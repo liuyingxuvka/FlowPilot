@@ -12,11 +12,14 @@ Risk intent brief:
   decisions resolving blockers by themselves, stale packet generations, and
   controller no-legal-next-action after a valid recheck failure, plus parent
   repairs that target leaf-only current-node events and outcome tables whose
-  success/blocker/protocol-blocker rows collapse onto one business event.
+  success/blocker/protocol-blocker rows collapse onto one business event, and
+  PM repair decisions that commit as empty waits without any existing producer,
+  queued action, Router handler, or terminal stop.
 - Hard invariant: a repair is a transaction. It either commits one coherent new
-  packet generation with both success and non-success outcomes routable through
-  executable, context-compatible event identities, or it remains blocked with a
-  router-visible follow-up blocker.
+  executable plan with a concrete producer/action/handler/terminal stop and,
+  for packet reissue, one coherent new packet generation with both success and
+  non-success outcomes routable through executable, context-compatible event
+  identities, or it remains blocked with a router-visible follow-up blocker.
 - Blindspot: this is a protocol model. It does not assert product quality or
   inspect concrete packet body contents.
 """
@@ -60,6 +63,17 @@ PARENT_REPAIR_SAFE_EVENTS = {
 BUSINESS_VALIDATED_REPAIR_EVENTS = LEAF_CURRENT_NODE_EVENTS | {
     "pm_completes_parent_node",
     "pm_records_parent_segment_decision",
+}
+EXECUTABLE_REPAIR_PLAN_KINDS = {
+    "operation_replay",
+    "controller_repair_work_packet",
+    "packet_reissue",
+    "role_reissue",
+    "router_internal_reconcile",
+    "await_existing_event",
+    "route_mutation",
+    "terminal_stop",
+    "event_replay",
 }
 EVENT_NODE_KIND_COMPATIBILITY = {
     event: {"leaf", "repair"}
@@ -120,7 +134,16 @@ class State:
     pm_decision_resolves_blocker: bool = False
     repair_transaction_opened: bool = False
     transaction_id_recorded: bool = False
-    transaction_plan_kind: str = "none"  # none | packet_reissue | route_mutation
+    transaction_plan_kind: str = "none"
+    repair_plan_validation_passed: bool = False
+    replay_operation_recorded: bool = False
+    replay_operation_safe: bool = False
+    concrete_repair_action_queued: bool = False
+    existing_event_producer_found: bool = False
+    controller_repair_packet_bounded: bool = False
+    router_internal_handler_found: bool = False
+    terminal_stop_recorded: bool = False
+    legacy_event_replay_alias: bool = False
 
     replacement_spec_written: bool = False
     packet_files_staged: bool = False
@@ -193,6 +216,14 @@ def _outcome_events(state: State) -> tuple[str, ...]:
             state.protocol_outcome_event,
         )
         if event != "none"
+    )
+
+
+def _requires_post_repair_model_check(state: State) -> bool:
+    return (
+        state.flowguard_bug_class_modelable
+        and state.transaction_plan_kind == "packet_reissue"
+        and state.replacement_generation_published
     )
 
 
@@ -363,7 +394,140 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 repair_transaction_opened=True,
                 transaction_id_recorded=True,
                 transaction_plan_kind="packet_reissue",
+                repair_plan_validation_passed=True,
                 active_repair_transaction=True,
+            ),
+        )
+        yield Transition(
+            "router_opens_await_existing_event_repair_transaction",
+            _inc(
+                state,
+                holder="controller",
+                repair_transaction_opened=True,
+                transaction_id_recorded=True,
+                transaction_plan_kind="await_existing_event",
+                repair_plan_validation_passed=True,
+                existing_event_producer_found=True,
+                active_repair_transaction=True,
+            ),
+        )
+        yield Transition(
+            "router_queues_operation_replay_repair_transaction",
+            _inc(
+                state,
+                holder="controller",
+                repair_transaction_opened=True,
+                transaction_id_recorded=True,
+                transaction_plan_kind="operation_replay",
+                repair_plan_validation_passed=True,
+                replay_operation_recorded=True,
+                replay_operation_safe=True,
+                concrete_repair_action_queued=True,
+                active_repair_transaction=True,
+            ),
+        )
+        yield Transition(
+            "router_queues_controller_repair_work_packet",
+            _inc(
+                state,
+                holder="controller",
+                repair_transaction_opened=True,
+                transaction_id_recorded=True,
+                transaction_plan_kind="controller_repair_work_packet",
+                repair_plan_validation_passed=True,
+                controller_repair_packet_bounded=True,
+                concrete_repair_action_queued=True,
+                active_repair_transaction=True,
+            ),
+        )
+        yield Transition(
+            "router_records_terminal_repair_stop",
+            replace(
+                state,
+                status="blocked",
+                steps=state.steps + 1,
+                holder="controller",
+                repair_transaction_opened=True,
+                transaction_id_recorded=True,
+                transaction_plan_kind="terminal_stop",
+                repair_plan_validation_passed=True,
+                terminal_stop_recorded=True,
+                followup_blocker_registered=True,
+                packet_ledger_refreshed=True,
+                frontier_refreshed=True,
+                display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
+            ),
+        )
+        return
+
+    if state.transaction_plan_kind == "await_existing_event":
+        yield Transition(
+            "existing_event_producer_completes_repair_success",
+            replace(
+                state,
+                status="complete",
+                steps=state.steps + 1,
+                holder="controller",
+                original_blocker_resolved=True,
+                post_repair_model_check_passed=True,
+                packet_ledger_refreshed=True,
+                frontier_refreshed=True,
+                display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
+                main_flow_resumed_after_success=True,
+            ),
+        )
+        yield Transition(
+            "existing_event_producer_returns_followup_blocker",
+            replace(
+                state,
+                status="blocked",
+                steps=state.steps + 1,
+                holder="controller",
+                followup_blocker_registered=True,
+                packet_ledger_refreshed=True,
+                frontier_refreshed=True,
+                display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
+            ),
+        )
+        return
+
+    if state.transaction_plan_kind in {"operation_replay", "controller_repair_work_packet"}:
+        yield Transition(
+            "queued_repair_action_completes_success",
+            replace(
+                state,
+                status="complete",
+                steps=state.steps + 1,
+                holder="controller",
+                original_blocker_resolved=True,
+                post_repair_model_check_passed=True,
+                packet_ledger_refreshed=True,
+                frontier_refreshed=True,
+                display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
+                main_flow_resumed_after_success=True,
+            ),
+        )
+        yield Transition(
+            "queued_repair_action_reports_followup_blocker",
+            replace(
+                state,
+                status="blocked",
+                steps=state.steps + 1,
+                holder="controller",
+                followup_blocker_registered=True,
+                packet_ledger_refreshed=True,
+                frontier_refreshed=True,
+                display_refreshed=True,
+                active_repair_transaction=False,
+                repair_recheck_pending_action=False,
             ),
         )
         return
@@ -403,10 +567,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if (
-        state.flowguard_bug_class_modelable
-        and not state.post_repair_model_check_passed
-    ):
+    if _requires_post_repair_model_check(state) and not state.post_repair_model_check_passed:
         yield Transition(
             "post_repair_model_check_passed_after_committed_generation",
             _inc(state, holder="flowguard_officer", post_repair_model_check_passed=True),
@@ -565,10 +726,58 @@ def repair_decision_requires_transaction(state: State, trace) -> InvariantResult
     if state.replacement_spec_written and not (
         state.repair_transaction_opened
         and state.transaction_id_recorded
-        and state.transaction_plan_kind in {"packet_reissue", "route_mutation"}
+        and state.transaction_plan_kind in EXECUTABLE_REPAIR_PLAN_KINDS
     ):
         return InvariantResult.fail(
             "PM repair wrote replacement artifacts outside a repair transaction"
+        )
+    return InvariantResult.pass_()
+
+
+def repair_transaction_plan_is_executable(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.repair_transaction_opened:
+        return InvariantResult.pass_()
+    if not state.transaction_id_recorded:
+        return InvariantResult.fail("repair transaction opened without transaction id")
+    if state.transaction_plan_kind not in EXECUTABLE_REPAIR_PLAN_KINDS:
+        return InvariantResult.fail("repair transaction used unsupported executable plan kind")
+    if not state.repair_plan_validation_passed:
+        return InvariantResult.fail("repair transaction committed without executable plan validation")
+
+    if state.transaction_plan_kind == "packet_reissue":
+        return InvariantResult.pass_()
+    if state.transaction_plan_kind == "operation_replay" and not (
+        state.replay_operation_recorded
+        and state.replay_operation_safe
+        and state.concrete_repair_action_queued
+    ):
+        return InvariantResult.fail(
+            "operation_replay repair transaction did not queue a safe recorded operation replay"
+        )
+    if state.transaction_plan_kind == "controller_repair_work_packet" and not (
+        state.controller_repair_packet_bounded and state.concrete_repair_action_queued
+    ):
+        return InvariantResult.fail(
+            "controller_repair_work_packet transaction lacked bounded work packet and queued action"
+        )
+    if state.transaction_plan_kind == "role_reissue" and not state.concrete_repair_action_queued:
+        return InvariantResult.fail("role_reissue repair transaction did not queue a role reissue action")
+    if state.transaction_plan_kind == "router_internal_reconcile" and not state.router_internal_handler_found:
+        return InvariantResult.fail("router_internal_reconcile transaction lacked a Router handler")
+    if state.transaction_plan_kind == "route_mutation" and not (
+        state.router_internal_handler_found or state.concrete_repair_action_queued
+    ):
+        return InvariantResult.fail("route_mutation repair transaction lacked a route mutation handler or action")
+    if state.transaction_plan_kind == "terminal_stop" and not state.terminal_stop_recorded:
+        return InvariantResult.fail("terminal_stop repair transaction lacked an explicit terminal stop")
+    if state.transaction_plan_kind == "await_existing_event" and not state.existing_event_producer_found:
+        return InvariantResult.fail("await_existing_event repair transaction lacked an existing producer")
+    if state.transaction_plan_kind == "event_replay" and not (
+        state.legacy_event_replay_alias and state.existing_event_producer_found
+    ):
+        return InvariantResult.fail(
+            "legacy event_replay transaction lacked an existing producer compatibility alias"
         )
     return InvariantResult.pass_()
 
@@ -715,7 +924,7 @@ def reviewer_recheck_requires_committed_generation(state: State, trace) -> Invar
         )
     if (
         state.reviewer_recheck_requested
-        and state.flowguard_bug_class_modelable
+        and _requires_post_repair_model_check(state)
         and not state.post_repair_model_check_passed
     ):
         return InvariantResult.fail(
@@ -759,7 +968,7 @@ def terminal_state_has_refreshed_authorities(state: State, trace) -> InvariantRe
         return InvariantResult.fail("repair transaction completed without returning to the main flow")
     if (
         state.status == "complete"
-        and state.flowguard_bug_class_modelable
+        and _requires_post_repair_model_check(state)
         and not state.post_repair_model_check_passed
     ):
         return InvariantResult.fail(
@@ -805,6 +1014,11 @@ INVARIANTS = (
         name="repair_decision_requires_transaction",
         description="Replacement artifacts are written only inside a repair transaction.",
         predicate=repair_decision_requires_transaction,
+    ),
+    Invariant(
+        name="repair_transaction_plan_is_executable",
+        description="Committed repair transactions name an executable plan with a producer, queued action, handler, or terminal stop.",
+        predicate=repair_transaction_plan_is_executable,
     ),
     Invariant(
         name="transaction_commit_requires_complete_generation",
@@ -910,6 +1124,7 @@ def _safe_base(**changes: object) -> State:
             repair_transaction_opened=True,
             transaction_id_recorded=True,
             transaction_plan_kind="packet_reissue",
+            repair_plan_validation_passed=True,
             replacement_spec_written=True,
             packet_files_staged=True,
             ledger_entries_staged=True,
@@ -994,6 +1209,26 @@ def hazard_states() -> dict[str, State]:
             repair_transaction_opened=False,
             transaction_id_recorded=False,
             replacement_spec_written=True,
+        ),
+        "await_existing_event_without_producer": _safe_base(
+            transaction_plan_kind="await_existing_event",
+            existing_event_producer_found=False,
+        ),
+        "legacy_event_replay_without_producer": _safe_base(
+            transaction_plan_kind="event_replay",
+            legacy_event_replay_alias=False,
+            existing_event_producer_found=False,
+        ),
+        "operation_replay_without_safe_recorded_operation": _safe_base(
+            transaction_plan_kind="operation_replay",
+            replay_operation_recorded=False,
+            replay_operation_safe=False,
+            concrete_repair_action_queued=False,
+        ),
+        "controller_repair_packet_without_boundaries": _safe_base(
+            transaction_plan_kind="controller_repair_work_packet",
+            controller_repair_packet_bounded=False,
+            concrete_repair_action_queued=True,
         ),
         "transaction_commits_packet_files_without_ledger": _safe_base(
             transaction_committed_atomically=True,

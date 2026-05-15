@@ -590,8 +590,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         decision: str = "proceed_with_model_backed_repair",
         output_name: str = "decisions/model_miss_valid",
     ) -> None:
+        self.ack_pending_delivered_card(root, "pm.event.reviewer_blocked")
         if not self.flag(root, "pm_model_miss_triage_card_delivered"):
             self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.ack_pending_delivered_card(root, "pm.event.reviewer_blocked")
         router.record_external_event(
             root,
             "pm_records_model_miss_triage_decision",
@@ -601,6 +603,43 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 self.model_miss_triage_body(root, decision=decision),
             ),
         )
+
+    def ack_pending_delivered_card(self, root: Path, card_id: str) -> bool:
+        run_root = self.run_root_for(root)
+        return_ledger_path = run_root / "return_event_ledger.json"
+        if not return_ledger_path.exists():
+            return False
+        return_ledger = read_json(return_ledger_path)
+        pending_return = next(
+            (
+                item
+                for item in return_ledger.get("pending_returns", [])
+                if isinstance(item, dict) and item.get("card_id") == card_id and item.get("status") == "pending"
+            ),
+            None,
+        )
+        if pending_return is None:
+            return False
+        state = read_json(router.run_state_path(run_root))
+        delivery_attempt_id = pending_return.get("delivery_attempt_id")
+        delivery = next(
+            (
+                item
+                for item in reversed(state.get("delivered_cards", []))
+                if isinstance(item, dict)
+                and item.get("card_id") == card_id
+                and (not delivery_attempt_id or item.get("delivery_attempt_id") == delivery_attempt_id)
+            ),
+            None,
+        )
+        if delivery is None:
+            return False
+        action = dict(delivery)
+        action["action_type"] = "deliver_system_card"
+        if not action.get("to_role") and pending_return.get("target_role"):
+            action["to_role"] = pending_return["target_role"]
+        self.ack_system_card_action(root, action)
+        return True
 
     def flag(self, root: Path, name: str) -> bool:
         run_root = self.run_root_for(root)
@@ -2179,7 +2218,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "return_gate": rerun_target,
             "rerun_target": rerun_target,
             "repair_transaction": {
-                "plan_kind": "event_replay",
+                "plan_kind": "role_reissue",
             },
             "blockers": [],
             "contract_self_check": {
@@ -7474,7 +7513,194 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(state["ledger_checks"], 1)
         self.assertEqual(state["mail_deliveries"], 1)
         self.assertEqual(packet_ledger["mail"][0]["mail_id"], "user_intake")
+        self.assertEqual(packet_ledger["active_packet_holder"], "project_manager")
+        self.assertEqual(packet_ledger["active_packet_status"], "envelope-relayed")
+        self.assertEqual(packet_ledger["packets"][0]["active_packet_holder"], "project_manager")
+        self.assertEqual(packet_ledger["packets"][0]["active_packet_status"], "envelope-relayed")
+        self.assertEqual(packet_ledger["packets"][0]["packet_controller_relay"]["relayed_to_role"], "project_manager")
+        mail_envelope = read_json(run_root / "mailbox" / "outbox" / "user_intake.json")
+        self.assertEqual(mail_envelope["controller_relay"]["relayed_to_role"], "project_manager")
         self.assertEqual(packet_ledger["schema_version"], packet_runtime.PACKET_LEDGER_SCHEMA)
+
+    def test_user_intake_mail_controller_receipt_folds_packet_ledger(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+        self.deliver_expected_card(root, "pm.core")
+        self.deliver_expected_card(root, "pm.output_contract_catalog")
+        self.deliver_expected_card(root, "pm.role_work_request")
+        self.deliver_expected_card(root, "pm.phase_map")
+        self.deliver_expected_card(root, "pm.startup_intake")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_mail")
+        self.assertEqual(action["mail_id"], "user_intake")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["ledger_check_requested"])
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router.save_run_state(run_root, state)
+
+        result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={
+                "mail_id": "user_intake",
+                "packet_id": "user_intake",
+                "packet_envelope_path": str(action["allowed_reads"][0]),
+                "delivered_to_role": "project_manager",
+                "delivery_confirmed": True,
+                "controller_read_body": False,
+                "target_must_use_packet_runtime": True,
+            },
+        )
+        self.assertTrue(result["ok"])
+        self.next_after_display_sync(root)
+
+        state = read_json(router.run_state_path(run_root))
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        action_record = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
+        self.assertFalse(state["ledger_check_requested"])
+        self.assertEqual(state["mail_deliveries"], 1)
+        self.assertEqual(len(state["delivered_mail"]), 1)
+        self.assertEqual(len(packet_ledger["mail"]), 1)
+        self.assertEqual(packet_ledger["mail"][0]["mail_id"], "user_intake")
+        self.assertEqual(packet_ledger["mail"][0]["to_role"], "project_manager")
+        self.assertEqual(packet_ledger["active_packet_holder"], "project_manager")
+        self.assertEqual(packet_ledger["active_packet_status"], "envelope-relayed")
+        self.assertEqual(packet_ledger["packets"][0]["active_packet_holder"], "project_manager")
+        self.assertEqual(packet_ledger["packets"][0]["active_packet_status"], "envelope-relayed")
+        self.assertEqual(packet_ledger["packets"][0]["packet_controller_relay"]["relayed_to_role"], "project_manager")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+        self.assertEqual(action_record["router_reconciliation"]["source"], "controller_receipt_mail_delivery_fold")
+        self.assertIsNone(state.get("active_control_blocker"))
+
+        duplicate = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={
+                "mail_id": "user_intake",
+                "packet_id": "user_intake",
+                "packet_envelope_path": str(action["allowed_reads"][0]),
+                "delivered_to_role": "project_manager",
+                "delivery_confirmed": True,
+                "controller_read_body": False,
+                "target_must_use_packet_runtime": True,
+            },
+        )
+        self.assertTrue(duplicate["ok"])
+        state = read_json(router.run_state_path(run_root))
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        self.assertEqual(state["mail_deliveries"], 1)
+        self.assertEqual(len(state["delivered_mail"]), 1)
+        self.assertEqual(len(packet_ledger["mail"]), 1)
+        self.assertEqual(len(packet_ledger["packets"][0]["controller_relay_history"]), 1)
+        self.assertEqual(len(packet_ledger["packets"][0]["holder_history"]), 2)
+
+    def test_controller_action_reconciliation_ignores_transient_temp_files(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-transient-action-scan")
+        state = read_json(router.run_state_path(run_root))
+        action_dir = router._controller_actions_dir(run_root)  # type: ignore[attr-defined]
+        action_dir.mkdir(parents=True, exist_ok=True)
+        (action_dir / ".tmp-1234-action.json").write_text("{", encoding="utf-8")
+
+        ledger = router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertEqual(ledger["actions"], [])
+        self.assertFalse(result["changed"])
+        self.assertIsNone(state.get("active_control_blocker"))
+
+    def test_mail_delivery_receipt_waits_for_active_packet_ledger_writer(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.deliver_startup_fact_check_card(root)
+        self.deliver_expected_card(root, "pm.core")
+        self.deliver_expected_card(root, "pm.output_contract_catalog")
+        self.deliver_expected_card(root, "pm.role_work_request")
+        self.deliver_expected_card(root, "pm.phase_map")
+        self.deliver_expected_card(root, "pm.startup_intake")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_mail")
+        state = read_json(router.run_state_path(run_root))
+        payload = {
+            "mail_id": "user_intake",
+            "packet_id": "user_intake",
+            "packet_envelope_path": str(action["allowed_reads"][0]),
+            "delivered_to_role": "project_manager",
+            "delivery_confirmed": True,
+        }
+        lock_path = run_root / "packet_ledger.json.write.lock"
+        lock_path.write_text(json.dumps({"created_at": router.utc_now()}, sort_keys=True), encoding="utf-8")
+
+        with self.assertRaises(router.RouterLedgerWriteInProgress):
+            router._fold_mail_delivery_postcondition(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                state,
+                action,
+                payload,
+                source="test_active_writer",
+            )
+
+        self.assertIsNone(state.get("active_control_blocker"))
+        self.assertFalse(state["flags"].get("user_intake_delivered_to_pm", False))
+
+    def test_daemon_folds_stable_startup_role_flags_from_bootstrap(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-startup-role-fold")
+        bootstrap_path = run_root / "bootstrap" / "startup_state.json"
+        router.write_json(
+            bootstrap_path,
+            {
+                "schema_version": "flowpilot.startup_state.v1",
+                "run_id": run_root.name,
+                "run_root": router.project_relative(root, run_root),
+                "flags": {
+                    "roles_started": True,
+                    "role_core_prompts_injected": True,
+                },
+            },
+        )
+        state = read_json(router.run_state_path(run_root))
+
+        result = router._fold_stable_startup_role_flags_from_bootstrap(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        self.assertTrue(state["flags"]["roles_started"])
+        self.assertTrue(state["flags"]["role_core_prompts_injected"])
+
+    def test_partial_startup_role_flags_wait_for_settlement(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-startup-role-partial")
+        bootstrap_path = run_root / "bootstrap" / "startup_state.json"
+        router.write_json(
+            bootstrap_path,
+            {
+                "schema_version": "flowpilot.startup_state.v1",
+                "run_id": run_root.name,
+                "run_root": router.project_relative(root, run_root),
+                "flags": {
+                    "roles_started": True,
+                    "role_core_prompts_injected": False,
+                },
+            },
+        )
+        state = read_json(router.run_state_path(run_root))
+
+        result = router._fold_stable_startup_role_flags_from_bootstrap(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertFalse(result["changed"])
+        self.assertTrue(result["waiting_for_settlement"])
+        self.assertFalse(state["flags"].get("roles_started", False))
+        self.assertFalse(state["flags"].get("role_core_prompts_injected", False))
 
     def test_startup_activation_requires_reviewer_facts_before_work(self) -> None:
         root = self.make_project()
@@ -10964,7 +11190,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(transaction_path.exists())
         transaction = read_json(transaction_path)
         self.assertEqual(transaction["status"], "committed")
-        self.assertEqual(transaction["plan_kind"], "event_replay")
+        self.assertEqual(transaction["plan_kind"], "role_reissue")
 
     def test_pm_repair_transaction_commits_material_reissue_generation(self) -> None:
         root = self.make_project()
@@ -11463,6 +11689,123 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "pm_records_control_blocker_protocol_blocker",
             },
         )
+
+    def test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="PM legacy replay has no current producer",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        decision["repair_transaction"] = {"plan_kind": "event_replay"}
+
+        with self.assertRaisesRegex(router.RouterError, "legacy event_replay repair transaction requires an existing producer"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "control_blocks/legacy_event_replay_no_producer", decision),
+            )
+
+    def test_operation_replay_repair_transaction_queues_replay_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Recorded mail delivery operation needs safe replay",
+            action_type="deliver_mail",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "operation_replay",
+            "operation_ref": {
+                "operation_kind": "controller_action",
+                "action_type": "deliver_mail",
+            },
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "control_blocks/operation_replay_pm_repair_decision", decision),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_mail")
+        self.assertEqual(action["repair_transaction_id"], read_json(router.run_state_path(run_root))["active_control_blocker"]["repair_transaction_id"])
+        self.assertEqual(action["repair_execution_plan"]["mode"], "operation_replay")
+
+    def test_controller_repair_work_packet_queues_bounded_controller_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller needs a bounded repair packet",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "controller_repair_work_packet",
+            "work_packet": {
+                "allowed_reads": [self.rel(root, state_path)],
+                "allowed_writes": [self.rel(root, state_path)],
+                "forbidden_actions": [
+                    "approve gates",
+                    "mutate routes",
+                    "read sealed bodies",
+                ],
+                "success_evidence": ["controller records bounded repair evidence"],
+            },
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "control_blocks/controller_repair_packet_pm_decision", decision),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "controller_repair_work_packet")
+        self.assertFalse(action["controller_may_approve_gate"])
+        self.assertFalse(action["controller_may_mutate_route"])
+        self.assertFalse(action["controller_may_read_sealed_bodies"])
+        self.assertEqual(action["repair_execution_plan"]["mode"], "controller_repair_work_packet")
+        result = router.apply_action(
+            root,
+            "controller_repair_work_packet",
+            {"status": "done", "evidence": ["controller records bounded repair evidence"]},
+        )
+        self.assertEqual(result["repair_transaction_id"], action["repair_transaction_id"])
+        transaction = read_json(run_root / "control_blocks" / "repair_transactions" / f"{action['repair_transaction_id']}.json")
+        self.assertEqual(transaction["status"], "awaiting_recheck")
+        self.assertEqual(transaction["controller_repair_work_packet_result"]["status"], "done")
 
     def test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target(self) -> None:
         root = self.make_project()

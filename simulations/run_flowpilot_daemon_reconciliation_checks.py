@@ -37,7 +37,19 @@ REQUIRED_LABELS = (
     "controller_writes_incomplete_rehydrate_receipt",
     "controller_writes_blocked_rehydrate_receipt",
     "daemon_applies_complete_receipt_and_clears_pending",
+    "startup_role_flags_written_to_secondary_record_only",
+    "daemon_folds_startup_role_flags_from_secondary_record",
+    "daemon_sees_transient_controller_action_temp_file",
+    "daemon_skips_transient_controller_action_temp_file",
+    "daemon_observes_active_runtime_writer",
+    "daemon_defers_reconciliation_for_active_runtime_writer",
+    "daemon_observes_writer_progress_and_keeps_waiting",
+    "runtime_writer_finishes_before_next_action",
     "daemon_reconciles_startup_bootloader_receipt_once",
+    "daemon_reconciles_mail_delivery_receipt_to_packet_ledger",
+    "daemon_blocks_unsupported_mail_delivery_receipt_before_next_action",
+    "pm_mail_delivery_repair_decision_submitted",
+    "daemon_consumes_pm_mail_delivery_decision_as_reissue",
     "daemon_resolves_prior_startup_blocker_and_supersedes_pm_row",
     "controller_boundary_receipt_artifact_seen_with_stale_flags",
     "daemon_reclaims_controller_boundary_projection_from_artifact",
@@ -57,10 +69,20 @@ HAZARD_EXPECTED_FAILURES = {
     "completed_controller_action_repeated": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
     "done_receipt_without_stateful_postconditions": "stateful Controller receipt was marked done without applying Router postconditions",
     "incomplete_stateful_receipt_silently_done": "incomplete stateful Controller receipt was accepted without a control blocker",
+    "mail_delivery_receipt_without_packet_ledger_fold": "mail delivery postcondition was applied without moving the packet ledger and Router flag together",
+    "mail_delivery_flag_without_packet_release": "mail delivery Router flag was set while the packet still belonged to Controller",
+    "mail_delivery_pm_decision_left_unconsumed": "PM mail delivery repair decision stayed only in durable storage",
+    "mail_delivery_reissue_without_repair_transaction": "mail delivery reissue was queued without a repair transaction",
     "submitted_role_output_left_in_ledger": "submitted expected role output was left only in durable storage",
     "canonical_artifact_flag_not_synced": "canonical role-output artifact existed without synced Router event flag",
     "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
     "computed_from_pending_before_reconciliation": "daemon computed next action from stale pending_action before durable reconciliation",
+    "startup_role_flags_left_in_secondary_record": "startup role flags stayed in secondary startup record without Router-state fold",
+    "startup_roles_started_without_core_prompt_router_flag": "startup roles_started Router flag was synced without role_core_prompts_injected",
+    "temp_controller_action_file_read_as_real_action": "daemon tried to read a transient Controller action temp file",
+    "temp_controller_action_file_error_kills_daemon": "transient Controller action temp file race stopped the daemon",
+    "active_runtime_writer_false_control_blocker": "active runtime writer was converted into a control blocker before settlement",
+    "active_runtime_writer_stops_daemon": "active runtime writer stopped the daemon before settlement",
     "startup_reconciled_action_false_pm_blocker": "startup bootloader row produced a control blocker after it was already reconciled",
     "startup_missing_postcondition_pm_lane_before_reissue": "startup bootloader missing postcondition was sent to PM before mechanical reissue budget was exhausted",
     "startup_blocker_not_resolved_after_success": "startup bootloader blocker stayed active after its postcondition was reconciled",
@@ -100,13 +122,34 @@ def _state_id(state: model.State) -> str:
         f"budget_exhausted={state.startup_reissue_budget_exhausted}|"
         f"startup={state.startup_row_reconciled},{state.startup_postcondition_satisfied},"
         f"owner={state.startup_reconciliation_owner},generic={state.generic_receipt_reconciler_touched_startup_row},"
-        f"unsupported={state.unsupported_startup_receipt_action}|"
+        f"unsupported={state.unsupported_startup_receipt_action},"
+        f"secondary_roles={state.startup_secondary_record_roles_started},"
+        f"secondary_prompts={state.startup_secondary_record_core_prompts_injected},"
+        f"router_roles={state.startup_router_state_roles_started},"
+        f"router_prompts={state.startup_router_state_core_prompts_injected},"
+        f"dual_folded={state.startup_dual_ledger_folded}|"
+        f"mail={state.mail_delivery_receipt_claimed},{state.mail_delivery_postcondition_required},"
+        f"applied={state.mail_delivery_postcondition_applied},ledger={state.mail_delivery_packet_ledger_folded},"
+        f"released={state.mail_delivery_packet_released_to_role},flag={state.mail_delivery_router_flag_synced},"
+        f"unsupported={state.mail_delivery_unsupported_receipt},pm_decision={state.pm_mail_repair_decision_submitted},"
+        f"pm_consumed={state.pm_mail_repair_decision_consumed},repair_tx={state.mail_delivery_repair_transaction_started},"
+        f"reissue={state.mail_delivery_reissue_queued}|"
         f"boundary={state.controller_boundary_artifact_exists},{state.controller_boundary_artifact_valid},"
         f"action_reconciled={state.controller_boundary_action_reconciled},"
         f"scheduler_reconciled={state.controller_boundary_scheduler_reconciled},"
         f"flags={state.controller_boundary_flags_synced},"
         f"reissued={state.controller_boundary_reissued_after_reconcile},"
-        f"without_pending={state.controller_boundary_action_returned_without_pending}|"
+        f"without_pending={state.controller_boundary_action_returned_without_pending},"
+        f"scan_temp={state.controller_action_directory_scan_includes_temp_json},"
+        f"temp_seen={state.temp_controller_action_file_seen},"
+        f"temp_renamed={state.temp_controller_action_file_renamed_before_read},"
+        f"temp_read={state.temp_controller_action_file_read_attempted},"
+        f"temp_skipped={state.temp_file_race_deferred_or_skipped},"
+        f"temp_error={state.daemon_error_from_temp_action_file},"
+        f"writer_active={state.runtime_writer_active},"
+        f"writer_stalled={state.runtime_writer_stalled},"
+        f"settlement_waiting={state.runtime_settlement_waiting},"
+        f"settlement_progress={state.runtime_settlement_progress_observed}|"
         f"queue={state.queue_stop_reason},sleep={state.sleep_taken},"
         f"immediate={state.immediate_tick_requested}|"
         f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
@@ -243,6 +286,111 @@ def _hazard_report() -> dict[str, object]:
 
 def _read_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _iter_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            records.append(payload)
+    return records
+
+
+def _router_daemon_events(run_root: Path) -> list[dict[str, Any]]:
+    return _iter_jsonl(run_root / "runtime" / "router_daemon_events.jsonl")
+
+
+def _event_details(event: dict[str, Any]) -> dict[str, Any]:
+    details = event.get("details")
+    return details if isinstance(details, dict) else {}
+
+
+def _startup_dual_ledger_projection_findings(run_root: Path) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    startup_state_path = run_root / "bootstrap" / "startup_state.json"
+    router_state_path = run_root / "runtime" / "router_state.json"
+    startup_state = _read_json(startup_state_path) if startup_state_path.exists() else {}
+    router_state = _read_json(router_state_path) if router_state_path.exists() else {}
+
+    startup_roles = bool(startup_state.get("roles_started"))
+    startup_prompts = bool(startup_state.get("role_core_prompts_injected"))
+    router_roles = bool(router_state.get("roles_started"))
+    router_prompts = bool(router_state.get("role_core_prompts_injected"))
+    if (startup_roles or startup_prompts) and not (router_roles and router_prompts):
+        findings.append(
+            {
+                "id": "startup_role_flags_left_in_secondary_record",
+                "startup_roles_started": startup_roles,
+                "startup_role_core_prompts_injected": startup_prompts,
+                "router_roles_started": router_roles,
+                "router_role_core_prompts_injected": router_prompts,
+            }
+        )
+    if router_roles and not router_prompts:
+        findings.append(
+            {
+                "id": "startup_roles_started_without_core_prompt_router_flag",
+                "router_roles_started": router_roles,
+                "router_role_core_prompts_injected": router_prompts,
+            }
+        )
+
+    for event in _router_daemon_events(run_root):
+        if event.get("event") != "router_daemon_lock_released":
+            continue
+        details = _event_details(event)
+        reason = str(event.get("reason") or details.get("reason") or "")
+        if "start_role_flags_not_folded" not in reason:
+            continue
+        findings.append(
+            {
+                "id": "startup_role_flag_fold_required_manual_daemon_restart",
+                "reason": reason,
+                "time": event.get("time") or event.get("recorded_at"),
+            }
+        )
+    return findings
+
+
+def _temp_action_file_projection_findings(run_root: Path) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    for event in _router_daemon_events(run_root):
+        if event.get("event") != "router_daemon_error":
+            continue
+        details = _event_details(event)
+        error_type = event.get("error_type") or details.get("error_type")
+        error_message = str(
+            event.get("error_message")
+            or details.get("error_message")
+            or event.get("error")
+            or details.get("error")
+            or ""
+        )
+        normalized = error_message.replace("\\", "/")
+        if (
+            error_type == "FileNotFoundError"
+            and "controller_actions" in normalized
+            and ".tmp-" in normalized
+            and ".json" in normalized
+        ):
+            findings.append(
+                {
+                    "id": "temp_controller_action_file_race_stopped_daemon",
+                    "error_type": error_type,
+                    "error_message": error_message,
+                    "time": event.get("time") or event.get("recorded_at"),
+                }
+            )
+    return findings
 
 
 def _resolve_current_run_root() -> tuple[Path | None, str]:
@@ -471,6 +619,174 @@ def _controller_boundary_projection_findings(
     return findings
 
 
+def _mail_delivery_projection_findings(
+    run_root: Path,
+    row_by_id: dict[str, dict[str, Any]],
+    actions: list[dict[str, Any]],
+) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    router_state_path = run_root / "router_state.json"
+    packet_ledger_path = run_root / "packet_ledger.json"
+    role_output_ledger_path = run_root / "role_output_ledger.json"
+    router_state = _read_json(router_state_path) if router_state_path.exists() else {}
+    packet_ledger = _read_json(packet_ledger_path) if packet_ledger_path.exists() else {}
+    role_output_ledger = _read_json(role_output_ledger_path) if role_output_ledger_path.exists() else {}
+    flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
+    mail_entries = packet_ledger.get("mail") if isinstance(packet_ledger.get("mail"), list) else []
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger.get("packets"), list) else []
+    role_outputs = role_output_ledger.get("outputs") if isinstance(role_output_ledger.get("outputs"), list) else []
+
+    repair_decisions_by_blocker: dict[str, list[dict[str, Any]]] = {}
+    for output in role_outputs:
+        if not isinstance(output, dict):
+            continue
+        if output.get("output_type") != "pm_control_blocker_repair_decision":
+            continue
+        body_path = output.get("body_path")
+        if not isinstance(body_path, str):
+            continue
+        path = PROJECT_ROOT / body_path
+        if not path.exists():
+            continue
+        try:
+            decision = _read_json(path)
+        except Exception:  # pragma: no cover - defensive live-run audit
+            continue
+        blocker_id = str(decision.get("blocker_id") or "")
+        if blocker_id:
+            repair_decisions_by_blocker.setdefault(blocker_id, []).append(
+                {
+                    "body_path": body_path,
+                    "decision": decision.get("decision"),
+                    "recovery_option": decision.get("recovery_option"),
+                    "return_gate": decision.get("return_gate"),
+                    "rerun_target": decision.get("rerun_target"),
+                }
+            )
+
+    action_by_id = {str(action.get("action_id")): action for action in actions if action.get("action_id")}
+    for action in actions:
+        if action.get("action_type") != "deliver_mail":
+            continue
+        nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+        mail_id = str(action.get("mail_id") or nested.get("mail_id") or "")
+        to_role = str(action.get("to_role") or nested.get("to_role") or "")
+        completion = action.get("completion_class") if isinstance(action.get("completion_class"), dict) else {}
+        postcondition = str(
+            completion.get("postcondition")
+            or action.get("postcondition")
+            or nested.get("postcondition")
+            or ""
+        )
+        row = row_by_id.get(str(action.get("router_scheduler_row_id")))
+        row_reconciliation = row.get("reconciliation", {}) if row else {}
+        if not isinstance(row_reconciliation, dict):
+            row_reconciliation = {}
+        action_reconciliation = action.get("router_reconciliation", {})
+        if not isinstance(action_reconciliation, dict):
+            action_reconciliation = {}
+        receipt = _controller_boundary_receipt_status(run_root, action, row)
+        mail_folded = any(
+            isinstance(entry, dict)
+            and str(entry.get("mail_id") or "") == mail_id
+            and (not to_role or str(entry.get("to_role") or "") == to_role)
+            for entry in mail_entries
+        )
+        flag_synced = bool(postcondition and flags.get(postcondition) is True)
+        packet = next(
+            (
+                item for item in packets
+                if isinstance(item, dict) and str(item.get("packet_id") or "") == mail_id
+            ),
+            {},
+        )
+        action_done = action.get("status") == "done"
+        action_blocked = action.get("router_reconciliation_status") == "blocked"
+        action_reconciled = action.get("router_reconciliation_status") == "reconciled"
+        row_state = row.get("router_state") if row else None
+        apply_result = action_reconciliation.get("apply_result")
+        if not isinstance(apply_result, dict):
+            apply_result = {}
+        nested_apply = apply_result.get("apply_result")
+        if not isinstance(nested_apply, dict):
+            nested_apply = {}
+        unsupported_reason = (
+            nested_apply.get("reason") == "unsupported_stateful_controller_receipt"
+            or apply_result.get("reason") == "unsupported_stateful_controller_receipt"
+        )
+        evidence = {
+            "action_id": action.get("action_id"),
+            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+            "row_state": row_state,
+            "receipt": receipt,
+            "mail_id": mail_id,
+            "to_role": to_role,
+            "postcondition": postcondition,
+            "mail_folded": mail_folded,
+            "flag_synced": flag_synced,
+            "packet_holder": packet.get("active_packet_holder"),
+            "packet_status": packet.get("active_packet_status"),
+            "router_reconciliation_status": action.get("router_reconciliation_status"),
+            "router_reconciliation_reason": action_reconciliation.get("reason"),
+            "router_reconciliation_apply_reason": nested_apply.get("reason") or apply_result.get("reason"),
+        }
+        if action_done and receipt.get("done") and action_blocked and unsupported_reason:
+            findings.append(
+                {
+                    "id": "mail_delivery_receipt_unfolded_to_packet_ledger",
+                    "action_type": "deliver_mail",
+                    **evidence,
+                }
+            )
+        if action_reconciled and (not mail_folded or not flag_synced):
+            findings.append(
+                {
+                    "id": "mail_delivery_reconciled_without_packet_ledger_fold",
+                    "action_type": "deliver_mail",
+                    **evidence,
+                }
+            )
+
+    control_block_dir = run_root / "control_blocks"
+    if control_block_dir.exists():
+        repair_transactions = router_state.get("repair_transactions")
+        repair_transaction_count = len(repair_transactions) if isinstance(repair_transactions, list) else 0
+        active_repair_transaction = router_state.get("active_repair_transaction")
+        flags_pm_decision = bool(flags.get("pm_control_blocker_repair_decision_recorded") is True)
+        for path in sorted(control_block_dir.glob("*.json")):
+            if path.name.endswith(".sealed_repair_packet.json") or path.name == "blocker_repair_policy_snapshot.json":
+                continue
+            blocker = _read_json(path)
+            if blocker.get("source") != MISSING_POSTCONDITION_BLOCKER_SOURCE:
+                continue
+            if blocker.get("originating_action_type") != "deliver_mail":
+                continue
+            blocker_id = str(blocker.get("blocker_id") or "")
+            decisions = repair_decisions_by_blocker.get(blocker_id, [])
+            if decisions and not flags_pm_decision and not active_repair_transaction and repair_transaction_count == 0:
+                origin_action = action_by_id.get(str(blocker.get("originating_controller_action_id") or ""))
+                findings.append(
+                    {
+                        "id": "mail_delivery_pm_repair_decision_unconsumed",
+                        "action_type": "deliver_mail",
+                        "blocker_id": blocker_id,
+                        "originating_controller_action_id": blocker.get("originating_controller_action_id"),
+                        "originating_postcondition": blocker.get("originating_postcondition"),
+                        "handling_lane": blocker.get("handling_lane"),
+                        "direct_retry_attempts_used": blocker.get("direct_retry_attempts_used"),
+                        "direct_retry_budget": blocker.get("direct_retry_budget"),
+                        "direct_retry_budget_exhausted": blocker.get("direct_retry_budget_exhausted"),
+                        "pm_decisions": decisions,
+                        "pm_decision_flag": flags.get("pm_control_blocker_repair_decision_recorded"),
+                        "active_repair_transaction": active_repair_transaction,
+                        "repair_transaction_count": repair_transaction_count,
+                        "origin_action_reconciliation_status": origin_action.get("router_reconciliation_status") if origin_action else None,
+                    }
+                )
+
+    return findings
+
+
 def _live_run_projection() -> dict[str, object]:
     run_root, skip_reason = _resolve_current_run_root()
     if run_root is None:
@@ -500,11 +816,19 @@ def _live_run_projection() -> dict[str, object]:
 
     actions = []
     for path in sorted(action_dir.glob("*.json")):
-        payload = _read_json(path)
+        if path.name.startswith(".tmp-") or path.name.endswith(".write.lock"):
+            continue
+        try:
+            payload = _read_json(path)
+        except FileNotFoundError:
+            continue
         if isinstance(payload, dict):
             actions.append(payload)
 
+    startup_dual_ledger_findings = _startup_dual_ledger_projection_findings(run_root)
+    temp_file_findings = _temp_action_file_projection_findings(run_root)
     boundary_findings = _controller_boundary_projection_findings(run_root, row_by_id, actions)
+    mail_findings = _mail_delivery_projection_findings(run_root, row_by_id, actions)
 
     startup_actions_by_type: dict[str, list[dict[str, Any]]] = {}
     row_findings: list[dict[str, object]] = []
@@ -650,7 +974,14 @@ def _live_run_projection() -> dict[str, object]:
                     }
                 )
 
-    findings = boundary_findings + row_findings + blocker_findings
+    findings = (
+        startup_dual_ledger_findings
+        + temp_file_findings
+        + boundary_findings
+        + mail_findings
+        + row_findings
+        + blocker_findings
+    )
     return {
         "ok": not findings,
         "classification_ok": True,

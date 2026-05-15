@@ -107,11 +107,34 @@ history considered and why this repair does not repeat a superseded or failed
 path.
 
 Every control-blocker repair must open a repair transaction. Do not treat a
-single `rerun_target` as the repair. For packet reissue, include the replacement
-packet specs in `repair_transaction.replacement_packets` or provide
-`repair_transaction.replacement_packet_specs_path` with its hash. Router will
-commit one new packet generation across packet files, packet ledger, material
-dispatch index, and reviewer outcome table before any recheck can pass.
+single `rerun_target`, `recovery_option`, or prose `repair_action` as the
+repair. Router executes `repair_transaction.plan_kind`; the other fields explain
+why the policy allows that route.
+
+Choose the executable plan kind deliberately:
+
+- Use `operation_replay` when a recorded Router or Controller operation can be
+  safely replayed. Include `repair_transaction.operation_ref` naming the action
+  type and recorded operation/controller action id when available.
+- Use `controller_repair_work_packet` when Controller must perform bounded AI
+  repair work inside current authority. Include `work_packet.allowed_reads`,
+  `work_packet.allowed_writes`, `work_packet.forbidden_actions`, and
+  `work_packet.success_evidence`.
+- Use `packet_reissue` when replacement packets must be generated. Include
+  `repair_transaction.replacement_packets` or
+  `repair_transaction.replacement_packet_specs_path` with its hash. Router will
+  commit one new packet generation across packet files, packet ledger, material
+  dispatch index, and reviewer outcome table before any recheck can pass.
+- Use `role_reissue` when the original role must resubmit a bounded report,
+  result, ACK, or decision.
+- Use `await_existing_event` only when a real current producer already exists
+  for the awaited event. Do not use it to mean "start over".
+- Use `route_mutation` only for structural route/node/acceptance changes.
+- Use `terminal_stop` for user stop, protocol dead-end, or human escalation.
+
+`event_replay` is deprecated compatibility language. Only use
+`await_existing_event` or `operation_replay`; Router may reject `event_replay`
+when no existing producer is already present.
 
 Do not mark the node complete until repair evidence passes the required review
 and the PM reruns the relevant node, parent, or terminal gate from current
@@ -158,7 +181,14 @@ Use these exact field names and one of the allowed `decision` values:
   "return_gate": "<gate/event/terminal-stop to retry or enter after this decision>",
   "rerun_target": "<success event to recheck, such as router_direct_material_scan_dispatch_recheck_passed>",
   "repair_transaction": {
-    "plan_kind": "<event_replay|packet_reissue|route_mutation>",
+    "plan_kind": "<operation_replay|controller_repair_work_packet|packet_reissue|role_reissue|router_internal_reconcile|await_existing_event|route_mutation|terminal_stop>",
+    "operation_ref": {},
+    "work_packet": {
+      "allowed_reads": [],
+      "allowed_writes": [],
+      "forbidden_actions": [],
+      "success_evidence": []
+    },
     "replacement_packet_specs_path": "<path-or-null>",
     "replacement_packet_specs_hash": "<sha256-or-null>",
     "replacement_packets": []
@@ -174,9 +204,11 @@ Use these exact field names and one of the allowed `decision` values:
 
 If the responsible role must reissue a malformed control-plane output, name
 that target and event in `rerun_target`, and set `repair_transaction.plan_kind`
-to `event_replay`. If the repair creates replacement packets, set
-`repair_transaction.plan_kind` to `packet_reissue`; do not write packet specs as
-loose side files without committing them through the router transaction.
+to `role_reissue` or `operation_replay` depending on whether Router should wait
+for a fresh role output or replay a recorded operation. If the repair creates
+replacement packets, set `repair_transaction.plan_kind` to `packet_reissue`;
+do not write packet specs as loose side files without committing them through
+the router transaction.
 
 PM may recover by same-gate repair, rollback, supplemental node, repair node,
 route mutation, evidence quarantine, allowed waiver, user stop, or protocol

@@ -107,6 +107,12 @@ Allowed actions:
 - rely on Router-owned manifest and packet-ledger checks; if Router exposes a
   card, mail, packet, or result relay action, perform only the relay work
   described by that action and its Controller ledger row;
+- for `deliver_mail`, a chat message or self-attested done receipt is not
+  delivery. Relay the packet envelope through the packet runtime holder/status
+  path named by the Router action, then write the Controller receipt with
+  mail id, packet id, target role, and delivery confirmation metadata. Router
+  will accept the receipt only after the packet ledger proves the packet was
+  released to the addressed role with a controller relay signature;
 - relay envelopes only, update holder/status ledgers, and request role
   decisions;
 - when returning a role/event envelope to the router, pass the envelope file
@@ -217,6 +223,14 @@ hard-stop conditions, and sealed repair packet path/hash to Project Manager.
 Do not read or restate sealed repair details, and do not contact a worker or
 reviewer directly about project repair unless PM later issues a
 router-authorized packet or decision envelope.
+
+If Router later exposes `controller_repair_work_packet`, execute only the
+bounded work packet fields. Read only `allowed_reads`, write only
+`allowed_writes`, and treat `forbidden_actions` as hard stops. This action does
+not let Controller approve gates, mutate routes, infer PM/reviewer/worker
+decisions, inspect sealed bodies, or turn chat/history into evidence. If the
+success evidence cannot be produced exactly, report a blocker through the
+router-approved path instead of improvising a repair.
 
 If a role or subagent response includes report bodies, blockers, evidence
 details, recommendations, commands, repair instructions, or other content that

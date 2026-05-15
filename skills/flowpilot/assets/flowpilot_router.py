@@ -213,6 +213,30 @@ PM_BLOCKER_RECOVERY_OPTIONS = (
     "user_stop",
     "protocol_dead_end",
 )
+REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS = {
+    "operation_replay",
+    "controller_repair_work_packet",
+    "packet_reissue",
+    "role_reissue",
+    "router_internal_reconcile",
+    "await_existing_event",
+    "route_mutation",
+    "terminal_stop",
+}
+REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES = {
+    "event_replay": "await_existing_event",
+}
+REPAIR_TRANSACTION_SAFE_REPLAY_ACTION_TYPES = {
+    "deliver_mail",
+    "deliver_system_card",
+    "deliver_system_card_bundle",
+    "relay_material_scan_packets",
+    "relay_research_packets",
+    "relay_current_node_packet",
+    "relay_material_scan_results_to_pm",
+    "relay_current_node_result_to_pm",
+    "relay_research_results_to_pm",
+}
 BLOCKER_REPAIR_POLICY_ROWS: dict[str, dict[str, Any]] = {
     "mechanical_control_plane_reissue": {
         "policy_row_id": "mechanical_control_plane_reissue",
@@ -2799,6 +2823,31 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
         "age_seconds": age,
         "stale_after_seconds": RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
     }
+
+
+def _raise_if_runtime_write_active(path: Path) -> None:
+    write_lock = _json_write_lock_liveness(path)
+    if write_lock["fresh"]:
+        raise RouterLedgerWriteInProgress(path, write_lock, "fresh runtime JSON write lock")
+
+
+def _is_transient_runtime_json_scan_artifact(path: Path) -> bool:
+    return path.name.startswith(".tmp-") or path.name.endswith(".write.lock")
+
+
+def _read_json_for_runtime_scan(path: Path) -> dict[str, Any] | None:
+    if _is_transient_runtime_json_scan_artifact(path):
+        return None
+    try:
+        _raise_if_runtime_write_active(path)
+        return read_json_if_exists(path)
+    except FileNotFoundError:
+        return None
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
+        write_lock = _json_write_lock_liveness(path)
+        if write_lock["fresh"]:
+            raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
+        raise
 
 
 def _acquire_json_write_lock(path: Path) -> Path:
@@ -5622,6 +5671,10 @@ def _controller_table_prompt() -> dict[str, Any]:
             "completion path is the row action plus Controller receipt. "
             "Do not skip ready rows. Do not invent route items, read sealed bodies, "
             "implement worker work, approve gates, or close the route from Controller evidence. "
+            "A Controller receipt is never enough by itself: Router must reconcile required "
+            "postconditions before progress counts. For deliver_mail rows, the receipt is "
+            "accepted only after the packet runtime ledger proves the packet was released "
+            "to the addressed role with a controller relay signature. "
             "Daemon-owned startup rows use the same table: Controller checks off the simple row, "
             "while Router's scheduler ledger owns ordering, barrier, scope, and dependency metadata.\n\n"
             "As long as FlowPilot is still running, keep the foreground Controller work attached. "
@@ -5661,9 +5714,8 @@ def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_st
     entries: list[dict[str, Any]] = []
     if action_dir.exists():
         for path in sorted(action_dir.glob("*.json")):
-            try:
-                entry = read_json(path)
-            except (OSError, json.JSONDecodeError, RouterError):
+            entry = _read_json_for_runtime_scan(path)
+            if entry is None:
                 continue
             if entry.get("schema_version") == CONTROLLER_ACTION_SCHEMA:
                 entries.append(_controller_action_summary(entry))
@@ -6023,7 +6075,9 @@ def _close_waiting_controller_actions_for_external_event(
     payload_digest = _external_event_payload_digest(payload)
     closed: list[dict[str, Any]] = []
     for action_path in sorted(action_dir.glob("*.json")):
-        entry = read_json_if_exists(action_path)
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         if entry.get("status") != "waiting":
@@ -6143,6 +6197,284 @@ def _pending_action_postcondition_satisfied(run_state: dict[str, Any], postcondi
         return True
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
     return bool(flags.get(postcondition))
+
+
+def _mail_sequence_entry(mail_id: str) -> dict[str, str] | None:
+    return next((entry for entry in MAIL_SEQUENCE if entry["mail_id"] == mail_id), None)
+
+
+def _mail_delivery_matches(item: object, *, mail_id: str, to_role: str) -> bool:
+    return (
+        isinstance(item, dict)
+        and str(item.get("mail_id") or "") == mail_id
+        and str(item.get("to_role") or "") == to_role
+    )
+
+
+def _find_mail_delivery(deliveries: object, *, mail_id: str, to_role: str) -> dict[str, Any] | None:
+    if not isinstance(deliveries, list):
+        return None
+    for item in deliveries:
+        if _mail_delivery_matches(item, mail_id=mail_id, to_role=to_role):
+            return item
+    return None
+
+
+def _count_unique_mail_deliveries(deliveries: object) -> int:
+    if not isinstance(deliveries, list):
+        return 0
+    keys = {
+        (str(item.get("mail_id") or ""), str(item.get("to_role") or ""))
+        for item in deliveries
+        if isinstance(item, dict) and item.get("mail_id") and item.get("to_role")
+    }
+    return len(keys)
+
+
+def _packet_record_for_mail_delivery(ledger: dict[str, Any], *, packet_id: str) -> dict[str, Any] | None:
+    packets = ledger.get("packets")
+    if not isinstance(packets, list):
+        return None
+    for item in packets:
+        if isinstance(item, dict) and str(item.get("packet_id") or "") == packet_id:
+            return item
+    return None
+
+
+def _mail_delivery_action_envelope_path(
+    project_root: Path,
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> Path | None:
+    candidates: list[object] = []
+    candidates.append(receipt_payload.get("packet_envelope_path"))
+    allowed_reads = pending_action.get("allowed_reads")
+    if isinstance(allowed_reads, list):
+        candidates.extend(allowed_reads)
+    for candidate in candidates:
+        raw_path = str(candidate or "").strip()
+        if not raw_path:
+            continue
+        path = resolve_project_path(project_root, raw_path)
+        if path.exists():
+            return path
+    return None
+
+
+def _mail_delivery_packet_released(record: dict[str, Any] | None, *, to_role: str) -> bool:
+    if not isinstance(record, dict):
+        return False
+    relay = record.get("packet_controller_relay")
+    if not isinstance(relay, dict):
+        relay = record.get("controller_relay")
+    return (
+        str(record.get("active_packet_holder") or "") == to_role
+        and str(record.get("active_packet_status") or "") == "envelope-relayed"
+        and isinstance(relay, dict)
+        and relay.get("delivered_via_controller") is True
+        and str(relay.get("relayed_to_role") or "") == to_role
+        and relay.get("body_was_read_by_controller") is False
+        and relay.get("body_was_executed_by_controller") is False
+    )
+
+
+def _ensure_mail_delivery_packet_released(
+    project_root: Path,
+    run_root: Path,
+    ledger: dict[str, Any],
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+    *,
+    mail_id: str,
+    to_role: str,
+    source: str,
+) -> dict[str, Any]:
+    record = _packet_record_for_mail_delivery(ledger, packet_id=mail_id)
+    if record is None:
+        raise RouterError(f"mail delivery packet record is missing: {mail_id}")
+    if _mail_delivery_packet_released(record, to_role=to_role):
+        return {
+            "packet_released": True,
+            "already_released": True,
+            "packet_id": mail_id,
+            "packet_envelope_path": record.get("packet_envelope_path"),
+        }
+
+    raw_packet_path = str(record.get("packet_envelope_path") or "").strip()
+    if not raw_packet_path:
+        raise RouterError(f"mail delivery packet envelope path is missing: {mail_id}")
+    packet_envelope_path = resolve_project_path(project_root, raw_packet_path)
+    if not packet_envelope_path.exists():
+        raise RouterError(f"mail delivery packet envelope is missing: {raw_packet_path}")
+
+    envelope = packet_runtime.load_envelope(project_root, packet_envelope_path)
+    if str(envelope.get("packet_id") or "") != mail_id:
+        raise RouterError(
+            f"mail delivery packet envelope mismatch: expected {mail_id}, got {envelope.get('packet_id')!r}"
+        )
+    if str(envelope.get("to_role") or envelope.get("next_holder") or "") != to_role:
+        raise RouterError(
+            f"mail delivery packet target mismatch: expected {to_role}, got {envelope.get('to_role')!r}"
+        )
+
+    relayed = packet_runtime.controller_relay_envelope(
+        project_root,
+        envelope=envelope,
+        envelope_path=packet_envelope_path,
+        controller_agent_id=str(receipt_payload.get("controller_agent_id") or pending_action.get("controller_agent_id") or "controller"),
+        received_from_role=str(envelope.get("from_role") or record.get("created_by_role") or "unknown"),
+        relayed_to_role=to_role,
+        body_was_read_by_controller=receipt_payload.get("controller_read_body") is True
+        or receipt_payload.get("body_was_read_by_controller") is True,
+        body_was_executed_by_controller=receipt_payload.get("controller_executed_body") is True
+        or receipt_payload.get("body_was_executed_by_controller") is True,
+        private_role_to_role_delivery_detected=receipt_payload.get("private_role_to_role_delivery_detected") is True,
+    )
+    action_envelope_path = _mail_delivery_action_envelope_path(project_root, pending_action, receipt_payload)
+    if action_envelope_path is not None and action_envelope_path.resolve() != packet_envelope_path.resolve():
+        write_json(action_envelope_path, relayed)
+
+    updated_ledger_path = run_root / "packet_ledger.json"
+    _raise_if_runtime_write_active(updated_ledger_path)
+    updated_ledger = read_daemon_critical_json_if_exists(updated_ledger_path)
+    updated_record = _packet_record_for_mail_delivery(updated_ledger, packet_id=mail_id)
+    if not _mail_delivery_packet_released(updated_record, to_role=to_role):
+        raise RouterError(f"mail delivery packet was not released to {to_role}")
+    return {
+        "packet_released": True,
+        "already_released": False,
+        "packet_id": mail_id,
+        "packet_envelope_path": project_relative(project_root, packet_envelope_path),
+        "source": source,
+    }
+
+
+def _fold_mail_delivery_postcondition(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any] | None = None,
+    *,
+    source: str,
+) -> dict[str, Any]:
+    receipt_payload = receipt_payload or {}
+    mail_id = str(pending_action.get("mail_id") or receipt_payload.get("mail_id") or receipt_payload.get("packet_id") or "")
+    if not mail_id:
+        raise RouterError("mail delivery requires a mail_id")
+    mail_entry = _mail_sequence_entry(mail_id)
+    if mail_entry is None:
+        raise RouterError(f"unknown mail in pending action: {mail_id}")
+    to_role = str(
+        pending_action.get("to_role")
+        or receipt_payload.get("delivered_to_role")
+        or receipt_payload.get("to_role")
+        or mail_entry["to_role"]
+    )
+    if to_role != mail_entry["to_role"]:
+        raise RouterError(f"mail delivery target mismatch for {mail_id}: expected {mail_entry['to_role']}, got {to_role}")
+    payload_mail_id = str(receipt_payload.get("mail_id") or receipt_payload.get("packet_id") or "")
+    if payload_mail_id and payload_mail_id != mail_id:
+        raise RouterError(f"mail delivery receipt mail mismatch: expected {mail_id}, got {payload_mail_id}")
+    payload_to_role = str(receipt_payload.get("delivered_to_role") or receipt_payload.get("to_role") or "")
+    if payload_to_role and payload_to_role != to_role:
+        raise RouterError(f"mail delivery receipt target mismatch: expected {to_role}, got {payload_to_role}")
+    if receipt_payload.get("delivery_confirmed") is False:
+        raise RouterError(f"mail delivery receipt for {mail_id} did not confirm delivery")
+
+    ledger_path = run_root / "packet_ledger.json"
+    _raise_if_runtime_write_active(ledger_path)
+    ledger = read_daemon_critical_json_if_exists(ledger_path)
+    ledger_mail = ledger.setdefault("mail", [])
+    if not isinstance(ledger_mail, list):
+        raise RouterError("packet ledger mail field must be a list")
+    state_mail = run_state.setdefault("delivered_mail", [])
+    if not isinstance(state_mail, list):
+        raise RouterError("run state delivered_mail field must be a list")
+
+    existing_ledger_delivery = _find_mail_delivery(ledger_mail, mail_id=mail_id, to_role=to_role)
+    existing_state_delivery = _find_mail_delivery(state_mail, mail_id=mail_id, to_role=to_role)
+    already_recorded = existing_ledger_delivery is not None and existing_state_delivery is not None
+    if not run_state.get("ledger_check_requested") and existing_ledger_delivery is None:
+        raise RouterError("mail delivery requires a current packet-ledger check")
+
+    packet_release = _ensure_mail_delivery_packet_released(
+        project_root,
+        run_root,
+        ledger,
+        pending_action,
+        receipt_payload,
+        mail_id=mail_id,
+        to_role=to_role,
+        source=source,
+    )
+    _raise_if_runtime_write_active(ledger_path)
+    ledger = read_daemon_critical_json_if_exists(ledger_path)
+    ledger_mail = ledger.setdefault("mail", [])
+    if not isinstance(ledger_mail, list):
+        raise RouterError("packet ledger mail field must be a list")
+    existing_ledger_delivery = _find_mail_delivery(ledger_mail, mail_id=mail_id, to_role=to_role)
+    existing_state_delivery = _find_mail_delivery(state_mail, mail_id=mail_id, to_role=to_role)
+    already_recorded = existing_ledger_delivery is not None and existing_state_delivery is not None
+
+    delivery = existing_ledger_delivery or existing_state_delivery or {
+        "mail_id": mail_id,
+        "delivered_by": str(pending_action.get("delivered_by") or "controller"),
+        "to_role": to_role,
+        "delivered_at": utc_now(),
+    }
+    delivery.setdefault("packet_id", mail_id)
+    if packet_release.get("packet_envelope_path"):
+        delivery.setdefault("packet_envelope_path", packet_release.get("packet_envelope_path"))
+    if receipt_payload.get("target_agent_id"):
+        delivery.setdefault("target_agent_id", receipt_payload.get("target_agent_id"))
+    if receipt_payload.get("delivery_channel"):
+        delivery.setdefault("delivery_channel", receipt_payload.get("delivery_channel"))
+
+    ledger_changed = False
+    state_changed = False
+    if existing_ledger_delivery is None:
+        ledger_mail.append(delivery)
+        ledger_changed = True
+    if existing_state_delivery is None:
+        state_mail.append(delivery)
+        state_changed = True
+    if ledger_changed or state_changed:
+        run_state["mail_deliveries"] = max(
+            int(run_state.get("mail_deliveries", 0)),
+            _count_unique_mail_deliveries(state_mail),
+            _count_unique_mail_deliveries(ledger_mail),
+        )
+
+    run_state.setdefault("flags", {})[mail_entry["flag"]] = True
+    run_state["ledger_check_requested"] = False
+    ledger["updated_at"] = utc_now()
+    write_json(ledger_path, ledger)
+    append_history(
+        run_state,
+        "router_folded_mail_delivery_postcondition",
+        {
+            "mail_id": mail_id,
+            "to_role": to_role,
+            "postcondition": mail_entry["flag"],
+            "source": source,
+            "already_recorded": already_recorded,
+            "ledger_changed": ledger_changed,
+            "state_changed": state_changed,
+            "packet_release": packet_release,
+        },
+    )
+    return {
+        "applied": True,
+        "source": source,
+        "postcondition": mail_entry["flag"],
+        "mail_id": mail_id,
+        "to_role": to_role,
+        "already_recorded": already_recorded,
+        "ledger_changed": ledger_changed,
+        "state_changed": state_changed,
+        "packet_release": packet_release,
+    }
 
 
 def _controller_boundary_required_deliverable(project_root: Path, run_root: Path) -> dict[str, Any]:
@@ -6506,7 +6838,9 @@ def _reconcile_controller_boundary_confirmation_projection(
     last_projection: dict[str, Any] | None = None
 
     for action_path in sorted(action_dir.glob("*.json")):
-        entry = read_json_if_exists(action_path)
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         if entry.get("action_type") != "confirm_controller_core_boundary":
@@ -7183,6 +7517,15 @@ def _apply_stateful_receipt_postcondition(
         _append_user_dialog_display_ledger(project_root, run_root, confirmation)
         run_state.setdefault("flags", {})["startup_display_status_written"] = True
         return {"applied": True, "postcondition": "startup_display_status_written"}
+    if action_type == "deliver_mail":
+        return _fold_mail_delivery_postcondition(
+            project_root,
+            run_root,
+            run_state,
+            pending_action,
+            receipt_payload,
+            source="controller_receipt_mail_delivery_fold",
+        )
     return {
         "applied": False,
         "reason": "unsupported_stateful_controller_receipt",
@@ -7486,7 +7829,10 @@ def _reconcile_pending_controller_action_receipt(
         )
 
     postcondition = _pending_action_postcondition(pending_action)
-    if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
+    if postcondition and (
+        not _pending_action_postcondition_satisfied(run_state, postcondition)
+        or action_type == "deliver_mail"
+    ):
         try:
             applied = _apply_stateful_receipt_postcondition(
                 project_root,
@@ -7495,6 +7841,8 @@ def _reconcile_pending_controller_action_receipt(
                 pending_action,
                 payload,
             )
+        except RouterLedgerWriteInProgress:
+            raise
         except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
             applied = {
                 "applied": False,
@@ -7685,7 +8033,10 @@ def _apply_done_controller_receipt_effects(
             "display_plan_path": sync_payload.get("display_plan_path"),
         }
     postcondition = _pending_action_postcondition(action)
-    if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
+    if postcondition and (
+        not _pending_action_postcondition_satisfied(run_state, postcondition)
+        or action_type == "deliver_mail"
+    ):
         applied = _apply_stateful_receipt_postcondition(project_root, run_root, run_state, action, payload)
         if not applied.get("applied") or not _pending_action_postcondition_satisfied(run_state, postcondition):
             repair = _schedule_controller_deliverable_repair(
@@ -7777,7 +8128,9 @@ def _reconcile_scheduled_controller_action_receipts(
     reconciled = 0
     blocked = 0
     for action_path in sorted(action_dir.glob("*.json")):
-        entry = read_json_if_exists(action_path)
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
@@ -7872,6 +8225,8 @@ def _reconcile_scheduled_controller_action_receipts(
             continue
         try:
             applied = _apply_done_controller_receipt_effects(project_root, run_root, run_state, action, receipt)
+        except RouterLedgerWriteInProgress:
+            raise
         except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
             applied = {"applied": False, "reason": str(exc)}
         if not applied.get("applied"):
@@ -9676,7 +10031,9 @@ def _startup_pre_review_reconciliation_blockers(
     action_dir = _controller_actions_dir(run_root)
     if action_dir.exists():
         for action_path in sorted(action_dir.glob("*.json")):
-            entry = read_json_if_exists(action_path)
+            entry = _read_json_for_runtime_scan(action_path)
+            if entry is None:
+                continue
             if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
                 continue
             if entry.get("status") in {"done", "blocked", "skipped"} and entry.get("router_reconciliation_status") == "reconciled":
@@ -12390,6 +12747,130 @@ def _validate_wait_event_producer_binding(
         )
 
 
+def _repair_transaction_for_control_blocker(project_root: Path, run_root: Path, record: dict[str, Any]) -> dict[str, Any] | None:
+    raw_path = record.get("repair_transaction_path")
+    if not raw_path:
+        return None
+    path = resolve_project_path(project_root, str(raw_path))
+    if not path.exists():
+        return None
+    transaction = read_json_if_exists(path)
+    if transaction.get("schema_version") != REPAIR_TRANSACTION_SCHEMA:
+        return None
+    return transaction
+
+
+def _make_operation_replay_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+    transaction: dict[str, Any],
+    execution_plan: dict[str, Any],
+) -> dict[str, Any]:
+    replay_source = execution_plan.get("replay_source") if isinstance(execution_plan.get("replay_source"), dict) else {}
+    source_action = replay_source.get("source_action") if isinstance(replay_source.get("source_action"), dict) else {}
+    action_type = str(execution_plan.get("queued_action_type") or replay_source.get("action_type") or record.get("originating_action_type") or "")
+    if action_type not in REPAIR_TRANSACTION_SAFE_REPLAY_ACTION_TYPES:
+        raise RouterError(f"operation_replay repair transaction cannot queue action_type={action_type or 'missing'}")
+    extra = {
+        key: value
+        for key, value in source_action.items()
+        if key
+        not in {
+            "schema_version",
+            "action_id",
+            "action_type",
+            "actor",
+            "source",
+            "issued_by",
+            "label",
+            "summary",
+            "allowed_reads",
+            "allowed_writes",
+            "created_at",
+        }
+    }
+    extra.update(
+        {
+            "repair_transaction_id": transaction.get("transaction_id"),
+            "control_blocker_id": record.get("blocker_id"),
+            "replay_of_controller_action_id": replay_source.get("controller_action_id"),
+            "idempotency_key": f"repair-transaction:{transaction.get('transaction_id')}:operation-replay",
+            "repair_execution_plan": execution_plan,
+        }
+    )
+    action = make_action(
+        action_type=action_type,
+        actor=str(source_action.get("actor") or "controller"),
+        label=f"controller_replays_{action_type}_for_{record.get('blocker_id')}",
+        summary=(
+            f"Replay recorded operation {action_type} for repair transaction "
+            f"{transaction.get('transaction_id')}."
+        ),
+        allowed_reads=list(source_action.get("allowed_reads") or [project_relative(project_root, run_state_path(run_root))]),
+        allowed_writes=list(source_action.get("allowed_writes") or [project_relative(project_root, run_state_path(run_root))]),
+        card_id=source_action.get("card_id"),
+        mail_id=source_action.get("mail_id"),
+        to_role=source_action.get("to_role"),
+        extra=extra,
+    )
+    return action
+
+
+def _make_controller_repair_work_packet_action(
+    project_root: Path,
+    run_root: Path,
+    record: dict[str, Any],
+    transaction: dict[str, Any],
+    execution_plan: dict[str, Any],
+) -> dict[str, Any]:
+    return make_action(
+        action_type="controller_repair_work_packet",
+        actor="controller",
+        label=f"controller_executes_repair_work_packet_for_{record.get('blocker_id')}",
+        summary=(
+            f"Execute bounded Controller repair work packet for repair transaction "
+            f"{transaction.get('transaction_id')} and report success evidence or a follow-up blocker."
+        ),
+        allowed_reads=list(execution_plan.get("allowed_reads") or []),
+        allowed_writes=list(execution_plan.get("allowed_writes") or [project_relative(project_root, run_state_path(run_root))]),
+        to_role="controller",
+        extra={
+            "repair_transaction_id": transaction.get("transaction_id"),
+            "control_blocker_id": record.get("blocker_id"),
+            "repair_execution_plan": execution_plan,
+            "forbidden_actions": execution_plan.get("forbidden_actions") or [],
+            "success_evidence": execution_plan.get("success_evidence") or [],
+            "sealed_body_reads_allowed": False,
+            "controller_may_approve_gate": False,
+            "controller_may_mutate_route": False,
+            "controller_may_read_sealed_bodies": False,
+            "idempotency_key": f"repair-transaction:{transaction.get('transaction_id')}:controller-repair-work-packet",
+        },
+    )
+
+
+def _next_repair_transaction_executable_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+) -> dict[str, Any] | None:
+    transaction = _repair_transaction_for_control_blocker(project_root, run_root, record)
+    if not isinstance(transaction, dict) or transaction.get("status") != "committed":
+        return None
+    execution_plan = transaction.get("execution_plan")
+    if not isinstance(execution_plan, dict):
+        return None
+    mode = str(execution_plan.get("mode") or transaction.get("plan_kind") or "")
+    if mode == "operation_replay":
+        return _make_operation_replay_action(project_root, run_root, run_state, record, transaction, execution_plan)
+    if mode == "controller_repair_work_packet":
+        return _make_controller_repair_work_packet_action(project_root, run_root, record, transaction, execution_plan)
+    return None
+
+
 def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     active = run_state.get("active_control_blocker")
     if not isinstance(active, dict):
@@ -12459,6 +12940,9 @@ def _next_control_blocker_action(project_root: Path, run_state: dict[str, Any], 
                 "skill_observation_reminder": record.get("skill_observation_reminder"),
             },
         )
+    executable_action = _next_repair_transaction_executable_action(project_root, run_root, run_state, record)
+    if executable_action is not None:
+        return executable_action
     return make_action(
         action_type="await_role_decision",
         actor="controller",
@@ -12725,6 +13209,209 @@ def _write_model_miss_triage_decision(project_root: Path, run_root: Path, run_st
     return decision_value
 
 
+def _repair_transaction_normalized_plan_kind(raw_plan_kind: str) -> tuple[str, str | None]:
+    requested = raw_plan_kind.strip()
+    if requested in REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES:
+        return REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES[requested], requested
+    if requested in REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS:
+        return requested, None
+    allowed = sorted(REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS | set(REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES))
+    raise RouterError(f"repair_transaction.plan_kind must be one of: {', '.join(allowed)}")
+
+
+def _event_already_recorded(run_state: dict[str, Any], event: str) -> bool:
+    return any(isinstance(item, dict) and item.get("event") == event for item in run_state.get("events", []))
+
+
+def _controller_wait_entries_for_event(run_root: Path, event: str) -> list[dict[str, Any]]:
+    matches: list[dict[str, Any]] = []
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return matches
+    for path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get("status") in CONTROLLER_ACTION_CLOSED_STATUSES:
+            continue
+        if entry.get("action_type") != "await_role_decision":
+            continue
+        if event in _controller_wait_allowed_external_events(entry):
+            matches.append(entry)
+    return matches
+
+
+def _existing_event_producer_evidence(
+    run_root: Path,
+    run_state: dict[str, Any],
+    event: str,
+) -> dict[str, Any] | None:
+    if _event_already_recorded(run_state, event):
+        return {"source": "already_recorded_event", "event": event}
+    pending = run_state.get("pending_action")
+    if (
+        isinstance(pending, dict)
+        and pending.get("action_type") == "await_role_decision"
+        and event in {str(item) for item in pending.get("allowed_external_events") or []}
+    ):
+        return {
+            "source": "current_pending_await_role_decision",
+            "event": event,
+            "label": pending.get("label"),
+        }
+    wait_entries = _controller_wait_entries_for_event(run_root, event)
+    if wait_entries:
+        return {
+            "source": "controller_action_wait",
+            "event": event,
+            "controller_action_ids": [entry.get("action_id") for entry in wait_entries],
+        }
+    meta = EXTERNAL_EVENTS.get(event) or {}
+    required_flag = str(meta.get("requires_flag") or "")
+    if required_flag and run_state.get("flags", {}).get(required_flag):
+        return {
+            "source": "satisfied_required_flag",
+            "event": event,
+            "requires_flag": required_flag,
+            "producer_role": _event_wait_role(event, meta),
+        }
+    return None
+
+
+def _list_field(value: Any, *, field: str, required: bool = True) -> list[str]:
+    if value in (None, "") and not required:
+        return []
+    if not isinstance(value, list) or (required and not value):
+        raise RouterError(f"{field} must be a non-empty list")
+    return [str(item) for item in value if str(item or "").strip()]
+
+
+def _repair_transaction_execution_plan(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    active: dict[str, Any],
+    request: dict[str, Any],
+    *,
+    requested_plan_kind: str,
+    legacy_plan_kind: str | None,
+    rerun_target: str,
+    repair_origin: str,
+    packet_specs: list[dict[str, Any]],
+) -> dict[str, Any]:
+    if requested_plan_kind == "packet_reissue":
+        if not packet_specs:
+            raise RouterError("packet_reissue repair transaction requires replacement packets or a packet spec path")
+        return {
+            "mode": "packet_reissue",
+            "validated": True,
+            "queued_action": False,
+            "existing_event_producer": None,
+        }
+
+    if packet_specs:
+        raise RouterError("repair transaction with replacement packets requires plan_kind=packet_reissue")
+
+    if requested_plan_kind == "await_existing_event":
+        evidence = _existing_event_producer_evidence(run_root, run_state, rerun_target)
+        if evidence is None:
+            if legacy_plan_kind == "event_replay":
+                raise RouterError("legacy event_replay repair transaction requires an existing producer for rerun_target")
+            raise RouterError("await_existing_event repair transaction requires an existing producer for rerun_target")
+        return {
+            "mode": "await_existing_event",
+            "validated": True,
+            "queued_action": False,
+            "existing_event_producer": evidence,
+            "legacy_plan_kind": legacy_plan_kind,
+        }
+
+    if requested_plan_kind in {"role_reissue", "route_mutation"}:
+        target_role = str(request.get("target_role") or _control_blocker_followup_target_role([rerun_target], "project_manager")).strip()
+        _validate_wait_event_producer_binding(
+            [rerun_target],
+            to_role=target_role,
+            context=f"{requested_plan_kind} repair transaction",
+        )
+        return {
+            "mode": requested_plan_kind,
+            "validated": True,
+            "queued_action": True,
+            "queued_action_type": "await_role_decision",
+            "target_role": target_role,
+            "allowed_external_events": [rerun_target],
+        }
+
+    if requested_plan_kind == "operation_replay":
+        operation_ref = request.get("operation_ref")
+        if not isinstance(operation_ref, dict):
+            raise RouterError("operation_replay repair transaction requires operation_ref object")
+        action_type = str(operation_ref.get("action_type") or active.get("originating_action_type") or "").strip()
+        if action_type not in REPAIR_TRANSACTION_SAFE_REPLAY_ACTION_TYPES:
+            raise RouterError(f"operation_replay repair transaction cannot replay action_type={action_type or 'missing'}")
+        originating_action_id = str(operation_ref.get("controller_action_id") or active.get("originating_controller_action_id") or "").strip()
+        replay_source: dict[str, Any] = {
+            "action_type": action_type,
+            "controller_action_id": originating_action_id or None,
+            "operation_ref": operation_ref,
+        }
+        if originating_action_id:
+            action_entry = read_json_if_exists(_controller_action_path(run_root, originating_action_id))
+            if action_entry.get("schema_version") == CONTROLLER_ACTION_SCHEMA:
+                replay_source["source_action"] = action_entry.get("action")
+        return {
+            "mode": "operation_replay",
+            "validated": True,
+            "queued_action": True,
+            "queued_action_type": action_type,
+            "operation_ref": operation_ref,
+            "replay_source": {key: value for key, value in replay_source.items() if value is not None},
+        }
+
+    if requested_plan_kind == "controller_repair_work_packet":
+        work_packet = request.get("work_packet") if isinstance(request.get("work_packet"), dict) else request
+        allowed_reads = _list_field(work_packet.get("allowed_reads"), field="controller_repair_work_packet.allowed_reads")
+        allowed_writes = _list_field(work_packet.get("allowed_writes"), field="controller_repair_work_packet.allowed_writes", required=False)
+        forbidden_actions = _list_field(work_packet.get("forbidden_actions"), field="controller_repair_work_packet.forbidden_actions")
+        success_evidence = _list_field(work_packet.get("success_evidence"), field="controller_repair_work_packet.success_evidence")
+        return {
+            "mode": "controller_repair_work_packet",
+            "validated": True,
+            "queued_action": True,
+            "queued_action_type": "controller_repair_work_packet",
+            "allowed_reads": allowed_reads,
+            "allowed_writes": allowed_writes,
+            "forbidden_actions": forbidden_actions,
+            "success_evidence": success_evidence,
+            "work_packet": work_packet,
+        }
+
+    if requested_plan_kind == "router_internal_reconcile":
+        handler = str(request.get("handler") or request.get("reconcile_handler") or "").strip()
+        if handler not in {"fold_mail_delivery_postcondition"}:
+            raise RouterError("router_internal_reconcile repair transaction requires a supported reconcile handler")
+        return {
+            "mode": "router_internal_reconcile",
+            "validated": True,
+            "queued_action": False,
+            "handler": handler,
+        }
+
+    if requested_plan_kind == "terminal_stop":
+        reason = str(request.get("terminal_reason") or request.get("stop_reason") or "").strip()
+        if not reason:
+            raise RouterError("terminal_stop repair transaction requires terminal_reason")
+        return {
+            "mode": "terminal_stop",
+            "validated": True,
+            "queued_action": False,
+            "terminal_reason": reason,
+            "repair_origin": repair_origin,
+        }
+
+    raise RouterError(f"unsupported repair_transaction.plan_kind: {requested_plan_kind}")
+
+
 def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     decision = _load_file_backed_role_payload(project_root, payload)
     if decision.get("decided_by_role") != "project_manager":
@@ -12753,18 +13440,20 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     repair_action = str(decision.get("repair_action") or "").strip()
     if not repair_action:
         raise RouterError("control blocker repair decision requires repair_action")
-    raw_rerun_target = decision.get("rerun_target")
-    rerun_target = _control_resolution_event_name(raw_rerun_target)
-    if not rerun_target:
-        raise RouterError("control blocker repair decision rerun_target must name a registered external event")
-    if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
-        raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
     repair_transaction_request = decision.get("repair_transaction")
     if not isinstance(repair_transaction_request, dict):
         raise RouterError("control blocker repair decision requires repair_transaction")
-    requested_plan_kind = str(repair_transaction_request.get("plan_kind") or "").strip()
-    if requested_plan_kind not in {"event_replay", "packet_reissue", "route_mutation"}:
-        raise RouterError("repair_transaction.plan_kind must be event_replay, packet_reissue, or route_mutation")
+    raw_requested_plan_kind = str(repair_transaction_request.get("plan_kind") or "").strip()
+    requested_plan_kind, legacy_plan_kind = _repair_transaction_normalized_plan_kind(raw_requested_plan_kind)
+    raw_rerun_target = decision.get("rerun_target")
+    rerun_target = _control_resolution_event_name(raw_rerun_target)
+    if requested_plan_kind != "terminal_stop":
+        if not rerun_target:
+            raise RouterError("control blocker repair decision rerun_target must name a registered external event")
+        if rerun_target == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT:
+            raise RouterError("control blocker repair decision rerun_target must name a corrected follow-up event, not the PM decision event")
+    else:
+        rerun_target = rerun_target or ""
     policy_recovery_options = active_record.get("pm_recovery_options")
     if not isinstance(policy_recovery_options, list):
         policy_recovery_options = []
@@ -12778,7 +13467,7 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         hard_stop_conditions = []
     if recovery_option == "allowed_waiver" and hard_stop_conditions:
         raise RouterError("control blocker repair decision cannot waive a blocker with hard-stop conditions")
-    return_gate = str(decision.get("return_gate") or rerun_target).strip()
+    return_gate = str(decision.get("return_gate") or rerun_target or requested_plan_kind).strip()
     if not return_gate:
         raise RouterError("control blocker repair decision requires return_gate or rerun_target")
     control_transaction = _validate_control_transaction_requirements(
@@ -12798,21 +13487,22 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     )
     repair_origin = _control_blocker_repair_origin(
         active,
-        rerun_target=rerun_target,
+        rerun_target=rerun_target or requested_plan_kind,
         requested_plan_kind=requested_plan_kind,
         run_root=run_root,
         run_state=run_state,
     )
     post_decision_state = _run_state_with_assumed_flag(run_state, "pm_control_blocker_repair_decision_recorded")
-    rerun_target = _validated_event_capability_names(
-        [rerun_target],
-        context="control blocker repair decision rerun_target",
-        run_root=run_root,
-        run_state=post_decision_state,
-        usage="rerun_target",
-        repair_origin=repair_origin,
-        allow_pm_repair_event=False,
-    )[0]
+    if requested_plan_kind != "terminal_stop":
+        rerun_target = _validated_event_capability_names(
+            [rerun_target],
+            context="control blocker repair decision rerun_target",
+            run_root=run_root,
+            run_state=post_decision_state,
+            usage="rerun_target",
+            repair_origin=repair_origin,
+            allow_pm_repair_event=False,
+        )[0]
     blockers = decision.get("blockers")
     if not isinstance(blockers, list):
         raise RouterError("control blocker repair decision requires blockers list")
@@ -12823,23 +13513,27 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         raise RouterError("control blocker repair decision requires contract_self_check.all_required_fields_present=true")
     if contract_self_check.get("exact_field_names_used") is not True:
         raise RouterError("control blocker repair decision requires contract_self_check.exact_field_names_used=true")
-    outcome_table = _repair_outcome_table(rerun_target, repair_origin=repair_origin)
-    _validate_repair_outcome_table(
-        outcome_table,
-        context="control blocker repair outcome table",
-        run_root=run_root,
-        run_state=post_decision_state,
-        repair_origin=repair_origin,
-    )
-    allowed_resolution_events = _validated_event_capability_names(
-        _repair_outcome_events(outcome_table),
-        context="control blocker repair outcome table",
-        run_root=run_root,
-        run_state=post_decision_state,
-        usage="wait",
-        repair_origin=repair_origin,
-        allow_pm_repair_event=False,
-    )
+    if requested_plan_kind == "terminal_stop":
+        outcome_table = {}
+        allowed_resolution_events: list[str] = []
+    else:
+        outcome_table = _repair_outcome_table(rerun_target, repair_origin=repair_origin)
+        _validate_repair_outcome_table(
+            outcome_table,
+            context="control blocker repair outcome table",
+            run_root=run_root,
+            run_state=post_decision_state,
+            repair_origin=repair_origin,
+        )
+        allowed_resolution_events = _validated_event_capability_names(
+            _repair_outcome_events(outcome_table),
+            context="control blocker repair outcome table",
+            run_root=run_root,
+            run_state=post_decision_state,
+            usage="wait",
+            repair_origin=repair_origin,
+            allow_pm_repair_event=False,
+        )
     transaction_id = _repair_transaction_id(blocker_id)
     packet_generation_id = f"{transaction_id}-gen-001"
     packet_specs, packet_spec_source = _repair_packet_specs_from_decision(
@@ -12848,10 +13542,18 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         decision,
         rerun_target=rerun_target,
     )
-    if packet_specs and requested_plan_kind != "packet_reissue":
-        raise RouterError("repair transaction with replacement packets requires plan_kind=packet_reissue")
-    if requested_plan_kind == "packet_reissue" and not packet_specs:
-        raise RouterError("packet_reissue repair transaction requires replacement packets or a packet spec path")
+    execution_plan = _repair_transaction_execution_plan(
+        project_root,
+        run_root,
+        post_decision_state,
+        active,
+        repair_transaction_request,
+        requested_plan_kind=requested_plan_kind,
+        legacy_plan_kind=legacy_plan_kind,
+        rerun_target=rerun_target,
+        repair_origin=repair_origin,
+        packet_specs=packet_specs,
+    )
     plan_kind = requested_plan_kind
     if packet_specs and rerun_target not in {
         "router_direct_material_scan_dispatch_recheck_passed",
@@ -12874,6 +13576,8 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "repair_origin": repair_origin,
         "rerun_target": rerun_target,
         "outcome_table": outcome_table,
+        "legacy_plan_kind": legacy_plan_kind,
+        "execution_plan": execution_plan,
         "control_transaction": control_transaction,
         "blockers": blockers,
         "contract_self_check": contract_self_check,
@@ -12901,8 +13605,10 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         "blocker_id": blocker_id,
         "originating_event": active.get("originating_event"),
         "originating_action_type": active.get("originating_action_type"),
-        "status": "committed",
+        "status": "blocked" if requested_plan_kind == "terminal_stop" else "committed",
         "plan_kind": plan_kind,
+        "legacy_plan_kind": legacy_plan_kind,
+        "execution_plan": execution_plan,
         "packet_generation_id": packet_generation_id if generation_commit else None,
         "packet_spec_source": packet_spec_source,
         "generation_commit": generation_commit,
@@ -12934,6 +13640,9 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
         record["repair_transaction_id"] = transaction_id
         record["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
         record["repair_outcome_table"] = outcome_table
+        record["repair_transaction_plan_kind"] = plan_kind
+        record["repair_transaction_legacy_plan_kind"] = legacy_plan_kind
+        record["repair_transaction_execution_plan"] = execution_plan
         record["control_transaction"] = control_transaction
         record["allowed_resolution_events"] = allowed_resolution_events
         record["resolution_status"] = None
@@ -12948,8 +13657,31 @@ def _write_control_blocker_repair_decision(project_root: Path, run_root: Path, r
     active["repair_transaction_id"] = transaction_id
     active["repair_transaction_path"] = project_relative(project_root, _repair_transaction_path(run_root, transaction_id))
     active["repair_outcome_table"] = outcome_table
+    active["repair_transaction_plan_kind"] = plan_kind
+    active["repair_transaction_legacy_plan_kind"] = legacy_plan_kind
+    active["repair_transaction_execution_plan"] = execution_plan
     active["control_transaction"] = control_transaction
     active["allowed_resolution_events"] = allowed_resolution_events
+    if requested_plan_kind == "terminal_stop":
+        resolved = dict(active)
+        resolved["resolution_status"] = "repair_transaction_terminal_stop"
+        resolved["resolved_at"] = utc_now()
+        resolved["terminal_reason"] = execution_plan.get("terminal_reason")
+        run_state.setdefault("resolved_control_blockers", []).append(resolved)
+        if active_path.exists():
+            terminal_record = read_json(active_path)
+            terminal_record["resolution_status"] = "repair_transaction_terminal_stop"
+            terminal_record["resolved_at"] = resolved["resolved_at"]
+            terminal_record["terminal_reason"] = execution_plan.get("terminal_reason")
+            write_json(active_path, terminal_record)
+        run_state["active_control_blocker"] = None
+        run_state["latest_control_blocker_path"] = None
+        if recovery_option == "protocol_dead_end":
+            run_state["status"] = "protocol_dead_end"
+            run_state.setdefault("flags", {})["startup_protocol_dead_end_declared"] = True
+        elif recovery_option == "user_stop":
+            run_state["status"] = "stopped_by_user"
+            run_state.setdefault("flags", {})["run_stopped_by_user"] = True
     _sync_control_plane_indexes(project_root, run_root, run_state)
 
 
@@ -13921,7 +14653,9 @@ def _startup_bootloader_open_entries_by_action_type(
         return {}
     open_entries: dict[str, list[dict[str, Any]]] = {}
     for action_path in sorted(action_dir.glob("*.json")):
-        entry = read_json_if_exists(action_path)
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         if entry.get("status") in CONTROLLER_ACTION_CLOSED_STATUSES and entry.get("router_reconciliation_status") == "reconciled":
@@ -14188,6 +14922,55 @@ def _sync_startup_bootstrap_flags_to_run_state(bootstrap_state: dict[str, Any], 
     ):
         if bootstrap_flags.get(flag):
             run_flags[flag] = True
+
+
+def _fold_stable_startup_role_flags_from_bootstrap(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    bootstrap_path = run_root / "bootstrap" / "startup_state.json"
+    if not bootstrap_path.exists():
+        return {"changed": False, "exists": False}
+    _raise_if_runtime_write_active(bootstrap_path)
+    bootstrap = read_daemon_critical_json_if_exists(bootstrap_path)
+    bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
+    roles_started = bool(bootstrap_flags.get("roles_started"))
+    core_prompts_injected = bool(bootstrap_flags.get("role_core_prompts_injected"))
+    if roles_started != core_prompts_injected:
+        return {
+            "changed": False,
+            "exists": True,
+            "waiting_for_settlement": True,
+            "roles_started": roles_started,
+            "role_core_prompts_injected": core_prompts_injected,
+        }
+    if not roles_started:
+        return {"changed": False, "exists": True}
+    flags = run_state.setdefault("flags", {})
+    missing = [
+        flag
+        for flag in ("roles_started", "role_core_prompts_injected")
+        if not flags.get(flag)
+    ]
+    if not missing:
+        return {"changed": False, "exists": True, "already_folded": True}
+    flags["roles_started"] = True
+    flags["role_core_prompts_injected"] = True
+    append_history(
+        run_state,
+        "router_folded_startup_role_flags_from_bootstrap",
+        {
+            "source": "daemon_settlement_barrier",
+            "bootstrap_state_path": project_relative(project_root, bootstrap_path),
+            "folded_flags": ["roles_started", "role_core_prompts_injected"],
+        },
+    )
+    return {
+        "changed": True,
+        "exists": True,
+        "folded_flags": ["roles_started", "role_core_prompts_injected"],
+    }
 
 
 def _complete_startup_daemon_bootloader_row(
@@ -32086,26 +32869,37 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
         run_state["ledger_checks"] = int(run_state.get("ledger_checks", 0)) + 1
     elif action_type == "deliver_mail":
-        mail_id = str(pending["mail_id"])
-        mail_entry = next((entry for entry in MAIL_SEQUENCE if entry["mail_id"] == mail_id), None)
-        if mail_entry is None:
-            raise RouterError(f"unknown mail in pending action: {mail_id}")
-        if not run_state.get("ledger_check_requested"):
-            raise RouterError("mail delivery requires a current packet-ledger check")
-        delivery = {
-            "mail_id": mail_id,
-            "delivered_by": "controller",
-            "to_role": pending["to_role"],
-            "delivered_at": utc_now(),
+        result_extra["mail_delivery"] = _fold_mail_delivery_postcondition(
+            project_root,
+            run_root,
+            run_state,
+            pending,
+            payload,
+            source="direct_controller_action_mail_delivery_fold",
+        )
+    elif action_type == "controller_repair_work_packet":
+        if pending.get("controller_may_approve_gate") or pending.get("controller_may_mutate_route") or pending.get("controller_may_read_sealed_bodies"):
+            raise RouterError("controller_repair_work_packet cannot grant gate approval, route mutation, or sealed body access")
+        transaction_id = str(pending.get("repair_transaction_id") or "")
+        if not transaction_id:
+            raise RouterError("controller_repair_work_packet requires repair_transaction_id")
+        transaction_path = _repair_transaction_path(run_root, transaction_id)
+        transaction = read_json_if_exists(transaction_path)
+        if transaction.get("schema_version") != REPAIR_TRANSACTION_SCHEMA:
+            raise RouterError("controller_repair_work_packet transaction is missing")
+        repair_result = {
+            "schema_version": "flowpilot.controller_repair_work_packet_result.v1",
+            "status": str((payload or {}).get("status") or "done"),
+            "evidence": (payload or {}).get("evidence") if isinstance(payload, dict) else None,
+            "recorded_at": utc_now(),
+            "controller_action_id": pending.get("controller_action_id"),
         }
-        run_state["delivered_mail"].append(delivery)
-        run_state["flags"][mail_entry["flag"]] = True
-        run_state["ledger_check_requested"] = False
-        run_state["mail_deliveries"] = int(run_state.get("mail_deliveries", 0)) + 1
-        ledger = read_json(run_root / "packet_ledger.json")
-        ledger.setdefault("mail", []).append(delivery)
-        ledger["updated_at"] = utc_now()
-        write_json(run_root / "packet_ledger.json", ledger)
+        transaction["controller_repair_work_packet_result"] = repair_result
+        transaction["status"] = "awaiting_recheck"
+        transaction["updated_at"] = repair_result["recorded_at"]
+        write_json(transaction_path, transaction)
+        result_extra["repair_transaction_id"] = transaction_id
+        result_extra["controller_repair_work_packet_result"] = repair_result
     elif action_type == "check_card_return_event":
         _apply_card_return_event_check(project_root, run_root, run_state, pending)
     elif action_type == "check_card_bundle_return_event":
@@ -33612,6 +34406,7 @@ def _router_daemon_tick(
     run_state.update(latest_state)
     run_state["daemon_mode_enabled"] = True
     _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="daemon_active")
+    startup_flag_fold = _fold_stable_startup_role_flags_from_bootstrap(project_root, run_root, run_state)
     receipt_summary = _reconcile_controller_receipts(project_root, run_root, run_state)
     scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     boundary_projection = _reconcile_controller_boundary_confirmation_projection(
@@ -33638,6 +34433,7 @@ def _router_daemon_tick(
             "controller_action_id": startup_schedule.get("controller_action_id"),
             "waiting_for_controller_core": False,
             "startup_driver_active": True,
+            "startup_flag_fold": startup_flag_fold,
             "receipt_summary": receipt_summary,
             "scheduled_reconciliation": scheduled_reconciliation,
             "boundary_projection": boundary_projection,
@@ -33662,6 +34458,7 @@ def _router_daemon_tick(
             "observe_only": True,
             "action_type": current_action.get("action_type") if isinstance(current_action, dict) else None,
             "controller_action_id": current_action.get("controller_action_id") if isinstance(current_action, dict) else None,
+            "startup_flag_fold": startup_flag_fold,
             "receipt_summary": receipt_summary,
             "scheduled_reconciliation": scheduled_reconciliation,
             "boundary_projection": boundary_projection,
@@ -33683,6 +34480,7 @@ def _router_daemon_tick(
         "observe_only": False,
         "action_type": current_action.get("action_type") if isinstance(current_action, dict) else None,
         "controller_action_id": current_action.get("controller_action_id") if isinstance(current_action, dict) else None,
+        "startup_flag_fold": startup_flag_fold,
         "receipt_summary": receipt_summary,
         "scheduled_reconciliation": scheduled_reconciliation,
         "boundary_projection": boundary_projection,

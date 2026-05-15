@@ -11928,3 +11928,139 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - If a later change moves `sync_display_plan` from Controller work into fully Router-internal execution, rerun the focused ownership model and update the Controller/display boundary tests before marking that broader slice complete.
+
+## 2026-05-15 Mail Delivery Receipt Model-Miss Review
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run showed a Controller `deliver_mail` receipt marked done while `user_intake_delivered_to_pm` was not folded into Router state or packet mail ledger.
+- Status: focused_model_upgraded_no_production_router_fix
+- OpenSpec context: `internalize-router-mechanical-actions`
+- Miss type: boundary_missing
+- Generalized case: any Controller receipt that claims a Router-owned postcondition must either fold the durable ledger and Router flag together, stay as an explicit control blocker, or consume a PM repair decision into a repair transaction/reissue before continuing to wait.
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Router internal mechanics model: `simulations/flowpilot_router_internal_mechanics_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations/flowpilot_daemon_reconciliation_model.py simulations/run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out tmp/flowguard_background/daemon_reconciliation_model_only_after.json` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --json-out tmp/flowguard_background/daemon_reconciliation_live_after.json` failed as expected because the live run projection now detects the current blocker.
+- `python simulations/run_flowpilot_router_internal_mechanics_checks.py --json-out tmp/flowguard_background/router_internal_mechanics_after.json` passed.
+- `openspec validate internalize-router-mechanical-actions --strict` passed.
+
+### Findings
+- The earlier model covered generic stateful receipts, startup bootloader receipts, Controller-boundary projection, and role-output durable reconciliation, but did not project `deliver_mail` from Controller receipt into packet mail ledger and Router flags.
+- The upgraded daemon reconciliation model now includes mail-delivery receipt state, packet/mail ledger folding, Router flag sync, unsupported receipt blockers, PM repair decision consumption, and repair-transaction-backed reissue.
+- The live projection now reports `mail_delivery_receipt_unfolded_to_packet_ledger` for `user_intake`: the Controller receipt is done, but mail ledger folding and `user_intake_delivered_to_pm` flag sync are absent, with reconciliation blocked by `unsupported_stateful_controller_receipt`.
+- No production Router behavior was changed in this pass; the result is a model-miss closure and a root-fix plan input.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Implement the smallest production fix at the Controller receipt reconciliation boundary: make `deliver_mail` either fold through the same durable helper used by the direct apply path or be classified so it never enters an unsupported receipt path.
+- Add a focused runtime regression for daemon/controller-receipt `deliver_mail` that asserts the Controller receipt, Router flag, packet mail ledger, Controller action row, and scheduler row are reconciled together.
+
+## 2026-05-15 Daemon Reconciliation Model-Miss Expansion
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A stopped FlowPilot run exposed three daemon reconciliation misses: startup role flags required a manual daemon restart, a transient `.tmp-*.json` Controller action file stopped the daemon with `FileNotFoundError`, and a `deliver_mail` receipt did not fold its packet ledger and Router postcondition.
+- Status: focused_model_upgraded_no_production_router_fix
+- Miss type: model_boundary_missing
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed earlier in this audit with schema `1.0`.
+- `python -m py_compile simulations/flowpilot_daemon_reconciliation_model.py simulations/run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out tmp/flowguard_background/daemon_reconciliation_after_temp_projection_fix_model_only.json` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --json-out tmp/flowguard_background/daemon_reconciliation_live_projection_after_temp_projection_fix.json` failed as expected because the stopped live run now projects three findings.
+
+### Findings
+- The model now treats startup secondary-record flags as durable evidence that must be atomically folded into Router state before next-action computation.
+- The model now treats `.tmp-*.json` Controller action files as transient write artifacts that directory scans must skip; reading them as real actions or stopping the daemon on their disappearance is an invariant failure.
+- The model now keeps the `deliver_mail` receipt path covered by packet-ledger fold, Router flag sync, explicit blocker, and PM repair decision consumption rules.
+- The live projection detects the current stopped run's three historical findings: `startup_role_flag_fold_required_manual_daemon_restart`, `temp_controller_action_file_race_stopped_daemon`, and `mail_delivery_receipt_unfolded_to_packet_ledger`.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- No production Router code was changed in this pass.
+
+### Next Actions
+- Implement the smallest production fix by centralizing Controller receipt reconciliation, skipping transient temp action files in durable scans, and folding startup role flags through one startup-state reconciliation owner.
+- Add focused runtime regressions for those three local daemon paths before rerunning heavyweight Meta/Capability checks.
+
+## 2026-05-15 Active Writer Settlement Runtime Fix
+
+- Project: FlowGuardProjectAutopilot_20260430
+- OpenSpec change: `defer-active-writer-settlement`
+- Trigger reason: User clarified that active writes can legitimately take longer than a short fixed retry window, so Router should wait while there is concrete writer progress instead of prematurely creating blockers.
+- Status: focused_runtime_update_synced
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+
+### Commands
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out tmp/flowguard_background/daemon_reconciliation_active_writer_after_runtime.json` passed.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "user_intake_mail_controller_receipt_folds_packet_ledger or user_intake_mail_delivery_updates_packet_runtime_ledger or transient_temp_files or active_packet_ledger_writer or stable_startup_role_flags or partial_startup_role_flags" -q` passed with 5 selected tests.
+- `openspec validate defer-active-writer-settlement --strict` passed.
+- `openspec validate fold-mail-delivery-receipts --strict` passed.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` passed and synchronized the installed local FlowPilot skill.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py` passed with installed skill fresh.
+
+### Findings
+- Active runtime writers are now modeled as a settlement/defer state, not as immediate blocker evidence.
+- Controller action scans skip `.tmp-*.json` files and tolerate scan/read disappearance.
+- Mail-delivery folding raises the existing `RouterLedgerWriteInProgress` path when packet/mail ledger writes are active, allowing the daemon to wait on the next tick instead of creating a false blocker.
+- Startup role flags are folded from bootstrap into Router state only as a stable pair.
+- The parallel `make-repair-transactions-executable` OpenSpec remains the owner of repair transaction `plan_kind` execution; this change does not replace that work.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Before final git submission, inspect and include compatible peer-agent work, especially `make-repair-transactions-executable`.
+
+## 2026-05-15 Mail Delivery Receipt Runtime Fold Fix
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The upgraded daemon reconciliation model and live-run projection showed that Controller `deliver_mail` receipts could be marked done without folding the `user_intake_delivered_to_pm` Router flag or packet mail ledger.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `fold-mail-delivery-receipts`
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Runtime fold helper: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -m py_compile skills/flowpilot/assets/flowpilot_router.py tests/test_flowpilot_router_runtime.py simulations/flowpilot_daemon_reconciliation_model.py simulations/run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -q -k "user_intake_mail"` passed with direct mail delivery, Controller receipt mail delivery folding, packet release, and duplicate receipt idempotency coverage.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -q -k "controller_receipt"` passed.
+- `python -m pytest tests/test_flowpilot_packet_runtime.py -q -k "controller_relay or user_intake_packet"` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out tmp/flowguard_background/daemon_reconciliation_model_after_fix.json` passed with 7,056 explored traces, zero violations, zero stuck states, and the known hazard fixtures detected.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --json-out tmp/flowguard_background/daemon_reconciliation_live_after_fix.json` failed as expected against the current historical stopped run, with three pre-fix live projection findings: startup role flag fold required manual daemon restart, transient temp Controller action file race, and old `deliver_mail` receipt not folded to packet ledger.
+- `python simulations/run_flowpilot_router_internal_mechanics_checks.py --json-out tmp/flowguard_background/router_internal_mechanics_after_runtime_fix.json` passed.
+- `openspec validate fold-mail-delivery-receipts --strict` and `openspec validate internalize-router-mechanical-actions --strict` passed.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` synchronized the installed `flowpilot` skill from repository source.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py` passed with installed `flowpilot` source-fresh.
+- `python scripts/smoke_autopilot.py --fast` passed and reused existing Meta/Capability proofs instead of rerunning those heavyweight checks.
+
+### Findings
+- Direct `deliver_mail` apply and Controller receipt reconciliation now use one Router-owned mail-delivery fold helper.
+- The helper validates mail id, target role, and negative delivery confirmation; releases the packet envelope through `packet_runtime.controller_relay_envelope`; verifies packet holder/status and controller relay signature; folds the Router flag and `packet_ledger.mail` together; clears the packet-ledger check latch; and records mail delivery exactly once across repeated receipts.
+- Controller receipt `deliver_mail` no longer falls into `unsupported_stateful_controller_receipt` when the receipt is complete and the packet-ledger check latch is present.
+- The historical stopped run may still contain old blocked evidence until deliberately replayed or superseded; this fix changes the current runtime path and is covered by a focused regression.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction. The fast smoke reused their existing proofs.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond the mail-delivery reconciliation boundary.

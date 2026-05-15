@@ -92,11 +92,21 @@ ordinary phase events such as `pm_requests_startup_repair` to resolve the
 router control blocker unless a later router action explicitly routes that
 separate phase event after the blocker is resolved.
 That decision must open a repair transaction. A single rerun event is only the
-success outcome, not the repair itself. It must name `recovery_option` and
-`return_gate`; PM may move around a blocker only by choosing a legal recovery
-path and returning to a named gate or terminal stop. Do not mark the blocked
-gate passed directly from PM prose. Packet reissues must be committed by the
-router as one generation before reviewer recheck.
+success outcome, not the repair itself. It must name `recovery_option`,
+`return_gate`, and an executable `repair_transaction.plan_kind`; PM may move
+around a blocker only by choosing a legal recovery path and returning to a
+named gate or terminal stop. Do not mark the blocked gate passed directly from
+PM prose.
+
+`recovery_option` and `repair_action` explain the PM policy decision; they are
+not Router execution instructions. Use `operation_replay` for a safe recorded
+operation replay, `controller_repair_work_packet` for bounded Controller repair
+work, `packet_reissue` for replacement packet generation, `role_reissue` for a
+fresh role output, `await_existing_event` only when a current producer already
+exists, `route_mutation` for structural route changes, and `terminal_stop` for
+user stop or protocol dead-end. Avoid legacy `event_replay`; Router may reject
+it when no existing producer can emit the awaited event. Packet reissues must
+be committed by the router as one generation before reviewer recheck.
 
 Before any route draft, node plan, repair, route mutation, resume continuation,
 final ledger, or closure decision, read the latest current-run route-memory

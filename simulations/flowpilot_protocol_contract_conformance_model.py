@@ -1299,10 +1299,10 @@ def _display_status_available_before_startup_fact_review(router_source: str) -> 
 
 
 def _startup_repair_request_repeatable_for_new_blocking_report(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_record_external_event_unchecked")
+    segment = _function_segment(router_source, "_external_event_flag_replay_requires_new_processing")
     return (
-        "repeatable_startup_repair_request" in segment
-        and "pm_requests_startup_repair" in segment
+        'event == "pm_requests_startup_repair"' in segment
+        and "run_state[\"flags\"].get(flag)" in segment
         and "startup_fact_reported" in segment
         and "pm_startup_activation_card_delivered" in segment
     )

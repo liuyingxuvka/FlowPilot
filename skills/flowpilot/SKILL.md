@@ -58,7 +58,7 @@ During formal runtime, Router owns ordinary waiting through `runtime/router_daem
 
 Router-ready state preempts foreground waits. After Controller relays or observes router-authored work, scan daemon status and the Controller action ledger before waiting on any role or subagent. During a nonterminal active run, the foreground Controller does not end: `foreground_required_mode=process_controller_action` means do the queued Controller work, and `foreground_required_mode=watch_router_daemon` means keep the `continuous_controller_standby` row in progress, sync the visible Codex plan from the ledger, and stay attached through `controller-standby`. One poll, a live target role, or diagnostic `timeout_still_waiting` does not complete standby. Only terminal status with `controller_stop_allowed: true` may end the Controller role.
 
-A Controller receipt is local Controller evidence only; Router must reconcile it into Router-owned workflow facts before progress is counted.
+A Controller receipt is local Controller evidence only; Router must reconcile it into Router-owned workflow facts before progress is counted. For mail delivery, progress is counted only after Router folds the receipt into the mail ledger and the packet runtime ledger shows the packet released to the addressed role with a controller relay signature.
 
 When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. After the UI closes, apply that same pending action with only `payload.startup_intake_result.result_path`. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 
