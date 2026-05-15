@@ -33,13 +33,13 @@ HAZARD_EXPECTED_FAILURES = {
     "startup_ack_bypass_pending_return_ledger": "startup card ACK bypassed the common pending-return ledger",
     "separate_startup_wait_table": "startup ACK join used a separate startup-only wait table",
     "pending_ack_blocks_independent_dispatch": "pending startup ACK blocked independent startup dispatch instead of common-ledger deferral",
-    "pm_prep_before_reviewer": "PM startup prep started before reviewer startup fact card dispatch",
-    "pm_prep_no_join_policy": "PM prep lacked independence and join policy while reviewer report was pending",
+    "reviewer_before_pre_review_ack_join": "reviewer startup fact card was dispatched before common startup prep ACK join",
+    "pm_prep_no_join_policy": "PM prep lacked independence and join policy before reviewer startup review",
     "pm_prep_blocks_reviewer": "PM prep blocked reviewer startup fact progress",
-    "startup_join_without_reviewer": "startup join was marked clean before reviewer report, PM prep completion, and ACK clearance",
+    "startup_review_acceptance_without_reviewer": "startup review report was accepted before reviewer report, PM prep completion, and ACK clearance",
     "startup_ack_join_without_common_ledger": "startup ACK join was marked clean without common ledger sync and clear pending returns",
     "startup_ack_join_with_pending_ack": "startup ACK join was marked clean without common ledger sync and clear pending returns",
-    "pm_activation_before_join": "PM startup activation occurred before reviewer, PM, and common ACK join",
+    "pm_activation_before_review_acceptance": "PM startup activation occurred before reviewer startup report acceptance",
     "work_before_pm_activation": "work beyond startup was allowed before PM startup activation",
     "route_work_before_startup_open": "route or material work started before startup activation opened",
 }
@@ -60,7 +60,7 @@ def _state_id(state: model.State) -> str:
         f"audit={state.mechanical_audit_written},{state.router_owned_mechanical_proof_current},"
         f"display={state.display_receipt_written},{state.display_receipt_visible_to_reviewer}|"
         f"reviewer={state.reviewer_fact_card_dispatched},"
-        f"first={state.reviewer_fact_card_dispatched_before_pm_prep},"
+        f"after_pre_review_join={state.reviewer_fact_card_dispatched_after_pre_review_join},"
         f"reprove={state.reviewer_required_to_reprove_router_facts},"
         f"report={state.reviewer_report_returned},{state.reviewer_external_facts_checked}|"
         f"ledgers={state.controller_action_ledger_used},{state.card_pending_return_ledger_used},"
@@ -68,10 +68,10 @@ def _state_id(state: model.State) -> str:
         f"async={state.independent_startup_dispatch_continues_with_pending_ack},"
         f"ack_join={state.startup_ack_join_checked_common_ledger},{state.startup_ack_join_clean},"
         f"separate={state.startup_only_wait_table_created}|"
-        f"pm={state.pm_prep_started},{state.pm_prep_independent_after_reviewer_dispatch},"
+        f"pm={state.pm_prep_started},{state.pm_prep_independent_before_reviewer_dispatch},"
         f"{state.pm_prep_join_policy_recorded},{state.pm_prep_completed},"
         f"blocks={state.pm_prep_blocked_reviewer}|"
-        f"join={state.startup_join_clean}|activation={state.pm_activation_approved},"
+        f"review_accepted={state.startup_review_report_accepted}|activation={state.pm_activation_approved},"
         f"open={state.work_beyond_startup_allowed}|work={state.route_or_material_work_started}"
     )
 

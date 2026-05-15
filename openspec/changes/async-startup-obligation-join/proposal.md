@@ -19,9 +19,11 @@ where the missing obligation actually matters.
   rest of runtime.
 - Allow Router to issue independent startup card deliveries while startup-scope
   card ACKs remain pending.
-- Add a startup activation join that reuses the existing ACK clearance and
-  event-dependency blocker path before PM can approve, repair, or dead-end
-  startup activation.
+- Add a pre-review startup join that reuses the existing ACK clearance and
+  event-dependency blocker path before Reviewer begins live startup fact review.
+- Keep PM startup activation on the existing same-role ACK rule: PM activation
+  decisions remain blocked until PM has ACKed the PM startup activation card,
+  without adding a second all-startup join.
 - Preserve all hard startup gates: current-run startup answers, run shell,
   six-role receipts, early heartbeat, Controller sealed-body boundary, reviewer
   fact check, PM prep, and no route/material work before startup opens.
@@ -37,7 +39,8 @@ where the missing obligation actually matters.
 
 ## Impact
 
-- Startup becomes less serial without weakening the startup activation gate.
+- Startup becomes less serial without weakening the startup review or activation
+  gates.
 - Controller continues to use one interaction table: Router appends and syncs
   actions in `runtime/controller_action_ledger.json`; Controller receipts clear
   ledger rows; role ACKs clear existing pending returns.

@@ -1,0 +1,223 @@
+{
+  "checked_at": "2026-05-15T06:10:38.590749+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "ack_used_as_semantic_completion": {
+        "detected": true,
+        "expected_failure": "ACK/read receipt was treated as semantic work completion",
+        "failures": [
+          "ACK/read receipt was treated as semantic work completion"
+        ],
+        "state": {
+          "ack_returned": true,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": false,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": true,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": true,
+          "reviewer_work_started": true,
+          "scenario": "ack_used_as_semantic_completion",
+          "scope_exited": true,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "local_deferred_without_carry_forward": {
+        "detected": true,
+        "expected_failure": "local obligation was carried forward without target scope and reason",
+        "failures": [
+          "local obligation was carried forward without target scope and reason"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": true,
+          "local_obligation_pending": true,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": true,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": true,
+          "scenario": "local_deferred_without_carry_forward",
+          "scope_exited": false,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "local_reconciliation_clears_future_scope": {
+        "detected": true,
+        "expected_failure": "local reconciliation cleared a future or sibling scope obligation",
+        "failures": [
+          "local reconciliation cleared a future or sibling scope obligation"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": true,
+          "future_obligation_pending": true,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": false,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": true,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": false,
+          "scenario": "local_reconciliation_clears_future_scope",
+          "scope_exited": false,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "no_review_scope_exit_without_reconciliation": {
+        "detected": true,
+        "expected_failure": "no-final-review scope exited before local reconciliation",
+        "failures": [
+          "no-final-review scope exited before local reconciliation"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": false,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": true,
+          "local_reconciliation_checked": false,
+          "local_reconciliation_clean": false,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": false,
+          "scenario": "no_review_scope_exit_without_reconciliation",
+          "scope_exited": true,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "review_started_before_local_reconciliation": {
+        "detected": true,
+        "expected_failure": "reviewer work started before current-scope reconciliation was clean",
+        "failures": [
+          "reviewer work started before current-scope reconciliation was clean"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": true,
+          "local_reconciliation_checked": false,
+          "local_reconciliation_clean": false,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": true,
+          "scenario": "review_started_before_local_reconciliation",
+          "scope_exited": false,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "scope_exit_before_review_created_closure": {
+        "detected": true,
+        "expected_failure": "scope exited before review-created obligations closed",
+        "failures": [
+          "scope exited before review-created obligations closed"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": false,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": true,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": true,
+          "reviewer_passed": true,
+          "reviewer_work_started": true,
+          "scenario": "scope_exit_before_review_created_closure",
+          "scope_exited": true,
+          "semantic_work_completed": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused current-scope review-start and scope-exit reconciliation; runtime tests remain required",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "future_obligation_ignored_locally",
+      "local_carry_forward_explicit",
+      "no_review_scope_clean_transition",
+      "node_clean_review",
+      "review_created_obligation_closed",
+      "startup_clean_review"
+    ],
+    "edge_count": 24,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "ack_used_as_semantic_completion",
+      "local_deferred_without_carry_forward",
+      "local_reconciliation_clears_future_scope",
+      "no_review_scope_exit_without_reconciliation",
+      "review_started_before_local_reconciliation",
+      "scope_exit_before_review_created_closure"
+    ],
+    "state_count": 25
+  }
+}

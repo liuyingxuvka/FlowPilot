@@ -6146,10 +6146,16 @@ CARD_RETURN_EVENT_BYPASS_EVENTS = {
     "user_requests_run_cancel",
 }
 
-STARTUP_ACK_JOIN_EVENTS = {
-    "pm_approves_startup_activation",
-    "pm_requests_startup_repair",
-    "pm_declares_startup_protocol_dead_end",
+STARTUP_REVIEW_BEGIN_JOIN_EVENTS = {
+    "reviewer_reports_startup_facts",
+}
+
+PRE_REVIEW_STARTUP_CARD_IDS = {
+    "pm.core",
+    "pm.output_contract_catalog",
+    "pm.role_work_request",
+    "pm.phase_map",
+    "pm.startup_intake",
 }
 
 STARTUP_ASYNC_CARD_IDS = {
@@ -6161,6 +6167,8 @@ STARTUP_ASYNC_CARD_IDS = {
     "pm.startup_intake",
     "pm.startup_activation",
 }
+
+REVIEWER_STARTUP_FACT_CARD_ID = "reviewer.startup_fact_check"
 
 
 def _pending_return_card_ids(pending_return: dict[str, Any]) -> set[str]:
@@ -6193,9 +6201,287 @@ def _pending_return_is_startup_async_scope(pending_return: dict[str, Any]) -> bo
     return bool(card_ids) and card_ids.issubset(STARTUP_ASYNC_CARD_IDS)
 
 
+def _pending_return_is_pre_review_startup_scope(pending_return: dict[str, Any]) -> bool:
+    card_ids = _pending_return_card_ids(pending_return)
+    return bool(card_ids) and card_ids.issubset(PRE_REVIEW_STARTUP_CARD_IDS)
+
+
+def _startup_pre_review_card_flags() -> set[str]:
+    flags: set[str] = set()
+    for entry in SYSTEM_CARD_SEQUENCE:
+        if entry.get("card_id") in PRE_REVIEW_STARTUP_CARD_IDS:
+            flag = str(entry.get("flag") or "")
+            if flag:
+                flags.add(flag)
+    return flags
+
+
+def _startup_pre_review_cards_delivered(run_state: dict[str, Any]) -> bool:
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    required_flags = _startup_pre_review_card_flags()
+    return bool(required_flags) and all(flags.get(flag) for flag in required_flags)
+
+
+def _startup_pre_review_pending_returns(run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    return [
+        record
+        for record in _pending_return_records(run_root, str(run_state["run_id"]))
+        if _pending_return_is_pre_review_startup_scope(record)
+    ]
+
+
+def _startup_pre_review_ack_join_clean(run_root: Path, run_state: dict[str, Any]) -> bool:
+    return _startup_pre_review_cards_delivered(run_state) and not _startup_pre_review_pending_returns(run_root, run_state)
+
+
+CURRENT_SCOPE_REVIEWER_CARD_IDS = {
+    "reviewer.worker_result_review",
+}
+
+CURRENT_SCOPE_REVIEW_EVENTS = {
+    "current_node_reviewer_passes_result",
+    "current_node_reviewer_blocks_result",
+}
+
+
+def _pending_return_matches_active_node_scope(pending_return: dict[str, Any], frontier: dict[str, Any]) -> bool:
+    scope = pending_return.get("ack_clearance_scope")
+    if not isinstance(scope, dict):
+        return False
+    active_node_id = str(frontier.get("active_node_id") or "")
+    if not active_node_id or str(scope.get("current_node_id") or "") != active_node_id:
+        return False
+    raw_scope_version = scope.get("route_version")
+    raw_frontier_version = frontier.get("route_version")
+    if raw_scope_version in (None, "") or raw_frontier_version in (None, ""):
+        return True
+    try:
+        return int(raw_scope_version) == int(raw_frontier_version)
+    except (TypeError, ValueError):
+        return str(raw_scope_version) == str(raw_frontier_version)
+
+
+def _pending_return_is_outside_active_node_scope(run_root: Path, pending_return: dict[str, Any]) -> bool:
+    scope = pending_return.get("ack_clearance_scope")
+    if not isinstance(scope, dict):
+        return False
+    scoped_node_id = str(scope.get("current_node_id") or "")
+    if not scoped_node_id:
+        return False
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    active_node_id = str(frontier.get("active_node_id") or "")
+    if not active_node_id:
+        return False
+    if scoped_node_id != active_node_id:
+        return True
+    raw_scope_version = scope.get("route_version")
+    raw_frontier_version = frontier.get("route_version")
+    if raw_scope_version in (None, "") or raw_frontier_version in (None, ""):
+        return False
+    try:
+        return int(raw_scope_version) != int(raw_frontier_version)
+    except (TypeError, ValueError):
+        return str(raw_scope_version) != str(raw_frontier_version)
+
+
+def _current_node_pre_review_reconciliation_blockers(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> list[dict[str, Any]]:
+    frontier = _active_frontier(run_root)
+    if str(frontier.get("status") or "") != "current_node_loop":
+        return []
+    active_node_id = str(frontier.get("active_node_id") or "")
+    if not active_node_id:
+        return []
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    blockers: list[dict[str, Any]] = []
+    required_flags = (
+        ("current_node_result_relayed_to_pm", "current-node result must be relayed to PM before reviewer work"),
+        ("current_node_result_disposition_recorded", "PM disposition must be recorded before reviewer work"),
+        ("current_node_result_absorbed_by_pm", "PM must absorb current-node result before reviewer work"),
+    )
+    for flag, reason in required_flags:
+        if not flags.get(flag):
+            blockers.append(
+                {
+                    "kind": "missing_current_node_flag",
+                    "flag": flag,
+                    "reason": reason,
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    batch = _active_parallel_packet_batch(run_root, "current_node")
+    if not isinstance(batch, dict):
+        blockers.append(
+            {
+                "kind": "missing_current_node_batch",
+                "reason": "current-node review requires a current-node packet batch",
+                "scope_kind": "current_node",
+                "node_id": active_node_id,
+            }
+        )
+    elif str(batch.get("node_id") or "") == active_node_id:
+        batch_status = str(batch.get("status") or "")
+        if batch_status != "pm_absorbed":
+            blockers.append(
+                {
+                    "kind": "current_node_batch_not_absorbed",
+                    "batch_id": batch.get("batch_id"),
+                    "batch_status": batch_status,
+                    "reason": "current-node batch must be PM-absorbed before reviewer work",
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    else:
+        blockers.append(
+            {
+                "kind": "missing_current_node_batch_for_active_node",
+                "batch_id": batch.get("batch_id"),
+                "batch_node_id": batch.get("node_id"),
+                "reason": "active node has no matching local current-node batch",
+                "scope_kind": "current_node",
+                "node_id": active_node_id,
+            }
+        )
+    for pending_return in _pending_return_records(run_root, str(run_state["run_id"])):
+        if _pending_return_matches_active_node_scope(pending_return, frontier):
+            blockers.append(
+                {
+                    "kind": "pending_current_node_card_return",
+                    "card_id": pending_return.get("card_id"),
+                    "card_ids": pending_return.get("card_ids") or [],
+                    "target_role": pending_return.get("target_role"),
+                    "card_return_event": pending_return.get("card_return_event"),
+                    "expected_return_path": pending_return.get("expected_return_path"),
+                    "reason": "current-node system-card ACK/read receipt must close before reviewer work",
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    return blockers
+
+
+def _current_scope_pre_review_reconciliation_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    blockers: list[dict[str, Any]],
+    review_trigger: str,
+) -> dict[str, Any]:
+    frontier = _active_frontier(run_root)
+    active_node_id = str(frontier.get("active_node_id") or "")
+    return make_action(
+        action_type="await_current_scope_reconciliation",
+        actor="controller",
+        label="controller_waits_for_current_scope_pre_review_reconciliation",
+        summary="Current-node reviewer work is blocked until local node obligations are reconciled.",
+        allowed_reads=[
+            project_relative(project_root, run_state_path(run_root)),
+            project_relative(project_root, run_root / "execution_frontier.json"),
+            project_relative(project_root, _parallel_packet_batch_ref_path(run_root, "current_node")),
+            project_relative(project_root, run_root / "return_event_ledger.json"),
+        ],
+        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+        to_role="controller",
+        extra={
+            "apply_required": False,
+            "scope_kind": "current_node",
+            "scope_id": active_node_id,
+            "route_id": frontier.get("active_route_id"),
+            "route_version": frontier.get("route_version"),
+            "review_trigger": review_trigger,
+            "blockers": blockers,
+            "local_scope_only": True,
+            "future_or_sibling_scopes_touched": False,
+            "reconciliation_rule": "resolve_or_explicitly_classify_current_scope_obligations_before_reviewer_work",
+        },
+    )
+
+
+def _current_scope_reconciliation_wait_still_blocked(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+) -> bool:
+    if pending_action.get("action_type") != "await_current_scope_reconciliation":
+        return False
+    if pending_action.get("scope_kind") != "current_node":
+        return False
+    return bool(_current_node_pre_review_reconciliation_blockers(project_root, run_root, run_state))
+
+
+def _current_node_scope_exit_reconciliation_blockers(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    frontier: dict[str, Any],
+) -> list[dict[str, Any]]:
+    active_node_id = str(frontier.get("active_node_id") or "")
+    if not active_node_id:
+        return []
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    blockers: list[dict[str, Any]] = []
+    required_flags = (
+        ("current_node_result_disposition_recorded", "PM disposition must remain recorded before node exit"),
+        ("current_node_result_absorbed_by_pm", "PM absorption must remain recorded before node exit"),
+        ("node_reviewer_passed_result", "Reviewer pass must remain recorded before node exit"),
+    )
+    for flag, reason in required_flags:
+        if not flags.get(flag):
+            blockers.append(
+                {
+                    "kind": "missing_current_node_exit_flag",
+                    "flag": flag,
+                    "reason": reason,
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    batch = _active_parallel_packet_batch(run_root, "current_node")
+    if isinstance(batch, dict) and str(batch.get("node_id") or "") == active_node_id:
+        batch_status = str(batch.get("status") or "")
+        if batch_status != "reviewed":
+            blockers.append(
+                {
+                    "kind": "current_node_batch_not_reviewed",
+                    "batch_id": batch.get("batch_id"),
+                    "batch_status": batch_status,
+                    "reason": "current-node review-created obligations must close before node exit",
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    for pending_return in _pending_return_records(run_root, str(run_state["run_id"])):
+        if _pending_return_matches_active_node_scope(pending_return, frontier):
+            blockers.append(
+                {
+                    "kind": "pending_current_node_card_return",
+                    "card_id": pending_return.get("card_id"),
+                    "card_ids": pending_return.get("card_ids") or [],
+                    "target_role": pending_return.get("target_role"),
+                    "card_return_event": pending_return.get("card_return_event"),
+                    "expected_return_path": pending_return.get("expected_return_path"),
+                    "reason": "current-node system-card ACK/read receipt must close before node exit",
+                    "scope_kind": "current_node",
+                    "node_id": active_node_id,
+                }
+            )
+    return blockers
+
+
 def _action_is_startup_async_delivery(action: dict[str, Any] | None) -> bool:
     if not isinstance(action, dict):
         return False
+    if action.get("action_type") == "check_prompt_manifest":
+        return str(action.get("next_card_id") or "") in STARTUP_ASYNC_CARD_IDS
+    if action.get("action_type") == "inject_role_io_protocol":
+        return str(action.get("required_before_card_id") or "") in STARTUP_ASYNC_CARD_IDS
     if action.get("action_type") == "deliver_system_card_bundle":
         raw_card_ids = action.get("card_ids")
         card_ids = {str(card_id) for card_id in raw_card_ids} if isinstance(raw_card_ids, list) else set()
@@ -6217,6 +6503,7 @@ def _action_is_startup_async_card_wait(action: dict[str, Any] | None) -> bool:
 
 
 def _startup_async_pending_returns(
+    run_root: Path,
     pending_returns: list[dict[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     deferred: list[dict[str, Any]] = []
@@ -6224,6 +6511,8 @@ def _startup_async_pending_returns(
     for record in pending_returns:
         if _pending_return_is_startup_async_scope(record):
             deferred.append(record)
+        elif _pending_return_is_outside_active_node_scope(run_root, record):
+            continue
         else:
             blocking.append(record)
     return deferred, blocking
@@ -6240,15 +6529,15 @@ def _pending_card_return_blocker_for_event(
     pending_returns = _pending_return_records(run_root, run_id)
     if not pending_returns:
         return None
-    if event in STARTUP_ACK_JOIN_EVENTS:
+    if event in STARTUP_REVIEW_BEGIN_JOIN_EVENTS:
         for record in pending_returns:
-            if _pending_return_is_startup_async_scope(record):
+            if _pending_return_is_pre_review_startup_scope(record):
                 return record
     for record in pending_returns:
         if _pending_card_return_matches_event_dependency(record, event, run_state):
             return record
     for record in pending_returns:
-        if not _pending_return_is_startup_async_scope(record):
+        if not _pending_return_is_startup_async_scope(record) and not _pending_return_is_outside_active_node_scope(run_root, record):
             return record
     return None
 
@@ -22445,6 +22734,13 @@ def _mark_frontier_node_completed(
     active_node_id = str(payload.get("node_id") or frontier.get("active_node_id") or "node-001")
     if active_node_id != str(frontier.get("active_node_id")):
         raise RouterError("completed node_id must match active frontier")
+    if source_event == "pm_completes_current_node_from_reviewed_result":
+        blockers = _current_node_scope_exit_reconciliation_blockers(project_root, run_root, run_state, frontier)
+        if blockers:
+            raise RouterError(
+                "current-node completion requires local current-scope reconciliation before node exit: "
+                + "; ".join(str(blocker.get("reason") or blocker.get("kind")) for blocker in blockers)
+            )
     if _active_node_has_children(run_root, frontier):
         if source_event == "pm_completes_parent_node_from_backward_replay":
             _require_legal_route_action(
@@ -23364,6 +23660,8 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
     )
     resume_card_ids = {"controller.resume_reentry", "pm.crew_rehydration_freshness", "pm.resume_decision"}
     for entry in SYSTEM_CARD_SEQUENCE:
+        if entry["card_id"] == REVIEWER_STARTUP_FACT_CARD_ID and not _startup_pre_review_ack_join_clean(run_root, run_state):
+            continue
         if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
             continue
         if flags.get(entry["flag"]):
@@ -23379,6 +23677,16 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             continue
         if entry.get("requires_active_node_children") and not _active_node_has_children(run_root, _active_frontier(run_root)):
             continue
+        if entry["card_id"] in CURRENT_SCOPE_REVIEWER_CARD_IDS:
+            blockers = _current_node_pre_review_reconciliation_blockers(project_root, run_root, run_state)
+            if blockers:
+                return _current_scope_pre_review_reconciliation_action(
+                    project_root,
+                    run_root,
+                    run_state,
+                    blockers=blockers,
+                    review_trigger=entry["card_id"],
+                )
         policy_action = _route_action_for_card(entry["card_id"])
         legal_context: dict[str, Any] | None = None
         if policy_action:
@@ -26082,8 +26390,14 @@ def _preconsume_pending_card_return_ack_before_external_event(
     pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
     if not pending_returns:
         return {"consumed": False, "reason": "no_pending_card_return"}
-    if event in STARTUP_ACK_JOIN_EVENTS:
-        candidates = [record for record in pending_returns if _pending_return_is_startup_async_scope(record)]
+    if event in STARTUP_REVIEW_BEGIN_JOIN_EVENTS:
+        pre_review = [record for record in pending_returns if _pending_return_is_pre_review_startup_scope(record)]
+        dependent = [
+            record
+            for record in pending_returns
+            if _pending_card_return_matches_event_dependency(record, event, run_state)
+        ]
+        candidates = pre_review + [record for record in dependent if record not in pre_review]
     else:
         candidates = [
             record
@@ -26163,7 +26477,7 @@ def _preconsume_pending_card_return_ack_before_external_event(
                 "event": event,
                 "consumed_count": len(consumed_results),
                 "consumed_returns": consumed_results,
-                "startup_ack_join": event in STARTUP_ACK_JOIN_EVENTS,
+                "startup_pre_review_ack_join": event in STARTUP_REVIEW_BEGIN_JOIN_EVENTS,
             },
         )
         _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_pre_consumed_card_return_ack")
@@ -26740,6 +27054,23 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
                 },
             )
             save_run_state(run_root, run_state)
+        elif (
+            isinstance(pending_action, dict)
+            and pending_action.get("action_type") == "await_current_scope_reconciliation"
+        ):
+            if _current_scope_reconciliation_wait_still_blocked(project_root, run_root, run_state, pending_action):
+                return pending_action
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_rechecks_after_current_scope_reconciliation_cleared",
+                {
+                    "scope_kind": pending_action.get("scope_kind"),
+                    "scope_id": pending_action.get("scope_id"),
+                    "review_trigger": pending_action.get("review_trigger"),
+                },
+            )
+            save_run_state(run_root, run_state)
         else:
             return pending_action
     if not _route_memory_ready(run_root, run_state):
@@ -26763,7 +27094,7 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
     if action is None:
         _invalidate_route_completion_if_dirty_before_closure(project_root, run_state, run_root)
         pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
-        startup_deferred_returns, blocking_returns = _startup_async_pending_returns(pending_returns)
+        startup_deferred_returns, blocking_returns = _startup_async_pending_returns(run_root, pending_returns)
         if blocking_returns:
             action = _next_pending_card_return_action(project_root, run_state, run_root, blocking_returns)
     if action is None:
@@ -26775,12 +27106,18 @@ def compute_controller_action(project_root: Path, run_state: dict[str, Any], run
         if candidate is not None and (not startup_deferred_returns or _action_is_startup_async_delivery(candidate)):
             action = candidate
     if action is None and startup_deferred_returns:
+        clearance_reason = (
+            "startup_pre_review_obligation_join"
+            if any(_pending_return_is_pre_review_startup_scope(record) for record in startup_deferred_returns)
+            and not _startup_pre_review_ack_join_clean(run_root, run_state)
+            else "router_progress"
+        )
         action = _next_pending_card_return_action(
             project_root,
             run_state,
             run_root,
             startup_deferred_returns,
-            clearance_reason="startup_obligation_join",
+            clearance_reason=clearance_reason,
         )
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
         return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
@@ -27548,6 +27885,50 @@ def _record_external_event_unchecked(
         )
         if recovered is not None:
             return recovered
+        if event in STARTUP_REVIEW_BEGIN_JOIN_EVENTS and _pending_return_is_pre_review_startup_scope(pending_card_return):
+            next_action = _next_pending_card_return_action(
+                project_root,
+                run_state,
+                run_root,
+                [pending_card_return],
+                clearance_reason="startup_pre_review_obligation_join",
+            )
+            if isinstance(next_action, dict):
+                run_state["pending_action"] = next_action
+            append_history(
+                run_state,
+                "router_blocked_startup_review_for_common_ack_join",
+                {
+                    "event": event,
+                    "pending_card_return_event": pending_card_return.get("card_return_event"),
+                    "pending_card_id": pending_card_return.get("card_id"),
+                    "pending_card_ids": pending_card_return.get("card_ids") or [],
+                    "target_role": pending_card_return.get("target_role"),
+                    "next_action_type": next_action.get("action_type") if isinstance(next_action, dict) else None,
+                    "common_progress_source": "runtime/controller_action_ledger.json_and_card_pending_return_ledger",
+                },
+            )
+            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_blocked_startup_review_for_ack_join")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="after_router_blocked_startup_review_for_ack_join",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+            return {
+                "ok": False,
+                "event": event,
+                "waiting": True,
+                "recoverable": True,
+                "startup_pre_review_ack_join_blocked": True,
+                "pending_card_return_event": pending_card_return.get("card_return_event"),
+                "pending_card_id": pending_card_return.get("card_id"),
+                "pending_card_ids": pending_card_return.get("card_ids") or [],
+                "waiting_for_role": pending_card_return.get("target_role"),
+                "next_required_action": next_action if isinstance(next_action, dict) else None,
+            }
         raise RouterError(
             "event blocked by unresolved card return: "
             f"waiting for {pending_card_return.get('card_return_event')} "
@@ -27555,6 +27936,48 @@ def _record_external_event_unchecked(
             f"for card {pending_card_return.get('card_id')}; "
             "validate the expected return envelope before recording another role event"
         )
+    if event in CURRENT_SCOPE_REVIEW_EVENTS:
+        blockers = _current_node_pre_review_reconciliation_blockers(project_root, run_root, run_state)
+        if blockers:
+            next_action = _current_scope_pre_review_reconciliation_action(
+                project_root,
+                run_root,
+                run_state,
+                blockers=blockers,
+                review_trigger=event,
+            )
+            run_state["pending_action"] = next_action
+            append_history(
+                run_state,
+                "router_blocked_current_node_review_for_local_reconciliation",
+                {
+                    "event": event,
+                    "scope_kind": next_action.get("scope_kind"),
+                    "scope_id": next_action.get("scope_id"),
+                    "blocker_count": len(blockers),
+                    "local_scope_only": True,
+                },
+            )
+            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_blocked_current_node_review_for_local_reconciliation")
+            _sync_derived_run_views(
+                project_root,
+                run_root,
+                run_state,
+                reason="after_router_blocked_current_node_review_for_local_reconciliation",
+                update_display=True,
+            )
+            save_run_state(run_root, run_state)
+            return {
+                "ok": False,
+                "event": event,
+                "waiting": True,
+                "recoverable": True,
+                "current_scope_reconciliation_blocked": True,
+                "scope_kind": next_action.get("scope_kind"),
+                "scope_id": next_action.get("scope_id"),
+                "blockers": blockers,
+                "next_required_action": next_action,
+            }
     payload = _normalize_record_event_payload(
         project_root,
         run_state,

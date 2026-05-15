@@ -10616,6 +10616,57 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - `python scripts\check_install.py` passed.
 - `git diff --check` passed with CRLF warnings only.
 
+## 2026-05-15 Gate-Scoped Obligation Cleanup Audit
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether Router should clear or reconcile all gate-local pending items at a gate/node boundary, not only system-card ACK read receipts, except when bypassed/superseded work is explicitly still needed.
+- Status: read_only_audit; production_fix_not_started
+- Skill decision: used_flowguard
+- Started: 2026-05-15T07:10:00+02:00
+- Ended: 2026-05-15T07:35:00+02:00
+- Commands OK: True
+
+### Risk Intent
+- Prevent route gate/node transition from carrying hidden current-gate obligations forward after ACKs are cleared.
+- Preserve valid bypass/supersede semantics by requiring explicit carry-forward, supersede, quarantine, or stale-evidence treatment instead of blanket deletion.
+- Keep ACK read-receipt clearance separate from PM/reviewer/officer/worker semantic completion.
+
+### Model Files
+- `simulations/flowpilot_card_envelope_model.py`
+- `simulations/flowpilot_route_mutation_activation_model.py`
+- `simulations/barrier_equivalence_model.py`
+- `simulations/flowpilot_startup_optimization_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python simulations\run_flowpilot_card_envelope_checks.py --json-out tmp\audit_card_envelope_results.json` passed.
+- `python simulations\run_flowpilot_route_mutation_activation_checks.py --json-out tmp\audit_route_mutation_activation_results.json` passed.
+- `python simulations\run_flowpilot_startup_optimization_checks.py --json-out tmp\audit_startup_optimization_results.json` passed.
+- `python simulations\run_barrier_equivalence_checks.py` passed and wrote `simulations\barrier_equivalence_results.json`.
+- `python -m pytest tests\test_flowpilot_barrier_bundle.py -q` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "stale_review_block_route_mutation_wait or startup_pending_ack_allows_independent_startup_card_delivery or startup_activation_joins_startup_pending_acks or missing_system_card_ack_wait_reminds_original_envelope_without_duplicate_delivery or formal_work_packet_ack_preflight_blocks_target_pending_card_ack or route_mutation_supersede_strategy_does_not_require_return_to_original"` passed with 6 selected tests.
+- `openspec validate async-startup-obligation-join --strict` passed.
+- `openspec validate enforce-gate-scoped-card-ack-clearance --strict` passed.
+
+### Findings
+- ACK clearance is modeled and implemented as a scoped read-obligation gate, including formal work-packet preflight and missing-ACK reminder semantics.
+- Startup join modeling already requires common pending-card-return ledger clearance before startup activation, but this is still ACK/read-receipt centered.
+- Node/route mutation logic resets cycle flags, marks superseded nodes, invalidates stale evidence, and rewrites frontier state, but does not yet expose one unified gate-obligation reconciliation ledger for every open current-gate pending item.
+- Barrier bundle equivalence covers required legacy obligations and final closure, but it validates bundle/final evidence rather than clearing all live pending gate items at boundary transition.
+
+### Counterexamples / Gaps
+- No executable model currently enumerates all pending gate-local action classes at boundary transition and forces each to be satisfied, explicitly carried forward, superseded, quarantined, or blocked.
+- Existing mechanisms are distributed across pending-card returns, `pending_action` recomputation, current-node cycle flags, route mutation stale evidence, and barrier bundles.
+
+### Skipped Steps
+- Production Router changes were intentionally not started; this pass was requirement discovery / OpenSpec explore.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were not run because no production behavior was changed.
+
+### Next Actions
+- Capture a scoped OpenSpec change for gate-scoped obligation reconciliation, likely extending `async-startup-obligation-join` or adding a sibling change.
+- Add a FlowGuard model where gate transition reads all current-gate obligation sources and produces a reconciliation record per item.
+- Implement Router transition guard only after the model proves the carry-forward/supersede/quarantine semantics.
+
 ### Runtime Findings
 - `sync_display_plan` Controller receipts now route through the same Router-owned display fact writer as direct apply, so `visible_plan_sync` is updated before Router computes the next action.
 - Status and standby payloads now separate "may return to caller" from "Controller may stop"; `controller_stop_allowed` is true only for terminal runs.
@@ -10629,3 +10680,113 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Runtime Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
 - Full `tests\test_flowpilot_router_runtime.py` was attempted once and timed out after 304 seconds; final evidence uses the focused affected subset plus model, OpenSpec, install, and self-check validation.
+
+## 2026-05-15 Foreground Controller Standby Experiment
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether the foreground Controller can keep watching while Router waits and then wake when a new task appears.
+- Status: process_preflight_with_isolated_runtime_experiment
+- Skill decision: used_flowguard
+- Commands OK: True
+
+### Risk Intent
+- Prevent a false confidence claim where the foreground Controller merely stays alive but misses a new Controller action.
+- Verify that standby observes Router daemon status and the Controller action ledger rather than using `next` or `run-until-wait` as a manual metronome.
+- Preserve the distinction between bounded timeout liveness evidence and real wake evidence.
+
+### Experiment Evidence
+- Isolated runtime root: `tmp/controller_standby_experiment/`
+- Summary artifact: `tmp/controller_standby_experiment/summary.json`
+- Initial live role wait returned `timeout_still_waiting` with `foreground_required_mode=watch_router_daemon`.
+- A delayed synthetic Controller action appeared after standby began; standby woke in about 1.078 seconds with `standby_state=controller_action_ready` and `foreground_required_mode=process_controller_action`.
+- After daemon cleanup, standby returned `daemon_stale_or_missing` with `foreground_required_mode=daemon_repair_or_restart`.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- Isolated Python harness using the real `skills/flowpilot/assets/flowpilot_router.py` standby function passed.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_foreground_controller_standby_waits_on_live_daemon_role_wait tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_foreground_controller_standby_wakes_on_controller_action_ledger tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_foreground_controller_standby_exits_on_stale_or_missing_daemon tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_foreground_controller_standby_does_not_compute_router_next` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_resume_checks.py` passed.
+- `python simulations\run_flowpilot_role_output_runtime_checks.py` passed.
+
+### Findings
+- The current foreground standby mechanism can wait through an ordinary daemon-owned role wait and wake when the Controller action ledger gains a pending action.
+- The right long-wait shape is bounded `controller-standby` re-entry: timeout means continue watching, not stop; `controller_action_ready` means process the ledger action before any foreground exit.
+- Heartbeat/manual resume remains a recovery and re-entry path. It should not start a second daemon or replace the standby monitor while a live daemon and foreground Controller are already attached.
+
+### Skipped Steps
+- Production code was not changed.
+- Full meta/capability heavyweight checks were not rerun because the experiment was isolated and used focused runtime plus relevant model checks.
+
+## 2026-05-15 Background Agent Fake Monitor Experiment
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User corrected the prior local-thread experiment and asked to use a real background agent watching a fake monitor.
+- Status: isolated_background_agent_experiment
+- Skill decision: used_flowguard_process_preflight; no production behavior changed
+- Commands OK: True
+
+### Risk Intent
+- Prevent claiming that foreground/controller standby works with background agents when only a local thread was tested.
+- Test whether a real background worker will keep its task open while a monitor remains `waiting`, then return after the monitor changes to `signal_ready`.
+- Keep the experiment isolated under `tmp/` so it does not mutate live FlowPilot run state.
+
+### Experiment Evidence
+- Monitor root: `tmp/background_agent_fake_monitor/`
+- Monitor file: `tmp/background_agent_fake_monitor/monitor.json`
+- Experiment notes: `tmp/background_agent_fake_monitor/experiment_notes.md`
+- Worker agent: `019e2a3b-f73d-7493-9e4d-d1be16f31186` (`Wegener`)
+
+### Findings
+- The worker did not complete during the first 10-second pre-signal wait.
+- After the monitor was changed to `signal_ready`, the worker returned with `signal_id=fake-monitor-signal-20260515T080422+0200`.
+- The worker reported first read at `2026-05-15T08:04:21.1915099+02:00`, observed signal at `2026-05-15T08:04:31.3928827+02:00`, waited about `10.233` seconds, and polled `11` times.
+- This proves a real background agent can obey a fake file-monitor contract and keep its task open until the signal appears.
+
+### Confidence Boundary
+- This does not yet prove the full FlowPilot Router event path, role-output envelope validation, or Controller wake path from a real background role result.
+- The next stronger experiment should connect the background agent's signal to a Router-accepted event or Controller action ledger entry and verify foreground `controller-standby` wakes from that real agent-produced artifact.
+
+## 2026-05-15 Current-Scope Pre-Review Reconciliation Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that every startup gate and current node review must be meaningful: current-scope work must be reconciled before review starts, and review-created obligations must close before scope exit.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: True
+
+### Risk Intent
+- Prevent the Router from treating ACK/read receipts as semantic work completion.
+- Keep reconciliation local to the active startup gate or current node so future and sibling node obligations are neither cleared nor used as current-node blockers.
+- Ensure node review cannot begin before local PM disposition, PM absorption, packet batch status, and active-node pending card returns are clean.
+- Ensure node completion cannot cross the node boundary while review-created local obligations remain unresolved.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/enforce-current-scope-pre-review-reconciliation/`
+- Focused model: `simulations/flowpilot_current_scope_pre_review_reconciliation_model.py`
+- Focused result: `simulations/flowpilot_current_scope_pre_review_reconciliation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py --json-out simulations\flowpilot_current_scope_pre_review_reconciliation_results.json` passed.
+- `openspec validate enforce-current-scope-pre-review-reconciliation --strict` passed.
+- `openspec validate async-startup-obligation-join --strict` passed.
+- `openspec validate controller-wait-target-liveness --strict` passed after fixing requirement wording in the parallel OpenSpec change.
+- `python simulations\run_flowpilot_startup_optimization_checks.py --json-out simulations\flowpilot_startup_optimization_results.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "startup_pre_review_ack_join_blocks_reviewer_card or reviewer_startup_report_preconsumes_pre_review_pm_bundle_ack or pm_startup_activation_uses_existing_same_role_card_ack_blocker or current_node_pre_review_reconciliation or future_node_pending_return_does_not_block_current_node_review or current_node_completion_waits_for_review_created_local_obligations or current_node_completion_requires_reviewer_passed_packet_audit or current_node_parallel_batch_waits_for_all_results_before_review"` passed with 8 tests.
+- `python -m pytest tests\test_flowpilot_barrier_bundle.py -q` passed with 7 tests.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_current_scope_pre_review_reconciliation_model.py simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` synchronized the installed FlowPilot skill to the repository source.
+- `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed with the installed FlowPilot digest matching the repository digest.
+
+### Findings
+- The focused model rejects review-start before local reconciliation, local reconciliation that clears future scope, deferred local work without explicit carry-forward evidence, scope exit before review-created closure, no-final-review scope exit without reconciliation, and ACK-as-semantic-completion.
+- The runtime now returns an `await_current_scope_reconciliation` Controller action before current-node reviewer work when active-node local obligations are not clean.
+- Direct reviewer pass/block events are held as recoverable waits when the active node is not locally reconciled.
+- Current-node completion now raises a Router error if the node tries to exit before review-created local obligations and reviewed packet status are closed.
+- Future-node scoped pending card returns no longer block the active node's review start.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
