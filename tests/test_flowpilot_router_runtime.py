@@ -3346,30 +3346,28 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result["action_type"], "load_controller_core")
         self.assertEqual(result["folded_command"], "run-until-wait")
-        self.assertEqual(
-            [item["action_type"] for item in result["folded_applied_actions"]],
-            [
-                "fill_runtime_placeholders",
-                "initialize_mailbox",
-                "record_user_request",
-                "write_user_intake",
-            ],
-        )
+        self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], [])
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         bootstrap = self.bootstrap_state(root)
         self.assertTrue(bootstrap["flags"]["run_shell_created"])
         self.assertTrue(bootstrap["flags"]["router_daemon_started"])
         self.assertTrue(bootstrap["flags"]["mailbox_initialized"])
         self.assertTrue(bootstrap["flags"].get("user_request_recorded", False))
+        self.assertTrue(bootstrap["flags"].get("deterministic_bootstrap_seed_completed", False))
         self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
         self.assertFalse(bootstrap["flags"].get("roles_started", False))
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
         run_root = self.run_root_for(root)
         self.assertTrue((run_root / "packet_ledger.json").exists())
+        self.assertTrue((run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json").exists())
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
         self.assertIn("emit_startup_banner", startup_types)
         self.assertIn("start_role_slots", startup_types)
+        self.assertNotIn("fill_runtime_placeholders", startup_types)
+        self.assertNotIn("initialize_mailbox", startup_types)
+        self.assertNotIn("record_user_request", startup_types)
+        self.assertNotIn("write_user_intake", startup_types)
 
     def test_run_until_wait_folds_user_intake_then_stops_before_role_boundary(self) -> None:
         root = self.make_project()
@@ -3379,17 +3377,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result = router.run_until_wait(root)
 
         self.assertEqual(result["action_type"], "load_controller_core")
-        self.assertEqual(
-            [item["action_type"] for item in result["folded_applied_actions"]],
-            [
-                "fill_runtime_placeholders",
-                "initialize_mailbox",
-                "record_user_request",
-                "write_user_intake",
-            ],
-        )
+        self.assertEqual([item["action_type"] for item in result["folded_applied_actions"]], [])
         self.assertEqual(result["folded_stop_reason"], "requires_user_host_or_role_boundary")
         self.assertTrue((self.run_root_for(root) / "mailbox" / "outbox" / "user_intake.json").exists())
+        self.assertTrue(
+            (self.run_root_for(root) / "bootstrap" / "deterministic_bootstrap_seed_evidence.json").exists()
+        )
         self.assertFalse(self.bootstrap_state(root)["flags"].get("roles_started", False))
 
     def test_scheduled_startup_heartbeat_is_bootloader_boundary_before_controller_core(self) -> None:
@@ -3493,17 +3486,89 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
 
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "fill_runtime_placeholders")
+        self.assertEqual(action["action_type"], "load_controller_core")
         bootstrap = self.bootstrap_state(root)
-        self.assertEqual(bootstrap["pending_action"]["action_type"], "fill_runtime_placeholders")
+        self.assertEqual(bootstrap["pending_action"]["action_type"], "load_controller_core")
+        self.assertTrue(bootstrap["flags"]["deterministic_bootstrap_seed_completed"])
+        self.assertTrue((run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json").exists())
 
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         banner_rows = [item for item in controller_ledger["actions"] if item.get("action_type") == "emit_startup_banner"]
         self.assertEqual(len(banner_rows), 1)
+        startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertNotIn("fill_runtime_placeholders", startup_types)
+        self.assertNotIn("initialize_mailbox", startup_types)
+        self.assertNotIn("record_user_request", startup_types)
+        self.assertNotIn("write_user_intake", startup_types)
         banner_record = read_json(run_root / "runtime" / "controller_actions" / f"{banner_rows[0]['action_id']}.json")
         self.assertEqual(banner_record["status"], "pending")
         self.assertEqual(banner_record["action"]["router_scheduler_progress_class"], "parallel_obligation")
         self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
+
+    def test_deterministic_bootstrap_seed_failure_does_not_create_pm_blocker(self) -> None:
+        root = self.make_project()
+        self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+
+        with mock.patch.object(
+            router,
+            "_initialize_mailbox_foundation",
+            side_effect=router.RouterError("seed mailbox failed"),
+        ):
+            with self.assertRaisesRegex(router.RouterError, "seed mailbox failed"):
+                router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        run_root = self.run_root_for(root)
+        control_blocks = run_root / "control_blocks"
+        self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
+
+    def test_deterministic_bootstrap_seed_replay_uses_existing_evidence(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        return_ledger_path = run_root / "return_event_ledger.json"
+        return_ledger = read_json(return_ledger_path)
+        return_ledger["pending_returns"].append({"return_id": "existing-return", "source": "test"})
+        router.write_json(return_ledger_path, return_ledger)
+
+        proof = router._run_deterministic_startup_bootstrap_seed(root, self.bootstrap_state(root))  # type: ignore[attr-defined]
+
+        self.assertTrue(proof["completed"])
+        refreshed_return_ledger = read_json(return_ledger_path)
+        self.assertEqual(
+            [item["return_id"] for item in refreshed_return_ledger["pending_returns"]],
+            ["existing-return"],
+        )
+
+    def test_reconciled_scheduler_row_receipt_replay_does_not_create_pm_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core")
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        load_core_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "load_controller_core")
+        action_path = run_root / "runtime" / "controller_actions" / f"{load_core_row['action_id']}.json"
+        entry = read_json(action_path)
+        entry.pop("router_reconciliation_status", None)
+        entry.pop("router_reconciled_at", None)
+        entry.pop("router_reconciliation", None)
+        router.write_json(action_path, entry)
+
+        run_state = read_json(router.run_state_path(run_root))
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, run_state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["blocked"], 0)
+        refreshed = read_json(action_path)
+        self.assertEqual(refreshed["router_reconciliation_status"], "reconciled")
+        control_blocks = run_root / "control_blocks"
+        self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
 
     def test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait(self) -> None:
         root = self.make_project()

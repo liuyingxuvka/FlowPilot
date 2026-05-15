@@ -88,6 +88,7 @@ ROUTER_OWNERSHIP_LEDGER_SCHEMA = "flowpilot.router_ownership_ledger.v1"
 ROUTER_SCHEDULER_LEDGER_SCHEMA = "flowpilot.router_scheduler_ledger.v1"
 ROUTER_SCHEDULER_ROW_SCHEMA = "flowpilot.router_scheduler_row.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
+DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA = "flowpilot.deterministic_bootstrap_seed_evidence.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
@@ -7283,6 +7284,20 @@ def _apply_done_controller_receipt_effects(
     return {"applied": True, "source": "controller_local_receipt"}
 
 
+def _scheduler_row_reconciliation_for_entry(run_root: Path, entry: dict[str, Any]) -> dict[str, Any] | None:
+    row_id = str(entry.get("router_scheduler_row_id") or "").strip()
+    if not row_id:
+        return None
+    scheduler = read_json_if_exists(_router_scheduler_ledger_path(run_root))
+    for row in scheduler.get("rows", []) if isinstance(scheduler.get("rows"), list) else []:
+        if not isinstance(row, dict) or row.get("row_id") != row_id:
+            continue
+        reconciliation = row.get("reconciliation") if isinstance(row.get("reconciliation"), dict) else {}
+        if row.get("router_state") == "reconciled" and reconciliation.get("applied"):
+            return dict(reconciliation)
+    return None
+
+
 def _reconcile_scheduled_controller_action_receipts(
     project_root: Path,
     run_root: Path,
@@ -7331,11 +7346,20 @@ def _reconcile_scheduled_controller_action_receipts(
             continue
         if entry.get("status") != "done":
             continue
-        if entry.get("router_reconciled_at"):
+        if entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at"):
             continue
         if entry.get("router_reconciliation_status") == "blocked":
             continue
         if not action:
+            continue
+        row_reconciliation = _scheduler_row_reconciliation_for_entry(run_root, entry)
+        if row_reconciliation is not None:
+            entry["router_reconciliation_status"] = "reconciled"
+            entry["router_reconciled_at"] = utc_now()
+            entry["router_reconciliation"] = row_reconciliation
+            write_json(action_path, entry)
+            changed = True
+            reconciled += 1
             continue
         action_id = str(entry.get("action_id") or action.get("controller_action_id") or "")
         receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
@@ -14064,6 +14088,223 @@ def _build_user_intake_body_from_ref(project_root: Path, user_request_ref: dict[
         "## User Work Request\n\n"
         f"{body_path.read_text(encoding='utf-8-sig').strip()}\n"
     )
+
+
+def _deterministic_bootstrap_seed_evidence_path(run_root: Path) -> Path:
+    return run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json"
+
+
+def _write_startup_answers_record(project_root: Path, run_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    interpretation = state.get("startup_answer_interpretation") if isinstance(state.get("startup_answer_interpretation"), dict) else None
+    interpretation_path = run_root / "startup_answer_interpretation.json"
+    if interpretation:
+        write_json(interpretation_path, interpretation)
+    record = {
+        "schema_version": "flowpilot.startup_answers.v1",
+        "run_id": state["run_id"],
+        "answers": state.get("startup_answers") or {},
+        "startup_answer_interpretation_path": project_relative(project_root, interpretation_path) if interpretation else None,
+        "recorded_at": utc_now(),
+    }
+    write_json(run_root / "startup_answers.json", record)
+    return record
+
+
+def _initialize_mailbox_foundation(project_root: Path, run_root: Path, run_id: str) -> dict[str, Any]:
+    dirs = (
+        "mailbox/system_cards",
+        "mailbox/inbox",
+        "mailbox/outbox",
+        "mailbox/outbox/card_acks",
+        "runtime_receipts/card_reads",
+        "runtime_receipts/role_io_protocol",
+        "packets",
+    )
+    for rel in dirs:
+        (run_root / rel).mkdir(parents=True, exist_ok=True)
+    packet_ledger_path = run_root / "packet_ledger.json"
+    prompt_delivery_ledger_path = run_root / "prompt_delivery_ledger.json"
+    card_ledger_path = _card_ledger_path(run_root)
+    return_event_ledger_path = _return_event_ledger_path(run_root)
+    role_io_protocol_ledger_path = _role_io_protocol_ledger_path(run_root)
+    write_json(packet_ledger_path, _create_empty_packet_ledger(project_root, run_id, run_root))
+    write_json(
+        prompt_delivery_ledger_path,
+        {"schema_version": "flowpilot.prompt_delivery_ledger.v1", "run_id": run_id, "deliveries": []},
+    )
+    write_json(card_ledger_path, _empty_card_ledger(run_id))
+    write_json(return_event_ledger_path, _empty_return_event_ledger(run_id))
+    write_json(role_io_protocol_ledger_path, _empty_role_io_protocol_ledger(run_id))
+    return {
+        "directories": [project_relative(project_root, run_root / rel) for rel in dirs],
+        "ledgers": [
+            project_relative(project_root, packet_ledger_path),
+            project_relative(project_root, prompt_delivery_ledger_path),
+            project_relative(project_root, card_ledger_path),
+            project_relative(project_root, return_event_ledger_path),
+            project_relative(project_root, role_io_protocol_ledger_path),
+        ],
+    }
+
+
+def _record_startup_user_request_ref(project_root: Path, run_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    if _confirmed_startup_intake(state) is not None:
+        intake_record = _materialize_startup_intake_record(project_root, state, run_root)
+        user_request = _user_request_ref_from_startup_intake(project_root, state, intake_record)
+        user_request_record = {
+            "schema_version": "flowpilot.user_request.v1",
+            "run_id": state["run_id"],
+            "source": "startup_intake_ui",
+            "user_request_ref": user_request,
+            "startup_intake_record": intake_record,
+            "controller_may_read_body": False,
+            "body_text_included": False,
+            "recorded_at": utc_now(),
+        }
+        state["startup_intake"] = intake_record
+        state["startup_intake_record_path"] = intake_record["record_path"]
+        state["user_request_ref"] = user_request
+    else:
+        user_request = state.get("user_request")
+        if not isinstance(user_request, dict):
+            raise RouterError("deterministic startup seed requires confirmed startup intake or user_request")
+        user_request_record = {
+            "schema_version": "flowpilot.user_request.v1",
+            "run_id": state["run_id"],
+            "user_request": user_request,
+            "recorded_at": utc_now(),
+        }
+    user_request_path = run_root / "user_request.json"
+    write_json(user_request_path, user_request_record)
+    state["user_request"] = user_request
+    state["user_request_path"] = project_relative(project_root, user_request_path)
+    return user_request_record
+
+
+def _write_startup_user_intake_scaffold(project_root: Path, run_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    user_request = state.get("user_request")
+    if not isinstance(user_request, dict):
+        raise RouterError("cannot write deterministic user_intake scaffold before user request reference")
+    if user_request.get("schema_version") == USER_REQUEST_REF_SCHEMA:
+        body_text = _build_user_intake_body_from_ref(project_root, user_request, state.get("startup_answers") or {})
+        user_intake = packet_runtime.create_user_intake_packet(
+            project_root,
+            run_id=str(state["run_id"]),
+            packet_id="user_intake",
+            node_id="startup",
+            body_text=body_text,
+            startup_options=state.get("startup_answers") or {},
+            source="startup_intake_ui",
+            body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+            startup_intake_ref=user_request,
+        )
+    else:
+        user_intake = packet_runtime.create_user_intake_packet(
+            project_root,
+            run_id=str(state["run_id"]),
+            packet_id="user_intake",
+            node_id="startup",
+            body_text=json.dumps(
+                {
+                    "user_request": user_request,
+                    "user_request_path": state.get("user_request_path"),
+                    "startup_answers": state.get("startup_answers") or {},
+                    "startup_answers_path": project_relative(project_root, run_root / "startup_answers.json"),
+                    "startup_answer_interpretation_path": project_relative(project_root, run_root / "startup_answer_interpretation.json")
+                    if isinstance(state.get("startup_answer_interpretation"), dict)
+                    else None,
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            startup_options=state.get("startup_answers") or {},
+        )
+    user_intake_path = run_root / "mailbox" / "outbox" / "user_intake.json"
+    write_json(user_intake_path, user_intake)
+    return {
+        "path": project_relative(project_root, user_intake_path),
+        "body_visibility": user_intake.get("body_visibility"),
+        "controller_may_read_body": False,
+    }
+
+
+def _run_deterministic_startup_bootstrap_seed(project_root: Path, state: dict[str, Any]) -> dict[str, Any]:
+    if not state.get("run_id") or not state.get("run_root"):
+        raise RouterError("deterministic startup seed requires run shell")
+    if not state.get("startup_answers"):
+        raise RouterError("deterministic startup seed requires startup answers")
+
+    run_root = project_root / str(state["run_root"])
+    flags = state.setdefault("flags", {})
+    evidence_path = _deterministic_bootstrap_seed_evidence_path(run_root)
+    if flags.get("deterministic_bootstrap_seed_completed") and evidence_path.exists():
+        existing_proof = read_json(evidence_path)
+        if (
+            existing_proof.get("schema_version") == DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA
+            and existing_proof.get("completed") is True
+        ):
+            state["deterministic_bootstrap_seed_evidence_path"] = project_relative(project_root, evidence_path)
+            return existing_proof
+        raise RouterError("completed deterministic startup seed has invalid evidence")
+
+    artifacts: dict[str, Any] = {}
+
+    if not flags.get("runtime_kit_copied"):
+        _copy_runtime_kit_into_run_root(run_root)
+        flags["runtime_kit_copied"] = True
+    artifacts["runtime_kit"] = project_relative(project_root, run_root / "runtime_kit")
+
+    artifacts["startup_answers"] = project_relative(project_root, run_root / "startup_answers.json")
+    _write_startup_answers_record(project_root, run_root, state)
+    flags["placeholders_filled"] = True
+
+    mailbox = _initialize_mailbox_foundation(project_root, run_root, str(state["run_id"]))
+    artifacts["mailbox"] = mailbox
+    flags["mailbox_initialized"] = True
+
+    user_request_record = _record_startup_user_request_ref(project_root, run_root, state)
+    artifacts["user_request"] = project_relative(project_root, run_root / "user_request.json")
+    flags["user_request_recorded"] = True
+
+    user_intake = _write_startup_user_intake_scaffold(project_root, run_root, state)
+    artifacts["user_intake"] = user_intake
+    flags["user_intake_ready"] = True
+
+    evidence_path.parent.mkdir(parents=True, exist_ok=True)
+    required_flags = (
+        "runtime_kit_copied",
+        "placeholders_filled",
+        "mailbox_initialized",
+        "user_request_recorded",
+        "user_intake_ready",
+    )
+    proof = {
+        "schema_version": DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA,
+        "run_id": state["run_id"],
+        "source": "deterministic_bootstrap_seed",
+        "controller_action_row_created": False,
+        "pm_blocker_allowed": False,
+        "required_flags": {flag: bool(flags.get(flag)) for flag in required_flags},
+        "artifacts": artifacts,
+        "user_request_record_controller_may_read_body": bool(user_request_record.get("controller_may_read_body", True)),
+        "completed": all(bool(flags.get(flag)) for flag in required_flags),
+        "completed_at": utc_now(),
+    }
+    if not proof["completed"]:
+        missing = [flag for flag, value in proof["required_flags"].items() if not value]
+        raise RouterError(f"deterministic startup seed missing required flags: {', '.join(missing)}")
+    write_json(evidence_path, proof)
+    state["deterministic_bootstrap_seed_evidence_path"] = project_relative(project_root, evidence_path)
+    flags["deterministic_bootstrap_seed_completed"] = True
+    append_history(
+        state,
+        "deterministic_startup_bootstrap_seed_completed",
+        {
+            "evidence_path": state["deterministic_bootstrap_seed_evidence_path"],
+            "artifacts": sorted(artifacts),
+        },
+    )
+    return proof
 
 
 def _display_text_hash(display_text: str) -> str:
@@ -26114,6 +26355,11 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
             state["flags"]["startup_state_written_awaiting_answers"] = True
             state["flags"]["dialog_stopped_for_answers"] = True
             state["flags"]["startup_answers_recorded"] = True
+            seed_proof = _run_deterministic_startup_bootstrap_seed(project_root, state)
+            result_extra["deterministic_bootstrap_seed"] = {
+                "evidence_path": state.get("deterministic_bootstrap_seed_evidence_path"),
+                "artifact_keys": sorted((seed_proof.get("artifacts") or {}).keys()),
+            }
     elif action_type == "ask_startup_questions":
         state["startup_state"] = "awaiting_answers_stopped"
         state["flags"]["startup_state_written_awaiting_answers"] = True

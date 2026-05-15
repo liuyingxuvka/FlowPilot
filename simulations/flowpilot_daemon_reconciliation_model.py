@@ -18,8 +18,10 @@ Risk intent brief:
   role outputs before returning work; completed or blocked Controller actions
   must be cleared, applied, or surfaced as a blocker; expected valid role
   outputs must become Router events exactly once; canonical artifacts and flags
-  must not diverge; and stale daemon snapshots must never erase newer durable
-  evidence.
+  must not diverge; startup-daemon bootloader rows must have one
+  reconciliation owner and must not be converted into PM repair blockers after
+  their postcondition is already satisfied; and stale daemon snapshots must
+  never erase newer durable evidence.
 """
 
 from __future__ import annotations
@@ -54,10 +56,16 @@ class State:
 
     controller_receipt_status: str = "none"  # none | done | blocked
     controller_receipt_payload_quality: str = "none"  # none | complete | incomplete
+    controller_receipt_action_class: str = "stateful"  # stateful | startup_bootloader
     controller_receipt_reconciled: bool = False
     pending_cleared_after_receipt: bool = False
     stateful_postconditions_applied: bool = False
     control_blocker_written: bool = False
+    startup_row_reconciled: bool = False
+    startup_postcondition_satisfied: bool = False
+    startup_reconciliation_owner: str = "none"  # none | startup_daemon | generic_receipt
+    generic_receipt_reconciler_touched_startup_row: bool = False
+    unsupported_startup_receipt_action: bool = False
 
     role_output_ledger_submitted: bool = False
     role_output_envelope_valid: bool = True
@@ -152,6 +160,23 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 role_output_ledger_submitted=True,
                 canonical_artifact_exists=True,
                 stale_daemon_snapshot_loaded=True,
+            ),
+        )
+        yield Transition(
+            "daemon_reconciles_startup_bootloader_receipt_once",
+            _step(
+                state,
+                pending_action_kind="none",
+                pending_action_status="none",
+                controller_receipt_status="done",
+                controller_receipt_payload_quality="complete",
+                controller_receipt_action_class="startup_bootloader",
+                controller_receipt_reconciled=True,
+                pending_cleared_after_receipt=True,
+                stateful_postconditions_applied=True,
+                startup_row_reconciled=True,
+                startup_postcondition_satisfied=True,
+                startup_reconciliation_owner="startup_daemon",
             ),
         )
         yield Transition(
@@ -447,6 +472,69 @@ def hazard_states() -> dict[str, State]:
             computed_before_reconciliation=True,
             next_action_computed=True,
         ),
+        "startup_reconciled_action_false_pm_blocker": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=True,
+            startup_reconciliation_owner="startup_daemon",
+            control_blocker_written=True,
+            next_action_computed=True,
+        ),
+        "startup_unsupported_receipt_escalated_to_pm": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=True,
+            startup_reconciliation_owner="startup_daemon",
+            generic_receipt_reconciler_touched_startup_row=True,
+            unsupported_startup_receipt_action=True,
+            control_blocker_written=True,
+            next_action_computed=True,
+        ),
+        "startup_row_reconciled_without_postcondition": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=False,
+            startup_reconciliation_owner="startup_daemon",
+            next_action_computed=True,
+        ),
+        "startup_row_reconciled_by_wrong_owner": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=True,
+            startup_reconciliation_owner="generic_receipt",
+            next_action_computed=True,
+        ),
         "role_wait_not_cleared_after_event": replace(
             safe,
             pending_action_kind="await_role_decision",
@@ -530,10 +618,30 @@ def invariant_failures(state: State) -> list[str]:
     if (
         state.controller_receipt_status == "done"
         and state.controller_receipt_payload_quality == "complete"
+        and state.controller_receipt_action_class != "startup_bootloader"
         and state.next_action_computed
         and not state.stateful_postconditions_applied
     ):
         failures.append("stateful Controller receipt was marked done without applying Router postconditions")
+
+    if state.controller_receipt_action_class == "startup_bootloader":
+        if state.startup_row_reconciled and not state.startup_postcondition_satisfied:
+            failures.append("startup bootloader row was reconciled without its postcondition")
+        if state.startup_row_reconciled and state.startup_reconciliation_owner != "startup_daemon":
+            failures.append("startup bootloader row was reconciled by the wrong owner")
+        if state.startup_row_reconciled and state.control_blocker_written:
+            failures.append("startup bootloader row produced a control blocker after it was already reconciled")
+        if (
+            state.generic_receipt_reconciler_touched_startup_row
+            and state.unsupported_startup_receipt_action
+            and state.startup_postcondition_satisfied
+            and state.control_blocker_written
+        ):
+            failures.append("unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied")
+        if state.next_action_computed and state.controller_receipt_status == "done" and not (
+            state.startup_row_reconciled or state.control_blocker_written
+        ):
+            failures.append("startup bootloader receipt reached next action without startup reconciliation or a real blocker")
 
     if (
         state.controller_receipt_status == "done"
@@ -597,6 +705,11 @@ INVARIANTS = (
     _invariant("controller_receipt_reconciled_before_next", "Controller receipt existed but was not reconciled before next action"),
     _invariant("receipt_reconciliation_clears_pending_action", "Controller receipt was reconciled but pending_action was not cleared"),
     _invariant("stateful_receipt_applies_postconditions", "stateful Controller receipt was marked done without applying Router postconditions"),
+    _invariant("startup_bootloader_reconciles_with_postcondition", "startup bootloader row was reconciled without its postcondition"),
+    _invariant("startup_bootloader_reconciliation_owner", "startup bootloader row was reconciled by the wrong owner"),
+    _invariant("startup_bootloader_no_false_pm_blocker_after_reconciled", "startup bootloader row produced a control blocker after it was already reconciled"),
+    _invariant("unsupported_startup_receipt_not_pm_repair_after_success", "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied"),
+    _invariant("startup_bootloader_receipt_must_be_reconciled", "startup bootloader receipt reached next action without startup reconciliation or a real blocker"),
     _invariant("incomplete_stateful_receipt_blocks", "incomplete stateful Controller receipt was accepted without a control blocker"),
     _invariant("blocked_receipt_surfaces_blocker", "blocked Controller receipt was not surfaced as a control blocker"),
     _invariant("role_output_storage_becomes_router_event", "submitted expected role output was left only in durable storage"),

@@ -11389,3 +11389,101 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
 - The full Router runtime unittest class timed out and remains a residual broad-suite risk; focused affected tests and lightweight FlowGuard checks passed.
+
+## 2026-05-15 Startup Bootloader Reconciliation False PM Blocker Model Upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live FlowPilot run `run-20260515-120231` created a PM repair control blocker for `initialize_mailbox` even though the startup Controller action and Router scheduler row were already reconciled by the startup daemon.
+- Status: completed_model_update_runtime_fix_pending
+- Skill decision: used_flowguard
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Result file: `simulations/flowpilot_daemon_reconciliation_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_results.json` passed.
+- `python simulations\run_flowpilot_model_mesh_checks.py --json-out simulations\flowpilot_model_mesh_results.json` passed.
+- A background `python simulations\run_meta_checks.py` was started, then stopped and marked `cancelled_by_user_instruction` after the user explicitly asked to skip the heavy Meta and Capability models.
+
+### Findings
+- The previous daemon reconciliation model covered generic stateful Controller receipts and role-output durable reconciliation, but it did not model startup-daemon bootloader receipts as a distinct receipt class with a single reconciliation owner.
+- The model now rejects startup bootloader rows that are reconciled without their postcondition, reconciled by the wrong owner, or converted into PM repair blockers after the startup daemon has already satisfied the postcondition.
+- The runner now includes a read-only live projection that scans current public FlowPilot ledger/control-block metadata. It detected `startup_reconciled_action_false_pm_blocker` for `initialize_mailbox` in `run-20260515-120231` without reading sealed repair packet bodies.
+
+### Counterexamples
+- `startup_reconciled_action_false_pm_blocker`
+- `startup_unsupported_receipt_escalated_to_pm`
+- `startup_row_reconciled_without_postcondition`
+- `startup_row_reconciled_by_wrong_owner`
+
+### Skipped Steps
+- No Router runtime implementation was changed in this pass.
+- Heavyweight Meta simulation was cancelled by explicit user direction after partial progress.
+- Heavyweight Capability simulation was not run by explicit user direction.
+
+### Next Actions
+- Runtime repair should make startup bootloader reconciliation single-owner and idempotent: a startup row already reconciled by `startup_daemon_bootloader_postcondition` must be skipped by the generic Controller receipt reconciler and must never create a PM repair blocker.
+
+## 2026-05-15 Deterministic Startup Bootstrap Root Fix
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved replacing daemon-scheduled deterministic startup setup rows with a script-owned bootstrap seed, after a live run showed a false PM blocker for an already reconciled `initialize_mailbox` startup row.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/deterministic-startup-bootstrap/`
+- Deterministic startup bootstrap model: `simulations/flowpilot_deterministic_startup_bootstrap_model.py`
+- Deterministic startup bootstrap runner: `simulations/run_flowpilot_deterministic_startup_bootstrap_checks.py`
+- Deterministic startup bootstrap results: `simulations/flowpilot_deterministic_startup_bootstrap_results.json`
+- Daemon reconciliation model and live projection: `simulations/flowpilot_daemon_reconciliation_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate deterministic-startup-bootstrap --strict` passed before and after implementation.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_deterministic_startup_bootstrap_model.py simulations\run_flowpilot_deterministic_startup_bootstrap_checks.py` passed.
+- `python simulations\run_flowpilot_deterministic_startup_bootstrap_checks.py --json-out simulations\flowpilot_deterministic_startup_bootstrap_results.json` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed and still detects the historical live false-blocker projection.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python simulations\run_flowpilot_daemon_microstep_lifecycle_checks.py --json-out simulations\flowpilot_daemon_microstep_lifecycle_results.json` passed.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_results.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "run_until_wait_folds_only_internal_bootloader_actions_after_banner or run_until_wait_folds_user_intake_then_stops_before_role_boundary or startup_daemon_defers_banner_and_queues_next_boot_row or deterministic_bootstrap_seed_failure_does_not_create_pm_blocker or deterministic_bootstrap_seed_replay_uses_existing_evidence or reconciled_scheduler_row_receipt_replay_does_not_create_pm_blocker or startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait or startup_async_receipts_update_bootstrap_flags_and_scheduler_rows or scheduled_startup_heartbeat_is_bootloader_boundary_before_controller_core" -q` passed with 9 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "deterministic_bootstrap or startup_daemon or startup_async_receipts or scheduled_startup_heartbeat or incomplete_stateful_rehydrate_receipt_becomes_control_blocker or startup_role_slots or run_until_wait_folds or startup_scope or controller_boundary_done_receipt_reclaims_router_postcondition" -q` passed with 13 tests.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` refreshed the installed `flowpilot` skill and ended with `source_fresh: true`.
+- `python scripts\audit_local_install_sync.py --json` passed.
+- `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` `source_fresh: true`.
+
+### Findings
+- Deterministic startup setup now happens in one script-owned bootstrap seed after confirmed startup intake: runtime kit copy, startup answers, placeholder record, mailbox/empty ledgers, user request reference, and user-intake scaffold.
+- The unified Router scheduler no longer queues deterministic setup rows such as `fill_runtime_placeholders`, `initialize_mailbox`, `record_user_request`, or `write_user_intake` in the normal startup path.
+- The scheduler still owns startup obligations that require host/AI/wait semantics: role-slot startup, heartbeat binding when requested, Controller core loading, and banner display.
+- Startup seed failure now raises before route activation and does not create a PM repair blocker.
+- Receipt replay for an already reconciled scheduler row is idempotently skipped before blocker creation.
+- Replaying a completed deterministic seed reuses existing evidence and does not reinitialize runtime ledgers.
+
+### Counterexamples
+- `scheduler_before_seed_success`
+- `seed_success_without_all_artifacts`
+- `deterministic_setup_left_as_controller_row`
+- `seed_failure_as_pm_blocker`
+- `reconciled_row_false_pm_blocker`
+- `unsupported_startup_receipt_escalated_to_pm`
+- `role_slots_bypass_scheduler`
+- `heartbeat_bypass_scheduler`
+- `controller_core_before_seed_and_scheduler`
+- `controller_reads_sealed_user_body`
+- `intake_written_without_user_request_ref`
+- `installed_skill_stale_after_fix`
+- `peer_changes_overwritten`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- If future startup changes affect the global project-control architecture or capability routing, rerun the heavyweight Meta and Capability checks when the user allows the runtime cost.

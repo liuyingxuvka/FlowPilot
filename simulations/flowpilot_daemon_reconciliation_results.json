@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=10 initial_states=1 traces=560",
+    "summary": "sequences=10 initial_states=1 traces=605",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -22,10 +22,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": true,
           "controller_receipt_status": "blocked",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -45,7 +47,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "canonical_artifact_flag_not_synced": {
@@ -59,10 +65,12 @@
           "canonical_artifact_exists": true,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -82,7 +90,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "completed_controller_action_repeated": {
@@ -97,10 +109,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "complete",
           "controller_receipt_reconciled": true,
           "controller_receipt_status": "done",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -120,7 +134,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "computed_from_pending_before_reconciliation": {
@@ -136,10 +154,12 @@
           "canonical_artifact_exists": true,
           "computed_before_reconciliation": true,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -159,7 +179,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "done_receipt_without_stateful_postconditions": {
@@ -172,10 +196,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "complete",
           "controller_receipt_reconciled": true,
           "controller_receipt_status": "done",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -195,7 +221,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "duplicate_role_output_consumption": {
@@ -209,10 +239,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -232,7 +264,11 @@
           "scoped_event_recorded": true,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "incomplete_stateful_receipt_silently_done": {
@@ -245,10 +281,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "incomplete",
           "controller_receipt_reconciled": true,
           "controller_receipt_status": "done",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -268,7 +306,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "invalid_role_output_silently_accepted": {
@@ -281,10 +323,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": true,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -304,7 +348,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "receipt_and_role_output_interleaving_starves_role_output": {
@@ -319,10 +367,12 @@
           "canonical_artifact_exists": true,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "complete",
           "controller_receipt_reconciled": true,
           "controller_receipt_status": "done",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -342,7 +392,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": true
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": true,
+          "unsupported_startup_receipt_action": false
         }
       },
       "role_wait_not_cleared_after_event": {
@@ -355,10 +409,12 @@
           "canonical_artifact_exists": false,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -378,7 +434,11 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       },
       "stale_snapshot_overwrites_role_output_event": {
@@ -394,10 +454,12 @@
           "canonical_artifact_exists": true,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -417,7 +479,180 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": true,
           "stale_snapshot_saved_after_external_event": true,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
+        }
+      },
+      "startup_reconciled_action_false_pm_blocker": {
+        "detected": true,
+        "expected_failure": "startup bootloader row produced a control blocker after it was already reconciled",
+        "failures": [
+          "startup bootloader row produced a control blocker after it was already reconciled"
+        ],
+        "state": {
+          "canonical_artifact_exists": false,
+          "computed_before_reconciliation": false,
+          "control_blocker_written": true,
+          "controller_receipt_action_class": "startup_bootloader",
+          "controller_receipt_payload_quality": "complete",
+          "controller_receipt_reconciled": true,
+          "controller_receipt_status": "done",
+          "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
+          "invalid_role_output_accepted": false,
+          "lifecycle": "active",
+          "next_action_computed": true,
+          "pending_action_kind": "none",
+          "pending_action_returned_again": false,
+          "pending_action_status": "none",
+          "pending_cleared_after_receipt": true,
+          "reconciliation_barrier_started": true,
+          "role_output_consumption_count": 0,
+          "role_output_envelope_valid": true,
+          "role_output_event_expected": true,
+          "role_output_ledger_submitted": false,
+          "role_output_reconciled": false,
+          "role_wait_cleared_after_event": false,
+          "router_event_flag_synced": false,
+          "router_event_recorded": false,
+          "scoped_event_recorded": false,
+          "stale_daemon_snapshot_loaded": false,
+          "stale_snapshot_saved_after_external_event": false,
+          "startup_postcondition_satisfied": true,
+          "startup_reconciliation_owner": "startup_daemon",
+          "startup_row_reconciled": true,
+          "stateful_postconditions_applied": true,
+          "unsupported_startup_receipt_action": false
+        }
+      },
+      "startup_row_reconciled_by_wrong_owner": {
+        "detected": true,
+        "expected_failure": "startup bootloader row was reconciled by the wrong owner",
+        "failures": [
+          "startup bootloader row was reconciled by the wrong owner"
+        ],
+        "state": {
+          "canonical_artifact_exists": false,
+          "computed_before_reconciliation": false,
+          "control_blocker_written": false,
+          "controller_receipt_action_class": "startup_bootloader",
+          "controller_receipt_payload_quality": "complete",
+          "controller_receipt_reconciled": true,
+          "controller_receipt_status": "done",
+          "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
+          "invalid_role_output_accepted": false,
+          "lifecycle": "active",
+          "next_action_computed": true,
+          "pending_action_kind": "none",
+          "pending_action_returned_again": false,
+          "pending_action_status": "none",
+          "pending_cleared_after_receipt": true,
+          "reconciliation_barrier_started": true,
+          "role_output_consumption_count": 0,
+          "role_output_envelope_valid": true,
+          "role_output_event_expected": true,
+          "role_output_ledger_submitted": false,
+          "role_output_reconciled": false,
+          "role_wait_cleared_after_event": false,
+          "router_event_flag_synced": false,
+          "router_event_recorded": false,
+          "scoped_event_recorded": false,
+          "stale_daemon_snapshot_loaded": false,
+          "stale_snapshot_saved_after_external_event": false,
+          "startup_postcondition_satisfied": true,
+          "startup_reconciliation_owner": "generic_receipt",
+          "startup_row_reconciled": true,
+          "stateful_postconditions_applied": true,
+          "unsupported_startup_receipt_action": false
+        }
+      },
+      "startup_row_reconciled_without_postcondition": {
+        "detected": true,
+        "expected_failure": "startup bootloader row was reconciled without its postcondition",
+        "failures": [
+          "startup bootloader row was reconciled without its postcondition"
+        ],
+        "state": {
+          "canonical_artifact_exists": false,
+          "computed_before_reconciliation": false,
+          "control_blocker_written": false,
+          "controller_receipt_action_class": "startup_bootloader",
+          "controller_receipt_payload_quality": "complete",
+          "controller_receipt_reconciled": true,
+          "controller_receipt_status": "done",
+          "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
+          "invalid_role_output_accepted": false,
+          "lifecycle": "active",
+          "next_action_computed": true,
+          "pending_action_kind": "none",
+          "pending_action_returned_again": false,
+          "pending_action_status": "none",
+          "pending_cleared_after_receipt": true,
+          "reconciliation_barrier_started": true,
+          "role_output_consumption_count": 0,
+          "role_output_envelope_valid": true,
+          "role_output_event_expected": true,
+          "role_output_ledger_submitted": false,
+          "role_output_reconciled": false,
+          "role_wait_cleared_after_event": false,
+          "router_event_flag_synced": false,
+          "router_event_recorded": false,
+          "scoped_event_recorded": false,
+          "stale_daemon_snapshot_loaded": false,
+          "stale_snapshot_saved_after_external_event": false,
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "startup_daemon",
+          "startup_row_reconciled": true,
+          "stateful_postconditions_applied": true,
+          "unsupported_startup_receipt_action": false
+        }
+      },
+      "startup_unsupported_receipt_escalated_to_pm": {
+        "detected": true,
+        "expected_failure": "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied",
+        "failures": [
+          "startup bootloader row produced a control blocker after it was already reconciled",
+          "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied"
+        ],
+        "state": {
+          "canonical_artifact_exists": false,
+          "computed_before_reconciliation": false,
+          "control_blocker_written": true,
+          "controller_receipt_action_class": "startup_bootloader",
+          "controller_receipt_payload_quality": "complete",
+          "controller_receipt_reconciled": true,
+          "controller_receipt_status": "done",
+          "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": true,
+          "invalid_role_output_accepted": false,
+          "lifecycle": "active",
+          "next_action_computed": true,
+          "pending_action_kind": "none",
+          "pending_action_returned_again": false,
+          "pending_action_status": "none",
+          "pending_cleared_after_receipt": true,
+          "reconciliation_barrier_started": true,
+          "role_output_consumption_count": 0,
+          "role_output_envelope_valid": true,
+          "role_output_event_expected": true,
+          "role_output_ledger_submitted": false,
+          "role_output_reconciled": false,
+          "role_wait_cleared_after_event": false,
+          "router_event_flag_synced": false,
+          "router_event_recorded": false,
+          "scoped_event_recorded": false,
+          "stale_daemon_snapshot_loaded": false,
+          "stale_snapshot_saved_after_external_event": false,
+          "startup_postcondition_satisfied": true,
+          "startup_reconciliation_owner": "startup_daemon",
+          "startup_row_reconciled": true,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": true
         }
       },
       "submitted_role_output_left_in_ledger": {
@@ -432,10 +667,12 @@
           "canonical_artifact_exists": true,
           "computed_before_reconciliation": false,
           "control_blocker_written": false,
+          "controller_receipt_action_class": "stateful",
           "controller_receipt_payload_quality": "none",
           "controller_receipt_reconciled": false,
           "controller_receipt_status": "none",
           "daemon_alive": true,
+          "generic_receipt_reconciler_touched_startup_row": false,
           "invalid_role_output_accepted": false,
           "lifecycle": "active",
           "next_action_computed": true,
@@ -455,11 +692,40 @@
           "scoped_event_recorded": false,
           "stale_daemon_snapshot_loaded": false,
           "stale_snapshot_saved_after_external_event": false,
-          "stateful_postconditions_applied": false
+          "startup_postcondition_satisfied": false,
+          "startup_reconciliation_owner": "none",
+          "startup_row_reconciled": false,
+          "stateful_postconditions_applied": false,
+          "unsupported_startup_receipt_action": false
         }
       }
     },
     "ok": true
+  },
+  "live_run_projection": {
+    "classification_ok": true,
+    "current_run_can_continue": false,
+    "decision": "blocked_by_startup_reconciliation_false_pm_blocker",
+    "finding_count": 1,
+    "findings": [
+      {
+        "action_type": "initialize_mailbox",
+        "blocker_id": "control-blocker-0001-20260515T120359958280Z",
+        "handling_lane": "pm_repair_decision_required",
+        "id": "startup_reconciled_action_false_pm_blocker",
+        "reconciled_matches": [
+          {
+            "action_id": "controller-action-494fff088b4b343c54c5",
+            "router_scheduler_row_id": "router-row-c4a1756c1abbe5ea3493",
+            "row_state": "reconciled"
+          }
+        ]
+      }
+    ],
+    "ok": true,
+    "run_id": "run-20260515-120231",
+    "run_root": ".flowpilot\\runs\\run-20260515-120231",
+    "skipped": false
   },
   "ok": true,
   "progress": {
@@ -469,15 +735,13 @@
     "stuck_state_count": 0
   },
   "safe_graph": {
-    "edge_count": 39,
+    "edge_count": 42,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 35,
-    "terminal_state_count": 7
+    "state_count": 38,
+    "terminal_state_count": 8
   },
-  "skipped_checks": {
-    "production_conformance_replay": "skipped_with_reason: this model is a model-miss design check; production replay should be added with the Router fix"
-  }
+  "skipped_checks": {}
 }

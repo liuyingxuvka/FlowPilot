@@ -14,7 +14,10 @@ import flowpilot_daemon_reconciliation_model as model
 
 
 ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_daemon_reconciliation_results.json"
+STARTUP_RECONCILIATION_SOURCE = "startup_daemon_bootloader_postcondition"
+MISSING_POSTCONDITION_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
 
 REQUIRED_LABELS = (
     "daemon_tick_starts_durable_reconciliation_barrier",
@@ -26,6 +29,7 @@ REQUIRED_LABELS = (
     "controller_writes_incomplete_rehydrate_receipt",
     "controller_writes_blocked_rehydrate_receipt",
     "daemon_applies_complete_receipt_and_clears_pending",
+    "daemon_reconciles_startup_bootloader_receipt_once",
     "daemon_converts_incomplete_receipt_to_control_blocker",
     "daemon_surfaces_blocked_receipt_as_control_blocker",
     "daemon_reconciles_role_output_to_router_event",
@@ -43,6 +47,10 @@ HAZARD_EXPECTED_FAILURES = {
     "canonical_artifact_flag_not_synced": "canonical role-output artifact existed without synced Router event flag",
     "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
     "computed_from_pending_before_reconciliation": "daemon computed next action from stale pending_action before durable reconciliation",
+    "startup_reconciled_action_false_pm_blocker": "startup bootloader row produced a control blocker after it was already reconciled",
+    "startup_unsupported_receipt_escalated_to_pm": "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied",
+    "startup_row_reconciled_without_postcondition": "startup bootloader row was reconciled without its postcondition",
+    "startup_row_reconciled_by_wrong_owner": "startup bootloader row was reconciled by the wrong owner",
     "role_wait_not_cleared_after_event": "expected role wait remained current after Router recorded the role output",
     "duplicate_role_output_consumption": "role output durable evidence was consumed more than once",
     "blocked_receipt_repeated_instead_of_blocker": "daemon repeated a completed or blocked Controller action instead of clearing or blocking",
@@ -59,8 +67,12 @@ def _state_id(state: model.State) -> str:
         f"returned_again={state.pending_action_returned_again}|"
         f"compute={state.next_action_computed},before_reconcile={state.computed_before_reconciliation}|"
         f"receipt={state.controller_receipt_status},{state.controller_receipt_payload_quality},"
+        f"class={state.controller_receipt_action_class},"
         f"reconciled={state.controller_receipt_reconciled},cleared={state.pending_cleared_after_receipt},"
         f"post={state.stateful_postconditions_applied},blocker={state.control_blocker_written}|"
+        f"startup={state.startup_row_reconciled},{state.startup_postcondition_satisfied},"
+        f"owner={state.startup_reconciliation_owner},generic={state.generic_receipt_reconciler_touched_startup_row},"
+        f"unsupported={state.unsupported_startup_receipt_action}|"
         f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
         f"expected={state.role_output_event_expected},artifact={state.canonical_artifact_exists},"
         f"reconciled={state.role_output_reconciled},event={state.router_event_recorded},"
@@ -193,18 +205,199 @@ def _hazard_report() -> dict[str, object]:
     return {"ok": ok, "hazards": hazards}
 
 
+def _read_json(path: Path) -> dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _resolve_current_run_root() -> tuple[Path | None, str]:
+    current_path = PROJECT_ROOT / ".flowpilot" / "current.json"
+    if not current_path.exists():
+        return None, "no .flowpilot/current.json found"
+    current = _read_json(current_path)
+    run_root_text = current.get("current_run_root")
+    if not isinstance(run_root_text, str) or not run_root_text:
+        return None, ".flowpilot/current.json has no current_run_root"
+    run_root = PROJECT_ROOT / run_root_text
+    if not run_root.exists():
+        return None, f"current run root does not exist: {run_root_text}"
+    return run_root, ""
+
+
+def _action_is_startup_bootloader(action: dict[str, Any]) -> bool:
+    nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+    return bool(
+        action.get("scope_kind") == "startup"
+        and (
+            nested.get("startup_daemon_scheduled") is True
+            or nested.get("startup_daemon_scheduler_source")
+        )
+    )
+
+
+def _startup_reconciliation_satisfied(
+    action: dict[str, Any],
+    row_by_id: dict[str, dict[str, Any]],
+) -> tuple[bool, dict[str, Any] | None]:
+    action_reconciliation = action.get("router_reconciliation")
+    if not isinstance(action_reconciliation, dict):
+        action_reconciliation = {}
+    row = row_by_id.get(str(action.get("router_scheduler_row_id")))
+    row_reconciliation = row.get("reconciliation", {}) if row else {}
+    if not isinstance(row_reconciliation, dict):
+        row_reconciliation = {}
+
+    action_satisfied = (
+        action.get("status") == "done"
+        and action.get("router_reconciliation_status") == "reconciled"
+        and action_reconciliation.get("source") == STARTUP_RECONCILIATION_SOURCE
+        and action_reconciliation.get("bootstrap_flag_satisfied") is True
+    )
+    row_satisfied = bool(
+        row
+        and row.get("router_state") == "reconciled"
+        and row_reconciliation.get("source") == STARTUP_RECONCILIATION_SOURCE
+        and row_reconciliation.get("bootstrap_flag_satisfied") is True
+    )
+    return action_satisfied or row_satisfied, row
+
+
+def _live_run_projection() -> dict[str, object]:
+    run_root, skip_reason = _resolve_current_run_root()
+    if run_root is None:
+        return {
+            "ok": True,
+            "classification_ok": False,
+            "skipped": True,
+            "skip_reason": skip_reason,
+        }
+
+    scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+    action_dir = run_root / "runtime" / "controller_actions"
+    control_block_dir = run_root / "control_blocks"
+
+    if not scheduler_path.exists() or not action_dir.exists():
+        return {
+            "ok": True,
+            "classification_ok": False,
+            "skipped": True,
+            "run_root": str(run_root.relative_to(PROJECT_ROOT)),
+            "skip_reason": "current run does not have runtime scheduler/action ledgers",
+        }
+
+    scheduler = _read_json(scheduler_path)
+    rows = [row for row in scheduler.get("rows", []) if isinstance(row, dict)]
+    row_by_id = {str(row.get("row_id")): row for row in rows if row.get("row_id")}
+
+    actions = []
+    for path in sorted(action_dir.glob("*.json")):
+        payload = _read_json(path)
+        if isinstance(payload, dict):
+            actions.append(payload)
+
+    startup_actions_by_type: dict[str, list[dict[str, Any]]] = {}
+    row_findings: list[dict[str, object]] = []
+    for action in actions:
+        if not _action_is_startup_bootloader(action):
+            continue
+        action_type = str(action.get("action_type", ""))
+        startup_actions_by_type.setdefault(action_type, []).append(action)
+
+        satisfied, row = _startup_reconciliation_satisfied(action, row_by_id)
+        action_reconciliation = action.get("router_reconciliation", {})
+        if not isinstance(action_reconciliation, dict):
+            action_reconciliation = {}
+        if action.get("router_reconciliation_status") == "reconciled" and not satisfied:
+            row_findings.append(
+                {
+                    "id": "startup_reconciled_without_satisfied_postcondition",
+                    "action_id": action.get("action_id"),
+                    "action_type": action_type,
+                    "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                }
+            )
+        if (
+            action.get("router_reconciliation_status") == "reconciled"
+            and action_reconciliation.get("source") not in ("", STARTUP_RECONCILIATION_SOURCE)
+        ):
+            row_findings.append(
+                {
+                    "id": "startup_reconciled_by_wrong_owner",
+                    "action_id": action.get("action_id"),
+                    "action_type": action_type,
+                    "owner": action_reconciliation.get("source"),
+                }
+            )
+        if row and row.get("router_state") == "reconciled":
+            row_reconciliation = row.get("reconciliation", {})
+            if not isinstance(row_reconciliation, dict):
+                row_reconciliation = {}
+            if row_reconciliation.get("source") not in ("", STARTUP_RECONCILIATION_SOURCE):
+                row_findings.append(
+                    {
+                        "id": "startup_scheduler_row_reconciled_by_wrong_owner",
+                        "action_id": action.get("action_id"),
+                        "action_type": action_type,
+                        "row_id": row.get("row_id"),
+                        "owner": row_reconciliation.get("source"),
+                    }
+                )
+
+    blocker_findings: list[dict[str, object]] = []
+    if control_block_dir.exists():
+        for path in sorted(control_block_dir.glob("*.json")):
+            if path.name.endswith(".sealed_repair_packet.json") or path.name == "blocker_repair_policy_snapshot.json":
+                continue
+            blocker = _read_json(path)
+            if blocker.get("source") != MISSING_POSTCONDITION_BLOCKER_SOURCE:
+                continue
+            action_type = str(blocker.get("originating_action_type", ""))
+            matching_startup_actions = startup_actions_by_type.get(action_type, [])
+            reconciled_matches = []
+            for action in matching_startup_actions:
+                satisfied, row = _startup_reconciliation_satisfied(action, row_by_id)
+                if satisfied:
+                    reconciled_matches.append(
+                        {
+                            "action_id": action.get("action_id"),
+                            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                            "row_state": row.get("router_state") if row else None,
+                        }
+                    )
+            if reconciled_matches:
+                blocker_findings.append(
+                    {
+                        "id": "startup_reconciled_action_false_pm_blocker",
+                        "blocker_id": blocker.get("blocker_id"),
+                        "action_type": action_type,
+                        "handling_lane": blocker.get("handling_lane"),
+                        "reconciled_matches": reconciled_matches,
+                    }
+                )
+
+    findings = row_findings + blocker_findings
+    return {
+        "ok": True,
+        "classification_ok": True,
+        "skipped": False,
+        "run_id": run_root.name,
+        "run_root": str(run_root.relative_to(PROJECT_ROOT)),
+        "current_run_can_continue": not findings,
+        "decision": "blocked_by_startup_reconciliation_false_pm_blocker" if findings else "no_startup_reconciliation_false_pm_blocker",
+        "finding_count": len(findings),
+        "findings": findings,
+    }
+
+
 def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
     graph = _build_graph()
     safe = _safe_graph_report(graph)
     progress = _progress_report(graph)
     explorer = _run_flowguard_explorer()
     hazards = _hazard_report()
-    skipped_checks: dict[str, str] = {
-        "production_conformance_replay": (
-            "skipped_with_reason: this model is a model-miss design check; "
-            "production replay should be added with the Router fix"
-        )
-    }
+    live_run_projection = _live_run_projection()
+    skipped_checks: dict[str, str] = {}
+    if live_run_projection.get("skipped"):
+        skipped_checks["live_run_projection"] = f"skipped_with_reason: {live_run_projection.get('skip_reason')}"
     if not json_out_requested:
         skipped_checks["default_results_file"] = (
             "skipped_with_reason: no --json-out path was provided"
@@ -213,11 +406,13 @@ def run_checks(*, json_out_requested: bool = False) -> dict[str, object]:
         "ok": bool(safe["ok"])
         and bool(progress["ok"])
         and bool(explorer["ok"])
-        and bool(hazards["ok"]),
+        and bool(hazards["ok"])
+        and bool(live_run_projection["ok"]),
         "safe_graph": safe,
         "progress": progress,
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
+        "live_run_projection": live_run_projection,
         "skipped_checks": skipped_checks,
     }
 
