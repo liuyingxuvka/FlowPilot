@@ -24,7 +24,10 @@ addressable while the run is active, record
 route work, packet waits, gates, or control blockers first; those waits may
 depend on the missing role.
 
-First load only the current-run control files named by the router action:
+First load only the run-scoped control files named by the router action. If the
+router action includes a `run_id` or `run_root`, that binding wins; treat
+`.flowpilot/current.json` as UI focus/default-target metadata, not as permission
+to switch to another run:
 
 - `.flowpilot/current.json`;
 - the active run `router_state.json`;

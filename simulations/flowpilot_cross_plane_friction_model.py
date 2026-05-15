@@ -133,7 +133,8 @@ class State:
 
     active_task_policy_observed: bool = False
     history_default_hidden: bool = True
-    current_pointer_is_active_authority: bool = True
+    current_pointer_is_ui_focus_only: bool = True
+    active_task_set_has_explicit_authority: bool = True
 
     minimal_repair_strategy_selected: bool = False
 
@@ -321,12 +322,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.active_task_policy_observed:
         yield Transition(
-            "active_task_catalog_uses_current_pointer_not_history",
+            "active_task_catalog_uses_focus_pointer_and_explicit_active_set",
             _inc(
                 state,
                 active_task_policy_observed=True,
                 history_default_hidden=True,
-                current_pointer_is_active_authority=True,
+                current_pointer_is_ui_focus_only=True,
+                active_task_set_has_explicit_authority=True,
             ),
         )
         return
@@ -461,8 +463,10 @@ def active_task_policy_hides_history(state: State, _trace: object) -> InvariantR
         return _ok()
     if not state.history_default_hidden:
         return _fail("completed, abandoned, or stale history is visible by default")
-    if not state.current_pointer_is_active_authority:
-        return _fail("active UI task authority is not the current pointer")
+    if not state.current_pointer_is_ui_focus_only:
+        return _fail("current pointer is not limited to UI focus/default target")
+    if not state.active_task_set_has_explicit_authority:
+        return _fail("active UI task set lacks explicit run-index authority")
     return _ok()
 
 
@@ -630,8 +634,11 @@ def hazard_states() -> dict[str, State]:
         "active_history_visible_by_default": _safe_base(
             history_default_hidden=False,
         ),
-        "active_task_authority_not_current_pointer": _safe_base(
-            current_pointer_is_active_authority=False,
+        "current_pointer_used_as_daemon_authority": _safe_base(
+            current_pointer_is_ui_focus_only=False,
+        ),
+        "active_task_set_missing_explicit_authority": _safe_base(
+            active_task_set_has_explicit_authority=False,
         ),
     }
 

@@ -145,7 +145,7 @@ HAZARD_EXPECTED_FAILURES = {
     "same_node_repair_without_reviewer_recheck": "same-node repair continued without same-review-class recheck",
     "route_mutation_without_current_node_incapability_reason": "route mutation lacked why the current node cannot contain the repair",
     "route_mutation_continues_without_route_recheck": "route mutation continued without resetting and rerunning route checks",
-    "multiple_active_tasks_under_current_json_only": "multiple active UI tasks were exposed under current_json_only authority",
+    "multiple_active_tasks_without_explicit_active_set": "multiple active UI tasks were exposed without explicit active-set authority",
     "role_work_wait_without_status_packet_read": "role-work wait did not expose matching controller status packet",
     "role_work_status_grants_packet_dir": "role-work progress visibility grant exposed more than controller status packet",
     "role_work_status_leaks_findings": "controller-visible progress status leaked sealed body details",

@@ -28,7 +28,7 @@ REQUIRED_LABELS = (
     "node_completion_idempotency_scoped_to_active_node",
     "install_policy_accepts_first_class_cockpit_source",
     "standard_six_roles_ready_or_blocked_before_route_work",
-    "active_task_catalog_uses_current_pointer_not_history",
+    "active_task_catalog_uses_focus_pointer_and_explicit_active_set",
     "minimal_repair_strategy_satisfies_cross_plane_invariants",
 )
 
@@ -56,7 +56,8 @@ HAZARD_EXPECTED_FAILURES = {
     "installed_skill_source_drift": "installed FlowPilot skill source differs from repository source",
     "six_role_liveness_unproven": "standard six roles have neither readiness proof nor an early blocker",
     "active_history_visible_by_default": "completed, abandoned, or stale history is visible by default",
-    "active_task_authority_not_current_pointer": "active UI task authority is not the current pointer",
+    "current_pointer_used_as_daemon_authority": "current pointer is not limited to UI focus/default target",
+    "active_task_set_missing_explicit_authority": "active UI task set lacks explicit run-index authority",
 }
 
 
@@ -93,7 +94,8 @@ def _state_id(state: model.State) -> str:
         f"{state.installed_skill_matches_repository_source}|"
         f"roles={state.standard_six_roles_requested},{state.role_liveness_ready_or_blocked}|"
         f"active_tasks={state.active_task_policy_observed},"
-        f"{state.history_default_hidden},{state.current_pointer_is_active_authority}|"
+        f"{state.history_default_hidden},{state.current_pointer_is_ui_focus_only},"
+        f"{state.active_task_set_has_explicit_authority}|"
         f"strategy={state.minimal_repair_strategy_selected}"
     )
 

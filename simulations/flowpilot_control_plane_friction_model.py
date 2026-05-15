@@ -320,7 +320,7 @@ class State:
     snapshot_published_as_active: bool = False
     snapshot_fresh_against_frontier_and_ledger: bool = False
     multiple_running_index_entries_visible: bool = False
-    active_task_authority: str = "current_json_only"  # current_json_only | explicit_active_set
+    active_task_authority: str = "current_focus_only"  # current_focus_only | explicit_active_set
 
     role_work_wait_pending: bool = False
     role_work_status_packet_exists: bool = True
@@ -1721,8 +1721,8 @@ def same_node_repair_requires_fresh_evidence_and_recheck(state: State, trace) ->
 
 def multi_active_requires_explicit_authority(state: State, trace) -> InvariantResult:
     del trace
-    if state.multiple_running_index_entries_visible and state.active_task_authority == "current_json_only":
-        return InvariantResult.fail("multiple active UI tasks were exposed under current_json_only authority")
+    if state.multiple_running_index_entries_visible and state.active_task_authority != "explicit_active_set":
+        return InvariantResult.fail("multiple active UI tasks were exposed without explicit active-set authority")
     return InvariantResult.pass_()
 
 
@@ -2886,9 +2886,9 @@ def hazard_states() -> dict[str, State]:
             route_draft_repaired_after_check=False,
             role_work_wait_pending=True,
         ),
-        "multiple_active_tasks_under_current_json_only": _safe_base(
+        "multiple_active_tasks_without_explicit_active_set": _safe_base(
             multiple_running_index_entries_visible=True,
-            active_task_authority="current_json_only",
+            active_task_authority="current_focus_only",
         ),
         "role_work_wait_without_status_packet_read": _safe_base(
             role_work_wait_pending=True,
@@ -4981,20 +4981,43 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             },
         )
 
-    stale_running_entries: list[str] = []
+    non_current_running_entries: list[str] = []
     if isinstance(index, dict):
         for item in index.get("runs", []):
             if isinstance(item, dict) and item.get("status") == "running" and item.get("run_id") != run_id:
-                stale_running_entries.append(str(item.get("run_id")))
-    if stale_running_entries:
+                non_current_running_entries.append(str(item.get("run_id")))
+    background_running_entries: list[str] = []
+    if isinstance(snapshot, dict):
+        for item in snapshot.get("background_running_index_entries", []):
+            if isinstance(item, dict) and item.get("run_id"):
+                background_running_entries.append(str(item.get("run_id")))
+            elif isinstance(item, str):
+                background_running_entries.append(item)
+    missing_background_projection = sorted(
+        set(non_current_running_entries) - set(background_running_entries)
+    )
+    if missing_background_projection:
         _add_finding(
             findings,
-            code="non_current_runs_still_marked_running",
+            code="non_current_runs_missing_background_projection",
             severity="warning",
-            summary="non-current index entries are still marked running and require active-authority filtering",
+            summary="non-current running index entries lack background-active projection",
             invariant="multi_active_requires_explicit_authority",
-            evidence={"current_run_id": run_id, "non_current_running_run_ids": stale_running_entries},
+            evidence={
+                "current_run_id": run_id,
+                "non_current_running_run_ids": non_current_running_entries,
+                "missing_background_projection_run_ids": missing_background_projection,
+            },
         )
+    has_explicit_active_authority = (
+        not non_current_running_entries
+        or (
+            isinstance(snapshot, dict)
+            and snapshot.get("current_pointer_is_ui_focus_only") is True
+            and snapshot.get("index_running_entries_are_parallel_run_authority") is True
+            and not missing_background_projection
+        )
+    )
 
     projected_state = _safe_base(
         pm_material_understanding_written=pm_material_written,
@@ -5124,8 +5147,8 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         route_draft_has_nodes=route_draft_has_nodes,
         route_process_check_card_delivered=route_process_check_delivered,
         route_process_check_passed=route_process_check_passed,
-        multiple_running_index_entries_visible=bool(stale_running_entries),
-        active_task_authority="explicit_active_set" if stale_running_entries else "current_json_only",
+        multiple_running_index_entries_visible=bool(non_current_running_entries),
+        active_task_authority="explicit_active_set" if has_explicit_active_authority else "current_focus_only",
     )
     projected_failures = invariant_failures(projected_state)
     error_count = sum(1 for finding in findings if finding.get("severity") == "error")

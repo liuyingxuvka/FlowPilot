@@ -28,10 +28,12 @@ long-form public explanation lives in `docs/protocol.md`.
    The banner means the startup-question gate is open. The run directory,
    `.flowpilot/current.json`, and `.flowpilot/index.json` are pointer/catalog
    state only.
-   Current control state must live under the run directory. The active-run
-   resolver is authoritative: read `.flowpilot/current.json`, then load
-   `.flowpilot/runs/<run-id>/`. Old top-level state files are legacy evidence
-   only and must not silently override an active run. Continuing prior
+   Current control state must live under the run directory. `.flowpilot/current.json`
+   is UI focus/default-target metadata; a daemon, heartbeat, or explicit
+   runtime command that already has a `run_id`/`run_root` must load that bound
+   run directly and must not re-resolve a different run from the current
+   pointer. Old top-level state files are legacy evidence only and must not
+   silently override an active run. Continuing prior
    work still creates a new run and writes a
    `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
    routes, agent IDs, screenshots, icons, or evidence may be referenced as
@@ -720,16 +722,18 @@ gate blockers.
 
 Repeat until complete or blocked:
 
-1. Resolve `.flowpilot/current.json`, then load
+1. Resolve the bound run first. If the router action, heartbeat, or CLI command
+   names a `run_id`/`run_root`, load that run directly; otherwise use
+   `.flowpilot/current.json` only as the foreground UI/default target. Then load
    `.flowpilot/runs/<run-id>/state.json`,
    `.flowpilot/runs/<run-id>/execution_frontier.json`,
    `.flowpilot/runs/<run-id>/crew_ledger.json`,
    `.flowpilot/runs/<run-id>/crew_memory/`, active route,
    active node, continuation mode, last heartbeat or manual-resume record,
    lifecycle evidence, and last checkpoint.
-   `.flowpilot/current.json` to `.flowpilot/runs/<run-id>/` is authoritative;
+   `.flowpilot/current.json` is not daemon authority after a run binding exists;
    top-level legacy state is import or quarantine evidence only and must not
-   override the active run.
+   override the bound run.
 2. Rehydrate all six role identities and work memories before PM runway work.
    Stored agent ids may be resumed only when they belong to the same active
    FlowPilot task-born cohort and a bounded host liveness preflight confirms

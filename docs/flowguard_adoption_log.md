@@ -11541,3 +11541,58 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - If ACK/card-return checks are later internalized, rerun the Router-internal mechanics model and update tests that currently observe explicit `check_card_return_event` waits.
 - Run heavyweight Meta and Capability simulations later if the user wants broader global assurance.
+
+## 2026-05-15 Parallel FlowPilot Run Isolation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed stopped/reopened FlowPilot runs leaving background-board state behind and asked for a root fix that also supports multiple FlowPilot runs in parallel.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/parallel-flowpilot-run-isolation/`
+- Parallel run isolation model: `simulations/flowpilot_parallel_run_isolation_model.py`
+- Parallel run isolation runner/results: `simulations/run_flowpilot_parallel_run_isolation_checks.py`, `simulations/flowpilot_parallel_run_isolation_results.json`
+- Updated adjacent models: `simulations/flowpilot_control_plane_friction_model.py`, `simulations/flowpilot_cross_plane_friction_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate parallel-flowpilot-run-isolation --strict` passed.
+- `python simulations\run_flowpilot_parallel_run_isolation_checks.py --json` passed; 11 known-bad hazards were detected and the safe two-run scenario passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_checks_results.json` passed after live-run reconciliation; results were copied to `simulations\flowpilot_control_plane_friction_results.json`.
+- `python simulations\run_flowpilot_cross_plane_friction_checks.py --json-out simulations\flowpilot_cross_plane_friction_checks_results.json` passed; results were copied to `simulations\flowpilot_cross_plane_friction_results.json`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py` passed.
+- Focused runtime regression group passed: `20 passed, 226 deselected, 2 subtests passed`.
+- `python scripts\check_install.py`, `python scripts\install_flowpilot.py --sync-repo-owned --json`, and `python scripts\audit_local_install_sync.py --json` passed; installed `flowpilot` is source-fresh.
+- `python skills\flowpilot\assets\flowpilot_router.py --root . --json reconcile-run` repaired the live stopped run's stale terminal status projection.
+
+### Findings
+- The daemon now binds to an immutable `run_id/run_root`; daemon ticks and daemon subprocess startup do not reload `.flowpilot/current.json` as authority.
+- `.flowpilot/current.json` is now documented and projected as UI focus/default target metadata only.
+- Non-current running index entries remain background-active instead of being marked `stale_not_current`.
+- `daemon-stop` accepts explicit `run_id`/`run_root`; targeted stop releases only the selected run's lock.
+- Released, error, and terminal locks are no longer refreshed back to active.
+- Controller action ledger summaries now separate active work from done-only history.
+- `reconcile-run` can recover terminal run state from current/index/lifecycle/frontier authorities when older artifacts disagree.
+- Controller prompt cards and protocol docs were updated so Controller does not switch runs from `.flowpilot/current.json` or continue from memory.
+
+### Counterexamples
+- `daemon_reads_current_after_focus_change`
+- `daemon_cross_writes_other_run`
+- `duplicate_writer_same_run`
+- `parallel_runs_forced_singleton`
+- `focus_change_marks_background_run_stale`
+- `untargeted_stop_releases_wrong_run`
+- `targeted_stop_releases_wrong_run`
+- `released_lock_reactivated`
+- `active_status_without_live_process`
+- `done_history_reported_as_active_work`
+- `current_focus_used_as_daemon_authority`
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Full `tests/test_flowpilot_router_runtime.py` timed out after 15 minutes with no pytest progress output; focused affected runtime tests plus FlowGuard checks were used as the final gate.
+
+### Next Actions
+- If future work changes global project-control flow or capability routing, rerun the heavyweight Meta and Capability checks when runtime cost is acceptable.
+- Investigate the full router runtime test-file timeout separately; it appears independent from the focused parallel-run fix.

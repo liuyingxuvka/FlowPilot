@@ -278,9 +278,11 @@ flowchart LR
   M --> D
 ```
 
-This is why FlowPilot can resume from files. The current run is not "whatever
-the chat seems to imply." It is the current pointer, run directory, state,
-frontier, packet ledger, role memory, route files, evidence, and PM decisions.
+This is why FlowPilot can resume from files. The foreground run is not
+"whatever the chat seems to imply." A daemon or resume command follows its
+bound run directory, state, frontier, packet ledger, role memory, route files,
+evidence, and PM decisions. The top-level current pointer is UI focus/default
+target metadata, not permission for an already-bound daemon to switch runs.
 
 ## Child Skills And Companion Capabilities
 
@@ -683,7 +685,7 @@ flowchart LR
   M --> D
 ```
 
-这就是为什么 FlowPilot 可以从文件恢复。当前 run 不是“聊天看起来应该是什么”，而是 current pointer、run directory、state、frontier、packet ledger、role memory、route files、evidence 和 PM decisions。
+这就是为什么 FlowPilot 可以从文件恢复。前台 run 不是“聊天看起来应该是什么”。已经绑定到某一轮的 daemon 或 resume 命令，依据的是自己的 run directory、state、frontier、packet ledger、role memory、route files、evidence 和 PM decisions。顶层 current pointer 只是 UI 焦点/默认目标，不允许已经绑定的 daemon 切换到另一轮。
 
 ## 子技能和伴随能力
 
