@@ -30,5 +30,5 @@
       ordering, daemon pre-core scheduling, and startup row reconciliation.
 - [x] 4.2 Run focused FlowGuard checks and targeted tests while skipping
       heavyweight meta/capability regressions.
-- [ ] 4.3 Sync the local installed FlowPilot skill and verify repo/install
+- [x] 4.3 Sync the local installed FlowPilot skill and verify repo/install
       consistency.
