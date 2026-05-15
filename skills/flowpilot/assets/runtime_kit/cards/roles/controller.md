@@ -124,8 +124,9 @@ Allowed actions:
 - display route signs and required startup text when the router or PM requires
   them. When a router action includes `display_text` and
   `requires_user_dialog_display_confirmation: true`, paste that exact
-  `display_text` in the current user dialog before applying the action, then
-  apply with a `display_confirmation` payload whose `rendered_to` is
+  `display_text` in the current user dialog before writing the Controller
+  action row's `controller-receipt`, then include a receipt payload with
+  `display_confirmation` whose `rendered_to` is
   `user_dialog` and whose `display_text_sha256` matches the router envelope;
   do not add display-gate, evidence, source-health, confirmation, or
   controller/audit metadata to the user-visible body. Generated files, host

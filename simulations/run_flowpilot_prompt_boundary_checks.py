@@ -31,6 +31,9 @@ def _state_id(state: model.State) -> str:
         f"unclear={state.unclear_step_rereads_daemon_and_ledger},{state.unclear_step_returns_to_router}|"
         f"rows=router_between:{state.row_to_row_uses_router_command}|"
         f"partial=wait:{state.partial_table_read_waits_next_tick},error:{state.partial_table_read_errors}|"
+        f"metadata=receipt:{state.controller_row_metadata_receipt_command},"
+        f"apply:{state.controller_row_metadata_apply_required},"
+        f"preserve:{state.controller_row_metadata_preserves_router_apply_intent}|"
         f"reason={state.rejection_reason}"
     )
 
@@ -218,6 +221,23 @@ def _actual_prompt_source_report() -> dict[str, object]:
             router,
             ("Do not call `next`, `apply`, or `run-until-wait` between rows", "row action plus Controller receipt"),
         ),
+        "router_projects_controller_rows_to_receipt_metadata": _contains_all(
+            router,
+            (
+                "controller_completion_command",
+                "controller-receipt",
+                "controller_action_ledger_receipt",
+                "router_pending_apply_required",
+            ),
+        ),
+        "router_projection_disables_controller_apply_required": _contains_all(
+            router,
+            (
+                '"apply_required": False',
+                '"router_pending_apply_required"',
+                '"controller_completion_mode"',
+            ),
+        ),
         "router_heartbeat_prompt_no_continue_router_loop": (
             "continue the router loop" not in router
             and "returning to the FlowPilot router loop" not in router
@@ -229,6 +249,14 @@ def _actual_prompt_source_report() -> dict[str, object]:
         "heartbeat_template_disclaims_manual_router_loop": _contains_all(
             heartbeat_template,
             ("does not authorize a manual Router loop", "daemon status", "Controller action ledger"),
+        ),
+        "controller_display_rows_use_receipt_wording": _contains_all(
+            controller,
+            ("display_confirmation", "controller-receipt", "receipt payload"),
+        ),
+        "skill_daemon_rows_distinguish_receipt_from_apply": _contains_all(
+            skill,
+            ("Controller ledger row", "controller-receipt", "direct pending action"),
         ),
     }
     failures = [name for name, ok in checks.items() if not ok]

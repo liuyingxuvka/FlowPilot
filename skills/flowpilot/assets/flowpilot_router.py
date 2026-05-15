@@ -4905,6 +4905,9 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "status": entry.get("status"),
         "to_role": entry.get("to_role"),
         "completion_class": entry.get("completion_class"),
+        "controller_completion_command": entry.get("controller_completion_command"),
+        "controller_completion_mode": entry.get("controller_completion_mode"),
+        "router_pending_apply_required": entry.get("router_pending_apply_required"),
         "completion_source": entry.get("completion_source"),
         "satisfied_by_external_event": entry.get("satisfied_by_external_event"),
         "controller_receipt_required": entry.get("controller_receipt_required"),
@@ -4922,6 +4925,112 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "expected_receipt_path": entry.get("expected_receipt_path"),
         "updated_at": entry.get("updated_at"),
     }
+
+
+def _controller_receipt_rule_for_display_action(action_type: str) -> str:
+    return (
+        "First paste display_text exactly into the user dialog, then write a "
+        f"Controller receipt for {action_type} with this payload_template as the "
+        "receipt payload. Generated files, host UI updates, and display paths do "
+        "not satisfy user-dialog display evidence."
+    )
+
+
+def _controller_receipt_display_rule(rule: object, action_type: str) -> str:
+    if isinstance(rule, str) and rule.strip():
+        rewritten = rule.replace("before applying", "before writing the Controller receipt for")
+        rewritten = rewritten.replace("before apply", "before writing the Controller receipt")
+        rewritten = rewritten.replace("apply requires", "the Controller receipt requires")
+        rewritten = rewritten.replace("applying this action", "writing the Controller receipt")
+        rewritten = rewritten.replace("applying the action", "writing the Controller receipt")
+        rewritten = rewritten.replace("applying action", "writing the Controller receipt")
+        if "Controller receipt" in rewritten or "controller-receipt" in rewritten:
+            return rewritten
+    return (
+        f"Paste the required display_text in the user dialog before writing the "
+        f"Controller receipt for {action_type}; the receipt payload must include "
+        "display_confirmation.rendered_to=user_dialog with the matching display_text_sha256."
+    )
+
+
+def _controller_ledger_action_view(
+    action: dict[str, Any],
+    *,
+    action_id: str,
+    receipt_path: str,
+    controller_receipt_required: bool,
+) -> dict[str, Any]:
+    """Project a Router action into Controller action-ledger semantics."""
+
+    view = dict(action)
+    original_apply_required = bool(view.get("apply_required", True))
+    original_contract = view.get("next_step_contract") if isinstance(view.get("next_step_contract"), dict) else {}
+    original_contract_apply_required = bool(original_contract.get("apply_required", original_apply_required))
+    router_pending_apply_required = original_apply_required if controller_receipt_required else False
+    contract_router_pending_apply_required = original_contract_apply_required if controller_receipt_required else False
+    completion_command = "controller-receipt" if controller_receipt_required else "router-controlled-wait"
+    completion_mode = "controller_action_ledger_receipt" if controller_receipt_required else "controller_action_ledger_wait"
+
+    view.update(
+        {
+            "controller_action_id": action_id,
+            "controller_receipt_path": receipt_path,
+            "controller_receipt_required": controller_receipt_required,
+            "controller_completion_command": completion_command,
+            "controller_completion_mode": completion_mode,
+            "controller_row_completion_source": "runtime/controller_action_ledger.json",
+            "router_pending_apply_required": router_pending_apply_required,
+            "apply_required": False,
+        }
+    )
+    if "proof_required_before_apply" in view:
+        view["proof_required_before_controller_receipt"] = bool(view.get("proof_required_before_apply"))
+        view["proof_required_before_apply"] = False
+    if "controller_must_display_text_before_apply" in view:
+        view["controller_must_display_text_before_receipt"] = bool(view.get("controller_must_display_text_before_apply"))
+        view["controller_must_display_text_before_apply"] = False
+    if view.get("payload_template_rule"):
+        view["payload_template_rule"] = _controller_receipt_rule_for_display_action(str(view.get("action_type") or "action"))
+    if view.get("controller_display_rule"):
+        view["controller_display_rule"] = _controller_receipt_display_rule(
+            view.get("controller_display_rule"),
+            str(view.get("action_type") or "action"),
+        )
+    if isinstance(view.get("plain_instruction"), str):
+        plain = str(view["plain_instruction"])
+        plain = plain.replace(
+            "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path.",
+            "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
+        )
+        view["plain_instruction"] = plain
+    if isinstance(view.get("spawn_policy"), str):
+        view["spawn_policy"] = str(view["spawn_policy"]).replace(
+            "before_applying_action",
+            "before_controller_receipt",
+        )
+    if controller_receipt_required:
+        view["controller_receipt_instruction"] = (
+            "Complete this Controller ledger row by performing the requested host/controller work, "
+            "then run flowpilot_router.py controller-receipt with the required receipt payload."
+        )
+    else:
+        view["controller_receipt_instruction"] = (
+            "This is a Router-controlled wait row. Do not apply it; follow Router wait/reminder "
+            "metadata until the matching external event or blocker path resolves it."
+        )
+
+    contract = dict(original_contract)
+    contract.update(
+        {
+            "apply_required": False,
+            "router_pending_apply_required": contract_router_pending_apply_required,
+            "controller_completion_command": completion_command,
+            "controller_completion_mode": completion_mode,
+            "controller_receipt_required": controller_receipt_required,
+        }
+    )
+    view["next_step_contract"] = contract
+    return view
 
 
 def _router_scheduler_row_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
@@ -5652,6 +5761,7 @@ def _write_controller_action_entry(
     action_id = str(action.get("controller_action_id") or _controller_action_id_for_action(action))
     action_path = _controller_action_path(run_root, action_id)
     receipt_path = _controller_receipt_path(run_root, action_id)
+    receipt_rel = project_relative(project_root, receipt_path)
     controller_receipt_required = action.get("action_type") not in {
         "await_card_return_event",
         "await_card_bundle_return_event",
@@ -5689,7 +5799,7 @@ def _write_controller_action_entry(
             "controller_visibility": "router_action_metadata_only",
             "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
             "action_path": project_relative(project_root, action_path),
-            "expected_receipt_path": project_relative(project_root, receipt_path),
+            "expected_receipt_path": receipt_rel,
             "controller_receipt_required": controller_receipt_required,
             "router_must_not_mark_done_without_controller_receipt": controller_receipt_required,
             "action": action,
@@ -5711,13 +5821,22 @@ def _write_controller_action_entry(
         entry["repair_of_controller_action_id"] = action.get("repair_of_controller_action_id")
         entry["repair_target_action_type"] = action.get("repair_target_action_type")
         entry["repair_attempt"] = action.get("repair_attempt")
+    controller_action_view = _controller_ledger_action_view(
+        action,
+        action_id=action_id,
+        receipt_path=receipt_rel,
+        controller_receipt_required=controller_receipt_required,
+    )
     entry["router_scheduler_row_id"] = action.get("router_scheduler_row_id")
     entry["scope_kind"] = action.get("scope_kind")
     entry["scope_id"] = action.get("scope_id")
     entry["controller_receipt_required"] = controller_receipt_required
     entry["router_must_not_mark_done_without_controller_receipt"] = controller_receipt_required
-    entry["action"] = {**action, "controller_action_id": action_id, "controller_receipt_path": project_relative(project_root, receipt_path)}
-    entry["expected_receipt_path"] = project_relative(project_root, receipt_path)
+    entry["controller_completion_command"] = controller_action_view.get("controller_completion_command")
+    entry["controller_completion_mode"] = controller_action_view.get("controller_completion_mode")
+    entry["router_pending_apply_required"] = controller_action_view.get("router_pending_apply_required")
+    entry["action"] = controller_action_view
+    entry["expected_receipt_path"] = receipt_rel
     write_json(action_path, entry)
     _record_router_scheduler_row(project_root, run_root, run_state, action, entry)
     action["controller_action_id"] = action_id
@@ -10282,7 +10401,7 @@ def _terminal_summary_payload_contract() -> dict[str, Any]:
             f"summary_markdown must start with this exact attribution line: {TERMINAL_SUMMARY_ATTRIBUTION}",
             "displayed_summary_sha256 must equal sha256(summary_markdown)",
             "source_paths_reviewed, when supplied, may cite only files inside the current run root",
-            "Controller must show this same summary text to the user before applying the action",
+            "Controller must show this same summary text to the user before writing the Controller receipt or applying the direct terminal action",
         ],
         description=(
             "Write the final FlowPilot run summary after terminal mode is reached. "
@@ -14709,7 +14828,7 @@ def _display_plan_user_dialog_fields(plan_projection: dict[str, Any]) -> dict[st
             "display_required": True,
             "controller_must_display_text_before_apply": True,
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": f"Paste this exact {display_label} display_text in the user dialog before applying sync_display_plan; display_plan.json or host-plan replacement alone does not satisfy display.",
+            "controller_display_rule": f"Paste this exact {display_label} display_text in the user dialog before writing the Controller receipt for sync_display_plan; display_plan.json or host-plan replacement alone does not satisfy display.",
         },
         display_kind=display_kind,
         display_text=display_text,
@@ -14745,7 +14864,7 @@ def _display_route_sign_user_dialog_fields(route_sign: dict[str, Any]) -> dict[s
             "display_required": True,
             "controller_must_display_text_before_apply": True,
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": "Paste this exact FlowPilot Route Sign Mermaid in the user dialog before applying sync_display_plan; display_plan.json or generated files alone do not satisfy display.",
+            "controller_display_rule": "Paste this exact FlowPilot Route Sign Mermaid in the user dialog before writing the Controller receipt for sync_display_plan; display_plan.json or generated files alone do not satisfy display.",
         },
         display_kind="route_map",
         display_text=display_text,
@@ -14771,7 +14890,7 @@ def _startup_banner_display() -> dict[str, Any]:
             "display_required": True,
             "controller_must_display_text_before_apply": True,
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": "Paste this exact startup banner display_text in the user dialog before applying emit_startup_banner; apply requires display_confirmation.rendered_to=user_dialog with matching display_text_sha256.",
+            "controller_display_rule": "Paste this exact startup banner display_text in the user dialog before writing the Controller receipt for emit_startup_banner; the Controller receipt requires display_confirmation.rendered_to=user_dialog with matching display_text_sha256.",
         },
         display_kind="startup_banner",
         display_text=display_text,
@@ -14802,7 +14921,7 @@ def _role_spawn_action_extra(state: dict[str, Any]) -> dict[str, Any]:
             {
                 "requires_payload": "role_agents",
                 "requires_host_spawn": True,
-                "spawn_policy": "spawn_all_six_fresh_current_task_agents_before_applying_action",
+                "spawn_policy": "spawn_all_six_fresh_current_task_agents_before_controller_receipt",
                 "payload_contract": _role_slots_payload_contract(),
                 "role_spawn_request": [
                     {
@@ -17485,7 +17604,7 @@ def _write_display_surface_status(
             "display_surface_receipt": display_receipt,
             "host_display_surface_verified": bool(display_receipt.get("host_display_surface_verified")),
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": "Controller must paste the router-provided display_text Mermaid block in chat before applying this action; generated files alone do not satisfy display.",
+            "controller_display_rule": "Controller must paste the router-provided display_text Mermaid block in chat before writing the Controller receipt for this action; generated files alone do not satisfy display.",
             "cockpit_status": "host_verified_open" if selected_surface == "cockpit" else "not_started_in_router_runtime",
             "cockpit_probe_required_for_requested_cockpit": "cockpit" in requested_normalized,
             "reviewer_fallback_check_required_for_requested_cockpit": "cockpit" in requested_normalized,
@@ -27192,7 +27311,7 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
                 },
             },
             "payload_contract": _heartbeat_payload_contract(run_state["run_id"], automation_id_hint),
-            "proof_required_before_apply": True,
+            "proof_required_before_controller_receipt": True,
         },
     )
 
@@ -27446,7 +27565,7 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
             "display_required": True,
             "controller_must_display_text_before_apply": True,
             "generated_files_alone_satisfy_chat_display": False,
-            "controller_display_rule": "Paste this exact startup route-sign display_text in the user dialog before applying write_display_surface_status; generated files alone do not satisfy display.",
+            "controller_display_rule": "Paste this exact startup route-sign display_text in the user dialog before writing the Controller receipt for write_display_surface_status; generated files alone do not satisfy display.",
         },
         display_kind="startup_route_sign",
         display_text=route_sign["markdown"],

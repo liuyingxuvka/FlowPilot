@@ -787,6 +787,46 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         for field in fields:
             self.assertIn(field, encoded)
 
+    def assert_controller_receipt_action_projection(
+        self,
+        action: dict,
+        *,
+        receipt_required: bool = True,
+        router_pending_apply_required: bool = True,
+    ) -> None:
+        completion_command = "controller-receipt" if receipt_required else "router-controlled-wait"
+        completion_mode = "controller_action_ledger_receipt" if receipt_required else "controller_action_ledger_wait"
+        self.assertEqual(action["controller_completion_command"], completion_command)
+        self.assertEqual(action["controller_completion_mode"], completion_mode)
+        self.assertEqual(action["controller_receipt_required"], receipt_required)
+        self.assertEqual(action["router_pending_apply_required"], router_pending_apply_required)
+        self.assertFalse(action["apply_required"])
+        contract = action["next_step_contract"]
+        self.assertEqual(contract["controller_completion_command"], completion_command)
+        self.assertEqual(contract["controller_completion_mode"], completion_mode)
+        self.assertEqual(contract["controller_receipt_required"], receipt_required)
+        self.assertEqual(contract["router_pending_apply_required"], router_pending_apply_required)
+        self.assertFalse(contract["apply_required"])
+
+    def assert_controller_receipt_entry_projection(
+        self,
+        entry: dict,
+        *,
+        receipt_required: bool = True,
+        router_pending_apply_required: bool = True,
+    ) -> None:
+        completion_command = "controller-receipt" if receipt_required else "router-controlled-wait"
+        completion_mode = "controller_action_ledger_receipt" if receipt_required else "controller_action_ledger_wait"
+        self.assertEqual(entry["controller_completion_command"], completion_command)
+        self.assertEqual(entry["controller_completion_mode"], completion_mode)
+        self.assertEqual(entry["controller_receipt_required"], receipt_required)
+        self.assertEqual(entry["router_pending_apply_required"], router_pending_apply_required)
+        self.assert_controller_receipt_action_projection(
+            entry["action"],
+            receipt_required=receipt_required,
+            router_pending_apply_required=router_pending_apply_required,
+        )
+
     def payload_for_action(self, action: dict, payload: dict | None = None) -> dict:
         payload = dict(payload or {})
         if action.get("requires_user_dialog_display_confirmation"):
@@ -3454,7 +3494,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", heartbeat_action["automation_update_request"]["prompt"])
         self.assertEqual(heartbeat_action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
         self.assertEqual(heartbeat_action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
-        self.assertTrue(heartbeat_action["proof_required_before_apply"])
+        self.assert_controller_receipt_action_projection(heartbeat_action)
+        self.assertTrue(heartbeat_action["proof_required_before_controller_receipt"])
+        self.assertFalse(heartbeat_action.get("proof_required_before_apply", False))
         self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
         self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
         self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
@@ -3595,6 +3637,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         load_core_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "load_controller_core")
         action_path = run_root / "runtime" / "controller_actions" / f"{load_core_row['action_id']}.json"
         entry = read_json(action_path)
+        self.assert_controller_receipt_entry_projection(entry)
         entry.pop("router_reconciliation_status", None)
         entry.pop("router_reconciled_at", None)
         entry.pop("router_reconciliation", None)
@@ -4345,6 +4388,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action_id = result["ticks"][0]["controller_action_id"]
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
         self.assertEqual(action_record["action_type"], "sync_display_plan")
+        self.assert_controller_receipt_entry_projection(action_record)
 
         router.record_controller_action_receipt(
             root,
@@ -4533,6 +4577,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action_record["completion_source"], "router_external_event_reconciliation")
         self.assertEqual(action_record["satisfied_by_external_event"], "reviewer_reports_startup_facts")
         self.assertFalse(action_record["controller_receipt_required"])
+        self.assert_controller_receipt_entry_projection(
+            action_record,
+            receipt_required=False,
+            router_pending_apply_required=False,
+        )
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         waiting_ids = [item["action_id"] for item in ledger["actions"] if item["status"] == "waiting"]
         self.assertNotIn(action_id, waiting_ids)
@@ -5740,6 +5789,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         action = router.run_until_wait(root, new_invocation=True)
         self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        self.assertTrue(action["apply_required"])
+        self.assertTrue(action["next_step_contract"]["apply_required"])
+        self.assertNotIn("controller_completion_command", action)
+        self.assertNotIn("router_pending_apply_required", action)
         self.assertTrue(action["requires_host_automation"])
         self.assertEqual(action["requires_payload"], "startup_intake_result")
         self.assertEqual(action["payload_contract"]["schema_version"], "flowpilot.payload_contract.v1")
@@ -5780,9 +5833,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         entry = read_json(run_root / "runtime" / "controller_actions" / f"{banner_row['action_id']}.json")
         action = entry["action"]
         self.assertEqual(action["action_type"], "emit_startup_banner")
+        self.assert_controller_receipt_action_projection(action)
         self.assertTrue(action["display_required"])
         self.assertEqual(action["display_text_format"], "plain_text")
-        self.assertTrue(action["controller_must_display_text_before_apply"])
+        self.assertFalse(action["controller_must_display_text_before_apply"])
+        self.assertTrue(action["controller_must_display_text_before_receipt"])
         self.assertTrue(action["requires_user_dialog_display_confirmation"])
         self.assertEqual(action["required_render_target"], "user_dialog")
         self.assertEqual(action["requires_payload"], "display_confirmation")
@@ -5804,8 +5859,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             },
         )
         self.assertIn("display_text exactly", action["payload_template_rule"])
+        self.assertIn("Controller receipt", action["payload_template_rule"])
+        self.assertNotIn("apply the action", action["payload_template_rule"])
         self.assertFalse(action["generated_files_alone_satisfy_chat_display"])
         self.assertIn("user dialog", action["controller_display_rule"])
+        self.assertIn("Controller receipt", action["controller_display_rule"])
+        self.assertNotIn("before applying", action["controller_display_rule"])
         self.assertIn("```text", action["display_text"])
         self.assertIn("FlowPilot", action["display_text"])
         self.assertIn("Developer: Yingxu Liu", action["display_text"])
@@ -5865,8 +5924,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         root, run_root, action, row = scheduled_role_slots_action()
 
+        self.assert_controller_receipt_action_projection(action)
         self.assertTrue(action["requires_host_spawn"])
         self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
+        self.assertEqual(action["spawn_policy"], "spawn_all_six_fresh_current_task_agents_before_controller_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],
             "role_agents[].role_key",
@@ -7789,6 +7850,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "write_terminal_summary")
+        self.assertTrue(action["apply_required"])
+        self.assertTrue(action["next_step_contract"]["apply_required"])
+        self.assertIn(
+            "direct terminal action",
+            json.dumps(action["payload_contract"]["structural_requirements"], sort_keys=True),
+        )
 
         bad_summary = "Final Summary\n\nNo FlowPilot attribution.\n"
         with self.assertRaisesRegex(router.RouterError, "GitHub attribution"):

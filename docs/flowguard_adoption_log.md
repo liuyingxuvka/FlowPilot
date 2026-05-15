@@ -11719,3 +11719,68 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Run heavyweight Meta/Capability checks later if a broader project-control or capability-routing change is made, or before a release confidence claim.
+
+## 2026-05-15 Startup Bootloader Blocker Classification Model-Miss Upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run created a PM repair control-blocker for `load_controller_core`, later reconciled the same startup bootloader row successfully, but still left a queued PM repair action.
+- Status: completed_focused_model_update_runtime_fix_planned
+
+### Model Evidence
+- Updated model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Updated runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Model-only result: `simulations/flowpilot_daemon_reconciliation_results.json`
+- Live audit result: `tmp/flowpilot_daemon_reconciliation_live_audit.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json --skip-live-projection` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out tmp\flowpilot_daemon_reconciliation_live_audit.json` intentionally failed on the historical run and reported four startup-blocker findings.
+- `python -m py_compile simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py` passed.
+
+### Findings
+- The previous focused model caught some false-PM startup blockers but did not separately model retry-lane classification, same-action blocker cleanup after successful reconciliation, or stale PM repair action queueing.
+- The model now rejects startup missing-postcondition blockers that go to PM before the mechanical reissue budget is exhausted.
+- The model now rejects a same-startup-action blocker that remains unresolved after the row and postcondition are reconciled.
+- The model now rejects any PM repair action queued after successful startup bootloader reconciliation.
+- The live projection now splits the observed `load_controller_core` incident into `startup_missing_postcondition_pm_lane_before_reissue`, `startup_reconciled_action_false_pm_blocker`, `startup_blocker_not_resolved_after_success`, and `startup_reconciled_action_queued_pm_repair`.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- No production Router behavior was changed in this pass; the runtime repair remains planned.
+
+### Next Actions
+- Runtime repair should centralize startup bootloader reconciliation ownership, classify startup postcondition misses as mechanical reissue until the retry budget is exhausted, and resolve same-action blockers plus queued PM repair rows when the startup postcondition is later satisfied.
+
+## 2026-05-15 Controller Receipt Action Metadata Separation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Controller daemon ledger rows embedded raw Router action metadata that still described the direct `apply` path, conflicting with the Controller row completion path through `controller-receipt`.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `separate-controller-receipt-action-metadata`
+
+### Model Evidence
+- OpenSpec: `openspec/changes/separate-controller-receipt-action-metadata/`
+- Updated model: `simulations/flowpilot_prompt_boundary_model.py`
+- Updated runner/source check: `simulations/run_flowpilot_prompt_boundary_checks.py`
+- Post-fix result: `tmp/flowguard_background/prompt_boundary_post_controller_receipt_metadata.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate separate-controller-receipt-action-metadata --strict` passed.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out tmp\flowguard_background\prompt_boundary_post_controller_receipt_metadata.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "recorded_external_event_closes_matching_wait_action_row or startup_banner_action_and_result_are_user_visible or scheduled_startup_heartbeat_is_bootloader_boundary_before_controller_core or reconciled_scheduler_row_receipt_replay_does_not_create_pm_blocker or startup_waits_for_answers_before_banner_or_controller or background_agents_allow_requires_six_fresh_live_agent_records or sync_display_plan_done_receipt_updates_router_fact_before_next_action or terminal_summary_payload_requires_attribution_display_and_run_root_sources"` passed with 8 selected tests.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json --skip-live-projection` passed for the parallel model-only daemon reconciliation update.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+
+### Findings
+- Controller action ledger rows now expose `controller_completion_command: controller-receipt`, `controller_completion_mode: controller_action_ledger_receipt`, and `apply_required: false`.
+- Raw direct pending action apply intent is preserved only under `router_pending_apply_required`; Router-controlled wait rows set that field to `false`.
+- Startup banner, role slot spawn, heartbeat automation, display sync, Controller core, and Controller card/skill wording now describe Controller row completion as a receipt path.
+- Direct startup intake and direct terminal summary actions still expose the normal apply path.
+
+### Skipped Steps
+- Background `python simulations\run_meta_checks.py` and `python simulations\run_capability_checks.py` were launched with the repository log contract, then cancelled and marked `cancelled_by_user_instruction` after the user explicitly said the two models are too heavy and can be skipped for this pass.
+
+### Next Actions
+- If a later change modifies global project-control or capability-routing behavior, rerun heavyweight Meta/Capability checks from a fresh background log root before making a broad confidence claim.

@@ -24,6 +24,7 @@ VALID_DAEMON_LEDGER_PROMPT_SET = "valid_daemon_ledger_prompt_set"
 VALID_PRE_DAEMON_BOOTLOADER_PROMPT = "valid_pre_daemon_bootloader_prompt"
 VALID_HEARTBEAT_LIVE_DAEMON_RESUME = "valid_heartbeat_live_daemon_resume"
 VALID_HEARTBEAT_STALE_DAEMON_REPAIR = "valid_heartbeat_stale_daemon_repair"
+VALID_CONTROLLER_LEDGER_RECEIPT_METADATA = "valid_controller_ledger_receipt_metadata"
 
 DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT = "daemon_prompt_prefers_run_until_wait"
 HEARTBEAT_CONTINUES_ROUTER_LOOP = "heartbeat_continues_router_loop"
@@ -31,12 +32,14 @@ UNCLEAR_STEP_RETURNS_TO_ROUTER = "unclear_step_returns_to_router"
 ROW_TO_ROW_USES_ROUTER_COMMAND = "row_to_row_uses_router_command"
 PARTIAL_TABLE_READ_ERRORS = "partial_table_read_errors"
 MISSING_STARTUP_PHASE_SPLIT = "missing_startup_phase_split"
+CONTROLLER_LEDGER_METADATA_USES_APPLY = "controller_ledger_metadata_uses_apply"
 
 VALID_SCENARIOS = (
     VALID_DAEMON_LEDGER_PROMPT_SET,
     VALID_PRE_DAEMON_BOOTLOADER_PROMPT,
     VALID_HEARTBEAT_LIVE_DAEMON_RESUME,
     VALID_HEARTBEAT_STALE_DAEMON_REPAIR,
+    VALID_CONTROLLER_LEDGER_RECEIPT_METADATA,
 )
 NEGATIVE_SCENARIOS = (
     DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT,
@@ -45,6 +48,7 @@ NEGATIVE_SCENARIOS = (
     ROW_TO_ROW_USES_ROUTER_COMMAND,
     PARTIAL_TABLE_READ_ERRORS,
     MISSING_STARTUP_PHASE_SPLIT,
+    CONTROLLER_LEDGER_METADATA_USES_APPLY,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -55,6 +59,7 @@ EXPECTED_REJECTIONS = {
     ROW_TO_ROW_USES_ROUTER_COMMAND: "row_completion_skips_controller_receipt",
     PARTIAL_TABLE_READ_ERRORS: "partial_table_read_not_deferred",
     MISSING_STARTUP_PHASE_SPLIT: "pre_daemon_and_daemon_phases_not_distinguished",
+    CONTROLLER_LEDGER_METADATA_USES_APPLY: "controller_ledger_metadata_confuses_apply_with_receipt",
 }
 
 
@@ -92,6 +97,9 @@ class State:
     row_to_row_uses_router_command: bool = False
     partial_table_read_waits_next_tick: bool = False
     partial_table_read_errors: bool = False
+    controller_row_metadata_receipt_command: bool = False
+    controller_row_metadata_apply_required: bool = False
+    controller_row_metadata_preserves_router_apply_intent: bool = False
     rejection_reason: str = "none"
 
 
@@ -217,6 +225,24 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.scenario == VALID_CONTROLLER_LEDGER_RECEIPT_METADATA:
+        yield Transition(
+            f"accept_{VALID_CONTROLLER_LEDGER_RECEIPT_METADATA}",
+            replace(
+                state,
+                status="accepted",
+                daemon_started=True,
+                controller_attaches_to_daemon_status=True,
+                controller_reads_action_ledger=True,
+                controller_writes_receipt=True,
+                diagnostic_router_commands_only=True,
+                controller_row_metadata_receipt_command=True,
+                controller_row_metadata_apply_required=False,
+                controller_row_metadata_preserves_router_apply_intent=True,
+            ),
+        )
+        return
+
     if state.scenario in EXPECTED_REJECTIONS:
         updates = {"status": "rejected", "rejection_reason": EXPECTED_REJECTIONS[state.scenario]}
         if state.scenario == DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT:
@@ -231,6 +257,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             updates.update(daemon_started=True, partial_table_read_errors=True)
         elif state.scenario == MISSING_STARTUP_PHASE_SPLIT:
             updates.update(startup_external_work_after_daemon=True)
+        elif state.scenario == CONTROLLER_LEDGER_METADATA_USES_APPLY:
+            updates.update(
+                daemon_started=True,
+                controller_reads_action_ledger=True,
+                controller_row_metadata_apply_required=True,
+                controller_row_metadata_receipt_command=False,
+            )
         yield Transition(f"reject_{state.scenario}", replace(state, **updates))
         return
 
@@ -298,6 +331,17 @@ def accepted_prompts_defer_partial_table_reads(state: State, _trace) -> Invarian
     return InvariantResult.pass_()
 
 
+def accepted_controller_ledger_metadata_uses_receipt_projection(state: State, _trace) -> InvariantResult:
+    if state.status == "accepted" and state.scenario == VALID_CONTROLLER_LEDGER_RECEIPT_METADATA:
+        if not state.controller_row_metadata_receipt_command:
+            return InvariantResult.fail("accepted Controller row metadata lacks controller-receipt command")
+        if state.controller_row_metadata_apply_required:
+            return InvariantResult.fail("accepted Controller row metadata still exposes apply_required as row completion")
+        if not state.controller_row_metadata_preserves_router_apply_intent:
+            return InvariantResult.fail("accepted Controller row metadata loses original Router apply intent")
+    return InvariantResult.pass_()
+
+
 def negative_scenarios_rejected(state: State, _trace) -> InvariantResult:
     if state.scenario in NEGATIVE_SCENARIOS and state.status == "accepted":
         return InvariantResult.fail(f"known-bad prompt scenario was accepted: {state.scenario}")
@@ -335,6 +379,11 @@ INVARIANTS = (
         name="accepted_prompts_defer_partial_table_reads",
         description="Prompts defer partial table reads to the next tick instead of treating them as corruption.",
         predicate=accepted_prompts_defer_partial_table_reads,
+    ),
+    Invariant(
+        name="accepted_controller_ledger_metadata_uses_receipt_projection",
+        description="Controller ledger row metadata exposes receipt completion while preserving original Router apply intent separately.",
+        predicate=accepted_controller_ledger_metadata_uses_receipt_projection,
     ),
     Invariant(
         name="negative_scenarios_rejected",

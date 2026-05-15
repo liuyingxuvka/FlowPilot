@@ -21,6 +21,11 @@ STARTUP_BOOTLOADER_RECEIPT_SOURCE = "startup_bootloader_controller_receipt"
 STARTUP_RECONCILIATION_SOURCES = (STARTUP_RECONCILIATION_SOURCE, STARTUP_BOOTLOADER_RECEIPT_SOURCE)
 MISSING_POSTCONDITION_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
 CONTROLLER_BOUNDARY_RECONCILIATION_SOURCE = "router_owned_controller_boundary_confirmation_reclaim"
+STARTUP_BLOCKER_RECONCILIATION_RESOLUTIONS = {
+    "resolved_by_startup_reconciliation",
+    "superseded_by_startup_reconciliation",
+    "superseded_by_successful_startup_reconciliation",
+}
 
 REQUIRED_LABELS = (
     "daemon_tick_starts_durable_reconciliation_barrier",
@@ -33,6 +38,7 @@ REQUIRED_LABELS = (
     "controller_writes_blocked_rehydrate_receipt",
     "daemon_applies_complete_receipt_and_clears_pending",
     "daemon_reconciles_startup_bootloader_receipt_once",
+    "daemon_resolves_prior_startup_blocker_and_supersedes_pm_row",
     "controller_boundary_receipt_artifact_seen_with_stale_flags",
     "daemon_reclaims_controller_boundary_projection_from_artifact",
     "daemon_converts_incomplete_receipt_to_control_blocker",
@@ -56,6 +62,9 @@ HAZARD_EXPECTED_FAILURES = {
     "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
     "computed_from_pending_before_reconciliation": "daemon computed next action from stale pending_action before durable reconciliation",
     "startup_reconciled_action_false_pm_blocker": "startup bootloader row produced a control blocker after it was already reconciled",
+    "startup_missing_postcondition_pm_lane_before_reissue": "startup bootloader missing postcondition was sent to PM before mechanical reissue budget was exhausted",
+    "startup_blocker_not_resolved_after_success": "startup bootloader blocker stayed active after its postcondition was reconciled",
+    "startup_reconciled_action_queued_pm_repair": "PM repair action was queued after startup bootloader postcondition reconciliation",
     "startup_unsupported_receipt_escalated_to_pm": "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied",
     "startup_row_reconciled_without_postcondition": "startup bootloader row was reconciled without its postcondition",
     "startup_row_reconciled_by_wrong_owner": "startup bootloader row was reconciled by the wrong owner",
@@ -85,6 +94,10 @@ def _state_id(state: model.State) -> str:
         f"class={state.controller_receipt_action_class},"
         f"reconciled={state.controller_receipt_reconciled},cleared={state.pending_cleared_after_receipt},"
         f"post={state.stateful_postconditions_applied},blocker={state.control_blocker_written}|"
+        f"blocker_lane={state.control_blocker_lane},retry={state.control_blocker_direct_retry_budget},"
+        f"resolved={state.control_blocker_resolved_by_reconciliation},"
+        f"pm_action={state.pm_repair_action_queued},pm_superseded={state.pm_repair_action_superseded},"
+        f"budget_exhausted={state.startup_reissue_budget_exhausted}|"
         f"startup={state.startup_row_reconciled},{state.startup_postcondition_satisfied},"
         f"owner={state.startup_reconciliation_owner},generic={state.generic_receipt_reconciler_touched_startup_row},"
         f"unsupported={state.unsupported_startup_receipt_action}|"
@@ -549,6 +562,7 @@ def _live_run_projection() -> dict[str, object]:
             blocker = _read_json(path)
             if blocker.get("source") != MISSING_POSTCONDITION_BLOCKER_SOURCE:
                 continue
+            blocker_id = str(blocker.get("blocker_id") or "")
             action_type = str(blocker.get("originating_action_type", ""))
             matching_startup_actions = startup_actions_by_type.get(action_type, [])
             reconciled_matches = []
@@ -562,13 +576,76 @@ def _live_run_projection() -> dict[str, object]:
                             "row_state": row.get("router_state") if row else None,
                         }
                     )
-            if reconciled_matches:
+            resolved_by_reconciliation = (
+                str(blocker.get("resolution_status") or "")
+                in STARTUP_BLOCKER_RECONCILIATION_RESOLUTIONS
+            )
+            queued_pm_actions = []
+            if blocker_id:
+                for action in actions:
+                    nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+                    if action.get("action_type") != "handle_control_blocker":
+                        continue
+                    if action.get("status") in {"done", "reconciled", "cancelled", "skipped", "resolved", "superseded"}:
+                        continue
+                    target_role = str(action.get("to_role") or nested.get("to_role") or "")
+                    if target_role != "project_manager":
+                        continue
+                    if blocker_id not in json.dumps(action, sort_keys=True):
+                        continue
+                    queued_pm_actions.append(
+                        {
+                            "action_id": action.get("action_id"),
+                            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                            "status": action.get("status"),
+                            "target_role": target_role,
+                        }
+                    )
+            if (
+                matching_startup_actions
+                and blocker.get("handling_lane") == "pm_repair_decision_required"
+                and not bool(blocker.get("direct_retry_budget_exhausted"))
+                and int(blocker.get("direct_retry_budget") or 0) < 1
+            ):
+                blocker_findings.append(
+                    {
+                        "id": "startup_missing_postcondition_pm_lane_before_reissue",
+                        "blocker_id": blocker.get("blocker_id"),
+                        "action_type": action_type,
+                        "handling_lane": blocker.get("handling_lane"),
+                        "policy_row_id": blocker.get("policy_row_id"),
+                        "direct_retry_budget": blocker.get("direct_retry_budget"),
+                        "direct_retry_budget_exhausted": blocker.get("direct_retry_budget_exhausted"),
+                    }
+                )
+            if reconciled_matches and not resolved_by_reconciliation:
                 blocker_findings.append(
                     {
                         "id": "startup_reconciled_action_false_pm_blocker",
                         "blocker_id": blocker.get("blocker_id"),
                         "action_type": action_type,
                         "handling_lane": blocker.get("handling_lane"),
+                        "resolution_status": blocker.get("resolution_status"),
+                        "reconciled_matches": reconciled_matches,
+                    }
+                )
+                blocker_findings.append(
+                    {
+                        "id": "startup_blocker_not_resolved_after_success",
+                        "blocker_id": blocker.get("blocker_id"),
+                        "action_type": action_type,
+                        "handling_lane": blocker.get("handling_lane"),
+                        "resolution_status": blocker.get("resolution_status"),
+                        "reconciled_matches": reconciled_matches,
+                    }
+                )
+            if reconciled_matches and queued_pm_actions:
+                blocker_findings.append(
+                    {
+                        "id": "startup_reconciled_action_queued_pm_repair",
+                        "blocker_id": blocker.get("blocker_id"),
+                        "action_type": action_type,
+                        "queued_pm_actions": queued_pm_actions,
                         "reconciled_matches": reconciled_matches,
                     }
                 )
