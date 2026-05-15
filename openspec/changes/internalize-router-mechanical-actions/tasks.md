@@ -17,7 +17,7 @@
 - [x] 3.1 Move `check_prompt_manifest` and `check_packet_ledger` to Router-internal consumption.
 - [ ] 3.2 Move safe ACK/check wait bookkeeping to Router-internal consumption without marking missing evidence as done.
 - [x] 3.3 Move `write_startup_mechanical_audit` to Router-internal proof writing once prerequisites are satisfied.
-- [ ] 3.4 Split local display projection generation from user-dialog display confirmation without claiming display proof.
+- [x] 3.4 Clarify `sync_display_plan` ownership so startup waiting sync is an internal host-plan projection, while canonical route display still keeps its user-dialog confirmation gate.
 
 ## 4. Verification And Reconciliation
 

@@ -5414,6 +5414,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(action["requires_user_dialog_display_confirmation"])
         self.assertTrue(action["user_visible_display_suppressed"])
         self.assertEqual(action["internal_display_reason"], "waiting_for_pm_route_before_canonical_route")
+        self.assertIn("internal waiting-for-PM-route placeholder", action["summary"])
+        self.assertIn("no user-dialog route map is required", action["summary"])
+        self.assertNotIn("Display the route map in the user dialog", action["summary"])
         self.assertNotIn("display_text", action)
         self.assertNotIn("payload_template", action)
         policy = action["controller_user_reporting_policy"]
@@ -5468,6 +5471,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(action["route_sign_display_required"])
         self.assertIn(action["route_sign_source_kind"], {"flow_json", "route_state_snapshot"})
         self.assertNotEqual(action["route_sign_source_kind"], "flow_draft")
+        self.assertIn("Display the canonical FlowPilot Route Sign", action["summary"])
+        self.assertIn("committed route state", action["summary"])
         self.assertIn("# FlowPilot Route Sign", action["display_text"])
         self.assertIn("```mermaid", action["display_text"])
         self.assertIn("route=route-001", action["display_text"])

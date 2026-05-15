@@ -11895,3 +11895,36 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Rerun heavyweight Meta/Capability checks later before making a broad release-level claim about global project-control and capability-routing surfaces.
+
+## 2026-05-15 Sync Display Plan Summary Clarification
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Startup `sync_display_plan` suppressed user-visible display correctly, but its action summary still told Controller to display a route map in the user dialog before any canonical PM route existed.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `internalize-router-mechanical-actions`
+
+### Model Evidence
+- Route display model: `simulations/flowpilot_route_display_model.py`
+- Router internal mechanics model: `simulations/flowpilot_router_internal_mechanics_model.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- Background `python simulations\run_flowpilot_route_display_checks.py --json-out simulations\flowpilot_route_display_results.json` passed with exit code `0`.
+- Background `python simulations\run_flowpilot_router_internal_mechanics_checks.py` passed with exit code `0`.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "display_plan_is_controller_synced_projection_from_pm_plan" -q` passed with 1 selected test.
+- `openspec validate internalize-router-mechanical-actions --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and synchronized the installed `flowpilot` skill from repository source.
+- `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed with installed `flowpilot` source-fresh.
+- `python scripts\smoke_autopilot.py --fast` passed and reused existing Meta/Capability proofs without rerunning those heavyweight checks.
+
+### Findings
+- `sync_display_plan` now describes startup waiting sync as internal host-plan projection and says no user-dialog route map is required until a canonical PM route exists.
+- Canonical route sync still describes displaying the FlowPilot Route Sign in the user dialog before syncing the host visible plan from committed route state.
+- The runtime behavior remains unchanged: startup waiting sync stays suppressed from user-visible chat, and canonical route display keeps its user-dialog confirmation boundary.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- If a later change moves `sync_display_plan` from Controller work into fully Router-internal execution, rerun the focused ownership model and update the Controller/display boundary tests before marking that broader slice complete.

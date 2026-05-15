@@ -27905,12 +27905,32 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
         action_type="sync_display_plan",
         actor="controller",
         label="controller_syncs_display_plan",
-        summary="Display the route map in the user dialog, then replace the host visible plan from the run display_plan.json or clear it to a waiting-for-PM placeholder.",
+        summary=_display_plan_sync_action_summary(sync_payload),
         allowed_reads=allowed_reads,
         allowed_writes=allowed_writes,
         extra={
             **sync_payload,
         },
+    )
+
+
+def _display_plan_sync_action_summary(sync_payload: dict[str, Any]) -> str:
+    if sync_payload.get("route_sign_display_required"):
+        return (
+            "Display the canonical FlowPilot Route Sign in the user dialog, "
+            "then sync the host visible plan from committed route state."
+        )
+    if (
+        sync_payload.get("display_kind") == "startup_waiting_state"
+        and sync_payload.get("user_visible_display_suppressed")
+    ):
+        return (
+            "Sync the host visible plan to the internal waiting-for-PM-route placeholder; "
+            "no user-dialog route map is required until a canonical PM route exists."
+        )
+    return (
+        "Display the current route map projection in the user dialog, "
+        "then sync the host visible plan from display_plan.json."
     )
 
 
