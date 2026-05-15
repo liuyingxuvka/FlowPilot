@@ -110,6 +110,8 @@ CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped", "resolved", "
 CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES = {"incomplete", "repair_pending", "resolved", "superseded"}
 CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE = "complete_missing_controller_deliverable"
 CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS = 2
+CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
+CONTROLLER_POSTCONDITION_RECONCILIATION_MAX_ATTEMPTS = CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS
 CONTROLLER_RUNTIME_HELPER_AGENT_ID = "controller-runtime-helper"
 CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE = role_output_runtime.CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE
 CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID = role_output_runtime.CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID
@@ -6264,6 +6266,88 @@ def _update_controller_action_entry_fields(
     return entry
 
 
+def _defer_controller_postcondition_reconciliation_retry(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    entry: dict[str, Any],
+    action: dict[str, Any],
+    apply_result: dict[str, Any],
+) -> dict[str, Any]:
+    postcondition = str(
+        apply_result.get("postcondition")
+        or _pending_action_postcondition(action)
+        or ""
+    ).strip()
+    if not postcondition:
+        return {"retry_applicable": False, "reason": "no_postcondition"}
+
+    action_id = str(entry.get("action_id") or action.get("controller_action_id") or "")
+    attempts_used = int(entry.get("postcondition_reconciliation_attempts") or 0)
+    max_attempts = CONTROLLER_POSTCONDITION_RECONCILIATION_MAX_ATTEMPTS
+    if attempts_used >= max_attempts:
+        return {
+            "retry_applicable": True,
+            "retry_pending": False,
+            "retry_budget_exhausted": True,
+            "direct_retry_attempts_used": attempts_used,
+            "direct_retry_budget": max_attempts,
+            "postcondition": postcondition,
+        }
+
+    next_attempt = attempts_used + 1
+    now = utc_now()
+    reconciliation = {
+        "source": "controller_action_receipt_postcondition_retry_pending",
+        "reason": str(apply_result.get("reason") or "postcondition_not_satisfied"),
+        "postcondition": postcondition,
+        "retry_attempt": next_attempt,
+        "max_retry_attempts": max_attempts,
+        "next_step": "retry_controller_receipt_reconciliation_before_pm_blocker",
+        "apply_result": _json_safe(apply_result),
+        "updated_at": now,
+    }
+    _update_controller_action_entry_fields(
+        project_root,
+        run_root,
+        run_state,
+        action_id=action_id,
+        fields={
+            "router_reconciliation_status": "retry_pending",
+            "router_reconciliation_retry_pending_at": now,
+            "router_reconciliation_retry_reason": reconciliation["reason"],
+            "postcondition_reconciliation_attempts": next_attempt,
+            "max_postcondition_reconciliation_attempts": max_attempts,
+            "postcondition_reconciliation_exhausted": False,
+            "router_reconciliation": reconciliation,
+        },
+        router_state="waiting",
+        reconciliation=reconciliation,
+    )
+    append_history(
+        run_state,
+        "router_deferred_controller_receipt_postcondition_retry",
+        {
+            "action_type": action.get("action_type"),
+            "controller_action_id": action_id,
+            "router_scheduler_row_id": entry.get("router_scheduler_row_id") or action.get("router_scheduler_row_id"),
+            "postcondition": postcondition,
+            "retry_attempt": next_attempt,
+            "max_retry_attempts": max_attempts,
+        },
+    )
+    save_run_state(run_root, run_state)
+    return {
+        "retry_applicable": True,
+        "retry_pending": True,
+        "retry_budget_exhausted": False,
+        "direct_retry_attempts_used": next_attempt,
+        "direct_retry_budget": max_attempts,
+        "postcondition": postcondition,
+    }
+
+
 def _sync_controller_boundary_confirmation_from_artifact(
     project_root: Path,
     run_root: Path,
@@ -7801,7 +7885,22 @@ def _reconcile_scheduled_controller_action_receipts(
             if applied.get("repair_pending"):
                 changed = True
                 continue
+            retry = _defer_controller_postcondition_reconciliation_retry(
+                project_root,
+                run_root,
+                run_state,
+                entry=entry,
+                action=action,
+                apply_result=applied,
+            )
+            if retry.get("retry_pending"):
+                changed = True
+                continue
             blocked += 1
+            retry_exhausted = bool(retry.get("retry_budget_exhausted"))
+            if retry_exhausted:
+                entry["postcondition_reconciliation_exhausted"] = True
+                entry["max_postcondition_reconciliation_attempts"] = retry.get("direct_retry_budget")
             entry["router_reconciliation_status"] = "blocked"
             entry["router_reconciliation_blocked_at"] = utc_now()
             entry["router_reconciliation_blocker"] = applied
@@ -7810,7 +7909,7 @@ def _reconcile_scheduled_controller_action_receipts(
                 project_root,
                 run_root,
                 run_state,
-                source="controller_action_receipt_missing_router_postcondition",
+                source=CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE,
                 error_message=(
                     f"Controller action {entry.get('action_type')} was marked done, but Router could not "
                     "apply its required postcondition before reconciliation."
@@ -7819,6 +7918,10 @@ def _reconcile_scheduled_controller_action_receipts(
                 payload={
                     "controller_action_id": action_id,
                     "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
+                    "postcondition": retry.get("postcondition") or applied.get("postcondition"),
+                    "direct_retry_attempts_used": retry.get("direct_retry_attempts_used"),
+                    "direct_retry_budget": retry.get("direct_retry_budget"),
+                    "direct_retry_budget_exhausted": retry_exhausted,
                     "apply_result": applied,
                 },
             )
@@ -11102,8 +11205,16 @@ def _infer_responsible_role(event: str | None, payload: dict[str, Any] | None, m
     return "project_manager"
 
 
-def _classify_control_blocker(message: str, *, event: str | None = None, action_type: str | None = None) -> str:
+def _classify_control_blocker(
+    message: str,
+    *,
+    event: str | None = None,
+    action_type: str | None = None,
+    source: str | None = None,
+) -> str:
     del action_type
+    if source == CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE:
+        return "control_plane_reissue"
     lowered = message.lower()
     fatal_markers = (
         "private role-to-role",
@@ -11667,6 +11778,15 @@ def _supersede_prior_control_blockers(
         write_json(path, record)
 
 
+def _nonnegative_int_or_none(value: Any) -> int | None:
+    if value is None or value == "":
+        return None
+    try:
+        return max(0, int(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def _write_control_blocker(
     project_root: Path,
     run_root: Path,
@@ -11678,7 +11798,7 @@ def _write_control_blocker(
     action_type: str | None = None,
     payload: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    base_category = _classify_control_blocker(error_message, event=event, action_type=action_type)
+    base_category = _classify_control_blocker(error_message, event=event, action_type=action_type, source=source)
     if base_category not in CONTROL_BLOCKER_LANES:
         base_category = "pm_repair_decision_required"
     payload_view = payload if isinstance(payload, dict) else {}
@@ -11700,6 +11820,12 @@ def _write_control_blocker(
         or ""
     ).strip() or None
     responsible_role = _infer_responsible_role(event, payload, error_message)
+    if (
+        source == CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE
+        and base_category == "control_plane_reissue"
+        and responsible_role == "project_manager"
+    ):
+        responsible_role = "controller"
     policy_row = _control_blocker_policy_row(error_message, base_category)
     policy_row_id = str(policy_row.get("policy_row_id") or "pm_semantic_repair")
     attempt_key = _control_blocker_attempt_key(
@@ -11708,14 +11834,27 @@ def _write_control_blocker(
         action_type=action_type,
         responsible_role=responsible_role,
     )
-    direct_retry_attempts_used = _control_blocker_direct_attempts_used(run_state, attempt_key)
-    direct_retry_budget = int(policy_row.get("direct_retry_budget") or 0)
-    first_handler = str(policy_row.get("first_handler") or "project_manager")
-    direct_retry_budget_exhausted = (
-        first_handler == "responsible_role"
-        and direct_retry_attempts_used >= direct_retry_budget
+    retry_attempt_override = _nonnegative_int_or_none(payload_view.get("direct_retry_attempts_used"))
+    if retry_attempt_override is None:
+        retry_attempt_override = _nonnegative_int_or_none(apply_result.get("direct_retry_attempts_used"))
+    if retry_attempt_override is None:
+        direct_retry_attempts_used = _control_blocker_direct_attempts_used(run_state, attempt_key)
+    else:
+        direct_retry_attempts_used = retry_attempt_override
+    retry_budget_override = _nonnegative_int_or_none(payload_view.get("direct_retry_budget"))
+    if retry_budget_override is None:
+        retry_budget_override = _nonnegative_int_or_none(apply_result.get("direct_retry_budget"))
+    direct_retry_budget = (
+        retry_budget_override
+        if retry_budget_override is not None
+        else int(policy_row.get("direct_retry_budget") or 0)
     )
-    if direct_retry_budget_exhausted:
+    first_handler = str(policy_row.get("first_handler") or "project_manager")
+    direct_retry_budget_exhausted = direct_retry_attempts_used >= direct_retry_budget
+    if base_category == "fatal_protocol_violation":
+        category = base_category
+        target_role = "project_manager"
+    elif first_handler == "responsible_role" and direct_retry_budget_exhausted:
         category = "pm_repair_decision_required"
         target_role = str(policy_row.get("escalate_to") or "project_manager")
     else:

@@ -458,7 +458,6 @@
   },
   "live_run_projection": {
     "blocking_reasons": [
-      "active_blocker_present",
       "packet_authority_unchecked"
     ],
     "classification_ok": true,
@@ -468,19 +467,10 @@
       {
         "current_run_can_continue": false,
         "decision": "blocked_by_cross_model_contradiction",
-        "id": "flowpilot_model_mesh.active_blocker_present",
-        "message": "Current FlowPilot run is not permitted to continue: active_blocker_present",
-        "reason": "active_blocker_present",
-        "run_id": "run-20260515-120231",
-        "severity": "blocking"
-      },
-      {
-        "current_run_can_continue": false,
-        "decision": "blocked_by_cross_model_contradiction",
         "id": "flowpilot_model_mesh.packet_authority_unchecked",
         "message": "Current FlowPilot run is not permitted to continue: packet_authority_unchecked",
         "reason": "packet_authority_unchecked",
-        "run_id": "run-20260515-120231",
+        "run_id": "run-20260515-174018",
         "severity": "blocking"
       }
     ],
@@ -489,7 +479,7 @@
     "permission": "blocked_or_insufficient",
     "projected_failures": [],
     "projected_state": {
-      "active_blocker_present": true,
+      "active_blocker_present": false,
       "collapsed_repair_outcome_events": false,
       "completed_agent_id_belongs_to_role": false,
       "conformance_required": false,
@@ -527,10 +517,10 @@
       "scenario": "live_run_projection",
       "sealed_body_opened_by_mesh": false,
       "status": "selected",
-      "status_summary_reports_blocked": true
+      "status_summary_reports_blocked": false
     },
-    "run_id": "run-20260515-120231",
-    "run_root": ".flowpilot\\runs\\run-20260515-120231",
+    "run_id": "run-20260515-174018",
+    "run_root": ".flowpilot\\runs\\run-20260515-174018",
     "sealed_body_opened_by_mesh": false
   },
   "model": "flowpilot_model_mesh",

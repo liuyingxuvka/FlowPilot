@@ -3703,8 +3703,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "controller_action_id": action["controller_action_id"],
                 "router_scheduler_row_id": action["router_scheduler_row_id"],
                 "postcondition": "controller_core_loaded",
+                "direct_retry_attempts_used": 2,
+                "direct_retry_budget": 2,
             },
         )
+        self.assertEqual(blocker["policy_row_id"], "mechanical_control_plane_reissue")
+        self.assertTrue(blocker["direct_retry_budget_exhausted"])
         state = read_json(router.run_state_path(run_root))
         stale_pm_action = router._next_control_blocker_action(root, state, run_root)  # type: ignore[attr-defined]
         self.assertIsNotNone(stale_pm_action)
@@ -3729,6 +3733,55 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         next_action = router.next_action(root)
         self.assertNotEqual(next_action["action_type"], "handle_control_blocker")
+
+    def test_startup_missing_router_postcondition_retries_before_pm_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+
+        status_path = run_root / "runtime" / "router_daemon_status.json"
+        status = read_json(status_path)
+        status["daemon_mode_enabled"] = False
+        router.write_json(status_path, status)
+
+        state = read_json(router.run_state_path(run_root))
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=action["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+
+        for expected_attempt in (1, 2):
+            state = read_json(router.run_state_path(run_root))
+            result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+            self.assertTrue(result["changed"])
+            self.assertEqual(result["blocked"], 0)
+            state = read_json(router.run_state_path(run_root))
+            entry = read_json(router._controller_action_path(run_root, action["controller_action_id"]))  # type: ignore[attr-defined]
+            self.assertEqual(entry["router_reconciliation_status"], "retry_pending")
+            self.assertEqual(entry["postcondition_reconciliation_attempts"], expected_attempt)
+            self.assertEqual(entry["max_postcondition_reconciliation_attempts"], 2)
+            self.assertFalse(entry["postcondition_reconciliation_exhausted"])
+            self.assertFalse(state.get("active_control_blocker"))
+
+        state = read_json(router.run_state_path(run_root))
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["blocked"], 1)
+        state = read_json(router.run_state_path(run_root))
+        blocker = state["active_control_blocker"]
+        self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+        self.assertEqual(blocker["policy_row_id"], "mechanical_control_plane_reissue")
+        self.assertEqual(blocker["target_role"], "project_manager")
+        self.assertEqual(blocker["direct_retry_budget"], 2)
+        self.assertEqual(blocker["direct_retry_attempts_used"], 2)
+        self.assertTrue(blocker["direct_retry_budget_exhausted"])
 
     def test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait(self) -> None:
         root = self.make_project()
@@ -10660,6 +10713,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         attempts = state["blocker_repair_attempts"][blockers[-1]["attempt_key"]]
         self.assertTrue(attempts["direct_retry_budget_exhausted"])
         self.assertEqual(attempts["latest_target_role"], "project_manager")
+
+    def test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action while reviewer gate result is waiting",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+
+        self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+        self.assertEqual(blocker["policy_row_id"], "pm_semantic_repair")
+        self.assertEqual(blocker["direct_retry_budget"], 0)
+        self.assertEqual(blocker["direct_retry_attempts_used"], 0)
+        self.assertTrue(blocker["direct_retry_budget_exhausted"])
 
     def test_already_recorded_event_can_resolve_delivered_control_blocker(self) -> None:
         root = self.make_project()

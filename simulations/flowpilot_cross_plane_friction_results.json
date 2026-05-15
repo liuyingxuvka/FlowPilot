@@ -1167,19 +1167,11 @@
   },
   "live_run_audit": {
     "body_files_opened": false,
-    "finding_count": 0,
     "findings": [],
     "ok": true,
     "projected_invariant_failures": [],
-    "run_id": "run-20260515-152931",
-    "run_root": ".flowpilot/runs/run-20260515-152931",
-    "sealed_body_names_blocked": [
-      "decision_body.md",
-      "packet_body.md",
-      "report_body.md",
-      "result_body.md"
-    ],
-    "skipped": false
+    "skip_reason": "skipped_with_reason: --skip-live-audit was provided",
+    "skipped": true
   },
   "minimal_repair_strategy": {
     "actions": [
@@ -1215,6 +1207,7 @@
     "state_count": 14
   },
   "skipped_checks": {
+    "live_run_audit": "skipped_with_reason: --skip-live-audit was provided",
     "production_mutation": "skipped_with_reason: user requested model upgrade, scan, and minimal repair strategy before production code edits"
   },
   "solution_simulation": {

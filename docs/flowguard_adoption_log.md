@@ -11818,3 +11818,80 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Rerun heavyweight Meta/Capability checks later only if a broader project-control or capability-routing change is made, or before a release-level confidence claim.
+
+## 2026-05-15 Router Process Liveness Middle-Layer Model
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Compressed Meta and Capability models no longer preserve enough Router demo mechanics to catch repeated process bugs around blockers, retry returns, PM repair loops, route mutation, and stuck-control cases.
+- Status: completed_model_and_projection
+- OpenSpec change: `add-router-process-liveness-model`
+
+### Model Evidence
+- OpenSpec: `openspec/changes/add-router-process-liveness-model/`
+- New model: `simulations/flowpilot_process_liveness_model.py`
+- New runner: `simulations/run_flowpilot_process_liveness_checks.py`
+- Result artifact: `simulations/flowpilot_process_liveness_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate add-router-process-liveness-model --strict` passed.
+- `python -m py_compile simulations\flowpilot_process_liveness_model.py simulations\run_flowpilot_process_liveness_checks.py` passed.
+- `python simulations\run_flowpilot_process_liveness_checks.py --json` passed.
+
+### Findings
+- The model preserves Router loop mechanics at a middle layer: durable settlement before next action, one action per tick, wait/event authority, route/frontier freshness, worker/result/PM/reviewer gates, blocker lanes, retry budget, PM repair returns, route mutation replay, and terminal ledger closure.
+- Safe graph checks found 231 states, 235 edges, no invariant failures, four normal complete states, and ten controlled blocked states after adding per-node coverage and blocker-lane classification.
+- Progress and loop checks found no stuck reachable states and no nonterminating components.
+- The node coverage check explored a three-node abstract route, reached node index 2, and found no completion or final-scan state without full reviewer/pass and completion-ledger coverage.
+- FlowGuard Explorer checked 63,682 traces with no violations, and all known-bad hazard fixtures were rejected.
+- Current-run projection classified the active run as a controlled `stopped_by_user` lifecycle, not a normal FlowPilot completion.
+- Current-run projection also warned that a `controller_action_receipt_missing_router_postcondition` blocker was routed to `pm_repair_decision_required`, its retry-budget flags were inconsistent, and terminal stopped history still contains open Controller/scheduler rows.
+
+### Skipped Steps
+- No production Router behavior was changed in this pass.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally not rerun because this pass adds the fast middle-layer process model rather than changing global project-control or capability-routing code.
+
+### Next Actions
+- Use this middle-layer model before future Router process changes that affect blockers, waits, retry/repair lanes, route mutation, terminal closure, or Controller evidence boundaries.
+- Do not treat a stopped-by-user run with retained open rows as normal completion or as resumable live work without a fresh settlement step.
+
+## 2026-05-15 Controller Postcondition Blocker Routing Repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The fast process model found that `controller_action_receipt_missing_router_postcondition` could be treated like a PM repair blocker even when it was a small local reconciliation miss.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `fix-controller-postcondition-blocker-routing`
+
+### Model Evidence
+- OpenSpec: `openspec/changes/fix-controller-postcondition-blocker-routing/`
+- Process liveness model: `simulations/flowpilot_process_liveness_model.py`
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Control-plane friction model: `simulations/flowpilot_control_plane_friction_model.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate fix-controller-postcondition-blocker-routing --strict` passed.
+- `python simulations\run_flowpilot_process_liveness_checks.py --json` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json --skip-live-projection` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\run_flowpilot_process_liveness_checks.py simulations\flowpilot_process_liveness_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_control_plane_friction_checks.py simulations\flowpilot_control_plane_friction_model.py` passed.
+- Focused `pytest` selection for startup missing postconditions, stale blocker supersession, Controller receipt cases, retry exhaustion, and zero-budget PM blockers passed with 5 selected tests.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and synchronized the installed `flowpilot` skill from repository source.
+- `python scripts\audit_local_install_sync.py --json` and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+- `python scripts\smoke_autopilot.py --fast` passed and reused existing Meta/Capability proofs without rerunning those heavyweight checks.
+
+### Findings
+- Missing Controller receipt postconditions now take the existing mechanical control-plane reissue lane for two direct attempts before PM escalation.
+- The retry state is written on the Controller action row and scheduler row instead of immediately creating a PM blocker.
+- If the two-attempt direct retry budget is exhausted, the blocker can still escalate to PM, but it carries the mechanical policy row and exhausted-budget metadata so later checks know this was not premature PM routing.
+- Zero-budget PM blockers now mark `direct_retry_budget_exhausted: true`, avoiding contradictory "0 of 0 retries but not exhausted" state.
+- Fatal protocol blockers still stay fatal and PM-targeted.
+- The current-run projection still reports the already stopped historical run as retaining old PM-warning artifacts; that remains old stopped-run history, not fresh runtime behavior after this patch.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks later before making a broad release-level claim about global project-control and capability-routing surfaces.
