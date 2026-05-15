@@ -11066,3 +11066,39 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
+
+## 2026-05-15 Stateful Controller Deliverable Repair Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User approved the root repair plan for stateful Controller receipts: declare required deliverables on the Controller action row, reclaim existing valid evidence, schedule bounded Controller repair rows for missing deliverables, and escalate only after two failed repairs.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: Focused FlowGuard, OpenSpec, py_compile, targeted Router runtime tests, install sync, and local install audit passed.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/require-stateful-controller-postconditions/`
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "controller_boundary_done_receipt_missing_deliverable_schedules_repair or controller_boundary_valid_artifact_reclaims_before_repair or controller_boundary_repair_action_resolves_original or controller_boundary_repair_budget_escalates_after_two_failures" -q` passed with 4 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "completed_pending_controller_action_receipt_is_not_returned_again or incomplete_stateful_rehydrate_receipt_becomes_control_blocker or controller_boundary" -q` passed with 8 tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "controller_action or controller_receipt or router_scheduler or sync_display_plan_done_receipt or recorded_external_event_closes_matching_wait_action_row" -q` passed with 6 tests.
+- `openspec validate require-stateful-controller-postconditions --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and reported installed FlowPilot source-fresh.
+- `python scripts\audit_local_install_sync.py` passed.
+
+### Findings
+- `confirm_controller_core_boundary` now carries required-deliverable metadata in the Controller action row.
+- Router receipt reconciliation validates an existing `startup/controller_boundary_confirmation.json` and syncs Router flags, but does not silently create that artifact from a bare done receipt.
+- Missing boundary deliverables mark the original row `repair_pending` and enqueue `complete_missing_controller_deliverable`.
+- A successful repair marks the original row `resolved`; two failed repair receipts create a control blocker with the missing deliverable and exhausted repair budget.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q` timed out after 10 minutes without a final result, so it was not counted as passing evidence.

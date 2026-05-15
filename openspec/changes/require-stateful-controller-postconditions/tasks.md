@@ -7,15 +7,15 @@
 
 ## 2. Production Reconciliation
 
-- [ ] 2.1 Add stateful postcondition and required-deliverable metadata to Controller action records for startup boundary actions, beginning with `confirm_controller_core_boundary`.
-- [ ] 2.2 Add a shared Router reconciliation validator table for stateful Controller action types.
-- [ ] 2.3 Implement the `confirm_controller_core_boundary` validator so it reclaims existing `startup/controller_boundary_confirmation.json`, validates it, and syncs the related Router flags before clearing the action.
-- [ ] 2.4 Update daemon and foreground receipt reconciliation to mark missing deliverables incomplete and enqueue bounded Controller repair rows before blocker escalation.
-- [ ] 2.5 Escalate incomplete or invalid stateful receipts to control blockers only after the repair budget is exhausted.
+- [x] 2.1 Add stateful postcondition and required-deliverable metadata to Controller action records for startup boundary actions, beginning with `confirm_controller_core_boundary`.
+- [x] 2.2 Add a shared Router reconciliation validator table for stateful Controller action types.
+- [x] 2.3 Implement the `confirm_controller_core_boundary` validator so it reclaims existing `startup/controller_boundary_confirmation.json`, validates it, and syncs the related Router flags before clearing the action.
+- [x] 2.4 Update daemon and foreground receipt reconciliation to mark missing deliverables incomplete and enqueue bounded Controller repair rows before blocker escalation.
+- [x] 2.5 Escalate incomplete or invalid stateful receipts to control blockers only after the repair budget is exhausted.
 
 ## 3. Verification
 
-- [ ] 3.1 Add focused runtime tests for minimal `done` receipts without postcondition evidence.
-- [ ] 3.2 Add focused runtime tests for valid artifact reclaim before blocker creation.
-- [ ] 3.3 Add focused runtime tests for successful Controller deliverable repair, repair-budget blocker escalation, normal startup boundary confirmation, and generic receipt-only actions.
-- [ ] 3.4 Rerun focused FlowGuard checks and targeted runtime tests; skip heavyweight meta/capability model regressions unless explicitly requested.
+- [x] 3.1 Add focused runtime tests for minimal `done` receipts without postcondition evidence.
+- [x] 3.2 Add focused runtime tests for valid artifact reclaim before blocker creation.
+- [x] 3.3 Add focused runtime tests for successful Controller deliverable repair, repair-budget blocker escalation, normal startup boundary confirmation, and generic receipt-only actions.
+- [x] 3.4 Rerun focused FlowGuard checks and targeted runtime tests; skip heavyweight meta/capability model regressions unless explicitly requested.
