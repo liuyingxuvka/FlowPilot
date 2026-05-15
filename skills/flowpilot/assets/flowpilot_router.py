@@ -100,6 +100,8 @@ RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
 FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
 FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
+CONTROLLER_PATROL_TIMER_SCHEMA = "flowpilot.controller_patrol_timer.v1"
+CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS = 10.0
 CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE = "continuous_controller_standby"
 WAIT_TARGET_ACK_REMINDER_SECONDS = 180
 WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
@@ -146,6 +148,22 @@ TERMINAL_SUMMARY_ATTRIBUTION = (
 )
 TERMINAL_SUMMARY_READ_SCOPE = "current_run_root_all_files"
 ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
+
+
+def _format_seconds_for_command(seconds: float) -> str:
+    seconds_float = float(seconds)
+    if seconds_float.is_integer():
+        return str(int(seconds_float))
+    return f"{seconds_float:g}"
+
+
+def _controller_patrol_timer_command(seconds: float = CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS) -> str:
+    return (
+        "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json "
+        f"controller-patrol-timer --seconds {_format_seconds_for_command(seconds)}"
+    )
+
+
 ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS = {
     EVENT_ENVELOPE_SCHEMA,
     ROLE_OUTPUT_ENVELOPE_SCHEMA,
@@ -5660,6 +5678,7 @@ def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str
 
 
 def _controller_table_prompt() -> dict[str, Any]:
+    patrol_command = _controller_patrol_timer_command()
     return {
         "language": "en",
         "prompt_kind": "controller_action_ledger_table_prompt",
@@ -5683,15 +5702,21 @@ def _controller_table_prompt() -> dict[str, Any]:
             "diagnostic timeout.\n\n"
             "If all ordinary rows are complete, enter the final fallback row: "
             "continuous_controller_standby. This row is a continuous monitoring duty, not a "
-            "finishable checklist item. Keep it in progress, keep watching router_daemon_status "
-            "and controller_action_ledger, keep the visible Codex plan synchronized from ledger "
-            "rows and receipts, and when Router exposes new Controller work, update this table "
-            "and return to top-to-bottom row processing."
+            "finishable checklist item. Its purpose is to prevent accidental foreground exit "
+            "while FlowPilot is still running. To perform it, run this exact patrol timer "
+            f"command and wait for its output: `{patrol_command}`. If the command returns "
+            "continue_patrol, immediately run the same command again and wait for that "
+            "command's next output. Starting or restarting the command is not completion. "
+            "Keep watching router_daemon_status and controller_action_ledger, keep the visible "
+            "Codex plan synchronized from ledger rows and receipts, and when Router exposes "
+            "new Controller work, update this table and return to top-to-bottom row processing."
         ),
         "applies_to": ["runtime/controller_action_ledger.json"],
         "row_processing_order": "top_to_bottom",
         "foreground_controller_must_remain_attached_while_flowpilot_running": True,
         "continuous_standby_row": CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
+        "patrol_timer_command": patrol_command,
+        "patrol_timer_seconds": CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
         "sealed_body_reads_allowed": False,
     }
 
@@ -6267,6 +6292,16 @@ def _mail_delivery_packet_released(record: dict[str, Any] | None, *, to_role: st
     relay = record.get("packet_controller_relay")
     if not isinstance(relay, dict):
         relay = record.get("controller_relay")
+    router_release = record.get("packet_router_release") or record.get("router_startup_release")
+    if isinstance(router_release, dict):
+        return (
+            str(record.get("active_packet_holder") or "") == to_role
+            and str(record.get("active_packet_status") or "") == "envelope-relayed"
+            and router_release.get("delivered_by_router") is True
+            and str(router_release.get("relayed_to_role") or "") == to_role
+            and router_release.get("body_was_read_by_router") is False
+            and router_release.get("body_was_executed_by_router") is False
+        )
     return (
         str(record.get("active_packet_holder") or "") == to_role
         and str(record.get("active_packet_status") or "") == "envelope-relayed"
@@ -8577,6 +8612,7 @@ def _continuous_standby_task_payload(
     current_wait: dict[str, Any],
 ) -> dict[str, Any]:
     wait_class = str(current_wait.get("wait_class") or "none")
+    patrol_command = _controller_patrol_timer_command()
     wait_policy: dict[str, Any] = {
         "wait_class": wait_class,
         "next_due": current_wait.get("next_due") or {},
@@ -8587,7 +8623,17 @@ def _continuous_standby_task_payload(
     }
     return {
         "task_kind": "continuous_controller_standby",
+        "task_type": "foreground_keepalive_waiting_patrol",
         "status": "in_progress",
+        "purpose": "Prevent Controller from accidentally exiting the foreground chat while FlowPilot is still running.",
+        "required_command": patrol_command,
+        "patrol_timer_seconds": CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
+        "loop_rule": (
+            "Run required_command and wait for its output. If it returns continue_patrol, "
+            "immediately run required_command again and wait for the next output. Starting "
+            "or restarting the command is not completion."
+        ),
+        "monitor_source": "existing_router_daemon_monitor",
         "watching": _continuous_standby_watch_label(current_wait),
         "monitor_sources": {
             "router_daemon_status_path": project_relative(project_root, _router_daemon_status_path(run_root)),
@@ -8609,7 +8655,9 @@ def _continuous_standby_task_payload(
             "plan_item": (
                 "FlowPilot continuous standby: this is the final fallback row when all ordinary "
                 "Controller rows are complete but FlowPilot is still running. Keep this row "
-                "in progress as a continuous monitoring duty, keep the foreground Controller "
+                "in progress as a continuous monitoring duty and foreground anti-exit patrol "
+                "duty. Run the patrol timer command, wait for its output, and if it returns "
+                "continue_patrol, rerun the same command and wait for the next output. Keep the foreground Controller "
                 "attached, sync the visible Codex plan from the Controller action ledger and "
                 "receipts, and when Router exposes new Controller work, update the table and "
                 "return to top-to-bottom row processing."
@@ -8621,12 +8669,19 @@ def _continuous_standby_task_payload(
         },
         "wait_policy": wait_policy,
         "do_not_mark_complete_on": [
+            "command_started",
+            "command_restarted",
+            "timer_finished",
+            "monitor_checked_once",
             "one_monitor_poll",
             "timeout_still_waiting",
             "target_role_alive",
             "target_role_still_working",
             "no_new_controller_action_yet",
+            "no_new_controller_work",
+            "continue_patrol",
         ],
+        "completion_allowed_only_when": "terminal_return_and_controller_stop_allowed_true",
         "release_conditions": _continuous_standby_release_conditions(),
         "release_condition_meaning": "switch duty or process new work, not foreground closure while FlowPilot is running",
         "controller_must_not_exit_foreground": True,
@@ -9137,6 +9192,92 @@ def foreground_controller_standby(
         poll_count += 1
         remaining = max_seconds - elapsed
         time.sleep(min(poll_seconds, max(0.0, remaining)))
+
+
+def controller_patrol_timer(
+    project_root: Path,
+    *,
+    seconds: float = CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
+) -> dict[str, Any]:
+    if seconds < 0:
+        raise RouterError("controller patrol timer requires seconds >= 0")
+    poll_seconds = max(0.01, float(seconds))
+    snapshot = foreground_controller_standby(
+        project_root,
+        max_seconds=float(seconds),
+        poll_seconds=poll_seconds,
+        bounded_diagnostic=True,
+    )
+    next_command = _controller_patrol_timer_command(seconds)
+    standby_state = str(snapshot.get("standby_state") or "")
+    foreground_mode = str(snapshot.get("foreground_required_mode") or "")
+    controller_stop_allowed = bool(snapshot.get("controller_stop_allowed"))
+    must_continue = bool(snapshot.get("controller_must_continue_standby"))
+    pending_ids = (
+        (snapshot.get("controller_action_ledger") or {}).get("pending_action_ids")
+        if isinstance(snapshot.get("controller_action_ledger"), dict)
+        else []
+    )
+
+    if standby_state == "controller_action_ready" or pending_ids:
+        patrol_result = "new_controller_work"
+        controller_instruction = (
+            "New Controller work exists. Read controller_action_ledger.json and process ready "
+            "Controller rows from top to bottom before returning to patrol."
+        )
+        anti_exit_reminder = ""
+    elif standby_state == "terminal" and controller_stop_allowed:
+        patrol_result = "terminal_return"
+        controller_instruction = (
+            "The monitored run is terminal and controller_stop_allowed is true. Controller may "
+            "end the foreground turn after terminal cleanup."
+        )
+        anti_exit_reminder = ""
+    elif must_continue or foreground_mode == "watch_router_daemon":
+        patrol_result = "continue_patrol"
+        anti_exit_reminder = (
+            "This patrol exists to prevent Controller from accidentally exiting the foreground "
+            "chat while FlowPilot is still running."
+        )
+        controller_instruction = (
+            "No new Controller work exists. Do not final-answer. Do not close the foreground "
+            "chat. Immediately rerun next_command and wait for that command's next output. "
+            "Starting or restarting the command is not completion."
+        )
+    else:
+        patrol_result = foreground_mode or standby_state or "non_standby_duty"
+        anti_exit_reminder = (
+            "This patrol exists to prevent Controller from accidentally exiting the foreground "
+            "chat while FlowPilot is still running."
+        )
+        controller_instruction = (
+            "A non-standby duty is due. Follow foreground_required_mode before any foreground "
+            "exit decision."
+        )
+
+    return {
+        "schema_version": CONTROLLER_PATROL_TIMER_SCHEMA,
+        "ok": True,
+        "command": "controller-patrol-timer",
+        "seconds": float(seconds),
+        "patrol_result": patrol_result,
+        "foreground_required_mode": foreground_mode,
+        "controller_stop_allowed": controller_stop_allowed,
+        "anti_exit_reminder": anti_exit_reminder,
+        "controller_instruction": controller_instruction,
+        "next_command": next_command if patrol_result == "continue_patrol" else None,
+        "standby_status_after_rerun": (
+            "continuous_controller_standby remains in_progress until the next command output"
+            if patrol_result == "continue_patrol"
+            else None
+        ),
+        "completion_allowed_only_when": "terminal_return_and_controller_stop_allowed_true",
+        "command_start_is_completion": False,
+        "command_restart_is_completion": False,
+        "monitor_source": "existing_router_daemon_monitor",
+        "normal_progress_source": "router_daemon_status_and_controller_action_ledger",
+        "standby_snapshot": snapshot,
+    }
 
 
 def _tail_text(path: Path, *, max_chars: int = 2000) -> str:
@@ -15678,7 +15819,8 @@ def _build_user_intake_body_from_ref(project_root: Path, user_request_ref: dict[
     return (
         "# FlowPilot Startup Intake\n\n"
         "The user's work request came from the native startup intake UI. "
-        "Controller receives only the envelope and hash; Project Manager may read this packet body.\n\n"
+        "Router holds this sealed startup packet and releases it to Project Manager after PM system-card ACK. "
+        "Controller must not read this packet body.\n\n"
         "```json\n"
         f"{json.dumps(metadata, indent=2, sort_keys=True)}\n"
         "```\n\n"
@@ -15794,6 +15936,7 @@ def _write_startup_user_intake_scaffold(project_root: Path, run_root: Path, stat
             source="startup_intake_ui",
             body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
             startup_intake_ref=user_request,
+            router_owned_startup_material=True,
         )
     else:
         user_intake = packet_runtime.create_user_intake_packet(
@@ -15815,12 +15958,16 @@ def _write_startup_user_intake_scaffold(project_root: Path, run_root: Path, stat
                 sort_keys=True,
             ),
             startup_options=state.get("startup_answers") or {},
+            body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+            router_owned_startup_material=True,
         )
     user_intake_path = run_root / "mailbox" / "outbox" / "user_intake.json"
     write_json(user_intake_path, user_intake)
     return {
         "path": project_relative(project_root, user_intake_path),
         "body_visibility": user_intake.get("body_visibility"),
+        "startup_owner": "router",
+        "release_condition": "pm_system_card_bundle_ack_resolved",
         "controller_may_read_body": False,
     }
 
@@ -17469,7 +17616,11 @@ def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str
     next_recipient = "project_manager"
     reason = "No active packet is recorded, so resume must continue through PM resume decision after role rehydration."
     if active_packet_id:
-        if status == "packet-with-controller":
+        if status == "router-held-startup-material":
+            next_recipient = assigned_worker or "project_manager"
+            controller_next_action = "wait_for_router_startup_release_after_pm_card_ack"
+            reason = "Packet ledger says startup user_intake is held by Router until PM system-card ACK settlement releases it."
+        elif status == "packet-with-controller":
             next_recipient = assigned_worker or "unknown"
             controller_next_action = "relay_packet_envelope_to_recorded_recipient"
             reason = "Packet ledger says the packet is with Controller and records the worker recipient."
@@ -28128,6 +28279,7 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
                 source="startup_intake_ui",
                 body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
                 startup_intake_ref=user_request,
+                router_owned_startup_material=True,
             )
             write_json(run_root / "mailbox" / "outbox" / "user_intake.json", user_intake)
             result_extra["user_intake_source"] = "startup_intake_ui"
@@ -28164,6 +28316,8 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
                 sort_keys=True,
             ),
             startup_options=state.get("startup_answers") or {},
+            body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+            router_owned_startup_material=True,
         )
         write_json(run_root / "mailbox" / "outbox" / "user_intake.json", user_intake)
     elif action_type == "start_role_slots":
@@ -31633,6 +31787,309 @@ def _pending_action_matches_card_return(pending_action: object, pending_return: 
     )
 
 
+CARD_BUNDLE_ACK_COMPLETE_STATUSES = {"acknowledged", "returned", "resolved"}
+
+
+def _record_value_for_bundle(record: dict[str, Any], key: str) -> str:
+    nested = record.get("action") if isinstance(record.get("action"), dict) else {}
+    return str(record.get(key) or nested.get(key) or "")
+
+
+def _record_matches_card_bundle_identity(
+    record: dict[str, Any],
+    *,
+    bundle_id: str,
+    expected_return_path: str,
+    card_return_event: str,
+) -> bool:
+    record_bundle = _record_value_for_bundle(record, "card_bundle_id")
+    record_return = _record_value_for_bundle(record, "expected_return_path")
+    record_event = _record_value_for_bundle(record, "card_return_event")
+    return bool(
+        (bundle_id and record_bundle == bundle_id)
+        or (expected_return_path and record_return == expected_return_path)
+        or (card_return_event and record_event == card_return_event and (record_bundle or record_return))
+    )
+
+
+def _startup_pm_card_bundle_ack_record(record: dict[str, Any]) -> bool:
+    target_role = str(record.get("target_role") or record.get("to_role") or record.get("role_key") or "")
+    if target_role not in {"project_manager", "pm"}:
+        return False
+    raw_card_ids = record.get("card_ids") or record.get("member_card_ids") or []
+    card_ids = {str(card_id) for card_id in raw_card_ids if str(card_id or "").strip()} if isinstance(raw_card_ids, list) else set()
+    return bool(card_ids & PRE_REVIEW_STARTUP_CARD_IDS) or str(record.get("card_return_event") or "") == "pm_card_bundle_ack"
+
+
+def _reconcile_card_bundle_wait_rows(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    bundle_id: str,
+    expected_return_path: str,
+    card_return_event: str,
+    source: str,
+    ack_path: str | None,
+) -> int:
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return 0
+    reconciled = 0
+    for action_path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(action_path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get("action_type") not in {"await_card_bundle_return_event", "check_card_bundle_return_event"}:
+            continue
+        if not _record_matches_card_bundle_identity(
+            entry,
+            bundle_id=bundle_id,
+            expected_return_path=expected_return_path,
+            card_return_event=card_return_event,
+        ):
+            continue
+        reconciliation = {
+            "source": source,
+            "card_bundle_id": bundle_id,
+            "card_return_event": card_return_event,
+            "expected_return_path": expected_return_path,
+            "ack_path": ack_path,
+            "reconciled_at": utc_now(),
+        }
+        if entry.get("status") not in CONTROLLER_ACTION_CLOSED_STATUSES:
+            entry["status"] = "resolved"
+            entry["completed_at"] = reconciliation["reconciled_at"]
+        entry["router_reconciliation_status"] = "reconciled"
+        entry["router_reconciliation"] = reconciliation
+        entry["updated_at"] = utc_now()
+        write_json(action_path, entry)
+        row_id = str(entry.get("router_scheduler_row_id") or "")
+        if row_id:
+            _update_router_scheduler_row(
+                project_root,
+                run_root,
+                run_state,
+                row_id=row_id,
+                router_state="reconciled",
+                reconciliation=reconciliation,
+            )
+        reconciled += 1
+    if reconciled:
+        _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    return reconciled
+
+
+def _router_release_startup_user_intake_to_pm(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    packet_ledger_path = run_root / "packet_ledger.json"
+    _raise_if_runtime_write_active(packet_ledger_path)
+    packet_ledger = read_daemon_critical_json_if_exists(packet_ledger_path)
+    packet_record = _packet_record_for_mail_delivery(packet_ledger, packet_id="user_intake")
+    if not isinstance(packet_record, dict):
+        return {"released": False, "reason": "user_intake_packet_missing"}
+    envelope_path_raw = str(packet_record.get("packet_envelope_path") or run_root / "mailbox" / "outbox" / "user_intake.json")
+    envelope_path = resolve_project_path(project_root, envelope_path_raw)
+    if not envelope_path.exists():
+        return {"released": False, "reason": "user_intake_envelope_missing", "packet_envelope_path": envelope_path_raw}
+    already_released = _mail_delivery_packet_released(packet_record, to_role="project_manager")
+    if not already_released:
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        released_envelope = packet_runtime.router_release_startup_user_intake(
+            project_root,
+            envelope=envelope,
+            envelope_path=envelope_path,
+            released_to_role="project_manager",
+            source=source,
+        )
+        outbox_path = run_root / "mailbox" / "outbox" / "user_intake.json"
+        if outbox_path.exists() and outbox_path.resolve() != envelope_path.resolve():
+            write_json(outbox_path, released_envelope)
+    _raise_if_runtime_write_active(packet_ledger_path)
+    packet_ledger = read_daemon_critical_json_if_exists(packet_ledger_path)
+    packet_record = _packet_record_for_mail_delivery(packet_ledger, packet_id="user_intake")
+    if not _mail_delivery_packet_released(packet_record, to_role="project_manager"):
+        return {"released": False, "reason": "router_release_postcondition_missing"}
+
+    delivered_at = utc_now()
+    delivery = {
+        "mail_id": "user_intake",
+        "packet_id": "user_intake",
+        "delivered_by": "router",
+        "delivery_channel": "router_startup_release",
+        "to_role": "project_manager",
+        "packet_envelope_path": project_relative(project_root, envelope_path),
+        "delivered_at": delivered_at,
+        "source": source,
+    }
+    ledger_mail = packet_ledger.setdefault("mail", [])
+    if not isinstance(ledger_mail, list):
+        raise RouterError("packet ledger mail field must be a list")
+    state_mail = run_state.setdefault("delivered_mail", [])
+    if not isinstance(state_mail, list):
+        raise RouterError("run state delivered_mail field must be a list")
+    ledger_changed = _find_mail_delivery(ledger_mail, mail_id="user_intake", to_role="project_manager") is None
+    state_changed = _find_mail_delivery(state_mail, mail_id="user_intake", to_role="project_manager") is None
+    if ledger_changed:
+        ledger_mail.append(delivery)
+    if state_changed:
+        state_mail.append(delivery)
+    run_state.setdefault("flags", {})["user_intake_delivered_to_pm"] = True
+    run_state["ledger_check_requested"] = False
+    run_state["mail_deliveries"] = max(
+        int(run_state.get("mail_deliveries", 0)),
+        _count_unique_mail_deliveries(state_mail),
+        _count_unique_mail_deliveries(ledger_mail),
+    )
+    packet_ledger["updated_at"] = utc_now()
+    write_json(packet_ledger_path, packet_ledger)
+    append_history(
+        run_state,
+        "router_released_startup_user_intake_to_pm",
+        {
+            "source": source,
+            "already_released": already_released,
+            "ledger_changed": ledger_changed,
+            "state_changed": state_changed,
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+        },
+    )
+    return {
+        "released": True,
+        "already_released": already_released,
+        "ledger_changed": ledger_changed,
+        "state_changed": state_changed,
+        "packet_envelope_path": project_relative(project_root, envelope_path),
+    }
+
+
+def _run_router_return_settlement_finalizers(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
+    pending_returns = return_ledger.setdefault("pending_returns", [])
+    completed_returns = return_ledger.setdefault("completed_returns", [])
+    changed = False
+    normalized = 0
+    wait_rows_reconciled = 0
+    startup_release: dict[str, Any] | None = None
+    completed_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for completed in completed_returns:
+        if not isinstance(completed, dict) or completed.get("return_kind") != "system_card_bundle":
+            continue
+        status = str(completed.get("status") or "")
+        if status not in CARD_BUNDLE_ACK_COMPLETE_STATUSES:
+            continue
+        bundle_id = str(completed.get("card_bundle_id") or "")
+        event = str(completed.get("card_return_event") or "")
+        if bundle_id and event:
+            completed_by_key[(bundle_id, event)] = completed
+
+    resolved_records: list[dict[str, Any]] = []
+    for pending in pending_returns:
+        if not isinstance(pending, dict) or pending.get("return_kind") != "system_card_bundle":
+            continue
+        bundle_id = str(pending.get("card_bundle_id") or "")
+        event = str(pending.get("card_return_event") or "")
+        completed = completed_by_key.get((bundle_id, event))
+        status = str(pending.get("status") or "")
+        if status not in CARD_BUNDLE_ACK_COMPLETE_STATUSES and completed is None:
+            continue
+        ack_path = str(pending.get("ack_path") or (completed or {}).get("ack_path") or pending.get("expected_return_path") or "")
+        envelope_path = str(pending.get("card_bundle_envelope_path") or (completed or {}).get("card_bundle_envelope_path") or "")
+        if not ack_path or not envelope_path:
+            continue
+        try:
+            validation = card_runtime.validate_card_bundle_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+        except card_runtime.CardRuntimeError:
+            continue
+        if pending.get("status") != "resolved":
+            pending["status"] = "resolved"
+            pending["resolved_at"] = utc_now()
+            changed = True
+            normalized += 1
+        pending["ack_path"] = validation["ack_path"]
+        pending["ack_hash"] = validation["ack_hash"]
+        pending["receipt_ref_count"] = validation["receipt_ref_count"]
+        record = dict(pending)
+        if completed is not None:
+            if completed.get("status") != "resolved":
+                completed["status"] = "resolved"
+                completed["resolved_at"] = pending.get("resolved_at") or utc_now()
+                changed = True
+                normalized += 1
+            completed["ack_path"] = validation["ack_path"]
+            completed["ack_hash"] = validation["ack_hash"]
+            completed["receipt_ref_count"] = validation["receipt_ref_count"]
+            record.update(completed)
+        resolved_records.append(record)
+
+    if changed:
+        return_ledger["updated_at"] = utc_now()
+        write_json(_return_event_ledger_path(run_root), return_ledger)
+
+    for record in resolved_records:
+        bundle_id = str(record.get("card_bundle_id") or "")
+        event = str(record.get("card_return_event") or "")
+        expected_return_path = str(record.get("expected_return_path") or record.get("ack_path") or "")
+        wait_rows_reconciled += _reconcile_card_bundle_wait_rows(
+            project_root,
+            run_root,
+            run_state,
+            bundle_id=bundle_id,
+            expected_return_path=expected_return_path,
+            card_return_event=event,
+            source=source,
+            ack_path=str(record.get("ack_path") or ""),
+        )
+        pending_action = run_state.get("pending_action")
+        if _pending_action_matches_card_return(pending_action, record):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_return_settlement_cleared_pending_card_bundle_wait",
+                {
+                    "source": source,
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                },
+            )
+        if _startup_pm_card_bundle_ack_record(record):
+            startup_release = _router_release_startup_user_intake_to_pm(
+                project_root,
+                run_root,
+                run_state,
+                source=source,
+            )
+
+    if normalized or wait_rows_reconciled or startup_release:
+        append_history(
+            run_state,
+            "router_return_settlement_finalizers_completed",
+            {
+                "source": source,
+                "normalized_card_bundle_acks": normalized,
+                "wait_rows_reconciled": wait_rows_reconciled,
+                "startup_user_intake_release": startup_release,
+            },
+        )
+    return {
+        "changed": bool(normalized or wait_rows_reconciled or startup_release),
+        "normalized_card_bundle_acks": normalized,
+        "wait_rows_reconciled": wait_rows_reconciled,
+        "startup_user_intake_release": startup_release,
+    }
+
+
 def _mark_card_return_pending_explicit_check(
     run_root: Path,
     run_id: str,
@@ -32384,6 +32841,12 @@ def compute_controller_action(
         source="next_action_reconciliation_barrier",
     )
     durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
+    return_settlement = _run_router_return_settlement_finalizers(
+        project_root,
+        run_root,
+        run_state,
+        source="compute_controller_action_return_settlement",
+    )
     pending_action = run_state.get("pending_action")
     if (
         durable_reconciliation.get("changed")
@@ -32414,6 +32877,7 @@ def compute_controller_action(
         or receipt_reconciliation.get("changed")
         or scheduled_reconciliation.get("changed")
         or boundary_projection.get("changed")
+        or return_settlement.get("changed")
     ):
         _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_reconciliation_barrier")
         _sync_derived_run_views(
@@ -32465,6 +32929,12 @@ def compute_controller_action(
         auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, pending_action)
         if auto_ack.get("consumed"):
             run_state["pending_action"] = None
+            settlement_after_auto_ack = _run_router_return_settlement_finalizers(
+                project_root,
+                run_root,
+                run_state,
+                source="after_router_auto_consumed_card_return_ack",
+            )
             append_history(
                 run_state,
                 "router_auto_consumed_card_return_ack",
@@ -32472,6 +32942,7 @@ def compute_controller_action(
                     "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
                     "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
                     "status": (auto_ack.get("result") or {}).get("status"),
+                    "return_settlement": settlement_after_auto_ack,
                 },
             )
             _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_auto_consumed_card_return_ack")
@@ -35406,6 +35877,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     standby_parser.add_argument("--poll-seconds", type=float, default=FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)
     standby_parser.add_argument("--bounded-diagnostic", action="store_true", help="Return timeout_still_waiting at max-seconds for diagnostics/tests instead of continuing standby")
     standby_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    patrol_parser = sub.add_parser("controller-patrol-timer", help="Wait, read the existing Router daemon monitor, and return the next Controller patrol instruction")
+    patrol_parser.add_argument("--seconds", type=float, default=CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS)
+    patrol_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     receipt_parser = sub.add_parser("controller-receipt", help="Record a Controller action ledger receipt")
     receipt_parser.add_argument("--action-id", required=True)
     receipt_parser.add_argument("--status", required=True, choices=sorted(CONTROLLER_RECEIPT_STATUSES))
@@ -35477,6 +35951,11 @@ def main(argv: list[str] | None = None) -> int:
                 max_seconds=float(getattr(args, "max_seconds", FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS)),
                 poll_seconds=float(getattr(args, "poll_seconds", FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)),
                 bounded_diagnostic=bool(getattr(args, "bounded_diagnostic", False)),
+            )
+        elif args.command == "controller-patrol-timer":
+            result = controller_patrol_timer(
+                root,
+                seconds=float(getattr(args, "seconds", CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS)),
             )
         elif args.command == "controller-receipt":
             payload = json.loads(args.payload_json) if args.payload_json else {}

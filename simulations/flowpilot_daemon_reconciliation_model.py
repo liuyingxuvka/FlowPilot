@@ -6,10 +6,10 @@ Risk intent brief:
 - Model-critical durable state: Controller action receipts, stateful
   Controller-action postconditions, Controller-boundary confirmation artifacts,
   Controller action rows, Router scheduler rows, packet ledgers, mail delivery
-  flags, startup secondary-state role flags, role-output ledgers, canonical
-  report artifacts, Router event flags, transient Controller action temp files,
-  stale in-memory daemon snapshots, and the one-tick reconciliation barrier
-  before next-action computation.
+  flags, startup system-card bundle ACK returns, startup secondary-state role
+  flags, role-output ledgers, canonical report artifacts, Router event flags,
+  transient Controller action temp files, stale in-memory daemon snapshots, and
+  the one-tick reconciliation barrier before next-action computation.
 - Adversarial branches include a completed Controller action repeated forever,
   a done receipt that updates only the action ledger but not Router state,
   an incomplete stateful receipt treated as success, a submitted role output
@@ -23,18 +23,21 @@ Risk intent brief:
   receipt must either fold the packet ledger and Router flag together or remain
   an explicit control blocker; a submitted PM repair decision for that blocker
   must be consumed into a repair transaction or reissue before the daemon keeps
-  waiting on the same role; expected valid role outputs must become Router
-  events exactly once; canonical artifacts and flags must not diverge; a valid
-  Controller-boundary artifact plus reconciled receipt/action/scheduler rows
-  must rebuild Router flags before any next action is exposed; startup-daemon
-  bootloader rows must have one reconciliation owner, startup postcondition
-  misses must stay on the mechanical reissue lane until that budget is
-  exhausted, and any blocker for the same startup row must be resolved before
-  PM repair work can be queued once the postcondition is satisfied; daemon
-  startup role flags written into the secondary startup record must be folded
-  into Router state atomically before next-action computation; Controller
-  action directory scans must skip transient `.tmp-*.json` files and transient
-  file disappearance must never stop the daemon; daemon
+  waiting on the same role; a resolved PM system-card bundle ACK must close the
+  matching wait row and immediately expose the real user-intake packet dispatch
+  if that packet is still held by Controller; expected valid role outputs must
+  become Router events exactly once; canonical artifacts and flags must not
+  diverge; a valid Controller-boundary artifact plus reconciled
+  receipt/action/scheduler rows must rebuild Router flags before any next
+  action is exposed; startup-daemon bootloader rows must have one
+  reconciliation owner, startup postcondition misses must stay on the
+  mechanical reissue lane until that budget is exhausted, and any blocker for
+  the same startup row must be resolved before PM repair work can be queued
+  once the postcondition is satisfied; daemon startup role flags written into
+  the secondary startup record must be folded into Router state atomically
+  before next-action computation; Controller action directory scans must skip
+  transient `.tmp-*.json` files and transient file disappearance must never
+  stop the daemon; daemon
   queue budget exhaustion must immediately start the next tick instead of
   sleeping; real waits must not busy-loop; and stale daemon snapshots must
   never erase newer durable evidence.
@@ -105,6 +108,18 @@ class State:
     pm_mail_repair_decision_consumed: bool = False
     mail_delivery_repair_transaction_started: bool = False
     mail_delivery_reissue_queued: bool = False
+
+    startup_card_bundle_ack_resolved: bool = False
+    startup_card_bundle_wait_action_reconciled: bool = False
+    startup_card_bundle_wait_scheduler_reconciled: bool = False
+    startup_card_bundle_ack_completion_normalized: bool = False
+    user_intake_router_owned: bool = False
+    user_intake_packet_with_controller: bool = False
+    user_intake_packet_to_pm: bool = False
+    user_intake_released_to_pm: bool = False
+    user_intake_release_count: int = 0
+    user_intake_delivery_action_queued: bool = False
+    unrelated_controller_action_repeated_after_ack: bool = False
 
     controller_boundary_artifact_exists: bool = False
     controller_boundary_artifact_valid: bool = False
@@ -178,6 +193,8 @@ class DaemonReconciliationStep:
         "controller_receipts",
         "controller_action_ledger",
         "router_scheduler_ledger",
+        "return_event_ledger",
+        "packet_ledger",
         "startup/controller_boundary_confirmation.json",
         "role_output_ledger",
         "canonical_role_output_artifacts",
@@ -188,6 +205,7 @@ class DaemonReconciliationStep:
         "router_state.pending_action",
         "router_state.flags",
         "router_state.events",
+        "packet_ledger",
         "controller_action_ledger",
         "control_blockers",
         "router_daemon_status",
@@ -331,6 +349,42 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if (
+        state.startup_card_bundle_ack_resolved
+        and not state.startup_card_bundle_wait_action_reconciled
+        and not state.next_action_computed
+    ):
+        if state.user_intake_router_owned and state.user_intake_packet_to_pm:
+            yield Transition(
+                "daemon_reconciles_card_bundle_ack_wait_and_releases_user_intake",
+                _step(
+                    state,
+                    startup_card_bundle_wait_action_reconciled=True,
+                    startup_card_bundle_wait_scheduler_reconciled=True,
+                    startup_card_bundle_ack_completion_normalized=True,
+                    user_intake_released_to_pm=True,
+                    user_intake_release_count=1,
+                    user_intake_delivery_action_queued=False,
+                    pending_action_kind="none",
+                    pending_action_status="none",
+                    next_action_computed=True,
+                ),
+            )
+        else:
+            yield Transition(
+                "daemon_reconciles_card_bundle_ack_wait_without_user_intake",
+                _step(
+                    state,
+                    startup_card_bundle_wait_action_reconciled=True,
+                    startup_card_bundle_wait_scheduler_reconciled=True,
+                    startup_card_bundle_ack_completion_normalized=True,
+                    pending_action_kind="none",
+                    pending_action_status="none",
+                    next_action_computed=True,
+                ),
+            )
+        return
+
     if not state.role_output_ledger_submitted and state.pending_action_kind == "await_role_decision":
         if not state.startup_secondary_record_roles_started:
             yield Transition(
@@ -355,6 +409,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             yield Transition(
                 "daemon_observes_active_runtime_writer",
                 _step(state, runtime_writer_active=True),
+            )
+        if not state.startup_card_bundle_ack_resolved:
+            yield Transition(
+                "card_bundle_ack_arrives_while_user_intake_waits",
+                _step(
+                    state,
+                    startup_card_bundle_ack_resolved=True,
+                    user_intake_router_owned=True,
+                    user_intake_packet_to_pm=True,
+                    stale_daemon_snapshot_loaded=True,
+                ),
             )
         yield Transition(
             "role_output_submitted_while_router_waits",
@@ -805,6 +870,90 @@ def hazard_states() -> dict[str, State]:
             canonical_artifact_exists=True,
             next_action_computed=True,
         ),
+        "card_bundle_ack_wait_row_left_open": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=False,
+            startup_card_bundle_wait_scheduler_reconciled=False,
+            startup_card_bundle_ack_completion_normalized=True,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_wait_action_scheduler_disagree": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=False,
+            startup_card_bundle_ack_completion_normalized=True,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_completion_status_not_normalized": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=False,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_resolved_user_intake_not_dispatched": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=True,
+            user_intake_packet_to_pm=True,
+            user_intake_released_to_pm=False,
+            user_intake_delivery_action_queued=False,
+            next_action_computed=True,
+        ),
+        "startup_user_intake_controller_owned": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=False,
+            user_intake_packet_with_controller=True,
+            user_intake_packet_to_pm=True,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_queued_controller_delivery": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=True,
+            user_intake_packet_to_pm=True,
+            user_intake_released_to_pm=False,
+            user_intake_delivery_action_queued=True,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_duplicate_user_intake_release": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=True,
+            user_intake_packet_to_pm=True,
+            user_intake_released_to_pm=True,
+            user_intake_release_count=2,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_resolved_unrelated_action_loop": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=True,
+            user_intake_packet_to_pm=True,
+            user_intake_released_to_pm=False,
+            user_intake_delivery_action_queued=False,
+            unrelated_controller_action_repeated_after_ack=True,
+            next_action_computed=True,
+        ),
         "mail_delivery_reissue_without_repair_transaction": replace(
             safe,
             pending_action_kind="none",
@@ -1189,13 +1338,17 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     durable_receipt_exists = state.controller_receipt_status in {"done", "blocked"}
     durable_role_output_exists = state.role_output_ledger_submitted or state.canonical_artifact_exists
+    durable_card_bundle_ack_exists = state.startup_card_bundle_ack_resolved
     durable_controller_boundary_exists = (
         state.controller_boundary_artifact_exists
         or state.controller_boundary_action_reconciled
         or state.controller_boundary_scheduler_reconciled
     )
     durable_evidence_exists = (
-        durable_receipt_exists or durable_role_output_exists or durable_controller_boundary_exists
+        durable_receipt_exists
+        or durable_role_output_exists
+        or durable_card_bundle_ack_exists
+        or durable_controller_boundary_exists
     )
 
     if state.lifecycle == "active" and state.daemon_alive and durable_evidence_exists:
@@ -1315,6 +1468,41 @@ def invariant_failures(state: State) -> list[str]:
             and not state.mail_delivery_reissue_queued
         ):
             failures.append("mail delivery repair transaction did not queue the reissue")
+
+    if state.startup_card_bundle_ack_resolved:
+        if state.user_intake_packet_with_controller:
+            failures.append("startup user_intake was Controller-held instead of Router-owned startup material")
+        if state.next_action_computed and not (
+            state.startup_card_bundle_wait_action_reconciled
+            and state.startup_card_bundle_wait_scheduler_reconciled
+        ):
+            failures.append("system-card bundle ACK resolved but its wait row stayed open")
+        if (
+            state.startup_card_bundle_wait_action_reconciled
+            != state.startup_card_bundle_wait_scheduler_reconciled
+        ):
+            failures.append("system-card bundle ACK wait action and scheduler reconciliation disagreed")
+        if state.next_action_computed and not state.startup_card_bundle_ack_completion_normalized:
+            failures.append("system-card bundle ACK completion was not normalized to resolved")
+        if (
+            state.next_action_computed
+            and state.user_intake_router_owned
+            and state.user_intake_packet_to_pm
+            and not state.user_intake_released_to_pm
+            and not state.control_blocker_written
+        ):
+            failures.append("PM system-card ACK resolved while Router-owned user_intake was not released to PM")
+        if state.next_action_computed and state.user_intake_delivery_action_queued:
+            failures.append("PM system-card ACK queued a Controller deliver_mail row instead of Router release")
+        if state.user_intake_release_count > 1:
+            failures.append("Router released startup user_intake more than once")
+        if (
+            state.unrelated_controller_action_repeated_after_ack
+            and state.user_intake_router_owned
+            and state.user_intake_packet_to_pm
+            and not state.user_intake_released_to_pm
+        ):
+            failures.append("Router repeated unrelated Controller work after PM ACK instead of releasing user_intake")
 
     if state.controller_receipt_action_class == "startup_bootloader":
         if state.startup_row_reconciled and not state.startup_postcondition_satisfied:
@@ -1485,6 +1673,14 @@ INVARIANTS = (
     _invariant("pm_mail_delivery_decision_consumed", "PM mail delivery repair decision stayed only in durable storage"),
     _invariant("mail_delivery_reissue_has_repair_transaction", "mail delivery reissue was queued without a repair transaction"),
     _invariant("mail_delivery_repair_transaction_queues_reissue", "mail delivery repair transaction did not queue the reissue"),
+    _invariant("card_bundle_ack_resolves_wait_row", "system-card bundle ACK resolved but its wait row stayed open"),
+    _invariant("card_bundle_ack_action_scheduler_agree", "system-card bundle ACK wait action and scheduler reconciliation disagreed"),
+    _invariant("card_bundle_ack_completion_normalized", "system-card bundle ACK completion was not normalized to resolved"),
+    _invariant("startup_user_intake_router_owned", "startup user_intake was Controller-held instead of Router-owned startup material"),
+    _invariant("pm_ack_releases_user_intake", "PM system-card ACK resolved while Router-owned user_intake was not released to PM"),
+    _invariant("pm_ack_does_not_queue_controller_user_intake_delivery", "PM system-card ACK queued a Controller deliver_mail row instead of Router release"),
+    _invariant("pm_ack_user_intake_release_idempotent", "Router released startup user_intake more than once"),
+    _invariant("pm_ack_preempts_unrelated_controller_loop", "Router repeated unrelated Controller work after PM ACK instead of releasing user_intake"),
     _invariant("startup_bootloader_reconciles_with_postcondition", "startup bootloader row was reconciled without its postcondition"),
     _invariant("startup_bootloader_reconciliation_owner", "startup bootloader row was reconciled by the wrong owner"),
     _invariant("startup_bootloader_no_false_pm_blocker_after_reconciled", "startup bootloader row produced a control blocker after it was already reconciled"),

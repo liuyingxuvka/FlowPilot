@@ -80,26 +80,33 @@ Allowed actions:
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is
   live, the `continuous_controller_standby` row is your active foreground duty,
-  not a finishable checklist item. You must sync the visible Codex plan from
-  the Controller action ledger and receipts, keep the standby item
-  `in_progress`, check for missed rows and receipts before each wait, and stay
-  attached through `controller-standby` as long as FlowPilot is still running.
-  If Router exposes new Controller work during standby, update or reread the
-  ledger and return to top-to-bottom row processing. "No Controller action
-  right now" is not permission to end the foreground turn;
+  not a finishable checklist item. This duty exists to prevent you from
+  accidentally exiting the foreground chat while FlowPilot is still running.
+  You must sync the visible Codex plan from the Controller action ledger and
+  receipts, keep the standby item `in_progress`, check for missed rows and
+  receipts before each wait, and run the patrol timer command:
+  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`.
+  Wait for that command's output. If it returns `continue_patrol`, immediately
+  run the same command again and wait for the next output. Starting or
+  restarting the command is not completion. If Router exposes new Controller
+  work during standby, update or reread the ledger and return to top-to-bottom row processing.
+  "No Controller action right now" is not permission to end the
+  foreground turn; keep this patrol attached as long as FlowPilot is still running;
 - before any final/stop decision, read the status `foreground_required_mode`.
   `process_controller_action` means do the pending Controller action now;
-  `watch_router_daemon` means stay in `controller-standby`; only terminal
-  status with `controller_stop_allowed: true` may end the Controller role;
+  `watch_router_daemon` means run the patrol timer command and wait for its
+  output; only terminal status with `controller_stop_allowed: true` may end the
+  Controller role;
 - when daemon status shows a live `await_card_return_event`,
   `await_card_bundle_return_event`, or `await_role_decision` and the action
-  ledger has no executable Controller action, call
-  `flowpilot_router.py controller-standby` and keep the foreground turn open
-  until that command returns a mode that requires Controller action, user
-  handling, daemon repair handling, wait-target reminder/liveness check,
-  blocker handling, or terminal cleanup. Nonterminal return modes are duty
-  switches, not permission to close foreground Controller while FlowPilot is
-  still running.
+  ledger has no executable Controller action, call the patrol timer command
+  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`
+  and keep the foreground turn open until that command returns a mode that
+  requires Controller action, user handling, daemon repair handling,
+  wait-target reminder/liveness check, blocker handling, or terminal cleanup.
+  If it returns `continue_patrol`, rerun it and wait for the next output.
+  Nonterminal return modes are duty switches, not permission to close
+  foreground Controller while FlowPilot is still running.
   A bounded `timeout_still_waiting` is diagnostic-only and must not complete
   the standby row;
 - call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,

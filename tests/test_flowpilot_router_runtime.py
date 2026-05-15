@@ -1161,10 +1161,29 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         batch_path.write_text(json.dumps(batch, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
     def deliver_user_intake_mail(self, root: Path) -> None:
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_mail")
-        self.assertEqual(action["mail_id"], "user_intake")
-        router.apply_action(root, "deliver_mail")
+        self.assert_startup_user_intake_released_to_pm(root)
+
+    def assert_startup_user_intake_released_to_pm(self, root: Path) -> None:
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
+        self.assertEqual(packet_ledger["active_packet_holder"], "project_manager")
+        self.assertEqual(packet_ledger["active_packet_status"], "envelope-relayed")
+        record = next(item for item in packet_ledger["packets"] if item["packet_id"] == "user_intake")
+        self.assertTrue(record["router_owned_startup_material"])
+        self.assertEqual(record["active_packet_holder"], "project_manager")
+        self.assertEqual(record["active_packet_status"], "envelope-relayed")
+        self.assertEqual(record["packet_router_release"]["relayed_to_role"], "project_manager")
+        self.assertTrue(record["packet_router_release"]["delivered_by_router"])
+        self.assertEqual(packet_ledger["mail"][0]["mail_id"], "user_intake")
+        self.assertEqual(packet_ledger["mail"][0]["delivered_by"], "router")
+        action_dir = run_root / "runtime" / "controller_actions"
+        controller_action_types = [
+            read_json(path).get("action_type")
+            for path in sorted(action_dir.glob("*.json"))
+        ] if action_dir.exists() else []
+        self.assertNotIn("deliver_mail", controller_action_types)
 
     def boot_to_controller(self, root: Path, startup_answers: dict | None = None) -> Path:
         startup_answers = startup_answers or STARTUP_ANSWERS
@@ -5125,6 +5144,57 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(standby_task["new_controller_work_requires_ledger_update_and_top_down_reentry"])
         self.assertIn("continuous monitoring duty", standby_task["codex_plan_sync"]["plan_item"])
         self.assertIn("no_new_controller_action_yet", standby_task["do_not_mark_complete_on"])
+        self.assertEqual(
+            standby_task["required_command"],
+            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10",
+        )
+        self.assertIn("continue_patrol", standby_task["do_not_mark_complete_on"])
+        self.assertIn("wait for the next output", standby_task["loop_rule"])
+        self.assertEqual(standby_task["completion_allowed_only_when"], "terminal_return_and_controller_stop_allowed_true")
+
+    def test_controller_patrol_timer_continue_patrol_restarts_and_waits(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        state["daemon_mode_enabled"] = True
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=None,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        result = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(result["schema_version"], router.CONTROLLER_PATROL_TIMER_SCHEMA)
+        self.assertEqual(result["patrol_result"], "continue_patrol")
+        self.assertEqual(result["foreground_required_mode"], "watch_router_daemon")
+        self.assertIn("prevent Controller from accidentally exiting", result["anti_exit_reminder"])
+        self.assertIn("Immediately rerun next_command and wait", result["controller_instruction"])
+        self.assertIn("Starting or restarting the command is not completion", result["controller_instruction"])
+        self.assertEqual(
+            result["next_command"],
+            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 0",
+        )
+        self.assertEqual(
+            result["standby_status_after_rerun"],
+            "continuous_controller_standby remains in_progress until the next command output",
+        )
+        self.assertFalse(result["command_start_is_completion"])
+        self.assertFalse(result["command_restart_is_completion"])
+        self.assertEqual(result["monitor_source"], "existing_router_daemon_monitor")
 
     def test_foreground_controller_standby_wakes_on_controller_action_ledger(self) -> None:
         root = self.make_project()
@@ -5144,6 +5214,35 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(standby["controller_stop_allowed"])
         self.assertEqual(standby["foreground_required_mode"], "process_controller_action")
         self.assertTrue(standby["exit_policy"]["controller_action_ready_blocks_foreground_exit"])
+
+    def test_controller_patrol_timer_wakes_on_controller_action_ledger(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=False)
+        action_id = result["ticks"][0]["controller_action_id"]
+
+        patrol = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(patrol["patrol_result"], "new_controller_work")
+        self.assertEqual(patrol["foreground_required_mode"], "process_controller_action")
+        self.assertIn("process ready Controller rows", patrol["controller_instruction"])
+        self.assertIn(action_id, patrol["standby_snapshot"]["controller_action_ledger"]["pending_action_ids"])
+
+    def test_controller_patrol_timer_allows_terminal_return_only_when_stopped(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["status"] = "completed"
+        state["pending_action"] = None
+        state["daemon_mode_enabled"] = True
+        router.save_run_state(run_root, state)
+
+        patrol = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(patrol["patrol_result"], "terminal_return")
+        self.assertTrue(patrol["controller_stop_allowed"])
+        self.assertEqual(patrol["completion_allowed_only_when"], "terminal_return_and_controller_stop_allowed_true")
 
     def test_foreground_controller_standby_exits_on_stale_or_missing_daemon(self) -> None:
         root = self.make_project()
@@ -6064,7 +6163,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(entry["status"], "done")
         self.assertEqual(entry["router_reconciliation_status"], "reconciled")
 
-    def test_user_intake_from_startup_ui_seals_request_for_controller(self) -> None:
+    def test_user_intake_from_startup_ui_is_router_owned_and_sealed_from_controller(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
@@ -6079,6 +6178,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         packet_envelope = read_json(run_root / "mailbox" / "outbox" / "user_intake.json")
         self.assertEqual(packet_envelope["body_visibility"], packet_runtime.SEALED_BODY_VISIBILITY)
         self.assertFalse(packet_envelope["body_access"]["controller_can_read_body"])
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        record = next(item for item in packet_ledger["packets"] if item["packet_id"] == "user_intake")
+        self.assertEqual(packet_ledger["active_packet_holder"], "router")
+        self.assertEqual(packet_ledger["active_packet_status"], "router-held-startup-material")
+        self.assertEqual(record["active_packet_holder"], "router")
+        self.assertEqual(record["active_packet_status"], "router-held-startup-material")
+        self.assertTrue(record["router_owned_startup_material"])
+        self.assertEqual(record["packet_envelope"]["to_role"], "project_manager")
         body = (run_root / "packets" / "user_intake" / "packet_body.md").read_text(encoding="utf-8")
         self.assertIn(USER_REQUEST["text"], body)
         self.assertIn("startup_intake_record_path", body)
@@ -7377,6 +7484,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
         ]
         self.assertEqual(bundle_records[0]["status"], "resolved")
+        self.assert_startup_user_intake_released_to_pm(root)
         next_action = self.next_after_display_sync(root)
         self.assertEqual(next_action["action_type"], "deliver_system_card")
         self.assertEqual(next_action["card_id"], "reviewer.startup_fact_check")
@@ -7476,14 +7584,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if isinstance(item, dict) and item.get("return_kind") == "system_card_bundle"
         ][0]
         self.assertEqual(bundle_pending["status"], "resolved")
+        self.assert_startup_user_intake_released_to_pm(root)
         self.assertEqual(next_action["action_type"], "deliver_system_card")
         self.assertEqual(next_action["card_id"], "reviewer.startup_fact_check")
 
-    def test_user_intake_mail_uses_router_internal_packet_ledger_check_after_pm_cards(self) -> None:
+    def test_pm_card_bundle_ack_releases_router_owned_user_intake_without_deliver_mail(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        self.deliver_startup_fact_check_card(root)
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
         self.deliver_expected_card(root, "pm.role_work_request")
@@ -7491,15 +7599,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.deliver_expected_card(root, "pm.startup_intake")
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_mail")
-        self.assertEqual(action["mail_id"], "user_intake")
-        pre_delivery_state = read_json(run_root / "router_state.json")
-        self.assertTrue(pre_delivery_state["ledger_check_requested"])
-        self.assertIn(
-            "check_packet_ledger",
-            [item["action_type"] for item in pre_delivery_state.get("router_internal_mechanical_events", [])],
-        )
-        router.apply_action(root, "deliver_mail")
 
         state = read_json(run_root / "router_state.json")
         packet_ledger = read_json(run_root / "packet_ledger.json")
@@ -7509,59 +7608,50 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             for path in sorted(action_dir.glob("*.json"))
         ] if action_dir.exists() else []
         self.assertNotIn("check_packet_ledger", controller_action_types)
+        self.assertNotIn("deliver_mail", controller_action_types)
         self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
-        self.assertEqual(state["ledger_checks"], 1)
         self.assertEqual(state["mail_deliveries"], 1)
         self.assertEqual(packet_ledger["mail"][0]["mail_id"], "user_intake")
         self.assertEqual(packet_ledger["active_packet_holder"], "project_manager")
         self.assertEqual(packet_ledger["active_packet_status"], "envelope-relayed")
         self.assertEqual(packet_ledger["packets"][0]["active_packet_holder"], "project_manager")
         self.assertEqual(packet_ledger["packets"][0]["active_packet_status"], "envelope-relayed")
-        self.assertEqual(packet_ledger["packets"][0]["packet_controller_relay"]["relayed_to_role"], "project_manager")
+        self.assertEqual(packet_ledger["packets"][0]["packet_router_release"]["relayed_to_role"], "project_manager")
         mail_envelope = read_json(run_root / "mailbox" / "outbox" / "user_intake.json")
-        self.assertEqual(mail_envelope["controller_relay"]["relayed_to_role"], "project_manager")
+        self.assertEqual(mail_envelope["router_startup_release"]["relayed_to_role"], "project_manager")
+        self.assertEqual(action["action_type"], "deliver_system_card")
+        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
         self.assertEqual(packet_ledger["schema_version"], packet_runtime.PACKET_LEDGER_SCHEMA)
 
-    def test_user_intake_mail_controller_receipt_folds_packet_ledger(self) -> None:
+    def test_user_intake_router_release_finalizer_is_idempotent(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        self.deliver_startup_fact_check_card(root)
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
         self.deliver_expected_card(root, "pm.role_work_request")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
 
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_mail")
-        self.assertEqual(action["mail_id"], "user_intake")
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["ledger_check_requested"])
-        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
-        state["pending_action"] = action
-        router.save_run_state(run_root, state)
-
-        result = router.record_controller_action_receipt(
+        first = router._run_router_return_settlement_finalizers(  # type: ignore[attr-defined]
             root,
-            action_id=entry["action_id"],
-            status="done",
-            payload={
-                "mail_id": "user_intake",
-                "packet_id": "user_intake",
-                "packet_envelope_path": str(action["allowed_reads"][0]),
-                "delivered_to_role": "project_manager",
-                "delivery_confirmed": True,
-                "controller_read_body": False,
-                "target_must_use_packet_runtime": True,
-            },
+            run_root,
+            state,
+            source="test_idempotent_return_settlement_first",
         )
-        self.assertTrue(result["ok"])
-        self.next_after_display_sync(root)
+        second = router._run_router_return_settlement_finalizers(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test_idempotent_return_settlement_second",
+        )
+        router.save_run_state(run_root, state)
 
         state = read_json(router.run_state_path(run_root))
         packet_ledger = read_json(run_root / "packet_ledger.json")
-        action_record = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertTrue(first["changed"] or first["startup_user_intake_release"]["already_released"])
+        self.assertTrue(second["startup_user_intake_release"]["already_released"])
         self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
         self.assertFalse(state["ledger_check_requested"])
         self.assertEqual(state["mail_deliveries"], 1)
@@ -7573,32 +7663,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(packet_ledger["active_packet_status"], "envelope-relayed")
         self.assertEqual(packet_ledger["packets"][0]["active_packet_holder"], "project_manager")
         self.assertEqual(packet_ledger["packets"][0]["active_packet_status"], "envelope-relayed")
-        self.assertEqual(packet_ledger["packets"][0]["packet_controller_relay"]["relayed_to_role"], "project_manager")
-        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
-        self.assertEqual(action_record["router_reconciliation"]["source"], "controller_receipt_mail_delivery_fold")
+        self.assertEqual(packet_ledger["packets"][0]["packet_router_release"]["relayed_to_role"], "project_manager")
         self.assertIsNone(state.get("active_control_blocker"))
-
-        duplicate = router.record_controller_action_receipt(
-            root,
-            action_id=entry["action_id"],
-            status="done",
-            payload={
-                "mail_id": "user_intake",
-                "packet_id": "user_intake",
-                "packet_envelope_path": str(action["allowed_reads"][0]),
-                "delivered_to_role": "project_manager",
-                "delivery_confirmed": True,
-                "controller_read_body": False,
-                "target_must_use_packet_runtime": True,
-            },
-        )
-        self.assertTrue(duplicate["ok"])
-        state = read_json(router.run_state_path(run_root))
-        packet_ledger = read_json(run_root / "packet_ledger.json")
-        self.assertEqual(state["mail_deliveries"], 1)
-        self.assertEqual(len(state["delivered_mail"]), 1)
-        self.assertEqual(len(packet_ledger["mail"]), 1)
-        self.assertEqual(len(packet_ledger["packets"][0]["controller_relay_history"]), 1)
+        self.assertEqual(len(packet_ledger["packets"][0]["router_startup_release_history"]), 1)
         self.assertEqual(len(packet_ledger["packets"][0]["holder_history"]), 2)
 
     def test_controller_action_reconciliation_ignores_transient_temp_files(self) -> None:
@@ -7620,16 +7687,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_expected_card(root, "pm.core")
-        self.deliver_expected_card(root, "pm.output_contract_catalog")
-        self.deliver_expected_card(root, "pm.role_work_request")
-        self.deliver_expected_card(root, "pm.phase_map")
-        self.deliver_expected_card(root, "pm.startup_intake")
-
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_mail")
         state = read_json(router.run_state_path(run_root))
+        state["ledger_check_requested"] = True
+        action = {
+            "action_type": "deliver_mail",
+            "mail_id": "user_intake",
+            "to_role": "project_manager",
+            "allowed_reads": [self.rel(root, run_root / "mailbox" / "outbox" / "user_intake.json")],
+        }
         payload = {
             "mail_id": "user_intake",
             "packet_id": "user_intake",

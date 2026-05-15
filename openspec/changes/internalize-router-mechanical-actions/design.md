@@ -15,8 +15,13 @@ delivery, it must remain a Controller work package.
 **Goals:**
 
 - Make local Router bookkeeping a Router-internal path, not Controller work.
+- Make startup `user_intake` a Router-owned startup packet until PM system-card
+  bundle ACK settlement releases it to PM.
+- Run one deterministic return settlement pass before the Router computes the
+  next visible Controller action.
 - Preserve Controller authority for heartbeat, role recovery/rehydration,
-  system-card relay, formal packet/result handoff, and prompt boundary work.
+  system-card relay, normal formal packet/result handoff, and prompt boundary
+  work.
 - Add explicit optimization and risk inventories before code edits.
 - Add FlowGuard coverage that proves known-bad variants are caught before the
   production runtime changes are trusted.
@@ -44,6 +49,7 @@ delivery, it must remain a Controller work package.
 | 6 | Controller work packages remain external | System-card and work-packet paths are partly auto-committed but still role-facing | Controller | System-card relay, formal work packet relay, heartbeat, role spawn/recovery remain Controller work packages | FlowGuard swallow hazard + existing ACK/packet tests |
 | 7 | Failure and idempotency | Repeated ticks or failures can create duplicate rows/blockers if ownership is unclear | Router reconciler | Router-internal success/failure is idempotent; failures do not become done receipts | Repeated tick tests and hazard checks |
 | 8 | Install sync | Repo and installed skill can diverge | Install scripts | Sync after focused tests pass | `install_flowpilot.py --sync-repo-owned --json` and check/audit |
+| 9 | Startup `user_intake` ownership | Startup packet is created as if Controller temporarily holds it | Router | Router creates and holds the packet as startup material, then releases it directly to PM after PM system-card bundle ACK settlement | FlowGuard startup ownership hazards + runtime tests |
 
 ## Risk Catalog
 
@@ -59,6 +65,9 @@ delivery, it must remain a Controller work package.
 | R8 | Host-boundary action is treated as local script work | Heartbeat/agent recovery can be falsely recorded | `host_boundary_consumed_locally` |
 | R9 | Router failure becomes a done receipt | Bad local state hides behind successful reconciliation | `router_internal_failure_marked_done` |
 | R10 | Parallel agent work is overwritten | Other accepted changes are lost | Covered by workflow discipline and git status checks, not model semantics |
+| R11 | Startup `user_intake` starts in Controller | Reintroduces the missing handoff class because Router does not own the packet it must release | `startup_user_intake_not_router_owned` |
+| R12 | PM bundle ACK resolves but startup packet is not released | PM reads cards but never receives the real task packet | `card_bundle_ack_resolved_user_intake_not_released` |
+| R13 | ACK finalizer settles one ledger but leaves wait rows open | Router thinks the ACK is done while Controller/scheduler still waits | `card_bundle_ack_wait_row_left_open` |
 
 ## FlowGuard Coverage Matrix
 
@@ -67,6 +76,7 @@ delivery, it must remain a Controller work package.
 | Add ownership classifier | `action_kind`, `classified`, `controller_row_written`, `router_event_written` | R1, R2, R8 | Router-internal classified before queueing; Controller work package preserved |
 | Internal checks | `local_check_needed`, `local_check_applied`, `controller_row_written` | R1, R6, R9 | Local check writes one Router event and no Controller row |
 | Internal wait reconciliation | `ack_expected`, `ack_present`, `waiting_recorded`, `done_recorded` | R5, R6 | Missing ACK records wait; present ACK advances once |
+| Startup packet release | `user_intake_router_owned`, `pm_ack_resolved`, `wait_row_reconciled`, `user_intake_released_to_pm` | R11, R12, R13 | Router-owned packet releases once to PM after ACK settlement |
 | Local proof writers | `mechanical_proof_needed`, `proof_written`, `controller_row_written` | R1, R6, R9 | Proof written once after prerequisites |
 | Display projection split | `projection_needed`, `projection_written`, `user_display_confirmed` | R7 | Projection is local; user confirmation remains separate |
 | Preserve Controller work packages | `role_interaction`, `host_boundary`, `system_card_delivery`, `packet_relay` | R2, R3, R8 | Controller row is written and Router does not self-complete |
@@ -96,6 +106,12 @@ delivery, it must remain a Controller work package.
      authority risks.
    - Alternative rejected: patch production first and rely only on runtime
      tests.
+
+5. Treat startup `user_intake` as a special Router-owned startup packet.
+   - Rationale: the Router script creates and tracks this packet from startup
+     material, and PM card ACK is the mechanical release condition.
+   - Alternative rejected: leave the packet with Controller and ask Controller
+     to relay it after ACK. That preserves the original lost-handoff failure.
 
 ## Risks / Trade-offs
 
@@ -129,4 +145,5 @@ delivery, it must remain a Controller work package.
   `check_packet_ledger`, and `write_startup_mechanical_audit`.
 - Whether packet/result relay should remain entirely Controller work package or
   later split into Router preparation plus Controller delivery. Default for this
-  change: keep role-facing relay as Controller work package.
+  change: keep normal role-facing relay as Controller work package; only the
+  startup `user_intake` packet uses Router-owned startup release.

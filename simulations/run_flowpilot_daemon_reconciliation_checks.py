@@ -50,6 +50,8 @@ REQUIRED_LABELS = (
     "daemon_blocks_unsupported_mail_delivery_receipt_before_next_action",
     "pm_mail_delivery_repair_decision_submitted",
     "daemon_consumes_pm_mail_delivery_decision_as_reissue",
+    "card_bundle_ack_arrives_while_user_intake_waits",
+    "daemon_reconciles_card_bundle_ack_wait_and_releases_user_intake",
     "daemon_resolves_prior_startup_blocker_and_supersedes_pm_row",
     "controller_boundary_receipt_artifact_seen_with_stale_flags",
     "daemon_reclaims_controller_boundary_projection_from_artifact",
@@ -73,6 +75,14 @@ HAZARD_EXPECTED_FAILURES = {
     "mail_delivery_flag_without_packet_release": "mail delivery Router flag was set while the packet still belonged to Controller",
     "mail_delivery_pm_decision_left_unconsumed": "PM mail delivery repair decision stayed only in durable storage",
     "mail_delivery_reissue_without_repair_transaction": "mail delivery reissue was queued without a repair transaction",
+    "card_bundle_ack_wait_row_left_open": "system-card bundle ACK resolved but its wait row stayed open",
+    "card_bundle_ack_wait_action_scheduler_disagree": "system-card bundle ACK wait action and scheduler reconciliation disagreed",
+    "card_bundle_ack_completion_status_not_normalized": "system-card bundle ACK completion was not normalized to resolved",
+    "card_bundle_ack_resolved_user_intake_not_dispatched": "PM system-card ACK resolved while Router-owned user_intake was not released to PM",
+    "startup_user_intake_controller_owned": "startup user_intake was Controller-held instead of Router-owned startup material",
+    "card_bundle_ack_queued_controller_delivery": "PM system-card ACK queued a Controller deliver_mail row instead of Router release",
+    "card_bundle_ack_duplicate_user_intake_release": "Router released startup user_intake more than once",
+    "card_bundle_ack_resolved_unrelated_action_loop": "PM system-card ACK resolved while Router-owned user_intake was not released to PM",
     "submitted_role_output_left_in_ledger": "submitted expected role output was left only in durable storage",
     "canonical_artifact_flag_not_synced": "canonical role-output artifact existed without synced Router event flag",
     "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
@@ -134,6 +144,17 @@ def _state_id(state: model.State) -> str:
         f"unsupported={state.mail_delivery_unsupported_receipt},pm_decision={state.pm_mail_repair_decision_submitted},"
         f"pm_consumed={state.pm_mail_repair_decision_consumed},repair_tx={state.mail_delivery_repair_transaction_started},"
         f"reissue={state.mail_delivery_reissue_queued}|"
+        f"card_ack={state.startup_card_bundle_ack_resolved},"
+        f"action_reconciled={state.startup_card_bundle_wait_action_reconciled},"
+        f"scheduler_reconciled={state.startup_card_bundle_wait_scheduler_reconciled},"
+        f"normalized={state.startup_card_bundle_ack_completion_normalized},"
+        f"user_intake_router={state.user_intake_router_owned},"
+        f"user_intake_controller={state.user_intake_packet_with_controller},"
+        f"user_intake_pm={state.user_intake_packet_to_pm},"
+        f"user_intake_released={state.user_intake_released_to_pm},"
+        f"user_intake_release_count={state.user_intake_release_count},"
+        f"user_intake_queued={state.user_intake_delivery_action_queued},"
+        f"unrelated_loop={state.unrelated_controller_action_repeated_after_ack}|"
         f"boundary={state.controller_boundary_artifact_exists},{state.controller_boundary_artifact_valid},"
         f"action_reconciled={state.controller_boundary_action_reconciled},"
         f"scheduler_reconciled={state.controller_boundary_scheduler_reconciled},"
@@ -787,6 +808,252 @@ def _mail_delivery_projection_findings(
     return findings
 
 
+TERMINAL_ACTION_STATES = {"done", "reconciled", "resolved", "superseded", "cancelled", "skipped"}
+TERMINAL_ROUTER_ROW_STATES = {"reconciled", "resolved", "superseded", "cancelled", "skipped"}
+ACK_COMPLETE_STATUSES = {"resolved", "acknowledged"}
+
+
+def _bundle_identity(record: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(record.get("card_bundle_id") or ""),
+        str(record.get("expected_return_path") or record.get("ack_path") or ""),
+        str(record.get("card_return_event") or ""),
+    )
+
+
+def _record_matches_bundle(record: dict[str, Any], bundle_id: str, expected_return_path: str, event: str) -> bool:
+    nested = record.get("action") if isinstance(record.get("action"), dict) else {}
+    record_bundle = str(record.get("card_bundle_id") or nested.get("card_bundle_id") or "")
+    record_return = str(record.get("expected_return_path") or nested.get("expected_return_path") or "")
+    record_event = str(record.get("card_return_event") or nested.get("card_return_event") or "")
+    return bool(
+        (bundle_id and record_bundle == bundle_id)
+        or (expected_return_path and record_return == expected_return_path)
+        or (event and record_event == event and (record_bundle or record_return))
+    )
+
+
+def _user_intake_packet_summary(packet_ledger: dict[str, Any]) -> dict[str, Any] | None:
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger.get("packets"), list) else []
+    for packet in packets:
+        if not isinstance(packet, dict) or packet.get("packet_id") != "user_intake":
+            continue
+        envelope = packet.get("packet_envelope") if isinstance(packet.get("packet_envelope"), dict) else {}
+        holder = str(packet.get("active_packet_holder") or packet_ledger.get("active_packet_holder") or "")
+        status = str(packet.get("active_packet_status") or "")
+        router_release = packet.get("packet_router_release") or packet.get("router_startup_release")
+        if not isinstance(router_release, dict):
+            router_release = {}
+        return {
+            "packet_id": packet.get("packet_id"),
+            "packet_holder": holder,
+            "packet_status": status,
+            "to_role": envelope.get("to_role") or packet.get("assigned_worker_role"),
+            "next_holder": envelope.get("next_holder"),
+            "router_direct_dispatch_decision": packet.get("router_direct_dispatch_decision"),
+            "router_owned_startup_material": bool(packet.get("router_owned_startup_material")),
+            "router_release_recorded": bool(
+                router_release
+                and router_release.get("delivered_by_router") is True
+                and str(router_release.get("relayed_to_role") or "") == "project_manager"
+            ),
+            "top_level_active_packet_status": packet_ledger.get("active_packet_status"),
+            "terminal_lifecycle": packet_ledger.get("terminal_lifecycle"),
+        }
+    return None
+
+
+def _user_intake_delivery_action_exists(actions: list[dict[str, Any]]) -> bool:
+    for action in actions:
+        nested = action.get("action") if isinstance(action.get("action"), dict) else {}
+        if action.get("action_type") != "deliver_mail":
+            continue
+        mail_id = str(action.get("mail_id") or nested.get("mail_id") or "")
+        if mail_id == "user_intake":
+            return True
+    return False
+
+
+def _mail_ledger_has_user_intake(packet_ledger: dict[str, Any]) -> bool:
+    mail_entries = packet_ledger.get("mail") if isinstance(packet_ledger.get("mail"), list) else []
+    return any(isinstance(item, dict) and item.get("mail_id") == "user_intake" for item in mail_entries)
+
+
+def _user_intake_router_released(packet: dict[str, Any] | None, packet_ledger: dict[str, Any]) -> bool:
+    if not isinstance(packet, dict):
+        return False
+    return (
+        str(packet.get("packet_holder") or "") == "project_manager"
+        and str(packet.get("packet_status") or "") == "envelope-relayed"
+        and packet.get("router_release_recorded") is True
+        and packet_ledger.get("active_packet_holder") == "project_manager"
+        and packet_ledger.get("active_packet_status") == "envelope-relayed"
+    )
+
+
+def _computed_actions_after(router_state: dict[str, Any], after_time: str) -> list[str]:
+    history = router_state.get("history") if isinstance(router_state.get("history"), list) else []
+    actions: list[str] = []
+    for item in history:
+        if not isinstance(item, dict):
+            continue
+        if item.get("label") != "router_computed_next_controller_action":
+            continue
+        at = str(item.get("at") or "")
+        if after_time and at and at < after_time:
+            continue
+        details = item.get("details") if isinstance(item.get("details"), dict) else {}
+        action_type = str(details.get("action_type") or "")
+        if action_type:
+            actions.append(action_type)
+    return actions
+
+
+def _card_ack_handoff_projection_findings(
+    run_root: Path,
+    row_by_id: dict[str, dict[str, Any]],
+    actions: list[dict[str, Any]],
+) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    return_ledger_path = run_root / "return_event_ledger.json"
+    packet_ledger_path = run_root / "packet_ledger.json"
+    router_state_path = run_root / "router_state.json"
+    return_ledger = _read_json(return_ledger_path) if return_ledger_path.exists() else {}
+    packet_ledger = _read_json(packet_ledger_path) if packet_ledger_path.exists() else {}
+    router_state = _read_json(router_state_path) if router_state_path.exists() else {}
+
+    completed_returns = [
+        item for item in return_ledger.get("completed_returns", [])
+        if isinstance(item, dict)
+        and item.get("return_kind") == "system_card_bundle"
+        and str(item.get("status") or "") in ACK_COMPLETE_STATUSES
+    ]
+    pending_resolved = [
+        item for item in return_ledger.get("pending_returns", [])
+        if isinstance(item, dict)
+        and item.get("return_kind") == "system_card_bundle"
+        and (item.get("status") == "resolved" or bool(item.get("resolved_at")))
+    ]
+
+    resolved_by_bundle: dict[tuple[str, str, str], dict[str, Any]] = {}
+    for item in pending_resolved + completed_returns:
+        key = _bundle_identity(item)
+        if key[0] or key[1]:
+            resolved_by_bundle[key] = item
+
+    if not resolved_by_bundle:
+        return findings
+
+    user_intake_packet = _user_intake_packet_summary(packet_ledger)
+    user_intake_released = _user_intake_router_released(user_intake_packet, packet_ledger)
+    user_intake_delivery_exists = _user_intake_delivery_action_exists(actions)
+    user_intake_mail_folded = _mail_ledger_has_user_intake(packet_ledger)
+
+    for key, resolved in sorted(resolved_by_bundle.items()):
+        bundle_id, expected_return_path, event = key
+        completed_for_key = [
+            item for item in completed_returns
+            if _record_matches_bundle(item, bundle_id, expected_return_path, event)
+        ]
+        pending_for_key = [
+            item for item in pending_resolved
+            if _record_matches_bundle(item, bundle_id, expected_return_path, event)
+        ]
+        if completed_for_key and any(item.get("status") != "resolved" for item in completed_for_key):
+            findings.append(
+                {
+                    "id": "card_bundle_ack_completion_status_not_normalized",
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                    "completed_statuses": sorted({str(item.get("status") or "") for item in completed_for_key}),
+                    "pending_statuses": sorted({str(item.get("status") or "") for item in pending_for_key}),
+                    "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                }
+            )
+
+        matching_wait_actions = [
+            action for action in actions
+            if action.get("action_type") in {"await_card_bundle_return_event", "check_card_bundle_return_event"}
+            and _record_matches_bundle(action, bundle_id, expected_return_path, event)
+        ]
+        for action in matching_wait_actions:
+            row = row_by_id.get(str(action.get("router_scheduler_row_id") or ""))
+            row_state = str(row.get("router_state") or "") if row else ""
+            action_done = str(action.get("status") or "") in TERMINAL_ACTION_STATES
+            action_reconciled = str(action.get("router_reconciliation_status") or "") in TERMINAL_ACTION_STATES
+            row_reconciled = row_state in TERMINAL_ROUTER_ROW_STATES
+            if not (action_done and action_reconciled and row_reconciled):
+                findings.append(
+                    {
+                        "id": "card_bundle_ack_resolved_wait_row_still_open",
+                        "action_type": action.get("action_type"),
+                        "action_id": action.get("action_id"),
+                        "action_status": action.get("status"),
+                        "router_reconciliation_status": action.get("router_reconciliation_status"),
+                        "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                        "row_state": row_state or None,
+                        "card_bundle_id": bundle_id,
+                        "card_return_event": event,
+                        "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                    }
+                )
+
+        if (
+            user_intake_packet
+            and user_intake_packet.get("packet_holder") == "controller"
+            and user_intake_packet.get("packet_status") == "packet-with-controller"
+        ):
+            findings.append(
+                {
+                    "id": "startup_user_intake_owned_by_controller",
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                    "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                    "user_intake_packet": user_intake_packet,
+                }
+            )
+        if user_intake_delivery_exists:
+            findings.append(
+                {
+                    "id": "pm_ack_resolved_queued_controller_user_intake_delivery",
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                    "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                    "user_intake_delivery_action_exists": user_intake_delivery_exists,
+                }
+            )
+        if (
+            user_intake_packet
+            and str(user_intake_packet.get("to_role") or user_intake_packet.get("next_holder") or "") == "project_manager"
+            and not user_intake_released
+        ):
+            findings.append(
+                {
+                    "id": "pm_ack_resolved_user_intake_not_released",
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                    "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                    "user_intake_packet": user_intake_packet,
+                    "user_intake_mail_folded": user_intake_mail_folded,
+                    "user_intake_router_released": user_intake_released,
+                }
+            )
+            ack_time = str(resolved.get("resolved_at") or resolved.get("returned_at") or resolved.get("checked_at") or "")
+            computed_actions = _computed_actions_after(router_state, ack_time)
+            unrelated = [action for action in computed_actions if action != "router_release_startup_user_intake"]
+            if len(unrelated) >= 3:
+                findings.append(
+                    {
+                        "id": "pm_ack_resolved_unrelated_action_loop_before_user_intake_release",
+                        "card_bundle_id": bundle_id,
+                        "after_ack_time": ack_time,
+                        "sample_computed_actions": unrelated[:10],
+                    }
+                )
+
+    return findings
+
+
 def _live_run_projection() -> dict[str, object]:
     run_root, skip_reason = _resolve_current_run_root()
     if run_root is None:
@@ -829,6 +1096,7 @@ def _live_run_projection() -> dict[str, object]:
     temp_file_findings = _temp_action_file_projection_findings(run_root)
     boundary_findings = _controller_boundary_projection_findings(run_root, row_by_id, actions)
     mail_findings = _mail_delivery_projection_findings(run_root, row_by_id, actions)
+    card_ack_findings = _card_ack_handoff_projection_findings(run_root, row_by_id, actions)
 
     startup_actions_by_type: dict[str, list[dict[str, Any]]] = {}
     row_findings: list[dict[str, object]] = []
@@ -979,6 +1247,7 @@ def _live_run_projection() -> dict[str, object]:
         + temp_file_findings
         + boundary_findings
         + mail_findings
+        + card_ack_findings
         + row_findings
         + blocker_findings
     )

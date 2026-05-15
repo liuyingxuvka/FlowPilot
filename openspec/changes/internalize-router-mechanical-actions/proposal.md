@@ -10,8 +10,14 @@ appear.
 
 - Add a Router-internal action boundary for local mechanical work that the
   Router can prove and complete without Controller authority.
+- Make startup `user_intake` Router-owned startup material until PM system-card
+  bundle ACK is mechanically settled; Controller no longer acts as the
+  temporary holder or delivery source for that startup packet.
+- Add a deterministic Router settlement pass for mechanical returns. The pass
+  normalizes completed ACKs, reconciles matching wait/check rows, and releases
+  any Router-owned startup packet whose release condition is satisfied.
 - Keep Controller work packages for host-boundary and role-interaction work:
-  heartbeat binding, role recovery/rehydration, system-card relay, and formal
+  heartbeat binding, role recovery/rehydration, system-card relay, and normal
   PM/Worker/Reviewer packet handoff remain Controller-visible work.
 - Add a focused FlowGuard model before production edits. The model must reject
   known-bad cases where Router-internal work leaks into Controller rows,
@@ -45,6 +51,8 @@ None.
   - install sync/audit scripts as verification commands only
 - Affected runtime behavior:
   - local Router bookkeeping should avoid unnecessary Controller action rows;
+  - startup `user_intake` should be held and released by Router rather than
+    relayed from Controller after ACK;
   - Controller work-package authority should remain intact for role and host
     interactions;
   - Router failures should become explicit blockers or wait states, not silent

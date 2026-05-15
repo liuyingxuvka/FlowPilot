@@ -1,0 +1,400 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=307",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "command_restart_marked_complete": {
+        "detected": true,
+        "expected_failure": "patrol command start or restart was treated as standby completion",
+        "failures": [
+          "patrol command start or restart was treated as standby completion"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": true,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "none",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      },
+      "command_start_marked_complete": {
+        "detected": true,
+        "expected_failure": "patrol command start or restart was treated as standby completion",
+        "failures": [
+          "patrol command start or restart was treated as standby completion"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": true,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "none",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      },
+      "continue_patrol_completes_standby": {
+        "detected": true,
+        "expected_failure": "continuous standby completed before terminal stop allowance",
+        "failures": [
+          "continuous standby completed before terminal stop allowance",
+          "continue_patrol did not keep continuous standby in progress"
+        ],
+        "state": {
+          "anti_exit_reminder": true,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "complete",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": true,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": true,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": true,
+          "waiting_for_next_output": false
+        }
+      },
+      "continue_patrol_without_anti_exit": {
+        "detected": true,
+        "expected_failure": "continue_patrol lacked anti-exit reminder",
+        "failures": [
+          "continue_patrol lacked anti-exit reminder"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": true,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": true,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": true,
+          "waiting_for_next_output": false
+        }
+      },
+      "continue_patrol_without_next_command": {
+        "detected": true,
+        "expected_failure": "continue_patrol did not name the next patrol command",
+        "failures": [
+          "continue_patrol did not name the next patrol command"
+        ],
+        "state": {
+          "anti_exit_reminder": true,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": true,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": true,
+          "waiting_for_next_output": false
+        }
+      },
+      "continue_patrol_without_rerun": {
+        "detected": true,
+        "expected_failure": "continue_patrol did not instruct Controller to rerun the patrol command",
+        "failures": [
+          "continue_patrol did not instruct Controller to rerun the patrol command"
+        ],
+        "state": {
+          "anti_exit_reminder": true,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": true,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": true,
+          "waiting_for_next_output": false
+        }
+      },
+      "continue_patrol_without_wait_next_output": {
+        "detected": true,
+        "expected_failure": "continue_patrol did not instruct Controller to wait for the next output",
+        "failures": [
+          "continue_patrol did not instruct Controller to wait for the next output"
+        ],
+        "state": {
+          "anti_exit_reminder": true,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": true,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": true,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      },
+      "quiet_monitor_foreground_exit": {
+        "detected": true,
+        "expected_failure": "quiet monitor allowed Controller foreground exit",
+        "failures": [
+          "quiet monitor allowed Controller foreground exit"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": true,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "none",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      },
+      "rerun_without_waiting": {
+        "detected": true,
+        "expected_failure": "Controller reran patrol command without waiting for next output",
+        "failures": [
+          "Controller reran patrol command without waiting for next output"
+        ],
+        "state": {
+          "anti_exit_reminder": true,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": true,
+          "next_command_rerun_started": true,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "continue_patrol",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": true,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": true,
+          "waiting_for_next_output": false
+        }
+      },
+      "router_next_used_as_metronome": {
+        "detected": true,
+        "expected_failure": "Controller used router next/apply/run-until-wait as the patrol metronome",
+        "failures": [
+          "Controller used router next/apply/run-until-wait as the patrol metronome"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "none",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": true,
+          "separate_monitor_used": false,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      },
+      "separate_monitor_used": {
+        "detected": true,
+        "expected_failure": "patrol timer used a separate monitor instead of the existing daemon monitor",
+        "failures": [
+          "patrol timer used a separate monitor instead of the existing daemon monitor"
+        ],
+        "state": {
+          "anti_exit_reminder": false,
+          "command_restart_marked_complete": false,
+          "command_start_marked_complete": false,
+          "continuous_standby_status": "in_progress",
+          "continuous_standby_visible": true,
+          "controller_action_ledger_processed": false,
+          "controller_stop_allowed": false,
+          "daemon_live": true,
+          "existing_monitor_read": true,
+          "foreground_closed": false,
+          "foreground_required_mode": "watch_router_daemon",
+          "lifecycle": "active",
+          "next_command_named": false,
+          "next_command_rerun_started": false,
+          "ordinary_controller_work_ready": false,
+          "patrol_command_named_in_prompt": true,
+          "patrol_command_started": true,
+          "patrol_result": "none",
+          "patrol_timer_elapsed": true,
+          "rerun_instruction": false,
+          "router_next_used_as_metronome": false,
+          "separate_monitor_used": true,
+          "wait_next_output_instruction": false,
+          "waiting_for_next_output": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "initial_can_reach_success": true,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 16,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 16,
+    "success_state_count": 6
+  },
+  "skipped_checks": {
+    "conformance_replay": "skipped_with_reason: this is a preimplementation abstract model; runtime pytest checks cover the concrete patrol command"
+  }
+}

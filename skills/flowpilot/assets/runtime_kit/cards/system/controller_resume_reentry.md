@@ -116,10 +116,13 @@ the daemon is live, treat
 `continuous_controller_standby` as the active foreground duty, not a completed
 or finishable checklist item: sync the visible Codex plan from the Controller
 action ledger and receipts, keep that item `in_progress`, check for missed rows
-and receipts, and stay attached through `controller-standby` as long as
-FlowPilot is still running. If Router exposes new Controller work while standby
-is active, update or reread the action ledger and return to top-to-bottom row
-processing.
+and receipts, and run the patrol timer command
+`python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`
+as long as FlowPilot is still running. Wait for that command's output. If it
+returns `continue_patrol`, immediately run the same command again and wait for
+the next output. Starting or restarting the command is not completion. If
+Router exposes new Controller work while standby is active, update or reread
+the action ledger and return to top-to-bottom row processing.
 "Nothing for Controller this second", one monitor poll, a live target role, or
 `timeout_still_waiting` is not a stop condition. A Controller receipt proves
 Controller's local relay/display/wait action only; Router still owns the
@@ -127,6 +130,7 @@ workflow fact and must reconcile the receipt before route progress is counted.
 
 Use `foreground_required_mode` as the plain stop-check answer:
 `process_controller_action` means do the queued Controller work;
-`watch_router_daemon` means stay attached to the monitor; terminal status with
-`controller_stop_allowed: true` is the only normal condition for ending
-foreground Controller because FlowPilot is no longer running.
+`watch_router_daemon` means run the patrol timer command and wait for its
+output; terminal status with `controller_stop_allowed: true` is the only normal
+condition for ending foreground Controller because FlowPilot is no longer
+running.

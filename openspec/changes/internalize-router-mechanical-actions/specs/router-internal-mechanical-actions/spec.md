@@ -53,6 +53,34 @@ rows, or convert a local failure into a done receipt.
 - **THEN** Router SHALL leave an explicit wait or blocker record
 - **AND** Router SHALL NOT mark the action as done
 
+### Requirement: Startup user intake is Router-owned until PM ACK release
+
+FlowPilot SHALL create startup `user_intake` as Router-owned startup material.
+Controller SHALL NOT be the temporary holder or delivery source for the startup
+packet. After the PM system-card bundle ACK is mechanically settled, Router
+SHALL release the startup packet to PM exactly once and record the release in
+the packet ledger.
+
+#### Scenario: Startup intake begins with Router
+- **WHEN** deterministic startup creates the `user_intake` packet
+- **THEN** the packet ledger SHALL record Router as the active holder
+- **AND** the packet SHALL remain sealed from Controller
+- **AND** Router SHALL record that PM is the eventual target role
+
+#### Scenario: PM bundle ACK releases startup intake
+- **WHEN** the PM system-card bundle ACK is present and valid
+- **THEN** Router SHALL normalize the ACK to a resolved return
+- **AND** Router SHALL reconcile the matching wait/check Controller and
+  scheduler rows
+- **AND** Router SHALL release the Router-owned `user_intake` packet to PM
+  without creating a `deliver_mail` Controller work row
+
+#### Scenario: Repeated ACK settlement is stable
+- **WHEN** Router runs the return settlement pass again after startup
+  `user_intake` has already been released
+- **THEN** no duplicate mail ledger row, release history entry, Controller row,
+  or holder transition SHALL be created
+
 ### Requirement: Body and display boundaries are preserved
 
 FlowPilot SHALL preserve sealed-body and user-display boundaries when moving

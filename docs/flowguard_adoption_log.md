@@ -12100,3 +12100,102 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond focused repair transaction execution.
+
+## 2026-05-15 PM Card Bundle ACK Handoff Model Upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A formal FlowPilot startup run accepted the PM system-card bundle ACK but left the ACK wait row open and did not dispatch the real `user_intake` packet from Controller to PM.
+- Status: completed_focused_model_update
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+
+### Commands
+- `python -m py_compile simulations/flowpilot_daemon_reconciliation_model.py simulations/run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out simulations/flowpilot_daemon_reconciliation_model_only_results.json` passed with 10,356 explored traces, zero violations, zero stuck states, and the upgraded hazard fixtures detected.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --json-out simulations/flowpilot_daemon_reconciliation_results.json` failed as expected against the historical stopped run, because the new live projection found the PM ACK handoff gap.
+
+### Findings
+- The earlier model verified ACK validity and mail-delivery folding separately, but did not require the bridge between them: after a PM system-card bundle ACK resolves, the matching ACK wait row must be reconciled and the real `user_intake` packet must be dispatched if it is still held by Controller.
+- The upgraded model now rejects stale ACK wait rows, action/scheduler disagreement, non-normalized completed ACK status, user-intake packets left with Controller after PM ACK, and unrelated Controller-action loops after ACK.
+- The historical run projection found four matching findings: non-normalized completed ACK status, open `await_card_bundle_return_event` row, `user_intake` still `packet-with-controller`, and repeated unrelated display-status actions before user-intake dispatch.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Implement the focused runtime fix by making system-card ACK resolution a single finalizer that atomically normalizes the return ledger, closes the matching Controller action and scheduler row, and then asks the packet ledger for the next real dispatch.
+
+## 2026-05-16 Controller Patrol Timer Anti-Exit Loop
+
+- Project: FlowGuardProjectAutopilot_20260430
+- OpenSpec change: `add-controller-patrol-timer`
+- Trigger reason: Controller could see an active daemon monitor with no immediate Controller action and incorrectly treat quiet standby as permission to close the foreground chat.
+- Status: completed_focused_runtime_update_synced
+
+### Model Evidence
+- Patrol timer model: `simulations/flowpilot_controller_patrol_model.py`
+- Patrol timer runner: `simulations/run_flowpilot_controller_patrol_checks.py`
+- Result artifact: `simulations/flowpilot_controller_patrol_results.json`
+- Runtime owner: `skills/flowpilot/assets/flowpilot_router.py`
+- Prompt contract surfaces: `skills/flowpilot/SKILL.md`, `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`, `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`, and the generated `controller_table_prompt`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python simulations/run_flowpilot_controller_patrol_checks.py --json-out simulations/flowpilot_controller_patrol_results.json` passed with the focused anti-exit hazards detected.
+- `python -m py_compile skills/flowpilot/assets/flowpilot_router.py simulations/flowpilot_controller_patrol_model.py simulations/run_flowpilot_controller_patrol_checks.py` passed.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "controller_patrol_timer or foreground_controller_standby or router_daemon_observation_initializes_lock_status_and_ledger" -q` passed with 14 selected tests.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json --skip-self-check` synchronized the installed `flowpilot` skill from repository source.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Controller standby now has a separate Controller-operated patrol command: `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`.
+- The existing Router daemon monitor remains the source of truth; the patrol timer is only a foreground keepalive and monitor-reading loop.
+- A `continue_patrol` result explicitly tells Controller that no new work exists yet, that the loop exists to prevent accidental foreground exit, and that Controller must rerun the same command and wait for the next output.
+- Starting or restarting the patrol command is not completion evidence. Completion is allowed only when terminal state reports `controller_stop_allowed: true`.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Concrete conformance replay was not added for this abstract patrol model; runtime pytest covers the concrete CLI/payload behavior, while the focused FlowGuard model covers the anti-exit transition hazards.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond the focused Controller patrol timer boundary.
+
+## 2026-05-16 Router-Owned Startup User Intake ACK Settlement
+
+- Project: FlowGuardProjectAutopilot_20260430
+- OpenSpec change: `internalize-router-mechanical-actions`
+- Trigger reason: PM system-card bundle ACK could be written and acknowledged while the real startup `user_intake` packet remained Controller-held and no Router-owned release to PM occurred.
+- Status: completed_focused_runtime_update_synced
+
+### Model Evidence
+- Daemon reconciliation model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Daemon reconciliation runner/live projection: `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- Runtime owners: `skills/flowpilot/assets/flowpilot_router.py`, `skills/flowpilot/assets/packet_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills/flowpilot/assets/packet_runtime.py skills/flowpilot/assets/flowpilot_router.py tests/test_flowpilot_router_runtime.py simulations/flowpilot_daemon_reconciliation_model.py simulations/run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out simulations/flowpilot_daemon_reconciliation_model_only_results.json` passed with 10,356 explored traces, zero violations, zero stuck states, and the upgraded startup release hazards detected.
+- `python simulations/run_flowpilot_daemon_reconciliation_checks.py --json-out simulations/flowpilot_daemon_reconciliation_results.json` failed as expected against the historical stopped run because the live projection found the old ACK handoff gap.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "user_intake_from_startup_ui_is_router_owned or pm_card_bundle_ack_releases_router_owned_user_intake or user_intake_router_release_finalizer_is_idempotent or incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers or system_card_bundle" -q` passed with 4 selected tests.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "mail_delivery_receipt_waits_for_active_packet_ledger_writer or controller_patrol_timer or foreground_controller_standby" -q` passed with 14 selected tests.
+- `python -m pytest tests/test_flowpilot_packet_runtime.py -k "user_intake_packet_records_startup_visibility_and_relays_to_pm" -q` passed with 1 selected test.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "user_intake or card_bundle_return_event or pm_card_bundle or startup_activation" -q` passed with 6 selected tests.
+- `openspec validate internalize-router-mechanical-actions --strict` passed, and `openspec list --json` reported 22/22 tasks complete.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` synchronized the installed `flowpilot` skill from repository source.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Startup `user_intake` is now created as Router-owned startup material (`router-held-startup-material`) instead of `packet-with-controller`.
+- Router now runs a deterministic return settlement finalizer before computing the next visible action. It validates/normalizes PM card-bundle ACKs, reconciles matching Controller action and scheduler rows, clears matching pending waits, and releases the Router-owned startup `user_intake` to PM exactly once.
+- `packet_runtime` now has a narrow `router_startup_release` signature for startup `user_intake` only. Normal formal packet/result relay remains Controller-controlled.
+- The live projection found five issues in the historical stopped run: non-normalized completed ACK status, open ACK wait row, Controller-owned startup `user_intake`, unreleased PM startup packet, and repeated unrelated display-status actions after ACK.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+### Next Actions
+- Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond the focused startup ACK settlement boundary.

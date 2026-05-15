@@ -15,9 +15,11 @@
 ## 3. Internal Local Actions
 
 - [x] 3.1 Move `check_prompt_manifest` and `check_packet_ledger` to Router-internal consumption.
-- [ ] 3.2 Move safe ACK/check wait bookkeeping to Router-internal consumption without marking missing evidence as done.
+- [x] 3.2 Move safe ACK/check wait bookkeeping to Router-internal consumption without marking missing evidence as done.
 - [x] 3.3 Move `write_startup_mechanical_audit` to Router-internal proof writing once prerequisites are satisfied.
 - [x] 3.4 Clarify `sync_display_plan` ownership so startup waiting sync is an internal host-plan projection, while canonical route display still keeps its user-dialog confirmation gate.
+- [x] 3.5 Make startup `user_intake` Router-owned at creation instead of Controller-held.
+- [x] 3.6 Release Router-owned startup `user_intake` to PM from the ACK settlement pass exactly once.
 
 ## 4. Verification And Reconciliation
 

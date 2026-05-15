@@ -19,6 +19,7 @@ PACKET_ENVELOPE_SCHEMA = "flowpilot.packet_envelope.v1"
 RESULT_ENVELOPE_SCHEMA = "flowpilot.result_envelope.v1"
 CONTROLLER_HANDOFF_SCHEMA = "flowpilot.controller_handoff.v1"
 CONTROLLER_RELAY_SCHEMA = "flowpilot.controller_relay.v1"
+ROUTER_STARTUP_RELEASE_SCHEMA = "flowpilot.router_startup_release.v1"
 MUTUAL_ROLE_REMINDER_SCHEMA = "flowpilot.mutual_role_reminder.v1"
 CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
 ROLE_PACKET_SESSION_SCHEMA = "flowpilot.role_packet_runtime_session.v1"
@@ -38,6 +39,8 @@ ENVELOPE_HASH_EXCLUDED_KEYS = {
     "body_opened_by_role",
     "controller_relay",
     "controller_relay_history",
+    "router_startup_release",
+    "router_startup_release_history",
     "controller_return_to_sender",
     "result_body_opened_by_role",
 }
@@ -854,7 +857,7 @@ def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str,
     for record in packets:
         if isinstance(record, dict) and record.get("packet_id") == packet_id:
             for key, value in updates.items():
-                if key in {"holder_history", "controller_relay_history"}:
+                if key in {"holder_history", "controller_relay_history", "router_startup_release_history"}:
                     existing = record.setdefault(key, [])
                     if isinstance(existing, list):
                         existing.extend(value if isinstance(value, list) else [value])
@@ -1342,6 +1345,123 @@ def controller_relay_envelope(
     return envelope
 
 
+def router_release_startup_user_intake(
+    project_root: Path,
+    *,
+    envelope: dict[str, Any],
+    envelope_path: str | Path,
+    released_to_role: str = "project_manager",
+    source: str = "router_return_settlement_finalizer",
+) -> dict[str, Any]:
+    envelope.update(normalize_envelope_aliases(envelope))
+    if envelope.get("packet_type") != "user_intake":
+        raise PacketRuntimeError("router startup release is only valid for user_intake packets")
+    if envelope.get("to_role") != released_to_role:
+        raise PacketRuntimeError("router startup release target does not match user_intake target role")
+    if envelope.get("body_visibility") == USER_INTAKE_BODY_VISIBILITY:
+        raise PacketRuntimeError("router startup release requires sealed startup intake body visibility")
+
+    paths = packet_paths_from_any_envelope(project_root, envelope)
+    resolved_envelope_path = resolve_project_path(project_root, str(envelope_path))
+    ledger_record = _packet_ledger_record(paths["packet_ledger"], str(envelope.get("packet_id") or ""))
+    holder_before = (
+        str(ledger_record.get("active_packet_holder") or "")
+        if isinstance(ledger_record, dict)
+        else str(envelope.get("from_role") or "router")
+    )
+    existing_release = envelope.get("router_startup_release")
+    if (
+        isinstance(existing_release, dict)
+        and existing_release.get("schema_version") == ROUTER_STARTUP_RELEASE_SCHEMA
+        and existing_release.get("delivered_by_router") is True
+        and existing_release.get("relayed_to_role") == released_to_role
+    ):
+        return envelope
+
+    release = {
+        "schema_version": ROUTER_STARTUP_RELEASE_SCHEMA,
+        "delivered_by_router": True,
+        "source": source,
+        "released_at": utc_now(),
+        "received_from_role": "user",
+        "relayed_to_role": released_to_role,
+        "holder_before": holder_before or "router",
+        "holder_after": released_to_role,
+        "body_was_read_by_router": False,
+        "body_was_executed_by_router": False,
+        "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
+        "startup_release_condition": "pm_system_card_bundle_ack_resolved",
+        "recipient_must_verify_before_body_open": True,
+        "controller_bypass_scope": "startup_user_intake_only",
+        "normal_role_packet_relay_unchanged": True,
+        "envelope_hash": envelope_hash(envelope),
+    }
+    envelope["router_startup_release"] = release
+    history = list(envelope.get("router_startup_release_history") or [])
+    history.append(release)
+    envelope["router_startup_release_history"] = history
+    write_json_atomic(resolved_envelope_path, envelope)
+
+    _update_packet_record(
+        project_root,
+        paths["packet_ledger"],
+        envelope["packet_id"],
+        {
+            "packet_router_release": release,
+            "router_startup_release_history": release,
+            "router_owned_startup_material": True,
+            "router_direct_dispatch_decision": "released_by_router_startup_finalizer",
+            "recipient_must_verify_router_startup_release_before_body_open": True,
+            "active_packet_status": "envelope-relayed",
+            "active_packet_holder": released_to_role,
+            "holder_history": {
+                "holder": released_to_role,
+                "status": "envelope-relayed",
+                "changed_at": release["released_at"],
+                "user_status_update_written": True,
+                "controller_status_packet_path": envelope.get("controller_status_packet_path"),
+                "source": source,
+            },
+        },
+    )
+    write_controller_status_packet(
+        project_root,
+        envelope,
+        holder=released_to_role,
+        status="envelope-relayed",
+        message=f"Router released startup user_intake to {released_to_role}.",
+        progress=0,
+    )
+    return envelope
+
+
+def verify_router_startup_release(
+    envelope: dict[str, Any],
+    *,
+    recipient_role: str,
+) -> dict[str, Any]:
+    release = envelope.get("router_startup_release")
+    if not isinstance(release, dict):
+        raise PacketRuntimeError("missing router startup release signature")
+    if release.get("schema_version") != ROUTER_STARTUP_RELEASE_SCHEMA:
+        raise PacketRuntimeError("router startup release schema mismatch")
+    if envelope.get("packet_type") != "user_intake":
+        raise PacketRuntimeError("router startup release can only open user_intake")
+    if release.get("delivered_by_router") is not True:
+        raise PacketRuntimeError("router startup release was not delivered by Router")
+    if release.get("relayed_to_role") != recipient_role:
+        raise PacketRuntimeError(
+            f"router startup release target {release.get('relayed_to_role')!r} does not match recipient {recipient_role!r}"
+        )
+    if release.get("body_was_read_by_router") is not False:
+        raise PacketRuntimeError("router startup release did not sign that body was unread")
+    if release.get("body_was_executed_by_router") is not False:
+        raise PacketRuntimeError("router startup release did not sign that body was unexecuted")
+    if not release.get("holder_before") or not release.get("holder_after"):
+        raise PacketRuntimeError("router startup release holder chain is incomplete")
+    return release
+
+
 def verify_controller_relay(
     envelope: dict[str, Any],
     *,
@@ -1476,6 +1596,10 @@ def create_packet(
     metadata: dict[str, Any] | None = None,
     barrier_bundle: dict[str, Any] | None = None,
     output_contract: dict[str, Any] | None = None,
+    initial_holder: str = "controller",
+    initial_ledger_status: str = "packet-with-controller",
+    initial_status_packet_status: str = "envelope-created",
+    router_owned_startup_material: bool = False,
 ) -> dict[str, Any]:
     paths = packet_paths(project_root, packet_id, run_id)
     resolved_run_id = str(paths["run_id"])
@@ -1562,9 +1686,13 @@ def create_packet(
     write_controller_status_packet(
         project_root,
         envelope,
-        holder="controller",
-        status="envelope-created",
-        message=f"Packet {packet_id} envelope is ready for relay to {to_role}.",
+        holder=initial_holder,
+        status=initial_status_packet_status,
+        message=(
+            f"Packet {packet_id} is held by Router as startup material for {to_role}."
+            if router_owned_startup_material
+            else f"Packet {packet_id} envelope is ready for relay to {to_role}."
+        ),
         progress=0,
     )
     record = {
@@ -1614,16 +1742,17 @@ def create_packet(
         },
         "holder_history": [
             {
-                "holder": "controller",
-                "status": "envelope-created",
+                "holder": initial_holder,
+                "status": initial_status_packet_status,
                 "changed_at": envelope["created_at"],
                 "user_status_update_written": True,
                 "controller_status_packet_path": envelope["controller_status_packet_path"],
             }
         ],
-        "active_packet_status": "packet-with-controller",
-        "active_packet_holder": "controller",
+        "active_packet_status": initial_ledger_status,
+        "active_packet_holder": initial_holder,
         "router_direct_dispatch_decision": "pending",
+        "router_owned_startup_material": router_owned_startup_material,
         "reviewer_dispatch_decision": "not_required",
         "assigned_worker_role": to_role,
         "result_envelope_path": result_envelope_rel,
@@ -1694,6 +1823,7 @@ def create_user_intake_packet(
     source: str = "user_chat_prompt",
     body_visibility: str | None = None,
     startup_intake_ref: dict[str, Any] | None = None,
+    router_owned_startup_material: bool = False,
 ) -> dict[str, Any]:
     """Preserve the user's initial prompt as the first PM-bound physical packet."""
 
@@ -1706,6 +1836,7 @@ def create_user_intake_packet(
         "controller_must_not_make_pm_route_or_gate_decision": True,
         "pm_must_request_startup_reviewer_gate_before_opening_start_gate": True,
         "startup_gate_status": "not_open_until_pm_decision_after_reviewer_audit",
+        "router_owned_startup_material": router_owned_startup_material,
     }
     if startup_intake_ref is not None:
         metadata.update(
@@ -1728,6 +1859,11 @@ def create_user_intake_packet(
         body_visibility=resolved_body_visibility,
         metadata=metadata,
         next_holder="project_manager",
+        return_to="router" if router_owned_startup_material else "controller",
+        initial_holder="router" if router_owned_startup_material else "controller",
+        initial_ledger_status="router-held-startup-material" if router_owned_startup_material else "packet-with-controller",
+        initial_status_packet_status="router-held-startup-material" if router_owned_startup_material else "envelope-created",
+        router_owned_startup_material=router_owned_startup_material,
     )
 
 
@@ -1805,7 +1941,12 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
     envelope.update(normalize_envelope_aliases(envelope))
-    verify_controller_relay(envelope, recipient_role=role)
+    if isinstance(envelope.get("controller_relay"), dict):
+        verify_controller_relay(envelope, recipient_role=role)
+    elif envelope.get("packet_type") == "user_intake":
+        verify_router_startup_release(envelope, recipient_role=role)
+    else:
+        verify_controller_relay(envelope, recipient_role=role)
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
     output_contract = envelope.get("output_contract")
