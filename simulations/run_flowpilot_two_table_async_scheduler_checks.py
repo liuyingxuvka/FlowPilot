@@ -31,8 +31,11 @@ HAZARD_EXPECTED_FAILURES = {
     model.PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN: "PM startup activation required redundant all-startup ACK join",
     model.STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION: "Router reconciled stateful receipt without Router-visible postcondition evidence",
     model.LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN: "live daemon wait exposed an empty Controller plan instead of a continuous standby row",
+    model.CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN: "Controller action ledger lacks table-local top-to-bottom prompt coverage",
+    model.FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED: "foreground Controller closure was allowed while FlowPilot was still running",
     model.STANDBY_COMPLETES_AFTER_ONE_CHECK: "continuous standby row was completed after one monitor check",
     model.STANDBY_TIMEOUT_TREATED_AS_COMPLETION: "timeout_still_waiting was treated as standby completion",
+    model.STANDBY_NEW_WORK_IGNORED: "continuous standby ignored new Controller work instead of returning to top-to-bottom row processing",
 }
 
 
@@ -42,6 +45,9 @@ def _state_id(state: model.State) -> str:
         f"{state.daemon_tick_seconds}|tables={state.router_scheduler_table_exists},"
         f"{state.controller_action_table_exists},router_meta={state.router_table_has_dependency_metadata},"
         f"controller_graph={state.controller_table_has_router_dependency_graph}|"
+        f"prompt={state.controller_table_prompt_present},{state.controller_table_prompt_before_actions},"
+        f"{state.controller_table_prompt_top_down_order},{state.controller_table_prompt_receipt_duty},"
+        f"{state.controller_table_prompt_foreground_while_running},{state.controller_table_prompt_authority_limits}|"
         f"queue={state.independent_controller_row_pending},{state.independent_row_enqueued},"
         f"{state.next_independent_row_enqueued},barrier={state.barrier_active},"
         f"after_barrier={state.enqueued_after_barrier}|idempotency={state.idempotency_key_used},"
@@ -53,12 +59,17 @@ def _state_id(state: model.State) -> str:
         f"review={state.reviewer_startup_fact_review_started}|pm={state.reviewer_fact_report_recorded},"
         f"{state.pm_startup_activation_card_sent},{state.pm_startup_activation_ack_clean},"
         f"decision={state.pm_activation_decision_accepted},second_join={state.pm_activation_second_global_join_required},"
-        f"route={state.route_work_started}|standby={state.live_wait_without_ordinary_controller_row},"
+        f"route={state.route_work_started}|running={state.flowpilot_still_running},{state.running_wait_state_kind}|"
+        f"standby={state.live_wait_without_ordinary_controller_row},"
         f"row={state.continuous_standby_row_present},stable={state.standby_row_stable_idempotency},"
         f"names_wait={state.standby_row_names_wait_target},plan_sync={state.standby_codex_plan_sync_required},"
         f"plan_progress={state.standby_codex_plan_item_in_progress},strict_wait={state.standby_strict_monitor_wait_policy},"
         f"one_check_done={state.standby_completed_after_one_check},timeout_done={state.standby_timeout_still_waiting_treated_as_completion},"
-        f"foreground_stopped={state.foreground_controller_stopped_during_standby}|reason={state.terminal_reason}"
+        f"closure_allowed={state.foreground_closure_allowed_while_running},"
+        f"foreground_stopped={state.foreground_controller_stopped_during_standby},"
+        f"new_work={state.new_controller_work_exposed_during_standby},"
+        f"ledger_update={state.standby_updates_ledger_on_new_work},"
+        f"top_down_return={state.standby_returns_to_top_down_row_processing}|reason={state.terminal_reason}"
     )
 
 

@@ -8,7 +8,8 @@ Risk purpose:
   inheriting Router dependency complexity, duplicate queued side effects after
   daemon retries, Reviewer startup fact review starting before startup-scope
   reconciliation, foreground Controller waits becoming an empty/complete plan,
-  and PM startup activation gaining a redundant global ACK gate.
+  Controller forgetting top-to-bottom row order during long ledgers, and PM
+  startup activation gaining a redundant global ACK gate.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
   behavior changes.
@@ -24,13 +25,17 @@ Risk intent brief:
   review, and PM activation ACK semantics.
 - Adversarial branches: hidden dependency metadata in Controller rows, retry
   duplicate side effects, Reviewer review before startup cleanup, route work
-  before PM activation, daemon enqueue past a real barrier, standby completion
-  after one monitor check, and redundant PM activation global join.
+  before PM activation, daemon enqueue past a real barrier, missing table-local
+  Controller prompt, standby completion after one monitor check, foreground
+  closure while FlowPilot is still running, standby ignoring new Controller
+  work, and redundant PM activation global join.
 - Hard invariants: Router and Controller tables stay separate; daemon enqueues
   independent rows until barrier; barriers stop enqueueing; done receipts need
   required Router-visible postconditions before reconciliation; startup review
-  uses current-scope reconciliation; live waits keep a continuous Controller
-  standby row and Codex-plan sync duty; PM activation uses same-role ACK only.
+  uses current-scope reconciliation; the Controller action ledger carries a
+  compact top-to-bottom table prompt; live waits keep a continuous Controller
+  standby row and Codex-plan sync duty; running FlowPilot keeps foreground
+  Controller attached; PM activation uses same-role ACK only.
 - Blindspot: this is a focused control-plane model. Runtime tests must still
   exercise concrete Router actions, ledgers, receipts, and install sync.
 """
@@ -49,6 +54,7 @@ STATEFUL_RECEIPT_RECONCILED_WITH_POSTCONDITION = "stateful_receipt_reconciled_wi
 STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION = "startup_review_waits_for_current_scope_reconciliation"
 PM_ACTIVATION_SAME_ROLE_ACK_ONLY = "pm_activation_same_role_ack_only"
 CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT = "continuous_standby_row_during_live_wait"
+STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK = "standby_reenters_top_down_on_new_work"
 
 CONTROLLER_OWNS_ROUTER_DEPENDENCIES = "controller_owns_router_dependencies"
 DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY = "daemon_duplicates_controller_row_on_retry"
@@ -57,8 +63,11 @@ DAEMON_ENQUEUES_PAST_BARRIER = "daemon_enqueues_past_barrier"
 PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN = "pm_activation_requires_second_global_join"
 STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION = "stateful_receipt_cleared_without_postcondition"
 LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN = "live_wait_with_empty_controller_plan"
+CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN = "controller_ledger_prompt_missing_top_down"
+FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED = "flowpilot_running_foreground_closure_allowed"
 STANDBY_COMPLETES_AFTER_ONE_CHECK = "standby_completes_after_one_check"
 STANDBY_TIMEOUT_TREATED_AS_COMPLETION = "standby_timeout_treated_as_completion"
+STANDBY_NEW_WORK_IGNORED = "standby_new_work_ignored"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -67,6 +76,7 @@ VALID_SCENARIOS = (
     STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION,
     PM_ACTIVATION_SAME_ROLE_ACK_ONLY,
     CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT,
+    STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -77,8 +87,11 @@ NEGATIVE_SCENARIOS = (
     PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN,
     STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION,
     LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN,
+    CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN,
+    FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED,
     STANDBY_COMPLETES_AFTER_ONE_CHECK,
     STANDBY_TIMEOUT_TREATED_AS_COMPLETION,
+    STANDBY_NEW_WORK_IGNORED,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -105,6 +118,12 @@ class State:
     controller_action_table_exists: bool = False
     router_table_has_dependency_metadata: bool = False
     controller_table_has_router_dependency_graph: bool = False
+    controller_table_prompt_present: bool = False
+    controller_table_prompt_before_actions: bool = False
+    controller_table_prompt_top_down_order: bool = False
+    controller_table_prompt_receipt_duty: bool = False
+    controller_table_prompt_foreground_while_running: bool = False
+    controller_table_prompt_authority_limits: bool = False
 
     startup_scope_active: bool = False
     independent_controller_row_pending: bool = False
@@ -133,6 +152,8 @@ class State:
     pm_activation_decision_accepted: bool = False
     pm_activation_second_global_join_required: bool = False
     route_work_started: bool = False
+    flowpilot_still_running: bool = False
+    running_wait_state_kind: str = "none"
     live_wait_without_ordinary_controller_row: bool = False
     continuous_standby_row_present: bool = False
     standby_row_stable_idempotency: bool = False
@@ -142,7 +163,11 @@ class State:
     standby_strict_monitor_wait_policy: bool = False
     standby_completed_after_one_check: bool = False
     standby_timeout_still_waiting_treated_as_completion: bool = False
+    foreground_closure_allowed_while_running: bool = False
     foreground_controller_stopped_during_standby: bool = False
+    new_controller_work_exposed_during_standby: bool = False
+    standby_updates_ledger_on_new_work: bool = False
+    standby_returns_to_top_down_row_processing: bool = False
     terminal_reason: str = "none"
 
 
@@ -170,7 +195,14 @@ def scenario_state(scenario: str) -> State:
         "router_scheduler_table_exists": True,
         "controller_action_table_exists": True,
         "router_table_has_dependency_metadata": True,
+        "controller_table_prompt_present": True,
+        "controller_table_prompt_before_actions": True,
+        "controller_table_prompt_top_down_order": True,
+        "controller_table_prompt_receipt_duty": True,
+        "controller_table_prompt_foreground_while_running": True,
+        "controller_table_prompt_authority_limits": True,
         "startup_scope_active": True,
+        "flowpilot_still_running": True,
     }
     if scenario == ASYNC_STARTUP_ROWS_UNTIL_BARRIER:
         return _accepted(
@@ -240,6 +272,22 @@ def scenario_state(scenario: str) -> State:
             standby_codex_plan_item_in_progress=True,
             standby_strict_monitor_wait_policy=True,
         )
+    if scenario == STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK:
+        return _accepted(
+            scenario,
+            **base,
+            barrier_active=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            new_controller_work_exposed_during_standby=True,
+            standby_updates_ledger_on_new_work=True,
+            standby_returns_to_top_down_row_processing=True,
+        )
     if scenario == CONTROLLER_OWNS_ROUTER_DEPENDENCIES:
         return _rejected(
             scenario,
@@ -301,6 +349,33 @@ def scenario_state(scenario: str) -> State:
             continuous_standby_row_present=False,
             standby_codex_plan_item_in_progress=False,
         )
+    if scenario == CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN:
+        prompt_missing_base = {
+            **base,
+            "controller_table_prompt_present": True,
+            "controller_table_prompt_before_actions": True,
+            "controller_table_prompt_top_down_order": False,
+            "controller_table_prompt_receipt_duty": False,
+        }
+        return _rejected(
+            scenario,
+            **prompt_missing_base,
+        )
+    if scenario == FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            running_wait_state_kind="blocker_or_user_or_repair_wait",
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            foreground_closure_allowed_while_running=True,
+        )
     if scenario == STANDBY_COMPLETES_AFTER_ONE_CHECK:
         return _rejected(
             scenario,
@@ -313,6 +388,22 @@ def scenario_state(scenario: str) -> State:
             standby_codex_plan_sync_required=True,
             standby_completed_after_one_check=True,
             foreground_controller_stopped_during_standby=True,
+        )
+    if scenario == STANDBY_NEW_WORK_IGNORED:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            new_controller_work_exposed_during_standby=True,
+            standby_updates_ledger_on_new_work=False,
+            standby_returns_to_top_down_row_processing=False,
         )
     if scenario == STANDBY_TIMEOUT_TREATED_AS_COMPLETION:
         return _rejected(
@@ -338,6 +429,15 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("Controller table owns Router dependency metadata")
     if state.router_scheduler_table_exists and not state.router_table_has_dependency_metadata:
         failures.append("Router scheduler table lacks dependency or barrier metadata")
+    if state.controller_action_table_exists and not (
+        state.controller_table_prompt_present
+        and state.controller_table_prompt_before_actions
+        and state.controller_table_prompt_top_down_order
+        and state.controller_table_prompt_receipt_duty
+        and state.controller_table_prompt_foreground_while_running
+        and state.controller_table_prompt_authority_limits
+    ):
+        failures.append("Controller action ledger lacks table-local top-to-bottom prompt coverage")
     if state.next_independent_row_enqueued and not state.independent_row_enqueued:
         failures.append("Router enqueued a later row without recording the first row")
     if state.duplicate_controller_row_created and not state.idempotency_key_used:
@@ -374,8 +474,14 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("continuous standby row was completed after one monitor check")
     if state.standby_timeout_still_waiting_treated_as_completion:
         failures.append("timeout_still_waiting was treated as standby completion")
+    if state.flowpilot_still_running and state.foreground_closure_allowed_while_running:
+        failures.append("foreground Controller closure was allowed while FlowPilot was still running")
     if state.foreground_controller_stopped_during_standby:
         failures.append("foreground Controller stopped during a live continuous standby duty")
+    if state.new_controller_work_exposed_during_standby and not (
+        state.standby_updates_ledger_on_new_work and state.standby_returns_to_top_down_row_processing
+    ):
+        failures.append("continuous standby ignored new Controller work instead of returning to top-to-bottom row processing")
     return failures
 
 

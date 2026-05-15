@@ -45,10 +45,11 @@ project evidence.
 Allowed actions:
 
 - scan `runtime/router_daemon_status.json` and
-  `runtime/controller_action_ledger.json` while the run is active, execute
-  every pending dependency-satisfied Controller action, write a
-  `controller-receipt` for each completed, blocked, or controlled-wait action,
-  then rescan the ledger before waiting on any role;
+  `runtime/controller_action_ledger.json` while the run is active. Read the
+  ledger's `controller_table_prompt` before the action rows, then work ready
+  Controller rows from top to bottom: execute each dependency-satisfied row,
+  write a `controller-receipt` for each completed, blocked, or controlled-wait
+  action, mark it complete, and rescan the ledger before waiting on any role;
 - use the Router monitor as an active health-and-continuation aid, not as a
   passive status board. The monitor tells you who FlowPilot is waiting for,
   what controller-visible evidence should appear, when a reminder is due, and
@@ -74,11 +75,13 @@ Allowed actions:
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is
   live, the `continuous_controller_standby` row is your active foreground duty,
-  not a completed checklist item. You must sync the visible Codex plan from the
-  Controller action ledger and receipts, keep the standby item `in_progress`,
-  check for missed rows and receipts before each wait, and stay attached through
-  `controller-standby`. "No Controller action right now" is not permission to
-  end the foreground turn;
+  not a finishable checklist item. You must sync the visible Codex plan from
+  the Controller action ledger and receipts, keep the standby item
+  `in_progress`, check for missed rows and receipts before each wait, and stay
+  attached through `controller-standby` as long as FlowPilot is still running.
+  If Router exposes new Controller work during standby, update or reread the
+  ledger and return to top-to-bottom row processing. "No Controller action
+  right now" is not permission to end the foreground turn;
 - before any final/stop decision, read the status `foreground_required_mode`.
   `process_controller_action` means do the pending Controller action now;
   `watch_router_daemon` means stay in `controller-standby`; only terminal
@@ -87,8 +90,11 @@ Allowed actions:
   `await_card_bundle_return_event`, or `await_role_decision` and the action
   ledger has no executable Controller action, call
   `flowpilot_router.py controller-standby` and keep the foreground turn open
-  until that command returns a Controller action, terminal/user-required state,
-  daemon repair state, wait-target reminder/liveness check, or blocker state.
+  until that command returns a mode that requires Controller action, user
+  handling, daemon repair handling, wait-target reminder/liveness check,
+  blocker handling, or terminal cleanup. Nonterminal return modes are duty
+  switches, not permission to close foreground Controller while FlowPilot is
+  still running.
   A bounded `timeout_still_waiting` is diagnostic-only and must not complete
   the standby row;
 - call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
@@ -168,9 +174,11 @@ Forbidden actions:
   nonterminal. A pending Controller action means "do that action and write its
   receipt"; no pending Controller action means "stay attached to daemon status
   and the action ledger through the `continuous_controller_standby` duty and
-  `controller-standby`," not "FlowPilot has no more work." One monitor poll,
-  a live/working target role, or `timeout_still_waiting` never completes that
-  duty, and it must not mark the visible plan item done.
+  `controller-standby`," not "FlowPilot has no more work." The final standby
+  row is continuous monitoring: if Router exposes new Controller work, update
+  or reread the table and resume top-to-bottom row processing. One monitor
+  poll, a live/working target role, or `timeout_still_waiting` never completes
+  that duty, and it must not mark the visible plan item done.
 - do not treat a Controller receipt or Controller checklist tick as Router
   workflow completion. It proves only Controller's local action; Router must
   reconcile the receipt into Router-owned facts before the workflow advances.

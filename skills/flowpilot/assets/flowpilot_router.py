@@ -5059,6 +5059,49 @@ def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str
     return {"kind": "controller_local_receipt", "artifact_kind": "", "postcondition": ""}
 
 
+def _controller_table_prompt() -> dict[str, Any]:
+    return {
+        "language": "en",
+        "prompt_kind": "controller_action_ledger_table_prompt",
+        "text": (
+            "You are Controller only. This table is your work board.\n\n"
+            "Work from top to bottom. For each ready Controller row, perform that row, "
+            "write its receipt, and mark it complete before moving to the next row. "
+            "Do not skip ready rows. Do not invent route items, read sealed bodies, "
+            "implement worker work, approve gates, or close the route from Controller evidence.\n\n"
+            "As long as FlowPilot is still running, keep the foreground Controller work attached. "
+            "Do not stop or close the foreground Controller because this table is quiet, blocked, "
+            "waiting for a user, waiting for repair, waiting for another role, or waiting for a "
+            "diagnostic timeout.\n\n"
+            "If all ordinary rows are complete, enter the final fallback row: "
+            "continuous_controller_standby. This row is a continuous monitoring duty, not a "
+            "finishable checklist item. Keep it in progress, keep watching router_daemon_status "
+            "and controller_action_ledger, keep the visible Codex plan synchronized from ledger "
+            "rows and receipts, and when Router exposes new Controller work, update this table "
+            "and return to top-to-bottom row processing."
+        ),
+        "applies_to": ["runtime/controller_action_ledger.json"],
+        "row_processing_order": "top_to_bottom",
+        "foreground_controller_must_remain_attached_while_flowpilot_running": True,
+        "continuous_standby_row": CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
+        "sealed_body_reads_allowed": False,
+    }
+
+
+def _controller_action_ledger_has_prompt_header(ledger: dict[str, Any]) -> bool:
+    if ledger.get("schema_version") != CONTROLLER_ACTION_LEDGER_SCHEMA:
+        return False
+    if not isinstance(ledger.get("controller_table_prompt"), dict):
+        return False
+    keys = list(ledger)
+    return "controller_table_prompt" in keys and "actions" in keys and keys.index("controller_table_prompt") < keys.index("actions")
+
+
+def _write_controller_action_ledger(path: Path, ledger: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(ledger, indent=2) + "\n", encoding="utf-8")
+
+
 def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     action_dir = _controller_actions_dir(run_root)
     entries: list[dict[str, Any]] = []
@@ -5075,12 +5118,13 @@ def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_st
         "run_id": run_state.get("run_id"),
         "run_root": project_relative(project_root, run_root),
         "updated_at": utc_now(),
+        "controller_table_prompt": _controller_table_prompt(),
         "actions": entries,
         "counts": _controller_action_counts(entries),
         "controller_must_clear_pending_actions": True,
         "router_must_not_mark_done_without_controller_receipt": True,
     }
-    write_json(_controller_action_ledger_path(run_root), ledger)
+    _write_controller_action_ledger(_controller_action_ledger_path(run_root), ledger)
     run_state["controller_action_ledger_path"] = project_relative(project_root, _controller_action_ledger_path(run_root))
     return ledger
 
@@ -5089,7 +5133,7 @@ def _ensure_controller_action_ledger(project_root: Path, run_root: Path, run_sta
     path = _controller_action_ledger_path(run_root)
     if path.exists():
         ledger = read_json(path)
-        if ledger.get("schema_version") == CONTROLLER_ACTION_LEDGER_SCHEMA:
+        if _controller_action_ledger_has_prompt_header(ledger):
             run_state["controller_action_ledger_path"] = project_relative(project_root, path)
             return ledger
     return _rebuild_controller_action_ledger(project_root, run_root, run_state)
@@ -6933,10 +6977,18 @@ def _continuous_standby_task_payload(
         },
         "codex_plan_sync": {
             "required": True,
-            "plan_item": "FlowPilot continuous standby: keep Controller attached, sync the visible Codex plan from the Controller action ledger, mark finished rows from receipts, and keep watching Router daemon status until a release condition appears.",
+            "plan_item": (
+                "FlowPilot continuous standby: this is the final fallback row when all ordinary "
+                "Controller rows are complete but FlowPilot is still running. Keep this row "
+                "in progress as a continuous monitoring duty, keep the foreground Controller "
+                "attached, sync the visible Codex plan from the Controller action ledger and "
+                "receipts, and when Router exposes new Controller work, update the table and "
+                "return to top-to-bottom row processing."
+            ),
             "plan_status": "in_progress",
             "sync_after_each_controller_row": True,
             "check_for_missed_rows_and_receipts_before_sleep": True,
+            "new_controller_work_returns_to_top_down_processing": True,
         },
         "wait_policy": wait_policy,
         "do_not_mark_complete_on": [
@@ -6947,7 +6999,10 @@ def _continuous_standby_task_payload(
             "no_new_controller_action_yet",
         ],
         "release_conditions": _continuous_standby_release_conditions(),
+        "release_condition_meaning": "switch duty or process new work, not foreground closure while FlowPilot is running",
         "controller_must_not_exit_foreground": True,
+        "foreground_close_allowed_while_flowpilot_running": False,
+        "new_controller_work_requires_ledger_update_and_top_down_reentry": True,
         "controller_must_not_use_router_next_as_metronome": True,
         "metadata_only": True,
         "sealed_body_reads_allowed": False,
@@ -6995,8 +7050,9 @@ def _ensure_continuous_standby_controller_action(
         actor="controller",
         label="controller_continuous_flowpilot_standby",
         summary=(
-            "Continuous standby duty: keep the foreground Controller attached, sync the visible Codex plan "
-            "from FlowPilot ledgers, and watch Router daemon status until a release condition appears."
+            "Continuous standby duty: keep the foreground Controller attached while FlowPilot is running, "
+            "sync the visible Codex plan from FlowPilot ledgers, watch Router daemon status, and return "
+            "to top-to-bottom row processing when Router exposes new Controller work."
         ),
         allowed_reads=[
             project_relative(project_root, _router_daemon_status_path(run_root)),

@@ -102,12 +102,18 @@ continuity.
 
 During a nonterminal active run, do not end the foreground Controller turn. If
 status metadata says `controller_action_ready`, clear the executable
-Controller action first and write its receipt. If there is no executable
-Controller action but the daemon is live, treat
+Controller action first and write its receipt. Read
+`controller_table_prompt` in `runtime/controller_action_ledger.json`, work
+ready Controller rows from top to bottom, and mark each completed row with a
+receipt before moving onward. If there is no executable Controller action but
+the daemon is live, treat
 `continuous_controller_standby` as the active foreground duty, not a completed
-checklist item: sync the visible Codex plan from the Controller action ledger
-and receipts, keep that item `in_progress`, check for missed rows and receipts,
-and stay attached through `controller-standby`.
+or finishable checklist item: sync the visible Codex plan from the Controller
+action ledger and receipts, keep that item `in_progress`, check for missed rows
+and receipts, and stay attached through `controller-standby` as long as
+FlowPilot is still running. If Router exposes new Controller work while standby
+is active, update or reread the action ledger and return to top-to-bottom row
+processing.
 "Nothing for Controller this second", one monitor poll, a live target role, or
 `timeout_still_waiting` is not a stop condition. A Controller receipt proves
 Controller's local relay/display/wait action only; Router still owns the
@@ -116,5 +122,5 @@ workflow fact and must reconcile the receipt before route progress is counted.
 Use `foreground_required_mode` as the plain stop-check answer:
 `process_controller_action` means do the queued Controller work;
 `watch_router_daemon` means stay attached to the monitor; terminal status with
-`controller_stop_allowed: true` is the only normal condition for ending the
-Controller role.
+`controller_stop_allowed: true` is the only normal condition for ending
+foreground Controller because FlowPilot is no longer running.

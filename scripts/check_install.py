@@ -723,9 +723,14 @@ def main() -> int:
             "Do not trust an old \"alive\" status",
             "controller_local_action",
             "do not remind yourself",
+            "controller_table_prompt",
+            "top to bottom",
+            "as long as FlowPilot is still running",
             "continuous_controller_standby",
             "active foreground duty",
             "sync the visible Codex plan",
+            "finishable checklist item",
+            "return to top-to-bottom row processing",
             "must not mark the visible plan item done",
             "timeout_still_waiting",
             "diagnostic-only",
@@ -746,6 +751,40 @@ def main() -> int:
         result["checks"].append(
             {
                 "name": "flowpilot_controller_wait_target_prompt_guidance",
+                "ok": False,
+                "error": repr(exc),
+            }
+        )
+
+    try:
+        router_source = (ROOT / "skills/flowpilot/assets/flowpilot_router.py").read_text(encoding="utf-8")
+        required_terms = [
+            "controller_table_prompt",
+            "Work from top to bottom",
+            "As long as FlowPilot is still running",
+            "continuous monitoring duty",
+            "finishable checklist item",
+            "update this table",
+            "return to top-to-bottom row processing",
+            "foreground_close_allowed_while_flowpilot_running",
+            "new_controller_work_requires_ledger_update_and_top_down_reentry",
+        ]
+        missing_terms = [term for term in required_terms if term not in router_source]
+        ok = not missing_terms
+        result["checks"].append(
+            {
+                "name": "flowpilot_controller_table_prompt_runtime_guidance",
+                "ok": ok,
+                "missing_terms": missing_terms,
+            }
+        )
+        if not ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {
+                "name": "flowpilot_controller_table_prompt_runtime_guidance",
                 "ok": False,
                 "error": repr(exc),
             }

@@ -11102,3 +11102,43 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
 - `python -m pytest tests\test_flowpilot_router_runtime.py -q` timed out after 10 minutes without a final result, so it was not counted as passing evidence.
+
+## 2026-05-15 Controller Ledger Table Prompt Hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User wanted Controller's own action ledger to carry an English table-local prompt so long-running foreground Controller work remembers row order, foreground attachment, and continuous standby re-entry.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: Focused FlowGuard, OpenSpec, py_compile, targeted Router runtime tests, install check, install sync, and local install audit passed.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/harden-controller-ledger-table-prompt/`
+- Focused model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Focused result: `simulations/flowpilot_two_table_async_scheduler_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Controller guidance: `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- Resume guidance: `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+- Install checks: `scripts/check_install.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -q -k "foreground_controller_standby or router_daemon_observation_initializes_lock_status_and_ledger or router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles"` passed with 12 tests.
+- `openspec validate harden-controller-ledger-table-prompt --strict --json` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed and updated the installed FlowPilot skill to the repository digest.
+- `python scripts\audit_local_install_sync.py --json` passed.
+- `python scripts\install_flowpilot.py --check --json` passed.
+- `git diff --check` reported CRLF warnings only.
+
+### Findings
+- `runtime/controller_action_ledger.json` now emits `controller_table_prompt` before `actions` using a ledger-specific writer that preserves table-top ordering.
+- The prompt tells Controller to work ready rows from top to bottom, write receipts before moving onward, keep foreground work attached while FlowPilot is running, and avoid route invention, sealed bodies, worker work, gate approval, or route closure from Controller evidence.
+- `continuous_controller_standby` remains `in_progress` and now explicitly says it is a continuous monitoring duty, not a finishable checklist item.
+- When Router exposes new Controller work during standby, Controller guidance now tells it to update or reread the ledger and return to top-to-bottom row processing.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- Full router runtime test suite was not run; final evidence uses focused affected runtime tests plus model/OpenSpec/install checks.

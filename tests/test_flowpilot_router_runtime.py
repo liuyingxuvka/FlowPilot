@@ -3556,6 +3556,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(status["router_internal_ownership_ledger_visible_to_controller"])
         self.assertTrue((run_root / "runtime" / "router_ownership_ledger.json").exists())
         self.assertEqual(ledger["schema_version"], router.CONTROLLER_ACTION_LEDGER_SCHEMA)
+        self.assertLess(list(ledger).index("controller_table_prompt"), list(ledger).index("actions"))
+        prompt = ledger["controller_table_prompt"]
+        self.assertEqual(prompt["language"], "en")
+        self.assertEqual(prompt["row_processing_order"], "top_to_bottom")
+        self.assertTrue(prompt["foreground_controller_must_remain_attached_while_flowpilot_running"])
+        self.assertFalse(prompt["sealed_body_reads_allowed"])
+        self.assertIn("Work from top to bottom", prompt["text"])
+        self.assertIn("As long as FlowPilot is still running", prompt["text"])
+        self.assertIn("continuous monitoring duty, not a finishable checklist item", prompt["text"])
+        self.assertIn("return to top-to-bottom row processing", prompt["text"])
 
         with self.assertRaisesRegex(router.RouterError, "already active"):
             router.run_router_daemon(root, max_ticks=1, observe_only=True)
@@ -3973,6 +3983,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         standby_task = standby["continuous_standby_task"]
         self.assertEqual(standby_task["task_kind"], "continuous_controller_standby")
         self.assertEqual(standby_task["codex_plan_sync"]["plan_status"], "in_progress")
+        self.assertFalse(standby_task["foreground_close_allowed_while_flowpilot_running"])
+        self.assertTrue(standby_task["new_controller_work_requires_ledger_update_and_top_down_reentry"])
+        self.assertIn("continuous monitoring duty", standby_task["codex_plan_sync"]["plan_item"])
+        self.assertIn("return to top-to-bottom row processing", standby_task["codex_plan_sync"]["plan_item"])
         self.assertIn("timeout_still_waiting", standby_task["do_not_mark_complete_on"])
         self.assertEqual(standby_task["current_wait"]["waiting_for_role"], "human_like_reviewer")
         run_root = self.run_root_for(root)
@@ -3986,6 +4000,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         standby_entry = read_json(root / standby_rows[0]["action_path"])
         self.assertEqual(standby_entry["status"], "waiting")
         self.assertTrue(standby_entry["action"]["codex_plan_sync"]["required"])
+        self.assertTrue(
+            standby_entry["action"]["codex_plan_sync"]["new_controller_work_returns_to_top_down_processing"]
+        )
 
     def test_foreground_controller_standby_returns_report_reminder_and_liveness_probe_due(self) -> None:
         root = self.make_project()
@@ -4232,6 +4249,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(standby_task["task_kind"], "continuous_controller_standby")
         self.assertTrue(standby_task["codex_plan_sync"]["required"])
         self.assertEqual(standby_task["codex_plan_sync"]["plan_status"], "in_progress")
+        self.assertFalse(standby_task["foreground_close_allowed_while_flowpilot_running"])
+        self.assertTrue(standby_task["new_controller_work_requires_ledger_update_and_top_down_reentry"])
+        self.assertIn("continuous monitoring duty", standby_task["codex_plan_sync"]["plan_item"])
         self.assertIn("no_new_controller_action_yet", standby_task["do_not_mark_complete_on"])
 
     def test_foreground_controller_standby_wakes_on_controller_action_ledger(self) -> None:
