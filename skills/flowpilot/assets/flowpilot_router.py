@@ -102,7 +102,18 @@ WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
 WAIT_TARGET_REPORT_REMINDER_SECONDS = 600
 WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS = {"missing", "cancelled", "unknown", "unresponsive", "blocked", "lost"}
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
-CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped"}
+CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped", "resolved", "superseded"}
+CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES = {"incomplete", "repair_pending", "resolved", "superseded"}
+CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE = "complete_missing_controller_deliverable"
+CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS = 2
+CONTROLLER_STATEFUL_VALIDATOR_TABLE = {
+    "confirm_controller_core_boundary": {
+        "validator": "controller_boundary_confirmation_context",
+        "postcondition": "controller_role_confirmed",
+        "deliverable_id": "controller_boundary_confirmation",
+        "artifact_kind": "controller_boundary_confirmation",
+    },
+}
 STARTUP_MECHANICAL_AUDIT_SCHEMA = "flowpilot.startup_mechanical_audit.v1"
 ROUTER_OWNED_CHECK_PROOF_SCHEMA = "flowpilot.router_owned_check_proof.v1"
 CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA = "flowpilot.controller_boundary_confirmation.v1"
@@ -4507,7 +4518,18 @@ def _controller_action_initial_status(action: dict[str, Any]) -> str:
 
 
 def _controller_action_counts(actions: list[dict[str, Any]]) -> dict[str, int]:
-    counts = {"pending": 0, "in_progress": 0, "done": 0, "blocked": 0, "waiting": 0, "skipped": 0}
+    counts = {
+        "pending": 0,
+        "in_progress": 0,
+        "done": 0,
+        "blocked": 0,
+        "waiting": 0,
+        "skipped": 0,
+        "incomplete": 0,
+        "repair_pending": 0,
+        "resolved": 0,
+        "superseded": 0,
+    }
     for item in actions:
         status = str(item.get("status") or "pending")
         counts[status] = counts.get(status, 0) + 1
@@ -4530,6 +4552,12 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
         "scope_kind": entry.get("scope_kind"),
         "scope_id": entry.get("scope_id"),
+        "required_deliverables": entry.get("required_deliverables") or [],
+        "deliverable_status": entry.get("deliverable_status"),
+        "deliverable_repair_attempts": entry.get("deliverable_repair_attempts"),
+        "max_deliverable_repair_attempts": entry.get("max_deliverable_repair_attempts"),
+        "repair_of_controller_action_id": entry.get("repair_of_controller_action_id"),
+        "resolved_by_controller_action_id": entry.get("resolved_by_controller_action_id"),
         "action_path": entry.get("action_path"),
         "expected_receipt_path": entry.get("expected_receipt_path"),
         "updated_at": entry.get("updated_at"),
@@ -4787,6 +4815,10 @@ def _record_router_scheduler_row(
         "dependencies": action.get("dependencies") or action.get("depends_on") or [],
         "postcondition": _pending_action_postcondition(action),
         "completion_class": _controller_action_completion_class(action),
+        "required_deliverables": action.get("required_deliverables") or controller_entry.get("required_deliverables") or [],
+        "deliverable_status": controller_entry.get("deliverable_status"),
+        "deliverable_repair_attempts": controller_entry.get("deliverable_repair_attempts"),
+        "max_deliverable_repair_attempts": controller_entry.get("max_deliverable_repair_attempts"),
         "controller_action_path": controller_entry.get("action_path"),
         "controller_receipt_path": controller_entry.get("expected_receipt_path"),
         "router_only_dependency_metadata": True,

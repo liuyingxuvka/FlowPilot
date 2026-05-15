@@ -10827,6 +10827,54 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Skipped Steps
 - `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
 
+## 2026-05-15 Continuous Controller Standby Row Runtime Update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that foreground Controller standby must be a durable in-progress duty, not an empty plan or one-time monitor poll.
+- Status: implemented_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+- Commands OK: OpenSpec validation, focused FlowGuard scheduler checks, targeted runtime tests, install sync, and local install audit passed.
+
+### Risk Intent
+- Ensure a live Router daemon wait always exposes a `continuous_controller_standby` Controller row when no ordinary Controller work is ready.
+- Keep the visible Codex plan synced from the Controller action ledger with the standby item in progress.
+- Prevent one monitor poll, `timeout_still_waiting`, or a still-working live target role from completing standby.
+- Keep ACK waits on three-minute reminder and ten-minute blocker timing, and report/result waits on ten-minute reminder plus fresh liveness checks.
+
+### Model And Runtime Evidence
+- OpenSpec change: `openspec/changes/router-two-table-async-scheduler/`
+- Focused model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Focused result: `simulations/flowpilot_two_table_async_scheduler_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Controller prompt guidance: `skills/flowpilot/SKILL.md`, `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`, `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile skills/flowpilot/assets/flowpilot_router.py simulations/flowpilot_two_table_async_scheduler_model.py simulations/run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python simulations/run_flowpilot_two_table_async_scheduler_checks.py` passed and refreshed `simulations/flowpilot_two_table_async_scheduler_results.json`.
+- `openspec validate router-two-table-async-scheduler --strict` passed.
+- `python scripts/check_install.py --json` passed.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "foreground_controller_standby or two_table or stateful" -q` passed with 11 tests.
+- `python -m pytest tests/test_flowpilot_router_runtime.py -k "foreground_controller_standby or daemon_tick_consumes_card_ack_without_manual_next or startup_fact" -q` passed with 16 tests and 3 subtests.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` synchronized the installed FlowPilot skill.
+- `python scripts/audit_local_install_sync.py --json` passed with matching installed and repository digests.
+
+### Findings
+- The focused model now rejects empty live-wait Controller plans, standby rows completed after one check, and `timeout_still_waiting` treated as completion.
+- Runtime standby now keeps waiting through nonterminal timeouts by default; bounded timeout returns are explicitly diagnostic/test mode.
+- Router daemon status and Controller action ledger now expose a plan-syncable continuous standby task while preserving Router-owned progress.
+- A legacy startup-fact test was updated to use a fresh run after intentionally triggering a fatal leaked-body-field blocker, matching the blocker semantics already enforced by the router.
+
+### Skipped Steps
+- `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are heavyweight checks and not required for this focused runtime update.
+
+### Peer Integration Follow-up
+- After the local commit, a parallel agent added stateful Controller postcondition repair modeling and runtime tests in `simulations/flowpilot_persistent_router_daemon_model.py`, `simulations/run_flowpilot_persistent_router_daemon_checks.py`, and `tests/test_flowpilot_router_runtime.py`.
+- The focused daemon model was rerun and passed with zero safe-graph invariant failures.
+- `openspec validate router-two-table-async-scheduler --type change --strict --json` passed for the related two-table scheduler change.
+- The related targeted router runtime scope passed with 5 tests.
+
 ## 2026-05-15 Router External Wait Reconciliation Runtime Update
 
 - Project: FlowGuardProjectAutopilot_20260430

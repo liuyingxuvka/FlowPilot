@@ -23,6 +23,10 @@ REQUIRED_LABELS = (
     "router_issues_stateful_controller_boundary_action_to_ledger",
     "controller_executes_action_and_writes_receipt",
     "controller_executes_stateful_action_writes_postcondition_evidence_and_receipt",
+    "router_marks_stateful_receipt_incomplete_and_enqueues_repair",
+    "controller_completes_stateful_deliverable_repair",
+    "router_enqueues_second_stateful_deliverable_repair",
+    "router_escalates_missing_stateful_deliverable_after_repair_budget",
     "router_reconciles_controller_receipt_updates_router_fact_and_requires_rescan",
     "router_reconciles_stateful_receipt_after_postcondition_evidence",
     "router_enters_ack_wait_owned_by_daemon",
@@ -54,6 +58,8 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
     "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
     "stateful_controller_receipt_done_without_postcondition_evidence": "stateful Controller receipt was marked done before Router-visible postcondition evidence existed",
+    "stateful_missing_deliverable_escalated_before_repair_budget": "stateful missing deliverable escalated before Controller repair attempts were exhausted",
+    "stateful_missing_deliverable_exhausted_without_blocker": "stateful missing deliverable exhausted repair attempts without control blocker",
     "router_cleared_stateful_receipt_without_postcondition_evidence": "Router cleared stateful Controller receipt without Router-visible postcondition evidence",
     "controller_role_confirmed_without_boundary_artifact": "Controller role was confirmed without controller boundary confirmation artifact",
     "same_controller_action_reissued_after_done_receipt": "Router reissued the same Controller action after a done receipt because Router-owned fact stayed stale",
@@ -122,6 +128,9 @@ def _state_id(state: model.State) -> str:
         f"postcondition_evidence={state.controller_stateful_postcondition_evidence_written},"
         f"boundary_artifact={state.controller_boundary_confirmation_written},"
         f"role_confirmed={state.controller_role_confirmed},"
+        f"deliverable_repair={state.controller_missing_deliverable_repair_pending},"
+        f"repair_attempts={state.controller_missing_deliverable_repair_attempts},"
+        f"deliverable_blocker={state.controller_missing_deliverable_blocker_recorded},"
         f"cleared_stateful_no_evidence={state.router_cleared_stateful_receipt_without_postcondition_evidence},"
         f"router_fact={state.router_internal_action_fact_current},"
         f"router_fact_from_receipt={state.router_internal_fact_updated_from_receipt},"

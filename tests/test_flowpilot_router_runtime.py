@@ -3587,6 +3587,92 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         self.assertGreaterEqual(ledger["counts"]["done"], 1)
 
+    def test_router_daemon_queues_startup_rows_until_barrier_with_two_tables(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        router.apply_action(root, "confirm_controller_core_boundary")
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        tick = result["ticks"][0]
+        self.assertGreaterEqual(tick["queued_count"], 2)
+        queued_types = [item["action_type"] for item in tick["queued_actions"]]
+        self.assertIn("write_startup_mechanical_audit", queued_types)
+        self.assertIn("write_display_surface_status", queued_types)
+        self.assertEqual(tick["queue_stop_reason"], "barrier")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        self.assertEqual(scheduler["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+        self.assertTrue(scheduler["router_is_only_scheduler_writer"])
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        startup_rows = [item for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertGreaterEqual(len(startup_rows), 2)
+        for row in startup_rows:
+            record = read_json(run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json")
+            self.assertEqual(record["dependencies"], [])
+            self.assertTrue(record["router_scheduler_row_id"])
+
+    def test_startup_reviewer_event_uses_current_scope_reconciliation(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        self.apply_startup_heartbeat_if_requested(root)
+        action = self.next_after_display_sync(root)
+        while action["action_type"] in {
+            "confirm_controller_core_boundary",
+            "check_prompt_manifest",
+            "write_startup_mechanical_audit",
+            "write_display_surface_status",
+        }:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
+            action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
+        self.mark_controller_action_done(root, action, {"delivery_relayed": True})
+
+        result = router.record_external_event(
+            root,
+            "reviewer_reports_startup_facts",
+            self.role_report_envelope(
+                root,
+                "startup/reviewer_report_before_startup_scope_clean",
+                self.startup_fact_report_body(root),
+            ),
+        )
+
+        self.assertFalse(result["ok"])
+        self.assertTrue(result["current_scope_reconciliation_blocked"])
+        self.assertEqual(result["scope_kind"], "startup")
+        self.assertEqual(result["next_required_action"]["action_type"], "await_current_scope_reconciliation")
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_fact_reported"])
+
+    def test_controller_boundary_done_receipt_reclaims_router_postcondition(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        receipt = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+
+        self.assertTrue(receipt["ok"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_role_confirmed"])
+        self.assertTrue(state["flags"]["controller_boundary_confirmation_written"])
+        self.assertTrue((run_root / "startup" / "controller_boundary_confirmation.json").exists())
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+
     def test_sync_display_plan_done_receipt_updates_router_fact_before_next_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -3647,7 +3733,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         self.assertEqual(ledger["counts"]["pending"], 3)
         second_record = read_json(run_root / "runtime" / "controller_actions" / f"{second['action_id']}.json")
-        self.assertEqual(second_record["dependencies"], ["test_multi_action_first"])
+        self.assertEqual(second_record["dependencies"], [])
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        second_row = next(row for row in scheduler["rows"] if row["controller_action_id"] == second["action_id"])
+        self.assertEqual(second_row["dependencies"], ["test_multi_action_first"])
+        self.assertTrue(second_row["router_only_dependency_metadata"])
 
         router.record_controller_action_receipt(root, action_id=first["action_id"], status="done")
         router.record_controller_action_receipt(root, action_id=first["action_id"], status="done")
@@ -6997,6 +7087,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                     "blockers": [],
                 },
             )
+
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.deliver_startup_fact_check_card(root)
+        self.deliver_initial_pm_cards_and_user_intake(root)
+        report_body = self.startup_fact_report_body(root)
+        report_text = json.dumps(report_body, indent=2, sort_keys=True)
+        private_report = run_root / "startup" / "reviewer_private_startup_fact_report.json"
+        private_report.parent.mkdir(parents=True, exist_ok=True)
+        private_report.write_text(report_text, encoding="utf-8")
+        report_hash = hashlib.sha256(private_report.read_bytes()).hexdigest()
+        report_path = str(private_report.relative_to(root))
 
         router.record_external_event(
             root,
