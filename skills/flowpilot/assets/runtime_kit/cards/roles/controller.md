@@ -73,11 +73,12 @@ Allowed actions:
 - treat every nonterminal active run as foreground keepalive. If the ledger has
   a pending executable Controller action, process it and write its receipt; if
   the ledger has no pending executable Controller action and the daemon is
-  live, the `continuous_controller_standby` row is your in-progress fallback
-  duty: sync the visible Codex plan from the Controller action ledger, keep the
-  standby item in progress, check for missed rows and receipts, and stay
-  attached through `controller-standby`. "No Controller action right now" is not
-  permission to end the foreground turn;
+  live, the `continuous_controller_standby` row is your active foreground duty,
+  not a completed checklist item. You must sync the visible Codex plan from the
+  Controller action ledger and receipts, keep the standby item `in_progress`,
+  check for missed rows and receipts before each wait, and stay attached through
+  `controller-standby`. "No Controller action right now" is not permission to
+  end the foreground turn;
 - before any final/stop decision, read the status `foreground_required_mode`.
   `process_controller_action` means do the pending Controller action now;
   `watch_router_daemon` means stay in `controller-standby`; only terminal
@@ -169,7 +170,7 @@ Forbidden actions:
   and the action ledger through the `continuous_controller_standby` duty and
   `controller-standby`," not "FlowPilot has no more work." One monitor poll,
   a live/working target role, or `timeout_still_waiting` never completes that
-  duty.
+  duty, and it must not mark the visible plan item done.
 - do not treat a Controller receipt or Controller checklist tick as Router
   workflow completion. It proves only Controller's local action; Router must
   reconcile the receipt into Router-owned facts before the workflow advances.

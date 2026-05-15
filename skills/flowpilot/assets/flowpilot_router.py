@@ -4717,6 +4717,7 @@ def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
     action_type = str(action.get("action_type") or "")
     if action_type in {
         "confirm_controller_core_boundary",
+        CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
         "write_startup_mechanical_audit",
         "write_display_surface_status",
     }:
@@ -5171,7 +5172,21 @@ def _write_controller_action_entry(
         }
     entry["updated_at"] = now
     entry["last_seen_at"] = now
+    required_deliverables = _controller_action_required_deliverables(project_root, run_root, run_state, action)
+    deliverable_contract = _controller_deliverable_contract(required_deliverables)
+    if required_deliverables:
+        action["required_deliverables"] = required_deliverables
     entry["completion_class"] = _controller_action_completion_class(action)
+    entry["required_deliverables"] = required_deliverables
+    entry["deliverable_contract"] = deliverable_contract
+    if required_deliverables and not entry.get("deliverable_status"):
+        entry["deliverable_status"] = "required"
+        entry["deliverable_repair_attempts"] = int(entry.get("deliverable_repair_attempts") or 0)
+        entry["max_deliverable_repair_attempts"] = CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS
+    if action.get("repair_of_controller_action_id"):
+        entry["repair_of_controller_action_id"] = action.get("repair_of_controller_action_id")
+        entry["repair_target_action_type"] = action.get("repair_target_action_type")
+        entry["repair_attempt"] = action.get("repair_attempt")
     entry["router_scheduler_row_id"] = action.get("router_scheduler_row_id")
     entry["scope_kind"] = action.get("scope_kind")
     entry["scope_id"] = action.get("scope_id")
@@ -5279,11 +5294,16 @@ def _reconcile_controller_receipts(project_root: Path, run_root: Path, run_state
             action = read_json_if_exists(action_path)
             if action.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
                 continue
-            action["status"] = status
+            previous_status = str(action.get("status") or "")
+            preserve_router_status = status == "done" and previous_status in CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES
+            if preserve_router_status:
+                action["receipt_status"] = status
+            else:
+                action["status"] = status
             action["receipt_path"] = project_relative(project_root, receipt_path)
             action["receipt_recorded_at"] = receipt.get("recorded_at")
             action["updated_at"] = utc_now()
-            if status == "done":
+            if status == "done" and not preserve_router_status:
                 action["completed_at"] = receipt.get("recorded_at")
             if status == "blocked":
                 blocked += 1
@@ -5293,7 +5313,13 @@ def _reconcile_controller_receipts(project_root: Path, run_root: Path, run_state
             row_id = str(action.get("router_scheduler_row_id") or "")
             if row_id:
                 router_state = (
-                    "receipt_done"
+                    "waiting"
+                    if preserve_router_status and previous_status == "repair_pending"
+                    else "superseded"
+                    if preserve_router_status and previous_status == "superseded"
+                    else "reconciled"
+                    if preserve_router_status and previous_status == "resolved"
+                    else "receipt_done"
                     if status == "done"
                     else "blocked"
                     if status == "blocked"
@@ -5474,6 +5500,509 @@ def _pending_action_postcondition_satisfied(run_state: dict[str, Any], postcondi
     return bool(flags.get(postcondition))
 
 
+def _controller_boundary_required_deliverable(project_root: Path, run_root: Path) -> dict[str, Any]:
+    contract = CONTROLLER_STATEFUL_VALIDATOR_TABLE["confirm_controller_core_boundary"]
+    return {
+        "deliverable_id": contract["deliverable_id"],
+        "artifact_kind": contract["artifact_kind"],
+        "path": project_relative(project_root, _controller_boundary_confirmation_path(run_root)),
+        "schema_version": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
+        "postcondition": contract["postcondition"],
+        "validator": contract["validator"],
+        "required_before_router_reconciles_done_receipt": True,
+    }
+
+
+def _controller_action_required_deliverables(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+) -> list[dict[str, Any]]:
+    del run_state
+    raw_required = action.get("required_deliverables")
+    if isinstance(raw_required, list) and raw_required:
+        return [item for item in raw_required if isinstance(item, dict)]
+    raw_missing = action.get("missing_deliverables")
+    if isinstance(raw_missing, list) and raw_missing:
+        return [item for item in raw_missing if isinstance(item, dict)]
+    action_type = str(action.get("action_type") or "")
+    if action_type == "confirm_controller_core_boundary":
+        return [_controller_boundary_required_deliverable(project_root, run_root)]
+    repair_target = str(action.get("repair_target_action_type") or "")
+    if action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE and repair_target == "confirm_controller_core_boundary":
+        return [_controller_boundary_required_deliverable(project_root, run_root)]
+    return []
+
+
+def _controller_deliverable_contract(deliverables: list[dict[str, Any]]) -> dict[str, Any]:
+    if not deliverables:
+        return {}
+    return {
+        "schema_version": "flowpilot.controller_deliverable_contract.v1",
+        "required_deliverables": deliverables,
+        "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+        "missing_deliverable_policy": "reclaim_existing_then_controller_repair_then_blocker",
+        "router_must_not_synthesize_missing_controller_deliverable_during_receipt_reconciliation": True,
+    }
+
+
+def _missing_deliverables_for_apply_result(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    apply_result: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    if isinstance(apply_result, dict):
+        raw_missing = apply_result.get("missing_deliverables")
+        if isinstance(raw_missing, list) and raw_missing:
+            return [item for item in raw_missing if isinstance(item, dict)]
+    return _controller_action_required_deliverables(project_root, run_root, run_state, action)
+
+
+def _update_controller_action_entry_fields(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    action_id: str,
+    status: str | None = None,
+    fields: dict[str, Any] | None = None,
+    router_state: str | None = None,
+    reconciliation: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if not action_id:
+        return {}
+    path = _controller_action_path(run_root, action_id)
+    entry = read_json_if_exists(path)
+    if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+        return {}
+    if status is not None:
+        entry["status"] = status
+    if fields:
+        entry.update(fields)
+    entry["updated_at"] = utc_now()
+    write_json(path, entry)
+    row_id = str(entry.get("router_scheduler_row_id") or "")
+    if row_id and router_state:
+        _update_router_scheduler_row(
+            project_root,
+            run_root,
+            run_state,
+            row_id=row_id,
+            router_state=router_state,
+            reconciliation=reconciliation or fields or {},
+        )
+    _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    return entry
+
+
+def _sync_controller_boundary_confirmation_from_artifact(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
+    if context is None:
+        missing = [_controller_boundary_required_deliverable(project_root, run_root)]
+        _record_router_ownership_entry(
+            project_root,
+            run_root,
+            run_state,
+            action_id=str(pending_action.get("controller_action_id") or ""),
+            action_type=str(pending_action.get("action_type") or ""),
+            router_state="router_reclaim_pending",
+            workflow_owner="router",
+            postcondition="controller_role_confirmed",
+            source=source,
+            receipt_path=str(pending_action.get("controller_receipt_path") or ""),
+            details={
+                "reason": "controller_boundary_confirmation_missing_or_invalid",
+                "missing_deliverables": missing,
+                "controller_receipt_payload": receipt_payload,
+            },
+        )
+        return {
+            "applied": False,
+            "reason": "controller_boundary_confirmation_missing_or_invalid",
+            "action_type": pending_action.get("action_type"),
+            "repairable": True,
+            "missing_deliverables": missing,
+        }
+    confirmation = run_state.get("controller_boundary_confirmation")
+    if not isinstance(confirmation, dict) or not confirmation.get("path"):
+        confirmation = {
+            "path": project_relative(project_root, context["path"]),
+            "sha256": context["sha256"],
+            "controller_core_path": context["confirmation"].get("controller_core_path"),
+            "controller_core_sha256": context["confirmation"].get("controller_core_sha256"),
+            "controller_policy_sha256": context["confirmation"].get("controller_policy_sha256"),
+        }
+    run_state.setdefault("flags", {})["controller_role_confirmed"] = True
+    run_state.setdefault("flags", {})["controller_role_confirmed_from_router_core"] = True
+    run_state.setdefault("flags", {})["controller_boundary_confirmation_written"] = True
+    run_state["controller_boundary_confirmation"] = confirmation
+    if not any(
+        isinstance(item, dict) and item.get("event") == "controller_role_confirmed_from_router_core"
+        for item in run_state.get("events", [])
+    ):
+        run_state.setdefault("events", []).append(
+            {
+                "event": "controller_role_confirmed_from_router_core",
+                "summary": "Controller confirmed the Router-delivered controller.core boundary.",
+                "payload": confirmation,
+                "recorded_at": utc_now(),
+            }
+        )
+    entry = _record_router_ownership_entry(
+        project_root,
+        run_root,
+        run_state,
+        action_id=str(pending_action.get("controller_action_id") or ""),
+        action_type=str(pending_action.get("action_type") or ""),
+        router_state="router_reclaimed",
+        workflow_owner="router",
+        postcondition="controller_role_confirmed",
+        source=source,
+        receipt_path=str(pending_action.get("controller_receipt_path") or ""),
+        artifact_refs={
+            "controller_boundary_confirmation_path": project_relative(project_root, context["path"]),
+            "controller_boundary_confirmation_hash": context["sha256"],
+        },
+        details={"controller_receipt_payload": receipt_payload},
+    )
+    return {
+        "applied": True,
+        "postcondition": "controller_role_confirmed",
+        "source": "router_owned_controller_boundary_confirmation_reclaim",
+        "router_ownership_entry_id": entry.get("entry_id"),
+    }
+
+
+def _mark_controller_deliverable_repair_resolved(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    repair_action: dict[str, Any],
+    receipt: dict[str, Any] | None = None,
+    applied_postcondition: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if str(repair_action.get("action_type") or "") != CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+        return {}
+    original_id = str(repair_action.get("repair_of_controller_action_id") or "")
+    repair_id = str(
+        (receipt or {}).get("action_id")
+        or repair_action.get("controller_action_id")
+        or ""
+    )
+    if not original_id:
+        return {}
+    now = utc_now()
+    resolution = {
+        "deliverable_status": "resolved",
+        "resolution_status": "resolved_by_controller_repair",
+        "resolved_at": now,
+        "resolved_by_controller_action_id": repair_id,
+        "last_repair_result": applied_postcondition or {},
+    }
+    original = _update_controller_action_entry_fields(
+        project_root,
+        run_root,
+        run_state,
+        action_id=original_id,
+        status="resolved",
+        fields=resolution,
+        router_state="reconciled",
+        reconciliation=resolution,
+    )
+    if repair_id:
+        _update_controller_action_entry_fields(
+            project_root,
+            run_root,
+            run_state,
+            action_id=repair_id,
+            fields={
+                "router_reconciliation_status": "reconciled",
+                "router_reconciled_at": now,
+                "router_reconciliation": applied_postcondition or {},
+            },
+            router_state="reconciled",
+            reconciliation=applied_postcondition or resolution,
+        )
+    append_history(
+        run_state,
+        "router_resolved_controller_action_by_deliverable_repair",
+        {
+            "original_controller_action_id": original_id,
+            "repair_controller_action_id": repair_id,
+            "original_action_type": original.get("action_type"),
+        },
+    )
+    return original
+
+
+def _write_controller_deliverable_budget_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    original_entry: dict[str, Any],
+    current_action: dict[str, Any],
+    receipt: dict[str, Any],
+    missing_deliverables: list[dict[str, Any]],
+    apply_result: dict[str, Any] | None,
+) -> dict[str, Any]:
+    original_id = str(original_entry.get("action_id") or "")
+    current_id = str(receipt.get("action_id") or current_action.get("controller_action_id") or "")
+    payload = {
+        "controller_action_id": original_id,
+        "current_controller_action_id": current_id,
+        "action_type": original_entry.get("action_type"),
+        "postcondition": _pending_action_postcondition(
+            original_entry.get("action") if isinstance(original_entry.get("action"), dict) else current_action
+        ),
+        "missing_deliverables": missing_deliverables,
+        "deliverable_repair_attempts": int(original_entry.get("deliverable_repair_attempts") or 0),
+        "max_deliverable_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+        "controller_receipt_payload": receipt.get("payload") if isinstance(receipt.get("payload"), dict) else {},
+        "apply_result": apply_result or {},
+    }
+    now = utc_now()
+    blocker = _write_control_blocker(
+        project_root,
+        run_root,
+        run_state,
+        source="controller_deliverable_repair_budget_exhausted",
+        error_message=(
+            f"Controller action {original_entry.get('action_type')} still lacks required deliverables "
+            f"after {CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS} repair attempts."
+        ),
+        action_type=str(original_entry.get("action_type") or ""),
+        payload=payload,
+    )
+    fields = {
+        "deliverable_status": "blocked",
+        "router_reconciliation_status": "blocked",
+        "router_reconciliation_blocked_at": now,
+        "router_reconciliation_blocker": payload,
+        "control_blocker_id": blocker.get("blocker_id"),
+    }
+    _update_controller_action_entry_fields(
+        project_root,
+        run_root,
+        run_state,
+        action_id=original_id,
+        status="blocked",
+        fields=fields,
+        router_state="blocked",
+        reconciliation=fields,
+    )
+    if current_id and current_id != original_id:
+        _update_controller_action_entry_fields(
+            project_root,
+            run_root,
+            run_state,
+            action_id=current_id,
+            status="blocked",
+            fields=fields,
+            router_state="blocked",
+            reconciliation=fields,
+        )
+    _record_router_ownership_entry(
+        project_root,
+        run_root,
+        run_state,
+        action_id=original_id,
+        action_type=str(original_entry.get("action_type") or ""),
+        router_state="blocked",
+        workflow_owner="router",
+        postcondition=str(payload.get("postcondition") or ""),
+        source="controller_deliverable_repair_budget_exhausted",
+        receipt_path=project_relative(project_root, _controller_receipt_path(run_root, current_id)) if current_id else "",
+        details=payload,
+    )
+    return blocker
+
+
+def _schedule_controller_deliverable_repair(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    pending_action: dict[str, Any],
+    receipt: dict[str, Any],
+    apply_result: dict[str, Any] | None = None,
+    source: str,
+) -> dict[str, Any]:
+    missing_deliverables = _missing_deliverables_for_apply_result(
+        project_root,
+        run_root,
+        run_state,
+        pending_action,
+        apply_result,
+    )
+    if not missing_deliverables:
+        return {"scheduled": False, "repairable": False, "reason": "no_declared_missing_deliverables"}
+    pending_action_id = str(receipt.get("action_id") or pending_action.get("controller_action_id") or "")
+    if str(pending_action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+        original_id = str(pending_action.get("repair_of_controller_action_id") or "")
+        repair_target_action_type = str(pending_action.get("repair_target_action_type") or "")
+    else:
+        original_id = pending_action_id
+        repair_target_action_type = str(pending_action.get("action_type") or receipt.get("action_type") or "")
+    if not original_id:
+        return {"scheduled": False, "repairable": False, "reason": "missing_original_controller_action_id"}
+    original_entry = read_json_if_exists(_controller_action_path(run_root, original_id))
+    if original_entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+        return {"scheduled": False, "repairable": False, "reason": "missing_original_controller_action_entry"}
+    attempts_used = int(original_entry.get("deliverable_repair_attempts") or 0)
+    if attempts_used >= CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS:
+        blocker = _write_controller_deliverable_budget_blocker(
+            project_root,
+            run_root,
+            run_state,
+            original_entry=original_entry,
+            current_action=pending_action,
+            receipt=receipt,
+            missing_deliverables=missing_deliverables,
+            apply_result=apply_result,
+        )
+        return {
+            "scheduled": False,
+            "blocked": True,
+            "budget_exhausted": True,
+            "blocker": blocker,
+            "missing_deliverables": missing_deliverables,
+        }
+    next_attempt = attempts_used + 1
+    deliverable_paths = [
+        str(item.get("path") or "")
+        for item in missing_deliverables
+        if isinstance(item, dict) and str(item.get("path") or "").strip()
+    ]
+    original_action = original_entry.get("action") if isinstance(original_entry.get("action"), dict) else pending_action
+    allowed_reads = [
+        str(original_entry.get("action_path") or ""),
+        project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
+    ]
+    allowed_reads.extend(str(path) for path in (original_action.get("allowed_reads") or []) if isinstance(path, str))
+    repair_action = make_action(
+        action_type=CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
+        actor="controller",
+        label=f"controller_completes_missing_deliverable_attempt_{next_attempt}_{original_id}",
+        summary=(
+            f"Complete missing Controller deliverable(s) for {repair_target_action_type}; "
+            "Router will reconcile the original action only after the declared artifact validates."
+        ),
+        allowed_reads=[item for item in dict.fromkeys(allowed_reads) if item],
+        allowed_writes=[item for item in dict.fromkeys(deliverable_paths + [project_relative(project_root, run_state_path(run_root))]) if item],
+        extra={
+            "postcondition": _pending_action_postcondition(original_action),
+            "repair_of_controller_action_id": original_id,
+            "repair_target_action_type": repair_target_action_type,
+            "repair_attempt": next_attempt,
+            "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+            "missing_deliverables": missing_deliverables,
+            "required_deliverables": missing_deliverables,
+            "source_receipt_action_id": pending_action_id,
+            "source_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
+            "idempotency_key": f"controller-deliverable-repair:{original_id}:{next_attempt}",
+            "scope_kind": str(original_entry.get("scope_kind") or pending_action.get("scope_kind") or "startup"),
+            "scope_id": str(original_entry.get("scope_id") or pending_action.get("scope_id") or "startup"),
+            "sealed_body_reads_allowed": False,
+            "controller_may_create_project_evidence": False,
+            "deliverable_repair_is_router_scheduled": True,
+        },
+    )
+    repair_entry = _write_controller_action_entry(project_root, run_root, run_state, repair_action)
+    repair_ids = [item for item in (original_entry.get("repair_action_ids") or []) if isinstance(item, str)]
+    repair_ids.append(str(repair_entry.get("action_id") or ""))
+    now = utc_now()
+    original_fields = {
+        "deliverable_status": "repair_pending",
+        "deliverable_repair_attempts": next_attempt,
+        "max_deliverable_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+        "missing_deliverables": missing_deliverables,
+        "repair_action_ids": repair_ids,
+        "last_incomplete_receipt_action_id": pending_action_id,
+        "last_incomplete_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
+        "last_apply_result": apply_result or {},
+        "router_reconciliation_status": "repair_pending",
+        "router_reconciliation_updated_at": now,
+    }
+    _update_controller_action_entry_fields(
+        project_root,
+        run_root,
+        run_state,
+        action_id=original_id,
+        status="repair_pending",
+        fields=original_fields,
+        router_state="waiting",
+        reconciliation=original_fields,
+    )
+    if pending_action_id and pending_action_id != original_id:
+        _update_controller_action_entry_fields(
+            project_root,
+            run_root,
+            run_state,
+            action_id=pending_action_id,
+            status="superseded",
+            fields={
+                "deliverable_status": "superseded_by_next_repair",
+                "superseded_by_controller_action_id": repair_entry.get("action_id"),
+                "router_reconciliation_status": "superseded_by_next_repair",
+                "router_reconciliation_updated_at": now,
+            },
+            router_state="superseded",
+            reconciliation={"superseded_by_controller_action_id": repair_entry.get("action_id")},
+        )
+    run_state["pending_action"] = repair_action
+    _record_router_ownership_entry(
+        project_root,
+        run_root,
+        run_state,
+        action_id=original_id,
+        action_type=repair_target_action_type,
+        router_state="router_reclaim_pending",
+        workflow_owner="router",
+        postcondition=str(original_fields.get("postcondition") or _pending_action_postcondition(original_action)),
+        source=source,
+        receipt_path=project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
+        details={
+            "missing_deliverables": missing_deliverables,
+            "repair_controller_action_id": repair_entry.get("action_id"),
+            "repair_attempt": next_attempt,
+            "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+            "apply_result": apply_result or {},
+        },
+    )
+    append_history(
+        run_state,
+        "router_scheduled_controller_deliverable_repair",
+        {
+            "original_controller_action_id": original_id,
+            "repair_controller_action_id": repair_entry.get("action_id"),
+            "repair_attempt": next_attempt,
+            "missing_deliverables": missing_deliverables,
+        },
+    )
+    return {
+        "scheduled": True,
+        "changed": True,
+        "repair_action": repair_action,
+        "repair_entry": repair_entry,
+        "original_controller_action_id": original_id,
+        "repair_attempt": next_attempt,
+        "missing_deliverables": missing_deliverables,
+    }
+
+
 def _reclaim_router_owned_postcondition_from_artifact(
     project_root: Path,
     run_root: Path,
@@ -5596,65 +6125,18 @@ def _apply_stateful_receipt_postcondition(
     if action_type == "rehydrate_role_agents":
         _write_resume_role_rehydration_report(project_root, run_root, run_state, receipt_payload)
         return {"applied": True, "postcondition": "resume_roles_restored"}
-    if action_type == "confirm_controller_core_boundary":
-        confirmation = run_state.get("controller_boundary_confirmation")
-        context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
-        if context is None:
-            confirmation = _write_controller_boundary_confirmation(project_root, run_root, run_state)
-            context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
-        if context is None:
-            return {
-                "applied": False,
-                "reason": "controller_boundary_confirmation_missing_or_invalid",
-                "action_type": action_type,
-            }
-        if not isinstance(confirmation, dict) or not confirmation.get("path"):
-            confirmation = {
-                "path": project_relative(project_root, context["path"]),
-                "sha256": context["sha256"],
-                "controller_core_path": context["confirmation"].get("controller_core_path"),
-                "controller_core_sha256": context["confirmation"].get("controller_core_sha256"),
-                "controller_policy_sha256": context["confirmation"].get("controller_policy_sha256"),
-            }
-        run_state.setdefault("flags", {})["controller_role_confirmed"] = True
-        run_state.setdefault("flags", {})["controller_role_confirmed_from_router_core"] = True
-        run_state.setdefault("flags", {})["controller_boundary_confirmation_written"] = True
-        run_state["controller_boundary_confirmation"] = confirmation
-        if not any(
-            isinstance(item, dict) and item.get("event") == "controller_role_confirmed_from_router_core"
-            for item in run_state.get("events", [])
-        ):
-            run_state.setdefault("events", []).append(
-                {
-                    "event": "controller_role_confirmed_from_router_core",
-                    "summary": "Controller confirmed the Router-delivered controller.core boundary.",
-                    "payload": confirmation,
-                    "recorded_at": utc_now(),
-                }
-            )
-        entry = _record_router_ownership_entry(
+    if action_type == "confirm_controller_core_boundary" or (
+        action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE
+        and str(pending_action.get("repair_target_action_type") or "") == "confirm_controller_core_boundary"
+    ):
+        return _sync_controller_boundary_confirmation_from_artifact(
             project_root,
             run_root,
             run_state,
-            action_id=str(pending_action.get("controller_action_id") or ""),
-            action_type=action_type,
-            router_state="router_reclaimed",
-            workflow_owner="router",
-            postcondition="controller_role_confirmed",
+            pending_action,
+            receipt_payload,
             source="controller_receipt_reconciliation",
-            receipt_path=str(pending_action.get("controller_receipt_path") or ""),
-            artifact_refs={
-                "controller_boundary_confirmation_path": project_relative(project_root, context["path"]),
-                "controller_boundary_confirmation_hash": context["sha256"],
-            },
-            details={"controller_receipt_payload": receipt_payload},
         )
-        return {
-            "applied": True,
-            "postcondition": "controller_role_confirmed",
-            "source": "router_owned_controller_boundary_confirmation_reclaim",
-            "router_ownership_entry_id": entry.get("entry_id"),
-        }
     if action_type == "write_display_surface_status":
         confirmation = _display_confirmation_for_action(receipt_payload, pending_action)
         _write_display_surface_status(project_root, run_root, run_state, confirmation, receipt_payload)
@@ -5677,6 +6159,15 @@ def _clear_pending_after_reconciled_controller_receipt(
     receipt: dict[str, Any],
     applied_postcondition: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    if str(pending_action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+        _mark_controller_deliverable_repair_resolved(
+            project_root,
+            run_root,
+            run_state,
+            repair_action=pending_action,
+            receipt=receipt,
+            applied_postcondition=applied_postcondition,
+        )
     run_state["pending_action"] = None
     append_history(
         run_state,
@@ -5808,6 +6299,54 @@ def _reconcile_pending_controller_action_receipt(
                 payload,
             )
         except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
+            applied = {
+                "applied": False,
+                "reason": str(exc),
+                "repairable": bool(
+                    _controller_action_required_deliverables(project_root, run_root, run_state, pending_action)
+                ),
+                "missing_deliverables": _controller_action_required_deliverables(
+                    project_root,
+                    run_root,
+                    run_state,
+                    pending_action,
+                ),
+            }
+            repair = _schedule_controller_deliverable_repair(
+                project_root,
+                run_root,
+                run_state,
+                pending_action=pending_action,
+                receipt=receipt,
+                apply_result=applied,
+                source="controller_action_receipt_incomplete_for_stateful_action",
+            )
+            if repair.get("scheduled"):
+                _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_deliverable_repair_scheduled")
+                _sync_derived_run_views(
+                    project_root,
+                    run_root,
+                    run_state,
+                    reason="after_controller_deliverable_repair_scheduled",
+                    update_display=True,
+                )
+                save_run_state(run_root, run_state)
+                return {
+                    "changed": True,
+                    "repair_scheduled": True,
+                    "receipt_status": status,
+                    "postcondition": postcondition,
+                    "repair_action_type": CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
+                }
+            if repair.get("blocked"):
+                save_run_state(run_root, run_state)
+                return {
+                    "changed": True,
+                    "blocked": True,
+                    "receipt_status": status,
+                    "postcondition": postcondition,
+                    "repair_budget_exhausted": True,
+                }
             _write_control_blocker(
                 project_root,
                 run_root,
@@ -5832,6 +6371,41 @@ def _reconcile_pending_controller_action_receipt(
                 "postcondition": postcondition,
             }
         if not applied.get("applied") or not _pending_action_postcondition_satisfied(run_state, postcondition):
+            repair = _schedule_controller_deliverable_repair(
+                project_root,
+                run_root,
+                run_state,
+                pending_action=pending_action,
+                receipt=receipt,
+                apply_result=applied,
+                source="controller_action_receipt_missing_stateful_postcondition",
+            )
+            if repair.get("scheduled"):
+                _refresh_route_memory(project_root, run_root, run_state, trigger="after_controller_deliverable_repair_scheduled")
+                _sync_derived_run_views(
+                    project_root,
+                    run_root,
+                    run_state,
+                    reason="after_controller_deliverable_repair_scheduled",
+                    update_display=True,
+                )
+                save_run_state(run_root, run_state)
+                return {
+                    "changed": True,
+                    "repair_scheduled": True,
+                    "receipt_status": status,
+                    "postcondition": postcondition,
+                    "repair_action_type": CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
+                }
+            if repair.get("blocked"):
+                save_run_state(run_root, run_state)
+                return {
+                    "changed": True,
+                    "blocked": True,
+                    "receipt_status": status,
+                    "postcondition": postcondition,
+                    "repair_budget_exhausted": True,
+                }
             _write_control_blocker(
                 project_root,
                 run_root,
@@ -5896,12 +6470,56 @@ def _apply_done_controller_receipt_effects(
     if postcondition and not _pending_action_postcondition_satisfied(run_state, postcondition):
         applied = _apply_stateful_receipt_postcondition(project_root, run_root, run_state, action, payload)
         if not applied.get("applied") or not _pending_action_postcondition_satisfied(run_state, postcondition):
+            repair = _schedule_controller_deliverable_repair(
+                project_root,
+                run_root,
+                run_state,
+                pending_action=action,
+                receipt=receipt,
+                apply_result=applied,
+                source="scheduled_controller_action_receipt_missing_stateful_postcondition",
+            )
+            if repair.get("scheduled") or repair.get("blocked"):
+                result = {
+                    "applied": False,
+                    "reason": "deliverable_repair_scheduled" if repair.get("scheduled") else "deliverable_repair_budget_exhausted",
+                    "postcondition": postcondition,
+                    "apply_result": applied,
+                    "repair": repair,
+                }
+                result["repair_scheduled"] = bool(repair.get("scheduled"))
+                result["blocked"] = bool(repair.get("blocked"))
+                return result
             return {
                 "applied": False,
                 "reason": "postcondition_not_satisfied",
                 "postcondition": postcondition,
                 "apply_result": applied,
             }
+        if str(action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+            _mark_controller_deliverable_repair_resolved(
+                project_root,
+                run_root,
+                run_state,
+                repair_action=action,
+                receipt=receipt,
+                applied_postcondition=applied,
+            )
+        return applied
+    if (
+        str(action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE
+        and postcondition
+        and _pending_action_postcondition_satisfied(run_state, postcondition)
+    ):
+        applied = {"applied": True, "source": "repair_postcondition_already_satisfied", "postcondition": postcondition}
+        _mark_controller_deliverable_repair_resolved(
+            project_root,
+            run_root,
+            run_state,
+            repair_action=action,
+            receipt=receipt,
+            applied_postcondition=applied,
+        )
         return applied
     return {"applied": True, "source": "controller_local_receipt"}
 
@@ -5969,6 +6587,13 @@ def _reconcile_scheduled_controller_action_receipts(
         except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
             applied = {"applied": False, "reason": str(exc)}
         if not applied.get("applied"):
+            if applied.get("repair_scheduled"):
+                changed = True
+                continue
+            if applied.get("blocked"):
+                blocked += 1
+                changed = True
+                continue
             blocked += 1
             entry["router_reconciliation_status"] = "blocked"
             entry["router_reconciliation_blocked_at"] = utc_now()
@@ -28733,6 +29358,34 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "recorded_at": utc_now(),
             }
         )
+    elif action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+        repair_target = str(pending.get("repair_target_action_type") or "")
+        if repair_target != "confirm_controller_core_boundary":
+            raise RouterError(f"unsupported controller deliverable repair target: {repair_target}")
+        confirmation = _write_controller_boundary_confirmation(project_root, run_root, run_state)
+        applied = _sync_controller_boundary_confirmation_from_artifact(
+            project_root,
+            run_root,
+            run_state,
+            pending,
+            payload or {"applied": action_type},
+            source="controller_deliverable_repair_apply",
+        )
+        if not applied.get("applied"):
+            raise RouterError("controller deliverable repair did not produce a valid boundary confirmation")
+        _mark_controller_deliverable_repair_resolved(
+            project_root,
+            run_root,
+            run_state,
+            repair_action=pending,
+            applied_postcondition=applied,
+        )
+        result_extra.update({
+            "repair_of_controller_action_id": pending.get("repair_of_controller_action_id"),
+            "repair_target_action_type": repair_target,
+            "controller_boundary_confirmation": confirmation,
+            "applied_postcondition": applied,
+        })
     elif action_type == "write_startup_mechanical_audit":
         computed_checks = _startup_fact_checks(project_root, run_root, run_state)
         _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)

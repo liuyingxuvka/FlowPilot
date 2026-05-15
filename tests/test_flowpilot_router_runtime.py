@@ -3656,6 +3656,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
         router.save_run_state(run_root, state)
 
         receipt = router.record_controller_action_receipt(
@@ -11332,6 +11333,139 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(state["events"][0]["event"], "controller_role_confirmed_from_router_core")
         self.assertIn("path", state["events"][0]["payload"])
         self.assertIn("sha256", state["events"][0]["payload"])
+
+    def test_controller_boundary_done_receipt_missing_deliverable_schedules_repair(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+
+        repair = self.next_after_display_sync(root)
+        self.assertEqual(repair["action_type"], "complete_missing_controller_deliverable")
+        self.assertEqual(repair["repair_of_controller_action_id"], entry["action_id"])
+        self.assertEqual(repair["repair_attempt"], 1)
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["status"], "repair_pending")
+        self.assertEqual(original["deliverable_repair_attempts"], 1)
+        self.assertEqual(original["missing_deliverables"][0]["deliverable_id"], "controller_boundary_confirmation")
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state.get("active_control_blocker"))
+
+    def test_controller_boundary_valid_artifact_reclaims_before_repair(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+
+        next_action = self.next_after_display_sync(root)
+        self.assertNotEqual(next_action["action_type"], "complete_missing_controller_deliverable")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_role_confirmed"])
+        self.assertTrue(state["flags"]["controller_boundary_confirmation_written"])
+        self.assertFalse(state.get("active_control_blocker"))
+
+    def test_controller_boundary_repair_action_resolves_original(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+        repair = self.next_after_display_sync(root)
+
+        result = router.apply_action(root, "complete_missing_controller_deliverable")
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["repair_of_controller_action_id"], entry["action_id"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["controller_role_confirmed"])
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        repair_entry = read_json(router._controller_action_path(run_root, repair["controller_action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["status"], "resolved")
+        self.assertEqual(original["resolved_by_controller_action_id"], repair["controller_action_id"])
+        self.assertEqual(repair_entry["status"], "done")
+
+    def test_controller_boundary_repair_budget_escalates_after_two_failures(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        action = self.next_after_display_sync(root)
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+        repair_1 = self.next_after_display_sync(root)
+        router.record_controller_action_receipt(
+            root,
+            action_id=repair_1["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        state = read_json(router.run_state_path(run_root))
+        repair_2 = state["pending_action"]
+        self.assertEqual(repair_2["action_type"], "complete_missing_controller_deliverable")
+        self.assertEqual(repair_2["repair_attempt"], 2)
+
+        router.record_controller_action_receipt(
+            root,
+            action_id=repair_2["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state.get("active_control_blocker"))
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["status"], "blocked")
+        self.assertEqual(original["deliverable_repair_attempts"], 2)
 
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()

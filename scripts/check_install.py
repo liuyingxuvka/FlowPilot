@@ -724,7 +724,9 @@ def main() -> int:
             "controller_local_action",
             "do not remind yourself",
             "continuous_controller_standby",
+            "active foreground duty",
             "sync the visible Codex plan",
+            "must not mark the visible plan item done",
             "timeout_still_waiting",
             "diagnostic-only",
         ]
