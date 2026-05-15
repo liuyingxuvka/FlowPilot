@@ -92,6 +92,32 @@ snapshots as separate state. It fails known-bad states where:
 - a canonical artifact exists while the Router flag remains false;
 - a stale daemon snapshot overwrites newer durable evidence.
 
+### Lifecycle Microstep Coverage
+
+The 2026-05-15 startup loop showed that a phase-level reconciliation model is
+not enough. The daemon must also be modeled at the tick microstep level across
+the whole lifecycle:
+
+1. read daemon status and the phase authority state;
+2. read Router scheduler rows and Controller action rows;
+3. read the relevant evidence source for the phase, such as receipts, role
+   output, external events, repair receipts, or terminal records;
+4. reconcile authority state, Router rows, and Controller rows together;
+5. clear pending or wait state only after the authority state is current;
+6. schedule the next row or record a real barrier;
+7. write Router-owned tables, Controller check-off summaries, and daemon
+   status from the refreshed table summary.
+
+This is lifecycle-wide control-plane coverage, not a startup-only rule. Startup,
+normal route work, role waits, external event waits, repair, and terminal
+cleanup are different phase labels over the same daemon microstep contract.
+
+The root runtime implication is intentionally small: the daemon should use one
+shared pre-next-action reconciliation pipeline instead of separate phase-specific
+shortcuts. Phase handlers may supply different evidence readers and
+postcondition appliers, but they should not bypass the read/reconcile/sync/
+clear/schedule/write order.
+
 ## Risks
 
 - The first implementation only reconciles the startup fact role-output event

@@ -411,35 +411,34 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         ledger_path = run_root / "role_output_ledger.json"
         body_ref = envelope["body_ref"]
         receipt_ref = envelope["runtime_receipt_ref"]
+        ledger = read_json(ledger_path) if ledger_path.exists() else {
+            "schema_version": role_output_runtime.ROLE_OUTPUT_LEDGER_SCHEMA,
+            "run_id": run_root.name,
+            "outputs": [],
+            "created_at": "2026-05-14T00:00:00Z",
+        }
+        outputs = ledger.setdefault("outputs", [])
+        outputs.append(
+            {
+                "output_id": "test-startup-fact-report-runtime-receipt",
+                "run_id": run_root.name,
+                "role": "human_like_reviewer",
+                "agent_id": "agent-human_like_reviewer",
+                "output_type": "startup_fact_report",
+                "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
+                "body_path": body_ref["path"],
+                "body_hash": body_ref["hash"],
+                "envelope": envelope,
+                "receipt_path": receipt_ref["path"],
+                "receipt_hash": receipt_ref["hash"],
+                "controller_visibility": "ledger_metadata_only",
+                "controller_may_read_body": False,
+                "recorded_at": "2026-05-14T00:00:00Z",
+            }
+        )
+        ledger["updated_at"] = "2026-05-14T00:00:00Z"
         ledger_path.write_text(
-            json.dumps(
-                {
-                    "schema_version": role_output_runtime.ROLE_OUTPUT_LEDGER_SCHEMA,
-                    "run_id": run_root.name,
-                    "outputs": [
-                        {
-                            "output_id": "test-startup-fact-report-runtime-receipt",
-                            "run_id": run_root.name,
-                            "role": "human_like_reviewer",
-                            "agent_id": "agent-human_like_reviewer",
-                            "output_type": "startup_fact_report",
-                            "output_contract_id": "flowpilot.output_contract.startup_fact_report.v1",
-                            "body_path": body_ref["path"],
-                            "body_hash": body_ref["hash"],
-                            "envelope": envelope,
-                            "receipt_path": receipt_ref["path"],
-                            "receipt_hash": receipt_ref["hash"],
-                            "controller_visibility": "ledger_metadata_only",
-                            "controller_may_read_body": False,
-                            "recorded_at": "2026-05-14T00:00:00Z",
-                        }
-                    ],
-                    "created_at": "2026-05-14T00:00:00Z",
-                    "updated_at": "2026-05-14T00:00:00Z",
-                },
-                indent=2,
-                sort_keys=True,
-            )
+            json.dumps(ledger, indent=2, sort_keys=True)
             + "\n",
             encoding="utf-8",
         )
@@ -1051,10 +1050,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
             elif action_type == "create_heartbeat_automation":
                 router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
+            elif action_type == "load_controller_core":
+                self.complete_startup_async_controller_rows(root, startup_answers=startup_answers)
+                router.apply_action(root, action_type, self.payload_for_action(action))
+                break
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
-            if action_type == "load_controller_core":
-                break
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
 
@@ -1086,6 +1087,31 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.stop_router_daemon(root, reason="test_reset_before_explicit_daemon")
         except router.RouterError:
             pass
+
+    def complete_startup_async_controller_rows(self, root: Path, startup_answers: dict | None = None) -> list[str]:
+        startup_answers = startup_answers or STARTUP_ANSWERS
+        run_root = self.run_root_for(root)
+        completed: list[str] = []
+        action_dir = run_root / "runtime" / "controller_actions"
+        if not action_dir.exists():
+            return completed
+        for action_path in sorted(action_dir.glob("*.json")):
+            entry = read_json(action_path)
+            if entry.get("status") in router.CONTROLLER_ACTION_CLOSED_STATUSES and entry.get("router_reconciliation_status") == "reconciled":
+                continue
+            action_type = entry.get("action_type")
+            if action_type not in {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"}:
+                continue
+            action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+            if action_type == "emit_startup_banner":
+                payload = self.payload_for_action(action)
+            elif action_type == "start_role_slots":
+                payload = self.role_agent_payload(root, startup_answers)
+            else:
+                payload = self.heartbeat_binding_payload(root)
+            router.record_controller_action_receipt(root, action_id=entry["action_id"], status="done", payload=payload)
+            completed.append(str(action_type))
+        return completed
 
     def force_startup_fact_role_wait(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
@@ -3313,16 +3339,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def test_run_until_wait_folds_only_internal_bootloader_actions_after_banner(self) -> None:
         root = self.make_project()
-        result = router.run_until_wait(root, new_invocation=True)
+        router.run_until_wait(root, new_invocation=True)
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "emit_startup_banner")
-        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
 
         result = router.run_until_wait(root)
 
-        self.assertEqual(result["action_type"], "start_role_slots")
-        self.assertTrue(result["requires_host_spawn"])
+        self.assertEqual(result["action_type"], "load_controller_core")
         self.assertEqual(result["folded_command"], "run-until-wait")
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
@@ -3339,20 +3361,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(bootstrap["flags"]["router_daemon_started"])
         self.assertTrue(bootstrap["flags"]["mailbox_initialized"])
         self.assertTrue(bootstrap["flags"].get("user_request_recorded", False))
+        self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
+        self.assertFalse(bootstrap["flags"].get("roles_started", False))
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
-        self.assertTrue((self.run_root_for(root) / "packet_ledger.json").exists())
+        run_root = self.run_root_for(root)
+        self.assertTrue((run_root / "packet_ledger.json").exists())
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertIn("emit_startup_banner", startup_types)
+        self.assertIn("start_role_slots", startup_types)
 
     def test_run_until_wait_folds_user_intake_then_stops_before_role_boundary(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-        action = router.next_action(root)
-        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
 
         result = router.run_until_wait(root)
 
-        self.assertEqual(result["action_type"], "start_role_slots")
-        self.assertTrue(result["requires_host_spawn"])
+        self.assertEqual(result["action_type"], "load_controller_core")
         self.assertEqual(
             [item["action_type"] for item in result["folded_applied_actions"]],
             [
@@ -3374,46 +3400,33 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "open_startup_intake_ui",
             self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
         )
-        action = router.next_action(root)
-        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
         action = router.run_until_wait(root)
-        self.assertEqual(action["action_type"], "start_role_slots")
-        router.apply_action(root, "start_role_slots", self.role_agent_payload(root, HEARTBEAT_STARTUP_ANSWERS))
+        self.assertEqual(action["action_type"], "load_controller_core")
 
         run_root = self.run_root_for(root)
         run_state = read_json(router.run_state_path(run_root))
         self.assertFalse(run_state["flags"]["controller_core_loaded"])
         self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "create_heartbeat_automation")
-        self.assertEqual(action["actor"], "bootloader")
-        self.assertEqual(action["postcondition"], "continuation_binding_recorded")
-        self.assertTrue(action["requires_host_automation"])
-        self.assertEqual(action["automation_update_request"]["kind"], "heartbeat")
-        self.assertNotIn("otherwise keep the run alive", action["automation_update_request"]["prompt"])
-        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", action["automation_update_request"]["prompt"])
-        self.assertIn("continue the router loop instead of stopping at check_prompt_manifest", action["automation_update_request"]["prompt"])
-        self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", action["automation_update_request"]["prompt"])
-        self.assertEqual(action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
-        self.assertEqual(action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
-        self.assertTrue(action["proof_required_before_apply"])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
-        self.assertEqual(action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
-        with self.assertRaisesRegex(router.RouterError, "host_automation_proof"):
-            router.apply_action(
-                root,
-                "create_heartbeat_automation",
-                {
-                    "route_heartbeat_interval_minutes": 1,
-                    "host_automation_id": "codex-test-heartbeat",
-                    "host_automation_verified": True,
-                },
-            )
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        heartbeat_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "create_heartbeat_automation")
+        heartbeat_action = read_json(run_root / "runtime" / "controller_actions" / f"{heartbeat_row['action_id']}.json")["action"]
+        self.assertEqual(heartbeat_action["actor"], "bootloader")
+        self.assertEqual(heartbeat_action["postcondition"], "continuation_binding_recorded")
+        self.assertTrue(heartbeat_action["requires_host_automation"])
+        self.assertEqual(heartbeat_action["router_scheduler_progress_class"], "parallel_obligation")
+        self.assertEqual(heartbeat_action["automation_update_request"]["kind"], "heartbeat")
+        self.assertNotIn("otherwise keep the run alive", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("continue the router loop instead of stopping at check_prompt_manifest", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertEqual(heartbeat_action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
+        self.assertEqual(heartbeat_action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
+        self.assertTrue(heartbeat_action["proof_required_before_apply"])
+        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
+        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
+        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
 
-        router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "load_controller_core")
+        self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         self.assertTrue(action["startup_daemon_scheduled"])
         self.assertTrue(action["scheduled_by_router_daemon"])
         router.apply_action(root, "load_controller_core")
@@ -3426,19 +3439,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def test_manual_startup_skips_heartbeat_before_controller_core(self) -> None:
         root = self.make_project()
-        router.run_until_wait(root, new_invocation=True)
-        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS))
-        action = router.next_action(root)
-        router.apply_action(root, "emit_startup_banner", self.payload_for_action(action))
-        action = router.run_until_wait(root)
-        self.assertEqual(action["action_type"], "start_role_slots")
-        router.apply_action(root, "start_role_slots", self.role_agent_payload(root, STARTUP_ANSWERS))
-
-        run_root = self.run_root_for(root)
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "load_controller_core")
+        run_root = self.boot_to_controller(root, startup_answers=STARTUP_ANSWERS)
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["formal_router_daemon_started"])
+        self.assertTrue(state["flags"]["controller_core_loaded"])
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertEqual(continuation["mode"], "manual_resume")
         self.assertFalse(continuation["heartbeat_active"])
@@ -3478,6 +3482,97 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(row["barrier_kind"], "external_barrier")
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"]["controller_core_loaded"])
+
+    def test_startup_daemon_defers_banner_and_queues_next_boot_row(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "fill_runtime_placeholders")
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["pending_action"]["action_type"], "fill_runtime_placeholders")
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        banner_rows = [item for item in controller_ledger["actions"] if item.get("action_type") == "emit_startup_banner"]
+        self.assertEqual(len(banner_rows), 1)
+        banner_record = read_json(run_root / "runtime" / "controller_actions" / f"{banner_rows[0]['action_id']}.json")
+        self.assertEqual(banner_record["status"], "pending")
+        self.assertEqual(banner_record["action"]["router_scheduler_progress_class"], "parallel_obligation")
+        self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
+
+    def test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(
+            root,
+            "open_startup_intake_ui",
+            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
+        )
+
+        while True:
+            action = router.next_action(root)
+            action_type = str(action["action_type"])
+            if action_type == "load_controller_core":
+                break
+            self.assertNotIn(action_type, {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"})
+            if action_type == "record_user_request":
+                router.apply_action(root, action_type)
+            else:
+                router.apply_action(root, action_type, self.payload_for_action(action))
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertEqual(startup_types.count("emit_startup_banner"), 1)
+        self.assertEqual(startup_types.count("start_role_slots"), 1)
+        self.assertEqual(startup_types.count("create_heartbeat_automation"), 1)
+        self.assertNotIn("inject_role_core_prompts", startup_types)
+        self.assertEqual(self.bootstrap_state(root)["pending_action"]["action_type"], "load_controller_core")
+
+        router.apply_action(root, "load_controller_core")
+        state = read_json(router.run_state_path(run_root))
+        blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
+        blocker_kinds = [item["kind"] for item in blockers]
+        self.assertIn("pending_startup_controller_row", blocker_kinds)
+        self.assertIn("missing_startup_flag", blocker_kinds)
+
+    def test_startup_async_receipts_update_bootstrap_flags_and_scheduler_rows(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(
+            root,
+            "open_startup_intake_ui",
+            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
+        )
+        while True:
+            action = router.next_action(root)
+            if action["action_type"] == "load_controller_core":
+                break
+            payload = {} if action["action_type"] == "record_user_request" else self.payload_for_action(action)
+            router.apply_action(root, str(action["action_type"]), payload)
+
+        completed = self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        self.assertEqual(set(completed), {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"})
+
+        bootstrap = self.bootstrap_state(root)
+        self.assertTrue(bootstrap["flags"]["banner_emitted"])
+        self.assertTrue(bootstrap["flags"]["roles_started"])
+        self.assertTrue(bootstrap["flags"]["role_core_prompts_injected"])
+        self.assertTrue(bootstrap["flags"]["continuation_binding_recorded"])
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        async_rows = [
+            item
+            for item in scheduler["rows"]
+            if item.get("action_type") in {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"}
+        ]
+        self.assertEqual(len(async_rows), 3)
+        self.assertTrue(all(item["router_state"] == "reconciled" for item in async_rows))
 
     def test_formal_startup_daemon_failure_blocks_controller_core(self) -> None:
         root = self.make_project()
@@ -3633,6 +3728,169 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             record = read_json(run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json")
             self.assertEqual(record["dependencies"], [])
             self.assertTrue(record["router_scheduler_row_id"])
+
+    def test_startup_obligations_are_not_global_scheduler_barriers(self) -> None:
+        root = self.make_project()
+        run_root = root / "run"
+        run_root.mkdir(parents=True)
+        run_state = {"run_id": "test-run"}
+
+        cases = (
+            (
+                "emit_startup_banner",
+                "parallel_obligation",
+                {"card_id": "startup_banner", "requires_user_dialog_display_confirmation": True},
+            ),
+            (
+                "create_heartbeat_automation",
+                "parallel_obligation",
+                {"requires_host_automation": True},
+            ),
+            (
+                "write_display_surface_status",
+                "parallel_obligation",
+                {"requires_user_dialog_display_confirmation": True},
+            ),
+            (
+                "start_role_slots",
+                "local_dependency",
+                {"requires_host_spawn": True},
+            ),
+        )
+
+        for action_type, progress_class, extra in cases:
+            with self.subTest(action_type=action_type):
+                action = router.make_action(
+                    action_type=action_type,
+                    actor="bootloader" if action_type != "write_display_surface_status" else "controller",
+                    label=f"test_{action_type}",
+                    summary=f"Test scheduler classification for {action_type}.",
+                    extra=extra,
+                )
+                prepared = router._prepare_router_scheduled_action(root, run_root, run_state, action)  # type: ignore[attr-defined]
+                self.assertEqual(prepared["scope_kind"], "startup")
+                self.assertEqual(prepared["router_scheduler_progress_class"], progress_class)
+                self.assertEqual(prepared["router_scheduler_barrier_kind"], "none")
+                self.assertTrue(router._router_daemon_can_continue_after_enqueued_action(prepared))  # type: ignore[attr-defined]
+
+    def test_true_barriers_still_stop_scheduler_queueing(self) -> None:
+        root = self.make_project()
+        run_root = root / "run"
+        run_root.mkdir(parents=True)
+        run_state = {"run_id": "test-run"}
+
+        cases = (
+            (
+                "open_startup_intake_ui",
+                {"requires_host_automation": True, "requires_payload": "startup_intake_result"},
+            ),
+            (
+                "record_startup_answers",
+                {"requires_user": True, "requires_payload": "startup_answers"},
+            ),
+            (
+                "await_card_return_event",
+                {"expected_return_path": "mailbox/outbox/card_acks/test.ack.json"},
+            ),
+        )
+
+        for action_type, extra in cases:
+            with self.subTest(action_type=action_type):
+                action = router.make_action(
+                    action_type=action_type,
+                    actor="bootloader" if action_type != "await_card_return_event" else "controller",
+                    label=f"test_{action_type}",
+                    summary=f"Test true scheduler barrier for {action_type}.",
+                    extra=extra,
+                )
+                prepared = router._prepare_router_scheduled_action(root, run_root, run_state, action)  # type: ignore[attr-defined]
+                self.assertEqual(prepared["router_scheduler_progress_class"], "true_barrier")
+                self.assertNotEqual(prepared["router_scheduler_barrier_kind"], "none")
+                self.assertFalse(router._router_daemon_can_continue_after_enqueued_action(prepared))  # type: ignore[attr-defined]
+
+    def test_reconciled_scheduler_row_is_not_downgraded_by_later_receipt_sync(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="write_display_surface_status",
+            actor="controller",
+            label="test_reconciled_scheduler_row",
+            summary="Test scheduler reconciliation monotonicity.",
+            extra={"postcondition": "startup_display_status_written"},
+        )
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        row_id = entry["router_scheduler_row_id"]
+        router._update_router_scheduler_row(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            row_id=row_id,
+            router_state="reconciled",
+            reconciliation={"source": "test_reconciliation"},
+        )
+        router._update_router_scheduler_row(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            row_id=row_id,
+            router_state="receipt_done",
+            reconciliation={"source": "late_receipt_sync"},
+        )
+
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
+        self.assertEqual(row["router_state"], "reconciled")
+        self.assertEqual(row["reconciliation"]["source"], "test_reconciliation")
+        self.assertEqual(row["reconciliation"]["latest_receipt_sync"]["source"], "late_receipt_sync")
+
+    def test_startup_bootloader_receipt_updates_bootstrap_and_scheduler_row(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        run_root = self.run_root_for(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        banner_row = next(item for item in controller_ledger["actions"] if item["action_type"] == "emit_startup_banner")
+        action_id = banner_row["action_id"]
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        action = action_record["action"]
+        row_id = action["router_scheduler_row_id"]
+
+        result = router.record_controller_action_receipt(
+            root,
+            action_id=action_id,
+            status="done",
+            payload=self.payload_for_action(action),
+        )
+
+        self.assertTrue(result["ok"])
+        bootstrap = self.bootstrap_state(root)
+        self.assertTrue(bootstrap["flags"]["banner_emitted"])
+        self.assertNotEqual((bootstrap.get("pending_action") or {}).get("controller_action_id"), action_id)
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
+        self.assertEqual(row["router_state"], "reconciled")
+        self.assertNotEqual(router.next_action(root)["action_type"], "emit_startup_banner")
+
+    def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        bootstrap = self.bootstrap_state(root)
+        bootstrap["flags"]["banner_emitted"] = False
+        bootstrap["flags"]["roles_started"] = False
+        router.write_json(router.bootstrap_state_path(root), bootstrap)
+
+        blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
+        missing_flags = {
+            blocker.get("flag")
+            for blocker in blockers
+            if blocker.get("kind") == "missing_startup_bootstrap_flag"
+        }
+        self.assertIn("banner_emitted", missing_flags)
+        self.assertIn("roles_started", missing_flags)
 
     def test_runtime_ledgers_remain_valid_json_after_repeated_daemon_writes(self) -> None:
         root = self.make_project()

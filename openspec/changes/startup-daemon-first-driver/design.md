@@ -73,6 +73,17 @@ binding can happen before the daemon is the active driver.
    startup daemon rows, ACKs, receipts, or required postconditions are still
    pending.
 
+6. **Startup receipt handling is not a special protocol**
+
+   A daemon-scheduled startup receipt follows the same daemon microstep
+   contract as later lifecycle work: the daemon reads current startup
+   authority state, Router scheduler rows, Controller action rows, and
+   Controller receipts; then it updates the startup flag, reconciles the
+   Router row, checks off the Controller row, clears bootstrap `pending_action`,
+   and either schedules the next startup row or records a real barrier. A done
+   receipt that leaves bootstrap `pending_action` stale is rejected by the
+   model because it can reissue the same startup action forever.
+
 ## Risks / Trade-offs
 
 - [Risk] A background daemon tick may race with foreground startup apply.

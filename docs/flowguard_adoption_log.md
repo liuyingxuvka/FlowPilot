@@ -11327,3 +11327,65 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+## 2026-05-15 Daemon Lifecycle Microstep Model Upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A new FlowPilot run repeated a completed startup banner action because Controller had written a done check-off while bootstrap `pending_action` and startup flags stayed stale.
+- Status: completed_model_update
+- Skill decision: used_openspec_apply_then_flowguard
+
+### Model Evidence
+- Two-table scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Persistent daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Lifecycle microstep model: `simulations/flowpilot_daemon_microstep_lifecycle_model.py`
+- OpenSpec changes: `openspec/changes/reconcile-daemon-durable-evidence/`, `openspec/changes/startup-daemon-first-driver/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `python -m py_compile simulations\flowpilot_daemon_microstep_lifecycle_model.py simulations\run_flowpilot_daemon_microstep_lifecycle_checks.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py simulations\flowpilot_persistent_router_daemon_model.py simulations\run_flowpilot_persistent_router_daemon_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_microstep_lifecycle_checks.py --json-out simulations\flowpilot_daemon_microstep_lifecycle_results.json` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+
+### Findings
+- The older models checked that the daemon started early and that receipts were reconciled in broad phase terms, but they did not model each daemon tick as read tables, reconcile evidence, sync authority state, clear pending/wait state, schedule or record a barrier, and write refreshed summaries.
+- The new lifecycle model covers startup, normal route work, role waits, external event waits, repair, and terminal cleanup with the same microstep contract.
+- The model rejects stale startup `pending_action` after a done receipt, stale Router facts after route receipts, durable-only role output, external event waits that are not Router-closed, repair blockers before reading repair receipts, terminal status before cleanup, Controller writes to Router-owned tables, and daemon status from stale summaries.
+- The minimal root fix remains one shared daemon pre-next-action reconciliation pipeline; phase-specific handlers can supply different evidence readers and postcondition appliers, but they should not bypass the common microstep order.
+
+### Skipped Steps
+- No production runtime code was changed in this model update.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+
+## 2026-05-15 Startup Scheduler Barrier Classification And Join Hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that startup banner, background role slots, and heartbeat binding are not global Router queue barriers; they are startup obligations that can be reconciled before the live Reviewer gate.
+- Status: completed_focused_runtime_update
+- Skill decision: used_openspec_then_flowguard
+
+### Model Evidence
+- Two-table scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Daemon lifecycle microstep model: `simulations/flowpilot_daemon_microstep_lifecycle_model.py`
+- OpenSpec change: `openspec/changes/classify-startup-scheduler-barriers/`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with schema `1.0`.
+- `openspec validate classify-startup-scheduler-barriers --strict` passed before runtime edits.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_microstep_lifecycle_checks.py` passed.
+- `python -m unittest ...` focused startup scheduler/runtime group passed with 11 tests.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests` was attempted but timed out after 15 minutes; this is not counted as a pass.
+
+### Findings
+- Startup banner, heartbeat binding, display/status, and role-slot startup rows now carry explicit progress classification instead of inheriting global barrier behavior from display, payload, host spawn, or host automation mechanics.
+- Startup daemon can keep queueing unrelated startup rows while nonblocking startup obligations remain open.
+- Startup Controller receipts for deferred banner, role-slot, and heartbeat rows can update bootstrap/run state and reconcile scheduler rows without reissuing the same work.
+- Reviewer startup fact review now checks unresolved startup bootstrap obligations and startup-local Controller rows before proceeding.
+- Role-dependent startup card work is blocked if role slots are not ready, while unrelated startup queueing can continue.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction.
+- The full Router runtime unittest class timed out and remains a residual broad-suite risk; focused affected tests and lightweight FlowGuard checks passed.

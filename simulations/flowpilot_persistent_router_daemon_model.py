@@ -17,6 +17,9 @@ Risk intent brief:
   launch before Controller core load, no daemon at a wait, duplicate Router
   writers, duplicate ACK observation, Router marking Controller work done
   without a receipt, Controller acting as the normal Router metronome,
+  daemon-scheduled startup rows whose done receipts do not update bootstrap
+  flags, clear bootstrap pending_action, reconcile the Router row, and schedule
+  the next startup row,
   Controller stopping at ordinary waits, foreground Controller ending while a
   live daemon-owned role wait is active, foreground Controller ending while
   the daemon is live but no Controller action is ready, heartbeat starting a
@@ -37,7 +40,9 @@ Risk intent brief:
   Controller repair receipt is received and invalid, and must not write a
   budget-exhausted blocker while a repair action is still pending;
   receipt reconciliation must also advance the matching Router-owned internal
-  fact so the same Controller action is not reissued forever; Controller
+  fact, and daemon-scheduled startup receipts must advance the bootstrap flag,
+  clear bootstrap pending_action, and reconcile the Router scheduler row, so the
+  same Controller action is not reissued forever; Controller
   follows the daemon-owned ledger instead of manually ticking the Router during
   normal runtime; Controller stays attached to the ledger during all
   nonterminal daemon-live runtime, processes pending executable Controller
@@ -89,6 +94,13 @@ class State:
     daemon_status_active_without_process: bool = False
     daemon_crashed_after_ledger_decode_error: bool = False
     controller_core_loaded: bool = False
+    startup_bootstrap_pending_action_open: bool = False
+    startup_controller_receipt_present: bool = False
+    startup_controller_receipt_consumed: bool = False
+    startup_bootstrap_flag_current: bool = False
+    startup_router_row_reconciled: bool = False
+    startup_next_row_scheduled_after_receipt: bool = False
+    startup_same_action_reissue_count: int = 0
     controller_attached: bool = False
     controller_called_router_next_as_metronome: bool = False
     controller_finaled_at_wait: bool = False
@@ -302,6 +314,41 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 runtime_ledger_write_lock_fresh=True,
             ),
         )
+
+    if not state.controller_core_loaded and not state.startup_controller_receipt_consumed:
+        if not state.startup_bootstrap_pending_action_open and not state.startup_controller_receipt_present:
+            yield Transition(
+                "daemon_schedules_startup_bootloader_row_before_controller_core",
+                _step(
+                    state,
+                    startup_bootstrap_pending_action_open=True,
+                    startup_bootstrap_flag_current=False,
+                    startup_same_action_reissue_count=1,
+                ),
+            )
+            return
+        if state.startup_bootstrap_pending_action_open and not state.startup_controller_receipt_present:
+            yield Transition(
+                "controller_executes_startup_bootloader_row_writes_receipt",
+                _step(
+                    state,
+                    startup_controller_receipt_present=True,
+                ),
+            )
+            return
+        if state.startup_bootstrap_pending_action_open and state.startup_controller_receipt_present:
+            yield Transition(
+                "daemon_consumes_startup_receipt_clears_pending_and_schedules_next",
+                _step(
+                    state,
+                    startup_controller_receipt_consumed=True,
+                    startup_bootstrap_flag_current=True,
+                    startup_bootstrap_pending_action_open=False,
+                    startup_router_row_reconciled=True,
+                    startup_next_row_scheduled_after_receipt=True,
+                ),
+            )
+            return
 
     if not state.controller_core_loaded:
         yield Transition(
@@ -831,6 +878,11 @@ def hazard_states() -> dict[str, State]:
         daemon_writer_count=1,
         daemon_tick_seconds=1,
         controller_core_loaded=True,
+        startup_controller_receipt_present=True,
+        startup_controller_receipt_consumed=True,
+        startup_bootstrap_flag_current=True,
+        startup_router_row_reconciled=True,
+        startup_next_row_scheduled_after_receipt=True,
         controller_attached=True,
         roles_live=True,
         heartbeat_active=True,
@@ -1042,6 +1094,19 @@ def hazard_states() -> dict[str, State]:
             router_internal_action_fact_current=False,
             router_internal_fact_updated_from_receipt=False,
             router_cleared_pending_without_internal_fact=True,
+        ),
+        "startup_done_receipt_reissued_from_stale_bootstrap_pending": replace(
+            safe_active,
+            controller_core_loaded=False,
+            controller_attached=False,
+            route_work_allowed=False,
+            startup_bootstrap_pending_action_open=True,
+            startup_controller_receipt_present=True,
+            startup_controller_receipt_consumed=True,
+            startup_bootstrap_flag_current=False,
+            startup_router_row_reconciled=False,
+            startup_next_row_scheduled_after_receipt=False,
+            startup_same_action_reissue_count=2,
         ),
         "stateful_controller_receipt_done_without_postcondition_evidence": replace(
             safe_active,
@@ -1271,6 +1336,24 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_action_done and not state.controller_receipt_present:
         failures.append("Controller action was marked done without a Controller receipt")
     if (
+        state.startup_controller_receipt_consumed
+        and not (
+            state.startup_controller_receipt_present
+            and state.startup_bootstrap_flag_current
+            and not state.startup_bootstrap_pending_action_open
+            and state.startup_router_row_reconciled
+        )
+    ):
+        failures.append("Router consumed startup receipt without synchronizing bootstrap flag, pending action, and Router row")
+    if (
+        state.startup_controller_receipt_consumed
+        and not state.startup_next_row_scheduled_after_receipt
+        and not state.controller_core_loaded
+    ):
+        failures.append("Router consumed startup receipt but did not schedule the next startup row")
+    if state.startup_controller_receipt_present and state.startup_same_action_reissue_count > 1:
+        failures.append("Router reissued the same startup Controller action after a done receipt")
+    if (
         state.controller_action_requires_stateful_postcondition
         and state.controller_receipt_present
         and not state.controller_stateful_postcondition_evidence_written
@@ -1417,6 +1500,12 @@ INVARIANTS = (
     _invariant("controller_not_runtime_metronome", "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"),
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),
+    _invariant(
+        "startup_receipt_syncs_bootstrap_and_router_row",
+        "Router consumed startup receipt without synchronizing bootstrap flag, pending action, and Router row",
+    ),
+    _invariant("startup_receipt_schedules_next_row", "Router consumed startup receipt but did not schedule the next startup row"),
+    _invariant("startup_done_receipt_not_reissued", "Router reissued the same startup Controller action after a done receipt"),
     _invariant("stateful_controller_receipt_requires_postcondition_evidence", "stateful Controller receipt was marked done before Router-visible postcondition evidence existed"),
     _invariant("stateful_missing_deliverable_repairs_before_blocker", "stateful missing deliverable escalated before Controller repair attempts were exhausted"),
     _invariant("stateful_missing_deliverable_no_blocker_while_repair_pending", "stateful missing deliverable blocker was recorded while a repair action was still pending"),
@@ -1455,7 +1544,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 12
+MAX_SEQUENCE_LENGTH = 16
 
 
 __all__ = [

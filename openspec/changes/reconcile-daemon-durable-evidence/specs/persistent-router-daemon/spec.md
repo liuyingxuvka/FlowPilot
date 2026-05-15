@@ -34,3 +34,26 @@ before returning a pending action or computing a new action.
 - **AND** the durable file exists before next-action computation
 - **THEN** Router MUST prefer durable evidence over the stale in-memory pending action
 - **AND** Router MUST save only the reconciled state
+
+### Requirement: Router daemon follows one lifecycle microstep contract
+Every Router daemon tick SHALL use the same read, reconcile, sync, clear,
+schedule-or-barrier, and write order across startup, normal route work, role
+waits, external event waits, repair, and terminal cleanup.
+
+#### Scenario: Daemon computes work from current tables only
+- **WHEN** the daemon is about to return existing work, schedule new work, write a blocker, or report terminal status
+- **THEN** it MUST first read daemon status, phase authority state, Router scheduler rows, Controller action rows, and the phase evidence source
+- **AND** it MUST NOT compute the next action from a stale summary
+
+#### Scenario: Done Controller receipt is consumed
+- **WHEN** a `done` Controller receipt exists for the active phase action
+- **THEN** Router MUST reconcile the phase authority state, Router scheduler row, Controller action row, and pending or wait state together
+- **AND** Router MUST NOT return or reissue that same action after the receipt has been consumed
+
+#### Scenario: Non-receipt phase evidence is consumed
+- **WHEN** role output or an external event satisfies a daemon-owned wait
+- **THEN** Router MUST sync the matching authority state and close the Router-owned wait row before opening unrelated work
+
+#### Scenario: Terminal status is written
+- **WHEN** a daemon tick writes terminal status
+- **THEN** runtime cleanup records MUST already show daemon, Controller, roles, heartbeat, and route work have been stopped or closed

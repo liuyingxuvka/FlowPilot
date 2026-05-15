@@ -3,6 +3,8 @@
 - [x] 1.1 Add a FlowGuard reconciliation model that separates durable evidence from Router state.
 - [x] 1.2 Add executable checks for stale pending action, receipt-only completion, role-output ledger submission, canonical artifact drift, stale snapshot overwrite, and barrier ordering.
 - [x] 1.3 Run the new reconciliation model and inspect its known-bad hazards before production edits.
+- [x] 1.4 Add a lifecycle-wide daemon microstep model for startup, route work, role waits, external events, repair, and terminal cleanup.
+- [x] 1.5 Add executable hazards for reading too little, stale startup pending action, stale Router facts, durable-only role output, unclosed external event waits, premature repair blockers, premature terminal status, wrong table ownership, and stale daemon summaries.
 
 ## 2. Router Runtime
 
@@ -24,3 +26,4 @@
 - [x] 4.2 Start heavyweight meta/capability regressions in the standard background log contract and inspect artifacts.
 - [x] 4.3 Run install check, sync, audit, and installed-skill check.
 - [x] 4.4 Stage and commit the local repository, preserving unrelated peer-agent changes.
+- [x] 4.5 Run the lifecycle microstep model and rerun the focused two-table and persistent daemon FlowGuard checks, skipping heavyweight meta/capability checks at current user direction.

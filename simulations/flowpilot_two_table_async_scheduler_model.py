@@ -11,9 +11,10 @@ Risk purpose:
   Controller forgetting top-to-bottom row order during long ledgers, startup
   host/UI/role/heartbeat work happening before the daemon becomes the driver,
   a daemon that starts but only waits for Controller core instead of driving
-  startup, treating a fresh runtime write lock as ledger corruption instead of
-  waiting for the next tick, and PM startup activation gaining a redundant
-  global ACK gate.
+  startup, Controller receipts that leave bootstrap `pending_action` stale and
+  reissue the same startup row forever, treating a fresh runtime write lock as
+  ledger corruption instead of waiting for the next tick, and PM startup
+  activation gaining a redundant global ACK gate.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
   behavior changes.
@@ -31,19 +32,32 @@ Risk intent brief:
   duplicate side effects, Reviewer review before startup cleanup, route work
   before PM activation, daemon enqueue past a real barrier, missing table-local
   Controller prompt, startup UI/roles/heartbeat before daemon ownership,
-  pre-Controller-core daemon idling, scheduler ledger partial writes that leave
-  invalid JSON without a fresh write lock, fresh write-lock reads reported as
-  corruption instead of deferred, standby completion after one monitor check,
-  foreground closure while FlowPilot is still running, standby ignoring new
-  Controller work, and redundant PM activation global join.
+  pre-Controller-core daemon idling, daemon-scheduled startup rows whose done
+  receipts do not update bootstrap flags or clear bootstrap pending_action,
+  startup banner/display/heartbeat/role-slot obligations that still behave as
+  global queue barriers, role-dependent startup work queued before role slots
+  are ready, true barriers accidentally demoted to nonblocking obligations,
+  startup obligations reconciled without Router-visible proof, reconciled
+  scheduler rows downgraded by later receipt sync,
+  scheduler ledger partial writes that leave invalid JSON without a fresh write
+  lock, fresh write-lock reads reported as corruption instead of deferred,
+  standby completion after one monitor check, foreground closure while
+  FlowPilot is still running, standby ignoring new Controller work, and
+  redundant PM activation global join.
 - Hard invariants: Router and Controller tables stay separate; daemon enqueues
-  independent rows until barrier; barriers stop enqueueing; done receipts need
+  independent rows until barrier; broad mechanics are not barriers unless the
+  action is a true dependency wall; barriers stop enqueueing; startup banner,
+  heartbeat, and display/status are parallel obligations; startup role-slot
+  spawn is only a local dependency; done receipts need
   required Router-visible postconditions before reconciliation; startup review
   uses current-scope reconciliation; startup external actions are daemon-owned
   after the minimal run shell exists; the Controller action ledger carries a
   compact top-to-bottom table prompt; ledger writes are atomic and leave both
   table files parseable after every daemon/controller write; Router scheduler
-  ledger remains Router-single-writer;
+  ledger remains Router-single-writer; daemon-scheduled startup receipts must
+  update the matching bootstrap flag, clear bootstrap pending_action, reconcile
+  the Router row, and compute the next startup row unless a real barrier is
+  reached;
   live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
@@ -68,6 +82,14 @@ PM_ACTIVATION_SAME_ROLE_ACK_ONLY = "pm_activation_same_role_ack_only"
 CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT = "continuous_standby_row_during_live_wait"
 STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK = "standby_reenters_top_down_on_new_work"
 TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS = "transient_scheduler_write_lock_waits"
+STARTUP_BOOTLOADER_RECEIPT_CONSUMES_PENDING_AND_ADVANCES = (
+    "startup_bootloader_receipt_consumes_pending_and_advances"
+)
+PARALLEL_STARTUP_OBLIGATIONS_QUEUE_UNRELATED_WORK = "parallel_startup_obligations_queue_unrelated_work"
+STARTUP_ROLE_SLOTS_LOCAL_DEPENDENCY = "startup_role_slots_local_dependency"
+TRUE_BARRIERS_STOP_QUEUEING = "true_barriers_stop_queueing"
+STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN = "startup_parallel_obligation_review_join"
+RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC = "reconciled_scheduler_row_status_monotonic"
 
 CONTROLLER_OWNS_ROUTER_DEPENDENCIES = "controller_owns_router_dependencies"
 DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY = "daemon_duplicates_controller_row_on_retry"
@@ -88,6 +110,22 @@ ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE = "router_scheduler_ledger_partial_write"
 CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE = "controller_action_ledger_partial_write"
 ROUTER_SCHEDULER_LEDGER_MULTI_WRITER = "router_scheduler_ledger_multi_writer"
 FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT = "fresh_scheduler_write_lock_reported_corrupt"
+STARTUP_BOOTLOADER_RECEIPT_LEAVES_STALE_PENDING_ACTION = (
+    "startup_bootloader_receipt_leaves_stale_pending_action"
+)
+STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER = "startup_banner_display_global_barrier"
+STARTUP_HEARTBEAT_GLOBAL_BARRIER = "startup_heartbeat_global_barrier"
+STARTUP_ROLE_SPAWN_GLOBAL_BARRIER = "startup_role_spawn_global_barrier"
+ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY = "role_dependent_work_before_role_slots_ready"
+REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN = (
+    "reviewer_starts_before_parallel_startup_obligations_clean"
+)
+TRUE_BARRIER_DEMOTED_TO_PARALLEL = "true_barrier_demoted_to_parallel"
+DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW = "duplicate_startup_parallel_obligation_row"
+STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF = (
+    "startup_obligation_reconciled_without_router_proof"
+)
+SCHEDULER_RECONCILED_ROW_DOWNGRADED = "scheduler_reconciled_row_downgraded"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -99,6 +137,12 @@ VALID_SCENARIOS = (
     CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT,
     STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK,
     TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS,
+    STARTUP_BOOTLOADER_RECEIPT_CONSUMES_PENDING_AND_ADVANCES,
+    PARALLEL_STARTUP_OBLIGATIONS_QUEUE_UNRELATED_WORK,
+    STARTUP_ROLE_SLOTS_LOCAL_DEPENDENCY,
+    TRUE_BARRIERS_STOP_QUEUEING,
+    STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN,
+    RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -121,6 +165,16 @@ NEGATIVE_SCENARIOS = (
     CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE,
     ROUTER_SCHEDULER_LEDGER_MULTI_WRITER,
     FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT,
+    STARTUP_BOOTLOADER_RECEIPT_LEAVES_STALE_PENDING_ACTION,
+    STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER,
+    STARTUP_HEARTBEAT_GLOBAL_BARRIER,
+    STARTUP_ROLE_SPAWN_GLOBAL_BARRIER,
+    ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY,
+    REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN,
+    TRUE_BARRIER_DEMOTED_TO_PARALLEL,
+    DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW,
+    STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF,
+    SCHEDULER_RECONCILED_ROW_DOWNGRADED,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -168,6 +222,14 @@ class State:
     daemon_drives_startup_before_controller_core: bool = False
     daemon_waits_for_controller_core_without_startup_drive: bool = False
     controller_core_loaded: bool = False
+    startup_bootstrap_pending_action_open: bool = False
+    startup_bootstrap_flag_current: bool = False
+    startup_controller_receipt_done: bool = False
+    startup_daemon_processed_done_receipt: bool = False
+    startup_router_row_reconciled: bool = False
+    startup_next_row_scheduled_after_receipt: bool = False
+    startup_real_barrier_reached_after_receipt: bool = False
+    startup_same_action_reissued_after_done_receipt: bool = False
 
     startup_scope_active: bool = False
     independent_controller_row_pending: bool = False
@@ -186,6 +248,24 @@ class State:
     startup_local_rows_clean: bool = False
     startup_prep_cards_sent: bool = False
     startup_prep_acks_clean: bool = False
+    startup_parallel_obligation_open: bool = False
+    startup_parallel_obligation_proof_written: bool = False
+    startup_parallel_obligation_reconciled: bool = False
+    startup_parallel_obligations_clean: bool = False
+    startup_parallel_obligation_blocked_unrelated_queue: bool = False
+    startup_heartbeat_obligation_open: bool = False
+    startup_role_slots_open: bool = False
+    startup_role_slots_ready: bool = False
+    startup_role_slots_blocked_unrelated_queue: bool = False
+    unrelated_startup_work_available: bool = False
+    unrelated_startup_work_enqueued: bool = False
+    role_independent_work_enqueued: bool = False
+    role_dependent_work_enqueued: bool = False
+    current_action_true_barrier: bool = False
+    queue_continued_after_true_barrier: bool = False
+    duplicate_startup_parallel_obligation_rows: bool = False
+    scheduler_row_status_reconciled: bool = False
+    scheduler_row_status_downgraded_to_receipt_done: bool = False
     startup_scope_reconciliation_checked: bool = False
     startup_scope_reconciliation_clean: bool = False
     reviewer_startup_fact_review_started: bool = False
@@ -302,6 +382,7 @@ def scenario_state(scenario: str) -> State:
             startup_local_rows_clean=True,
             startup_prep_cards_sent=True,
             startup_prep_acks_clean=True,
+            startup_parallel_obligations_clean=True,
             startup_scope_reconciliation_checked=True,
             startup_scope_reconciliation_clean=True,
             reviewer_startup_fact_review_started=True,
@@ -313,6 +394,7 @@ def scenario_state(scenario: str) -> State:
             startup_local_rows_clean=True,
             startup_prep_cards_sent=True,
             startup_prep_acks_clean=True,
+            startup_parallel_obligations_clean=True,
             startup_scope_reconciliation_checked=True,
             startup_scope_reconciliation_clean=True,
             reviewer_startup_fact_review_started=True,
@@ -359,6 +441,80 @@ def scenario_state(scenario: str) -> State:
             independent_row_enqueued=True,
             router_scheduler_write_lock_fresh=True,
             daemon_deferred_for_fresh_write_lock=True,
+        )
+    if scenario == STARTUP_BOOTLOADER_RECEIPT_CONSUMES_PENDING_AND_ADVANCES:
+        return _accepted(
+            scenario,
+            **base,
+            independent_row_enqueued=True,
+            receipt_done=True,
+            idempotency_key_used=True,
+            startup_bootstrap_pending_action_open=False,
+            startup_bootstrap_flag_current=True,
+            startup_controller_receipt_done=True,
+            startup_daemon_processed_done_receipt=True,
+            startup_router_row_reconciled=True,
+            startup_next_row_scheduled_after_receipt=True,
+            startup_same_action_reissued_after_done_receipt=False,
+        )
+    if scenario == PARALLEL_STARTUP_OBLIGATIONS_QUEUE_UNRELATED_WORK:
+        return _accepted(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=True,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=False,
+            startup_parallel_obligations_clean=False,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=True,
+            independent_row_enqueued=True,
+            next_independent_row_enqueued=True,
+            idempotency_key_used=True,
+        )
+    if scenario == STARTUP_ROLE_SLOTS_LOCAL_DEPENDENCY:
+        return _accepted(
+            scenario,
+            **base,
+            startup_role_slots_open=True,
+            startup_role_slots_ready=False,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=True,
+            role_independent_work_enqueued=True,
+            role_dependent_work_enqueued=False,
+            idempotency_key_used=True,
+        )
+    if scenario == TRUE_BARRIERS_STOP_QUEUEING:
+        return _accepted(
+            scenario,
+            **base,
+            current_action_true_barrier=True,
+            barrier_active=True,
+            queue_continued_after_true_barrier=False,
+            enqueued_after_barrier=False,
+        )
+    if scenario == STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN:
+        return _accepted(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=False,
+            startup_parallel_obligation_proof_written=True,
+            startup_parallel_obligation_reconciled=True,
+            startup_parallel_obligations_clean=True,
+            startup_local_rows_clean=True,
+            startup_prep_cards_sent=True,
+            startup_prep_acks_clean=True,
+            startup_scope_reconciliation_checked=True,
+            startup_scope_reconciliation_clean=True,
+            reviewer_startup_fact_review_started=True,
+        )
+    if scenario == RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC:
+        return _accepted(
+            scenario,
+            **base,
+            receipt_done=True,
+            router_marked_row_reconciled=True,
+            scheduler_row_status_reconciled=True,
+            scheduler_row_status_downgraded_to_receipt_done=False,
         )
     if scenario == CONTROLLER_OWNS_ROUTER_DEPENDENCIES:
         return _rejected(
@@ -560,6 +716,117 @@ def scenario_state(scenario: str) -> State:
                 "daemon_deferred_for_fresh_write_lock": False,
             },
         )
+    if scenario == STARTUP_BOOTLOADER_RECEIPT_LEAVES_STALE_PENDING_ACTION:
+        return _rejected(
+            scenario,
+            **{
+                **base,
+                "independent_row_enqueued": True,
+                "receipt_done": True,
+                "idempotency_key_used": True,
+                "startup_bootstrap_pending_action_open": True,
+                "startup_bootstrap_flag_current": False,
+                "startup_controller_receipt_done": True,
+                "startup_daemon_processed_done_receipt": True,
+                "startup_router_row_reconciled": False,
+                "startup_next_row_scheduled_after_receipt": False,
+                "startup_same_action_reissued_after_done_receipt": True,
+            },
+        )
+    if scenario == STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER:
+        return _rejected(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=True,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=False,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=False,
+            startup_parallel_obligation_blocked_unrelated_queue=True,
+        )
+    if scenario == STARTUP_HEARTBEAT_GLOBAL_BARRIER:
+        return _rejected(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=True,
+            startup_heartbeat_obligation_open=True,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=False,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=False,
+            startup_parallel_obligation_blocked_unrelated_queue=True,
+        )
+    if scenario == STARTUP_ROLE_SPAWN_GLOBAL_BARRIER:
+        return _rejected(
+            scenario,
+            **base,
+            startup_role_slots_open=True,
+            startup_role_slots_ready=False,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=False,
+            role_independent_work_enqueued=False,
+            startup_role_slots_blocked_unrelated_queue=True,
+        )
+    if scenario == ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY:
+        return _rejected(
+            scenario,
+            **base,
+            startup_role_slots_open=True,
+            startup_role_slots_ready=False,
+            role_dependent_work_enqueued=True,
+        )
+    if scenario == REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN:
+        return _rejected(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=True,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=False,
+            startup_parallel_obligations_clean=False,
+            startup_local_rows_clean=True,
+            startup_prep_cards_sent=True,
+            startup_prep_acks_clean=True,
+            startup_scope_reconciliation_checked=True,
+            startup_scope_reconciliation_clean=True,
+            reviewer_startup_fact_review_started=True,
+        )
+    if scenario == TRUE_BARRIER_DEMOTED_TO_PARALLEL:
+        return _rejected(
+            scenario,
+            **base,
+            current_action_true_barrier=True,
+            queue_continued_after_true_barrier=True,
+            independent_row_enqueued=True,
+            next_independent_row_enqueued=True,
+        )
+    if scenario == DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW:
+        return _rejected(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=True,
+            unrelated_startup_work_available=True,
+            unrelated_startup_work_enqueued=True,
+            idempotency_key_used=True,
+            duplicate_startup_parallel_obligation_rows=True,
+        )
+    if scenario == STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF:
+        return _rejected(
+            scenario,
+            **base,
+            startup_parallel_obligation_open=False,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=True,
+            startup_parallel_obligations_clean=True,
+        )
+    if scenario == SCHEDULER_RECONCILED_ROW_DOWNGRADED:
+        return _rejected(
+            scenario,
+            **base,
+            receipt_done=True,
+            router_marked_row_reconciled=True,
+            scheduler_row_status_reconciled=True,
+            scheduler_row_status_downgraded_to_receipt_done=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -604,6 +871,49 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("Router daemon waited for Controller core instead of driving startup work")
     if state.daemon_waits_for_controller_core_without_startup_drive:
         failures.append("pre-Controller-core daemon tick idled instead of scheduling startup work")
+    if (
+        state.startup_controller_receipt_done
+        and state.startup_daemon_processed_done_receipt
+        and not (
+            state.startup_bootstrap_flag_current
+            and not state.startup_bootstrap_pending_action_open
+            and state.startup_router_row_reconciled
+        )
+    ):
+        failures.append("daemon consumed startup Controller receipt without syncing bootstrap flag, pending action, and Router row")
+    if (
+        state.startup_controller_receipt_done
+        and state.startup_daemon_processed_done_receipt
+        and not state.startup_real_barrier_reached_after_receipt
+        and not state.startup_next_row_scheduled_after_receipt
+    ):
+        failures.append("daemon consumed startup Controller receipt but did not schedule the next startup row")
+    if state.startup_same_action_reissued_after_done_receipt:
+        failures.append("daemon reissued a completed startup Controller action because bootstrap pending_action stayed stale")
+    if (
+        state.startup_parallel_obligation_open
+        and state.unrelated_startup_work_available
+        and not state.unrelated_startup_work_enqueued
+        and state.startup_parallel_obligation_blocked_unrelated_queue
+    ):
+        failures.append("startup parallel obligation blocked unrelated startup queueing")
+    if (
+        state.startup_role_slots_open
+        and state.unrelated_startup_work_available
+        and not state.role_independent_work_enqueued
+        and state.startup_role_slots_blocked_unrelated_queue
+    ):
+        failures.append("startup role-slot dependency blocked unrelated startup queueing")
+    if state.role_dependent_work_enqueued and not state.startup_role_slots_ready:
+        failures.append("role-dependent startup work was queued before role slots were ready")
+    if state.current_action_true_barrier and state.queue_continued_after_true_barrier:
+        failures.append("Router daemon continued queueing after a true barrier")
+    if state.duplicate_startup_parallel_obligation_rows:
+        failures.append("daemon retry duplicated a startup parallel obligation row without open-row skip")
+    if state.startup_parallel_obligation_reconciled and not state.startup_parallel_obligation_proof_written:
+        failures.append("startup obligation was reconciled without Router-visible proof")
+    if state.scheduler_row_status_reconciled and state.scheduler_row_status_downgraded_to_receipt_done:
+        failures.append("Router scheduler row reconciliation status was downgraded after receipt sync")
     if state.controller_action_table_exists and state.controller_table_has_router_dependency_graph:
         failures.append("Controller table owns Router dependency metadata")
     if state.router_scheduler_table_exists and not state.router_table_has_dependency_metadata:
@@ -631,8 +941,11 @@ def scheduler_failures(state: State) -> list[str]:
         and state.startup_local_rows_clean
         and state.startup_prep_cards_sent
         and state.startup_prep_acks_clean
+        and state.startup_parallel_obligations_clean
     ):
         failures.append("Reviewer startup fact review started before startup current-scope reconciliation was clean")
+    if state.reviewer_startup_fact_review_started and not state.startup_parallel_obligations_clean:
+        failures.append("Reviewer startup fact review started before startup parallel obligations were reconciled")
     if state.pm_activation_second_global_join_required:
         failures.append("PM startup activation required redundant all-startup ACK join")
     if state.route_work_started and not state.pm_activation_decision_accepted:

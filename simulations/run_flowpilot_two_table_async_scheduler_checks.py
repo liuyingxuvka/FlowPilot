@@ -43,6 +43,28 @@ HAZARD_EXPECTED_FAILURES = {
     model.CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE: "Controller action ledger was not valid JSON after Controller table write",
     model.ROUTER_SCHEDULER_LEDGER_MULTI_WRITER: "Router scheduler ledger had more than one writer",
     model.FRESH_SCHEDULER_WRITE_LOCK_REPORTED_CORRUPT: "fresh Router scheduler ledger write lock was not deferred to the next tick",
+    model.STARTUP_BOOTLOADER_RECEIPT_LEAVES_STALE_PENDING_ACTION: (
+        "daemon consumed startup Controller receipt without syncing bootstrap flag, pending action, and Router row"
+    ),
+    model.STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
+    model.STARTUP_HEARTBEAT_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
+    model.STARTUP_ROLE_SPAWN_GLOBAL_BARRIER: "startup role-slot dependency blocked unrelated startup queueing",
+    model.ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY: (
+        "role-dependent startup work was queued before role slots were ready"
+    ),
+    model.REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN: (
+        "Reviewer startup fact review started before startup parallel obligations were reconciled"
+    ),
+    model.TRUE_BARRIER_DEMOTED_TO_PARALLEL: "Router daemon continued queueing after a true barrier",
+    model.DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW: (
+        "daemon retry duplicated a startup parallel obligation row without open-row skip"
+    ),
+    model.STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF: (
+        "startup obligation was reconciled without Router-visible proof"
+    ),
+    model.SCHEDULER_RECONCILED_ROW_DOWNGRADED: (
+        "Router scheduler row reconciliation status was downgraded after receipt sync"
+    ),
 }
 
 
@@ -64,7 +86,32 @@ def _state_id(state: model.State) -> str:
         f"heartbeat_before_daemon={state.startup_heartbeat_bound_before_daemon},"
         f"daemon_drives_pre_core={state.daemon_drives_startup_before_controller_core},"
         f"daemon_waits_pre_core={state.daemon_waits_for_controller_core_without_startup_drive},"
-        f"controller_core={state.controller_core_loaded}|"
+        f"controller_core={state.controller_core_loaded},"
+        f"bootstrap_pending={state.startup_bootstrap_pending_action_open},"
+        f"bootstrap_flag={state.startup_bootstrap_flag_current},"
+        f"startup_receipt={state.startup_controller_receipt_done},"
+        f"startup_receipt_processed={state.startup_daemon_processed_done_receipt},"
+        f"startup_router_row_reconciled={state.startup_router_row_reconciled},"
+        f"startup_next_after_receipt={state.startup_next_row_scheduled_after_receipt},"
+        f"startup_barrier_after_receipt={state.startup_real_barrier_reached_after_receipt},"
+        f"startup_reissued_done={state.startup_same_action_reissued_after_done_receipt}|"
+        f"startup_obligation=open:{state.startup_parallel_obligation_open},"
+        f"proof:{state.startup_parallel_obligation_proof_written},"
+        f"reconciled:{state.startup_parallel_obligation_reconciled},"
+        f"clean:{state.startup_parallel_obligations_clean},"
+        f"blocked_unrelated:{state.startup_parallel_obligation_blocked_unrelated_queue},"
+        f"heartbeat_open:{state.startup_heartbeat_obligation_open}|"
+        f"role_slots=open:{state.startup_role_slots_open},ready:{state.startup_role_slots_ready},"
+        f"blocked_unrelated:{state.startup_role_slots_blocked_unrelated_queue},"
+        f"role_independent:{state.role_independent_work_enqueued},"
+        f"role_dependent:{state.role_dependent_work_enqueued}|"
+        f"unrelated_startup=available:{state.unrelated_startup_work_available},"
+        f"enqueued:{state.unrelated_startup_work_enqueued}|"
+        f"true_barrier={state.current_action_true_barrier},"
+        f"continued_after_true_barrier={state.queue_continued_after_true_barrier},"
+        f"dup_parallel_rows={state.duplicate_startup_parallel_obligation_rows},"
+        f"scheduler_row_reconciled={state.scheduler_row_status_reconciled},"
+        f"scheduler_row_downgraded={state.scheduler_row_status_downgraded_to_receipt_done}|"
         f"queue={state.independent_controller_row_pending},{state.independent_row_enqueued},"
         f"{state.next_independent_row_enqueued},barrier={state.barrier_active},"
         f"after_barrier={state.enqueued_after_barrier}|idempotency={state.idempotency_key_used},"

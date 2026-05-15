@@ -20,6 +20,9 @@ REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
     "runtime_ledger_write_lock_appears_during_daemon_read",
     "daemon_defers_runtime_ledger_read_until_next_tick",
+    "daemon_schedules_startup_bootloader_row_before_controller_core",
+    "controller_executes_startup_bootloader_row_writes_receipt",
+    "daemon_consumes_startup_receipt_clears_pending_and_schedules_next",
     "controller_core_loaded_after_builtin_daemon_start",
     "router_issues_controller_action_to_ledger",
     "router_issues_stateful_controller_boundary_action_to_ledger",
@@ -65,6 +68,9 @@ HAZARD_EXPECTED_FAILURES = {
     "router_scheduler_ledger_multi_writer": "Router scheduler ledger has more than one writer",
     "duplicate_ack_consumption": "mailbox evidence was consumed more than once",
     "controller_done_without_receipt": "Controller action was marked done without a Controller receipt",
+    "startup_done_receipt_reissued_from_stale_bootstrap_pending": (
+        "Router consumed startup receipt without synchronizing bootstrap flag, pending action, and Router row"
+    ),
     "router_cleared_controller_receipt_without_internal_fact": "Router cleared Controller receipt without updating Router-owned internal action fact",
     "stateful_controller_receipt_done_without_postcondition_evidence": "stateful Controller receipt was marked done before Router-visible postcondition evidence existed",
     "stateful_missing_deliverable_escalated_before_repair_budget": "stateful missing deliverable escalated before Controller repair attempts were exhausted",
@@ -106,7 +112,14 @@ def _state_id(state: model.State) -> str:
         f"decode_crash={state.daemon_crashed_after_ledger_decode_error},"
         f"status_after_error={state.daemon_status_active_after_lock_error},"
         f"status_no_process={state.daemon_status_active_without_process}|"
-        f"core={state.controller_core_loaded}|"
+        f"core={state.controller_core_loaded},"
+        f"startup_pending={state.startup_bootstrap_pending_action_open},"
+        f"startup_receipt={state.startup_controller_receipt_present},"
+        f"startup_consumed={state.startup_controller_receipt_consumed},"
+        f"startup_flag={state.startup_bootstrap_flag_current},"
+        f"startup_row_reconciled={state.startup_router_row_reconciled},"
+        f"startup_next={state.startup_next_row_scheduled_after_receipt},"
+        f"startup_reissues={state.startup_same_action_reissue_count}|"
         f"controller={state.controller_attached},"
         f"metronome={state.controller_called_router_next_as_metronome},"
         f"finaled={state.controller_finaled_at_wait},"

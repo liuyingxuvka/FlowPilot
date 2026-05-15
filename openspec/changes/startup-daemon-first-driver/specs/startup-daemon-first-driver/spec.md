@@ -45,6 +45,13 @@ action ledger and Router scheduler ledger used after Controller core loads.
   or waits briefly for the daemon to schedule one
 - **AND** it SHALL NOT compute a fresh external startup row outside the daemon.
 
+#### Scenario: Daemon consumes a startup Controller receipt
+
+- **WHEN** Controller checks off a daemon-scheduled startup row with a `done` receipt
+- **THEN** Router MUST sync the matching startup authority flag, Router scheduler row, Controller action row, and bootstrap `pending_action`
+- **AND** Router MUST schedule the next startup row unless a real startup barrier has been reached
+- **AND** Router MUST NOT reissue the same startup Controller action after the receipt is consumed.
+
 ### Requirement: Startup Gate Waits For Current-Scope Reconciliation
 
 Before startup reviewer fact or real-time review begins, Router SHALL clear

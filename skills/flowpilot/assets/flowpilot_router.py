@@ -2830,7 +2830,7 @@ def _acquire_json_write_lock(path: Path) -> Path:
 def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = True, verify: bool = True) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = _acquire_json_write_lock(path)
-    tmp_path = path.with_name(f".{path.name}.{os.getpid()}.{time.time_ns()}.tmp")
+    tmp_path = path.with_name(f".tmp-{os.getpid()}-{time.time_ns():x}.json")
     try:
         body = json.dumps(payload, indent=2, sort_keys=sort_keys) + "\n"
         with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
@@ -4239,6 +4239,65 @@ def _already_recorded_external_event_result(
     return result
 
 
+def _external_event_flag_replay_requires_new_processing(
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    flag: str,
+    payload: dict[str, Any],
+    scoped_identity: dict[str, Any] | None,
+) -> bool:
+    active_blocker = run_state.get("active_control_blocker")
+    if (
+        event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
+        and isinstance(active_blocker, dict)
+        and active_blocker.get("delivery_status") == "delivered"
+        and active_blocker.get("handling_lane") in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
+    ):
+        return True
+    if event == GATE_DECISION_EVENT:
+        return True
+    if event in GATE_OUTCOME_BLOCK_EVENTS:
+        return True
+    if event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or event == PM_PARENT_PROTOCOL_BLOCKER_EVENT:
+        return True
+    if (
+        event == "pm_requests_startup_repair"
+        and run_state["flags"].get(flag)
+        and run_state["flags"].get("startup_fact_reported")
+        and run_state["flags"].get("pm_startup_activation_card_delivered")
+    ):
+        return True
+    if (
+        event == "pm_writes_route_draft"
+        and run_state["flags"].get(flag)
+        and not run_state["flags"].get("route_activated_by_pm")
+    ):
+        return True
+    if (
+        event in {
+            "pm_completes_current_node_from_reviewed_result",
+            "pm_completes_parent_node_from_backward_replay",
+        }
+        and run_state["flags"].get(flag)
+        and _active_node_completion_write_missing(run_root, run_state, payload)
+    ):
+        return True
+    if event in {
+        PM_ROLE_WORK_REQUEST_EVENT,
+        ROLE_WORK_RESULT_RETURNED_EVENT,
+        PM_ROLE_WORK_RESULT_DECISION_EVENT,
+        "worker_current_node_result_returned",
+    }:
+        return True
+    return bool(
+        scoped_identity
+        and event == "pm_mutates_route_after_review_block"
+        and _active_model_miss_review_block_flags(run_state)
+    )
+
+
 def _role_output_envelope_record(payload: dict[str, Any]) -> dict[str, Any]:
     envelope = payload.get("_role_output_envelope")
     if isinstance(envelope, dict):
@@ -4955,6 +5014,9 @@ def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
         return False
     action_type = str(action.get("action_type") or "")
     if action_type in {
+        "emit_startup_banner",
+        "start_role_slots",
+        "create_heartbeat_automation",
         "confirm_controller_core_boundary",
         CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
         "write_startup_mechanical_audit",
@@ -4977,15 +5039,61 @@ def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
     return False
 
 
+def _router_scheduler_progress_class(action: dict[str, Any]) -> str:
+    action_type = str(action.get("action_type") or "")
+    explicit = str(action.get("scheduler_progress_class") or action.get("router_scheduler_progress_class") or "").strip()
+    if explicit:
+        return explicit
+    if action_type in {"emit_startup_banner", "create_heartbeat_automation", "write_display_surface_status"}:
+        return "parallel_obligation"
+    if action_type == "sync_display_plan" and _action_is_startup_scoped(action):
+        return "parallel_obligation"
+    if action_type == "start_role_slots":
+        return "local_dependency"
+    if action_type == "load_controller_core":
+        return "phase_handoff"
+    if action_type in {
+        "open_startup_intake_ui",
+        "stop_for_startup_answers",
+        "record_startup_answers",
+        "record_user_request",
+        "await_current_scope_reconciliation",
+        "await_role_decision",
+        "await_card_return_event",
+        "await_card_bundle_return_event",
+        "handle_control_blocker",
+        "run_lifecycle_terminal",
+        "write_terminal_summary",
+        "controller_no_legal_next_action",
+    }:
+        return "true_barrier"
+    if str(action.get("actor") or "") == "host":
+        return "true_barrier"
+    if bool(action.get("requires_user")):
+        return "true_barrier"
+    if bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn")) or bool(action.get("requires_host_automation")):
+        return "true_barrier"
+    if bool(action.get("requires_user_dialog_display_confirmation")):
+        return "true_barrier"
+    return "ordinary"
+
+
 def _router_scheduler_barrier_kind(action: dict[str, Any]) -> str:
     action_type = str(action.get("action_type") or "")
-    if str(action.get("actor") or "") == "host":
+    progress_class = _router_scheduler_progress_class(action)
+    if progress_class in {"parallel_obligation", "local_dependency"}:
+        return "none"
+    if progress_class == "phase_handoff":
+        return action_type or "phase_handoff"
+    if progress_class == "true_barrier" and str(action.get("actor") or "") == "host":
         return "host_action_barrier"
-    if bool(action.get("requires_user")) or bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn")):
+    if progress_class == "true_barrier" and (
+        bool(action.get("requires_user")) or bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn"))
+    ):
         return "external_barrier"
-    if bool(action.get("requires_host_automation")):
+    if progress_class == "true_barrier" and bool(action.get("requires_host_automation")):
         return "host_automation_barrier"
-    if bool(action.get("requires_user_dialog_display_confirmation")):
+    if progress_class == "true_barrier" and bool(action.get("requires_user_dialog_display_confirmation")):
         return "user_display_barrier"
     if action_type in {
         "await_current_scope_reconciliation",
@@ -5015,6 +5123,7 @@ def _prepare_router_scheduled_action(project_root: Path, run_root: Path, run_sta
     action.setdefault("router_scheduler_table", "runtime/router_scheduler_ledger.json")
     action.setdefault("controller_table", "runtime/controller_action_ledger.json")
     action.setdefault("controller_table_contract", "simple_work_board")
+    action.setdefault("router_scheduler_progress_class", _router_scheduler_progress_class(action))
     action.setdefault("router_scheduler_barrier_kind", _router_scheduler_barrier_kind(action))
     action.setdefault("router_daemon_tick_seconds", ROUTER_DAEMON_TICK_SECONDS)
     action.setdefault("run_id", run_state.get("run_id"))
@@ -5053,6 +5162,7 @@ def _record_router_scheduler_row(
         "idempotency_key": action.get("idempotency_key"),
         "router_state": router_state,
         "controller_status": status,
+        "progress_class": action.get("router_scheduler_progress_class") or _router_scheduler_progress_class(action),
         "barrier_kind": action.get("router_scheduler_barrier_kind") or _router_scheduler_barrier_kind(action),
         "dependencies": action.get("dependencies") or action.get("depends_on") or [],
         "postcondition": _pending_action_postcondition(action),
@@ -5107,6 +5217,18 @@ def _update_router_scheduler_row(
         if not isinstance(row, dict):
             continue
         if row.get("row_id") == row_id:
+            existing_state = str(row.get("router_state") or "")
+            if existing_state == "reconciled" and router_state in {"queued", "waiting", "receipt_done"}:
+                if reconciliation is not None:
+                    existing_reconciliation = row.get("reconciliation")
+                    if isinstance(existing_reconciliation, dict):
+                        existing_reconciliation.update({"latest_receipt_sync": reconciliation})
+                        row["reconciliation"] = existing_reconciliation
+                    else:
+                        row["reconciliation"] = {"latest_receipt_sync": reconciliation}
+                row["updated_at"] = utc_now()
+                rows.append(row)
+                continue
             row["router_state"] = router_state
             row["updated_at"] = utc_now()
             if router_state == "reconciled":
@@ -6622,6 +6744,141 @@ def _apply_stateful_receipt_postcondition(
     }
 
 
+def _boot_action_meta(action_type: str) -> dict[str, Any] | None:
+    if action_type == "load_router":
+        return {
+            "action_type": "load_router",
+            "flag": "router_loaded",
+            "label": "bootloader_router_loaded",
+            "actor": "bootloader",
+        }
+    for item in BOOT_ACTIONS:
+        if item.get("action_type") == action_type:
+            return item
+    return None
+
+
+def _matching_bootstrap_pending_action(bootstrap_state: dict[str, Any], action: dict[str, Any]) -> bool:
+    pending = bootstrap_state.get("pending_action")
+    if not isinstance(pending, dict):
+        return False
+    for key in ("controller_action_id", "router_scheduler_row_id", "action_id"):
+        if pending.get(key) and pending.get(key) == action.get(key):
+            return True
+    return bool(pending.get("action_type") and pending.get("action_type") == action.get("action_type"))
+
+
+def _apply_startup_bootloader_receipt_effects(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    action_type = str(action.get("action_type") or "")
+    action_meta = _boot_action_meta(action_type)
+    if action_meta is None:
+        return {"applied": False, "reason": "not_bootloader_action"}
+    if str(action.get("scope_kind") or "") != "startup" and not _daemon_scheduled_bootloader_action(action):
+        return {"applied": False, "reason": "not_startup_bootloader_scheduler_row"}
+
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    flag = str(action_meta.get("flag") or _pending_action_postcondition(action) or "")
+    result: dict[str, Any] = {
+        "applied": True,
+        "source": "startup_bootloader_controller_receipt",
+        "postcondition": flag,
+        "action_type": action_type,
+    }
+
+    if action_type == "emit_startup_banner":
+        banner = _startup_banner_display()
+        confirmation = _display_confirmation_for_action(receipt_payload, action)
+        banner["dialog_display_confirmation"] = confirmation
+        bootstrap["startup_banner_path"] = banner["display_path"]
+        bootstrap["startup_banner_display"] = banner
+        bootstrap["startup_banner_dialog_display_confirmation"] = confirmation
+        run_state.setdefault("flags", {})["banner_emitted"] = True
+        result["display_text_sha256"] = confirmation.get("display_text_sha256")
+    elif action_type == "start_role_slots":
+        role_slots = _normalize_role_agent_records(bootstrap, receipt_payload)
+        write_json(
+            run_root / "crew_ledger.json",
+            {
+                "schema_version": "flowpilot.crew_ledger.v1",
+                "run_id": run_state["run_id"],
+                "background_agents_mode": (bootstrap.get("startup_answers") or {}).get("background_agents"),
+                "role_slots": role_slots,
+                "created_at": utc_now(),
+            },
+        )
+        crew_memory_root = run_root / "crew_memory"
+        crew_memory_root.mkdir(parents=True, exist_ok=True)
+        for role in CREW_ROLE_KEYS:
+            write_json(crew_memory_root / f"{role}.json", _create_empty_role_memory(str(run_state["run_id"]), role))
+        _append_role_io_protocol_injections(
+            project_root,
+            run_root,
+            str(run_state["run_id"]),
+            role_slots,
+            default_lifecycle_phase="fresh_spawn",
+            resume_tick_id="manual-resume",
+            source_action="start_role_slots",
+        )
+        write_json(
+            run_root / "role_core_prompt_delivery.json",
+            _role_core_prompt_delivery_payload(
+                project_root,
+                run_root,
+                str(run_state["run_id"]),
+                source_action="start_role_slots",
+            ),
+        )
+        bootstrap.setdefault("flags", {})["role_core_prompts_injected"] = True
+        run_state.setdefault("flags", {})["roles_started"] = True
+        run_state.setdefault("flags", {})["role_core_prompts_injected"] = True
+        result["coalesced_postconditions"] = ["roles_started", "role_core_prompts_injected"]
+    elif action_type == "create_heartbeat_automation":
+        _write_host_heartbeat_binding(project_root, run_root, run_state, receipt_payload)
+        run_state.setdefault("flags", {})["continuation_binding_recorded"] = True
+        run_state.setdefault("events", []).append(
+            {
+                "event": "host_records_heartbeat_binding",
+                "summary": EXTERNAL_EVENTS["host_records_heartbeat_binding"]["summary"],
+                "payload": receipt_payload,
+                "recorded_at": utc_now(),
+                "source_action": action_type,
+                "startup_phase": "bootloader_controller_receipt",
+            }
+        )
+    else:
+        return {
+            "applied": False,
+            "reason": "unsupported_startup_bootloader_receipt_action",
+            "action_type": action_type,
+        }
+
+    if flag:
+        bootstrap.setdefault("flags", {})[flag] = True
+        run_state.setdefault("flags", {})[flag] = True
+    if _matching_bootstrap_pending_action(bootstrap, action):
+        bootstrap["pending_action"] = None
+        result["cleared_bootstrap_pending_action"] = True
+    append_history(
+        bootstrap,
+        "router_reconciled_startup_bootloader_receipt",
+        {
+            "action_type": action_type,
+            "postcondition": flag,
+            "controller_action_id": action.get("controller_action_id"),
+            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+        },
+    )
+    save_bootstrap_state(project_root, bootstrap)
+    save_run_state(run_root, run_state)
+    return result
+
+
 def _clear_pending_after_reconciled_controller_receipt(
     project_root: Path,
     run_root: Path,
@@ -6947,6 +7204,9 @@ def _apply_done_controller_receipt_effects(
 ) -> dict[str, Any]:
     payload = receipt.get("payload") if isinstance(receipt.get("payload"), dict) else {}
     action_type = str(action.get("action_type") or receipt.get("action_type") or "")
+    startup_bootloader_receipt = _apply_startup_bootloader_receipt_effects(project_root, run_root, run_state, action, payload)
+    if startup_bootloader_receipt.get("applied") or startup_bootloader_receipt.get("reason") != "not_bootloader_action":
+        return startup_bootloader_receipt
     action_class = _controller_action_completion_class(action)
     if action_class.get("kind") == "display_status" and action_type == "sync_display_plan":
         sync_payload = _apply_sync_display_plan_state(project_root, run_root, run_state, action, payload)
@@ -8784,6 +9044,9 @@ def _startup_pre_review_reconciliation_blockers(
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
     blockers: list[dict[str, Any]] = []
     required_flags = (
+        ("banner_emitted", "startup banner display must be reconciled before startup fact review"),
+        ("roles_started", "startup role slots must be reconciled before startup fact review"),
+        ("role_core_prompts_injected", "startup role core prompts must be reconciled before startup fact review"),
         ("controller_role_confirmed", "Controller boundary confirmation must be reconciled before startup fact review"),
         ("startup_mechanical_audit_written", "startup mechanical audit must be reconciled before startup fact review"),
         ("startup_display_status_written", "startup display status must be reconciled before startup fact review"),
@@ -8799,6 +9062,25 @@ def _startup_pre_review_reconciliation_blockers(
             blockers.append(
                 {
                     "kind": "missing_startup_flag",
+                    "flag": flag,
+                    "reason": reason,
+                    "scope_kind": "startup",
+                    "scope_id": "startup",
+                }
+            )
+    try:
+        bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    except RouterError:
+        bootstrap = {}
+    bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
+    for flag, reason in (
+        ("banner_emitted", "startup banner display must be reconciled before startup fact review"),
+        ("roles_started", "startup role slots must be reconciled before startup fact review"),
+    ):
+        if not bootstrap_flags.get(flag):
+            blockers.append(
+                {
+                    "kind": "missing_startup_bootstrap_flag",
                     "flag": flag,
                     "reason": reason,
                     "scope_kind": "startup",
@@ -12798,7 +13080,51 @@ def _try_write_control_blocker_for_exception(
             }
 
 
-def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
+def _startup_bootloader_open_entries_by_action_type(
+    project_root: Path,
+    state: dict[str, Any],
+) -> dict[str, list[dict[str, Any]]]:
+    run_state, run_root = _startup_run_state_if_ready(project_root, state)
+    if run_state is None or run_root is None:
+        return {}
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return {}
+    open_entries: dict[str, list[dict[str, Any]]] = {}
+    for action_path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(action_path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get("status") in CONTROLLER_ACTION_CLOSED_STATUSES and entry.get("router_reconciliation_status") == "reconciled":
+            continue
+        action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+        scope_kind = str(entry.get("scope_kind") or action.get("scope_kind") or "")
+        if scope_kind != "startup" and not _action_is_startup_scoped(action):
+            continue
+        action_type = str(entry.get("action_type") or action.get("action_type") or "")
+        if not action_type:
+            continue
+        open_entries.setdefault(action_type, []).append(entry)
+    return open_entries
+
+
+def _startup_open_entry_progress_class(entry: dict[str, Any]) -> str:
+    action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+    explicit = str(action.get("router_scheduler_progress_class") or action.get("scheduler_progress_class") or "").strip()
+    if explicit:
+        return explicit
+    return _router_scheduler_progress_class(action or {"action_type": entry.get("action_type"), "scope_kind": "startup"})
+
+
+def _startup_bootloader_entry_is_nonblocking(entry: dict[str, Any]) -> bool:
+    return _startup_open_entry_progress_class(entry) in {"parallel_obligation", "local_dependency"}
+
+
+def _startup_bootloader_action_depends_on_role_slots(action_type: str) -> bool:
+    return action_type == "inject_role_core_prompts"
+
+
+def _next_boot_action(project_root: Path | None, state: dict[str, Any]) -> dict[str, Any] | None:
     if not state.get("router_loaded"):
         return {
             "action_type": "load_router",
@@ -12807,12 +13133,23 @@ def _next_boot_action(state: dict[str, Any]) -> dict[str, Any] | None:
             "summary": "Load the FlowPilot router and initialize bootstrap state.",
             "actor": "bootloader",
         }
+    open_entries = _startup_bootloader_open_entries_by_action_type(project_root, state) if project_root is not None else {}
+    flags = state.setdefault("flags", {})
+    role_slots_open = bool(open_entries.get("start_role_slots")) and not bool(flags.get("roles_started"))
     for action in BOOT_ACTIONS:
-        if action["action_type"] == "create_heartbeat_automation" and not _scheduled_continuation_requested(
+        action_type = str(action["action_type"])
+        if action_type == "create_heartbeat_automation" and not _scheduled_continuation_requested(
             state.get("startup_answers") if isinstance(state.get("startup_answers"), dict) else {}
         ):
             continue
-        if not state["flags"].get(action["flag"]):
+        if flags.get(action["flag"]):
+            continue
+        if role_slots_open and _startup_bootloader_action_depends_on_role_slots(action_type):
+            continue
+        entries = open_entries.get(action_type) or []
+        if any(_startup_bootloader_entry_is_nonblocking(entry) for entry in entries):
+            continue
+        if not flags.get(action["flag"]):
             return action
     return None
 
@@ -12863,7 +13200,7 @@ def compute_bootloader_action(project_root: Path, state: dict[str, Any], *, daem
         return state["pending_action"]
     if _startup_daemon_controls_bootstrap(state) and not daemon_tick:
         return None
-    boot_action = _next_boot_action(state)
+    boot_action = _next_boot_action(project_root, state)
     if boot_action is None:
         return None
     bootstrap_rel = project_relative(project_root, bootstrap_state_path(project_root, state))
@@ -13011,6 +13348,19 @@ def _startup_run_state_if_ready(project_root: Path, bootstrap_state: dict[str, A
     return run_state, run_root
 
 
+def _sync_startup_bootstrap_flags_to_run_state(bootstrap_state: dict[str, Any], run_state: dict[str, Any]) -> None:
+    bootstrap_flags = bootstrap_state.get("flags") if isinstance(bootstrap_state.get("flags"), dict) else {}
+    run_flags = run_state.setdefault("flags", {})
+    for flag in (
+        "banner_emitted",
+        "roles_started",
+        "role_core_prompts_injected",
+        "continuation_binding_recorded",
+    ):
+        if bootstrap_flags.get(flag):
+            run_flags[flag] = True
+
+
 def _complete_startup_daemon_bootloader_row(
     project_root: Path,
     bootstrap_state: dict[str, Any],
@@ -13114,32 +13464,78 @@ def _startup_daemon_schedule_bootloader_action(
             "tick_at": status["last_tick_at"],
             "terminal": bool(status.get("run_lifecycle_status")),
         }
-    pending = bootstrap.get("pending_action")
-    if isinstance(pending, dict):
-        if _daemon_scheduled_bootloader_action(pending):
-            entry = _write_controller_action_entry(project_root, run_root, run_state, pending)
-            bootstrap["pending_action"] = pending
-            save_bootstrap_state(project_root, bootstrap)
-            status = _write_router_daemon_status(
-                project_root,
-                run_root,
-                run_state,
-                lifecycle_status="daemon_startup_driver_active",
-                current_action=pending,
-                lock=lock,
-            )
-            save_run_state(run_root, run_state)
-            return {
-                "scheduled": True,
-                "existing": True,
-                "action": pending,
+    queued_actions: list[dict[str, Any]] = []
+    current_action: dict[str, Any] | None = None
+    current_entry: dict[str, Any] | None = None
+    existing = False
+    stop_reason = "no_bootloader_action"
+    for _index in range(ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK):
+        pending = bootstrap.get("pending_action")
+        if isinstance(pending, dict):
+            if not _daemon_scheduled_bootloader_action(pending):
+                return {"scheduled": False, "reason": "non_daemon_bootloader_pending", "action": pending}
+            action = _prepare_router_scheduled_action(project_root, run_root, run_state, pending)
+            existing = True
+        else:
+            action = compute_bootloader_action(project_root, bootstrap, daemon_tick=True)
+            if not isinstance(action, dict):
+                stop_reason = "no_bootloader_action"
+                break
+            action["startup_daemon_scheduled"] = True
+            action["scheduled_by_router_daemon"] = True
+            action["startup_daemon_scheduler_source"] = source
+            action["scope_kind"] = "startup"
+            action["scope_id"] = "startup"
+            action["controller_table_contract"] = "simple_work_board"
+            action["normal_progress_source"] = "runtime/router_daemon_status.json_and_controller_action_ledger"
+            action = _prepare_router_scheduled_action(project_root, run_root, run_state, action)
+            existing = False
+        entry = _write_controller_action_entry(project_root, run_root, run_state, action)
+        current_action = action
+        current_entry = entry
+        bootstrap["pending_action"] = action
+        queued_actions.append(
+            {
+                "action_type": action.get("action_type"),
                 "controller_action_id": entry.get("action_id"),
-                "tick_at": status["last_tick_at"],
-                "terminal": bool(status.get("run_lifecycle_status")),
+                "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                "progress_class": action.get("router_scheduler_progress_class"),
+                "barrier_kind": action.get("router_scheduler_barrier_kind"),
+                "existing": existing,
             }
-        return {"scheduled": False, "reason": "non_daemon_bootloader_pending", "action": pending}
-    action = compute_bootloader_action(project_root, bootstrap, daemon_tick=True)
-    if not isinstance(action, dict):
+        )
+        append_history(
+            run_state,
+            "router_daemon_scheduled_startup_bootloader_action",
+            {
+                "action_type": action.get("action_type"),
+                "controller_action_id": entry.get("action_id"),
+                "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                "source": source,
+                "existing": existing,
+            },
+        )
+        if not _router_daemon_can_continue_after_enqueued_action(action):
+            stop_reason = "barrier"
+            save_bootstrap_state(project_root, bootstrap)
+            break
+        bootstrap["pending_action"] = None
+        append_history(
+            bootstrap,
+            "startup_daemon_deferred_nonblocking_bootloader_row",
+            {
+                "action_type": action.get("action_type"),
+                "controller_action_id": entry.get("action_id"),
+                "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                "progress_class": action.get("router_scheduler_progress_class"),
+            },
+        )
+        save_bootstrap_state(project_root, bootstrap)
+        stop_reason = "continued_after_nonblocking_startup_row"
+    else:
+        stop_reason = "max_actions_per_tick"
+
+    if current_action is None:
         status = _write_router_daemon_status(
             project_root,
             run_root,
@@ -13155,42 +13551,25 @@ def _startup_daemon_schedule_bootloader_action(
             "tick_at": status["last_tick_at"],
             "terminal": bool(status.get("run_lifecycle_status")),
         }
-    action["startup_daemon_scheduled"] = True
-    action["scheduled_by_router_daemon"] = True
-    action["startup_daemon_scheduler_source"] = source
-    action["scope_kind"] = "startup"
-    action["scope_id"] = "startup"
-    action["controller_table_contract"] = "simple_work_board"
-    action["normal_progress_source"] = "runtime/router_daemon_status.json_and_controller_action_ledger"
-    action = _prepare_router_scheduled_action(project_root, run_root, run_state, action)
-    entry = _write_controller_action_entry(project_root, run_root, run_state, action)
-    bootstrap["pending_action"] = action
     save_bootstrap_state(project_root, bootstrap)
-    append_history(
-        run_state,
-        "router_daemon_scheduled_startup_bootloader_action",
-        {
-            "action_type": action.get("action_type"),
-            "controller_action_id": entry.get("action_id"),
-            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
-            "source": source,
-        },
-    )
     status = _write_router_daemon_status(
         project_root,
         run_root,
         run_state,
         lifecycle_status="daemon_startup_driver_active",
-        current_action=action,
+        current_action=current_action,
         lock=lock,
     )
     save_run_state(run_root, run_state)
     return {
         "scheduled": True,
-        "existing": False,
-        "action": action,
-        "controller_action_id": entry.get("action_id"),
-        "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+        "existing": bool(current_action and queued_actions[-1].get("existing")) if queued_actions else False,
+        "action": current_action,
+        "controller_action_id": current_entry.get("action_id") if isinstance(current_entry, dict) else None,
+        "router_scheduler_row_id": current_action.get("router_scheduler_row_id") if isinstance(current_action, dict) else None,
+        "queued_count": len(queued_actions),
+        "queued_actions": queued_actions,
+        "queue_stop_reason": stop_reason,
         "tick_at": status["last_tick_at"],
         "terminal": bool(status.get("run_lifecycle_status")),
     }
@@ -26005,8 +26384,7 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         result_extra.update(_start_or_attach_formal_router_daemon(project_root, run_root, run_state))
     elif action_type == "load_controller_core":
         run_state, run_root = _ensure_startup_run_state(project_root, state)
-        if _scheduled_continuation_requested(_startup_answers_from_run(run_root)) and not _host_heartbeat_binding_ready(run_root, run_state):
-            raise RouterError("cannot load Controller core before startup heartbeat binding is recorded")
+        _sync_startup_bootstrap_flags_to_run_state(state, run_state)
         if not _formal_router_daemon_ready(project_root, run_root):
             raise RouterError("cannot load Controller core before the formal Router daemon is live and ready")
         run_state["status"] = "controller_ready"
@@ -26632,6 +27010,23 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             if policy_action not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
                 continue
         to_role = _system_card_to_role(run_root, entry)
+        if entry["card_id"] in STARTUP_ASYNC_CARD_IDS and to_role in CREW_ROLE_KEYS and not _active_agent_id_for_role(run_root, to_role):
+            return _current_scope_pre_review_reconciliation_action(
+                project_root,
+                run_root,
+                run_state,
+                blockers=[
+                    {
+                        "kind": "startup_role_slots_not_ready",
+                        "target_role": to_role,
+                        "card_id": entry["card_id"],
+                        "reason": "startup role slots must be reconciled before role-dependent startup work",
+                        "scope_kind": "startup",
+                        "scope_id": "startup",
+                    }
+                ],
+                review_trigger=entry["card_id"],
+            )
         if not run_state.get("manifest_check_requested"):
             manifest_extra = {"next_card_id": entry["card_id"], "to_role": to_role}
             if legal_context is not None:
@@ -30213,6 +30608,24 @@ def next_action(project_root: Path, *, new_invocation: bool = False) -> dict[str
     project_root = project_root.resolve()
     bootstrap = load_bootstrap_state(project_root, create_if_missing=True, new_invocation=new_invocation)
     if _startup_daemon_controls_bootstrap(bootstrap):
+        pending = bootstrap.get("pending_action")
+        if (
+            isinstance(pending, dict)
+            and _daemon_scheduled_bootloader_action(pending)
+            and _router_daemon_can_continue_after_enqueued_action(pending)
+        ):
+            run_state, run_root = load_run_state(project_root, bootstrap)
+            if run_state is None or run_root is None:
+                raise RouterError("startup daemon controls bootloader but run router state is missing")
+            schedule = _startup_daemon_schedule_bootloader_action(
+                project_root,
+                run_root,
+                run_state,
+                source="foreground_next_daemon_catchup",
+            )
+            action = schedule.get("action") if isinstance(schedule.get("action"), dict) else None
+            if isinstance(action, dict):
+                return action
         boot_action = compute_bootloader_action(project_root, bootstrap)
         if boot_action is not None:
             return boot_action
@@ -31023,6 +31436,44 @@ def _record_external_event_unchecked(
             f"for card {pending_card_return.get('card_id')}; "
             "validate the expected return envelope before recording another role event"
         )
+    scoped_identity: dict[str, Any] | None = None
+    payload_normalized_for_replay = False
+    if run_state["flags"].get(flag):
+        payload = _normalize_record_event_payload(
+            project_root,
+            run_state,
+            event=event,
+            payload=payload,
+            envelope_path=envelope_path,
+            envelope_hash=envelope_hash,
+        )
+        payload_normalized_for_replay = True
+        scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+        if _scoped_event_is_recorded(run_state, scoped_identity):
+            return _already_recorded_external_event_result(
+                project_root,
+                run_root,
+                run_state,
+                event=event,
+                payload=payload,
+                scoped_identity=scoped_identity,
+            )
+        if not _external_event_flag_replay_requires_new_processing(
+            run_root,
+            run_state,
+            event=event,
+            flag=flag,
+            payload=payload,
+            scoped_identity=scoped_identity,
+        ):
+            return _already_recorded_external_event_result(
+                project_root,
+                run_root,
+                run_state,
+                event=event,
+                payload=payload,
+                scoped_identity=scoped_identity,
+            )
     if event in STARTUP_REVIEW_BEGIN_JOIN_EVENTS:
         blockers = _startup_pre_review_reconciliation_blockers(project_root, run_root, run_state)
         if blockers:
@@ -31107,15 +31558,16 @@ def _record_external_event_unchecked(
                 "blockers": blockers,
                 "next_required_action": next_action,
             }
-    payload = _normalize_record_event_payload(
-        project_root,
-        run_state,
-        event=event,
-        payload=payload,
-        envelope_path=envelope_path,
-        envelope_hash=envelope_hash,
-    )
-    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    if not payload_normalized_for_replay:
+        payload = _normalize_record_event_payload(
+            project_root,
+            run_state,
+            event=event,
+            payload=payload,
+            envelope_path=envelope_path,
+            envelope_hash=envelope_hash,
+        )
+        scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
     if _scoped_event_is_recorded(run_state, scoped_identity):
         return _already_recorded_external_event_result(
             project_root,
@@ -31128,56 +31580,13 @@ def _record_external_event_unchecked(
     if required_flag and not run_state["flags"].get(required_flag):
         raise RouterError(f"event {event} requires {required_flag}")
     _check_scoped_event_retry_budget(run_state, scoped_identity)
-    active_blocker = run_state.get("active_control_blocker")
-    repeatable_pm_repair_decision = (
-        event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT
-        and isinstance(active_blocker, dict)
-        and active_blocker.get("delivery_status") == "delivered"
-        and active_blocker.get("handling_lane") in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
-    )
-    repeatable_gate_decision = event == GATE_DECISION_EVENT
-    repeatable_gate_outcome_block = event in GATE_OUTCOME_BLOCK_EVENTS
-    repeatable_control_blocker_repair_outcome = event in CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or event == PM_PARENT_PROTOCOL_BLOCKER_EVENT
-    repeatable_startup_repair_request = (
-        event == "pm_requests_startup_repair"
-        and run_state["flags"].get(flag)
-        and run_state["flags"].get("startup_fact_reported")
-        and run_state["flags"].get("pm_startup_activation_card_delivered")
-    )
-    repeatable_route_draft_repair = (
-        event == "pm_writes_route_draft"
-        and run_state["flags"].get(flag)
-        and not run_state["flags"].get("route_activated_by_pm")
-    )
-    repeatable_current_node_completion = (
-        event in {
-            "pm_completes_current_node_from_reviewed_result",
-            "pm_completes_parent_node_from_backward_replay",
-        }
-        and run_state["flags"].get(flag)
-        and _active_node_completion_write_missing(run_root, run_state, payload)
-    )
-    repeatable_pm_role_work_request = event == PM_ROLE_WORK_REQUEST_EVENT
-    repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT
-    repeatable_pm_role_work_result_decision = event == PM_ROLE_WORK_RESULT_DECISION_EVENT
-    repeatable_current_node_result = event == "worker_current_node_result_returned"
-    scoped_event_has_active_repair_context = bool(
-        scoped_identity
-        and event == "pm_mutates_route_after_review_block"
-        and _active_model_miss_review_block_flags(run_state)
-    )
-    if run_state["flags"].get(flag) and not scoped_event_has_active_repair_context and not (
-        repeatable_pm_repair_decision
-        or repeatable_gate_decision
-        or repeatable_gate_outcome_block
-        or repeatable_control_blocker_repair_outcome
-        or repeatable_startup_repair_request
-        or repeatable_route_draft_repair
-        or repeatable_current_node_completion
-        or repeatable_pm_role_work_request
-        or repeatable_role_work_result
-        or repeatable_pm_role_work_result_decision
-        or repeatable_current_node_result
+    if run_state["flags"].get(flag) and not _external_event_flag_replay_requires_new_processing(
+        run_root,
+        run_state,
+        event=event,
+        flag=flag,
+        payload=payload,
+        scoped_identity=scoped_identity,
     ):
         return _already_recorded_external_event_result(
             project_root,
@@ -31482,7 +31891,7 @@ def _record_external_event_unchecked(
     elif event == "capability_evidence_synced":
         _sync_capability_evidence(project_root, run_root, run_state, payload)
     elif event == "pm_writes_route_draft":
-        if repeatable_route_draft_repair:
+        if run_state["flags"].get(flag) and not run_state["flags"].get("route_activated_by_pm"):
             _reset_route_review_after_route_draft_repair(run_state)
         _write_route_draft(project_root, run_root, run_state, payload)
     elif event in {"process_officer_submits_process_route_model", "process_officer_passes_route_check"}:
@@ -31737,6 +32146,9 @@ def apply_action(project_root: Path, action_type: str, payload: dict[str, Any] |
 
 
 def _router_daemon_can_continue_after_enqueued_action(action: dict[str, Any]) -> bool:
+    progress_class = action.get("router_scheduler_progress_class") or _router_scheduler_progress_class(action)
+    if progress_class in {"parallel_obligation", "local_dependency"}:
+        return _action_is_startup_scoped(action)
     barrier = action.get("router_scheduler_barrier_kind") or _router_scheduler_barrier_kind(action)
     if barrier and barrier != "none":
         return False
