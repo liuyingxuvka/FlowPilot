@@ -2,6 +2,33 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.3 - 2026-05-16
+
+### Changed
+
+- Split router runtime helper boundaries into focused modules for Controller
+  reconciliation, ACK/return settlement identity, startup/daemon liveness,
+  dispatch gating, terminal summary helpers, router protocol tables, IO, and
+  runtime errors while preserving the existing router facade.
+- Added focused runtime test entrypoints so ACK/return, Controller,
+  startup/daemon, dispatch/packet gate, and terminal closure behavior can be
+  checked without rerunning the full monolithic runtime suite every time.
+- Added OpenSpec records for the ACK busy-clearance repair and both router
+  boundary maintenance passes, with FlowGuard adoption notes and verification
+  evidence.
+
+### Fixed
+
+- Kept ACK-only wait settlement separate from output-bearing work completion so
+  stale ACK waits stop blocking roles without prematurely completing semantic
+  PM or role work.
+- Preserved the router facade import surface after helper extraction, including
+  the role-output envelope helper used by dispatch paths.
+- Recovered terminal closure approval when durable terminal authorities prove a
+  legacy run is already closed.
+- Synchronized local installed FlowPilot skill freshness after the main-branch
+  merge so the installed skill matches the repository source.
+
 ## 0.9.2 - 2026-05-14
 
 ### Fixed

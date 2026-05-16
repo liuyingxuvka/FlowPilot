@@ -13148,7 +13148,7 @@ sync evidence.
 
 - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
   schema `1.0`.
-- `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
+- `python <Codex home>\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
   passed with installed FlowGuard schema `1.0`.
 - `python -m py_compile` for the router facade and extracted helper modules
   passed.
