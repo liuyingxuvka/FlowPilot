@@ -22,7 +22,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=102",
+    "summary": "sequences=3 initial_states=1 traces=120",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -240,6 +240,29 @@
           "wait_events": []
         }
       },
+      "role_work_result_wait_unreceivable_accepted": {
+        "detected": true,
+        "expected_failure": "event capability precondition is not currently receivable",
+        "failures": [
+          "event capability precondition is not currently receivable"
+        ],
+        "state": {
+          "active_node_kind": "leaf",
+          "currently_receivable": false,
+          "repair_blocker_event": "none",
+          "repair_origin": "none",
+          "repair_protocol_event": "none",
+          "repair_success_event": "none",
+          "rerun_target": "none",
+          "scenario": "role_work_result_wait_unreceivable_accepted",
+          "status": "running",
+          "target_role": "worker_a",
+          "terminal_reason": "none",
+          "wait_events": [
+            "role_work_result_returned"
+          ]
+        }
+      },
       "unregistered_event_accepted": {
         "detected": true,
         "expected_failure": "event capability row is missing",
@@ -295,18 +318,20 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 17
+    "terminal_state_count": 20
   },
   "safe_graph": {
     "accepted_scenarios": [
       "valid_generic_repair_outcome_table",
       "valid_leaf_current_packet_wait",
+      "valid_material_partial_batch_result_wait",
       "valid_material_repair_outcome_table",
       "valid_parent_backward_wait",
       "valid_parent_repair_outcome_table",
+      "valid_pm_role_work_result_wait",
       "valid_worker_leaf_result_wait"
     ],
-    "edge_count": 34,
+    "edge_count": 40,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -320,9 +345,10 @@
       "parent_current_packet_wait_accepted",
       "pm_repair_event_as_rerun_target",
       "protocol_outcome_uses_success_event",
+      "role_work_result_wait_unreceivable_accepted",
       "unregistered_event_accepted",
       "wrong_producer_role_wait_accepted"
     ],
-    "state_count": 35
+    "state_count": 41
   }
 }

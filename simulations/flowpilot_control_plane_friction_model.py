@@ -220,6 +220,7 @@ class State:
     status_summary_blocker_state_consistent: bool = True
     controller_user_reporting_policy_present: bool = False
     router_action_user_reporting_reminder_present: bool = False
+    controller_table_prompt_user_language_guidance_present: bool = False
     user_report_plain_language: bool = True
     user_report_internal_metadata_exposed: bool = False
     router_action_user_reporting_reminder_displayed_to_user: bool = False
@@ -426,6 +427,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_boundary_confirmed=True,
                 controller_user_reporting_policy_present=True,
                 router_action_user_reporting_reminder_present=True,
+                controller_table_prompt_user_language_guidance_present=True,
                 user_report_plain_language=True,
                 user_report_internal_metadata_exposed=False,
                 router_action_user_reporting_reminder_displayed_to_user=False,
@@ -1640,6 +1642,8 @@ def controller_user_reporting_policy_is_plain(state: State, trace) -> InvariantR
         return InvariantResult.fail("Controller user reporting policy was missing")
     if state.status != "new" and not state.router_action_user_reporting_reminder_present:
         return InvariantResult.fail("Router action lacked Controller plain-language user reporting reminder")
+    if state.status != "new" and not state.controller_table_prompt_user_language_guidance_present:
+        return InvariantResult.fail("Controller table prompt lacked plain-language user reporting guidance")
     if state.controller_user_reporting_policy_present and not state.user_report_plain_language:
         return InvariantResult.fail("Controller user reporting policy did not require plain language")
     if state.user_report_internal_metadata_exposed:
@@ -2463,6 +2467,7 @@ def _safe_base(**changes: object) -> State:
             status_summary_blocker_state_consistent=True,
             controller_user_reporting_policy_present=True,
             router_action_user_reporting_reminder_present=True,
+            controller_table_prompt_user_language_guidance_present=True,
             user_report_plain_language=True,
             user_report_internal_metadata_exposed=False,
             router_action_user_reporting_reminder_displayed_to_user=False,
@@ -2808,6 +2813,9 @@ def hazard_states() -> dict[str, State]:
         ),
         "router_action_user_reporting_reminder_missing": _safe_base(
             router_action_user_reporting_reminder_present=False,
+        ),
+        "controller_table_prompt_user_language_guidance_missing": _safe_base(
+            controller_table_prompt_user_language_guidance_present=False,
         ),
         "controller_user_report_internal_metadata_exposed": _safe_base(
             user_report_internal_metadata_exposed=True,

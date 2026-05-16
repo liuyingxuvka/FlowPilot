@@ -43,6 +43,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.ACK_USED_AS_SEMANTIC_COMPLETION: (
         "ACK/read receipt was treated as semantic work completion"
     ),
+    model.PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION: (
+        "passive wait status row was counted as current-scope Controller work"
+    ),
 }
 
 
@@ -55,6 +58,11 @@ def _state_id(state: model.State) -> str:
         f"{state.carry_forward_target_scope},{state.carry_forward_reason_recorded}|"
         f"future={state.future_obligation_pending},"
         f"{state.future_obligation_cleared_by_local_reconciliation}|"
+        f"passive_wait={state.passive_wait_status_pending},"
+        f"{state.passive_wait_action_type},"
+        f"side_effect={state.passive_wait_controller_side_effect_required},"
+        f"receipt={state.passive_wait_controller_receipt_required},"
+        f"counted={state.passive_wait_counted_as_local_obligation}|"
         f"review_created={state.review_created_obligation_pending},"
         f"{state.review_created_obligation_closed}|exit={state.scope_exited}|"
         f"ack={state.ack_returned}|semantic={state.semantic_work_completed}|"

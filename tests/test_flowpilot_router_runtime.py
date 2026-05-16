@@ -152,6 +152,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "startup_intake_envelope.json",
         ):
             self.assertEqual((output_dir / name).read_bytes()[:1], b"{", name)
+        result_payload = json.loads((output_dir / "startup_intake_result.json").read_text(encoding="utf-8"))
+        self.assertEqual(result_payload["launch_mode"], "headless")
+        self.assertTrue(result_payload["headless"])
+        self.assertFalse(result_payload["formal_startup_allowed"])
 
     def test_startup_intake_ui_runs_from_installed_skill_without_repo_assets(self) -> None:
         if sys.platform != "win32" or shutil.which("powershell") is None:
@@ -1335,6 +1339,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         startup_answers: dict | None = None,
         body_text: str | None = None,
         status: str = "confirmed",
+        launch_mode: str = "interactive_native",
+        headless: bool = False,
+        formal_startup_allowed: bool = True,
     ) -> dict:
         startup_answers = startup_answers or STARTUP_ANSWERS
         bootstrap = self.bootstrap_state(root)
@@ -1348,6 +1355,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 "schema_version": router.STARTUP_INTAKE_RECEIPT_SCHEMA,
                 "status": "cancelled",
                 "ui_surface": "native_wpf_startup_intake",
+                "launch_mode": launch_mode,
+                "headless": headless,
+                "formal_startup_allowed": formal_startup_allowed,
                 "language": "en",
                 "startup_answers": startup_answers,
                 "confirmed_by_user": False,
@@ -1358,6 +1368,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             result = {
                 "schema_version": router.STARTUP_INTAKE_RESULT_SCHEMA,
                 "status": "cancelled",
+                "launch_mode": launch_mode,
+                "headless": headless,
+                "formal_startup_allowed": formal_startup_allowed,
                 "receipt_path": self.rel(root, receipt_path),
                 "controller_visibility": "cancel_status_only",
                 "body_text_included": False,
@@ -1374,6 +1387,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "schema_version": router.STARTUP_INTAKE_RECEIPT_SCHEMA,
             "status": "confirmed",
             "ui_surface": "native_wpf_startup_intake",
+            "launch_mode": launch_mode,
+            "headless": headless,
+            "formal_startup_allowed": formal_startup_allowed,
             "language": "en",
             "startup_answers": startup_answers,
             "confirmed_by_user": True,
@@ -1389,6 +1405,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             "schema_version": router.STARTUP_INTAKE_ENVELOPE_SCHEMA,
             "status": "confirmed",
             "source": "native_wpf_startup_intake",
+            "launch_mode": launch_mode,
+            "headless": headless,
+            "formal_startup_allowed": formal_startup_allowed,
             "language": "en",
             "startup_answers": startup_answers,
             "body_path": self.rel(root, body_path),
@@ -1404,6 +1423,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result = {
             "schema_version": router.STARTUP_INTAKE_RESULT_SCHEMA,
             "status": "confirmed",
+            "launch_mode": launch_mode,
+            "headless": headless,
+            "formal_startup_allowed": formal_startup_allowed,
             "startup_answers": startup_answers,
             "language": "en",
             "receipt_path": self.rel(root, receipt_path),
@@ -5744,6 +5766,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         result["body_text"] = USER_REQUEST["text"]
         result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         with self.assertRaisesRegex(router.RouterError, "forbidden body text fields"):
+            router.apply_action(root, "open_startup_intake_ui", payload)
+
+    def test_startup_intake_rejects_headless_confirmed_result(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        payload = self.startup_intake_payload(
+            root,
+            launch_mode="headless",
+            headless=True,
+            formal_startup_allowed=False,
+        )
+        with self.assertRaisesRegex(router.RouterError, "native interactive startup intake UI"):
             router.apply_action(root, "open_startup_intake_ui", payload)
 
     def test_startup_sequence_creates_prompt_isolated_run(self) -> None:
@@ -10914,6 +10948,71 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(state["flags"]["startup_mechanical_audit_written"])
         self.assertTrue(any(
             item.get("label") == "router_local_obligation_preempted_passive_reconciliation_wait"
+            for item in state.get("history", [])
+        ))
+
+    def test_startup_reconciliation_wait_does_not_block_itself(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        flags = state.setdefault("flags", {})
+        for flag in (
+            "banner_emitted",
+            "roles_started",
+            "role_core_prompts_injected",
+            "controller_role_confirmed",
+            "startup_mechanical_audit_written",
+            "startup_display_status_written",
+            "continuation_binding_recorded",
+            *router._startup_pre_review_card_flags(),  # type: ignore[attr-defined]
+        ):
+            flags[flag] = True
+        state.pop("active_control_blocker", None)
+        bootstrap = self.bootstrap_state(root)
+        bootstrap.setdefault("flags", {})["banner_emitted"] = True
+        bootstrap.setdefault("flags", {})["roles_started"] = True
+        router.write_json(router.bootstrap_state_path(root), bootstrap)
+        return_ledger_path = run_root / "return_event_ledger.json"
+        if return_ledger_path.exists():
+            return_ledger = read_json(return_ledger_path)
+            return_ledger["pending_returns"] = []
+            router.write_json(return_ledger_path, return_ledger)
+        action_dir = run_root / "runtime" / "controller_actions"
+        if action_dir.exists():
+            for action_path in sorted(action_dir.glob("*.json")):
+                entry = read_json(action_path)
+                if entry.get("schema_version") != router.CONTROLLER_ACTION_SCHEMA:
+                    continue
+                entry["status"] = "done"
+                entry["router_reconciliation_status"] = "reconciled"
+                entry["router_reconciled_at"] = router.utc_now()
+                router.write_json(action_path, entry)
+        router.save_run_state(run_root, state)
+
+        wait = router._current_scope_pre_review_reconciliation_action(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            blockers=[{"kind": "test_reconciled_startup_blocker", "scope_kind": "startup"}],
+            review_trigger="reviewer.startup_fact_check",
+        )
+        state["pending_action"] = wait
+        entry = router._write_controller_action_entry(root, run_root, state, wait)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        self.assertFalse(entry["controller_receipt_required"])
+        self.assertEqual(entry["controller_projection_kind"], "passive_wait_status")
+
+        state = read_json(router.run_state_path(run_root))
+        blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
+        self.assertEqual(blockers, [])
+        self.assertFalse(router._current_scope_reconciliation_wait_still_blocked(root, run_root, state, wait))  # type: ignore[attr-defined]
+
+        action = router.next_action(root)
+
+        self.assertNotEqual(action["action_type"], "await_current_scope_reconciliation")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(any(
+            item.get("label") == "router_rechecks_after_current_scope_reconciliation_cleared"
             for item in state.get("history", [])
         ))
 

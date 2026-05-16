@@ -12322,6 +12322,71 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
 
+## 2026-05-16 Controller User-Language Guidance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Controller foreground reports could still surface internal Router/action/ledger/packet terms even though the user wanted plain-language status by default.
+- Status: completed_focused_prompt_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/narrow-controller-user-language-guidance/`
+- Control-plane friction model: `simulations/flowpilot_control_plane_friction_model.py`
+- Control-plane friction runner: `simulations/run_flowpilot_control_plane_friction_checks.py`
+- Result evidence: `simulations/flowpilot_control_plane_friction_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py simulations\flowpilot_control_plane_friction_model.py simulations\run_flowpilot_control_plane_friction_checks.py` passed.
+- `openspec validate narrow-controller-user-language-guidance --strict` passed.
+- `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json` passed.
+- A generated `controller_table_prompt` guidance smoke check passed.
+- Focused runtime tests for display-plan user-reporting policy and progress summary passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` and `python scripts\audit_local_install_sync.py --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- The Controller role card now tells Controller to start user updates by translating control-plane state into what the user can understand.
+- The generated Controller work board now repeats the same compact reminder during long foreground runs.
+- Technical names remain allowed when the user asks for detail or when a concrete blocker needs the name.
+- No new Router plain-summary field, fixed report template, Route Sign rewrite, Mermaid rewrite, or sealed-body behavior was introduced.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
+## 2026-05-16 Interactive Startup Intake Enforcement
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a formal FlowPilot startup was advanced with a headless startup intake result instead of opening the native UI, exposing that the UI boundary was prompt-described but not runtime-enforced.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/enforce-interactive-startup-intake/`
+- Startup intake UI model: `simulations/flowpilot_startup_intake_ui_model.py`
+- Result evidence: `simulations/flowpilot_startup_intake_ui_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python simulations\run_flowpilot_startup_intake_ui_checks.py --json-out simulations\flowpilot_startup_intake_ui_results.json` passed after the model was refined to allow true interactive UI cancellation while rejecting headless acceptance.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "startup_intake" -q` passed with 8 tests selected.
+- Focused background-log reruns passed with exit code `0` for `startup_intake_ui`, `prompt_boundary`, `persistent_router_daemon`, `router_loop`, and `startup_intake_pytest` under `tmp/flowguard_background/`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Startup intake artifacts now carry `launch_mode`, `headless`, and `formal_startup_allowed`.
+- The headless helper writes `launch_mode: headless`, `headless: true`, and `formal_startup_allowed: false`.
+- Router rejects formal startup intake results unless result, receipt, and envelope all identify an interactive native launch.
+- Controller prompt guidance now explicitly stops non-interactive substitutions instead of treating them as a valid UI result.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
 ## 2026-05-16 Role Recovery Obligation Replay
 
 - Project: FlowGuardProjectAutopilot_20260430

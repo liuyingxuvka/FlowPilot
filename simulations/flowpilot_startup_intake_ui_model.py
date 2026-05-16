@@ -11,6 +11,8 @@ Risk purpose:
   parsing or leaking an encoding marker into the PM-bound intake packet.
 - Guard against Windows PowerShell 5.1 parsing non-ASCII UTF-8 no-BOM `.ps1`
   source under a legacy code page before the startup intake UI can open.
+- Guard against headless or synthesized startup intake output being accepted as
+  a formal user-operated native UI confirmation.
 - Run with `python simulations/run_flowpilot_startup_intake_ui_checks.py`
   before changing FlowPilot startup protocol code and after each meaningful
   startup integration edit.
@@ -66,6 +68,9 @@ class State:
     router_loaded: bool = False
     ui_opened: bool = False
     ui_result: str = "none"  # none | confirmed | cancelled
+    launch_mode: str = "none"  # none | interactive_native | headless | synthetic
+    headless_result: bool = False
+    formal_startup_allowed: bool = False
 
     receipt_written: bool = False
     envelope_written: bool = False
@@ -178,6 +183,9 @@ def _confirm_state(state: State, *, background: str, continuation: str, display:
         state,
         ui_result="confirmed",
         status="running",
+        launch_mode="interactive_native",
+        headless_result=False,
+        formal_startup_allowed=True,
         receipt_written=True,
         envelope_written=True,
         body_written=True,
@@ -234,7 +242,14 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
             Transition(
                 "ui_cancelled_before_run",
-                replace(state, ui_result="cancelled", status="cancelled"),
+                replace(
+                    state,
+                    ui_result="cancelled",
+                    status="cancelled",
+                    launch_mode="interactive_native",
+                    headless_result=False,
+                    formal_startup_allowed=True,
+                ),
             ),
             Transition(
                 "ui_confirmed_with_all_artifacts",
@@ -354,6 +369,9 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         and state.pm_intake_packet_created
     ):
         return InvariantResult.fail("Controller loaded before confirmed UI intake and PM packet")
+    if state.ui_result in {"confirmed", "cancelled"} and state.status != "new":
+        if state.launch_mode != "interactive_native" or state.headless_result or not state.formal_startup_allowed:
+            return InvariantResult.fail("formal startup accepted non-interactive startup intake result")
     if state.ui_result == "cancelled" and (
         state.run_shell_created
         or state.user_request_ref_recorded
@@ -454,6 +472,9 @@ def hazard_states() -> dict[str, State]:
             ui_opened=True,
             ui_result="cancelled",
             status="cancelled",
+            launch_mode="interactive_native",
+            headless_result=False,
+            formal_startup_allowed=True,
             run_shell_created=True,
         ),
         "controller_body_leak": replace(recorded, body_text_in_controller_visible_state=True),
@@ -474,6 +495,12 @@ def hazard_states() -> dict[str, State]:
         "ui_receipt_json_bom_breaks_router": replace(recorded, receipt_json_no_bom=False),
         "ui_envelope_json_bom_breaks_router": replace(recorded, envelope_json_no_bom=False),
         "legacy_bom_json_without_router_fallback": replace(recorded, router_json_reader_bom_tolerant=False),
+        "headless_result_accepted": replace(
+            recorded,
+            launch_mode="headless",
+            headless_result=True,
+            formal_startup_allowed=False,
+        ),
         "body_bom_leaks_to_pm_packet": replace(
             recorded,
             pm_intake_packet_created=True,

@@ -15,13 +15,15 @@ You are Controller only.
 
 ## User-Facing Reports
 
-When reporting status to the user, use plain language. Say only what is
+When reporting status to the user, use plain language first. Start by
+translating control-plane state into what the user can understand: what is
 happening now, what FlowPilot is waiting for, and whether the user needs to do
 anything.
 
-Do not show internal event names, packet ids, ledger names, hashes, action ids,
-contract names, or diagnostic file paths unless the user explicitly asks for
-technical details.
+Keep internal Router, action, ledger, packet, ACK, scheduler, receipt, hash,
+contract, or diagnostic terms out of the first explanation by default. Use the
+technical names only when the user explicitly asks for technical details or
+when a concrete blocker cannot be explained accurately without them.
 
 ## Relay Authority
 

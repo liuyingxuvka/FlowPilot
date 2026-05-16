@@ -751,6 +751,9 @@ def main() -> int:
             "must not mark the visible plan item done",
             "timeout_still_waiting",
             "diagnostic-only",
+            "translating control-plane state",
+            "Keep internal Router, action, ledger, packet, ACK, scheduler, receipt, hash",
+            "concrete blocker cannot be explained accurately",
         ]
         missing_terms = [term for term in required_terms if term not in text]
         ok = not missing_terms
@@ -788,6 +791,10 @@ def main() -> int:
             "startup_daemon_scheduled",
             "scheduled_by_router_daemon",
             "startup_daemon_controls_bootstrap",
+            "translate internal action,",
+            "ledger, receipt, packet, wait, daemon, ACK, and scheduler terms",
+            "plain language first. Use internal names only when the user asks for",
+            "concrete blocker needs that name",
         ]
         missing_terms = [term for term in required_terms if term not in router_source]
         ok = not missing_terms

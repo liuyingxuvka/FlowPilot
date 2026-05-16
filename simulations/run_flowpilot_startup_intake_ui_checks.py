@@ -25,6 +25,7 @@ HAZARD_EXPECTED_FAILURES = {
     "ui_receipt_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "ui_envelope_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "legacy_bom_json_without_router_fallback": "Router startup intake JSON reader is not BOM-compatible",
+    "headless_result_accepted": "formal startup accepted non-interactive startup intake result",
     "body_bom_leaks_to_pm_packet": "PM intake packet leaked leading UTF-8 BOM marker",
     "bom_repair_bypasses_body_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
     "invalid_toggle_value": "background agent toggle did not map to a startup answer enum",
@@ -39,6 +40,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|router={state.router_loaded}|ui={state.ui_opened},{state.ui_result}|"
+        f"launch={state.launch_mode},headless={state.headless_result},formal={state.formal_startup_allowed}|"
         f"source={state.script_source_contains_non_ascii},{state.script_source_utf8_bom},"
         f"{state.legacy_powershell_source_parse_safe},{state.source_encoding_contract_verified}|"
         f"artifacts={state.receipt_written},{state.envelope_written},{state.body_written},"

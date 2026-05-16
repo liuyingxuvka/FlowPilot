@@ -138,13 +138,17 @@ function Write-StartupIntakeResult(
     [bool]$AgentsEnabled,
     [bool]$ContinuationEnabled,
     [bool]$CockpitEnabled,
-    [string]$Language
+    [string]$Language,
+    [string]$LaunchMode = "interactive_native",
+    [bool]$Headless = $false,
+    [bool]$FormalStartupAllowed = $true
 ) {
     $outDir = Get-StartupIntakeOutputDir
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
     $recordedAt = Get-UtcNow
     $answers = New-StartupAnswerMap $AgentsEnabled $ContinuationEnabled $CockpitEnabled
+    $source = if ($Headless) { "headless_startup_intake" } else { "native_wpf_startup_intake" }
     $receiptPath = Join-Path $outDir "startup_intake_receipt.json"
     $resultPath = Join-Path $outDir "startup_intake_result.json"
 
@@ -152,7 +156,11 @@ function Write-StartupIntakeResult(
         $receipt = @{
             schema_version = "flowpilot.startup_intake_receipt.v1"
             status = "cancelled"
+            source = $source
             ui_surface = "native_wpf_startup_intake"
+            launch_mode = $LaunchMode
+            headless = $Headless
+            formal_startup_allowed = $FormalStartupAllowed
             language = $Language
             startup_answers = $answers
             confirmed_by_user = $false
@@ -163,6 +171,10 @@ function Write-StartupIntakeResult(
         $result = @{
             schema_version = "flowpilot.startup_intake_result.v1"
             status = "cancelled"
+            source = $source
+            launch_mode = $LaunchMode
+            headless = $Headless
+            formal_startup_allowed = $FormalStartupAllowed
             receipt_path = Get-ProjectRelativePath $receiptPath
             controller_visibility = "cancel_status_only"
             body_text_included = $false
@@ -184,7 +196,11 @@ function Write-StartupIntakeResult(
     $receipt = @{
         schema_version = "flowpilot.startup_intake_receipt.v1"
         status = "confirmed"
+        source = $source
         ui_surface = "native_wpf_startup_intake"
+        launch_mode = $LaunchMode
+        headless = $Headless
+        formal_startup_allowed = $FormalStartupAllowed
         language = $Language
         startup_answers = $answers
         confirmed_by_user = $true
@@ -200,7 +216,10 @@ function Write-StartupIntakeResult(
     $envelope = @{
         schema_version = "flowpilot.startup_intake_envelope.v1"
         status = "confirmed"
-        source = "native_wpf_startup_intake"
+        source = $source
+        launch_mode = $LaunchMode
+        headless = $Headless
+        formal_startup_allowed = $FormalStartupAllowed
         language = $Language
         startup_answers = $answers
         body_path = Get-ProjectRelativePath $bodyPath
@@ -217,6 +236,10 @@ function Write-StartupIntakeResult(
     $result = @{
         schema_version = "flowpilot.startup_intake_result.v1"
         status = "confirmed"
+        source = $source
+        launch_mode = $LaunchMode
+        headless = $Headless
+        formal_startup_allowed = $FormalStartupAllowed
         startup_answers = $answers
         language = $Language
         receipt_path = Get-ProjectRelativePath $receiptPath
@@ -233,12 +256,12 @@ function Write-StartupIntakeResult(
 }
 
 if ($HeadlessCancel) {
-    Write-StartupIntakeResult "cancelled" "" $true $true $true "en" | Write-Output
+    Write-StartupIntakeResult "cancelled" "" $true $true $true "en" "headless" $true $false | Write-Output
     exit 0
 }
 
 if (-not [string]::IsNullOrWhiteSpace($HeadlessConfirmText)) {
-    Write-StartupIntakeResult "confirmed" $HeadlessConfirmText $true $true $true "en" | Write-Output
+    Write-StartupIntakeResult "confirmed" $HeadlessConfirmText $true $true $true "en" "headless" $true $false | Write-Output
     exit 0
 }
 

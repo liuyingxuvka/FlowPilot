@@ -130,6 +130,7 @@ HAZARD_EXPECTED_FAILURES = {
     "status_summary_hides_unresolved_blocker": "status summary hid an unresolved blocker or pending repair state",
     "controller_user_reporting_policy_missing": "Controller user reporting policy was missing",
     "router_action_user_reporting_reminder_missing": "Router action lacked Controller plain-language user reporting reminder",
+    "controller_table_prompt_user_language_guidance_missing": "Controller table prompt lacked plain-language user reporting guidance",
     "controller_user_report_internal_metadata_exposed": "Controller user report exposed internal action, packet, ledger, hash, contract, or diagnostic metadata",
     "router_action_user_reporting_reminder_displayed": "Router action user reporting reminder leaked into user-visible display text",
     "status_summary_missing_progress_facts": "status summary omitted compact progress facts",
@@ -289,6 +290,7 @@ def _state_id(state: model.State) -> str:
         f"{state.route_draft_repaired_after_check},{state.route_review_flags_reset_after_draft_repair}|"
         f"user_report={state.controller_user_reporting_policy_present},"
         f"{state.router_action_user_reporting_reminder_present},"
+        f"{state.controller_table_prompt_user_language_guidance_present},"
         f"{state.user_report_plain_language},{state.user_report_internal_metadata_exposed},"
         f"{state.router_action_user_reporting_reminder_displayed_to_user}|"
         f"progress_summary={state.status_summary_progress_facts_present},"

@@ -156,6 +156,7 @@ STARTUP_INTAKE_RESULT_SCHEMA = "flowpilot.startup_intake_result.v1"
 STARTUP_INTAKE_RECEIPT_SCHEMA = "flowpilot.startup_intake_receipt.v1"
 STARTUP_INTAKE_ENVELOPE_SCHEMA = "flowpilot.startup_intake_envelope.v1"
 STARTUP_INTAKE_RECORD_SCHEMA = "flowpilot.startup_intake_record.v1"
+STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE = "interactive_native"
 USER_REQUEST_REF_SCHEMA = "flowpilot.user_request_ref.v1"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
@@ -5766,6 +5767,10 @@ def _controller_table_prompt() -> dict[str, Any]:
         "prompt_kind": "controller_action_ledger_table_prompt",
         "text": (
             "You are Controller only. This table is your work board.\n\n"
+            "When mentioning Controller work to the user, translate internal action, "
+            "ledger, receipt, packet, wait, daemon, ACK, and scheduler terms into "
+            "plain language first. Use internal names only when the user asks for "
+            "technical detail or when a concrete blocker needs that name.\n\n"
             "Work from top to bottom. For each ready Controller row, perform that row, "
             "write its receipt, and mark it complete before moving to the next row. "
             "Do not call `next`, `apply`, or `run-until-wait` between rows; the row "
@@ -10803,6 +10808,8 @@ def _startup_pre_review_reconciliation_blockers(
             if entry is None:
                 continue
             if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+                continue
+            if not _controller_action_is_ordinary_work_row(entry):
                 continue
             if entry.get("status") in {"done", "blocked", "skipped"} and entry.get("router_reconciliation_status") == "reconciled":
                 continue
@@ -16099,6 +16106,11 @@ def _startup_intake_result_payload_contract(project_root: Path, state: dict[str,
         "result_schema_version": STARTUP_INTAKE_RESULT_SCHEMA,
         "receipt_schema_version": STARTUP_INTAKE_RECEIPT_SCHEMA,
         "envelope_schema_version": STARTUP_INTAKE_ENVELOPE_SCHEMA,
+        "formal_launch_provenance": {
+            "launch_mode": STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE,
+            "headless": False,
+            "formal_startup_allowed": True,
+        },
         "output_dir": _startup_intake_output_dir_ref(project_root, state),
         "controller_body_boundary": {
             "controller_may_read_body": False,
@@ -16131,10 +16143,13 @@ def _startup_intake_ui_action_extra(project_root: Path, state: dict[str, Any]) -
             "result_path_expected": f"{output_dir}/startup_intake_result.json",
             "body_text_is_never_router_payload": True,
             "cancel_result_is_terminal": True,
+            "headless_result_is_not_formal_startup": True,
         },
         "payload_contract": _startup_intake_result_payload_contract(project_root, state),
         "plain_instruction": (
             "Open the native FlowPilot startup intake UI with the provided command. "
+            "Formal startup must use the interactive native UI result; do not use headless auto-confirmation, "
+            "scripted result synthesis, chat substitution, or direct JSON creation. "
             "After the UI closes, return to Router daemon status and the Controller action ledger before continuing. "
             "Do not paste the user's work request into chat and do not include it in the Router payload."
         ),
@@ -16205,6 +16220,22 @@ def _startup_intake_result_path_from_payload(payload: dict[str, Any]) -> str:
     raise RouterError("open_startup_intake_ui requires payload.startup_intake_result.result_path")
 
 
+def _require_interactive_startup_intake_artifact(artifact: dict[str, Any], label: str) -> None:
+    launch_mode = artifact.get("launch_mode")
+    headless = artifact.get("headless")
+    formal_allowed = artifact.get("formal_startup_allowed")
+    if (
+        launch_mode != STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE
+        or headless is not False
+        or formal_allowed is not True
+    ):
+        raise RouterError(
+            "formal FlowPilot startup requires the native interactive startup intake UI; "
+            f"{label} must declare launch_mode={STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE}, "
+            "headless=false, and formal_startup_allowed=true"
+        )
+
+
 def _validate_startup_intake_result_payload(project_root: Path, payload: dict[str, Any]) -> dict[str, Any]:
     result_path = _resolve_existing_project_file(project_root, _startup_intake_result_path_from_payload(payload), "result")
     result = read_json(result_path)
@@ -16216,6 +16247,7 @@ def _validate_startup_intake_result_payload(project_root: Path, payload: dict[st
     status = result.get("status")
     if status not in {"confirmed", "cancelled"}:
         raise RouterError("startup intake result status must be confirmed or cancelled")
+    _require_interactive_startup_intake_artifact(result, "startup intake result")
     result_rel = project_relative(project_root, result_path)
     receipt_path: Path | None = None
     receipt: dict[str, Any] | None = None
@@ -16227,12 +16259,18 @@ def _validate_startup_intake_result_payload(project_root: Path, payload: dict[st
         leaked_receipt = _forbidden_startup_intake_body_fields(receipt)
         if leaked_receipt:
             raise RouterError(f"startup intake receipt contains forbidden body text fields: {', '.join(leaked_receipt)}")
+        _require_interactive_startup_intake_artifact(receipt, "startup intake receipt")
+    if receipt_path is None or receipt is None:
+        raise RouterError("startup intake result requires receipt_path from the native interactive startup intake UI")
     if status == "cancelled":
         return {
             "schema_version": STARTUP_INTAKE_RECORD_SCHEMA,
             "status": "cancelled",
+            "launch_mode": STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE,
+            "headless": False,
+            "formal_startup_allowed": True,
             "result_path": result_rel,
-            "receipt_path": project_relative(project_root, receipt_path) if receipt_path else None,
+            "receipt_path": project_relative(project_root, receipt_path),
             "controller_visibility": result.get("controller_visibility") or "cancel_status_only",
             "body_text_included": False,
             "recorded_at": result.get("recorded_at") or utc_now(),
@@ -16241,11 +16279,10 @@ def _validate_startup_intake_result_payload(project_root: Path, payload: dict[st
         raise RouterError("startup intake confirmed result must be envelope-only for Controller")
     envelope_path = _resolve_existing_project_file(project_root, result.get("envelope_path"), "envelope")
     body_path = _resolve_existing_project_file(project_root, result.get("body_path"), "body")
-    if receipt_path is None or receipt is None:
-        raise RouterError("startup intake confirmed result requires receipt_path")
     envelope = read_json(envelope_path)
     if envelope.get("schema_version") != STARTUP_INTAKE_ENVELOPE_SCHEMA:
         raise RouterError(f"startup intake envelope requires schema_version={STARTUP_INTAKE_ENVELOPE_SCHEMA}")
+    _require_interactive_startup_intake_artifact(envelope, "startup intake envelope")
     leaked_envelope = _forbidden_startup_intake_body_fields(envelope)
     if leaked_envelope:
         raise RouterError(f"startup intake envelope contains forbidden body text fields: {', '.join(leaked_envelope)}")
@@ -16274,6 +16311,9 @@ def _validate_startup_intake_result_payload(project_root: Path, payload: dict[st
         "schema_version": STARTUP_INTAKE_RECORD_SCHEMA,
         "status": "confirmed",
         "source": envelope.get("source") or "native_wpf_startup_intake",
+        "launch_mode": STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE,
+        "headless": False,
+        "formal_startup_allowed": True,
         "language": result.get("language") or envelope.get("language") or receipt.get("language"),
         "result_path": result_rel,
         "receipt_path": project_relative(project_root, receipt_path),
@@ -16419,6 +16459,9 @@ def _materialize_startup_intake_record(project_root: Path, state: dict[str, Any]
         "run_id": state.get("run_id"),
         "status": "confirmed",
         "source": intake.get("source") or "native_wpf_startup_intake",
+        "launch_mode": STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE,
+        "headless": False,
+        "formal_startup_allowed": True,
         "language": intake.get("language"),
         "result_path": project_relative(project_root, result_path),
         "receipt_path": project_relative(project_root, receipt_path),
@@ -19705,6 +19748,15 @@ def _startup_intake_record_context(project_root: Path, run_root: Path, run_state
         and receipt.get("body_hash") == body_hash
         and envelope.get("body_hash") == body_hash
         and result.get("body_hash") == body_hash
+        and receipt.get("launch_mode") == STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE
+        and envelope.get("launch_mode") == STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE
+        and result.get("launch_mode") == STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE
+        and receipt.get("headless") is False
+        and envelope.get("headless") is False
+        and result.get("headless") is False
+        and receipt.get("formal_startup_allowed") is True
+        and envelope.get("formal_startup_allowed") is True
+        and result.get("formal_startup_allowed") is True
         and envelope.get("controller_may_read_body") is False
         and result.get("controller_may_read_body") is False
         and envelope.get("body_text_included") is False
