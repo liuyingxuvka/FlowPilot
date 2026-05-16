@@ -8801,7 +8801,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         pending_before_stop = self.next_after_display_sync(root)
         self.assertIn(
             pending_before_stop["action_type"],
-            {"confirm_controller_core_boundary", "check_prompt_manifest", "create_heartbeat_automation", "deliver_system_card"},
+            {
+                "confirm_controller_core_boundary",
+                "check_prompt_manifest",
+                "create_heartbeat_automation",
+                "deliver_system_card",
+                "write_display_surface_status",
+            },
         )
 
         router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})

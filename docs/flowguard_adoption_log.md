@@ -13034,6 +13034,87 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - `python simulations\run_capability_checks.py` was skipped by explicit user
   direction because it is too heavy for this focused pass.
 
+## 2026-05-16 Router Stateful Maintenance Boundaries
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Continue the behavior-preserving split of
+  `flowpilot_router.py` after the first modularization pass, with emphasis on
+  test partitioning and pure helper seams that do not alter Controller,
+  ACK/return, startup/daemon, dispatch, or terminal runtime behavior.
+- Status: completed_runtime_boundary_split_verified_synced
+- OpenSpec change: `split-router-stateful-maintenance-boundaries`
+
+### Risk Intent
+
+- Prevent accidental movement of write-bearing finalizers into new modules
+  without preserving scheduler, ledger, derived-view, and terminal update order.
+- Keep ACK-only wait settlement distinct from output-bearing work completion.
+- Keep the router facade stable for CLI commands, tests, install checks, and
+  local skill synchronization.
+- Make focused test and model evidence available before install sync and local
+  commit.
+
+### Planned Checks
+
+- Focused runtime boundary suites for ACK/return, Controller reconciliation,
+  startup/daemon, dispatch/packet gate, and terminal closure.
+- Focused FlowGuard checks for touched dispatch/scheduler/card boundaries.
+- Broad Meta and Capability regressions through `tmp/flowguard_background/`
+  artifacts before final completion evidence is reported.
+- OpenSpec strict validation, install self-check, local install freshness audit,
+  and fast smoke check.
+
+### Completed Checks
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
+  `1.0`.
+- Focused runtime suites passed:
+  `tests.test_flowpilot_router_boundaries`,
+  `tests.test_flowpilot_router_runtime_ack_return`,
+  `tests.test_flowpilot_router_runtime_controller`,
+  `tests.test_flowpilot_router_runtime_startup_daemon`,
+  `tests.test_flowpilot_router_runtime_dispatch_gate`, and
+  `tests.test_flowpilot_router_runtime_terminal`.
+- Focused FlowGuard checks passed:
+  `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py` and
+  `python simulations\run_flowpilot_two_table_async_scheduler_checks.py`.
+- Broad background checks completed through the stable artifact contract:
+  `tmp\flowguard_background\run_meta_checks.*` and
+  `tmp\flowguard_background\run_capability_checks.*` both exited with
+  `exit_code=0` and reused their proof artifacts.
+- `python -B -c "import ..."` passed for the router facade and the extracted
+  helper modules.
+- `openspec validate split-router-stateful-maintenance-boundaries --strict`,
+  `python scripts\check_install.py`, and
+  `python scripts\smoke_autopilot.py --fast` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed with installed
+  FlowPilot source-fresh.
+
+### Findings
+
+- The router facade needed one preserved import for the existing
+  `_without_role_output_envelope` helper after earlier boundary extraction;
+  the new dispatch boundary suite exposed that gap.
+- Terminal closure recovery now marks `terminal_closure_approved` when durable
+  terminal authorities recover a closed legacy state, preserving the terminal
+  lifecycle contract for resumed or repaired runs.
+- ACK-only settlement, output-bearing work completion, startup daemon liveness,
+  dispatch gating, and terminal summary helpers now have focused module
+  boundaries without moving write-bearing finalizers out of the router runtime.
+- The original monolithic runtime test class remains the source of test bodies;
+  focused entrypoints select existing methods so later maintenance can run
+  smaller risk-scoped suites without duplicating behavior assertions.
+
+### Skipped Or Deferred Steps
+
+- No stateful extraction seam that required a new behavior contract was moved
+  into this refactor. The full monolithic runtime suite was not rerun as one
+  command because its deep terminal closure cases are slow; the focused boundary
+  entrypoints passed, and the slow terminal cases remained in the original
+  suite with representative individual coverage during the pass.
+
 ## 2026-05-16 Router Runtime Boundary Modularization
 
 - Project: FlowGuardProjectAutopilot_20260430

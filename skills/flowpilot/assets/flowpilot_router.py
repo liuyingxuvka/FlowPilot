@@ -31,6 +31,11 @@ import role_output_runtime
 from flowpilot_router_card_settlement import (
     CARD_ACK_COMPLETE_STATUSES,
     CARD_BUNDLE_ACK_COMPLETE_STATUSES,
+    _card_ack_clearance_scope,
+    _controller_delivery_action_matches_pending_return,
+    _delivery_identity,
+    _original_card_ack_reminder_policy,
+    _pending_action_matches_card_return,
     _record_matches_card_bundle_identity,
     _record_matches_card_identity,
     _record_value_for_bundle,
@@ -61,6 +66,35 @@ from flowpilot_router_controller_boundary import (
     _controller_patrol_timer_command,
     _format_seconds_for_command,
 )
+from flowpilot_router_controller_reconciliation import (
+    _action_is_passive_wait_status,
+    _controller_action_active_work_count,
+    _controller_action_counts,
+    _controller_action_id_for_action,
+    _controller_action_initial_status,
+    _controller_action_is_ordinary_work_row,
+    _controller_action_projection_kind,
+    _controller_action_summary,
+    _controller_receipt_display_rule,
+    _controller_receipt_rule_for_display_action,
+    _controller_ledger_action_view,
+    _router_scheduler_idempotency_key,
+    _router_scheduler_row_counts,
+    _router_scheduler_row_id_for_action,
+)
+from flowpilot_router_dispatch_gate import (
+    DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS,
+    DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET,
+    PM_ROLE_WORK_PM_BUSY_STATUSES,
+    PM_ROLE_WORK_TARGET_BUSY_STATUSES,
+    _dispatch_gate_candidate_packet_ids,
+    _dispatch_gate_candidate_request_ids,
+    _dispatch_gate_packet_completed_by_flow_state,
+    _dispatch_gate_same_obligation_instruction,
+    _dispatch_gate_system_card_ids,
+    _dispatch_gate_target_roles,
+    _dispatch_gate_wait_events_for_packet_record,
+)
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 from flowpilot_router_io import (
     RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS,
@@ -79,6 +113,7 @@ from flowpilot_router_io import (
     _role_output_semantic_hashes,
     _role_output_semantic_hash,
     _run_foreground_with_runtime_writer_settlement,
+    _without_role_output_envelope,
     bootstrap_state_path,
     legacy_bootstrap_state_path,
     project_relative,
@@ -94,6 +129,35 @@ from flowpilot_router_io import (
     write_json_atomic,
 )
 from flowpilot_router_protocol_tables import MAIL_SEQUENCE, RUN_TERMINAL_STATUSES
+from flowpilot_router_startup_daemon import (
+    ROUTER_DAEMON_EVENT_LOG_SCHEMA,
+    ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+    ROUTER_DAEMON_LOCK_SCHEMA,
+    ROUTER_DAEMON_LOCK_STALE_SECONDS,
+    ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK,
+    ROUTER_DAEMON_STARTUP_POLL_SECONDS,
+    ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS,
+    ROUTER_DAEMON_STATUS_SCHEMA,
+    ROUTER_DAEMON_TICK_SECONDS,
+    _lock_age_seconds,
+    _process_is_live,
+    _router_daemon_heartbeat_monitor,
+    _router_daemon_lock_has_live_owner,
+    _router_daemon_lock_is_live,
+    _router_daemon_lock_liveness,
+    _router_daemon_owner,
+)
+from flowpilot_router_terminal import (
+    FLOWPILOT_PROJECT_URL,
+    TERMINAL_SUMMARY_ATTRIBUTION,
+    TERMINAL_SUMMARY_READ_SCOPE,
+    TERMINAL_SUMMARY_SCHEMA,
+    _path_is_inside,
+    _terminal_lifecycle_mode,
+    _terminal_summary_hash,
+    _terminal_summary_json_path,
+    _terminal_summary_markdown_path,
+)
 
 
 SCHEMA_VERSION = "flowpilot.router.v1"
@@ -121,7 +185,6 @@ ROLE_RECOVERY_REPORT_SCHEMA = "flowpilot.role_recovery_report.v1"
 ROLE_RECOVERY_OBLIGATION_REPLAY_SCHEMA = "flowpilot.role_recovery_obligation_replay.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
 ROUTE_ACTION_POLICY_REGISTRY_SCHEMA = "flowpilot.route_action_policy_registry.v1"
-TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 EVENT_ENVELOPE_SCHEMA = "flowpilot.event_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
@@ -145,9 +208,6 @@ EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 CURRENT_STATUS_SUMMARY_SCHEMA = "flowpilot.current_status_summary.v1"
-ROUTER_DAEMON_LOCK_SCHEMA = "flowpilot.router_daemon_lock.v1"
-ROUTER_DAEMON_STATUS_SCHEMA = "flowpilot.router_daemon_status.v1"
-ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
 CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
@@ -156,12 +216,6 @@ ROUTER_SCHEDULER_LEDGER_SCHEMA = "flowpilot.router_scheduler_ledger.v1"
 ROUTER_SCHEDULER_ROW_SCHEMA = "flowpilot.router_scheduler_row.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA = "flowpilot.deterministic_bootstrap_seed_evidence.v1"
-ROUTER_DAEMON_TICK_SECONDS = 1
-ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 5.0
-ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
-ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
-ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
-ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK = 16
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
 CONTROLLER_PATROL_TIMER_SCHEMA = "flowpilot.controller_patrol_timer.v1"
 CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE = role_output_runtime.CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE
@@ -192,11 +246,6 @@ USER_REQUEST_REF_SCHEMA = "flowpilot.user_request_ref.v1"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
 DISPLAY_CONFIRMATION_TARGET = "user_dialog"
-FLOWPILOT_PROJECT_URL = "https://github.com/liuyingxuvka/FlowPilot"
-TERMINAL_SUMMARY_ATTRIBUTION = (
-    f"Generated with [FlowPilot]({FLOWPILOT_PROJECT_URL}) - a project-control workflow for AI coding agents."
-)
-TERMINAL_SUMMARY_READ_SCOPE = "current_run_root_all_files"
 ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
 
 
@@ -4446,13 +4495,6 @@ def _controller_receipt_path(run_root: Path, action_id: str) -> Path:
     return _controller_receipts_dir(run_root) / f"{action_id}.json"
 
 
-def _router_daemon_owner() -> dict[str, Any]:
-    return {
-        "pid": os.getpid(),
-        "host": os.environ.get("COMPUTERNAME") or os.environ.get("HOSTNAME") or "",
-    }
-
-
 def _append_router_daemon_event(run_root: Path, event: str, details: dict[str, Any] | None = None) -> None:
     path = _router_daemon_event_log_path(run_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -4464,137 +4506,6 @@ def _append_router_daemon_event(run_root: Path, event: str, details: dict[str, A
     }
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
-
-
-def _lock_age_seconds(lock: dict[str, Any]) -> float | None:
-    parsed = _parse_utc_timestamp(lock.get("last_tick_at") or lock.get("created_at"))
-    if parsed is None:
-        return None
-    return (datetime.now(timezone.utc) - parsed).total_seconds()
-
-
-def _process_is_live(pid: object) -> bool:
-    try:
-        value = int(pid)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return False
-    if value <= 0:
-        return False
-    if value == os.getpid():
-        return True
-    if sys.platform == "win32":
-        try:
-            import ctypes
-
-            process_query_limited_information = 0x1000
-            still_active = 259
-            handle = ctypes.windll.kernel32.OpenProcess(process_query_limited_information, False, value)
-            if not handle:
-                return False
-            try:
-                exit_code = ctypes.c_ulong()
-                ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
-                return bool(ok) and exit_code.value == still_active
-            finally:
-                ctypes.windll.kernel32.CloseHandle(handle)
-        except Exception:
-            return False
-    try:
-        os.kill(value, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
-
-
-def _router_daemon_lock_liveness(lock: dict[str, Any]) -> dict[str, Any]:
-    owner = lock.get("owner") if isinstance(lock.get("owner"), dict) else {}
-    age = _lock_age_seconds(lock)
-    schema_ok = lock.get("schema_version") == ROUTER_DAEMON_LOCK_SCHEMA
-    status_active = lock.get("status") == "active"
-    fresh = age is not None and age <= ROUTER_DAEMON_LOCK_STALE_SECONDS
-    process_live = _process_is_live(owner.get("pid")) if isinstance(owner, dict) else False
-    reasons: list[str] = []
-    if not schema_ok:
-        reasons.append("invalid_or_missing_lock_schema")
-    if not status_active:
-        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
-    if age is None:
-        reasons.append("missing_or_invalid_lock_timestamp")
-    elif not fresh:
-        reasons.append("lock_stale")
-    if not process_live:
-        reasons.append("owner_process_not_live")
-    return {
-        "live": bool(schema_ok and status_active and fresh and process_live),
-        "schema_ok": schema_ok,
-        "status_active": status_active,
-        "fresh": fresh,
-        "age_seconds": age,
-        "process_live": process_live,
-        "reasons": reasons,
-        "owner": owner,
-    }
-
-
-def _router_daemon_lock_has_live_owner(liveness: dict[str, Any]) -> bool:
-    return bool(
-        liveness.get("schema_ok")
-        and liveness.get("status_active")
-        and liveness.get("process_live")
-    )
-
-
-def _router_daemon_heartbeat_monitor(
-    lock: dict[str, Any],
-    liveness: dict[str, Any],
-    *,
-    status_exists: bool,
-    status_ok: bool,
-) -> dict[str, Any]:
-    age = liveness.get("age_seconds")
-    reasons: list[str] = []
-    if not status_exists:
-        reasons.append("status_file_missing")
-    elif not status_ok:
-        reasons.append("status_file_invalid")
-    if not liveness.get("schema_ok"):
-        reasons.append("lock_schema_missing_or_invalid")
-    if not liveness.get("status_active"):
-        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
-    if age is None:
-        reasons.append("heartbeat_timestamp_missing_or_invalid")
-    elif float(age) > ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS:
-        reasons.append("heartbeat_older_than_five_seconds")
-    if not liveness.get("process_live"):
-        reasons.append("owner_process_liveness_needs_check")
-    status = "check_liveness" if reasons else "ok"
-    instruction = (
-        "Daemon heartbeat is normal; Controller should stay attached to the existing Router daemon."
-        if status == "ok"
-        else (
-            "Daemon heartbeat needs a Controller liveness check. Check the daemon process, lock, "
-            "and status for this run. If the daemon is alive, stay attached and continue. If it "
-            "is dead, recover the current-run Router daemon without starting a second live writer."
-        )
-    )
-    return {
-        "status": status,
-        "check_after_seconds": ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
-        "age_seconds": age,
-        "last_tick_at": lock.get("last_tick_at") or lock.get("created_at"),
-        "controller_liveness_check_required": status == "check_liveness",
-        "monitor_can_decide_recovery": False,
-        "reasons": reasons,
-        "controller_instruction": instruction,
-    }
-
-
-def _router_daemon_lock_is_live(lock: dict[str, Any]) -> bool:
-    return bool(_router_daemon_lock_liveness(lock).get("live"))
 
 
 def _acquire_router_daemon_lock(
@@ -4684,263 +4595,6 @@ def _release_router_daemon_lock(
     write_json(path, lock)
     _append_router_daemon_event(run_root, "router_daemon_lock_released", {"status": status, "reason": reason})
     return lock
-
-
-def _controller_action_id_for_action(action: dict[str, Any]) -> str:
-    idempotency_key = str(action.get("idempotency_key") or "").strip()
-    if idempotency_key:
-        identity = {
-            "idempotency_key": idempotency_key,
-            "action_type": action.get("action_type"),
-            "label": action.get("label"),
-            "scope_kind": action.get("scope_kind"),
-            "scope_id": action.get("scope_id"),
-        }
-        digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-        return f"controller-action-{digest}"
-    identity = {
-        "source_action_id": action.get("action_id"),
-        "action_type": action.get("action_type"),
-        "label": action.get("label"),
-        "card_id": action.get("card_id"),
-        "card_bundle_id": action.get("card_bundle_id"),
-        "mail_id": action.get("mail_id"),
-        "expected_return_path": action.get("expected_return_path"),
-        "allowed_external_events": action.get("allowed_external_events"),
-        "created_at": action.get("created_at"),
-    }
-    digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-    return f"controller-action-{digest}"
-
-
-def _action_is_passive_wait_status(action: dict[str, Any] | None) -> bool:
-    if not isinstance(action, dict):
-        return False
-    action_type = str(action.get("action_type") or "")
-    if action_type not in PASSIVE_WAIT_STATUS_ACTION_TYPES:
-        return False
-    return not bool(action.get("controller_side_effect_required"))
-
-
-def _controller_action_projection_kind(action: dict[str, Any] | None) -> str:
-    if _action_is_passive_wait_status(action):
-        return "passive_wait_status"
-    if isinstance(action, dict) and str(action.get("action_type") or "") == CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE:
-        return "continuous_standby"
-    return "ordinary_controller_work"
-
-
-def _controller_action_is_ordinary_work_row(entry_or_action: dict[str, Any] | None) -> bool:
-    if not isinstance(entry_or_action, dict):
-        return False
-    explicit = entry_or_action.get("ordinary_controller_work_row")
-    if explicit is not None:
-        return bool(explicit)
-    action = entry_or_action.get("action") if isinstance(entry_or_action.get("action"), dict) else entry_or_action
-    return not _action_is_passive_wait_status(action)
-
-
-def _controller_action_initial_status(action: dict[str, Any]) -> str:
-    if action.get("action_type") in {
-        "await_card_return_event",
-        "await_card_bundle_return_event",
-        "await_current_scope_reconciliation",
-        "await_role_decision",
-        CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
-    }:
-        return "waiting"
-    return "pending"
-
-
-def _controller_action_counts(actions: list[dict[str, Any]]) -> dict[str, int]:
-    counts = {
-        "pending": 0,
-        "in_progress": 0,
-        "done": 0,
-        "blocked": 0,
-        "waiting": 0,
-        "skipped": 0,
-        "incomplete": 0,
-        "repair_pending": 0,
-        "resolved": 0,
-        "superseded": 0,
-    }
-    for item in actions:
-        status = str(item.get("status") or "pending")
-        counts[status] = counts.get(status, 0) + 1
-    counts["total"] = len(actions)
-    return counts
-
-
-def _controller_action_active_work_count(counts: dict[str, int]) -> int:
-    return sum(
-        int(counts.get(status, 0) or 0)
-        for status in ("pending", "in_progress", "blocked", "incomplete", "repair_pending")
-    )
-
-
-def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "action_id": entry.get("action_id"),
-        "action_type": entry.get("action_type"),
-        "label": entry.get("label"),
-        "summary": entry.get("summary"),
-        "status": entry.get("status"),
-        "to_role": entry.get("to_role"),
-        "completion_class": entry.get("completion_class"),
-        "controller_completion_command": entry.get("controller_completion_command"),
-        "controller_completion_mode": entry.get("controller_completion_mode"),
-        "router_pending_apply_required": entry.get("router_pending_apply_required"),
-        "completion_source": entry.get("completion_source"),
-        "satisfied_by_external_event": entry.get("satisfied_by_external_event"),
-        "controller_receipt_required": entry.get("controller_receipt_required"),
-        "controller_projection_kind": entry.get("controller_projection_kind"),
-        "ordinary_controller_work_row": entry.get("ordinary_controller_work_row"),
-        "router_reconciliation_status": entry.get("router_reconciliation_status"),
-        "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
-        "scope_kind": entry.get("scope_kind"),
-        "scope_id": entry.get("scope_id"),
-        "required_deliverables": entry.get("required_deliverables") or [],
-        "deliverable_status": entry.get("deliverable_status"),
-        "deliverable_repair_attempts": entry.get("deliverable_repair_attempts"),
-        "max_deliverable_repair_attempts": entry.get("max_deliverable_repair_attempts"),
-        "repair_of_controller_action_id": entry.get("repair_of_controller_action_id"),
-        "resolved_by_controller_action_id": entry.get("resolved_by_controller_action_id"),
-        "action_path": entry.get("action_path"),
-        "expected_receipt_path": entry.get("expected_receipt_path"),
-        "updated_at": entry.get("updated_at"),
-    }
-
-
-def _controller_receipt_rule_for_display_action(action_type: str) -> str:
-    return (
-        "First paste display_text exactly into the user dialog, then write a "
-        f"Controller receipt for {action_type} with this payload_template as the "
-        "receipt payload. Generated files, host UI updates, and display paths do "
-        "not satisfy user-dialog display evidence."
-    )
-
-
-def _controller_receipt_display_rule(rule: object, action_type: str) -> str:
-    if isinstance(rule, str) and rule.strip():
-        rewritten = rule.replace("before applying", "before writing the Controller receipt for")
-        rewritten = rewritten.replace("before apply", "before writing the Controller receipt")
-        rewritten = rewritten.replace("apply requires", "the Controller receipt requires")
-        rewritten = rewritten.replace("applying this action", "writing the Controller receipt")
-        rewritten = rewritten.replace("applying the action", "writing the Controller receipt")
-        rewritten = rewritten.replace("applying action", "writing the Controller receipt")
-        if "Controller receipt" in rewritten or "controller-receipt" in rewritten:
-            return rewritten
-    return (
-        f"Paste the required display_text in the user dialog before writing the "
-        f"Controller receipt for {action_type}; the receipt payload must include "
-        "display_confirmation.rendered_to=user_dialog with the matching display_text_sha256."
-    )
-
-
-def _controller_ledger_action_view(
-    action: dict[str, Any],
-    *,
-    action_id: str,
-    receipt_path: str,
-    controller_receipt_required: bool,
-) -> dict[str, Any]:
-    """Project a Router action into Controller action-ledger semantics."""
-
-    view = dict(action)
-    passive_wait_status = _action_is_passive_wait_status(view)
-    original_apply_required = bool(view.get("apply_required", True))
-    original_contract = view.get("next_step_contract") if isinstance(view.get("next_step_contract"), dict) else {}
-    original_contract_apply_required = bool(original_contract.get("apply_required", original_apply_required))
-    router_pending_apply_required = original_apply_required if controller_receipt_required else False
-    contract_router_pending_apply_required = original_contract_apply_required if controller_receipt_required else False
-    completion_command = "controller-receipt" if controller_receipt_required else "router-controlled-wait"
-    completion_mode = "controller_action_ledger_receipt" if controller_receipt_required else "controller_action_ledger_wait"
-
-    view.update(
-        {
-            "controller_action_id": action_id,
-            "controller_receipt_path": receipt_path,
-            "controller_receipt_required": controller_receipt_required,
-            "controller_projection_kind": _controller_action_projection_kind(view),
-            "ordinary_controller_work_row": not passive_wait_status,
-            "controller_completion_command": completion_command,
-            "controller_completion_mode": completion_mode,
-            "controller_row_completion_source": "runtime/controller_action_ledger.json",
-            "router_pending_apply_required": router_pending_apply_required,
-            "apply_required": False,
-        }
-    )
-    if "proof_required_before_apply" in view:
-        view["proof_required_before_controller_receipt"] = bool(view.get("proof_required_before_apply"))
-        view["proof_required_before_apply"] = False
-    if "controller_must_display_text_before_apply" in view:
-        view["controller_must_display_text_before_receipt"] = bool(view.get("controller_must_display_text_before_apply"))
-        view["controller_must_display_text_before_apply"] = False
-    if view.get("payload_template_rule"):
-        view["payload_template_rule"] = _controller_receipt_rule_for_display_action(str(view.get("action_type") or "action"))
-    if view.get("controller_display_rule"):
-        view["controller_display_rule"] = _controller_receipt_display_rule(
-            view.get("controller_display_rule"),
-            str(view.get("action_type") or "action"),
-        )
-    if isinstance(view.get("plain_instruction"), str):
-        plain = str(view["plain_instruction"])
-        legacy_startup_intake_apply_instruction = (
-            "After the UI closes, apply "
-            "this pending action with only the returned startup_intake_result.result_path."
-        )
-        plain = plain.replace(
-            legacy_startup_intake_apply_instruction,
-            "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
-        )
-        view["plain_instruction"] = plain
-    if isinstance(view.get("spawn_policy"), str):
-        view["spawn_policy"] = str(view["spawn_policy"]).replace(
-            "before_applying_action",
-            "before_controller_receipt",
-        )
-    if controller_receipt_required:
-        view["controller_receipt_instruction"] = (
-            "Complete this Controller ledger row by performing the requested host/controller work, "
-            "then run flowpilot_router.py controller-receipt with the required receipt payload."
-        )
-    else:
-        view["controller_receipt_instruction"] = (
-            "This is a Router-controlled wait status projection, not ordinary Controller work. "
-            "Do not apply it; follow Router daemon status, current_wait, and standby/patrol "
-            "metadata until the matching external event or blocker path resolves it."
-        )
-
-    contract = dict(original_contract)
-    contract.update(
-        {
-            "apply_required": False,
-            "router_pending_apply_required": contract_router_pending_apply_required,
-            "controller_completion_command": completion_command,
-            "controller_completion_mode": completion_mode,
-            "controller_receipt_required": controller_receipt_required,
-        }
-    )
-    view["next_step_contract"] = contract
-    return view
-
-
-def _router_scheduler_row_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
-    counts: dict[str, int] = {
-        "queued": 0,
-        "waiting": 0,
-        "receipt_done": 0,
-        "reconciled": 0,
-        "blocked": 0,
-        "skipped": 0,
-        "superseded": 0,
-    }
-    for row in rows:
-        state = str(row.get("router_state") or "queued")
-        counts[state] = counts.get(state, 0) + 1
-    counts["total"] = len(rows)
-    return counts
 
 
 def _empty_router_scheduler_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
@@ -5043,49 +4697,6 @@ def _router_scheduler_scope_for_action(action: dict[str, Any], run_root: Path) -
     if str(frontier.get("status") or "") == "current_node_loop" and frontier.get("active_node_id"):
         return "current_node", str(frontier.get("active_node_id"))
     return "run", "run"
-
-
-def _router_scheduler_idempotency_key(action: dict[str, Any], scope_kind: str, scope_id: str) -> str:
-    action_type = str(action.get("action_type") or "")
-    key_parts: dict[str, Any] = {
-        "action_type": action_type,
-        "scope_kind": scope_kind,
-        "scope_id": scope_id,
-        "label": action.get("label"),
-    }
-    for field in (
-        "card_id",
-        "card_bundle_id",
-        "delivery_attempt_id",
-        "mail_id",
-        "expected_return_path",
-        "postcondition",
-        "projection_hash",
-        "next_card_id",
-    ):
-        value = action.get(field)
-        if value not in (None, "", []):
-            key_parts[field] = value
-    if action_type == "sync_display_plan":
-        key_parts["projection_hash"] = action.get("projection_hash")
-    return "router-scheduler:" + hashlib.sha256(json.dumps(key_parts, sort_keys=True).encode("utf-8")).hexdigest()[:24]
-
-
-def _router_scheduler_row_id_for_action(action: dict[str, Any]) -> str:
-    key = str(action.get("router_scheduler_row_id") or action.get("idempotency_key") or "").strip()
-    if not key:
-        key = json.dumps(
-            {
-                "action_type": action.get("action_type"),
-                "label": action.get("label"),
-                "card_id": action.get("card_id"),
-                "card_bundle_id": action.get("card_bundle_id"),
-                "expected_return_path": action.get("expected_return_path"),
-            },
-            sort_keys=True,
-        )
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
-    return f"router-row-{digest}"
 
 
 def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
@@ -11701,12 +11312,6 @@ DISPATCH_RECIPIENT_GATE_ACTION_TYPES = {
     "deliver_system_card_bundle",
     *FORMAL_WORK_PACKET_RELAY_ACTION_TYPES,
 }
-DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET = {
-    ("project_manager", "user_intake"): "pm.material_scan",
-}
-DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS = {
-    "user_intake": "pm_material_packets_issued",
-}
 DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
     "pm.event.reviewer_report": (
         "pm_accepts_reviewed_material",
@@ -11723,68 +11328,9 @@ DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
     ),
 }
 
-PM_ROLE_WORK_TARGET_BUSY_STATUSES = {"open", "packet_created", "packet_relayed"}
-PM_ROLE_WORK_PM_BUSY_STATUSES = {"result_returned", "result_relayed_to_pm"}
-
-
-def _dispatch_gate_target_roles(action: dict[str, Any]) -> set[str]:
-    return _role_set(str(action.get("to_role") or ""))
-
-
-def _dispatch_gate_candidate_packet_ids(action: dict[str, Any]) -> set[str]:
-    packet_ids: set[str] = set()
-    for key in ("packet_id", "mail_id"):
-        value = str(action.get(key) or "").strip()
-        if value:
-            packet_ids.add(value)
-    raw_packet_ids = action.get("packet_ids")
-    if isinstance(raw_packet_ids, list):
-        packet_ids.update(str(item).strip() for item in raw_packet_ids if str(item).strip())
-    active_holder = action.get("active_holder_fast_lane")
-    packets = active_holder.get("packets") if isinstance(active_holder, dict) else None
-    if isinstance(packets, list):
-        for item in packets:
-            if isinstance(item, dict):
-                packet_id = str(item.get("packet_id") or "").strip()
-                if packet_id:
-                    packet_ids.add(packet_id)
-    return packet_ids
-
-
-def _dispatch_gate_candidate_request_ids(action: dict[str, Any]) -> set[str]:
-    request_ids: set[str] = set()
-    value = str(action.get("request_id") or "").strip()
-    if value:
-        request_ids.add(value)
-    raw_requests = action.get("request_ids")
-    if isinstance(raw_requests, list):
-        request_ids.update(str(item).strip() for item in raw_requests if str(item).strip())
-    return request_ids
-
 
 def _dispatch_gate_card_entry(card_id: str) -> dict[str, Any] | None:
     return next((entry for entry in SYSTEM_CARD_SEQUENCE if entry.get("card_id") == card_id), None)
-
-
-def _dispatch_gate_system_card_ids(action: dict[str, Any]) -> list[str]:
-    action_type = action.get("action_type")
-    if action_type == "deliver_system_card":
-        card_id = str(action.get("card_id") or "").strip()
-        return [card_id] if card_id else []
-    if action_type != "deliver_system_card_bundle":
-        return []
-    card_ids: list[str] = []
-    raw_card_ids = action.get("card_ids")
-    if isinstance(raw_card_ids, list):
-        card_ids.extend(str(item).strip() for item in raw_card_ids if str(item or "").strip())
-    raw_cards = action.get("cards")
-    if isinstance(raw_cards, list):
-        for item in raw_cards:
-            if isinstance(item, dict):
-                card_id = str(item.get("card_id") or item.get("id") or "").strip()
-                if card_id:
-                    card_ids.append(card_id)
-    return list(dict.fromkeys(card_ids))
 
 
 def _dispatch_gate_output_events_for_card_id(card_id: str) -> list[str]:
@@ -11820,59 +11366,6 @@ def _dispatch_gate_action_work_class(action: dict[str, Any]) -> str:
     if action.get("action_type") in {"deliver_system_card", "deliver_system_card_bundle"}:
         return "output_bearing_work_package"
     return "work_dispatch"
-
-
-def _dispatch_gate_wait_events_for_packet_record(record: dict[str, Any]) -> list[str]:
-    packet_family = str(record.get("packet_family") or "").strip()
-    packet_type = str(record.get("packet_type") or "").strip()
-    packet_id = str(record.get("packet_id") or "").strip()
-    holder = str(record.get("active_packet_holder") or "").strip()
-    if holder == "project_manager" and packet_id == "user_intake":
-        return ["pm_issues_material_and_capability_scan_packets"]
-    if holder == "project_manager" and packet_id.startswith("material-scan"):
-        return ["pm_records_material_scan_result_disposition"]
-    if holder == "project_manager" and "research" in packet_id:
-        return ["pm_records_research_result_disposition"]
-    if holder == "project_manager" and "node" in packet_id:
-        return ["pm_completes_current_node_from_reviewed_result"]
-    if packet_family == "pm_role_work" or packet_type == "pm_role_work_request" or packet_id.startswith("pm-role-work-"):
-        return [ROLE_WORK_RESULT_RETURNED_EVENT]
-    if packet_family == "research" or "research" in packet_id:
-        return ["worker_research_report_returned"]
-    if packet_family == "material_scan" or "material" in packet_id:
-        return ["worker_scan_results_returned"]
-    return ["worker_current_node_result_returned", ROLE_WORK_RESULT_RETURNED_EVENT]
-
-
-def _dispatch_gate_packet_completed_by_flow_state(record: dict[str, Any], run_state: dict[str, Any]) -> bool:
-    packet_id = str(record.get("packet_id") or "").strip()
-    completion_flag = DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS.get(packet_id)
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    if completion_flag and flags.get(completion_flag):
-        return True
-    if packet_id.startswith("material-scan") and flags.get("material_scan_results_absorbed_by_pm"):
-        return True
-    if "research" in packet_id and flags.get("research_result_absorbed_for_review_by_pm"):
-        return True
-    if "node" in packet_id and flags.get("current_node_result_absorbed_by_pm"):
-        return True
-    return False
-
-
-def _dispatch_gate_same_obligation_instruction(
-    action: dict[str, Any],
-    record: dict[str, Any],
-    run_state: dict[str, Any],
-) -> bool:
-    if action.get("action_type") != "deliver_system_card":
-        return False
-    holder = str(record.get("active_packet_holder") or "").strip()
-    packet_id = str(record.get("packet_id") or "").strip()
-    expected_card = DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET.get((holder, packet_id))
-    if not expected_card or str(action.get("card_id") or "") != expected_card:
-        return False
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    return bool(flags.get("user_intake_delivered_to_pm") and not flags.get("pm_material_packets_issued"))
 
 
 def _dispatch_gate_same_obligation_instruction_context(
@@ -15553,42 +15046,8 @@ def _resolve_delivered_control_blocker(
     return resolved
 
 
-def _terminal_lifecycle_mode(run_state: dict[str, Any]) -> str | None:
-    status = str(run_state.get("status") or "")
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    if status == "cancelled_by_user" or flags.get("run_cancelled_by_user"):
-        return "cancelled_by_user"
-    if status == "stopped_by_user" or flags.get("run_stopped_by_user"):
-        return "stopped_by_user"
-    if status == "protocol_dead_end" or flags.get("startup_protocol_dead_end_declared"):
-        return "protocol_dead_end"
-    if status in {"closed", "completed"} or flags.get("terminal_closure_approved"):
-        return "closed"
-    return None
-
-
 def _lifecycle_record_path(run_root: Path) -> Path:
     return run_root / "lifecycle" / "run_lifecycle.json"
-
-
-def _terminal_summary_markdown_path(run_root: Path) -> Path:
-    return run_root / "final_summary.md"
-
-
-def _terminal_summary_json_path(run_root: Path) -> Path:
-    return run_root / "final_summary.json"
-
-
-def _terminal_summary_hash(summary_markdown: str) -> str:
-    return hashlib.sha256(summary_markdown.encode("utf-8")).hexdigest()
-
-
-def _path_is_inside(child: Path, parent: Path) -> bool:
-    try:
-        child.resolve().relative_to(parent.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def _terminal_summary_index_entry(
@@ -25392,76 +24851,6 @@ def _live_card_delivery_context(
     }
 
 
-def _card_ack_clearance_scope(
-    delivery_context: dict[str, Any] | None,
-    *,
-    card_id: str | None,
-    target_role: str,
-) -> dict[str, Any]:
-    context = delivery_context if isinstance(delivery_context, dict) else {}
-    stage = context.get("current_stage") if isinstance(context.get("current_stage"), dict) else {}
-    current_node_id = stage.get("current_node_id")
-    return {
-        "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
-        "card_id": card_id,
-        "target_role": target_role,
-        "current_phase": stage.get("current_phase"),
-        "card_phase": stage.get("card_phase"),
-        "current_node_id": current_node_id,
-        "current_route_id": stage.get("current_route_id"),
-        "route_version": stage.get("route_version"),
-        "boundary_kind": "node" if current_node_id else "route_or_startup",
-        "required_before": [
-            "gate_or_node_boundary_transition",
-            "formal_work_packet_relay_to_target_role",
-        ],
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-
-
-def _delivery_identity(value: Any) -> str:
-    return str(value or "").strip().replace("\\", "/")
-
-
-def _controller_delivery_action_matches_pending_return(action: dict[str, Any], record: dict[str, Any], *, bundle: bool) -> bool:
-    action_type = str(action.get("action_type") or "")
-    if bundle:
-        if action_type != "deliver_system_card_bundle":
-            return False
-        if record.get("card_bundle_id") and action.get("card_bundle_id") == record.get("card_bundle_id"):
-            return True
-        if _delivery_identity(record.get("card_bundle_envelope_path")) and (
-            _delivery_identity(record.get("card_bundle_envelope_path"))
-            == _delivery_identity(action.get("card_bundle_envelope_path"))
-        ):
-            return True
-        record_attempts = {
-            str(item)
-            for item in (record.get("delivery_attempt_ids") or [])
-            if str(item)
-        }
-        action_attempts = {
-            str(item)
-            for item in (action.get("delivery_attempt_ids") or [])
-            if str(item)
-        }
-        return bool(record_attempts and action_attempts and record_attempts.intersection(action_attempts))
-
-    if action_type != "deliver_system_card":
-        return False
-    if record.get("delivery_attempt_id") and action.get("delivery_attempt_id") == record.get("delivery_attempt_id"):
-        return True
-    if record.get("card_id") and action.get("card_id") == record.get("card_id"):
-        if record.get("expected_return_path") and action.get("expected_return_path") == record.get("expected_return_path"):
-            return True
-        if _delivery_identity(record.get("card_envelope_path")) and (
-            _delivery_identity(record.get("card_envelope_path")) == _delivery_identity(action.get("card_envelope_path"))
-        ):
-            return True
-    return False
-
-
 def _matching_controller_delivery_actions(
     project_root: Path,
     run_root: Path,
@@ -25568,43 +24957,6 @@ def _controller_delivery_fact_for_pending_return(
         "controller_delivery_reissue_reason": reissue_reason,
         "controller_must_not_remind_target_before_delivery_done": True,
     }
-
-
-def _original_card_ack_reminder_policy(
-    record: dict[str, Any],
-    *,
-    bundle: bool = False,
-    delivery_fact: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    envelope_key = "card_bundle_envelope_path" if bundle else "card_envelope_path"
-    receipt_key = "expected_receipt_paths" if bundle else "expected_receipt_path"
-    target_allowed = True
-    if delivery_fact is not None:
-        target_allowed = bool(delivery_fact.get("target_role_ack_reminder_allowed"))
-    policy = {
-        "missing_ack_recovery": "remind_target_role_to_ack_original_committed_card",
-        "reminder_target": "original_committed_card_bundle" if bundle else "original_committed_card",
-        "original_envelope_path": record.get(envelope_key),
-        "original_expected_return_path": record.get("expected_return_path"),
-        "original_expected_receipt_path": record.get(receipt_key),
-        "duplicate_system_card_delivery_allowed": False,
-        "reissue_allowed_only_if_original_invalid_lost_stale_or_role_replaced": True,
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-        "ack_clearance_scope": record.get("ack_clearance_scope"),
-        "controller_delivery_fact": delivery_fact or {},
-        "target_role_ack_reminder_allowed": target_allowed,
-        "controller_delivery_reissue_required_before_target_ack_reminder": not target_allowed,
-    }
-    if not target_allowed:
-        policy.update(
-            {
-                "missing_ack_recovery": "confirm_or_reissue_controller_delivery_before_target_ack_reminder",
-                "reminder_target": "controller_delivery_task",
-                "target_role_ack_reminder_allowed": False,
-            }
-        )
-    return policy
 
 
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -34380,20 +33732,6 @@ def _try_auto_consume_pending_card_return_ack(
     return {"consumed": True, "result": result}
 
 
-def _pending_action_matches_card_return(pending_action: object, pending_return: dict[str, Any]) -> bool:
-    if not isinstance(pending_action, dict):
-        return False
-    if pending_return.get("return_kind") == "system_card_bundle":
-        return (
-            pending_action.get("card_bundle_id") == pending_return.get("card_bundle_id")
-            or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
-        )
-    return (
-        pending_action.get("delivery_attempt_id") == pending_return.get("delivery_attempt_id")
-        or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
-    )
-
-
 def _startup_pm_card_bundle_ack_record(record: dict[str, Any]) -> bool:
     return is_startup_pm_card_bundle_ack_record(record, pre_review_startup_card_ids=PRE_REVIEW_STARTUP_CARD_IDS)
 
@@ -38381,6 +37719,9 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         run_state["status"] = recovered_terminal_status
         status = recovered_terminal_status
         repaired["terminal_status_recovered_from_authority"] = True
+        if recovered_terminal_status == "closed":
+            flags["terminal_closure_approved"] = True
+            repaired["terminal_closure_status_recovered"] = True
     if status == "stopped_by_user":
         flags["run_stopped_by_user"] = True
     elif status == "cancelled_by_user":
