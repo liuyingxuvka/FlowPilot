@@ -18,6 +18,9 @@ REQUIRED_LABELS = (
     "start_run_a_with_bound_daemon",
     "start_run_b_with_independent_daemon_and_focus",
     "old_daemon_ticks_bound_run_after_focus_moves",
+    "fresh_start_creates_new_run_c_despite_parallel_runs",
+    "explicit_resume_attaches_selected_run_b",
+    "ambiguous_resume_blocks_for_target_selection",
     "targeted_stop_releases_only_run_a",
     "done_history_does_not_count_as_active_board_work",
     "safe_parallel_run_isolation_complete",
@@ -35,12 +38,19 @@ HAZARD_EXPECTED_FAILURES = {
     "active_status_without_live_process": "daemon status reported active without a live process",
     "done_history_reported_as_active_work": "historical done rows were reported as active board work",
     "current_focus_used_as_daemon_authority": "current focus was used as daemon authority",
+    "fresh_start_attaches_existing_run": "fresh startup attached to an existing run",
+    "fresh_start_mutates_existing_run": "fresh startup mutated an existing run",
+    "fresh_start_uses_current_pointer_as_intent": "current pointer was used as fresh startup intent",
+    "fresh_start_without_new_run": "fresh startup did not create a new run",
+    "explicit_resume_without_target": "explicit resume attached without a selected target",
+    "explicit_resume_attaches_wrong_run": "explicit resume attached a run other than the selected target",
+    "ambiguous_resume_silently_chooses_current": "ambiguous resume silently chose current pointer",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
-        f"status={state.status}|runs={state.run_a_exists},{state.run_b_exists}|"
+        f"status={state.status}|runs={state.run_a_exists},{state.run_b_exists},{state.run_c_exists}|"
         f"focus={state.current_focus}|bound={state.daemon_a_bound},{state.daemon_b_bound}|"
         f"tick_after_focus={state.daemon_a_tick_after_focus_change}|"
         f"reads_current={state.daemon_a_read_current_pointer}|"
@@ -52,7 +62,16 @@ def _state_id(state: model.State) -> str:
         f"locks={state.lock_a_status},{state.lock_b_status},reactivated={state.lock_a_refreshed_after_release}|"
         f"active_no_process={state.status_active_without_process}|"
         f"board=done{state.done_history_rows},active{state.active_work_rows},reported{state.board_reports_active_work}|"
-        f"current_authority={state.current_focus_used_as_daemon_authority}"
+        f"current_authority={state.current_focus_used_as_daemon_authority}|"
+        f"fresh_start={state.fresh_start_requested},new={state.fresh_start_created_new_run},"
+        f"attached_existing={state.fresh_start_attached_existing_run},"
+        f"mutated_existing={state.fresh_start_mutated_existing_run},"
+        f"current_as_intent={state.current_pointer_used_as_startup_intent}|"
+        f"resume={state.explicit_resume_requested},target={state.resume_target_selected},"
+        f"attached={state.resume_attached_target}|"
+        f"ambiguous_resume={state.ambiguous_resume_requested},"
+        f"blocked={state.ambiguous_resume_blocked_for_selection},"
+        f"chose_current={state.ambiguous_resume_silently_chose_current}"
     )
 
 

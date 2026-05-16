@@ -3811,6 +3811,61 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         control_blocks = run_root / "control_blocks"
         self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
 
+    def test_startup_daemon_bootloader_completion_uses_receipt_owner(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        intake_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "open_startup_intake_ui")
+        action_path = run_root / "runtime" / "controller_actions" / f"{intake_row['action_id']}.json"
+        entry = read_json(action_path)
+        reconciliation = entry["router_reconciliation"]
+
+        self.assertEqual(entry["router_reconciliation_status"], "reconciled")
+        self.assertEqual(reconciliation["source"], "startup_bootloader_controller_receipt")
+        self.assertNotEqual(reconciliation["source"], "startup_daemon_bootloader_postcondition")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
+        self.assertEqual(scheduler_row["router_state"], "reconciled")
+        self.assertEqual(scheduler_row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
+
+    def test_legacy_startup_daemon_postcondition_owner_canonicalizes_to_receipt_owner(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        intake_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "open_startup_intake_ui")
+        action_path = run_root / "runtime" / "controller_actions" / f"{intake_row['action_id']}.json"
+        entry = read_json(action_path)
+        entry["router_reconciliation"]["source"] = "startup_daemon_bootloader_postcondition"
+        entry["router_pending_apply_required"] = True
+        entry["action"]["router_pending_apply_required"] = True
+        router.write_json(action_path, entry)
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        scheduler = read_json(scheduler_path)
+        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
+        scheduler_row["reconciliation"]["source"] = "startup_daemon_bootloader_postcondition"
+        router.write_json(scheduler_path, scheduler)
+
+        state = read_json(router.run_state_path(run_root))
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        refreshed = read_json(action_path)
+        self.assertEqual(refreshed["router_reconciliation"]["source"], "startup_bootloader_controller_receipt")
+        self.assertEqual(
+            refreshed["router_reconciliation"]["canonicalized_from"],
+            "startup_daemon_bootloader_postcondition",
+        )
+        self.assertFalse(refreshed["router_pending_apply_required"])
+        scheduler = read_json(scheduler_path)
+        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
+        self.assertEqual(scheduler_row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
+
     def test_load_controller_core_receipt_reconciles_startup_postcondition(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root)
@@ -4252,6 +4307,92 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             self.assertIn(action_type, passive_types)
         self.assertEqual(ledger["passive_wait_count"], len(router.PASSIVE_WAIT_STATUS_ACTION_TYPES))
 
+    def test_current_work_uses_packet_holder_when_pending_wait_is_empty(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-current-work-packet")
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+        router.write_json(
+            run_root / "packet_ledger.json",
+            {
+                "schema_version": router.PACKET_LEDGER_SCHEMA,
+                "run_id": "run-current-work-packet",
+                "active_packet_id": "user_intake",
+                "active_packet_status": "packet-body-opened-by-recipient",
+                "active_packet_holder": "project_manager",
+                "packets": [
+                    {
+                        "packet_id": "user_intake",
+                        "active_packet_status": "packet-body-opened-by-recipient",
+                        "active_packet_holder": "project_manager",
+                    }
+                ],
+                "mail": [],
+                "updated_at": router.utc_now(),
+            },
+        )
+
+        daemon_status = router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+        )
+        router._write_current_status_summary(run_root, state)  # type: ignore[attr-defined]
+        status_summary = read_json(run_root / "display" / "current_status_summary.json")
+        snapshot = router._build_foreground_controller_standby_snapshot(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            started_at=router.utc_now(),
+            start_monotonic=time.monotonic(),
+            poll_count=0,
+            max_seconds=0,
+            poll_seconds=0.1,
+        )
+
+        self.assertIsNone(daemon_status["current_wait"]["waiting_for_role"])
+        self.assertEqual(daemon_status["current_work"]["owner_kind"], "role")
+        self.assertEqual(daemon_status["current_work"]["owner_key"], "project_manager")
+        self.assertEqual(daemon_status["current_work"]["source"], "packet_ledger")
+        self.assertEqual(status_summary["current_work"]["owner_key"], "project_manager")
+        self.assertEqual(status_summary["current_work"]["packet_id"], "user_intake")
+        self.assertEqual(snapshot["current_work"]["owner_key"], "project_manager")
+
+    def test_current_work_uses_passive_reconciliation_owner_when_pending_wait_is_empty(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-current-work-passive")
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        passive_action = router.make_action(
+            action_type="await_current_scope_reconciliation",
+            actor="controller",
+            label="controller_reconciles_current_scope",
+            summary="Reconcile current scope before continuing.",
+            to_role="controller",
+            extra={"scope_kind": "startup", "scope_id": "startup", "blockers": [{"kind": "test"}]},
+        )
+        router._write_controller_action_entry(root, run_root, state, passive_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        daemon_status = router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+        )
+        router._write_current_status_summary(run_root, state)  # type: ignore[attr-defined]
+        status_summary = read_json(run_root / "display" / "current_status_summary.json")
+
+        self.assertIsNone(daemon_status["current_wait"]["waiting_for_role"])
+        self.assertEqual(daemon_status["current_work"]["owner_kind"], "controller")
+        self.assertEqual(daemon_status["current_work"]["owner_key"], "controller")
+        self.assertEqual(daemon_status["current_work"]["source"], "controller_action_ledger.passive_waits")
+        self.assertIn("Reconcile current scope", daemon_status["current_work"]["task_label"])
+        self.assertEqual(status_summary["current_work"]["owner_key"], "controller")
+        self.assertEqual(status_summary["current_work"]["source"], "controller_action_ledger.passive_waits")
+
     def test_router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -4600,6 +4741,49 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
         self.assertFalse(result["ticks"][1].get("deferred", False))
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+
+    def test_foreground_next_waits_on_fresh_controller_action_write_lock(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action_path = sorted((run_root / "runtime" / "controller_actions").glob("*.json"))[0]
+        original_entry = read_json(action_path)
+        action_path.write_text(
+            '{"schema_version": "flowpilot.controller_action.v1"}\nBROKEN',
+            encoding="utf-8",
+        )
+        write_lock = router._json_write_lock_path(action_path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(action_path),
+                    "pid": 0,
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        def finish_write() -> None:
+            time.sleep(0.05)
+            action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_lock.unlink()
+
+        thread = threading.Thread(target=finish_write, daemon=True)
+        thread.start()
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = router.main(["--root", str(root), "next", "--json"])
+        thread.join(timeout=1.0)
+
+        self.assertEqual(exit_code, 0, stdout.getvalue())
+        result = json.loads(stdout.getvalue())
+        self.assertTrue(result["runtime_write_settlement"]["waited"])
+        self.assertEqual(result["runtime_write_settlement"]["command"], "next")
+        self.assertGreaterEqual(result["runtime_write_settlement"]["wait_count"], 1)
+        self.assertEqual(read_json(action_path)["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
 
     def test_router_daemon_status_not_active_after_error_lock_or_missing_pid(self) -> None:
         root = self.make_project()
@@ -5473,6 +5657,43 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(result["command_restart_is_completion"])
         self.assertEqual(result["monitor_source"], "existing_router_daemon_monitor")
 
+    def test_controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        state["daemon_mode_enabled"] = True
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        lock["last_tick_at"] = self.old_utc(minutes=1)
+        router.write_json(run_root / "runtime" / "router_daemon.lock", lock)
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=None,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        result = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(result["patrol_result"], "check_liveness")
+        self.assertEqual(result["foreground_required_mode"], "check_liveness")
+        self.assertIn("If the daemon is alive, stay attached", result["controller_instruction"])
+        router_daemon = result["standby_snapshot"]["router_daemon"]
+        self.assertEqual(router_daemon["heartbeat_status"], "check_liveness")
+        self.assertGreater(router_daemon["heartbeat_age_seconds"], router.ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS)
+        self.assertFalse(router_daemon["monitor_can_decide_recovery"])
+        self.assertTrue(router_daemon["controller_liveness_check_required"])
+
     def test_foreground_controller_standby_wakes_on_controller_action_ledger(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -5521,20 +5742,22 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(patrol["controller_stop_allowed"])
         self.assertEqual(patrol["completion_allowed_only_when"], "terminal_return_and_controller_stop_allowed_true")
 
-    def test_foreground_controller_standby_exits_on_stale_or_missing_daemon(self) -> None:
+    def test_foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
         router.stop_router_daemon(root, reason="test_standby_missing_daemon")
 
         standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
 
-        self.assertEqual(standby["standby_state"], "daemon_stale_or_missing")
+        self.assertEqual(standby["standby_state"], "daemon_liveness_check_required")
         self.assertFalse(standby["router_daemon"]["daemon_live"])
         self.assertFalse(standby["controller_must_continue_standby"])
         self.assertFalse(standby["foreground_exit_allowed"])
         self.assertFalse(standby["controller_stop_allowed"])
         self.assertTrue(standby["foreground_turn_return_allowed"])
-        self.assertEqual(standby["foreground_required_mode"], "daemon_repair_or_restart")
+        self.assertEqual(standby["foreground_required_mode"], "check_liveness")
+        self.assertEqual(standby["router_daemon"]["heartbeat_status"], "check_liveness")
+        self.assertFalse(standby["router_daemon"]["monitor_can_decide_recovery"])
 
     def test_foreground_controller_standby_does_not_compute_router_next(self) -> None:
         root = self.make_project()
@@ -6653,6 +6876,59 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(bootstrap["flags"]["startup_answers_recorded"])
         self.assertEqual(action["allowed_reads"], [current["startup_bootstrap_path"]])
 
+    def test_start_command_creates_fresh_run_when_current_is_running(self) -> None:
+        root = self.make_project()
+        old_run_root = self.write_minimal_run(root, "run-old-running", status="controller_ready")
+        self.write_current_focus(root, old_run_root)
+        old_state_before = read_json(router.run_state_path(old_run_root))
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = router.main(["--root", str(root), "start", "--json"])
+
+        self.assertEqual(exit_code, 0)
+        result = json.loads(stdout.getvalue())
+        current = read_json(root / ".flowpilot" / "current.json")
+        self.assertNotEqual(current["current_run_id"], "run-old-running")
+        self.assertIn("create_run_shell", [item["action_type"] for item in result["folded_applied_actions"]])
+        self.assertTrue((root / current["current_run_root"] / "run.json").exists())
+        self.assertEqual(read_json(router.run_state_path(old_run_root)), old_state_before)
+        self.assertFalse((old_run_root / "runtime" / "controller_action_ledger.json").exists())
+
+    def test_new_invocation_preserves_multiple_parallel_running_runs(self) -> None:
+        root = self.make_project()
+        run_a = self.write_minimal_run(root, "run-a", status="controller_ready")
+        run_b = self.write_minimal_run(root, "run-b", status="controller_ready")
+        self.write_current_focus(root, run_b)
+        router.write_json(
+            root / ".flowpilot" / "index.json",
+            {
+                "schema_version": "flowpilot.index.v1",
+                "runs": [
+                    {"run_id": "run-a", "run_root": ".flowpilot/runs/run-a", "status": "running"},
+                    {"run_id": "run-b", "run_root": ".flowpilot/runs/run-b", "status": "running"},
+                ],
+                "current_run_id": "run-b",
+                "updated_at": router.utc_now(),
+            },
+        )
+        state_a_before = read_json(router.run_state_path(run_a))
+        state_b_before = read_json(router.run_state_path(run_b))
+
+        result = router.run_until_wait(root, new_invocation=True)
+
+        current = read_json(root / ".flowpilot" / "current.json")
+        self.assertNotIn(current["current_run_id"], {"run-a", "run-b"})
+        self.assertIn("create_run_shell", [item["action_type"] for item in result["folded_applied_actions"]])
+        self.assertTrue((root / current["current_run_root"] / "run.json").exists())
+        self.assertEqual(read_json(router.run_state_path(run_a)), state_a_before)
+        self.assertEqual(read_json(router.run_state_path(run_b)), state_b_before)
+        index = read_json(root / ".flowpilot" / "index.json")
+        run_ids = {item["run_id"] for item in index["runs"]}
+        self.assertTrue({"run-a", "run-b", current["current_run_id"]}.issubset(run_ids))
+        self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-a")["status"], "running")
+        self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-b")["status"], "running")
+
     def test_record_startup_answers_rejects_naked_inferred_or_invalid_values(self) -> None:
         root = self.make_project()
         self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
@@ -6733,6 +7009,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertEqual(parsed.command, "run-until-wait")
         self.assertTrue(parsed.new_invocation)
+        self.assertTrue(parsed.json)
+
+        parsed = router.parse_args(["--root", "C:/tmp/project", "start", "--json"])
+        self.assertEqual(parsed.command, "start")
         self.assertTrue(parsed.json)
 
         parsed = router.parse_args(
@@ -10112,7 +10392,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         finally:
             router.stop_router_daemon(root, reason="test_cleanup")
 
-    def test_resume_reentry_marks_stale_or_missing_daemon_for_restart(self) -> None:
+    def test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -10126,6 +10406,36 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "load_resume_state")
         recovery = action["router_daemon_resume_recovery"]
         self.assertFalse(recovery["router_daemon_lock_live"])
+        self.assertTrue(recovery["router_daemon_owner_process_live"])
+        self.assertTrue(recovery["router_daemon_active_owner_live"])
+        self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
+        self.assertEqual(recovery["decision"], "attach_controller_to_live_daemon")
+
+        router.apply_action(root, "load_resume_state")
+        resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
+        self.assertTrue(resume_evidence["router_daemon_liveness_checked"])
+        self.assertFalse(resume_evidence["router_daemon_restarted_if_dead"])
+        self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
+        router.stop_router_daemon(root, reason="test_cleanup")
+
+    def test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        lock_path = run_root / "runtime" / "router_daemon.lock"
+        lock = read_json(lock_path)
+        lock["last_tick_at"] = "2000-01-01T00:00:00Z"
+        lock["owner"] = {"pid": 999999999, "process_name": "missing-test-daemon"}
+        router.write_json(lock_path, lock)
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        recovery = action["router_daemon_resume_recovery"]
+        self.assertFalse(recovery["router_daemon_lock_live"])
+        self.assertFalse(recovery["router_daemon_owner_process_live"])
+        self.assertFalse(recovery["router_daemon_active_owner_live"])
+        self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
         self.assertEqual(recovery["decision"], "restart_router_daemon_from_current_state")
 
         router.apply_action(root, "load_resume_state")
@@ -10133,7 +10443,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(resume_evidence["router_daemon_liveness_checked"])
         self.assertTrue(resume_evidence["router_daemon_restarted_if_dead"])
         self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
-        router.stop_router_daemon(root, reason="test_cleanup")
 
     def test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision(self) -> None:
         root = self.make_project()

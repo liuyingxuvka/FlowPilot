@@ -12565,3 +12565,244 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
+## 2026-05-16 FlowPilot Invocation Intent Isolation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a user request to start FlowPilot was incorrectly treated as permission to continue the run named by `.flowpilot/current.json`; historical and parallel running FlowPilot runs must remain independent unless the user explicitly targets one.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/separate-new-invocation-from-resume/`
+- Focused model: `simulations/flowpilot_parallel_run_isolation_model.py`
+- Focused result: `simulations/flowpilot_parallel_run_isolation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python simulations\run_flowpilot_parallel_run_isolation_checks.py --json` passed and detected the expected bad-startup and ambiguous-resume hazards.
+- Focused runtime pytest selection for fresh `start`, stale `current.json`, multiple parallel runs, JSON parsing, daemon binding, and targeted stop passed with 6 selected tests.
+- `openspec validate separate-new-invocation-from-resume --strict` passed.
+- `python scripts\check_install.py` passed after keeping `skills/flowpilot/SKILL.md` under the small launcher limit.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Fresh formal startup now uses the explicit router `start` command and creates a new run even when `.flowpilot/current.json` points at a running run.
+- Existing running runs are independent parallel workflows; fresh startup does not attach, stop, merge, supersede, import, or mutate them.
+- Resume remains explicit and target-bound. Ambiguous resume cannot silently choose the current pointer.
+- Launcher and README guidance now state that `.flowpilot/current.json` is UI/default-target metadata, not startup intent.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+- Include any peer-agent work that is present at final staging time, per user direction.
+
+## 2026-05-16 FlowPilot Startup Reconciliation Model Upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot startup exposed a class of races where a foreground start/status reader can collide with a fresh runtime-state writer, and startup Controller receipts can be marked reconciled only after a separate startup-daemon postcondition path.
+- Status: completed_model_update_with_live_projection_findings
+
+### Model Evidence
+- Focused model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Focused runner/result: `simulations/run_flowpilot_daemon_reconciliation_checks.py`, `simulations/flowpilot_daemon_reconciliation_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed: safe graph ok, progress ok, FlowGuard explorer ok, and hazard checks ok.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` correctly failed the live projection for the current run because existing durable records still hit startup projection gaps.
+
+### Findings
+- The model now requires a foreground start command that sees a fresh runtime writer to wait, retry after settlement, and only then return live daemon status.
+- The model now rejects a foreground start/status path that turns an active runtime writer into a fatal error or reports live status before settlement.
+- Startup Controller receipts now require a single-owner fold of action row, scheduler row, pending state, bootstrap postcondition, and run-state projection; a separate later apply path is modeled as a hazard.
+- Live projection for `run-20260516-090714` flagged startup receipt/application split on `load_controller_core` and `open_startup_intake_ui`, plus the existing PM ACK/user-intake projection issue.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were not run because this pass changed only the focused FlowGuard model and live projection, not runtime behavior.
+
+### Next Actions
+- Runtime fix should centralize startup settlement behind one idempotent reconciler and make foreground start/status reads wait or retry on fresh runtime-state write locks before returning status.
+
+## 2026-05-16 FlowPilot Packet Open Authority Exits
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: PM successfully opened the startup `user_intake` packet in the runtime ledger but then reported it was waiting for corrected relay evidence; roles needed an explicit work-or-formal-exit rule after verified packet open.
+- Status: focused_runtime_and_prompt_update_complete_heavy_checks_user_deferred
+
+### Risk Intent
+
+- Prevent a verified `open-packet` receipt from being reinterpreted as missing authority.
+- Prevent PM from routing a blocker back to PM or inventing a new repair channel.
+- Preserve ordinary role blockers as formal decision inputs for PM/Router.
+- Keep Controller sealed-body isolation unchanged.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/harden-packet-open-authority-exits/`
+- Focused model: `simulations/flowpilot_packet_open_authority_model.py`
+- Focused runner/result: `simulations/run_flowpilot_packet_open_authority_checks.py`, `simulations/flowpilot_packet_open_authority_results.json`
+- Runtime implementation: `skills/flowpilot/assets/packet_runtime.py`
+- Prompt/card updates: PM startup/review cards, PM/worker/reviewer/officer role cards, and packet body template.
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\packet_runtime.py simulations\flowpilot_packet_open_authority_model.py simulations\run_flowpilot_packet_open_authority_checks.py tests\test_flowpilot_packet_runtime.py tests\test_flowpilot_card_instruction_coverage.py` passed.
+- `python simulations\run_flowpilot_packet_open_authority_checks.py --json-out simulations\flowpilot_packet_open_authority_results.json` passed: safe graph ok, progress ok, FlowGuard explorer ok, and all known-bad hazards detected.
+- `openspec validate harden-packet-open-authority-exits --strict` passed.
+- `python -m unittest tests.test_flowpilot_packet_runtime` passed.
+- `python -m unittest tests.test_flowpilot_card_instruction_coverage` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed with installed `flowpilot` source-fresh.
+- Background heavyweight checks were launched under `tmp/flowguard_background/` and then stopped after the user confirmed they are too heavy for this pass:
+  - `run_meta_checks`: `python simulations/run_meta_checks.py`, stopped with `exit_code=skipped_by_user`.
+  - `run_capability_checks`: `python simulations/run_capability_checks.py`, stopped with `exit_code=skipped_by_user`.
+
+### Findings
+
+- Packet-open sessions now persist `work_authority` metadata in the runtime session, packet envelope, packet ledger, and Controller status packet.
+- A successful packet open now states that the addressed role has authority to work that packet and must not wait for another relay or prompt.
+- PM guidance now points PM inability to existing exits: `pm_startup_repair_request`, `pm_startup_protocol_dead_end`, and `pm_control_blocker_repair_decision`.
+- Ordinary worker, reviewer, and officer guidance now says true inability after a verified open must return an existing formal blocker, result-with-blocker, or PM suggestion for PM/Router disposition.
+- Step 3 active-writer settlement and Step 4 current-work-owner display were not taken over because parallel OpenSpec changes already own those scopes.
+
+### Skipped Or Deferred Steps
+
+- No focused checks were skipped.
+- Heavyweight Meta and Capability checks were explicitly deferred by user direction because they are too heavy for this focused pass. Their background processes were stopped and their log metadata records `status=skipped_by_user_after_start`; do not claim those checks passed.
+
+### Next Actions
+
+- Before a release-level or broad project-control confidence claim, rerun Meta and Capability checks and inspect their `.exit.txt`, `.meta.json`, `.out.txt`, `.err.txt`, and `.combined.txt` artifacts.
+- Commit only after compatible parallel-agent work has settled, because the user asked for peer changes to be included together.
+
+## 2026-05-16 FlowPilot Current Work Owner Projection
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: monitor/status payloads could have `waiting_for_role: null` while real work was still held by a role, Controller reconciliation, or Router internal daemon work.
+- Status: completed_runtime_update_with_background_regression
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/surface-current-work-owner/`
+- Focused model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Focused result: `simulations/flowpilot_persistent_router_daemon_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate surface-current-work-owner --strict` passed.
+- `python -m py_compile` passed for the changed Router and FlowGuard model/runner files.
+- Focused runtime pytest selections for `current_work`, passive waits, status summary, and foreground standby passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\check_install.py` passed with installed `flowpilot` source-fresh.
+- Heavyweight background checks completed under `tmp/flowguard_background/`: `run_meta_checks` exit `0`, `run_capability_checks` exit `0`, both `proof_reuse=false`.
+
+### Findings
+- Status payloads now expose a single `current_work` object that names the effective current owner, task, source, and Controller liveness-use guidance.
+- The legacy `current_wait` and `waiting_for_role` fields remain compatibility fields; Controller-facing monitoring should prefer `current_work`.
+- Packet-ledger ownership now surfaces the role holder even when `pending_action` and legacy waiting fields are empty.
+- Passive reconciliation and internal daemon work now name Controller or Router explicitly instead of leaving the monitor owner blank.
+
+### Skipped Steps
+- No heavyweight checks were skipped; both Meta and Capability background regressions completed with fresh exit artifacts.
+
+### Next Actions
+- Keep future monitor UI/copy on `current_work` as the primary live-owner projection and treat `waiting_for_role` as legacy compatibility only.
+
+## 2026-05-16 FlowPilot Daemon Heartbeat Liveness Window
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: foreground patrol could classify an old daemon heartbeat as stale/restart work before Controller performed a real liveness check.
+- Status: completed_runtime_update_with_background_regression
+
+### Risk Intent
+
+- Keep the monitor simple: heartbeat status is only `ok` or `check_liveness`.
+- Treat five seconds as the foreground check window; a delayed heartbeat is not by itself proof that the daemon is dead.
+- Make Controller perform the real process/lock/status liveness check, attach when the owner is alive, and recover only when that check finds the daemon dead.
+- Preserve the single-writer invariant: never start a second Router writer while the current-run daemon owner is still live.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/soften-daemon-heartbeat-liveness/`
+- Focused model: `simulations/flowpilot_daemon_liveness_model.py`
+- Focused runner/result: `simulations/run_flowpilot_daemon_liveness_checks.py`, `simulations/flowpilot_daemon_liveness_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python simulations\run_flowpilot_daemon_liveness_checks.py --json-out simulations\flowpilot_daemon_liveness_results.json` passed: safe graph ok, progress ok, FlowGuard explorer ok, and known-bad hazards detected.
+- `python -m py_compile simulations\flowpilot_daemon_liveness_model.py simulations\run_flowpilot_daemon_liveness_checks.py skills\flowpilot\assets\flowpilot_router.py scripts\check_install.py` passed.
+- Focused pytest coverage for delayed heartbeat patrol, stopped daemon liveness check, delayed-live resume attach, dead-daemon resume recovery, and existing missing-pid status passed.
+- Focused pytest coverage for existing foreground standby/patrol ready-action and continue-patrol behavior passed.
+- `openspec validate soften-daemon-heartbeat-liveness --strict` passed.
+- `python scripts\check_install.py` passed.
+- Background heavyweight checks completed under `tmp/flowguard_background/`: `run_meta_checks` exit `0`, `run_capability_checks` exit `0`, and `run_flowpilot_persistent_router_daemon_checks` exit `0`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+
+- `runtime/router_daemon_status.json`, foreground standby snapshots, and current status summaries now expose five-second heartbeat metadata and `check_liveness` guidance.
+- `controller-patrol-timer` returns `check_liveness` with plain Controller instructions instead of `daemon_repair_or_restart` when monitor evidence is delayed or incomplete.
+- Resume recovery now uses active owner process liveness for attach-first behavior, so an old heartbeat with a live owner attaches instead of restarting.
+
+### Skipped Or Deferred Steps
+
+- A first attempt to extend the broad daemon reconciliation model was stopped because it expanded the unrelated state space too much. The focused liveness model now owns this policy.
+- No heavyweight checks were skipped. The broad daemon reconciliation model extension attempt was stopped intentionally and replaced by the focused liveness model before production edits.
+
+## 2026-05-16 FlowPilot Startup Settlement Ownership
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: startup could fail or leave false repair blockers when a foreground command observed an active runtime writer, and startup bootloader completion had two competing owners: the startup daemon postcondition path and the scheduled Controller receipt reconciler.
+- Status: completed_focused_runtime_update
+
+### Risk Intent
+
+- Reuse the existing runtime JSON write-lock liveness rule instead of adding a second lock system.
+- Foreground startup/status commands wait and retry when another live writer is making progress.
+- Keep one owner for final startup settlement: Controller receipt reconciliation folds the action row, scheduler row, bootstrap flag, and pending state.
+- Preserve real failures: stale locks, unsupported receipts, malformed state, and genuine blockers still fail instead of being hidden.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/unify-startup-settlement-ownership/`
+- Focused model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Focused runner/result: `simulations/run_flowpilot_daemon_reconciliation_checks.py`, `simulations/flowpilot_daemon_reconciliation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate unify-startup-settlement-ownership --strict` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --json-out simulations\flowpilot_daemon_reconciliation_results.json` passed: safe graph `1069` states / `1129` edges, zero invariant failures, FlowGuard Explorer `13914` traces / zero violations, live projection finding count `0`, and current run can continue.
+- Focused pytest coverage for foreground writer settlement, startup receipt ownership, legacy canonicalization, and existing daemon writer wait behavior passed.
+- `python skills\flowpilot\assets\flowpilot_router.py --root . reconcile-run --json` canonicalized current-run startup rows through the receipt owner.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed; installed `flowpilot` was source-fresh and `check_install` reported `451` passing checks.
+
+### Findings
+
+- Fresh writer locks are now treated as short-lived progress, so foreground commands wait and retry instead of immediately reporting a fatal JSON/write error.
+- Startup bootloader completion now writes/uses the existing Controller receipt and lets the scheduled receipt reconciler perform final settlement.
+- Legacy rows that were already marked by the old daemon-postcondition owner are canonicalized to the Controller receipt owner when the receipt evidence exists.
+- The live projection now accepts a Router-released `user_intake` packet that has already been opened by PM, avoiding a false "not released" model finding.
+
+### Skipped Or Deferred Steps
+
+- `python simulations/run_meta_checks.py` was deferred by explicit user direction because it is too heavy for this focused pass.
+- `python simulations/run_capability_checks.py` was deferred by explicit user direction because it is too heavy for this focused pass.
+- A full `tests/test_flowpilot_router_runtime.py` run exceeded the practical timeout while other peer-agent tests were also active, so completion evidence uses the focused tests plus the formal daemon reconciliation model and install checks.
+
+### Next Actions
+
+- Run Meta and Capability checks later before making release-level confidence claims.
+- Preserve compatible peer-agent changes in the final local commit after the combined worktree settles.

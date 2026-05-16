@@ -38,6 +38,9 @@ REQUIRED_LABELS = (
     "router_enters_ack_wait_owned_by_daemon",
     "router_enters_report_wait_with_liveness_obligation",
     "router_enters_controller_local_wait_for_self_audit",
+    "daemon_projects_packet_holder_current_work_owner",
+    "daemon_projects_passive_reconciliation_current_work_owner",
+    "daemon_projects_router_internal_current_work_owner",
     "daemon_wait_tick_keeps_checking_mailbox",
     "foreground_controller_standby_poll_tick_keeps_turn_open",
     "foreground_controller_bounded_timeout_reenters_standby",
@@ -97,6 +100,9 @@ HAZARD_EXPECTED_FAILURES = {
     "ack_wait_ten_minutes_without_blocker": "ACK wait reached ten minutes without Router-visible blocker",
     "lost_role_without_pm_blocker": "lost role wait did not route to PM blocker recovery",
     "controller_local_wait_reminded_itself": "Controller sent a reminder to itself instead of self-auditing local action ledger",
+    "packet_holder_projection_missing_current_work": "packet holder is active but current_work does not name the packet holder",
+    "passive_reconciliation_projection_missing_current_work": "passive reconciliation wait is active but current_work does not name the internal owner",
+    "router_internal_projection_missing_current_work": "Router internal work is active but current_work does not name Router",
     "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
     "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
 }
@@ -154,6 +160,14 @@ def _state_id(state: model.State) -> str:
         f"controller_self_audit={state.controller_local_self_audit_done},"
         f"controller_local_blocker={state.controller_local_blocker_recorded},"
         f"controller_reminded_itself={state.controller_reminded_itself}|"
+        f"legacy_wait_null={state.legacy_waiting_for_role_null},"
+        f"packet_holder={state.active_packet_holder},"
+        f"packet_projection={state.packet_holder_projection_needed},"
+        f"passive_reconcile={state.passive_reconciliation_wait_open},"
+        f"router_projection={state.router_internal_projection_needed},"
+        f"current_work={state.current_work_owner_kind}:{state.current_work_owner_key},"
+        f"current_work_task={state.current_work_task_visible},"
+        f"current_work_source={state.current_work_source}|"
         f"mail={state.mailbox_evidence_present},"
         f"{state.mailbox_evidence_valid},{state.mailbox_evidence_consumed},"
         f"wait_tick={state.mailbox_wait_tick_observed},"

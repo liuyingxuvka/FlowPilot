@@ -24,6 +24,8 @@ Risk intent brief:
   live daemon-owned role wait is active, foreground Controller ending while
   the daemon is live but no Controller action is ready, heartbeat starting a
   second live daemon, Router scheduler ledger corruption from partial writes,
+  monitor current-work projection dropping active packet holders or internal
+  reconciliation owners after `pending_action` is cleared,
   treating a fresh runtime write lock as corruption instead of a one-tick
   defer, daemon status claiming active after an error lock or missing process,
   and terminal stop leaving daemon/Controller/roles active.
@@ -47,7 +49,9 @@ Risk intent brief:
   normal runtime; Controller stays attached to the ledger during all
   nonterminal daemon-live runtime, processes pending executable Controller
   actions, and keeps a foreground standby loop active during ordinary
-  daemon-owned role waits; Router/Controller durable ledgers stay valid JSON
+  daemon-owned role waits; monitor current-work projection names active packet
+  holders, passive reconciliation owners, and internal Router/Controller work
+  even when the legacy wait target is null; Router/Controller durable ledgers stay valid JSON
   after every write, fresh in-progress write locks defer daemon progress
   instead of surfacing as corruption, durable ledgers are written atomically,
   and daemon active status never contradicts an error lock or missing process;
@@ -141,6 +145,15 @@ class State:
     controller_local_self_audit_done: bool = False
     controller_local_blocker_recorded: bool = False
     controller_reminded_itself: bool = False
+    legacy_waiting_for_role_null: bool = False
+    active_packet_holder: str = ""
+    packet_holder_projection_needed: bool = False
+    passive_reconciliation_wait_open: bool = False
+    router_internal_projection_needed: bool = False
+    current_work_owner_kind: str = "none"  # none | role | controller | router | user
+    current_work_owner_key: str = ""
+    current_work_task_visible: bool = False
+    current_work_source: str = "none"
     mailbox_wait_tick_observed: bool = False
     mailbox_evidence_present: bool = False
     mailbox_evidence_valid: bool = True
@@ -254,6 +267,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 daemon_tick_seconds=1,
                 roles_live=True,
                 heartbeat_active=True,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
             ),
         )
         return
@@ -285,6 +302,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 wait_target_metadata_present=False,
                 controller_action_pending=False,
                 controller_action_ready=False,
+                legacy_waiting_for_role_null=False,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="none",
+                current_work_owner_key="",
+                current_work_task_visible=False,
+                current_work_source="none",
                 route_work_allowed=False,
             ),
         )
@@ -327,6 +353,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     startup_bootstrap_pending_action_open=True,
                     startup_bootstrap_flag_current=False,
                     startup_same_action_reissue_count=1,
+                    current_work_owner_kind="controller",
+                    current_work_owner_key="controller",
+                    current_work_task_visible=True,
+                    current_work_source="pending_action",
                 ),
             )
             return
@@ -349,6 +379,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     startup_bootstrap_pending_action_open=False,
                     startup_router_row_reconciled=True,
                     startup_next_row_scheduled_after_receipt=True,
+                    current_work_owner_kind="router",
+                    current_work_owner_key="router",
+                    current_work_task_visible=True,
+                    current_work_source="router_daemon",
                 ),
             )
             return
@@ -361,6 +395,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_core_loaded=True,
                 controller_attached=True,
                 route_work_allowed=True,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
             ),
         )
         return
@@ -395,6 +433,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_cleared_stateful_receipt_without_postcondition_evidence=False,
                 same_controller_action_reissue_count=state.same_controller_action_reissue_count + 1,
                 foreground_standby_active=False,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="controller",
+                current_work_owner_key="controller",
+                current_work_task_visible=True,
+                current_work_source="pending_action",
             ),
         )
         yield Transition(
@@ -422,11 +468,67 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_cleared_stateful_receipt_without_postcondition_evidence=False,
                 same_controller_action_reissue_count=state.same_controller_action_reissue_count + 1,
                 foreground_standby_active=False,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="controller",
+                current_work_owner_key="controller",
+                current_work_task_visible=True,
+                current_work_source="pending_action",
             ),
         )
         yield Transition(
             "user_requests_terminal_stop",
             _step(state, stop_requested=True),
+        )
+        return
+
+    if (
+        state.current_wait == "none"
+        and not state.controller_action_pending
+        and state.router_internal_action_fact_current
+        and not state.packet_holder_projection_needed
+        and not state.passive_reconciliation_wait_open
+        and not state.router_internal_projection_needed
+        and state.current_work_source == "router_daemon"
+    ):
+        yield Transition(
+            "daemon_projects_packet_holder_current_work_owner",
+            _step(
+                state,
+                legacy_waiting_for_role_null=True,
+                active_packet_holder="project_manager",
+                packet_holder_projection_needed=True,
+                current_work_owner_kind="role",
+                current_work_owner_key="project_manager",
+                current_work_task_visible=True,
+                current_work_source="packet_ledger",
+            ),
+        )
+        yield Transition(
+            "daemon_projects_passive_reconciliation_current_work_owner",
+            _step(
+                state,
+                legacy_waiting_for_role_null=True,
+                passive_reconciliation_wait_open=True,
+                current_work_owner_kind="controller",
+                current_work_owner_key="controller",
+                current_work_task_visible=True,
+                current_work_source="passive_wait",
+            ),
+        )
+        yield Transition(
+            "daemon_projects_router_internal_current_work_owner",
+            _step(
+                state,
+                legacy_waiting_for_role_null=True,
+                router_internal_projection_needed=True,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
+            ),
         )
         return
 
@@ -440,6 +542,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="ack",
+                legacy_waiting_for_role_null=False,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="role",
+                current_work_owner_key="target_role",
+                current_work_task_visible=True,
+                current_work_source="current_wait",
                 event_wait_action_open=False,
                 external_event_recorded=False,
                 external_event_matches_wait=False,
@@ -461,6 +572,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="report",
+                legacy_waiting_for_role_null=False,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="role",
+                current_work_owner_key="target_role",
+                current_work_task_visible=True,
+                current_work_source="current_wait",
                 event_wait_action_open=True,
                 external_event_recorded=False,
                 external_event_matches_wait=False,
@@ -483,6 +603,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
+                legacy_waiting_for_role_null=True,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="controller",
+                current_work_owner_key="controller",
+                current_work_task_visible=True,
+                current_work_source="current_wait",
                 event_wait_action_open=False,
                 wait_target_metadata_present=True,
                 wait_target_expected_evidence_visible=True,
@@ -497,6 +626,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
+                legacy_waiting_for_role_null=True,
+                active_packet_holder="",
+                packet_holder_projection_needed=False,
+                passive_reconciliation_wait_open=False,
+                router_internal_projection_needed=False,
+                current_work_owner_kind="controller",
+                current_work_owner_key="controller",
+                current_work_task_visible=True,
+                current_work_source="current_wait",
                 event_wait_action_open=False,
                 wait_target_metadata_present=True,
                 wait_target_expected_evidence_visible=True,
@@ -686,6 +824,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_internal_action_fact_current=True,
                 router_internal_fact_updated_from_receipt=True,
                 foreground_standby_active=False,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
             ),
         )
         return
@@ -708,6 +850,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 router_internal_action_fact_current=True,
                 router_internal_fact_updated_from_receipt=True,
                 foreground_standby_active=False,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
             ),
         )
         return
@@ -806,12 +952,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if state.controller_local_blocker_recorded:
             yield Transition(
                 "controller_local_wait_blocker_routes_to_pm",
-                _step(state, current_wait="none", stop_requested=True),
+                _step(
+                    state,
+                    current_wait="none",
+                    stop_requested=True,
+                    current_work_owner_kind="controller",
+                    current_work_owner_key="controller",
+                    current_work_task_visible=True,
+                    current_work_source="current_wait",
+                ),
             )
             return
         yield Transition(
             "controller_local_self_audit_clears_wait",
-            _step(state, current_wait="none", controller_local_self_audit_done=False),
+            _step(
+                state,
+                current_wait="none",
+                controller_local_self_audit_done=False,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
+            ),
         )
         return
 
@@ -870,6 +1032,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 current_wait="none",
                 mailbox_wait_tick_observed=False,
                 foreground_standby_active=False,
+                current_work_owner_kind="router",
+                current_work_owner_key="router",
+                current_work_task_visible=True,
+                current_work_source="router_daemon",
             ),
         )
         return
@@ -1103,6 +1269,37 @@ def hazard_states() -> dict[str, State]:
             wait_target_metadata_present=True,
             wait_target_expected_evidence_visible=True,
             controller_reminded_itself=True,
+        ),
+        "packet_holder_projection_missing_current_work": replace(
+            safe_active,
+            current_wait="none",
+            legacy_waiting_for_role_null=True,
+            active_packet_holder="project_manager",
+            packet_holder_projection_needed=True,
+            current_work_owner_kind="none",
+            current_work_owner_key="",
+            current_work_task_visible=False,
+            current_work_source="none",
+        ),
+        "passive_reconciliation_projection_missing_current_work": replace(
+            safe_active,
+            current_wait="none",
+            legacy_waiting_for_role_null=True,
+            passive_reconciliation_wait_open=True,
+            current_work_owner_kind="none",
+            current_work_owner_key="",
+            current_work_task_visible=False,
+            current_work_source="none",
+        ),
+        "router_internal_projection_missing_current_work": replace(
+            safe_active,
+            current_wait="none",
+            legacy_waiting_for_role_null=True,
+            router_internal_projection_needed=True,
+            current_work_owner_kind="none",
+            current_work_owner_key="",
+            current_work_task_visible=False,
+            current_work_source="none",
         ),
         "foreground_controller_ended_with_pending_controller_action": replace(
             safe_active,
@@ -1350,6 +1547,30 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller sent a reminder to itself instead of self-auditing local action ledger")
     if state.current_wait == "controller_local" and not state.controller_local_self_audit_done:
         failures.append("Controller-local wait did not self-audit action ledger and receipts")
+    if state.packet_holder_projection_needed and not (
+        state.active_packet_holder
+        and state.current_work_owner_kind == "role"
+        and state.current_work_owner_key == state.active_packet_holder
+        and state.current_work_task_visible
+        and state.current_work_source == "packet_ledger"
+    ):
+        failures.append("packet holder is active but current_work does not name the packet holder")
+    if state.passive_reconciliation_wait_open and not (
+        state.current_work_owner_kind == "controller"
+        and state.current_work_owner_key == "controller"
+        and state.current_work_task_visible
+        and state.current_work_source == "passive_wait"
+    ):
+        failures.append("passive reconciliation wait is active but current_work does not name the internal owner")
+    if state.router_internal_projection_needed and not (
+        state.current_work_owner_kind == "router"
+        and state.current_work_owner_key == "router"
+        and state.current_work_task_visible
+        and state.current_work_source == "router_daemon"
+    ):
+        failures.append("Router internal work is active but current_work does not name Router")
+    if state.current_work_owner_kind == "role" and not state.current_work_owner_key:
+        failures.append("role current_work owner lacks owner key")
     if state.daemon_writer_count > 1 or state.daemon_lock_state == "duplicate":
         failures.append("multiple Router daemon writers exist for one run")
     if state.daemon_alive and state.daemon_tick_seconds != 1:
@@ -1542,6 +1763,10 @@ INVARIANTS = (
     _invariant("controller_does_not_close_external_event_wait", "Controller closed external-event wait instead of Router"),
     _invariant("controller_local_wait_does_not_remind_itself", "Controller sent a reminder to itself instead of self-auditing local action ledger"),
     _invariant("controller_local_wait_self_audits", "Controller-local wait did not self-audit action ledger and receipts"),
+    _invariant("current_work_names_packet_holder", "packet holder is active but current_work does not name the packet holder"),
+    _invariant("current_work_names_passive_reconciliation_owner", "passive reconciliation wait is active but current_work does not name the internal owner"),
+    _invariant("current_work_names_router_internal_owner", "Router internal work is active but current_work does not name Router"),
+    _invariant("role_current_work_has_owner_key", "role current_work owner lacks owner key"),
     _invariant("controller_not_runtime_metronome", "Controller used diagnostic Router next/run-until-wait as the normal runtime metronome"),
     _invariant("mailbox_evidence_consumed_once", "mailbox evidence was consumed more than once"),
     _invariant("controller_done_requires_receipt", "Controller action was marked done without a Controller receipt"),

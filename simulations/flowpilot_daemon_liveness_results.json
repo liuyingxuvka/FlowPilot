@@ -1,0 +1,71 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=4 initial_states=1 traces=30",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "controller_skips_liveness_check": {
+        "detected": true,
+        "expected": "Controller continued after delayed heartbeat without liveness check",
+        "failures": [
+          "Controller continued after delayed heartbeat without liveness check",
+          "check_liveness was treated as final without Controller liveness check"
+        ]
+      },
+      "dead_daemon_left_dead_after_check": {
+        "detected": true,
+        "expected": "Controller found dead daemon without recovering current run daemon",
+        "failures": [
+          "Controller found dead daemon without recovering current run daemon"
+        ]
+      },
+      "delayed_heartbeat_reported_ok": {
+        "detected": true,
+        "expected": "monitor reported ok after the five-second heartbeat window",
+        "failures": [
+          "monitor reported ok after the five-second heartbeat window",
+          "Controller continued after delayed heartbeat without liveness check"
+        ]
+      },
+      "monitor_decides_restart_from_timestamp": {
+        "detected": true,
+        "expected": "monitor decided recovery before Controller liveness check",
+        "failures": [
+          "monitor decided recovery before Controller liveness check",
+          "Controller continued after delayed heartbeat without liveness check"
+        ]
+      },
+      "recovery_starts_second_writer": {
+        "detected": true,
+        "expected": "Controller recovery started a second live Router writer",
+        "failures": [
+          "Controller recovery started a second live Router writer"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "heartbeat_check_seconds": 5,
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 8,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 9,
+    "terminal_state_count": 3
+  }
+}

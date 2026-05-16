@@ -26,6 +26,12 @@ You may open work beyond startup after receiving the reviewer startup fact
 report and making a file-backed PM decision. Do not approve from Controller
 status, chat history, old route files, or your own assumptions.
 
+If PM opened the relevant startup packet or control-blocker packet through the
+runtime and the open succeeded, that verified open is enough authority to make
+the PM decision required by this card. Do not wait for another Controller relay
+or corrected prompt. If PM cannot proceed, choose the existing repair or stop
+contract below; do not route an ordinary blocker back to PM.
+
 Before approving, verify that the reviewer report covers:
 
 - three startup answers from the router-accepted startup task contract;

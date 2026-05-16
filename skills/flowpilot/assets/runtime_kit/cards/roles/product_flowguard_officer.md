@@ -26,6 +26,11 @@ Open the addressed officer packet through the unified runtime
 a concrete `--agent-id`; do not read the packet body by ordinary file read or
 from chat context. Use the unified runtime as the live packet execution entrypoint. If the runtime session cannot open the packet, return the runtime
 blocker envelope instead of continuing from memory.
+A successful packet-open session is sufficient authority to work this addressed
+officer packet. Do not wait for another relay, corrected prompt, or extra
+permission after the open succeeds. If you truly cannot complete the packet,
+return the existing formal blocker, report-with-blocker, or PM suggestion
+allowed by the packet/card contract so PM or Router can decide.
 
 Check whether the product model covers user tasks, user-visible state, backend
 or UI behavior, missing workflows, failure states, negative scope, acceptance

@@ -39,8 +39,12 @@ Risk intent brief:
   transient `.tmp-*.json` files and transient file disappearance must never
   stop the daemon; daemon
   queue budget exhaustion must immediately start the next tick instead of
-  sleeping; real waits must not busy-loop; and stale daemon snapshots must
-  never erase newer durable evidence.
+  sleeping; foreground start commands that collide with a fresh runtime-state
+  writer must wait for settlement and return live daemon status instead of
+  failing; startup Controller receipts must fold action, scheduler, pending,
+  bootstrap, and run-state projections under one owner instead of depending on
+  a later apply path; real waits must not busy-loop; and stale daemon snapshots
+  must never erase newer durable evidence.
 """
 
 from __future__ import annotations
@@ -75,7 +79,7 @@ class State:
 
     controller_receipt_status: str = "none"  # none | done | blocked
     controller_receipt_payload_quality: str = "none"  # none | complete | incomplete
-    controller_receipt_action_class: str = "stateful"  # stateful | startup_bootloader | mail_delivery
+    controller_receipt_action_class: str = "stateful"  # stateful | startup_bootloader | mail_delivery | controller_boundary
     controller_receipt_reconciled: bool = False
     pending_cleared_after_receipt: bool = False
     stateful_postconditions_applied: bool = False
@@ -91,6 +95,10 @@ class State:
     startup_reconciliation_owner: str = "none"  # none | startup_daemon | startup_bootloader_controller_receipt | generic_receipt
     generic_receipt_reconciler_touched_startup_row: bool = False
     unsupported_startup_receipt_action: bool = False
+    startup_receipt_apply_split: bool = False
+    startup_receipt_requires_apply_to_advance: bool = False
+    startup_receipt_single_owner_folded: bool = False
+    startup_receipt_replay_is_noop: bool = False
     startup_secondary_record_roles_started: bool = False
     startup_secondary_record_core_prompts_injected: bool = False
     startup_router_state_roles_started: bool = False
@@ -138,6 +146,12 @@ class State:
     runtime_writer_stalled: bool = False
     runtime_settlement_waiting: bool = False
     runtime_settlement_progress_observed: bool = False
+    foreground_start_command_active: bool = False
+    foreground_start_reads_runtime_during_writer: bool = False
+    foreground_start_waits_for_runtime_writer: bool = False
+    foreground_start_retries_after_writer_finishes: bool = False
+    foreground_start_returns_live_daemon_status: bool = False
+    foreground_start_fatal_from_active_writer: bool = False
     queue_stop_reason: str = "none"  # none | barrier | no_action | pending_action_changed | max_actions_per_tick
     sleep_taken: bool = False
     immediate_tick_requested: bool = False
@@ -298,6 +312,54 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if (
         state.runtime_writer_active
+        and state.foreground_start_command_active
+        and state.foreground_start_reads_runtime_during_writer
+        and not state.foreground_start_waits_for_runtime_writer
+        and not state.next_action_computed
+    ):
+        yield Transition(
+            "foreground_start_waits_for_active_runtime_writer",
+            _step(state, foreground_start_waits_for_runtime_writer=True),
+        )
+        return
+
+    if (
+        state.runtime_writer_active
+        and state.foreground_start_command_active
+        and state.foreground_start_waits_for_runtime_writer
+        and not state.foreground_start_retries_after_writer_finishes
+        and not state.next_action_computed
+    ):
+        yield Transition(
+            "foreground_start_retries_after_runtime_writer_finishes",
+            _step(
+                state,
+                runtime_writer_active=False,
+                runtime_settlement_waiting=False,
+                runtime_settlement_progress_observed=False,
+                foreground_start_retries_after_writer_finishes=True,
+            ),
+        )
+        return
+
+    if (
+        state.foreground_start_command_active
+        and state.foreground_start_retries_after_writer_finishes
+        and not state.foreground_start_returns_live_daemon_status
+        and not state.next_action_computed
+    ):
+        yield Transition(
+            "foreground_start_returns_live_daemon_status_after_settlement",
+            _step(
+                state,
+                foreground_start_command_active=False,
+                foreground_start_returns_live_daemon_status=True,
+            ),
+        )
+        return
+
+    if (
+        state.runtime_writer_active
         and not state.runtime_writer_stalled
         and not state.runtime_settlement_waiting
         and not state.next_action_computed
@@ -410,6 +472,16 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 "daemon_observes_active_runtime_writer",
                 _step(state, runtime_writer_active=True),
             )
+            if not state.foreground_start_returns_live_daemon_status:
+                yield Transition(
+                    "foreground_start_observes_active_runtime_writer",
+                    _step(
+                        state,
+                        runtime_writer_active=True,
+                        foreground_start_command_active=True,
+                        foreground_start_reads_runtime_during_writer=True,
+                    ),
+                )
         if not state.startup_card_bundle_ack_resolved:
             yield Transition(
                 "card_bundle_ack_arrives_while_user_intake_waits",
@@ -445,6 +517,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 startup_row_reconciled=True,
                 startup_postcondition_satisfied=True,
                 startup_reconciliation_owner="startup_bootloader_controller_receipt",
+                startup_receipt_single_owner_folded=True,
+            ),
+        )
+        yield Transition(
+            "daemon_folds_startup_receipt_with_single_owner",
+            _step(
+                state,
+                pending_action_kind="none",
+                pending_action_status="none",
+                controller_receipt_status="done",
+                controller_receipt_payload_quality="complete",
+                controller_receipt_action_class="startup_bootloader",
+                controller_receipt_reconciled=True,
+                pending_cleared_after_receipt=True,
+                stateful_postconditions_applied=True,
+                startup_row_reconciled=True,
+                startup_postcondition_satisfied=True,
+                startup_reconciliation_owner="startup_bootloader_controller_receipt",
+                startup_receipt_single_owner_folded=True,
             ),
         )
         yield Transition(
@@ -501,6 +592,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 startup_row_reconciled=True,
                 startup_postcondition_satisfied=True,
                 startup_reconciliation_owner="startup_bootloader_controller_receipt",
+                startup_receipt_single_owner_folded=True,
                 control_blocker_written=True,
                 control_blocker_lane="control_plane_reissue",
                 control_blocker_direct_retry_budget=2,
@@ -537,6 +629,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 role_wait_cleared_after_event=False,
                 stale_daemon_snapshot_loaded=True,
             ),
+        )
+        return
+
+    if (
+        state.controller_receipt_action_class == "startup_bootloader"
+        and state.controller_receipt_status == "done"
+        and state.startup_receipt_single_owner_folded
+        and not state.startup_receipt_replay_is_noop
+        and not state.next_action_computed
+    ):
+        yield Transition(
+            "startup_receipt_replay_is_noop",
+            _step(state, startup_receipt_replay_is_noop=True),
         )
         return
 
@@ -1062,6 +1167,23 @@ def hazard_states() -> dict[str, State]:
             runtime_writer_stalled=False,
             runtime_settlement_waiting=False,
         ),
+        "foreground_start_active_writer_fatal": replace(
+            safe,
+            runtime_writer_active=True,
+            runtime_writer_stalled=False,
+            foreground_start_command_active=True,
+            foreground_start_reads_runtime_during_writer=True,
+            foreground_start_fatal_from_active_writer=True,
+        ),
+        "foreground_start_reports_before_writer_settles": replace(
+            safe,
+            runtime_writer_active=True,
+            runtime_writer_stalled=False,
+            foreground_start_command_active=True,
+            foreground_start_reads_runtime_during_writer=True,
+            foreground_start_waits_for_runtime_writer=True,
+            foreground_start_returns_live_daemon_status=True,
+        ),
         "startup_reconciled_action_false_pm_blocker": replace(
             safe,
             pending_action_kind="none",
@@ -1077,6 +1199,68 @@ def hazard_states() -> dict[str, State]:
             startup_reconciliation_owner="startup_daemon",
             control_blocker_written=True,
             control_blocker_lane="pm_repair_decision_required",
+            next_action_computed=True,
+        ),
+        "startup_receipt_apply_split_requires_later_apply": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            startup_receipt_apply_split=True,
+            startup_receipt_requires_apply_to_advance=True,
+            startup_row_reconciled=False,
+            startup_postcondition_satisfied=False,
+            next_action_computed=True,
+        ),
+        "startup_receipt_apply_split_false_pm_blocker": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            startup_receipt_apply_split=True,
+            startup_row_reconciled=False,
+            startup_postcondition_satisfied=False,
+            control_blocker_written=True,
+            control_blocker_lane="pm_repair_decision_required",
+            next_action_computed=True,
+        ),
+        "startup_receipt_single_owner_incomplete_fold": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            startup_receipt_single_owner_folded=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=False,
+            startup_reconciliation_owner="startup_bootloader_controller_receipt",
+            next_action_computed=True,
+        ),
+        "startup_receipt_reconciled_by_daemon_postcondition_owner": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            controller_receipt_reconciled=True,
+            pending_cleared_after_receipt=True,
+            stateful_postconditions_applied=True,
+            startup_row_reconciled=True,
+            startup_postcondition_satisfied=True,
+            startup_reconciliation_owner="startup_daemon",
             next_action_computed=True,
         ),
         "startup_missing_postcondition_pm_lane_before_reissue": replace(
@@ -1423,6 +1607,22 @@ def invariant_failures(state: State) -> list[str]:
     if state.runtime_writer_active and not state.runtime_writer_stalled and not state.daemon_alive:
         failures.append("active runtime writer stopped the daemon before settlement")
 
+    if state.foreground_start_fatal_from_active_writer:
+        failures.append("foreground start command failed on active runtime writer instead of waiting and retrying")
+
+    if (
+        state.foreground_start_command_active
+        and state.foreground_start_returns_live_daemon_status
+        and state.runtime_writer_active
+    ):
+        failures.append("foreground start reported live daemon status before runtime writer settled")
+
+    if (
+        state.foreground_start_retries_after_writer_finishes
+        and not state.foreground_start_waits_for_runtime_writer
+    ):
+        failures.append("foreground start retried runtime read without first waiting on the active writer")
+
     if state.controller_receipt_action_class == "mail_delivery":
         mail_fold_complete = (
             state.mail_delivery_postcondition_applied
@@ -1505,9 +1705,29 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("Router repeated unrelated Controller work after PM ACK instead of releasing user_intake")
 
     if state.controller_receipt_action_class == "startup_bootloader":
+        startup_fold_complete = (
+            state.controller_receipt_reconciled
+            and state.pending_cleared_after_receipt
+            and state.stateful_postconditions_applied
+            and state.startup_row_reconciled
+            and state.startup_postcondition_satisfied
+            and state.startup_reconciliation_owner == "startup_bootloader_controller_receipt"
+        )
+        if state.startup_receipt_apply_split and state.startup_receipt_requires_apply_to_advance:
+            failures.append("startup Controller receipt required a separate apply path to advance")
+        if state.startup_receipt_apply_split and state.next_action_computed:
+            failures.append("startup Controller receipt reached next action through split receipt/apply ownership")
+        if state.startup_receipt_single_owner_folded and not startup_fold_complete:
+            failures.append("startup bootloader receipt single-owner fold did not update every durable projection")
         if state.startup_row_reconciled and not state.startup_postcondition_satisfied:
             failures.append("startup bootloader row was reconciled without its postcondition")
-        if state.startup_row_reconciled and state.startup_reconciliation_owner not in {
+        if (
+            state.controller_receipt_status == "done"
+            and state.startup_row_reconciled
+            and state.startup_reconciliation_owner != "startup_bootloader_controller_receipt"
+        ):
+            failures.append("startup bootloader row was reconciled by the wrong owner")
+        elif state.startup_row_reconciled and state.startup_reconciliation_owner not in {
             "startup_daemon",
             "startup_bootloader_controller_receipt",
         }:
@@ -1667,6 +1887,9 @@ INVARIANTS = (
     _invariant("temp_controller_action_race_cannot_stop_daemon", "transient Controller action temp file race stopped the daemon"),
     _invariant("active_runtime_writer_defers_blocker", "active runtime writer was converted into a control blocker before settlement"),
     _invariant("active_runtime_writer_cannot_stop_daemon", "active runtime writer stopped the daemon before settlement"),
+    _invariant("foreground_start_waits_on_active_runtime_writer", "foreground start command failed on active runtime writer instead of waiting and retrying"),
+    _invariant("foreground_start_reports_after_runtime_writer_settlement", "foreground start reported live daemon status before runtime writer settled"),
+    _invariant("foreground_start_retry_requires_writer_wait", "foreground start retried runtime read without first waiting on the active writer"),
     _invariant("mail_delivery_receipt_folds_or_blocks", "mail delivery receipt reached next action without packet ledger fold or control blocker"),
     _invariant("mail_delivery_postcondition_folds_packet_ledger", "mail delivery postcondition was applied without moving the packet ledger and Router flag together"),
     _invariant("mail_delivery_flag_requires_packet_release", "mail delivery Router flag was set while the packet still belonged to Controller"),
@@ -1681,6 +1904,9 @@ INVARIANTS = (
     _invariant("pm_ack_does_not_queue_controller_user_intake_delivery", "PM system-card ACK queued a Controller deliver_mail row instead of Router release"),
     _invariant("pm_ack_user_intake_release_idempotent", "Router released startup user_intake more than once"),
     _invariant("pm_ack_preempts_unrelated_controller_loop", "Router repeated unrelated Controller work after PM ACK instead of releasing user_intake"),
+    _invariant("startup_receipt_does_not_depend_on_later_apply_path", "startup Controller receipt required a separate apply path to advance"),
+    _invariant("startup_receipt_single_owner_before_next_action", "startup Controller receipt reached next action through split receipt/apply ownership"),
+    _invariant("startup_receipt_single_owner_fold_updates_all_projections", "startup bootloader receipt single-owner fold did not update every durable projection"),
     _invariant("startup_bootloader_reconciles_with_postcondition", "startup bootloader row was reconciled without its postcondition"),
     _invariant("startup_bootloader_reconciliation_owner", "startup bootloader row was reconciled by the wrong owner"),
     _invariant("startup_bootloader_no_false_pm_blocker_after_reconciled", "startup bootloader row produced a control blocker after it was already reconciled"),

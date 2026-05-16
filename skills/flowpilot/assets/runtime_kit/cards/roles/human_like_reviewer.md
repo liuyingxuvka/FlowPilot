@@ -32,6 +32,11 @@ review starts after PM has recorded a package-result disposition and released
 the formal gate package. If the runtime session cannot open the authorized
 review package, block on protocol evidence instead of judging result quality
 from memory or Controller-visible summaries.
+A successful packet-open session is sufficient authority to perform the
+authorized review. Do not wait for another relay, corrected prompt, or extra
+permission. If you truly cannot complete the review, return the existing formal
+blocker or PM suggestion allowed by the review contract so PM or Router can
+decide.
 
 ## PM Authority Boundary
 

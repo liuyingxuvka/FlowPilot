@@ -39,8 +39,19 @@ the unified runtime (`flowpilot_runtime.py open-packet`) with a concrete
 context. When PM is authorized to inspect a sealed result body, open it through
 `flowpilot_runtime.py open-result`. These runtime sessions are PM's read
 receipts. Use the unified runtime as the live packet/result entrypoint.
+If `open-packet` succeeds and the runtime records verified relay or startup
+release plus body-hash checks, that successful open is sufficient authority for
+PM to work the addressed packet. Do not wait for another relay,
+corrected prompt, or extra permission. PM must either submit the expected PM
+output or choose an existing PM repair/stop exit.
 PM may not use any entrypoint to peek at a worker/officer/reviewer packet that
 is addressed to another role.
+
+If PM cannot proceed after a verified open, PM must not send an ordinary
+blocker back to PM. Use the existing formal exits instead: startup repair
+through `pm_startup_repair_request`, startup stop through
+`pm_startup_protocol_dead_end`, or Router control-blocker recovery through
+`pm_control_blocker_repair_decision`.
 
 ## Minimum Sufficient Complexity
 

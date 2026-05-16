@@ -1,0 +1,642 @@
+{
+  "contract_refinement": {
+    "accepted_scenarios": [
+      "valid_hierarchy_with_background_obligation",
+      "valid_release_hierarchy_with_current_heavy_proof"
+    ],
+    "bad_accepts": [],
+    "bad_rejects": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "authority_mesh_confused_with_partition",
+      "background_progress_only_claimed_pass",
+      "child_model_inlines_parent_graph",
+      "heavy_parent_without_split_review",
+      "hidden_child_skipped_checks",
+      "missing_child_inventory",
+      "parent_partition_gap",
+      "release_green_without_heavy_parent_proof",
+      "sibling_ownership_overlap",
+      "stale_child_evidence_used"
+    ]
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0,
+    "violations": []
+  },
+  "graph": {
+    "accepted_state_count": 2,
+    "edge_count": 24,
+    "labels_seen": [
+      "accept_valid_hierarchy_with_background_obligation",
+      "accept_valid_release_hierarchy_with_current_heavy_proof",
+      "reject_authority_mesh_confused_with_partition",
+      "reject_background_progress_only_claimed_pass",
+      "reject_child_model_inlines_parent_graph",
+      "reject_heavy_parent_without_split_review",
+      "reject_hidden_child_skipped_checks",
+      "reject_missing_child_inventory",
+      "reject_parent_partition_gap",
+      "reject_release_green_without_heavy_parent_proof",
+      "reject_sibling_ownership_overlap",
+      "reject_stale_child_evidence_used",
+      "select_authority_mesh_confused_with_partition",
+      "select_background_progress_only_claimed_pass",
+      "select_child_model_inlines_parent_graph",
+      "select_heavy_parent_without_split_review",
+      "select_hidden_child_skipped_checks",
+      "select_missing_child_inventory",
+      "select_parent_partition_gap",
+      "select_release_green_without_heavy_parent_proof",
+      "select_sibling_ownership_overlap",
+      "select_stale_child_evidence_used",
+      "select_valid_hierarchy_with_background_obligation",
+      "select_valid_release_hierarchy_with_current_heavy_proof"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 10,
+    "state_count": 25,
+    "terminal_state_count": 12,
+    "violations": []
+  },
+  "hazard_review": {
+    "hazards": [
+      {
+        "expected_failures": [
+          "authority_mesh_cannot_substitute_for_partition_map"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "authority_mesh_cannot_substitute_for_partition_map"
+        ],
+        "ok": true,
+        "scenario": "authority_mesh_confused_with_partition"
+      },
+      {
+        "expected_failures": [
+          "background_progress_is_not_completion_evidence"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "background_progress_is_not_completion_evidence"
+        ],
+        "ok": true,
+        "scenario": "background_progress_only_claimed_pass"
+      },
+      {
+        "expected_failures": [
+          "child_model_must_not_inline_parent_state_graph"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "child_model_must_not_inline_parent_state_graph"
+        ],
+        "ok": true,
+        "scenario": "child_model_inlines_parent_graph"
+      },
+      {
+        "expected_failures": [
+          "heavy_parent_split_review_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "heavy_parent_split_review_missing"
+        ],
+        "ok": true,
+        "scenario": "heavy_parent_without_split_review"
+      },
+      {
+        "expected_failures": [
+          "child_skipped_required_checks_hidden"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "child_skipped_required_checks_hidden"
+        ],
+        "ok": true,
+        "scenario": "hidden_child_skipped_checks"
+      },
+      {
+        "expected_failures": [
+          "child_model_inventory_incomplete"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "child_model_inventory_incomplete"
+        ],
+        "ok": true,
+        "scenario": "missing_child_inventory"
+      },
+      {
+        "expected_failures": [
+          "parent_partition_coverage_gap"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "parent_partition_coverage_gap"
+        ],
+        "ok": true,
+        "scenario": "parent_partition_gap"
+      },
+      {
+        "expected_failures": [
+          "release_claim_requires_current_heavy_parent_regression"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "release_claim_requires_current_heavy_parent_regression"
+        ],
+        "ok": true,
+        "scenario": "release_green_without_heavy_parent_proof"
+      },
+      {
+        "expected_failures": [
+          "sibling_overlap_requires_explicit_shared_kernel_or_refactor"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "sibling_overlap_requires_explicit_shared_kernel_or_refactor"
+        ],
+        "ok": true,
+        "scenario": "sibling_ownership_overlap"
+      },
+      {
+        "expected_failures": [
+          "child_evidence_stale_or_foreign"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "child_evidence_stale_or_foreign"
+        ],
+        "ok": true,
+        "scenario": "stale_child_evidence_used"
+      }
+    ],
+    "ok": true
+  },
+  "inventory": {
+    "heavy_parent_full_regression_obligations": [],
+    "heavyweight_threshold": 10000,
+    "large_child_models": [],
+    "missing_child_results": [
+      "flowpilot_output_contract",
+      "flowpilot_role_output_runtime",
+      "proof_carrying_checks"
+    ],
+    "ok": true,
+    "parents": [
+      {
+        "edge_count": 2010665,
+        "model_id": "meta",
+        "ok": true,
+        "proof": {
+          "created_at": "2026-05-16T10:02:44.105769+00:00",
+          "proof_file": "simulations/results.proof.json",
+          "reason": "valid proof",
+          "result_file": "simulations/results.json",
+          "valid": true
+        },
+        "result_file": "simulations/results.json",
+        "role": "heavyweight_parent",
+        "split_review_required": true,
+        "state_count": 1949768,
+        "tier": "huge"
+      },
+      {
+        "edge_count": 2036030,
+        "model_id": "capability",
+        "ok": true,
+        "proof": {
+          "created_at": "2026-05-16T10:07:04.242905+00:00",
+          "proof_file": "simulations/capability_results.proof.json",
+          "reason": "valid proof",
+          "result_file": "simulations/capability_results.json",
+          "valid": true
+        },
+        "result_file": "simulations/capability_results.json",
+        "role": "heavyweight_parent",
+        "split_review_required": true,
+        "state_count": 1959064,
+        "tier": "huge"
+      }
+    ],
+    "partition_items": [
+      "startup",
+      "material_intake",
+      "product_architecture",
+      "crew_and_heartbeat",
+      "router_daemon_resume",
+      "packet_and_role_authority",
+      "child_skill_capability",
+      "terminal_ledger",
+      "evidence_mesh_and_install_sync"
+    ],
+    "partition_map": {
+      "child_skill_capability": {
+        "children": [
+          "card_instruction_coverage",
+          "flowpilot_reviewer_active_challenge",
+          "flowpilot_requirement_traceability",
+          "flowpilot_output_contract"
+        ],
+        "owner": "capability"
+      },
+      "crew_and_heartbeat": {
+        "children": [
+          "flowpilot_resume",
+          "flowpilot_role_recovery",
+          "flowpilot_daemon_liveness"
+        ],
+        "owner": "shared_kernel"
+      },
+      "evidence_mesh_and_install_sync": {
+        "children": [
+          "flowpilot_model_mesh",
+          "flowpilot_control_transaction_registry",
+          "flowpilot_legal_next_action",
+          "proof_carrying_checks",
+          "release_tooling"
+        ],
+        "owner": "shared_kernel"
+      },
+      "material_intake": {
+        "children": [
+          "flowpilot_pm_package_absorption",
+          "flowpilot_handoff_artifact_protocol"
+        ],
+        "owner": "meta"
+      },
+      "packet_and_role_authority": {
+        "children": [
+          "flowpilot_packet_lifecycle",
+          "flowpilot_packet_open_authority",
+          "flowpilot_card_envelope",
+          "flowpilot_role_output_runtime"
+        ],
+        "owner": "shared_kernel"
+      },
+      "product_architecture": {
+        "children": [
+          "flowpilot_planning_quality",
+          "flowpilot_model_driven_recursive_route"
+        ],
+        "owner": "shared_kernel"
+      },
+      "router_daemon_resume": {
+        "children": [
+          "flowpilot_router_loop",
+          "flowpilot_persistent_router_daemon",
+          "flowpilot_daemon_reconciliation",
+          "flowpilot_route_replanning_policy"
+        ],
+        "owner": "meta"
+      },
+      "startup": {
+        "children": [
+          "flowpilot_startup_control",
+          "startup_pm_review",
+          "flowpilot_startup_intake_ui",
+          "flowpilot_deterministic_startup_bootstrap"
+        ],
+        "owner": "shared_kernel"
+      },
+      "terminal_ledger": {
+        "children": [
+          "flowpilot_terminal_state_monotonicity",
+          "flowpilot_terminal_summary",
+          "defect_governance",
+          "flowpilot_repair_transaction"
+        ],
+        "owner": "shared_kernel"
+      }
+    },
+    "registered_child_count": 32,
+    "registered_children": [
+      {
+        "edge_count": null,
+        "model_id": "card_instruction_coverage",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/card_instruction_coverage_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 69,
+        "tier": "small"
+      },
+      {
+        "edge_count": 48,
+        "model_id": "defect_governance",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/defect_governance_results.json",
+        "role": "child_evidence",
+        "state_count": 49,
+        "tier": "small"
+      },
+      {
+        "edge_count": 53,
+        "model_id": "flowpilot_card_envelope",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_card_envelope_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 54,
+        "tier": "small"
+      },
+      {
+        "edge_count": 48,
+        "model_id": "flowpilot_control_transaction_registry",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_control_transaction_registry_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 49,
+        "tier": "small"
+      },
+      {
+        "edge_count": 8,
+        "model_id": "flowpilot_daemon_liveness",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_liveness_results.json",
+        "role": "child_evidence",
+        "state_count": 9,
+        "tier": "small"
+      },
+      {
+        "edge_count": 1129,
+        "model_id": "flowpilot_daemon_reconciliation",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
+        "role": "child_evidence",
+        "state_count": 1069,
+        "tier": "medium"
+      },
+      {
+        "edge_count": 38,
+        "model_id": "flowpilot_deterministic_startup_bootstrap",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_deterministic_startup_bootstrap_results.json",
+        "role": "child_evidence",
+        "state_count": 39,
+        "tier": "small"
+      },
+      {
+        "edge_count": 40,
+        "model_id": "flowpilot_handoff_artifact_protocol",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_handoff_artifact_protocol_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 41,
+        "tier": "small"
+      },
+      {
+        "edge_count": 38,
+        "model_id": "flowpilot_legal_next_action",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_legal_next_action_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 39,
+        "tier": "small"
+      },
+      {
+        "edge_count": 40,
+        "model_id": "flowpilot_model_driven_recursive_route",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_model_driven_recursive_route_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 41,
+        "tier": "small"
+      },
+      {
+        "edge_count": 52,
+        "model_id": "flowpilot_model_mesh",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_model_mesh_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 53,
+        "tier": "small"
+      },
+      {
+        "model_id": "flowpilot_output_contract",
+        "registered_in_partition": true,
+        "role": "child_evidence",
+        "tier": "unknown"
+      },
+      {
+        "edge_count": 59,
+        "model_id": "flowpilot_packet_lifecycle",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_packet_lifecycle_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 60,
+        "tier": "small"
+      },
+      {
+        "edge_count": 9,
+        "model_id": "flowpilot_packet_open_authority",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_packet_open_authority_results.json",
+        "role": "child_evidence",
+        "state_count": 10,
+        "tier": "small"
+      },
+      {
+        "edge_count": 16653,
+        "model_id": "flowpilot_persistent_router_daemon",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_persistent_router_daemon_results.json",
+        "role": "child_evidence",
+        "state_count": 7962,
+        "tier": "medium"
+      },
+      {
+        "edge_count": 68,
+        "model_id": "flowpilot_planning_quality",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_planning_quality_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 69,
+        "tier": "small"
+      },
+      {
+        "edge_count": 30,
+        "model_id": "flowpilot_pm_package_absorption",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_pm_package_absorption_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 31,
+        "tier": "small"
+      },
+      {
+        "edge_count": 204,
+        "model_id": "flowpilot_repair_transaction",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_repair_transaction_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 205,
+        "tier": "small"
+      },
+      {
+        "edge_count": 7,
+        "model_id": "flowpilot_requirement_traceability",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_requirement_traceability_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 8,
+        "tier": "small"
+      },
+      {
+        "edge_count": 874,
+        "model_id": "flowpilot_resume",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_resume_results.json",
+        "role": "child_evidence",
+        "state_count": 875,
+        "tier": "small"
+      },
+      {
+        "edge_count": 58,
+        "model_id": "flowpilot_reviewer_active_challenge",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_reviewer_active_challenge_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 59,
+        "tier": "small"
+      },
+      {
+        "model_id": "flowpilot_role_output_runtime",
+        "registered_in_partition": true,
+        "role": "child_evidence",
+        "tier": "unknown"
+      },
+      {
+        "edge_count": 153,
+        "model_id": "flowpilot_role_recovery",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_role_recovery_results.json",
+        "role": "child_evidence",
+        "state_count": 154,
+        "tier": "small"
+      },
+      {
+        "edge_count": 42,
+        "model_id": "flowpilot_route_replanning_policy",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_route_replanning_policy_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 43,
+        "tier": "small"
+      },
+      {
+        "edge_count": 174,
+        "model_id": "flowpilot_router_loop",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_router_loop_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 175,
+        "tier": "small"
+      },
+      {
+        "edge_count": 298,
+        "model_id": "flowpilot_startup_control",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_startup_control_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 283,
+        "tier": "small"
+      },
+      {
+        "edge_count": 24,
+        "model_id": "flowpilot_startup_intake_ui",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_startup_intake_ui_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 25,
+        "tier": "small"
+      },
+      {
+        "edge_count": 28,
+        "model_id": "flowpilot_terminal_state_monotonicity",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_terminal_state_monotonicity_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 29,
+        "tier": "small"
+      },
+      {
+        "edge_count": 20,
+        "model_id": "flowpilot_terminal_summary",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_terminal_summary_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 21,
+        "tier": "small"
+      },
+      {
+        "model_id": "proof_carrying_checks",
+        "registered_in_partition": true,
+        "role": "child_evidence",
+        "tier": "unknown"
+      },
+      {
+        "edge_count": 39,
+        "model_id": "release_tooling",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/release_tooling_results.json",
+        "role": "child_evidence",
+        "state_count": 40,
+        "tier": "small"
+      },
+      {
+        "edge_count": 3148,
+        "model_id": "startup_pm_review",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/startup_pm_review_results.json",
+        "role": "child_evidence",
+        "state_count": 3149,
+        "tier": "medium"
+      }
+    ],
+    "release_confidence": "current"
+  },
+  "model": "flowpilot_model_hierarchy",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "schema_version": 1
+}

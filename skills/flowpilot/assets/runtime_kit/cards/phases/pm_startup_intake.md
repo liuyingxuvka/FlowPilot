@@ -28,6 +28,16 @@ packet as the startup authority. Do not ask Controller to recover the user's
 work request from chat history; Controller may relay only paths, hashes,
 status, and envelopes.
 
+After `flowpilot_runtime.py open-packet` succeeds for the delivered
+`user_intake` packet, PM has verified runtime authority to perform this startup
+intake task. This verified open is enough to continue; do not wait for an
+additional corrected Controller relay. If the
+startup packet or evidence cannot legally support the next PM decision, submit
+an existing PM exit: `pm_startup_repair_request` when a legal repair target
+exists, `pm_startup_protocol_dead_end` when no legal path exists, or
+`pm_control_blocker_repair_decision` when Router delivered a control blocker.
+Do not submit an ordinary blocker back to PM.
+
 Allowed PM decisions:
 
 - reset Controller role;

@@ -7,9 +7,14 @@ Risk purpose:
   daemon follows `.flowpilot/current.json`, writes another run, revives a
   released lock, marks background runs stale just because UI focus moved, or
   reports historical done rows as active work.
+- Guards the human/bootloader invocation boundary: a fresh "start FlowPilot"
+  request creates a new run even when old or parallel runs exist, while resume
+  attaches to an existing run only after explicit resume intent and target
+  selection.
 - Future agents should update and rerun this model when changing daemon start,
   daemon tick, daemon stop, lock refresh, current/index semantics, active task
-  projection, or controller work-board summaries.
+  projection, controller work-board summaries, or fresh-start/resume entry
+  semantics.
 - Companion command: `python simulations/run_flowpilot_parallel_run_isolation_checks.py --json`.
 """
 
@@ -36,7 +41,8 @@ class State:
     status: str = "new"  # new | running | complete
     run_a_exists: bool = False
     run_b_exists: bool = False
-    current_focus: str = "none"  # none | A | B
+    run_c_exists: bool = False
+    current_focus: str = "none"  # none | A | B | C
     daemon_a_bound: bool = False
     daemon_b_bound: bool = False
     daemon_a_tick_after_focus_change: bool = False
@@ -58,6 +64,17 @@ class State:
     active_work_rows: int = 0
     board_reports_active_work: bool = False
     current_focus_used_as_daemon_authority: bool = False
+    fresh_start_requested: bool = False
+    fresh_start_created_new_run: bool = False
+    fresh_start_attached_existing_run: bool = False
+    fresh_start_mutated_existing_run: bool = False
+    current_pointer_used_as_startup_intent: bool = False
+    explicit_resume_requested: bool = False
+    resume_target_selected: str = "none"  # none | A | B | C
+    resume_attached_target: str = "none"  # none | A | B | C
+    ambiguous_resume_requested: bool = False
+    ambiguous_resume_blocked_for_selection: bool = False
+    ambiguous_resume_silently_chose_current: bool = False
 
 
 class Transition(NamedTuple):
@@ -78,9 +95,10 @@ class ParallelRunIsolationStep:
 
     Input x State -> Set(Output x State)
     reads: run catalog, UI focus pointer, run-scoped daemon lock/status,
-      run-scoped router_state, controller action ledger summaries
+      run-scoped router_state, controller action ledger summaries, invocation
+      intent
     writes: run-scoped daemon lock/status, run-scoped router_state, active task
-      projection metadata
+      projection metadata, fresh run shell, resume target selection
     idempotency: daemon writes are scoped by bound run_id/run_root and lock
       identity; board projection is derived from row statuses
     """
@@ -151,6 +169,46 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.fresh_start_requested:
+        yield Transition(
+            "fresh_start_creates_new_run_c_despite_parallel_runs",
+            _step(
+                state,
+                fresh_start_requested=True,
+                fresh_start_created_new_run=True,
+                fresh_start_attached_existing_run=False,
+                fresh_start_mutated_existing_run=False,
+                current_pointer_used_as_startup_intent=False,
+                run_c_exists=True,
+                current_focus="C",
+            ),
+        )
+        return
+
+    if not state.explicit_resume_requested:
+        yield Transition(
+            "explicit_resume_attaches_selected_run_b",
+            _step(
+                state,
+                explicit_resume_requested=True,
+                resume_target_selected="B",
+                resume_attached_target="B",
+            ),
+        )
+        return
+
+    if not state.ambiguous_resume_requested:
+        yield Transition(
+            "ambiguous_resume_blocks_for_target_selection",
+            _step(
+                state,
+                ambiguous_resume_requested=True,
+                ambiguous_resume_blocked_for_selection=True,
+                ambiguous_resume_silently_chose_current=False,
+            ),
+        )
+        return
+
     if state.stop_target == "none":
         yield Transition(
             "targeted_stop_releases_only_run_a",
@@ -217,6 +275,22 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("historical done rows were reported as active board work")
     if state.current_focus_used_as_daemon_authority:
         failures.append("current focus was used as daemon authority")
+    if state.fresh_start_requested and state.fresh_start_attached_existing_run:
+        failures.append("fresh startup attached to an existing run")
+    if state.fresh_start_requested and state.fresh_start_mutated_existing_run:
+        failures.append("fresh startup mutated an existing run")
+    if state.fresh_start_requested and state.current_pointer_used_as_startup_intent:
+        failures.append("current pointer was used as fresh startup intent")
+    if state.fresh_start_requested and not state.fresh_start_created_new_run:
+        failures.append("fresh startup did not create a new run")
+    if state.explicit_resume_requested and state.resume_target_selected == "none":
+        failures.append("explicit resume attached without a selected target")
+    if state.explicit_resume_requested and state.resume_attached_target != state.resume_target_selected:
+        failures.append("explicit resume attached a run other than the selected target")
+    if state.ambiguous_resume_requested and state.ambiguous_resume_silently_chose_current:
+        failures.append("ambiguous resume silently chose current pointer")
+    if state.ambiguous_resume_requested and not state.ambiguous_resume_blocked_for_selection:
+        failures.append("ambiguous resume did not block for target selection")
     return failures
 
 
@@ -229,6 +303,7 @@ def hazard_states() -> dict[str, State]:
         status="running",
         run_a_exists=True,
         run_b_exists=True,
+        run_c_exists=True,
         current_focus="B",
         daemon_a_bound=True,
         daemon_b_bound=True,
@@ -246,6 +321,13 @@ def hazard_states() -> dict[str, State]:
         done_history_rows=1,
         active_work_rows=0,
         board_reports_active_work=False,
+        fresh_start_requested=True,
+        fresh_start_created_new_run=True,
+        explicit_resume_requested=True,
+        resume_target_selected="B",
+        resume_attached_target="B",
+        ambiguous_resume_requested=True,
+        ambiguous_resume_blocked_for_selection=True,
     )
     return {
         "daemon_reads_current_after_focus_change": replace(safe, daemon_a_read_current_pointer=True),
@@ -259,4 +341,11 @@ def hazard_states() -> dict[str, State]:
         "active_status_without_live_process": replace(safe, status_active_without_process=True),
         "done_history_reported_as_active_work": replace(safe, board_reports_active_work=True),
         "current_focus_used_as_daemon_authority": replace(safe, current_focus_used_as_daemon_authority=True),
+        "fresh_start_attaches_existing_run": replace(safe, run_c_exists=False, fresh_start_created_new_run=False, fresh_start_attached_existing_run=True),
+        "fresh_start_mutates_existing_run": replace(safe, fresh_start_mutated_existing_run=True),
+        "fresh_start_uses_current_pointer_as_intent": replace(safe, current_pointer_used_as_startup_intent=True),
+        "fresh_start_without_new_run": replace(safe, run_c_exists=False, fresh_start_created_new_run=False),
+        "explicit_resume_without_target": replace(safe, resume_target_selected="none"),
+        "explicit_resume_attaches_wrong_run": replace(safe, resume_target_selected="A", resume_attached_target="B"),
+        "ambiguous_resume_silently_chooses_current": replace(safe, ambiguous_resume_blocked_for_selection=False, ambiguous_resume_silently_chose_current=True),
     }

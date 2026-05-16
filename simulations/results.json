@@ -1,6 +1,6 @@
 {
   "graph": {
-    "edge_count": 2010668,
+    "edge_count": 2010665,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "labels": [
@@ -59,7 +59,7 @@
       "control_blocker_retry_budget_escalated_to_pm",
       "control_state_written_under_run_root",
       "controller_coordination_boundary_recorded",
-      "controller_core_loaded_after_startup_continuation_bootstrap",
+      "controller_core_loaded_before_startup_obligations",
       "controller_mail_relay_chain_audit_done",
       "crew_archived_at_terminal",
       "crew_ledger_written",
@@ -263,7 +263,7 @@
       "skill_improvement_observation_logged",
       "standard_scenario_pack_selected",
       "startup_background_agents_answered",
-      "startup_banner_emitted",
+      "startup_banner_emitted_after_controller_core",
       "startup_dialog_stopped_for_user_answers",
       "startup_display_entry_action_done",
       "startup_display_surface_answered",
@@ -317,7 +317,7 @@
     }
   },
   "loop": {
-    "edge_count": 2010668,
+    "edge_count": 2010665,
     "nonterminating_component_count": 0,
     "nonterminating_component_samples": [],
     "ok": true,
@@ -328,7 +328,7 @@
     "unreachable_success": false
   },
   "progress": {
-    "edge_count": 2010668,
+    "edge_count": 2010665,
     "nonterminal_without_terminal_path_count": 0,
     "nonterminal_without_terminal_path_samples": [],
     "ok": true,

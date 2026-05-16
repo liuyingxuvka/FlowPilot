@@ -236,6 +236,10 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(session_record["agent_id"], "agent-worker-a-1")
         self.assertFalse(session_record["body_text_persisted_in_session"])
         self.assertNotIn("body_text", session_record)
+        self.assertTrue(session_record["packet_open_authorizes_work"])
+        self.assertTrue(session_record["work_authority"]["authorized"])
+        self.assertTrue(session_record["work_authority"]["do_not_wait_for_additional_controller_relay"])
+        self.assertEqual(session_record["work_authority"]["required_exit"], "expected_packet_result_or_existing_formal_blocker")
 
         ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
         ledger = self.read_json(ledger_path)
@@ -243,6 +247,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(packet_record["packet_runtime_session_id"], session["session_id"])
         self.assertEqual(packet_record["packet_body_opened_by_agent_id"], "agent-worker-a-1")
         self.assertTrue(packet_record["packet_body_opened_by_runtime_session"])
+        self.assertTrue(packet_record["packet_open_authorizes_work"])
+        self.assertEqual(packet_record["packet_open_required_exit"], "expected_packet_result_or_existing_formal_blocker")
+
+        opened_envelope = self.read_json(self.packet_envelope_path(root))
+        self.assertTrue(opened_envelope["packet_open_work_authority"]["authorized"])
+        status_packet = self.read_json(root / opened_envelope["controller_status_packet_path"])
+        self.assertTrue(status_packet["work_authority"]["authorized"])
 
         result = packet_runtime.complete_role_packet_session(
             root,
@@ -602,7 +613,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         user_intake_body = packet_runtime.read_packet_body_for_role(root, envelope, role="project_manager")
         self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, user_intake_body)
         self.assertIn("recipient_role: project_manager", user_intake_body)
+        self.assertIn("pm_startup_repair_request", user_intake_body)
         self.assertIn("user task prompt", user_intake_body)
+        opened_envelope = self.read_json(self.packet_envelope_path(root, "user-intake-001"))
+        self.assertEqual(
+            opened_envelope["packet_open_work_authority"]["required_exit"],
+            "expected_pm_packet_output_or_existing_pm_recovery_decision",
+        )
 
     def test_packet_identity_boundary_is_required_on_read(self) -> None:
         root = self.make_project()

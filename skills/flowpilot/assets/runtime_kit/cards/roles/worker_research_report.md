@@ -26,7 +26,13 @@ envelope.
 Open the addressed research packet through the unified runtime
 (`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
 a concrete `--agent-id`; do not read the packet body by ordinary file read or
-from chat context. Use the unified runtime as the live packet execution entrypoint. Return only the bounded research result requested by the PM.
+from chat context. Use the unified runtime as the live packet execution entrypoint.
+A successful packet-open session is sufficient authority to work this addressed
+research packet. Do not wait for another relay, corrected prompt, or extra
+permission after the open succeeds. If you truly cannot complete the packet,
+return the existing formal blocker, result-with-blocker, or PM suggestion
+allowed by the packet/card contract so PM or Router can decide. Return only the
+bounded research result requested by the PM.
 
 The PM packet boundary is a hard scope boundary, not a low-standard target.
 Within the requested research boundary, use the simplest high-quality evidence

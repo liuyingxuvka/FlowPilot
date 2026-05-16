@@ -291,6 +291,9 @@ REQUIRED_FILES = [
     "simulations/flowpilot_resume_model.py",
     "simulations/run_flowpilot_resume_checks.py",
     "simulations/flowpilot_resume_results.json",
+    "simulations/flowpilot_daemon_liveness_model.py",
+    "simulations/run_flowpilot_daemon_liveness_checks.py",
+    "simulations/flowpilot_daemon_liveness_results.json",
     "simulations/flowpilot_router_loop_model.py",
     "simulations/run_flowpilot_router_loop_checks.py",
     "simulations/flowpilot_router_loop_results.json",
@@ -397,6 +400,7 @@ JSON_FILES = [
     "simulations/flowpilot_reviewer_only_gate_results.json",
     "simulations/card_instruction_coverage_results.json",
     "simulations/flowpilot_resume_results.json",
+    "simulations/flowpilot_daemon_liveness_results.json",
     "simulations/flowpilot_router_loop_results.json",
     "simulations/flowpilot_control_plane_friction_results.json",
     "simulations/flowpilot_event_contract_results.json",
@@ -923,6 +927,7 @@ def main() -> int:
             if not route_action_policy_ok:
                 result["ok"] = False
             cli_cases = [
+                ["--root", str(ROOT), "start", "--json"],
                 ["--root", str(ROOT), "next", "--json"],
                 ["--root", str(ROOT), "run-until-wait", "--new-invocation", "--json"],
                 ["--root", str(ROOT), "apply", "--action-type", "load_router", "--json"],

@@ -32,15 +32,11 @@ If only the skill directory is available, read `DEPENDENCIES.md` in this skill f
 
 ## Required Launcher Behavior
 
-Before the daemon is started or attached, the assistant is only the FlowPilot bootloader. The bootloader may manually run the router only for minimal pre-daemon startup actions: create the run shell, write the current pointer, update the run index, and start or attach the Router daemon. After `start_router_daemon` succeeds, do not keep progress alive by manually looping back to Router commands; attach to daemon-owned status and the Controller action ledger, process exposed Controller rows, write receipts, and otherwise stay in standby.
+Before the daemon is started or attached, the assistant is only the FlowPilot bootloader. A user request to "start FlowPilot" or "use FlowPilot" is always a fresh formal invocation: create a new run even if `.flowpilot/current.json` points at an old or still-running run. Existing runs are independent background/parallel runs; do not attach, stop, merge, supersede, import, or deliver cards to them unless the user explicitly asks to resume, continue, stop, inspect, or target that existing run. The bootloader may manually run the router only for minimal pre-daemon startup actions: create the run shell, write the current pointer, update the run index, and start or attach the Router daemon for the newly created run. After `start_router_daemon` succeeds, do not keep progress alive by manually looping back to Router commands; attach to daemon-owned status and the Controller action ledger, process exposed Controller rows, write receipts, and otherwise stay in standby.
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation:
-
-```powershell
-python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation
-```
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. Legacy equivalent: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation`.
 
 Manual diagnostic/repair commands:
 
@@ -49,6 +45,8 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json apply --action-type <action_type>
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait
 ```
+
+`next` and `run-until-wait` without `--new-invocation` are existing-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
 
 Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
 

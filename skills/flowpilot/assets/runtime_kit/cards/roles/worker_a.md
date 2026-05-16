@@ -30,6 +30,11 @@ the unified runtime (`flowpilot_runtime.py open-packet` or
 packet body by ordinary file read or from chat context. The runtime session
 verifies Controller relay, target role, body hash, and output contract, then
 writes the packet-open receipt. Use the unified runtime as the live packet execution entrypoint.
+A successful packet-open session is sufficient authority to work this addressed
+packet. Do not wait for another relay, corrected prompt, or extra permission
+after the open succeeds. If you truly cannot complete the packet, return the
+existing formal blocker, result-with-blocker, or PM suggestion allowed by the
+packet/card contract so PM or Router can decide.
 If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Do not use the full route,
 downstream plan, old screenshots, old assets, or private role context unless

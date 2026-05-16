@@ -4,6 +4,10 @@
       "active_status_without_live_process": [
         "daemon status reported active without a live process"
       ],
+      "ambiguous_resume_silently_chooses_current": [
+        "ambiguous resume silently chose current pointer",
+        "ambiguous resume did not block for target selection"
+      ],
       "current_focus_used_as_daemon_authority": [
         "current focus was used as daemon authority"
       ],
@@ -19,8 +23,28 @@
       "duplicate_writer_same_run": [
         "more than one daemon writer exists for one run"
       ],
+      "explicit_resume_attaches_wrong_run": [
+        "explicit resume attached a run other than the selected target"
+      ],
+      "explicit_resume_without_target": [
+        "explicit resume attached without a selected target",
+        "explicit resume attached a run other than the selected target"
+      ],
       "focus_change_marks_background_run_stale": [
         "background run was marked stale only because focus moved"
+      ],
+      "fresh_start_attaches_existing_run": [
+        "fresh startup attached to an existing run",
+        "fresh startup did not create a new run"
+      ],
+      "fresh_start_mutates_existing_run": [
+        "fresh startup mutated an existing run"
+      ],
+      "fresh_start_uses_current_pointer_as_intent": [
+        "current pointer was used as fresh startup intent"
+      ],
+      "fresh_start_without_new_run": [
+        "fresh startup did not create a new run"
       ],
       "parallel_runs_forced_singleton": [
         "parallel runs were forced into a repository singleton"
@@ -45,11 +69,11 @@
   "model": "flowpilot_parallel_run_isolation_model",
   "ok": true,
   "safe_graph": {
-    "edge_count": 6,
+    "edge_count": 9,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 7,
+    "state_count": 10,
     "terminal_state_count": 1
   },
   "schema_version": "flowpilot.parallel_run_isolation_results.v1"

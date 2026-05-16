@@ -176,6 +176,51 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
 
+    def test_packet_open_success_requires_work_or_existing_exit(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        packet_runtime_text = normalized(ROOT / "skills/flowpilot/assets/packet_runtime.py")
+        packet_template = normalized(ROOT / "templates/flowpilot/packets/packet_body.template.md")
+        pm_card = normalized(ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md")
+        pm_startup_cards = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
+        ]
+        ordinary_role_cards = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
+        ]
+
+        for text in (packet_runtime_text, packet_template, pm_card):
+            self.assertIn("successful", text)
+            self.assertIn("open-packet", text)
+            self.assertIn("do not wait for another relay", text)
+            self.assertIn("pm_startup_repair_request", text)
+            self.assertIn("pm_startup_protocol_dead_end", text)
+            self.assertIn("pm_control_blocker_repair_decision", text)
+            self.assertIn("ordinary blocker back to pm", text)
+
+        for path in pm_startup_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("verified open", text)
+                self.assertIn("controller relay", text)
+                self.assertIn("ordinary blocker back to pm", text)
+
+        for path in ordinary_role_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("successful packet-open session is sufficient authority", text)
+                self.assertIn("do not wait for another relay", text)
+                self.assertIn("formal blocker", text)
+                self.assertIn("pm or router can decide", text)
+
 
 if __name__ == "__main__":
     unittest.main()

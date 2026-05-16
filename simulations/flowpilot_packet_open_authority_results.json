@@ -1,0 +1,67 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=27",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "ordinary_role_silent_terminal_wait": {
+        "detected": true,
+        "expected": "ordinary role ended without result or formal blocker",
+        "failures": [
+          "ordinary role ended without result or formal blocker"
+        ]
+      },
+      "pm_custom_repair_flow": {
+        "detected": true,
+        "expected": "PM invented a custom recovery flow",
+        "failures": [
+          "PM invented a custom recovery flow"
+        ]
+      },
+      "pm_self_blocker_loop": {
+        "detected": true,
+        "expected": "PM routed a blocker back to PM",
+        "failures": [
+          "PM routed a blocker back to PM"
+        ]
+      },
+      "pm_waits_for_extra_relay_after_verified_open": {
+        "detected": true,
+        "expected": "verified open waited for additional relay",
+        "failures": [
+          "verified open waited for additional relay"
+        ]
+      },
+      "verified_open_without_authority": {
+        "detected": true,
+        "expected": "verified open did not record work authority",
+        "failures": [
+          "verified open did not record work authority"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 9,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 10,
+    "terminal_state_count": 6
+  }
+}

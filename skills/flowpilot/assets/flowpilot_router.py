@@ -22,7 +22,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 import flowpilot_user_flow_diagram
 import card_runtime
@@ -91,6 +91,7 @@ ROUTER_SCHEDULER_ROW_SCHEMA = "flowpilot.router_scheduler_row.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA = "flowpilot.deterministic_bootstrap_seed_evidence.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
+ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 5.0
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
 ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
@@ -2877,6 +2878,50 @@ def _raise_if_runtime_write_active(path: Path) -> None:
         raise RouterLedgerWriteInProgress(path, write_lock, "fresh runtime JSON write lock")
 
 
+def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) -> dict[str, Any]:
+    path = exc.path
+    lock_path = _json_write_lock_path(path)
+    started = time.monotonic()
+    poll_count = 0
+    last_liveness = dict(exc.write_lock)
+    while True:
+        liveness = _json_write_lock_liveness(path)
+        last_liveness = liveness
+        if not liveness.get("fresh"):
+            return {
+                "path": str(path),
+                "lock_path": str(lock_path),
+                "waited_seconds": max(0.0, time.monotonic() - started),
+                "poll_count": poll_count,
+                "final_liveness": last_liveness,
+            }
+        poll_count += 1
+        time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
+
+
+def _run_foreground_with_runtime_writer_settlement(
+    operation: Callable[[], dict[str, Any]],
+    *,
+    command_name: str,
+) -> dict[str, Any]:
+    waits: list[dict[str, Any]] = []
+    while True:
+        try:
+            result = operation()
+            break
+        except RouterLedgerWriteInProgress as exc:
+            waits.append(_wait_for_runtime_json_writer_to_settle(exc))
+    if waits:
+        result = dict(result)
+        result["runtime_write_settlement"] = {
+            "waited": True,
+            "command": command_name,
+            "wait_count": len(waits),
+            "waits": waits,
+        }
+    return result
+
+
 def _is_transient_runtime_json_scan_artifact(path: Path) -> bool:
     return path.name.startswith(".tmp-") or path.name.endswith(".write.lock")
 
@@ -3048,6 +3093,13 @@ def project_relative(project_root: Path, path: Path) -> str:
         return path.resolve().relative_to(project_root.resolve()).as_posix()
     except ValueError as exc:
         raise RouterError(f"path is outside project root: {path}") from exc
+
+
+def _project_root_from_run_root(run_root: Path) -> Path:
+    resolved = run_root.resolve()
+    if resolved.parent.name == "runs" and resolved.parent.parent.name == ".flowpilot":
+        return resolved.parent.parent.parent
+    return resolved.parent
 
 
 def _flowpilot_runtime_entrypoint_ref(project_root: Path) -> str:
@@ -4839,6 +4891,59 @@ def _router_daemon_lock_liveness(lock: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _router_daemon_lock_has_live_owner(liveness: dict[str, Any]) -> bool:
+    return bool(
+        liveness.get("schema_ok")
+        and liveness.get("status_active")
+        and liveness.get("process_live")
+    )
+
+
+def _router_daemon_heartbeat_monitor(
+    lock: dict[str, Any],
+    liveness: dict[str, Any],
+    *,
+    status_exists: bool,
+    status_ok: bool,
+) -> dict[str, Any]:
+    age = liveness.get("age_seconds")
+    reasons: list[str] = []
+    if not status_exists:
+        reasons.append("status_file_missing")
+    elif not status_ok:
+        reasons.append("status_file_invalid")
+    if not liveness.get("schema_ok"):
+        reasons.append("lock_schema_missing_or_invalid")
+    if not liveness.get("status_active"):
+        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
+    if age is None:
+        reasons.append("heartbeat_timestamp_missing_or_invalid")
+    elif float(age) > ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS:
+        reasons.append("heartbeat_older_than_five_seconds")
+    if not liveness.get("process_live"):
+        reasons.append("owner_process_liveness_needs_check")
+    status = "check_liveness" if reasons else "ok"
+    instruction = (
+        "Daemon heartbeat is normal; Controller should stay attached to the existing Router daemon."
+        if status == "ok"
+        else (
+            "Daemon heartbeat needs a Controller liveness check. Check the daemon process, lock, "
+            "and status for this run. If the daemon is alive, stay attached and continue. If it "
+            "is dead, recover the current-run Router daemon without starting a second live writer."
+        )
+    )
+    return {
+        "status": status,
+        "check_after_seconds": ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+        "age_seconds": age,
+        "last_tick_at": lock.get("last_tick_at") or lock.get("created_at"),
+        "controller_liveness_check_required": status == "check_liveness",
+        "monitor_can_decide_recovery": False,
+        "reasons": reasons,
+        "controller_instruction": instruction,
+    }
+
+
 def _router_daemon_lock_is_live(lock: dict[str, Any]) -> bool:
     return bool(_router_daemon_lock_liveness(lock).get("live"))
 
@@ -4874,7 +4979,8 @@ def _acquire_router_daemon_lock(
         return lock
     except FileExistsError:
         existing = read_json_if_exists(path)
-        if _router_daemon_lock_is_live(existing):
+        existing_liveness = _router_daemon_lock_liveness(existing)
+        if existing_liveness.get("live") or _router_daemon_lock_has_live_owner(existing_liveness):
             raise RouterError(
                 "router daemon lock is already active for this run; attach to the existing daemon instead of starting a second writer"
             )
@@ -5029,6 +5135,7 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "action_id": entry.get("action_id"),
         "action_type": entry.get("action_type"),
         "label": entry.get("label"),
+        "summary": entry.get("summary"),
         "status": entry.get("status"),
         "to_role": entry.get("to_role"),
         "completion_class": entry.get("completion_class"),
@@ -8014,6 +8121,18 @@ def _apply_startup_bootloader_receipt_effects(
             set(result.get("coalesced_postconditions") or []) | {"controller_role_confirmed"}
         )
         result["source"] = "startup_bootloader_controller_receipt"
+    elif str(receipt_payload.get("source") or "") == "startup_daemon_bootloader_apply":
+        bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
+        if flag and not (receipt_payload.get("bootstrap_flag_satisfied") or bootstrap_flags.get(flag)):
+            return {
+                "applied": False,
+                "reason": "startup_bootloader_receipt_postcondition_missing",
+                "action_type": action_type,
+                "postcondition": flag,
+            }
+        _sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+        result["bootstrap_flag_satisfied"] = bool(flag and bootstrap_flags.get(flag))
+        result["source"] = "startup_bootloader_controller_receipt"
     else:
         return {
             "applied": False,
@@ -8479,6 +8598,59 @@ def _scheduler_row_reconciliation_for_entry(run_root: Path, entry: dict[str, Any
     return None
 
 
+def _canonicalize_legacy_startup_daemon_reconciliation(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    entry: dict[str, Any],
+    action: dict[str, Any],
+    receipt: dict[str, Any],
+) -> dict[str, Any]:
+    current = entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else {}
+    source = current.get("source")
+    if source == "startup_bootloader_controller_receipt" and current.get("postcondition"):
+        return {"applied": False, "reason": "startup_receipt_owner_already_complete"}
+    if source not in {"startup_daemon_bootloader_postcondition", "startup_bootloader_controller_receipt"}:
+        return {"applied": False, "reason": "not_legacy_startup_daemon_owner"}
+    if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA or receipt.get("status") != "done":
+        return {"applied": False, "reason": "startup_receipt_missing_or_not_done"}
+    if not _daemon_scheduled_bootloader_action(action):
+        return {"applied": False, "reason": "not_daemon_scheduled_bootloader_action"}
+    action_type = str(action.get("action_type") or entry.get("action_type") or "")
+    action_meta = _boot_action_meta(action_type)
+    if action_meta is None:
+        return {"applied": False, "reason": "not_bootloader_action"}
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    flag = str(action_meta.get("flag") or _pending_action_postcondition(action) or "")
+    bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
+    run_flags = run_state.setdefault("flags", {})
+    if flag and not (bootstrap_flags.get(flag) or run_flags.get(flag)):
+        return {
+            "applied": False,
+            "reason": "legacy_startup_postcondition_not_satisfied",
+            "postcondition": flag,
+            "action_type": action_type,
+        }
+    if flag:
+        run_flags[flag] = True
+    canonical = dict(current)
+    canonical.update(
+        {
+            "applied": True,
+            "source": "startup_bootloader_controller_receipt",
+            "canonicalized_from": source,
+            "controller_receipt_path": project_relative(
+                project_root,
+                _controller_receipt_path(run_root, str(receipt.get("action_id") or entry.get("action_id") or "")),
+            ),
+            "postcondition": flag,
+            "bootstrap_postcondition": current.get("bootstrap_postcondition") or flag,
+            "bootstrap_flag_satisfied": True,
+        }
+    )
+    return canonical
+
+
 def _reconcile_scheduled_controller_action_receipts(
     project_root: Path,
     run_root: Path,
@@ -8498,6 +8670,48 @@ def _reconcile_scheduled_controller_action_receipts(
             continue
         action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
         row_reconciliation = _scheduler_row_reconciliation_for_entry(run_root, entry)
+        action_id = str(entry.get("action_id") or action.get("controller_action_id") or "")
+        receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id)) if action_id else {}
+        legacy_startup_canonical = _canonicalize_legacy_startup_daemon_reconciliation(
+            project_root,
+            run_root,
+            run_state,
+            entry,
+            action,
+            receipt,
+        )
+        if legacy_startup_canonical.get("applied"):
+            now = utc_now()
+            entry["status"] = "done"
+            entry["completed_at"] = entry.get("completed_at") or now
+            entry["router_reconciliation_status"] = "reconciled"
+            entry["router_reconciled_at"] = now
+            entry["router_reconciliation"] = legacy_startup_canonical
+            entry["router_pending_apply_required"] = False
+            if isinstance(entry.get("action"), dict):
+                entry["action"]["router_pending_apply_required"] = False
+            write_json(action_path, entry)
+            row_id = str(entry.get("router_scheduler_row_id") or "")
+            if row_id:
+                _update_router_scheduler_row(
+                    project_root,
+                    run_root,
+                    run_state,
+                    row_id=row_id,
+                    router_state="reconciled",
+                    reconciliation=legacy_startup_canonical,
+                )
+            _resolve_control_blockers_for_reconciled_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                action=action,
+                entry=entry,
+                reconciliation=legacy_startup_canonical,
+            )
+            changed = True
+            reconciled += 1
+            continue
         if row_reconciliation is not None and not (
             entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at")
         ):
@@ -8623,8 +8837,6 @@ def _reconcile_scheduled_controller_action_receipts(
             changed = True
             reconciled += 1
             continue
-        action_id = str(entry.get("action_id") or action.get("controller_action_id") or "")
-        receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
         if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA or receipt.get("status") != "done":
             continue
         try:
@@ -8984,6 +9196,285 @@ def _pending_wait_summary(run_state: dict[str, Any], *, project_root: Path | Non
     }
 
 
+def _current_work_owner_kind(owner_key: str) -> str:
+    key = owner_key.strip()
+    if key in {"router", "controller", "user"}:
+        return key
+    if key:
+        return "role"
+    return "none"
+
+
+def _current_work_owner_label(owner_key: str) -> str:
+    labels = {
+        "router": "Router",
+        "controller": "Controller",
+        "user": "User",
+        "project_manager": "Project Manager",
+        "human_like_reviewer": "Human-like Reviewer",
+        "process_flowguard_officer": "Process FlowGuard Officer",
+        "product_flowguard_officer": "Product FlowGuard Officer",
+        "worker_a": "Worker A",
+        "worker_b": "Worker B",
+    }
+    key = owner_key.strip()
+    if key in labels:
+        return labels[key]
+    return key.replace("_", " ").strip().title() if key else "None"
+
+
+def _current_work_payload(
+    *,
+    owner_key: str,
+    task_label: str,
+    source: str,
+    source_path: str | None = None,
+    action_type: str | None = None,
+    action_id: str | None = None,
+    packet_id: str | None = None,
+    wait_class: str | None = None,
+    waiting_for_role: str | None = None,
+    diagnostics: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    owner_key = owner_key.strip()
+    owner_kind = _current_work_owner_kind(owner_key)
+    owner_label = _current_work_owner_label(owner_key)
+    task = task_label.strip() or "Monitor current FlowPilot progress"
+    return {
+        "owner_kind": owner_kind,
+        "owner_key": owner_key or None,
+        "owner_label": owner_label,
+        "task_label": task,
+        "source": source,
+        "source_path": source_path,
+        "action_type": action_type,
+        "action_id": action_id,
+        "packet_id": packet_id,
+        "wait_class": wait_class,
+        "legacy_waiting_for_role": waiting_for_role,
+        "display": {
+            "en": f"Current owner: {owner_label}. Current task: {task}.",
+            "zh": f"当前处理方：{owner_label}。当前任务：{task}。",
+        },
+        "controller_use": {
+            "primary_monitor_field": True,
+            "ownership_projection_only": True,
+            "does_not_satisfy_wait_or_approval": True,
+            "role_liveness_checks_apply": owner_kind == "role",
+            "internal_owner": owner_kind in {"router", "controller"},
+        },
+        "diagnostics": diagnostics or {},
+    }
+
+
+def _current_work_from_action(
+    action: dict[str, Any],
+    *,
+    source: str,
+    source_path: str | None = None,
+    fallback_owner: str = "controller",
+) -> dict[str, Any] | None:
+    if not isinstance(action, dict) or not action:
+        return None
+    action_type = str(action.get("action_type") or "")
+    label = str(action.get("summary") or action.get("label") or action_type or "Process FlowPilot action")
+    target = str(
+        action.get("waiting_for_role")
+        or action.get("to_role")
+        or action.get("target_role")
+        or action.get("actor")
+        or ""
+    ).strip()
+    if action.get("requires_user") or action.get("requires_user_dialog_display_confirmation"):
+        owner_key = "user"
+    elif _action_is_passive_wait_status(action):
+        owner_key = target
+        if not owner_key and action_type == "await_current_scope_reconciliation":
+            owner_key = "controller"
+        if not owner_key:
+            owner_key = "router"
+    elif target in {"router", "controller"}:
+        owner_key = target
+    else:
+        owner_key = fallback_owner
+    wait_class = _pending_wait_class(action)
+    return _current_work_payload(
+        owner_key=owner_key,
+        task_label=label,
+        source=source,
+        source_path=source_path,
+        action_type=action_type or None,
+        action_id=str(action.get("action_id") or action.get("controller_action_id") or "") or None,
+        wait_class=wait_class,
+        waiting_for_role=target or None,
+        diagnostics={
+            "passive_wait_status": _action_is_passive_wait_status(action),
+            "ordinary_controller_work_row": not _action_is_passive_wait_status(action),
+        },
+    )
+
+
+def _packet_status_allows_current_work(status: str) -> bool:
+    normalized = status.strip().lower()
+    if not normalized:
+        return False
+    return normalized not in {
+        "done",
+        "complete",
+        "completed",
+        "cancelled",
+        "canceled",
+        "closed",
+        "stopped_by_user",
+        "result-returned",
+        "result_returned",
+        "result-absorbed",
+        "result_absorbed",
+        "absorbed",
+        "superseded",
+    }
+
+
+def _current_work_from_packet_ledger(project_root: Path, run_root: Path) -> dict[str, Any] | None:
+    path = run_root / "packet_ledger.json"
+    packet_ledger = read_json_if_exists(path)
+    if not isinstance(packet_ledger, dict) or not packet_ledger:
+        return None
+    holder = str(packet_ledger.get("active_packet_holder") or "").strip()
+    status = str(packet_ledger.get("active_packet_status") or "").strip()
+    packet_id = str(packet_ledger.get("active_packet_id") or "").strip()
+    if not holder or not _packet_status_allows_current_work(status):
+        return None
+    task = f"Advance active packet {packet_id or 'work'} ({status})"
+    return _current_work_payload(
+        owner_key=holder,
+        task_label=task,
+        source="packet_ledger",
+        source_path=project_relative(project_root, path),
+        packet_id=packet_id or None,
+        diagnostics={
+            "active_packet_status": status,
+            "active_packet_holder": holder,
+            "packet_ledger_schema": packet_ledger.get("schema_version"),
+        },
+    )
+
+
+def _current_work_from_passive_waits(
+    project_root: Path,
+    run_root: Path,
+    *,
+    controller_ledger: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if controller_ledger is None:
+        controller_ledger = _controller_action_ledger_summary(run_root)
+    passive_waits = controller_ledger.get("passive_waits") if isinstance(controller_ledger, dict) else []
+    if isinstance(passive_waits, list):
+        for item in passive_waits:
+            if not isinstance(item, dict):
+                continue
+            status = str(item.get("status") or "").strip()
+            reconciled = str(item.get("router_reconciliation_status") or "").strip()
+            if status in {"done", "resolved", "skipped", "superseded"} or reconciled == "reconciled":
+                continue
+            payload = _current_work_from_action(
+                item,
+                source="controller_action_ledger.passive_waits",
+                source_path=controller_ledger.get("path") if isinstance(controller_ledger.get("path"), str) else None,
+                fallback_owner="controller",
+            )
+            if payload:
+                return payload
+    scheduler_path = _router_scheduler_ledger_path(run_root)
+    scheduler = read_json_if_exists(scheduler_path)
+    rows = scheduler.get("rows") if isinstance(scheduler, dict) and isinstance(scheduler.get("rows"), list) else []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        router_state = str(row.get("router_state") or "").strip()
+        controller_status = str(row.get("controller_status") or "").strip()
+        if router_state not in {"queued", "waiting", "receipt_done"} and controller_status not in {"pending", "waiting", "in_progress"}:
+            continue
+        action_type = str(row.get("action_type") or "")
+        target = str(row.get("to_role") or row.get("waiting_for_role") or "").strip()
+        if action_type == "await_current_scope_reconciliation" and not target:
+            target = "controller"
+        payload = _current_work_payload(
+            owner_key=target or "router",
+            task_label=str(row.get("label") or action_type or "Reconcile scheduler wait"),
+            source="router_scheduler_ledger",
+            source_path=project_relative(project_root, scheduler_path),
+            action_type=action_type or None,
+            action_id=str(row.get("row_id") or "") or None,
+            waiting_for_role=target or None,
+            diagnostics={
+                "router_state": router_state,
+                "controller_status": controller_status,
+                "barrier_kind": row.get("barrier_kind"),
+            },
+        )
+        return payload
+    return None
+
+
+def _derive_current_work(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    current_wait: dict[str, Any] | None = None,
+    current_action: dict[str, Any] | None = None,
+    controller_ledger: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    pending = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    if pending:
+        payload = _current_work_from_action(
+            pending,
+            source="pending_action",
+            source_path=project_relative(project_root, run_state_path(run_root)),
+        )
+        if payload:
+            return payload
+    if isinstance(current_action, dict) and current_action:
+        payload = _current_work_from_action(
+            current_action,
+            source="current_action",
+            source_path=project_relative(project_root, _router_daemon_status_path(run_root)),
+        )
+        if payload:
+            return payload
+    packet_payload = _current_work_from_packet_ledger(project_root, run_root)
+    if packet_payload:
+        return packet_payload
+    passive_payload = _current_work_from_passive_waits(project_root, run_root, controller_ledger=controller_ledger)
+    if passive_payload:
+        return passive_payload
+    if isinstance(current_wait, dict) and current_wait:
+        payload = _current_work_from_action(
+            current_wait,
+            source="current_wait",
+            source_path=project_relative(project_root, _router_daemon_status_path(run_root)),
+            fallback_owner="router",
+        )
+        if payload and payload.get("owner_kind") != "none":
+            return payload
+    if run_state.get("daemon_mode_enabled"):
+        return _current_work_payload(
+            owner_key="router",
+            task_label="Compute or observe the next safe FlowPilot step",
+            source="router_daemon",
+            source_path=project_relative(project_root, _router_daemon_status_path(run_root)),
+            diagnostics={"daemon_mode_enabled": True, "run_status": run_state.get("status")},
+        )
+    return _current_work_payload(
+        owner_key="controller",
+        task_label="Inspect FlowPilot state",
+        source="controller",
+        source_path=project_relative(project_root, run_state_path(run_root)),
+        diagnostics={"run_status": run_state.get("status")},
+    )
+
+
 def _wait_target_reminder_text_sha256(reminder_text: str) -> str:
     return hashlib.sha256(reminder_text.encode("utf-8")).hexdigest()
 
@@ -9171,6 +9662,7 @@ def _continuous_standby_release_conditions() -> list[str]:
         "wait_target_blocker_required",
         "terminal",
         "user_input_required",
+        "daemon_liveness_check_required",
         "daemon_stale_or_missing",
         "explicit_host_stop",
     ]
@@ -9348,7 +9840,7 @@ def _write_router_daemon_status(
     if lifecycle_status in {"daemon_active", "daemon_observing", "daemon_starting"}:
         if lock_payload.get("status") == "error":
             effective_lifecycle_status = "daemon_error"
-        elif not lock_liveness["live"]:
+        elif not _router_daemon_lock_has_live_owner(lock_liveness):
             effective_lifecycle_status = "daemon_stale_or_missing"
     terminal_mode = _terminal_lifecycle_mode(run_state)
     current_wait = _pending_wait_summary(run_state, project_root=project_root)
@@ -9361,6 +9853,22 @@ def _write_router_daemon_status(
     if standby_required:
         standby_entry = _ensure_continuous_standby_controller_action(project_root, run_root, run_state, current_wait)
     lock_owner = lock_liveness.get("owner") if isinstance(lock_liveness.get("owner"), dict) else {}
+    controller_ledger_summary = _controller_action_ledger_summary(run_root)
+    router_scheduler_summary = _router_scheduler_ledger_summary(run_root)
+    heartbeat_monitor = _router_daemon_heartbeat_monitor(
+        lock_payload,
+        lock_liveness,
+        status_exists=True,
+        status_ok=True,
+    )
+    current_work = _derive_current_work(
+        project_root,
+        run_root,
+        run_state,
+        current_wait=current_wait,
+        current_action=current_action,
+        controller_ledger=controller_ledger_summary,
+    )
     status = {
         "schema_version": ROUTER_DAEMON_STATUS_SCHEMA,
         "run_id": run_state.get("run_id"),
@@ -9381,7 +9889,9 @@ def _write_router_daemon_status(
             "age_seconds": lock_liveness["age_seconds"],
             "reasons": lock_liveness["reasons"],
         },
+        "heartbeat": heartbeat_monitor,
         "daemon_live": bool(bool(run_state.get("daemon_mode_enabled")) and lock_liveness["live"]),
+        "current_work": current_work,
         "current_wait": current_wait,
         "continuous_standby_task": (
             (standby_entry.get("action") or {}).get("continuous_standby_task")
@@ -9401,8 +9911,8 @@ def _write_router_daemon_status(
         }
         if isinstance(current_action, dict)
         else None,
-        "controller_action_ledger": _controller_action_ledger_summary(run_root),
-        "router_scheduler_ledger": _router_scheduler_ledger_summary(run_root),
+        "controller_action_ledger": controller_ledger_summary,
+        "router_scheduler_ledger": router_scheduler_summary,
         "router_internal_ownership_ledger_visible_to_controller": False,
         "recovery_hints": recovery_hints or [],
         "error": error,
@@ -9420,9 +9930,17 @@ def _router_daemon_resume_recovery_summary(project_root: Path, run_root: Path) -
     ledger_path = _controller_action_ledger_path(run_root)
     lock = read_json_if_exists(lock_path)
     status = read_json_if_exists(status_path)
-    lock_live = _router_daemon_lock_is_live(lock)
+    lock_liveness = _router_daemon_lock_liveness(lock)
+    lock_live = bool(lock_liveness.get("live"))
+    active_owner_live = _router_daemon_lock_has_live_owner(lock_liveness)
+    heartbeat_monitor = _router_daemon_heartbeat_monitor(
+        lock,
+        lock_liveness,
+        status_exists=status_path.exists(),
+        status_ok=status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA,
+    )
     ledger_exists = ledger_path.exists()
-    if lock_live:
+    if active_owner_live:
         decision = "attach_controller_to_live_daemon"
     else:
         decision = "restart_router_daemon_from_current_state"
@@ -9433,13 +9951,16 @@ def _router_daemon_resume_recovery_summary(project_root: Path, run_root: Path) -
         "router_daemon_lock_path": project_relative(project_root, lock_path),
         "router_daemon_lock_exists": lock_path.exists(),
         "router_daemon_lock_live": lock_live,
+        "router_daemon_owner_process_live": bool(lock_liveness.get("process_live")),
+        "router_daemon_active_owner_live": active_owner_live,
         "router_daemon_lock_status": lock.get("status"),
         "router_daemon_last_tick_at": lock.get("last_tick_at") or status.get("last_tick_at"),
+        "heartbeat": heartbeat_monitor,
         "controller_action_ledger_path": project_relative(project_root, ledger_path),
         "controller_action_ledger_exists": ledger_exists,
         "controller_action_ledger_rescanned": True,
         "decision": decision,
-        "restart_only_when_missing_or_stale": True,
+        "restart_only_after_controller_liveness_check_finds_dead": True,
         "never_start_second_router_writer": True,
     }
 
@@ -9522,8 +10043,16 @@ def _build_foreground_controller_standby_snapshot(
     lock = read_json_if_exists(lock_path)
     daemon_status = read_json_if_exists(status_path)
     ledger = read_json_if_exists(ledger_path)
-    lock_live = _router_daemon_lock_is_live(lock)
+    lock_liveness = _router_daemon_lock_liveness(lock)
+    lock_live = bool(lock_liveness.get("live"))
     status_ok = daemon_status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
+    heartbeat_monitor = _router_daemon_heartbeat_monitor(
+        lock,
+        lock_liveness,
+        status_exists=status_path.exists(),
+        status_ok=status_ok,
+    )
+    daemon_liveness_check_required = heartbeat_monitor.get("status") == "check_liveness"
     daemon_live = (
         lock_live
         and status_ok
@@ -9547,6 +10076,14 @@ def _build_foreground_controller_standby_snapshot(
         ):
             if current_wait.get(key) in (None, "", []) and daemon_wait.get(key) not in (None, "", []):
                 current_wait[key] = daemon_wait.get(key)
+    current_work = _derive_current_work(
+        project_root,
+        run_root,
+        run_state,
+        current_wait=current_wait,
+        current_action=daemon_status.get("current_action") if isinstance(daemon_status.get("current_action"), dict) else None,
+        controller_ledger=_controller_action_ledger_summary(run_root),
+    )
     current_action = daemon_status.get("current_action") if isinstance(daemon_status.get("current_action"), dict) else {}
     continuous_standby_task = (
         daemon_status.get("continuous_standby_task")
@@ -9565,8 +10102,8 @@ def _build_foreground_controller_standby_snapshot(
         standby_state = "terminal"
     elif user_required:
         standby_state = "user_input_required"
-    elif not daemon_live:
-        standby_state = "daemon_stale_or_missing"
+    elif daemon_liveness_check_required:
+        standby_state = "daemon_liveness_check_required"
     elif pending_action_ids:
         standby_state = "controller_action_ready"
     elif ((current_wait.get("blocker") or {}).get("required")):
@@ -9594,7 +10131,7 @@ def _build_foreground_controller_standby_snapshot(
     foreground_turn_return_allowed = standby_state in {
         "terminal",
         "user_input_required",
-        "daemon_stale_or_missing",
+        "daemon_liveness_check_required",
         "wait_target_check_due",
         "wait_target_blocker_required",
         "wait_target_reissue_required",
@@ -9611,8 +10148,8 @@ def _build_foreground_controller_standby_snapshot(
         foreground_required_mode = "watch_router_daemon"
     elif standby_state == "user_input_required":
         foreground_required_mode = "return_for_user_input"
-    elif standby_state == "daemon_stale_or_missing":
-        foreground_required_mode = "daemon_repair_or_restart"
+    elif standby_state == "daemon_liveness_check_required":
+        foreground_required_mode = "check_liveness"
     else:
         foreground_required_mode = "terminal_return"
     elapsed = max(0.0, time.monotonic() - start_monotonic)
@@ -9656,6 +10193,14 @@ def _build_foreground_controller_standby_snapshot(
             "status_exists": status_path.exists(),
             "status_ok": status_ok,
             "daemon_live": daemon_live,
+            "active_owner_live": _router_daemon_lock_has_live_owner(lock_liveness),
+            "heartbeat_status": heartbeat_monitor["status"],
+            "heartbeat_age_seconds": heartbeat_monitor["age_seconds"],
+            "heartbeat_check_after_seconds": heartbeat_monitor["check_after_seconds"],
+            "heartbeat_reasons": heartbeat_monitor["reasons"],
+            "controller_liveness_check_required": heartbeat_monitor["controller_liveness_check_required"],
+            "monitor_can_decide_recovery": heartbeat_monitor["monitor_can_decide_recovery"],
+            "controller_instruction": heartbeat_monitor["controller_instruction"],
             "lifecycle_status": daemon_status.get("lifecycle_status"),
             "last_tick_at": daemon_status.get("last_tick_at"),
             "tick_interval_seconds": daemon_status.get("tick_interval_seconds"),
@@ -9675,6 +10220,7 @@ def _build_foreground_controller_standby_snapshot(
             "pending_action_ids": pending_action_ids,
             "waiting_action_ids": waiting_action_ids,
         },
+        "current_work": current_work,
         "current_wait": {
             "action_type": current_wait.get("action_type"),
             "label": current_wait.get("label"),
@@ -9710,7 +10256,7 @@ def _build_foreground_controller_standby_snapshot(
             "returns_on_controller_action": True,
             "returns_on_terminal": True,
             "returns_on_user_required": True,
-            "returns_on_daemon_stale_or_missing": True,
+            "returns_on_daemon_liveness_check_required": True,
             "returns_on_bounded_timeout": True,
             "bounded_timeout_is_diagnostic_only": True,
             "returns_on_wait_target_check_due": True,
@@ -9719,7 +10265,7 @@ def _build_foreground_controller_standby_snapshot(
             "controller_action_ready_blocks_foreground_exit": True,
             "live_daemon_wait_requires_standby": True,
             "controller_stop_requires_terminal_run": True,
-            "nonterminal_modes": ["process_controller_action", "watch_router_daemon"],
+            "nonterminal_modes": ["process_controller_action", "watch_router_daemon", "check_liveness"],
         },
     }
 
@@ -9796,7 +10342,7 @@ def foreground_controller_standby(
             "wait_target_reissue_required",
             "terminal",
             "user_input_required",
-            "daemon_stale_or_missing",
+            "daemon_liveness_check_required",
         }:
             return snapshot
         elapsed = time.monotonic() - start_monotonic
@@ -9864,6 +10410,21 @@ def controller_patrol_timer(
             "end the foreground turn after terminal cleanup."
         )
         anti_exit_reminder = ""
+    elif standby_state == "daemon_liveness_check_required" or foreground_mode == "check_liveness":
+        patrol_result = "check_liveness"
+        anti_exit_reminder = (
+            "This patrol exists to prevent Controller from accidentally exiting the foreground "
+            "chat while FlowPilot is still running."
+        )
+        router_daemon = snapshot.get("router_daemon") if isinstance(snapshot.get("router_daemon"), dict) else {}
+        controller_instruction = str(
+            router_daemon.get("controller_instruction")
+            or (
+                "Daemon heartbeat needs a Controller liveness check. If the daemon is alive, "
+                "stay attached and continue. If it is dead, recover the current-run Router "
+                "daemon without starting a second live writer."
+            )
+        )
     elif must_continue or foreground_mode == "watch_router_daemon":
         patrol_result = "continue_patrol"
         anti_exit_reminder = (
@@ -15803,6 +16364,19 @@ def _complete_startup_daemon_bootloader_row(
     entry = read_json_if_exists(action_path)
     if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
         return None
+    existing_reconciliation = (
+        entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else {}
+    )
+    if (
+        entry.get("router_reconciliation_status") == "reconciled"
+        and existing_reconciliation.get("source") == "startup_bootloader_controller_receipt"
+    ):
+        return {
+            "controller_action_id": action_id,
+            "router_scheduler_row_id": row_id,
+            "already_reconciled": True,
+            "router_reconciliation": existing_reconciliation,
+        }
     receipt = _write_controller_receipt(
         project_root,
         run_root,
@@ -15820,54 +16394,30 @@ def _complete_startup_daemon_bootloader_row(
             ),
         },
     )
-    reconciliation = {
-        "applied": True,
-        "source": "startup_daemon_bootloader_postcondition",
-        "controller_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, action_id)),
-        "bootstrap_postcondition": scheduled_action.get("postcondition"),
-        "bootstrap_flag_satisfied": bool(
-            (bootstrap_state.get("flags") if isinstance(bootstrap_state.get("flags"), dict) else {}).get(
-                str(scheduled_action.get("postcondition") or "")
-            )
-        ),
-    }
-    entry["status"] = "done"
-    entry["completed_at"] = utc_now()
-    entry["router_reconciliation_status"] = "reconciled"
-    entry["router_reconciled_at"] = utc_now()
-    entry["router_reconciliation"] = reconciliation
-    write_json(action_path, entry)
-    if row_id:
-        _update_router_scheduler_row(
-            project_root,
-            run_root,
-            run_state,
-            row_id=row_id,
-            router_state="reconciled",
-            reconciliation=reconciliation,
-        )
-    blocker_resolution = _resolve_control_blockers_for_reconciled_controller_action(
-        project_root,
-        run_root,
-        run_state,
-        action=scheduled_action,
-        entry=entry,
-        reconciliation=reconciliation,
-    )
+    scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
+    entry = read_json_if_exists(action_path)
+    reconciliation = entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else {}
     _rebuild_controller_action_ledger(project_root, run_root, run_state)
     append_history(
         run_state,
-        "router_reconciled_startup_daemon_bootloader_row",
+        "router_folded_startup_daemon_bootloader_row_through_receipt",
         {
             "action_type": scheduled_action.get("action_type"),
             "controller_action_id": action_id,
             "router_scheduler_row_id": row_id,
             "receipt_status": receipt.get("status"),
-            "control_blocker_resolution": blocker_resolution,
+            "scheduled_reconciliation": scheduled_reconciliation,
+            "router_reconciliation": reconciliation,
         },
     )
     save_run_state(run_root, run_state)
-    return {"controller_action_id": action_id, "router_scheduler_row_id": row_id, "receipt": receipt}
+    return {
+        "controller_action_id": action_id,
+        "router_scheduler_row_id": row_id,
+        "receipt": receipt,
+        "scheduled_reconciliation": scheduled_reconciliation,
+        "router_reconciliation": reconciliation,
+    }
 
 
 def _startup_daemon_schedule_bootloader_action(
@@ -23654,9 +24204,11 @@ def _build_current_status_summary(
     daemon_status_ok = daemon_status.get("schema_version") == ROUTER_DAEMON_STATUS_SCHEMA
     daemon_lifecycle = str(daemon_status.get("lifecycle_status") or "")
     daemon_lock_live = bool((daemon_status.get("lock") or {}).get("live")) if daemon_status_ok else False
-    daemon_stale_or_missing = bool(run_state.get("daemon_mode_enabled")) and (
+    daemon_heartbeat = daemon_status.get("heartbeat") if isinstance(daemon_status.get("heartbeat"), dict) else {}
+    daemon_liveness_check_required = (
         not daemon_status_ok
         or not daemon_lock_live
+        or daemon_heartbeat.get("status") == "check_liveness"
         or daemon_lifecycle in {"daemon_error", "daemon_stale_or_missing"}
     )
     controller_action_ready = state_kind == "controller_action_ready" or bool(pending_controller_action_ids)
@@ -23664,15 +24216,15 @@ def _build_current_status_summary(
         foreground_required_mode = "terminal_return"
     elif user_required:
         foreground_required_mode = "return_for_user_input"
-    elif daemon_stale_or_missing:
-        foreground_required_mode = "daemon_repair_or_restart"
+    elif daemon_liveness_check_required:
+        foreground_required_mode = "check_liveness"
     elif controller_action_ready:
         foreground_required_mode = "process_controller_action"
     else:
         foreground_required_mode = "watch_router_daemon" if run_state.get("daemon_mode_enabled") else "router_action_diagnostic"
     foreground_exit_policy = {
         "foreground_exit_allowed": bool(terminal),
-        "foreground_turn_return_allowed": bool(terminal or user_required or daemon_stale_or_missing),
+        "foreground_turn_return_allowed": bool(terminal or user_required or daemon_liveness_check_required),
         "controller_stop_allowed": bool(terminal),
         "run_complete": bool(terminal),
         "nonterminal_controller_must_stay_attached": not bool(terminal),
@@ -23681,7 +24233,7 @@ def _build_current_status_summary(
         "controller_must_continue_standby": (
             not terminal
             and not user_required
-            and not daemon_stale_or_missing
+            and not daemon_liveness_check_required
             and not controller_action_ready
             and state_kind in {"waiting_for_role", "running"}
             and bool(run_state.get("daemon_mode_enabled"))
@@ -23714,7 +24266,16 @@ def _build_current_status_summary(
             "zh": "FlowPilot 正在运行。",
         },
     }
-    current_work = node_label or active_node_id or frontier_status or run_status
+    current_work_label = node_label or active_node_id or frontier_status or run_status
+    project_root = _project_root_from_run_root(run_root)
+    current_work = _derive_current_work(
+        project_root,
+        run_root,
+        run_state,
+        current_wait=daemon_status.get("current_wait") if isinstance(daemon_status.get("current_wait"), dict) else None,
+        current_action=daemon_status.get("current_action") if isinstance(daemon_status.get("current_action"), dict) else None,
+        controller_ledger=controller_ledger,
+    )
     return {
         "schema_version": CURRENT_STATUS_SUMMARY_SCHEMA,
         "run_id": run_state.get("run_id"),
@@ -23722,6 +24283,7 @@ def _build_current_status_summary(
         "state_kind": state_kind,
         "headline": labels[state_kind],
         "current_work": current_work,
+        "current_work_label": current_work_label,
         "progress_summary": _build_progress_summary(
             run_root,
             run_state,
@@ -23761,6 +24323,12 @@ def _build_current_status_summary(
             "tick_interval_seconds": daemon_status.get("tick_interval_seconds") or ROUTER_DAEMON_TICK_SECONDS,
             "last_tick_at": daemon_status.get("last_tick_at"),
             "lock_status": (daemon_status.get("lock") or {}).get("status") if isinstance(daemon_status.get("lock"), dict) else None,
+            "heartbeat_status": daemon_heartbeat.get("status"),
+            "heartbeat_age_seconds": daemon_heartbeat.get("age_seconds"),
+            "heartbeat_check_after_seconds": daemon_heartbeat.get("check_after_seconds")
+            or ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+            "controller_liveness_check_required": daemon_liveness_check_required,
+            "monitor_can_decide_recovery": False,
             "router_owns_waiting": True,
         },
         "controller_action_ledger": {
@@ -23778,7 +24346,8 @@ def _build_current_status_summary(
             **foreground_exit_policy,
             "user_required": user_required,
             "daemon_status_ok": daemon_status_ok,
-            "daemon_stale_or_missing": daemon_stale_or_missing,
+            "daemon_lock_live": daemon_lock_live,
+            "daemon_liveness_check_required": daemon_liveness_check_required,
         },
         "ui_contract": {
             "metadata_only": True,
@@ -30411,9 +30980,10 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         "before any wait or resume claim. Do not self-classify the work chain as alive from old "
         "crew or route state, and do not use wait_agent timeout as proof of liveness. The router must "
         "load the current resume state, inspect runtime/router_daemon_status.json, "
-        "runtime/router_daemon.lock, and runtime/controller_action_ledger.json, restore or restart "
-        "the per-run Router daemon when the lock is missing or stale, attach Controller to the "
-        "current action ledger when the daemon is live, restore the visible plan, and request six-role liveness "
+        "runtime/router_daemon.lock, and runtime/controller_action_ledger.json. If the daemon heartbeat is "
+        "older than five seconds, Controller must check the process, lock, and status; attach when it is "
+        "alive, and restore the per-run Router daemon only when that check finds it dead. Then attach "
+        "Controller to the current action ledger, restore the visible plan, and request six-role liveness "
         "rehydration before any PM resume decision. Never start a second Router writer while a live daemon "
         "lock exists. Any restored or replacement background role "
         "agent must be explicitly requested with the strongest available host model and highest "
@@ -37439,6 +38009,7 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         "terminal_status_recovered_from_authority": False,
         "legacy_material_packet_contracts": 0,
         "non_current_running_index_entries": 0,
+        "scheduled_controller_receipts": {"changed": False, "reconciled": 0, "blocked": 0},
         "controller_boundary_projection": {"changed": False, "reason": "not_run"},
     }
     status = str(run_state.get("status") or "")
@@ -37497,6 +38068,11 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
     repaired["prompt_delivery_contexts"] = _repair_prompt_delivery_contexts(project_root, run_root, run_state)
     repaired["role_output_envelope_hashes"] = _repair_role_output_envelope_hashes(project_root, run_root)
     repaired["legacy_material_packet_contracts"] = _repair_legacy_material_packet_contracts(project_root, run_root)
+    repaired["scheduled_controller_receipts"] = _reconcile_scheduled_controller_action_receipts(
+        project_root,
+        run_root,
+        run_state,
+    )
     repaired["controller_boundary_projection"] = _reconcile_controller_boundary_confirmation_projection(
         project_root,
         run_root,
@@ -37746,7 +38322,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
     parser.add_argument("--json", action="store_true", help="Print JSON output")
     sub = parser.add_subparsers(dest="command", required=True)
-    next_parser = sub.add_parser("next", help="Return the next router-authorized action")
+    start_parser = sub.add_parser("start", help="Start a fresh formal FlowPilot invocation")
+    start_parser.add_argument("--max-steps", type=int, default=50)
+    start_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
+    next_parser = sub.add_parser("next", help="Return the next router-authorized action for an existing run")
     next_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation")
     next_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     run_wait_parser = sub.add_parser("run-until-wait", help="Apply safe internal router actions and return the next wait-boundary action")
@@ -37814,13 +38393,24 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     root = Path(args.root).resolve()
     try:
-        if args.command == "next":
-            result = next_action(root, new_invocation=bool(getattr(args, "new_invocation", False)))
+        if args.command == "start":
+            result = _run_foreground_with_runtime_writer_settlement(
+                lambda: run_until_wait(root, max_steps=int(args.max_steps), new_invocation=True),
+                command_name=args.command,
+            )
+        elif args.command == "next":
+            result = _run_foreground_with_runtime_writer_settlement(
+                lambda: next_action(root, new_invocation=bool(getattr(args, "new_invocation", False))),
+                command_name=args.command,
+            )
         elif args.command == "run-until-wait":
-            result = run_until_wait(
-                root,
-                max_steps=int(args.max_steps),
-                new_invocation=bool(getattr(args, "new_invocation", False)),
+            result = _run_foreground_with_runtime_writer_settlement(
+                lambda: run_until_wait(
+                    root,
+                    max_steps=int(args.max_steps),
+                    new_invocation=bool(getattr(args, "new_invocation", False)),
+                ),
+                command_name=args.command,
             )
         elif args.command == "daemon":
             result = run_router_daemon(
@@ -37840,16 +38430,22 @@ def main(argv: list[str] | None = None) -> int:
                 run_root=getattr(args, "run_root", "") or None,
             )
         elif args.command == "controller-standby":
-            result = foreground_controller_standby(
-                root,
-                max_seconds=float(getattr(args, "max_seconds", FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS)),
-                poll_seconds=float(getattr(args, "poll_seconds", FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)),
-                bounded_diagnostic=bool(getattr(args, "bounded_diagnostic", False)),
+            result = _run_foreground_with_runtime_writer_settlement(
+                lambda: foreground_controller_standby(
+                    root,
+                    max_seconds=float(getattr(args, "max_seconds", FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS)),
+                    poll_seconds=float(getattr(args, "poll_seconds", FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS)),
+                    bounded_diagnostic=bool(getattr(args, "bounded_diagnostic", False)),
+                ),
+                command_name=args.command,
             )
         elif args.command == "controller-patrol-timer":
-            result = controller_patrol_timer(
-                root,
-                seconds=float(getattr(args, "seconds", CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS)),
+            result = _run_foreground_with_runtime_writer_settlement(
+                lambda: controller_patrol_timer(
+                    root,
+                    seconds=float(getattr(args, "seconds", CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS)),
+                ),
+                command_name=args.command,
             )
         elif args.command == "controller-receipt":
             payload = json.loads(args.payload_json) if args.payload_json else {}
@@ -37884,21 +38480,24 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "reconcile-run":
             result = reconcile_current_run(root)
         elif args.command == "state":
-            bootstrap = load_bootstrap_state(root, create_if_missing=False)
-            run_state, run_root = load_run_state(root, bootstrap)
-            active_ui_task_catalog = (
-                _active_ui_task_catalog(root, run_root, run_state)
-                if run_state is not None and run_root is not None
-                else {"schema_version": "flowpilot.active_ui_task_catalog.v1", "active_tasks": []}
-            )
-            result = {
-                "bootstrap": bootstrap,
-                "run_root": str(run_root) if run_root else None,
-                "run_state": run_state,
-                "active_ui_task_catalog": active_ui_task_catalog,
-                "router_daemon_status": read_json_if_exists(_router_daemon_status_path(run_root)) if run_root else {},
-                "controller_action_ledger": read_json_if_exists(_controller_action_ledger_path(run_root)) if run_root else {},
-            }
+            def _state_command() -> dict[str, Any]:
+                bootstrap = load_bootstrap_state(root, create_if_missing=False)
+                run_state, run_root = load_run_state(root, bootstrap)
+                active_ui_task_catalog = (
+                    _active_ui_task_catalog(root, run_root, run_state)
+                    if run_state is not None and run_root is not None
+                    else {"schema_version": "flowpilot.active_ui_task_catalog.v1", "active_tasks": []}
+                )
+                return {
+                    "bootstrap": bootstrap,
+                    "run_root": str(run_root) if run_root else None,
+                    "run_state": run_state,
+                    "active_ui_task_catalog": active_ui_task_catalog,
+                    "router_daemon_status": read_json_if_exists(_router_daemon_status_path(run_root)) if run_root else {},
+                    "controller_action_ledger": read_json_if_exists(_controller_action_ledger_path(run_root)) if run_root else {},
+                }
+
+            result = _run_foreground_with_runtime_writer_settlement(_state_command, command_name=args.command)
         else:
             raise RouterError(f"unknown command: {args.command}")
         print(json.dumps(result, indent=2, sort_keys=True))

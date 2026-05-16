@@ -42,10 +42,16 @@ REQUIRED_LABELS = (
     "daemon_sees_transient_controller_action_temp_file",
     "daemon_skips_transient_controller_action_temp_file",
     "daemon_observes_active_runtime_writer",
+    "foreground_start_observes_active_runtime_writer",
+    "foreground_start_waits_for_active_runtime_writer",
+    "foreground_start_retries_after_runtime_writer_finishes",
+    "foreground_start_returns_live_daemon_status_after_settlement",
     "daemon_defers_reconciliation_for_active_runtime_writer",
     "daemon_observes_writer_progress_and_keeps_waiting",
     "runtime_writer_finishes_before_next_action",
     "daemon_reconciles_startup_bootloader_receipt_once",
+    "daemon_folds_startup_receipt_with_single_owner",
+    "startup_receipt_replay_is_noop",
     "daemon_reconciles_mail_delivery_receipt_to_packet_ledger",
     "daemon_blocks_unsupported_mail_delivery_receipt_before_next_action",
     "pm_mail_delivery_repair_decision_submitted",
@@ -93,7 +99,13 @@ HAZARD_EXPECTED_FAILURES = {
     "temp_controller_action_file_error_kills_daemon": "transient Controller action temp file race stopped the daemon",
     "active_runtime_writer_false_control_blocker": "active runtime writer was converted into a control blocker before settlement",
     "active_runtime_writer_stops_daemon": "active runtime writer stopped the daemon before settlement",
+    "foreground_start_active_writer_fatal": "foreground start command failed on active runtime writer instead of waiting and retrying",
+    "foreground_start_reports_before_writer_settles": "foreground start reported live daemon status before runtime writer settled",
     "startup_reconciled_action_false_pm_blocker": "startup bootloader row produced a control blocker after it was already reconciled",
+    "startup_receipt_apply_split_requires_later_apply": "startup Controller receipt required a separate apply path to advance",
+    "startup_receipt_apply_split_false_pm_blocker": "startup Controller receipt reached next action through split receipt/apply ownership",
+    "startup_receipt_single_owner_incomplete_fold": "startup bootloader receipt single-owner fold did not update every durable projection",
+    "startup_receipt_reconciled_by_daemon_postcondition_owner": "startup bootloader row was reconciled by the wrong owner",
     "startup_missing_postcondition_pm_lane_before_reissue": "startup bootloader missing postcondition was sent to PM before mechanical reissue budget was exhausted",
     "startup_blocker_not_resolved_after_success": "startup bootloader blocker stayed active after its postcondition was reconciled",
     "startup_reconciled_action_queued_pm_repair": "PM repair action was queued after startup bootloader postcondition reconciliation",
@@ -138,6 +150,10 @@ def _state_id(state: model.State) -> str:
         f"router_roles={state.startup_router_state_roles_started},"
         f"router_prompts={state.startup_router_state_core_prompts_injected},"
         f"dual_folded={state.startup_dual_ledger_folded}|"
+        f"startup_receipt=split={state.startup_receipt_apply_split},"
+        f"requires_apply={state.startup_receipt_requires_apply_to_advance},"
+        f"single_owner={state.startup_receipt_single_owner_folded},"
+        f"replay_noop={state.startup_receipt_replay_is_noop}|"
         f"mail={state.mail_delivery_receipt_claimed},{state.mail_delivery_postcondition_required},"
         f"applied={state.mail_delivery_postcondition_applied},ledger={state.mail_delivery_packet_ledger_folded},"
         f"released={state.mail_delivery_packet_released_to_role},flag={state.mail_delivery_router_flag_synced},"
@@ -171,6 +187,12 @@ def _state_id(state: model.State) -> str:
         f"writer_stalled={state.runtime_writer_stalled},"
         f"settlement_waiting={state.runtime_settlement_waiting},"
         f"settlement_progress={state.runtime_settlement_progress_observed}|"
+        f"fg_start=active={state.foreground_start_command_active},"
+        f"read_during_writer={state.foreground_start_reads_runtime_during_writer},"
+        f"waited={state.foreground_start_waits_for_runtime_writer},"
+        f"retried={state.foreground_start_retries_after_writer_finishes},"
+        f"returned_live={state.foreground_start_returns_live_daemon_status},"
+        f"fatal={state.foreground_start_fatal_from_active_writer}|"
         f"queue={state.queue_stop_reason},sleep={state.sleep_taken},"
         f"immediate={state.immediate_tick_requested}|"
         f"role_output={state.role_output_ledger_submitted},valid={state.role_output_envelope_valid},"
@@ -411,6 +433,40 @@ def _temp_action_file_projection_findings(run_root: Path) -> list[dict[str, obje
                     "time": event.get("time") or event.get("recorded_at"),
                 }
             )
+    return findings
+
+
+def _runtime_write_lock_projection_findings(run_root: Path) -> list[dict[str, object]]:
+    findings: list[dict[str, object]] = []
+    runtime_dir = run_root / "runtime"
+    if not runtime_dir.exists():
+        return findings
+    needles = (
+        "runtime ledger write is still in progress",
+        "fresh runtime JSON write lock",
+        "runtime JSON write lock",
+    )
+    candidates: list[Path] = []
+    for pattern in ("*.err.txt", "*.out.txt", "*.combined.txt", "*.log"):
+        candidates.extend(sorted(runtime_dir.glob(pattern)))
+    for path in candidates:
+        try:
+            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError:
+            continue
+        for line_no, line in enumerate(lines, start=1):
+            normalized = line.lower()
+            if not any(needle.lower() in normalized for needle in needles):
+                continue
+            findings.append(
+                {
+                    "id": "foreground_start_failed_on_fresh_runtime_writer",
+                    "path": str(path.relative_to(PROJECT_ROOT)),
+                    "line": line_no,
+                    "message": line.strip()[:500],
+                }
+            )
+            return findings
     return findings
 
 
@@ -882,12 +938,32 @@ def _mail_ledger_has_user_intake(packet_ledger: dict[str, Any]) -> bool:
 def _user_intake_router_released(packet: dict[str, Any] | None, packet_ledger: dict[str, Any]) -> bool:
     if not isinstance(packet, dict):
         return False
+    released_statuses = {
+        "envelope-relayed",
+        "packet-body-opened-by-recipient",
+        "result-returned",
+        "result-returned-to-router",
+        "stopped_by_user",
+    }
+    terminal_lifecycle = packet.get("terminal_lifecycle")
+    terminal_ok = isinstance(terminal_lifecycle, dict) and terminal_lifecycle.get("status") in {
+        "stopped_by_user",
+        "cancelled_by_user",
+        "closed",
+    }
+    packet_status = str(packet.get("packet_status") or "")
+    top_level_status = str(packet_ledger.get("active_packet_status") or "")
     return (
         str(packet.get("packet_holder") or "") == "project_manager"
-        and str(packet.get("packet_status") or "") == "envelope-relayed"
+        and packet_status in released_statuses
         and packet.get("router_release_recorded") is True
-        and packet_ledger.get("active_packet_holder") == "project_manager"
-        and packet_ledger.get("active_packet_status") == "envelope-relayed"
+        and (
+            (
+                packet_ledger.get("active_packet_holder") == "project_manager"
+                and top_level_status in released_statuses
+            )
+            or terminal_ok
+        )
     )
 
 
@@ -1094,6 +1170,7 @@ def _live_run_projection() -> dict[str, object]:
 
     startup_dual_ledger_findings = _startup_dual_ledger_projection_findings(run_root)
     temp_file_findings = _temp_action_file_projection_findings(run_root)
+    runtime_write_lock_findings = _runtime_write_lock_projection_findings(run_root)
     boundary_findings = _controller_boundary_projection_findings(run_root, row_by_id, actions)
     mail_findings = _mail_delivery_projection_findings(run_root, row_by_id, actions)
     card_ack_findings = _card_ack_handoff_projection_findings(run_root, row_by_id, actions)
@@ -1110,6 +1187,40 @@ def _live_run_projection() -> dict[str, object]:
         action_reconciliation = action.get("router_reconciliation", {})
         if not isinstance(action_reconciliation, dict):
             action_reconciliation = {}
+        action_source = action_reconciliation.get("source")
+        receipt_status = _controller_boundary_receipt_status(run_root, action, row)
+        receipt_done = bool(action.get("receipt_recorded_at") or receipt_status.get("done"))
+        if (
+            action.get("router_reconciliation_status") == "reconciled"
+            and receipt_done
+            and action_source == STARTUP_RECONCILIATION_SOURCE
+        ):
+            row_findings.append(
+                {
+                    "id": "startup_receipt_reconciled_by_daemon_postcondition_owner",
+                    "action_id": action.get("action_id"),
+                    "action_type": action_type,
+                    "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                    "owner": action_source,
+                    "receipt_path": action.get("receipt_path") or action.get("expected_receipt_path"),
+                }
+            )
+        if (
+            action.get("router_reconciliation_status") == "reconciled"
+            and receipt_done
+            and action_source == STARTUP_RECONCILIATION_SOURCE
+            and action.get("router_pending_apply_required") is True
+        ):
+            row_findings.append(
+                {
+                    "id": "startup_receipt_apply_split_requires_later_apply",
+                    "action_id": action.get("action_id"),
+                    "action_type": action_type,
+                    "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                    "router_pending_apply_required": action.get("router_pending_apply_required"),
+                    "owner": action_source,
+                }
+            )
         if action.get("router_reconciliation_status") == "reconciled" and not satisfied:
             row_findings.append(
                 {
@@ -1135,6 +1246,16 @@ def _live_run_projection() -> dict[str, object]:
             row_reconciliation = row.get("reconciliation", {})
             if not isinstance(row_reconciliation, dict):
                 row_reconciliation = {}
+            if receipt_done and row_reconciliation.get("source") == STARTUP_RECONCILIATION_SOURCE:
+                row_findings.append(
+                    {
+                        "id": "startup_scheduler_row_reconciled_by_daemon_postcondition_owner",
+                        "action_id": action.get("action_id"),
+                        "action_type": action_type,
+                        "row_id": row.get("row_id"),
+                        "owner": row_reconciliation.get("source"),
+                    }
+                )
             if row_reconciliation.get("source") not in ("", *STARTUP_RECONCILIATION_SOURCES):
                 row_findings.append(
                     {
@@ -1245,6 +1366,7 @@ def _live_run_projection() -> dict[str, object]:
     findings = (
         startup_dual_ledger_findings
         + temp_file_findings
+        + runtime_write_lock_findings
         + boundary_findings
         + mail_findings
         + card_ack_findings
