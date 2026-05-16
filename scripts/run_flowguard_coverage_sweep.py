@@ -33,6 +33,7 @@ STRONG_COVERAGE = {
     "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",
     "flowpilot_model_mesh",
+    "flowpilot_model_hierarchy",
 }
 ABSTRACT_STRONG = {
     "meta",

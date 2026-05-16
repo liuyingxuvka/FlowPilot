@@ -17,7 +17,7 @@ import flowpilot_model_hierarchy_model as model
 
 ROOT = Path(__file__).resolve().parents[1]
 SIMULATIONS = ROOT / "simulations"
-RESULTS_PATH = SIMULATIONS / "flowpilot_model_hierarchy_results.json"
+RESULTS_PATH = Path(__file__).resolve().with_name("flowpilot_model_hierarchy_results.json")
 HEAVYWEIGHT_STATE_THRESHOLD = model.HEAVYWEIGHT_STATE_THRESHOLD
 
 REQUIRED_LABELS = {
@@ -196,7 +196,10 @@ def _result_index() -> dict[str, dict[str, Any]]:
         base = _base_from_result_path(path)
         previous = rows.get(base)
         current_state_count = counts["state_count"] if counts["state_count"] is not None else -1
-        if previous and previous.get("state_count", -1) >= current_state_count:
+        previous_state_count = -1
+        if previous and previous.get("state_count") is not None:
+            previous_state_count = int(previous["state_count"])
+        if previous and previous_state_count >= current_state_count:
             continue
         rows[base] = {
             "model_id": base,
@@ -308,7 +311,7 @@ def build_inventory_report() -> dict[str, Any]:
         row["registered_in_partition"] = True
         child_rows.append(row)
 
-    missing_children = sorted(child["model_id"] for child in child_rows if child["tier"] == "unknown")
+    missing_children = sorted(child["model_id"] for child in child_rows if not child.get("result_file"))
     large_children = sorted(
         child["model_id"]
         for child in child_rows

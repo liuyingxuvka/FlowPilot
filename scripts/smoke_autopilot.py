@@ -43,6 +43,12 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_model_mesh_results.json",
     ]
+    model_hierarchy_check = [
+        sys.executable,
+        "simulations/run_flowpilot_model_hierarchy_checks.py",
+        "--json-out",
+        "simulations/flowpilot_model_hierarchy_results.json",
+    ]
     control_transaction_registry_check = [
         sys.executable,
         "simulations/run_flowpilot_control_transaction_registry_checks.py",
@@ -64,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         cross_plane_friction_check,
         control_transaction_registry_check,
         model_mesh_check,
+        model_hierarchy_check,
         meta_check,
         capability_check,
     ]

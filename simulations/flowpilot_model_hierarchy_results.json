@@ -184,11 +184,7 @@
     "heavy_parent_full_regression_obligations": [],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
-    "missing_child_results": [
-      "flowpilot_output_contract",
-      "flowpilot_role_output_runtime",
-      "proof_carrying_checks"
-    ],
+    "missing_child_results": [],
     "ok": true,
     "parents": [
       {
@@ -260,7 +256,7 @@
           "flowpilot_model_mesh",
           "flowpilot_control_transaction_registry",
           "flowpilot_legal_next_action",
-          "proof_carrying_checks",
+          "proof_carrying",
           "release_tooling"
         ],
         "owner": "shared_kernel"
@@ -429,9 +425,13 @@
         "tier": "small"
       },
       {
+        "edge_count": null,
         "model_id": "flowpilot_output_contract",
+        "ok": true,
         "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_output_contract_results.json",
         "role": "child_evidence",
+        "state_count": null,
         "tier": "unknown"
       },
       {
@@ -525,9 +525,13 @@
         "tier": "small"
       },
       {
+        "edge_count": null,
         "model_id": "flowpilot_role_output_runtime",
+        "ok": true,
         "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_role_output_runtime_checks_results.json",
         "role": "child_evidence",
+        "state_count": null,
         "tier": "unknown"
       },
       {
@@ -601,10 +605,14 @@
         "tier": "small"
       },
       {
-        "model_id": "proof_carrying_checks",
+        "edge_count": 10,
+        "model_id": "proof_carrying",
+        "ok": true,
         "registered_in_partition": true,
+        "result_file": "simulations/proof_carrying_checks_results.json",
         "role": "child_evidence",
-        "tier": "unknown"
+        "state_count": 11,
+        "tier": "small"
       },
       {
         "edge_count": 39,
