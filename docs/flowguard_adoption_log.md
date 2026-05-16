@@ -12497,6 +12497,40 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
 - If the full runtime suite remains slow, split it into focused named groups so timeout does not hide the result of unrelated runtime checks.
 
+## 2026-05-16 Startup Reconciliation Passive Wait Self-Block
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: the startup pre-review reconciliation wait could persist after the real startup flags and card ACKs were reconciled because `await_current_scope_reconciliation` itself was counted as a pending startup Controller row.
+- Status: completed_runtime_repair
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/fix-startup-reconciliation-self-block/`
+- Focused model: `simulations/flowpilot_current_scope_pre_review_reconciliation_model.py`
+- Focused result: `simulations/flowpilot_current_scope_pre_review_reconciliation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime test: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate fix-startup-reconciliation-self-block --strict` passed.
+- `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py` passed with zero violations and the passive-wait-counted-as-local-obligation hazard detected.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "startup_reconciliation_wait_does_not_block_itself or startup_reconciliation_wait_does_not_hide_router_local_obligation or startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait"` passed with 3 selected tests.
+- Background `run_light_checks` completed with exit code `0` under `tmp/flowguard_background/`; its metadata records a fresh proof with Meta, Capability, model-mesh, and smoke-autopilot commands skipped.
+- `openspec validate --all --strict` passed after correcting an unrelated historical OpenSpec delta header.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed FlowPilot source-fresh.
+
+### Findings
+- Passive wait status rows must remain visible as Router-owned status, but they cannot count as ordinary executable Controller work or as startup pre-review blockers.
+- `_startup_pre_review_reconciliation_blockers` now filters Controller rows through the ordinary-work classifier before treating them as local startup obligations.
+- The runtime still preserves blocking behavior for real executable Controller rows and wait-shaped rows that require Controller side effects or receipts.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction for this pass.
+- `python simulations/run_flowpilot_model_mesh_checks.py` and `python scripts/smoke_autopilot.py` were also excluded from the light background batch because they invoke heavyweight Meta/Capability-style work.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
 ## 2026-05-16 Work ACK Continuation And No-Output Reissue
 
 - Project: FlowGuardProjectAutopilot_20260430
