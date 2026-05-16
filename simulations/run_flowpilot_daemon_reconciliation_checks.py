@@ -110,6 +110,7 @@ HAZARD_EXPECTED_FAILURES = {
     "startup_blocker_not_resolved_after_success": "startup bootloader blocker stayed active after its postcondition was reconciled",
     "startup_reconciled_action_queued_pm_repair": "PM repair action was queued after startup bootloader postcondition reconciliation",
     "startup_unsupported_receipt_escalated_to_pm": "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied",
+    "native_startup_intake_receipt_unsupported": "native startup intake Controller receipt was unsupported despite a complete native UI payload",
     "startup_row_reconciled_without_postcondition": "startup bootloader row was reconciled without its postcondition",
     "startup_row_reconciled_by_wrong_owner": "startup bootloader row was reconciled by the wrong owner",
     "controller_boundary_reconciled_artifact_left_flags_false": "Controller boundary confirmation was reconciled but Router flags stayed false",
@@ -144,6 +145,7 @@ def _state_id(state: model.State) -> str:
         f"budget_exhausted={state.startup_reissue_budget_exhausted}|"
         f"startup={state.startup_row_reconciled},{state.startup_postcondition_satisfied},"
         f"owner={state.startup_reconciliation_owner},generic={state.generic_receipt_reconciler_touched_startup_row},"
+        f"kind={state.startup_bootloader_receipt_kind},"
         f"unsupported={state.unsupported_startup_receipt_action},"
         f"secondary_roles={state.startup_secondary_record_roles_started},"
         f"secondary_prompts={state.startup_secondary_record_core_prompts_injected},"

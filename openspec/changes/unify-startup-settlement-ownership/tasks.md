@@ -15,8 +15,10 @@
 - [x] 3.1 Add focused runtime regression coverage for foreground active-writer settlement.
 - [x] 3.2 Add focused runtime regression coverage for startup receipt single-owner reconciliation and replay no-op behavior.
 - [x] 3.3 Run focused tests and local install sync/audit. Heavyweight Meta and Capability regressions were deferred by explicit user direction because they are too heavy for this focused pass.
+- [x] 3.4 Add focused regression coverage for `open_startup_intake_ui` done receipts carrying native startup intake results.
 
 ## 4. Finalization
 
 - [x] 4.1 Update FlowGuard adoption notes with commands, findings, and any deferred checks.
-- [ ] 4.2 Preserve compatible peer-agent changes and prepare the local git commit once the combined worktree is verified.
+- [x] 4.2 Preserve compatible peer-agent changes and prepare the local git commit once the combined worktree is verified.
+- [x] 4.3 Sync the repaired FlowPilot skill into the local installed version and verify the sync audit.

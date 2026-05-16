@@ -12806,3 +12806,51 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 - Run Meta and Capability checks later before making release-level confidence claims.
 - Preserve compatible peer-agent changes in the final local commit after the combined worktree settles.
+
+## 2026-05-16 FlowPilot Native Startup Intake Receipt Fold
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a real startup run received a done Controller receipt for `open_startup_intake_ui`, but the startup bootloader receipt effect layer did not recognize that receipt action and blocked at the startup barrier with `unsupported_startup_bootloader_receipt_action`.
+- Status: completed_focused_runtime_update
+
+### Risk Intent
+
+- Keep the native startup intake result validation in one shared function.
+- Let both direct bootloader apply and Controller receipt reconciliation fold the same `startup_intake_result.result_path` into bootstrap state.
+- Preserve the existing internal `startup_daemon_bootloader_apply` receipt path so old direct-apply completion receipts remain compatible.
+- Keep Meta and Capability regressions deferred by explicit user direction for this focused pass.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/unify-startup-settlement-ownership/`
+- Focused model: `simulations/flowpilot_daemon_reconciliation_model.py`
+- Focused runner/result: `simulations/run_flowpilot_daemon_reconciliation_checks.py`, `tmp/flowguard_background/run_daemon_reconciliation_focus.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate unify-startup-settlement-ownership --strict --json` passed.
+- `python -m compileall -q skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py tests\test_flowpilot_router_runtime.py` passed.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection --json-out tmp\flowguard_background\run_daemon_reconciliation_focus.json` passed: safe graph `1141` states / `1201` edges, zero invariant failures, FlowGuard Explorer `14694` traces / zero violations, and hazard checks ok.
+- Focused unittest coverage for native startup intake Controller receipts, startup receipt owner preservation, legacy owner canonicalization, load-controller-core receipt reconciliation, startup wait prompt guidance, native cancellation, and native intake validation passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed; installed `flowpilot` was source-fresh.
+
+### Findings
+
+- The missed path was a receipt-layer protocol gap, not a UI or payload problem: the native UI payload already validated, but receipt reconciliation lacked a branch for `open_startup_intake_ui`.
+- `_apply_startup_intake_result_to_bootstrap` now centralizes the startup intake write and deterministic bootstrap seed so direct apply and Controller receipt reconciliation use the same behavior.
+- The startup receipt effect layer now recognizes a real native startup-intake receipt while still routing internal `startup_daemon_bootloader_apply` receipts through the existing satisfied-flag path.
+- The focused model now includes a native-startup-intake receipt kind and an expected hazard for rejecting a complete native UI receipt as unsupported.
+
+### Skipped Or Deferred Steps
+
+- `python simulations/run_meta_checks.py` was skipped by explicit user direction because it is too heavy for this focused pass.
+- `python simulations/run_capability_checks.py` was skipped by explicit user direction because it is too heavy for this focused pass.
+- Live projection was skipped for the focused daemon reconciliation model because the current stopped startup run is historical evidence from before the repair.
+
+### Next Actions
+
+- Run Meta and Capability checks later before release-level confidence claims.
+- Preserve compatible peer-agent changes and the untracked parallel OpenSpec work when preparing any combined git commit.

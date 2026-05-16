@@ -7766,6 +7766,15 @@ def _apply_stateful_receipt_postcondition(
     receipt_payload: dict[str, Any],
 ) -> dict[str, Any]:
     action_type = str(pending_action.get("action_type") or "")
+    startup_bootloader_receipt = _apply_startup_bootloader_receipt_effects(
+        project_root,
+        run_root,
+        run_state,
+        pending_action,
+        receipt_payload,
+    )
+    if startup_bootloader_receipt.get("applied") or startup_bootloader_receipt.get("reason") != "not_bootloader_action":
+        return startup_bootloader_receipt
     durable_reclaim = _reclaim_router_owned_postcondition_from_artifact(
         project_root,
         run_root,
@@ -8036,7 +8045,10 @@ def _apply_startup_bootloader_receipt_effects(
         "action_type": action_type,
     }
 
-    if action_type == "emit_startup_banner":
+    if action_type == "open_startup_intake_ui" and str(receipt_payload.get("source") or "") != "startup_daemon_bootloader_apply":
+        result.update(_apply_startup_intake_result_to_bootstrap(project_root, bootstrap, receipt_payload))
+        _sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+    elif action_type == "emit_startup_banner":
         banner = _startup_banner_display()
         confirmation = _display_confirmation_for_action(receipt_payload, action)
         banner["dialog_display_confirmation"] = confirmation
@@ -16286,6 +16298,9 @@ def _sync_startup_bootstrap_flags_to_run_state(bootstrap_state: dict[str, Any], 
     bootstrap_flags = bootstrap_state.get("flags") if isinstance(bootstrap_state.get("flags"), dict) else {}
     run_flags = run_state.setdefault("flags", {})
     for flag in (
+        "startup_state_written_awaiting_answers",
+        "dialog_stopped_for_answers",
+        "startup_answers_recorded",
         "banner_emitted",
         "roles_started",
         "role_core_prompts_injected",
@@ -16878,6 +16893,35 @@ def _validate_startup_intake_result_payload(project_root: Path, payload: dict[st
         "reviewer_must_not_use_chat_history": True,
         "recorded_at": result.get("recorded_at") or utc_now(),
     }
+
+
+def _apply_startup_intake_result_to_bootstrap(
+    project_root: Path,
+    state: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    startup_intake = _validate_startup_intake_result_payload(project_root, payload)
+    state.setdefault("flags", {})
+    state["startup_intake"] = startup_intake
+    result_extra: dict[str, Any] = {"startup_intake": startup_intake}
+    if startup_intake["status"] == "cancelled":
+        state["status"] = "startup_cancelled"
+        state["startup_state"] = "startup_cancelled"
+        state["pending_action"] = None
+        return result_extra
+
+    state["startup_answers"] = startup_intake["startup_answers"]
+    state["startup_answer_interpretation"] = None
+    state["startup_state"] = "answers_complete"
+    state["flags"]["startup_state_written_awaiting_answers"] = True
+    state["flags"]["dialog_stopped_for_answers"] = True
+    state["flags"]["startup_answers_recorded"] = True
+    seed_proof = _run_deterministic_startup_bootstrap_seed(project_root, state)
+    result_extra["deterministic_bootstrap_seed"] = {
+        "evidence_path": state.get("deterministic_bootstrap_seed_evidence_path"),
+        "artifact_keys": sorted((seed_proof.get("artifacts") or {}).keys()),
+    }
+    return result_extra
 
 
 def _validate_startup_answer_interpretation(payload: dict[str, Any], answers: dict[str, str]) -> dict[str, Any] | None:
@@ -30440,25 +30484,7 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
     flag = str(action_meta["flag"])
 
     if action_type == "open_startup_intake_ui":
-        startup_intake = _validate_startup_intake_result_payload(project_root, payload)
-        state["startup_intake"] = startup_intake
-        result_extra["startup_intake"] = startup_intake
-        if startup_intake["status"] == "cancelled":
-            state["status"] = "startup_cancelled"
-            state["startup_state"] = "startup_cancelled"
-            state["pending_action"] = None
-        else:
-            state["startup_answers"] = startup_intake["startup_answers"]
-            state["startup_answer_interpretation"] = None
-            state["startup_state"] = "answers_complete"
-            state["flags"]["startup_state_written_awaiting_answers"] = True
-            state["flags"]["dialog_stopped_for_answers"] = True
-            state["flags"]["startup_answers_recorded"] = True
-            seed_proof = _run_deterministic_startup_bootstrap_seed(project_root, state)
-            result_extra["deterministic_bootstrap_seed"] = {
-                "evidence_path": state.get("deterministic_bootstrap_seed_evidence_path"),
-                "artifact_keys": sorted((seed_proof.get("artifacts") or {}).keys()),
-            }
+        result_extra.update(_apply_startup_intake_result_to_bootstrap(project_root, state, payload))
     elif action_type == "ask_startup_questions":
         state["startup_state"] = "awaiting_answers_stopped"
         state["flags"]["startup_state_written_awaiting_answers"] = True

@@ -94,6 +94,7 @@ class State:
     startup_postcondition_satisfied: bool = False
     startup_reconciliation_owner: str = "none"  # none | startup_daemon | startup_bootloader_controller_receipt | generic_receipt
     generic_receipt_reconciler_touched_startup_row: bool = False
+    startup_bootloader_receipt_kind: str = "generic"  # generic | native_startup_intake
     unsupported_startup_receipt_action: bool = False
     startup_receipt_apply_split: bool = False
     startup_receipt_requires_apply_to_advance: bool = False
@@ -535,6 +536,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 startup_row_reconciled=True,
                 startup_postcondition_satisfied=True,
                 startup_reconciliation_owner="startup_bootloader_controller_receipt",
+                startup_receipt_single_owner_folded=True,
+            ),
+        )
+        yield Transition(
+            "daemon_folds_native_startup_intake_receipt_with_single_owner",
+            _step(
+                state,
+                pending_action_kind="none",
+                pending_action_status="none",
+                controller_receipt_status="done",
+                controller_receipt_payload_quality="complete",
+                controller_receipt_action_class="startup_bootloader",
+                controller_receipt_reconciled=True,
+                pending_cleared_after_receipt=True,
+                stateful_postconditions_applied=True,
+                startup_row_reconciled=True,
+                startup_postcondition_satisfied=True,
+                startup_reconciliation_owner="startup_bootloader_controller_receipt",
+                startup_bootloader_receipt_kind="native_startup_intake",
                 startup_receipt_single_owner_folded=True,
             ),
         )
@@ -1338,6 +1358,23 @@ def hazard_states() -> dict[str, State]:
             control_blocker_lane="pm_repair_decision_required",
             next_action_computed=True,
         ),
+        "native_startup_intake_receipt_unsupported": replace(
+            safe,
+            pending_action_kind="none",
+            pending_action_status="none",
+            controller_receipt_status="done",
+            controller_receipt_payload_quality="complete",
+            controller_receipt_action_class="startup_bootloader",
+            startup_bootloader_receipt_kind="native_startup_intake",
+            generic_receipt_reconciler_touched_startup_row=True,
+            unsupported_startup_receipt_action=True,
+            startup_row_reconciled=False,
+            startup_postcondition_satisfied=False,
+            control_blocker_written=True,
+            control_blocker_lane="pm_repair_decision_required",
+            startup_reissue_budget_exhausted=True,
+            next_action_computed=True,
+        ),
         "startup_row_reconciled_without_postcondition": replace(
             safe,
             pending_action_kind="none",
@@ -1769,6 +1806,13 @@ def invariant_failures(state: State) -> list[str]:
             and not state.control_blocker_resolved_by_reconciliation
         ):
             failures.append("unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied")
+        if (
+            state.startup_bootloader_receipt_kind == "native_startup_intake"
+            and state.controller_receipt_status == "done"
+            and state.controller_receipt_payload_quality == "complete"
+            and state.unsupported_startup_receipt_action
+        ):
+            failures.append("native startup intake Controller receipt was unsupported despite a complete native UI payload")
         if state.next_action_computed and state.controller_receipt_status == "done" and not (
             state.startup_row_reconciled or state.control_blocker_written
         ):
@@ -1914,6 +1958,7 @@ INVARIANTS = (
     _invariant("startup_success_resolves_same_action_blocker", "startup bootloader blocker stayed active after its postcondition was reconciled"),
     _invariant("startup_success_prevents_pm_repair_action_queue", "PM repair action was queued after startup bootloader postcondition reconciliation"),
     _invariant("unsupported_startup_receipt_not_pm_repair_after_success", "unsupported startup bootloader receipt was escalated to PM repair after the startup postcondition was satisfied"),
+    _invariant("native_startup_intake_receipt_supported", "native startup intake Controller receipt was unsupported despite a complete native UI payload"),
     _invariant("startup_bootloader_receipt_must_be_reconciled", "startup bootloader receipt reached next action without startup reconciliation or a real blocker"),
     _invariant("controller_boundary_action_scheduler_agree", "Controller boundary action and scheduler reconciliation disagreed"),
     _invariant("controller_boundary_reconciled_projection_updates_flags", "Controller boundary confirmation was reconciled but Router flags stayed false"),

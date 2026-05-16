@@ -39,6 +39,15 @@ rows or scheduler rows as Router-reconciled.
   already settled
 - **AND** FlowPilot MUST NOT create a PM/control blocker from the replay.
 
+#### Scenario: native startup intake receipt folds UI result
+- **WHEN** the startup daemon schedules `open_startup_intake_ui`
+- **AND** the Controller writes a done receipt containing the native startup
+  intake `result_path`
+- **THEN** FlowPilot applies the same startup intake validation and bootstrap
+  seeding used by the direct bootloader apply path
+- **AND** the action row, scheduler row, bootstrap pending action, and
+  run-state startup flags reconcile under the startup Controller receipt owner.
+
 #### Scenario: unsupported startup receipt still blocks
 - **WHEN** the existing startup receipt effect handler cannot prove the
   startup postcondition from the receipt and run state

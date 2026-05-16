@@ -4644,6 +4644,53 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(row["router_state"], "reconciled")
         self.assertNotEqual((self.bootstrap_state(root).get("pending_action") or {}).get("action_type"), "emit_startup_banner")
 
+    def test_startup_intake_controller_receipt_folds_native_ui_result(self) -> None:
+        root = self.make_project()
+        action = router.run_until_wait(root, new_invocation=True)
+        self.assertEqual(action["action_type"], "open_startup_intake_ui")
+        run_root = self.run_root_for(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        intake_row = next(item for item in controller_ledger["actions"] if item["action_type"] == "open_startup_intake_ui")
+        action_id = intake_row["action_id"]
+        row_id = intake_row["router_scheduler_row_id"]
+
+        result = router.record_controller_action_receipt(
+            root,
+            action_id=action_id,
+            status="done",
+            payload=self.startup_intake_payload(root),
+        )
+
+        self.assertTrue(result["ok"])
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["startup_state"], "answers_complete")
+        self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
+        self.assertIsNone(bootstrap.get("pending_action"))
+        self.assertTrue(bootstrap["flags"]["startup_questions_asked"])
+        self.assertTrue(bootstrap["flags"]["startup_state_written_awaiting_answers"])
+        self.assertTrue(bootstrap["flags"]["dialog_stopped_for_answers"])
+        self.assertTrue(bootstrap["flags"]["startup_answers_recorded"])
+        self.assertTrue((run_root / "startup_answers.json").exists())
+
+        run_state = read_json(router.run_state_path(run_root))
+        self.assertTrue(run_state["flags"]["startup_questions_asked"])
+        self.assertTrue(run_state["flags"]["startup_state_written_awaiting_answers"])
+        self.assertTrue(run_state["flags"]["dialog_stopped_for_answers"])
+        self.assertTrue(run_state["flags"]["startup_answers_recorded"])
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+        self.assertEqual(action_record["router_reconciliation"]["source"], "startup_bootloader_controller_receipt")
+        self.assertEqual(action_record["router_reconciliation"]["action_type"], "open_startup_intake_ui")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
+        self.assertEqual(row["router_state"], "reconciled")
+        self.assertEqual(row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
+        control_blocks = run_root / "control_blocks"
+        self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
+
+        next_action = router.run_until_wait(root)
+        self.assertEqual(next_action["action_type"], "load_controller_core")
+
     def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
