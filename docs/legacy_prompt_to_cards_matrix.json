@@ -300,7 +300,7 @@
       "legacy_line": 958,
       "legacy_section": "Node Acceptance Plans",
       "new_architecture_decision": "preserve_as_system_card",
-      "next_action": "Expand recursive route-tree and repair sibling traversal; PM high-standard recheck validation and route-display refresh are now router-backed.",
+      "next_action": "Parent/module sibling traversal is router-backed; expand full repair sibling replacement policy later.",
       "priority": "P1",
       "reason": "The router now requires a reviewer-passed node acceptance plan, structured PM high-standard recheck, current-node packet registration, and parent backward replay before parent-node completion."
     },
@@ -331,6 +331,7 @@
         "templates/flowpilot/defects/defect_ledger.template.json",
         "templates/flowpilot/evidence/evidence_ledger.template.json",
         "simulations/defect_governance_model.py",
+        "simulations/flowpilot_recursive_closure_reconciliation_model.py",
         "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
         "skills/flowpilot/assets/flowpilot_router.py _current_closure_state_clean"
       ],
@@ -338,15 +339,15 @@
         "pm.final_ledger",
         "pm.closure"
       ],
-      "current_coverage": "partially_covered",
+      "current_coverage": "covered",
       "id": "defect_evidence_governance",
       "legacy_intent": "Track defects and evidence state; open blockers and stale evidence block terminal completion.",
       "legacy_line": 1032,
       "legacy_section": "Defect And Evidence Governance",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Add explicit defect-ledger reconciliation to the closure suite.",
+      "next_action": "Keep defect-ledger reconciliation aligned as defect schemas grow.",
       "priority": "P1",
-      "reason": "Evidence, generated-resource, final-ledger, and residual-risk blockers are now bound into completion; explicit defect-ledger reconciliation remains to be added."
+      "reason": "Evidence, generated-resource, final-ledger, residual-risk, and defect-ledger blockers are now bound into completion."
     },
     {
       "current_artifacts": [
@@ -587,6 +588,7 @@
       "current_artifacts": [
         "templates/flowpilot/routes/route-001/flow.template.json",
         "skills/flowpilot/assets/flowpilot_router.py",
+        "simulations/flowpilot_recursive_closure_reconciliation_model.py",
         "tests/test_flowpilot_router_runtime.py"
       ],
       "current_cards": [
@@ -602,9 +604,9 @@
       "legacy_line": 1809,
       "legacy_section": "Recursive Route Tree Planning",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Expand from effective-node auto-advance to full recursive tree and repair sibling resolution.",
+      "next_action": "Parent/module sibling traversal is covered; expand full repair sibling replacement policy later.",
       "priority": "P1",
-      "reason": "The router now auto-advances effective route nodes and gates parent closure on backward replay, but full recursive tree traversal and repair sibling resolution remain expansions."
+      "reason": "The router now auto-advances effective route nodes, enters sibling parent/module scopes before descendants, and gates parent closure on backward replay. Full repair sibling replacement remains an expansion."
     },
     {
       "current_artifacts": [
@@ -843,6 +845,7 @@
       "current_artifacts": [
         "templates/flowpilot/terminal_closure_suite.template.json",
         "templates/flowpilot/final_user_report.template.json",
+        "simulations/flowpilot_recursive_closure_reconciliation_model.py",
         "scripts/flowpilot_lifecycle.py",
         "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite",
         "skills/flowpilot/assets/flowpilot_runtime_closure.py final_user_report_record"
@@ -850,15 +853,15 @@
       "current_cards": [
         "pm.closure"
       ],
-      "current_coverage": "partially_covered",
+      "current_coverage": "covered",
       "id": "terminal_closure_suite",
       "legacy_intent": "Terminal close reconciles defects, evidence, state, heartbeat/manual resume, role memory, and final report.",
       "legacy_line": 2603,
       "legacy_section": "Terminal Closure Suite",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Add explicit defect-ledger and role-memory reconciliation.",
+      "next_action": "Keep closure reconciliation aligned as new ledger families are added.",
       "priority": "P1",
-      "reason": "Closure is not only old-prompt protection; it prevents dangling automation/state/role memory. The router now writes the closure suite, disables continuation binding, blocks dirty evidence/resource/final ledgers, and records final user-report metadata; defect and role-memory reconciliation remain expansions."
+      "reason": "Closure is not only old-prompt protection; it prevents dangling automation/state/role memory. The router now writes the closure suite, disables continuation binding, blocks dirty evidence/resource/final/defect ledgers, reconciles role memory and continuation quarantine, and records final user-report metadata."
     },
     {
       "current_artifacts": [

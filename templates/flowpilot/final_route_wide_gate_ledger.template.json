@@ -14,7 +14,10 @@
     "standard_scenario_pack": ".flowpilot/runs/<run-id>/standard_scenario_pack.json",
     "capabilities": ".flowpilot/runs/<run-id>/capabilities.json",
     "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
-    "self_interrogation_index": ".flowpilot/runs/<run-id>/self_interrogation_index.json"
+    "self_interrogation_index": ".flowpilot/runs/<run-id>/self_interrogation_index.json",
+    "defect_ledger": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
+    "crew_memory": ".flowpilot/runs/<run-id>/crew_memory",
+    "continuation_quarantine": ".flowpilot/runs/<run-id>/continuation/quarantine.json"
   },
   "current_route_scanned": false,
   "effective_nodes_resolved": false,
@@ -25,7 +28,8 @@
     "product_process_gates_collected": false,
     "generated_resource_lineage_collected": false,
     "final_completion_gates_collected": false,
-    "self_interrogation_dispositions_collected": false
+    "self_interrogation_dispositions_collected": false,
+    "terminal_closure_reconciliation_collected": false
   },
   "evidence_integrity": {
     "generated_resource_lineage_resolved": false,
@@ -41,6 +45,10 @@
     "requirement_waiver_authority_checked": false,
     "requirement_stale_status_checked": false,
     "self_interrogation_index_clean": false,
+    "defect_ledger_reconciled": false,
+    "role_memory_reconciled": false,
+    "continuation_quarantine_reconciled": false,
+    "terminal_closure_reconciliation_clean": false,
     "unresolved_residual_risk_count_zero": false,
     "waivers_have_required_role": false,
     "blocked_items_have_pm_repair_or_stop_decision": false
@@ -70,6 +78,11 @@
     "self_interrogation_record_count": 0,
     "self_interrogation_issue_count": 0,
     "self_interrogation_unresolved_hard_finding_count": 0,
+    "defect_blocker_open_count": 0,
+    "defect_fixed_pending_recheck_count": 0,
+    "role_memory_file_count": 0,
+    "stale_role_memory_path_count": 0,
+    "imported_artifact_authority_count": 0,
     "unresolved_count": null
   },
   "residual_risk_triage": {
@@ -218,6 +231,31 @@
       "unresolved_reason": "<reason-or-null>"
     }
   ],
+  "terminal_closure_reconciliation": {
+    "schema_version": "flowpilot.terminal_closure_reconciliation.v1",
+    "clean": false,
+    "dirty_families": [],
+    "defect_ledger": {
+      "present": false,
+      "absence_is_pass_claim": false,
+      "blocker_open_count": null,
+      "fixed_pending_recheck_count": null,
+      "clean": false
+    },
+    "role_memory": {
+      "present": false,
+      "absence_is_pass_claim": false,
+      "file_count": 0,
+      "stale_role_memory_paths": [],
+      "clean": false
+    },
+    "continuation_quarantine": {
+      "present": false,
+      "absence_is_pass_claim": false,
+      "imported_artifact_authority_count": 0,
+      "clean": false
+    }
+  },
   "terminal_human_backward_replay": {
     "required": true,
     "status": "not_started",

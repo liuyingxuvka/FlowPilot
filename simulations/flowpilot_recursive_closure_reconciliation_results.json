@@ -1,0 +1,81 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=72",
+    "violation_count": 0
+  },
+  "hazards": {
+    "hazards": {
+      "closure_with_imported_artifact_authority": {
+        "detected": true,
+        "expected": "terminal closure approved with imported artifact authority",
+        "failures": [
+          "terminal closure approved with imported artifact authority"
+        ]
+      },
+      "closure_with_stale_role_memory": {
+        "detected": true,
+        "expected": "terminal closure approved with stale role memory authority",
+        "failures": [
+          "terminal closure approved with stale role memory authority"
+        ]
+      },
+      "closure_with_unresolved_defect": {
+        "detected": true,
+        "expected": "terminal closure approved with unresolved defect",
+        "failures": [
+          "terminal closure approved with unresolved defect"
+        ]
+      },
+      "closure_without_defect_reconciliation": {
+        "detected": true,
+        "expected": "terminal closure approved without clean defect ledger reconciliation",
+        "failures": [
+          "terminal closure approved without clean defect ledger reconciliation"
+        ]
+      },
+      "parent_done_before_children": {
+        "detected": true,
+        "expected": "parent completed before child coverage",
+        "failures": [
+          "parent completed before child coverage"
+        ]
+      },
+      "root_selected_as_worker": {
+        "detected": true,
+        "expected": "route root selected as executable worker scope",
+        "failures": [
+          "route root selected as executable worker scope"
+        ]
+      },
+      "sibling_leaf_before_parent": {
+        "detected": true,
+        "expected": "sibling leaf entered before sibling parent/module",
+        "failures": [
+          "sibling leaf entered before sibling parent/module"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "recursive_closure_reconciliation",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 14,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 15,
+    "terminal_state_count": 2
+  }
+}

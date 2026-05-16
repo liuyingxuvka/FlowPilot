@@ -20004,6 +20004,236 @@ def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
         run_state["flags"][flag] = False
 
 
+def _defect_ledger_reconciliation_status(project_root: Path, run_root: Path) -> dict[str, Any]:
+    path = run_root / "defects" / "defect_ledger.json"
+    status: dict[str, Any] = {
+        "present": path.exists(),
+        "path": project_relative(project_root, path) if path.exists() else None,
+        "required_for_current_run": False,
+        "absence_is_pass_claim": False,
+        "blocker_open_count": 0,
+        "fixed_pending_recheck_count": 0,
+        "closed_defect_missing_recheck_count": 0,
+        "issue_count": 0,
+        "issues": [],
+        "clean": True,
+    }
+    if not path.exists():
+        return status
+    ledger = read_json(path)
+    issues: list[str] = []
+    if ledger.get("schema_version") != "flowpilot.defect_ledger.v1":
+        issues.append("schema_version mismatch")
+    counts = ledger.get("counts") if isinstance(ledger.get("counts"), dict) else {}
+    defects = ledger.get("defects") if isinstance(ledger.get("defects"), list) else []
+    count_blocker_open = int(counts.get("blocker_open", 0) or 0)
+    count_fixed_pending = int(counts.get("fixed_pending_recheck", 0) or 0)
+    scan_blocker_open = 0
+    scan_fixed_pending = 0
+    closed_missing_recheck = 0
+    for defect in defects:
+        if not isinstance(defect, dict):
+            continue
+        defect_status = str(defect.get("status") or "").lower()
+        severity = str(defect.get("severity") or "").lower()
+        if severity == "blocker" and defect_status in {"open", "accepted", "fixing"}:
+            scan_blocker_open += 1
+        if defect_status == "fixed_pending_recheck":
+            scan_fixed_pending += 1
+        pm_triage = defect.get("pm_triage") if isinstance(defect.get("pm_triage"), dict) else {}
+        recheck_role = str(pm_triage.get("recheck_role_class") or "").lower()
+        if defect_status == "closed" and recheck_role not in {"", "none"} and not defect.get("recheck_paths"):
+            closed_missing_recheck += 1
+    blocker_open = max(count_blocker_open, scan_blocker_open, 0)
+    fixed_pending = max(count_fixed_pending, scan_fixed_pending, 0)
+    if blocker_open:
+        issues.append("blocker defects remain open")
+    if fixed_pending:
+        issues.append("defects are fixed but pending recheck")
+    if closed_missing_recheck:
+        issues.append("closed defects are missing required recheck evidence")
+    status.update(
+        {
+            "required_for_current_run": True,
+            "blocker_open_count": blocker_open,
+            "fixed_pending_recheck_count": fixed_pending,
+            "closed_defect_missing_recheck_count": closed_missing_recheck,
+            "issue_count": len(issues),
+            "issues": issues,
+            "clean": not issues,
+        }
+    )
+    return status
+
+
+def _role_memory_reconciliation_status(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    memory_root = run_root / "crew_memory"
+    files = sorted(memory_root.glob("*.json")) if memory_root.exists() else []
+    expected_run_id = str(run_state.get("run_id") or run_root.name)
+    issues: list[str] = []
+    stale_paths: list[str] = []
+    role_keys_seen: set[str] = set()
+    historical_authority_count = 0
+    for path in files:
+        memory = read_json(path)
+        rel_path = project_relative(project_root, path)
+        if memory.get("schema_version") != "flowpilot.role_memory.v1":
+            issues.append(f"{rel_path}: schema_version mismatch")
+        role_key = str(memory.get("role_key") or path.stem)
+        if role_key not in CREW_ROLE_KEYS:
+            issues.append(f"{rel_path}: unknown role_key")
+        else:
+            role_keys_seen.add(role_key)
+        if str(memory.get("run_id") or "") != expected_run_id:
+            stale_paths.append(rel_path)
+            issues.append(f"{rel_path}: run_id does not match current run")
+        identity_policy = memory.get("identity_policy") if isinstance(memory.get("identity_policy"), dict) else {}
+        if identity_policy and identity_policy.get("agent_id_is_diagnostic_only") is False:
+            historical_authority_count += 1
+            issues.append(f"{rel_path}: agent_id is not diagnostic-only")
+        last_rehydration = memory.get("last_rehydration") if isinstance(memory.get("last_rehydration"), dict) else {}
+        if last_rehydration.get("historical_agent_id_reused") is True:
+            historical_authority_count += 1
+            issues.append(f"{rel_path}: historical agent id reused")
+        if memory.get("controller_decision_authority") is True or memory.get("role_memory_used_for_completion_authority") is True:
+            historical_authority_count += 1
+            issues.append(f"{rel_path}: role memory claims completion authority")
+    missing_roles = [role for role in CREW_ROLE_KEYS if files and role not in role_keys_seen]
+    return {
+        "present": bool(files),
+        "path": project_relative(project_root, memory_root) if memory_root.exists() else None,
+        "required_for_current_run": bool(files),
+        "absence_is_pass_claim": False,
+        "file_count": len(files),
+        "role_count": len(role_keys_seen),
+        "missing_role_keys": missing_roles,
+        "stale_role_memory_paths": stale_paths,
+        "historical_agent_authority_count": historical_authority_count,
+        "issue_count": len(issues),
+        "issues": issues,
+        "clean": not issues,
+    }
+
+
+def _continuation_quarantine_reconciliation_status(project_root: Path, run_root: Path) -> dict[str, Any]:
+    path = _continuation_quarantine_path(run_root)
+    status: dict[str, Any] = {
+        "present": path.exists(),
+        "path": project_relative(project_root, path) if path.exists() else None,
+        "required_for_current_run": path.exists(),
+        "absence_is_pass_claim": False,
+        "current_pointer_matches_run": None,
+        "prior_run_files_are_evidence_by_default": None,
+        "old_agent_ids_are_current_authority": None,
+        "old_assets_are_current_evidence_by_default": None,
+        "old_agent_id_count": 0,
+        "old_asset_count": 0,
+        "issue_count": 0,
+        "issues": [],
+        "clean": True,
+    }
+    if not path.exists():
+        return status
+    record = read_json(path)
+    issues = list(flowpilot_runtime_closure.validate_continuation_quarantine_record(record))
+    old_agent_ids = record.get("old_agent_ids") if isinstance(record.get("old_agent_ids"), list) else []
+    old_assets = record.get("old_assets") if isinstance(record.get("old_assets"), list) else []
+    imported_authority_count = 0
+    for item in old_agent_ids:
+        if isinstance(item, dict) and item.get("current_authority") is True:
+            imported_authority_count += 1
+    for item in old_assets:
+        if isinstance(item, dict) and (
+            item.get("current_evidence") is True or item.get("current_authority") is True
+        ):
+            imported_authority_count += 1
+    if imported_authority_count:
+        issues.append("imported old artifacts still claim current authority")
+    if record.get("current_pointer_matches_run") is False:
+        issues.append("current pointer does not match run")
+    status.update(
+        {
+            "current_pointer_matches_run": record.get("current_pointer_matches_run"),
+            "prior_run_files_are_evidence_by_default": record.get("prior_run_files_are_evidence_by_default"),
+            "old_agent_ids_are_current_authority": record.get("old_agent_ids_are_current_authority"),
+            "old_assets_are_current_evidence_by_default": record.get("old_assets_are_current_evidence_by_default"),
+            "old_agent_id_count": len(old_agent_ids),
+            "old_asset_count": len(old_assets),
+            "imported_artifact_authority_count": imported_authority_count,
+            "issue_count": len(issues),
+            "issues": issues,
+            "clean": not issues,
+        }
+    )
+    return status
+
+
+def _terminal_closure_reconciliation_status(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    defect_status = _defect_ledger_reconciliation_status(project_root, run_root)
+    role_memory_status = _role_memory_reconciliation_status(project_root, run_root, run_state)
+    quarantine_status = _continuation_quarantine_reconciliation_status(project_root, run_root)
+    families = {
+        "defect_ledger": defect_status,
+        "role_memory": role_memory_status,
+        "continuation_quarantine": quarantine_status,
+    }
+    dirty = [
+        name
+        for name, family_status in families.items()
+        if not bool(family_status.get("clean"))
+    ]
+    return {
+        "schema_version": "flowpilot.terminal_closure_reconciliation.v1",
+        "clean": not dirty,
+        "dirty_families": dirty,
+        "defect_ledger": defect_status,
+        "role_memory": role_memory_status,
+        "continuation_quarantine": quarantine_status,
+    }
+
+
+def _closure_reconciliation_blocker_message(status: dict[str, Any]) -> str:
+    dirty = status.get("dirty_families") if isinstance(status.get("dirty_families"), list) else []
+    if not dirty:
+        return "terminal closure reconciliation is dirty"
+    details = []
+    for family in dirty:
+        family_status = status.get(str(family)) if isinstance(status.get(str(family)), dict) else {}
+        issues = family_status.get("issues") if isinstance(family_status.get("issues"), list) else []
+        first_issue = str(issues[0]) if issues else "dirty"
+        details.append(f"{family}: {first_issue}")
+    return "; ".join(details)
+
+
+def _closure_reconciliation_entries(
+    project_root: Path,
+    status: dict[str, Any],
+    *,
+    route_version: int,
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for family in ("defect_ledger", "role_memory", "continuation_quarantine"):
+        family_status = status.get(family) if isinstance(status.get(family), dict) else {}
+        path = family_status.get("path")
+        entries.append(
+            {
+                "entry_id": f"closure_reconciliation:{family}",
+                "route_version": route_version,
+                "gate_family": "terminal_closure_reconciliation",
+                "required_approver": "project_manager",
+                "status": "approved"
+                if family_status.get("clean") and family_status.get("present")
+                else "not_present"
+                if family_status.get("clean")
+                else "blocked",
+                "source_of_truth_paths": [path] if isinstance(path, str) and path else [],
+                "evidence_paths": [path] if isinstance(path, str) and path else [],
+                "reconciliation": family_status,
+            }
+        )
+    return entries
+
+
 def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
     evidence = read_json_if_exists(run_root / "evidence" / "evidence_ledger.json")
     generated = read_json_if_exists(run_root / "generated_resource_ledger.json")
@@ -20012,6 +20242,7 @@ def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
     task_projection = read_json_if_exists(_task_completion_projection_path(run_root))
     pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
     self_interrogation_status = _self_interrogation_status(project_root, run_root)
+    closure_reconciliation = _terminal_closure_reconciliation_status(project_root, run_root, {})
     return (
         evidence.get("unresolved_count") == 0
         and evidence.get("stale_count") == 0
@@ -20023,6 +20254,7 @@ def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
         and task_projection.get("task_status") == "ready_for_pm_terminal_closure"
         and pm_suggestion_status["clean"]
         and self_interrogation_status["clean"]
+        and closure_reconciliation["clean"]
     )
 
 
@@ -23500,10 +23732,9 @@ def _next_effective_node_id(route: dict[str, Any], mutations: dict[str, Any], co
         if node_id not in completed:
             node = nodes_by_id.get(node_id) or {}
             if _node_kind(node) != "leaf":
-                child_ids = set(_effective_child_ids(node, nodes_by_id))
-                if child_ids and child_ids.issubset(completed):
-                    return node_id
-                continue
+                if _is_route_root_node(node):
+                    continue
+                return node_id
             return node_id
     return None
 
@@ -29688,6 +29919,12 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         run_root,
         gate_name="final route-wide ledger",
     )
+    closure_reconciliation = _terminal_closure_reconciliation_status(project_root, run_root, run_state)
+    if not closure_reconciliation["clean"]:
+        raise RouterError(
+            "final ledger requires clean terminal closure reconciliation: "
+            + _closure_reconciliation_blocker_message(closure_reconciliation)
+        )
     if unresolved_count != 0:
         raise RouterError("final ledger requires unresolved_count=0")
     if unresolved_resource_count != 0:
@@ -29725,6 +29962,13 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         child_manifest,
         evidence_ledger,
         generated_ledger,
+    )
+    entries.extend(
+        _closure_reconciliation_entries(
+            project_root,
+            closure_reconciliation,
+            route_version=route_version,
+        )
     )
     bad_entry_statuses = [
         str(entry.get("entry_id"))
@@ -29785,6 +30029,9 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "self_interrogation_index": project_relative(project_root, _self_interrogation_index_path(run_root))
             if self_interrogation_status["exists"]
             else None,
+            "defect_ledger": closure_reconciliation["defect_ledger"]["path"],
+            "crew_memory": closure_reconciliation["role_memory"]["path"],
+            "continuation_quarantine": closure_reconciliation["continuation_quarantine"]["path"],
         },
         "prior_path_context_review": prior_review,
         "current_route_scanned": True,
@@ -29799,6 +30046,7 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "gate_decisions_collected": True,
             "pm_suggestions_disposed": True,
             "self_interrogation_dispositions_collected": True,
+            "terminal_closure_reconciliation_collected": True,
         },
         "evidence_integrity": {
             "generated_resource_lineage_resolved": True,
@@ -29814,6 +30062,10 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "requirement_waiver_authority_checked": True,
             "requirement_stale_status_checked": True,
             "self_interrogation_index_clean": True,
+            "defect_ledger_reconciled": closure_reconciliation["defect_ledger"]["clean"],
+            "role_memory_reconciled": closure_reconciliation["role_memory"]["clean"],
+            "continuation_quarantine_reconciled": closure_reconciliation["continuation_quarantine"]["clean"],
+            "terminal_closure_reconciliation_clean": closure_reconciliation["clean"],
         },
         "counts": {
             "effective_node_count": len(_effective_route_nodes(route, mutations)),
@@ -29835,9 +30087,18 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
             "self_interrogation_record_count": self_interrogation_status["record_count"],
             "self_interrogation_issue_count": self_interrogation_status["issue_count"],
             "self_interrogation_unresolved_hard_finding_count": self_interrogation_status["unresolved_hard_finding_count"],
+            "defect_blocker_open_count": closure_reconciliation["defect_ledger"]["blocker_open_count"],
+            "defect_fixed_pending_recheck_count": closure_reconciliation["defect_ledger"]["fixed_pending_recheck_count"],
+            "role_memory_file_count": closure_reconciliation["role_memory"]["file_count"],
+            "stale_role_memory_path_count": len(closure_reconciliation["role_memory"]["stale_role_memory_paths"]),
+            "imported_artifact_authority_count": closure_reconciliation["continuation_quarantine"].get(
+                "imported_artifact_authority_count",
+                0,
+            ),
         },
         "entries": entries,
         "gate_decisions": gate_decisions,
+        "terminal_closure_reconciliation": closure_reconciliation,
         "root_contract_replay": root_replay,
         "requirement_trace_closure": requirement_trace_closure,
         "frozen_contract_replay": {
@@ -30095,6 +30356,12 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
         run_root,
         gate_name="terminal closure",
     )
+    closure_reconciliation = _terminal_closure_reconciliation_status(project_root, run_root, run_state)
+    if not closure_reconciliation["clean"]:
+        raise RouterError(
+            "terminal closure requires clean reconciliation ledgers: "
+            + _closure_reconciliation_blocker_message(closure_reconciliation)
+        )
     unresolved_role_work = _unresolved_pm_role_work_requests(run_root, run_state)
     if unresolved_role_work:
         request_ids = ", ".join(str(item.get("request_id")) for item in unresolved_role_work[:5])
@@ -30127,6 +30394,9 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "self_interrogation_index": project_relative(project_root, _self_interrogation_index_path(run_root))
             if self_interrogation_status["exists"]
             else None,
+            "defect_ledger": closure_reconciliation["defect_ledger"]["path"],
+            "crew_memory": closure_reconciliation["role_memory"]["path"],
+            "continuation_quarantine": closure_reconciliation["continuation_quarantine"]["path"],
         },
         "decision": decision,
         "prior_path_context_review": prior_review,
@@ -30141,6 +30411,7 @@ def _write_terminal_closure_suite(project_root: Path, run_root: Path, run_state:
             "unresolved_hard_finding_count": self_interrogation_status["unresolved_hard_finding_count"],
             "clean": self_interrogation_status["clean"],
         },
+        "terminal_closure_reconciliation": closure_reconciliation,
         "lifecycle": {
             "heartbeat_active": False,
             "manual_resume_notice_required": False,

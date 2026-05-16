@@ -13,6 +13,7 @@
     "evidence_credibility_ledger_reconciled",
     "risk_triage_zero_unresolved",
     "terminal_human_backward_replay_passed",
+    "terminal_closure_reconciliation_clean",
     "sync_terminal_state_files",
     "refresh_terminal_evidence",
     "rebuild_final_ledger_if_evidence_changed",
@@ -89,6 +90,38 @@
     "issue_count": 0,
     "unresolved_hard_finding_count": 0,
     "clean": false
+  },
+  "terminal_closure_reconciliation": {
+    "schema_version": "flowpilot.terminal_closure_reconciliation.v1",
+    "required": true,
+    "clean": false,
+    "dirty_families": [],
+    "defect_ledger": {
+      "path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
+      "required_for_current_run": "<true|false>",
+      "absence_is_pass_claim": false,
+      "blocker_open_count": null,
+      "fixed_pending_recheck_count": null,
+      "clean": false
+    },
+    "role_memory": {
+      "path": ".flowpilot/runs/<run-id>/crew_memory",
+      "required_for_current_run": "<true|false>",
+      "absence_is_pass_claim": false,
+      "file_count": 0,
+      "stale_role_memory_paths": [],
+      "historical_agent_authority_count": 0,
+      "clean": false
+    },
+    "continuation_quarantine": {
+      "path": ".flowpilot/runs/<run-id>/continuation/quarantine.json",
+      "required_for_current_run": "<true|false>",
+      "absence_is_pass_claim": false,
+      "old_agent_ids_are_current_authority": "<true|false>",
+      "old_assets_are_current_evidence_by_default": "<true|false>",
+      "imported_artifact_authority_count": 0,
+      "clean": false
+    }
   },
   "terminal_human_backward_replay": {
     "ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",

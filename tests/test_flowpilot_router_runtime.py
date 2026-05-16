@@ -147,7 +147,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             ["leaf-a1", "leaf-a2", "module-a"],
             "module-a",
         )
-        self.assertEqual(next_node_after_parent_review, "leaf-b1")
+        self.assertEqual(next_node_after_parent_review, "module-b")
 
     def next_and_apply(self, root: Path, payload: dict | None = None) -> dict:
         action = self.next_after_display_sync(root)
@@ -14668,6 +14668,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger["evidence_integrity"]["self_interrogation_index_clean"])
         self.assertGreaterEqual(ledger["counts"]["self_interrogation_record_count"], 3)
         self.assertEqual(ledger["counts"]["self_interrogation_unresolved_hard_finding_count"], 0)
+        self.assertTrue(ledger["terminal_closure_reconciliation"]["clean"])
+        self.assertEqual(ledger["counts"]["defect_blocker_open_count"], 0)
+        self.assertEqual(ledger["counts"]["defect_fixed_pending_recheck_count"], 0)
+        self.assertEqual(ledger["counts"]["imported_artifact_authority_count"], 0)
+        self.assertIn("terminal_closure_reconciliation", {entry["gate_family"] for entry in ledger["entries"]})
 
     def test_closure_lifecycle_blocks_when_ledgers_are_dirty_after_terminal_replay(self) -> None:
         root = self.make_project()
@@ -14686,6 +14691,62 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         action = router.next_action(root)
         card_id = action.get("next_card_id") or action.get("card_id")
         self.assertNotEqual(card_id, "pm.closure")
+
+    def test_terminal_closure_blocks_dirty_defect_ledger_after_terminal_replay(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-dirty-defect")
+        self.complete_evidence_quality_package(root)
+        self.complete_final_ledger_and_terminal_replay(root)
+        self.deliver_expected_card(root, "pm.closure")
+
+        defect_ledger_path = run_root / "defects" / "defect_ledger.json"
+        router.write_json(
+            defect_ledger_path,
+            {
+                "schema_version": "flowpilot.defect_ledger.v1",
+                "run_id": run_root.name,
+                "route_id": "route-001",
+                "route_version": 1,
+                "pm_owned": True,
+                "status": "active",
+                "counts": {
+                    "total": 1,
+                    "open": 1,
+                    "blocker_open": 1,
+                    "fixed_pending_recheck": 0,
+                    "closed": 0,
+                    "deferred": 0,
+                },
+                "defects": [
+                    {
+                        "defect_id": "defect-open-terminal",
+                        "severity": "blocker",
+                        "status": "open",
+                        "pm_triage": {"recheck_role_class": "human_like_reviewer"},
+                        "recheck_paths": [],
+                    }
+                ],
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "defect_ledger"):
+            router.record_external_event(
+                root,
+                "pm_approves_terminal_closure",
+                self.role_decision_envelope(
+                    root,
+                    "closure/pm_terminal_closure_dirty_defect",
+                    {
+                        "approved_by_role": "project_manager",
+                        "decision": "approve_terminal_closure",
+                        **self.prior_path_context_review(root, "Terminal closure attempted with dirty defect ledger."),
+                        "final_report": {"status": "complete"},
+                    },
+                ),
+            )
 
     def test_pm_terminal_closure_uses_file_backed_contract_and_prior_context(self) -> None:
         root = self.make_project()
@@ -14736,6 +14797,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(closure["decision"], "approve_terminal_closure")
         self.assertEqual(closure["prior_path_context_review"]["reviewed"], True)
         self.assertTrue(closure["self_interrogation_review"]["clean"])
+        self.assertTrue(closure["terminal_closure_reconciliation"]["clean"])
+        self.assertTrue(closure["terminal_closure_reconciliation"]["role_memory"]["clean"])
+        self.assertTrue(closure["terminal_closure_reconciliation"]["continuation_quarantine"]["clean"])
         self.assertEqual(closure["status"], "closed")
         frontier = read_json(run_root / "execution_frontier.json")
         self.assertEqual(frontier["status"], "closed")

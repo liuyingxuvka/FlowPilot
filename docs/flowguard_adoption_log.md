@@ -13529,3 +13529,81 @@ sync evidence.
   direction because it is too heavy for this focused pass.
 - `python simulations\run_capability_checks.py` was skipped by explicit user
   direction because it is too heavy for this focused pass.
+
+## 2026-05-16 Recursive Route Closure Reconciliation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: v0.9.4 still had two narrow maintenance gaps: recursive
+  effective-node traversal could skip a sibling parent/module and terminal
+  closure did not explicitly reconcile defect ledger, role memory, or imported
+  artifact quarantine state.
+- Status: completed_recursive_closure_reconciliation_synced
+- OpenSpec change: `harden-recursive-route-closure-reconciliation`
+
+### Model And Runtime Evidence
+
+- Focused model/result:
+  `simulations/flowpilot_recursive_closure_reconciliation_model.py`,
+  `simulations/run_flowpilot_recursive_closure_reconciliation_checks.py`,
+  `simulations/flowpilot_recursive_closure_reconciliation_results.json`
+- Runtime changes:
+  `skills/flowpilot/assets/flowpilot_router.py`,
+  `templates/flowpilot/final_route_wide_gate_ledger.template.json`,
+  `templates/flowpilot/terminal_closure_suite.template.json`,
+  `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema `1.0`.
+- `openspec validate harden-recursive-route-closure-reconciliation --strict
+  --json` passed.
+- `python simulations\run_flowpilot_recursive_closure_reconciliation_checks.py
+  --json-out simulations\flowpilot_recursive_closure_reconciliation_results.json`
+  passed: 15 states / 14 edges, 72 FlowGuard traces, zero violations, hazards
+  detected.
+- Focused runtime tests passed: sibling parent entry, final ledger source paths,
+  dirty defect-ledger terminal closure block, PM terminal closure, runtime
+  closure suite, and terminal suite.
+- `python simulations\run_flowpilot_runtime_closure_checks.py --json-out
+  simulations\flowpilot_runtime_closure_results.json` passed.
+- Background `python simulations\run_meta_checks.py` completed through
+  `tmp/flowguard_background/run_meta_checks.*` with exit code 0; stdout,
+  stderr, combined, exit, and meta artifacts exist; result reports valid full
+  proof for release confidence.
+- Background `python simulations\run_capability_checks.py` completed through
+  `tmp/flowguard_background/run_capability_checks.*` with exit code 0; stdout,
+  stderr, combined, exit, and meta artifacts exist; result reports valid full
+  proof for release confidence.
+- `python scripts\check_install.py --json`, `python scripts\smoke_autopilot.py
+  --fast`, `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed; installed
+  FlowPilot is source-fresh.
+
+### Findings
+
+- Non-root parent/module nodes are executable scopes; after one parent closes,
+  the next sibling module must be entered before its leaves.
+- Terminal closure now reads current-run defect ledger, role memory, and
+  continuation quarantine state. Dirty present ledgers block final ledger or
+  closure; absent optional ledgers are recorded as `present=false` and are not
+  claimed as passes.
+- The final route-wide ledger and terminal closure suite now cite the same
+  reconciliation structure, keeping PM closure and replay evidence aligned.
+- Version, README, HANDOFF, legacy equivalence docs, install checks, and the
+  local installed skill were synchronized to v0.9.5.
+
+### Counterexamples
+
+- Sibling leaf entered before sibling parent/module.
+- Parent completed before child coverage.
+- Terminal closure approved with unresolved defects.
+- Terminal closure approved with stale role-memory authority.
+- Terminal closure approved with imported artifact authority.
+
+### Skipped Or Deferred Steps
+
+- No push, tag, release, deploy, or public publication was performed.
+- Full repair sibling route replacement policy and native Cockpit snapshot
+  consumption remain future work.

@@ -56,7 +56,9 @@ skill. The current model boundary covers:
   commitments, failure hypotheses, task-specific challenge actions, direct
   evidence or approved waiver, blocker triage, and PM reroute/repair request
   when hard issues are found;
-- terminal closure, final route-wide gate ledgers, and residual-risk review.
+- terminal closure, final route-wide gate ledgers, residual-risk review,
+  defect-ledger/role-memory/quarantine reconciliation, and recursive
+  parent/module route entry.
 
 ## Latest Validation
 
@@ -71,6 +73,7 @@ python scripts\check_install.py
 python simulations\run_meta_checks.py
 python simulations\run_capability_checks.py
 python simulations\run_startup_pm_review_checks.py
+python simulations\run_flowpilot_recursive_closure_reconciliation_checks.py
 python scripts\install_flowpilot.py --sync-repo-owned --json
 python scripts\audit_local_install_sync.py --json
 python scripts\install_flowpilot.py --check --json
@@ -89,6 +92,8 @@ Results:
   stuck states, zero nonterminating components;
 - startup PM-review model: passed, including hazard detection and safe-graph
   checks;
+- recursive closure reconciliation model: passed, including parent/module
+  traversal and dirty terminal-closure hazard detection;
 - smoke autopilot: passed.
 
 ## Historical Note

@@ -447,23 +447,26 @@ FlowGuard caught and fixed these design issues:
   artifacts. The focused model and checker are
   `simulations/flowpilot_runtime_closure_model.py` and
   `simulations/run_flowpilot_runtime_closure_checks.py`.
+- Recursive route and terminal closure reconciliation hardening now prevents
+  sibling parent/module skips and records defect-ledger, role-memory, and
+  continuation-quarantine reconciliation in the final ledger and closure suite.
+  The focused model and checker are
+  `simulations/flowpilot_recursive_closure_reconciliation_model.py` and
+  `simulations/run_flowpilot_recursive_closure_reconciliation_checks.py`.
 
 ## Remaining Work
 
 Before public release:
 
-1. Extend the router beyond single-node scaffolding into full multi-node route
-   resolver validation.
-2. Continue terminal expansion with defect-ledger, role-memory, and broader
-   closure-suite reconciliation. Officer request/report lifecycle, continuation
-   quarantine, final user report, and route-display refresh are now runtime
-   artifacts.
-3. Build a production replay adapter for the abstract resume and router-loop
+1. Extend repair/mutation traversal beyond the current active subtree into full
+   branch/sibling replacement policy validation. Basic recursive parent/module
+   entry and terminal closure reconciliation are now runtime-backed.
+2. Build a production replay adapter for the abstract resume and router-loop
    FlowGuard models if they are promoted from design models to conformance
    checks.
-4. Review the README and docs for final GitHub presentation.
-5. Fill in final public FlowGuard source URLs if needed.
-6. Run privacy and public-boundary review before publishing.
+3. Review the README and docs for final GitHub presentation.
+4. Fill in final public FlowGuard source URLs if needed.
+5. Run privacy and public-boundary review before publishing.
 
 ## Validation Commands
 
@@ -483,6 +486,7 @@ python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flo
 python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python simulations/run_flowpilot_runtime_closure_checks.py --json-out simulations/flowpilot_runtime_closure_results.json
+python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py --json-out simulations/flowpilot_recursive_closure_reconciliation_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

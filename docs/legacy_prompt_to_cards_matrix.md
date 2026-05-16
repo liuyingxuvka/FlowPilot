@@ -23,8 +23,8 @@ section, whether an old rule should be:
 - Legacy prompt sections mapped: 45
 - Current runtime cards: 58
 - Template files: no old/new template file count gap was found
-- Covered sections: 18
-- Partially covered sections: 24
+- Covered sections: 20
+- Partially covered sections: 22
 - Planned sections: 2
 - Deferred sections: 0
 - Retired sections: 1
@@ -33,10 +33,12 @@ The biggest gap is no longer missing core startup/material/route/final cards.
 Those have been split into runtime cards and router-enforced transitions. The
 2026-05-16 runtime-closure pass added the generalized officer request lifecycle
 index, current-run quarantine baseline, route-display refresh record, and final
-user-report metadata. The remaining gaps are narrower: full recursive
-route-tree expansion beyond effective-node advance, richer closure-suite
-reconciliation, native Cockpit consumption of the route snapshot, and
-field-level validators for future specialized officer report families.
+user-report metadata. The 2026-05-16 recursive closure pass then added
+parent/module sibling traversal and defect-ledger, role-memory, and
+continuation-quarantine closure reconciliation. The remaining gaps are narrower:
+full repair sibling route replacement policy, native Cockpit consumption of the
+route snapshot, and field-level validators for future specialized officer
+report families.
 
 ## Key Architectural Decision
 
@@ -85,11 +87,10 @@ authority rather than old prompt contamination:
 
 ## Highest Priority Gaps
 
-1. Full recursive route-tree expansion beyond effective-node advance.
-2. Closure-suite reconciliation for defect ledgers, role memory, and imported
-   artifact disposition.
-3. Native Cockpit consumption of the route snapshot.
-4. Field-level validators for future specialized officer report families.
+1. Full repair sibling route replacement policy beyond the current active
+   subtree resolver.
+2. Native Cockpit consumption of the route snapshot.
+3. Field-level validators for future specialized officer report families.
 
 ## Section Matrix
 
@@ -107,9 +108,9 @@ authority rather than old prompt contamination:
 | Product Function Architecture Gate | Partial | Preserve as hard gate | PM product architecture, product officer modelability, reviewer challenge | Keep strengthening architecture field validation |
 | PM Child-Skill Selection Gate | Covered | Preserve as hard gate | `pm.child_skill_selection`, `pm.child_skill_gate_manifest`, reviewer/officer child-skill cards, capability evidence sync | Keep child-skill gate validators in sync with new child skills |
 | Root Acceptance Contract And Standard Scenarios | Covered | Preserve as hard gate | PM root contract, reviewer challenge, product officer modelability, PM freeze, final-ledger root replay | Keep frozen-contract replay aligned with root schema growth |
-| Node Acceptance Plans | Partial | Preserve as system card | `pm.node_acceptance_plan`, `reviewer.node_acceptance_plan_review`, PM high-standard recheck, parent replay cards, node/parent replay templates, route-display refresh | Expand recursive route-tree and repair sibling traversal |
+| Node Acceptance Plans | Partial | Preserve as system card | `pm.node_acceptance_plan`, `reviewer.node_acceptance_plan_review`, PM high-standard recheck, parent replay cards, node/parent replay templates, route-display refresh, recursive closure reconciliation model | Parent/module sibling traversal is covered; expand repair sibling replacement policy |
 | FlowPilot Skill Improvement Notes | Covered | Preserve as runtime artifact | improvement templates and child-skill improvement reporting path | Add nonblocking PM improvement-report card near closure if needed |
-| Defect And Evidence Governance | Partial | Preserve as router validator | defect/evidence scripts/templates/model, PM evidence quality package, final ledger writer, closure cleanliness check | Add explicit defect-ledger reconciliation to closure suite |
+| Defect And Evidence Governance | Covered | Preserve as router validator | defect/evidence scripts/templates/model, PM evidence quality package, final ledger writer, closure cleanliness check, defect-ledger reconciliation | Keep defect reconciliation aligned as defect schemas grow |
 | Persistent Six-Agent Crew | Partial | Preserve as hard gate | role cards, crew templates, crew rehydration/freshness card, role memory skeleton | Expand live-agent replacement validation and role memory writeback |
 | Reviewer Fact-Check Baseline | Covered | Preserve as system card | reviewer core/dispatch/result/startup/material/route/final cards | Add specialized cards only as new gate families appear |
 | Actor Authority Matrix | Partial | Preserve as router validator | core role cards, controller policy, role-owned router events, models | Add explicit required_approver metadata to every gate artifact |
@@ -122,7 +123,7 @@ authority rather than old prompt contamination:
 | Dual-Layer Product And Process Models | Partial | Preserve as hard gate | meta/capability/runtime-closure models, officer core cards, PM officer request/report card, officer request lifecycle index | Add specialized field-level validators as new model-report families appear |
 | PM-Initiated FlowGuard Modeling | Partial | Preserve as system card | request/report templates, PM officer request/report card, officer request lifecycle index | Keep PM officer loop packet-bound and add report-specific validators when needed |
 | Human-Like Inspection Loop | Partial | Preserve as system card | reviewer core/result/startup/material/node/final cards, terminal replay, human review template | Add richer UI/product walkthrough cards when those route surfaces are active |
-| Recursive Route Tree Planning | Partial | Preserve as router validator | route templates, route skeleton card, parent backward replay cards, effective-node auto-advance | Expand to full recursive tree and repair sibling resolution |
+| Recursive Route Tree Planning | Partial | Preserve as router validator | route templates, route skeleton card, parent backward replay cards, effective-node auto-advance, parent/module sibling entry | Expand repair sibling replacement policy |
 | Controlled Nonterminal Stop Notice | Partial | Preserve as runtime artifact | pause/continuation templates, resume model | Add pause snapshot action and PM stop/block path |
 | Quality Package | Covered | Merge into existing card | `pm.evidence_quality_package`, `reviewer.evidence_quality_review`, evidence/generated-resource/quality ledgers | Extend quality fields as new route surfaces require them |
 | `.flowpilot/` Source Of Truth | Partial | Preserve as router validator | run shell, resume state load, continuation quarantine, final-ledger source-of-truth builder | Expand old-file import disposition beyond the quarantine baseline |
@@ -134,7 +135,7 @@ authority rather than old prompt contamination:
 | Final Route-Wide Gate Ledger | Covered | Preserve as hard gate | final ledger templates/card, source-of-truth final ledger writer, segmented reviewer replay, terminal map, closure suite, router-loop model | Keep replay segment generation aligned with future source-of-truth entry types |
 | Chunk Rule | Partial | Preserve as system card | worker cards, current-node card, node acceptance plan/review, router-loop model | Extend the same packet loop to repair packets and officer packets |
 | Residual Risk Triage Gate | Covered | Preserve as hard gate | PM final ledger writer validates `unresolved_residual_risk_count=0` | Extend residual-risk source ledger if a route adds explicit risk entries |
-| Terminal Closure Suite | Partial | Preserve as hard gate | closure card/template, lifecycle script, closure-suite writer, continuation disable, dirty-ledger block, final user report metadata | Add defect-ledger and role-memory reconciliation |
+| Terminal Closure Suite | Covered | Preserve as hard gate | closure card/template, lifecycle script, closure-suite writer, continuation disable, dirty-ledger block, defect-ledger/role-memory/quarantine reconciliation, final user report metadata | Keep closure reconciliation aligned as new ledger families are added |
 | Route Updates | Covered | Preserve as router validator | route mutation writer, repair cards, stale-evidence ledger, superseded node history | Expand to full branch/sibling route replacement policies |
 | Hard Gates | Partial | Preserve as hard gate | PM core, HANDOFF | Add gate metadata to route/ledger artifacts |
 | Automatic Tool Installation | Partial | Preserve as system card | installer/check scripts, dependencies manifest, PM dependency-policy card | Add router-visible dependency decision records when a route needs an install |
@@ -143,8 +144,8 @@ authority rather than old prompt contamination:
 
 ## Immediate Next Work
 
-1. Add full recursive route-tree traversal and repair sibling resolution.
-2. Add defect-ledger, role-memory, and imported-artifact closure reconciliation.
-3. Add native Cockpit consumption of the route snapshot.
-4. Add specialized field-level validators when future officer report families
+1. Add full repair sibling route replacement policy beyond the current active
+   subtree resolver.
+2. Add native Cockpit consumption of the route snapshot.
+3. Add specialized field-level validators when future officer report families
    are introduced.

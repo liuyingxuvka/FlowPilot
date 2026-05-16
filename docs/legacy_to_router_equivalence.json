@@ -154,7 +154,7 @@
     {
       "id": "route_frontier_and_current_node_loop",
       "legacy_obligation": "The active route/frontier drive current node work; PM chooses current-node packets, reviewer checks results, and Controller does not create new nodes.",
-      "missing_work": "Add automatic multi-node route traversal and repair sibling resolution.",
+      "missing_work": "Parent/module sibling traversal is covered. Add full repair sibling replacement policy beyond the current active subtree resolver.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
@@ -163,6 +163,8 @@
         "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md",
         "skills/flowpilot/assets/flowpilot_router.py _write_route_activation",
         "skills/flowpilot/assets/flowpilot_router.py _write_node_acceptance_plan",
+        "skills/flowpilot/assets/flowpilot_router.py _next_effective_node_id",
+        "simulations/flowpilot_recursive_closure_reconciliation_model.py",
         "simulations/flowpilot_router_loop_model.py",
         "tests/test_flowpilot_router_runtime.py test_parent_node_requires_backward_replay_before_completion"
       ],
@@ -201,7 +203,7 @@
     {
       "id": "final_route_wide_ledger_and_terminal_replay",
       "legacy_obligation": "Completion requires PM-built current-route ledger, stale evidence/resource disposition, reviewer terminal backward replay, PM segment decisions, and PM completion approval.",
-      "missing_work": "Final user report metadata now exists after terminal lifecycle. Add broader closure-suite lifecycle reconciliation after PM closure approval.",
+      "missing_work": "Defect-ledger, role-memory, and continuation-quarantine reconciliation now run before final ledger and terminal closure. Keep closure reconciliation aligned as new ledger families are added.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md",
         "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md",
@@ -210,13 +212,15 @@
         "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
         "skills/flowpilot/assets/flowpilot_router.py reviewer_final_backward_replay_passed",
         "skills/flowpilot/assets/flowpilot_router.py _write_terminal_backward_replay",
+        "skills/flowpilot/assets/flowpilot_router.py _terminal_closure_reconciliation_status",
+        "simulations/flowpilot_recursive_closure_reconciliation_model.py",
         "tests/test_flowpilot_router_runtime.py test_current_node_completion_requires_reviewer_passed_packet_audit",
         "simulations/flowpilot_router_loop_model.py",
         "templates/flowpilot/final_route_wide_gate_ledger.template.json",
         "templates/flowpilot/terminal_human_backward_replay_map.template.json",
         "templates/flowpilot/final_user_report.template.json"
       ],
-      "status": "partially_covered"
+      "status": "covered"
     },
     {
       "id": "cockpit_or_chat_route_display",

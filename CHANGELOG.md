@@ -2,6 +2,22 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.5 - 2026-05-16
+
+### Added
+
+- Added focused FlowGuard coverage for recursive parent/module route entry and
+  terminal closure reconciliation.
+- Added final-ledger and terminal-closure reconciliation records for defect
+  ledgers, role memory, and continuation quarantine/imported artifacts.
+
+### Fixed
+
+- Prevented recursive route traversal from skipping a sibling parent/module and
+  jumping directly into its child leaf after the previous parent closes.
+- Blocked terminal closure when a present defect ledger, role-memory packet, or
+  continuation quarantine record is dirty.
+
 ## 0.9.4 - 2026-05-16
 
 ### Added
