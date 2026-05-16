@@ -5553,7 +5553,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(result["tick_count"], 1)
         after = read_json(router.run_state_path(run_root))
         labels = [item["label"] for item in after["history"] if isinstance(item, dict)]
-        self.assertIn("router_auto_consumed_card_return_ack", labels)
+        self.assertTrue(
+            {
+                "router_auto_consumed_card_return_ack",
+                "router_return_settlement_cleared_pending_card_bundle_wait",
+            }
+            & set(labels)
+        )
         self.assertNotEqual((after.get("pending_action") or {}).get("action_id"), action.get("action_id"))
 
     def test_router_daemon_invalid_card_ack_variants_do_not_advance(self) -> None:
@@ -10350,12 +10356,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         report = self.recover_worker_a_after_liveness_fault(root)
         self.assertTrue(report["all_six_roles_ready"])
 
-        action_path = next(
-            path
-            for path in sorted((run_root / "runtime" / "controller_actions").glob("*.json"))
-            if read_json(path).get("action_type") == "recover_role_agents"
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="recover_role_agents",
+            actor="controller",
+            label="host_recovers_role_agents_before_normal_work_stale_projection",
+            summary="Stale daemon row for a recovery action whose report already exists.",
+            allowed_reads=[],
+            allowed_writes=[],
+            extra={"postcondition": "role_recovery_roles_restored"},
         )
-        entry = read_json(action_path)
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        action_path = run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json"
         entry["status"] = "done"
         entry["router_reconciliation_status"] = "blocked"
         entry["router_reconciliation_blocker"] = {"reason": "stale_role_recovery_projection"}

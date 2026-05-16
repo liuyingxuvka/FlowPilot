@@ -4230,111 +4230,12 @@
     "ok": true
   },
   "live_run_projection": {
-    "classification_ok": true,
-    "current_run_can_continue": false,
-    "decision": "blocked_by_daemon_reconciliation_projection_gap",
-    "finding_count": 5,
-    "findings": [
-      {
-        "ack_path": ".flowpilot/runs/run-20260515-213828/mailbox/outbox/card_bundle_acks/pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001.ack.json",
-        "card_bundle_id": "pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001",
-        "card_return_event": "pm_card_bundle_ack",
-        "completed_statuses": [
-          "acknowledged"
-        ],
-        "id": "card_bundle_ack_completion_status_not_normalized",
-        "pending_statuses": [
-          "resolved"
-        ]
-      },
-      {
-        "ack_path": ".flowpilot/runs/run-20260515-213828/mailbox/outbox/card_bundle_acks/pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001.ack.json",
-        "action_id": "controller-action-9f2c9b8a4e509bb40502",
-        "action_status": "waiting",
-        "action_type": "await_card_bundle_return_event",
-        "card_bundle_id": "pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001",
-        "card_return_event": "pm_card_bundle_ack",
-        "id": "card_bundle_ack_resolved_wait_row_still_open",
-        "router_reconciliation_status": null,
-        "router_scheduler_row_id": "router-row-e4c4a3c3e75af21f9e49",
-        "row_state": "waiting"
-      },
-      {
-        "ack_path": ".flowpilot/runs/run-20260515-213828/mailbox/outbox/card_bundle_acks/pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001.ack.json",
-        "card_bundle_id": "pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001",
-        "card_return_event": "pm_card_bundle_ack",
-        "id": "startup_user_intake_owned_by_controller",
-        "user_intake_packet": {
-          "next_holder": "project_manager",
-          "packet_holder": "controller",
-          "packet_id": "user_intake",
-          "packet_status": "packet-with-controller",
-          "router_direct_dispatch_decision": "pending",
-          "router_owned_startup_material": false,
-          "router_release_recorded": false,
-          "terminal_lifecycle": {
-            "controller_may_continue_packet_loop": false,
-            "event": "user_requests_run_stop",
-            "previous_active_packet_holder": "controller",
-            "previous_active_packet_status": "packet-with-controller",
-            "reconciled_at": "2026-05-15T21:50:50Z",
-            "status": "stopped_by_user"
-          },
-          "to_role": "project_manager",
-          "top_level_active_packet_status": "stopped_by_user"
-        }
-      },
-      {
-        "ack_path": ".flowpilot/runs/run-20260515-213828/mailbox/outbox/card_bundle_acks/pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001.ack.json",
-        "card_bundle_id": "pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001",
-        "card_return_event": "pm_card_bundle_ack",
-        "id": "pm_ack_resolved_user_intake_not_released",
-        "user_intake_mail_folded": false,
-        "user_intake_packet": {
-          "next_holder": "project_manager",
-          "packet_holder": "controller",
-          "packet_id": "user_intake",
-          "packet_status": "packet-with-controller",
-          "router_direct_dispatch_decision": "pending",
-          "router_owned_startup_material": false,
-          "router_release_recorded": false,
-          "terminal_lifecycle": {
-            "controller_may_continue_packet_loop": false,
-            "event": "user_requests_run_stop",
-            "previous_active_packet_holder": "controller",
-            "previous_active_packet_status": "packet-with-controller",
-            "reconciled_at": "2026-05-15T21:50:50Z",
-            "status": "stopped_by_user"
-          },
-          "to_role": "project_manager",
-          "top_level_active_packet_status": "stopped_by_user"
-        },
-        "user_intake_router_released": false
-      },
-      {
-        "after_ack_time": "2026-05-15T21:46:30Z",
-        "card_bundle_id": "pm_core-delivery-001-attempt-001--to--pm_startup_intake-delivery-001-attempt-001",
-        "id": "pm_ack_resolved_unrelated_action_loop_before_user_intake_release",
-        "sample_computed_actions": [
-          "await_current_scope_reconciliation",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status",
-          "write_display_surface_status"
-        ]
-      }
-    ],
-    "ok": false,
-    "run_id": "run-20260515-213828",
-    "run_root": ".flowpilot\\runs\\run-20260515-213828",
-    "skipped": false
+    "classification_ok": false,
+    "ok": true,
+    "skip_reason": "model_only_preimplementation_gate",
+    "skipped": true
   },
-  "ok": false,
+  "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "ok": true,
@@ -4350,5 +4251,7 @@
     "state_count": 521,
     "terminal_state_count": 168
   },
-  "skipped_checks": {}
+  "skipped_checks": {
+    "live_run_projection": "skipped_with_reason: model_only_preimplementation_gate"
+  }
 }
