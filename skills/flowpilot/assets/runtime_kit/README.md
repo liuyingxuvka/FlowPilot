@@ -20,6 +20,11 @@ Rules:
   system-card check-in to `card_runtime.py`, packet/result opens and
   completions to `packet_runtime.py`, and formal reports/decisions to
   `role_output_runtime.py`.
+- An ACK-only system card is complete when Router receives the matching ACK.
+  That clears the card ACK wait only.
+- Any card, mail, or packet that asks for a report, result, decision, packet
+  spec, or blocker remains active after ACK. It is complete only when Router
+  records the named output event.
 - Role-output envelopes should use compact `body_ref` and
   `runtime_receipt_ref` metadata. Legacy top-level path/hash fields are
   compatibility inputs.

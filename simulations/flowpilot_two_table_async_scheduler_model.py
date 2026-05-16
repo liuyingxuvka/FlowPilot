@@ -15,7 +15,7 @@ Risk purpose:
   reissue the same startup row forever, treating a fresh runtime write lock as
   ledger corruption instead of waiting for the next tick, PM startup activation
   gaining a redundant global ACK gate, and cross-ledger drift where a durable
-  single-card ACK resolution leaves the matching Controller passive wait or
+  single-card ACK resolution leaves the matching Controller ACK wait or
   Router scheduler row stuck as waiting.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
@@ -42,7 +42,7 @@ Risk intent brief:
   startup obligations reconciled without Router-visible proof, reconciled
   scheduler rows downgraded by later receipt sync,
   single-card ACK returns resolved in the return ledger while the matching
-  Controller wait or Router scheduler row remains unreconciled,
+  Controller ACK wait or Router scheduler row remains unreconciled,
   scheduler ledger partial writes that leave invalid JSON without a fresh write
   lock, fresh write-lock reads reported as corruption instead of deferred,
   standby completion after one monitor check, foreground closure while
@@ -62,8 +62,8 @@ Risk intent brief:
   update the matching bootstrap flag, clear bootstrap pending_action, reconcile
   the Router row, and compute the next startup row unless a real barrier is
   reached;
-  single-card ACK settlement must update the return ledger, Controller
-  passive-wait row, and Router scheduler row together;
+  single-card ACK settlement must update the return ledger, matching Controller
+  ACK wait row, and Router scheduler row together;
   live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
@@ -1186,9 +1186,9 @@ def scheduler_failures(state: State) -> list[str]:
     if state.single_card_ack_return_resolved and not (
         state.single_card_controller_wait_row_reconciled and state.single_card_scheduler_row_reconciled
     ):
-        failures.append("single-card ACK return resolved without reconciling Controller wait row and Router scheduler row")
+        failures.append("single-card ACK return resolved without reconciling Controller ACK wait row and Router scheduler row")
     if state.single_card_wait_still_waiting_after_return_resolution:
-        failures.append("Controller passive wait stayed waiting after single-card ACK return resolved")
+        failures.append("Controller ACK wait stayed waiting after single-card ACK return resolved")
     if state.single_card_scheduler_still_waiting_after_return_resolution:
         failures.append("Router scheduler row stayed waiting after single-card ACK return resolved")
     if state.controller_action_table_exists and state.controller_table_has_router_dependency_graph:

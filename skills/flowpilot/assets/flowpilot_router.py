@@ -28,6 +28,136 @@ import flowpilot_user_flow_diagram
 import card_runtime
 import packet_runtime
 import role_output_runtime
+from flowpilot_router_card_settlement import (
+    CARD_ACK_COMPLETE_STATUSES,
+    CARD_BUNDLE_ACK_COMPLETE_STATUSES,
+    _card_ack_clearance_scope,
+    _controller_delivery_action_matches_pending_return,
+    _delivery_identity,
+    _original_card_ack_reminder_policy,
+    _pending_action_matches_card_return,
+    _record_matches_card_bundle_identity,
+    _record_matches_card_identity,
+    _record_value_for_bundle,
+    _record_value_for_card,
+    is_startup_pm_card_bundle_ack_record,
+)
+from flowpilot_router_controller_boundary import (
+    CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
+    CONTROLLER_ACTION_CLOSED_STATUSES,
+    CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES,
+    CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
+    CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
+    CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
+    CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE,
+    CONTROLLER_POSTCONDITION_RECONCILIATION_MAX_ATTEMPTS,
+    CONTROLLER_RECEIPT_STATUSES,
+    CONTROLLER_RUNTIME_HELPER_AGENT_ID,
+    FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS,
+    FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS,
+    PASSIVE_WAIT_STATUS_ACTION_TYPES,
+    ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS,
+    WAIT_TARGET_ACK_BLOCKER_SECONDS,
+    WAIT_TARGET_ACK_REMINDER_SECONDS,
+    WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS,
+    WAIT_TARGET_REMINDER_ACTION_TYPE,
+    WAIT_TARGET_REPORT_REMINDER_SECONDS,
+    WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS,
+    _controller_patrol_timer_command,
+    _format_seconds_for_command,
+)
+from flowpilot_router_controller_reconciliation import (
+    _action_is_passive_wait_status,
+    _controller_action_active_work_count,
+    _controller_action_counts,
+    _controller_action_id_for_action,
+    _controller_action_initial_status,
+    _controller_action_is_ordinary_work_row,
+    _controller_action_projection_kind,
+    _controller_action_summary,
+    _controller_receipt_display_rule,
+    _controller_receipt_rule_for_display_action,
+    _controller_ledger_action_view,
+    _router_scheduler_idempotency_key,
+    _router_scheduler_row_counts,
+    _router_scheduler_row_id_for_action,
+)
+from flowpilot_router_dispatch_gate import (
+    DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS,
+    DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET,
+    PM_ROLE_WORK_PM_BUSY_STATUSES,
+    PM_ROLE_WORK_TARGET_BUSY_STATUSES,
+    _dispatch_gate_candidate_packet_ids,
+    _dispatch_gate_candidate_request_ids,
+    _dispatch_gate_packet_completed_by_flow_state,
+    _dispatch_gate_same_obligation_instruction,
+    _dispatch_gate_system_card_ids,
+    _dispatch_gate_target_roles,
+    _dispatch_gate_wait_events_for_packet_record,
+)
+from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_io import (
+    RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS,
+    RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
+    RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS,
+    _copy_runtime_kit_into_run_root,
+    _flowpilot_runtime_entrypoint_ref,
+    _json_sha256,
+    _json_write_lock_liveness,
+    _json_write_lock_path,
+    _parse_utc_timestamp,
+    _project_root_from_run_root,
+    _raise_if_runtime_write_active,
+    _read_json_for_runtime_scan,
+    _role_output_hashes,
+    _role_output_semantic_hashes,
+    _role_output_semantic_hash,
+    _run_foreground_with_runtime_writer_settlement,
+    _without_role_output_envelope,
+    bootstrap_state_path,
+    legacy_bootstrap_state_path,
+    project_relative,
+    read_daemon_critical_json_if_exists,
+    read_json,
+    read_json_if_exists,
+    read_json_if_valid,
+    run_bootstrap_state_path,
+    runtime_kit_source,
+    skill_root,
+    utc_now,
+    write_json,
+    write_json_atomic,
+)
+from flowpilot_router_protocol_tables import MAIL_SEQUENCE, RUN_TERMINAL_STATUSES
+from flowpilot_router_startup_daemon import (
+    ROUTER_DAEMON_EVENT_LOG_SCHEMA,
+    ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+    ROUTER_DAEMON_LOCK_SCHEMA,
+    ROUTER_DAEMON_LOCK_STALE_SECONDS,
+    ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK,
+    ROUTER_DAEMON_STARTUP_POLL_SECONDS,
+    ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS,
+    ROUTER_DAEMON_STATUS_SCHEMA,
+    ROUTER_DAEMON_TICK_SECONDS,
+    _lock_age_seconds,
+    _process_is_live,
+    _router_daemon_heartbeat_monitor,
+    _router_daemon_lock_has_live_owner,
+    _router_daemon_lock_is_live,
+    _router_daemon_lock_liveness,
+    _router_daemon_owner,
+)
+from flowpilot_router_terminal import (
+    FLOWPILOT_PROJECT_URL,
+    TERMINAL_SUMMARY_ATTRIBUTION,
+    TERMINAL_SUMMARY_READ_SCOPE,
+    TERMINAL_SUMMARY_SCHEMA,
+    _path_is_inside,
+    _terminal_lifecycle_mode,
+    _terminal_summary_hash,
+    _terminal_summary_json_path,
+    _terminal_summary_markdown_path,
+)
 
 
 SCHEMA_VERSION = "flowpilot.router.v1"
@@ -55,7 +185,6 @@ ROLE_RECOVERY_REPORT_SCHEMA = "flowpilot.role_recovery_report.v1"
 ROLE_RECOVERY_OBLIGATION_REPLAY_SCHEMA = "flowpilot.role_recovery_obligation_replay.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
 ROUTE_ACTION_POLICY_REGISTRY_SCHEMA = "flowpilot.route_action_policy_registry.v1"
-TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
 ROLE_OUTPUT_ENVELOPE_SCHEMA = "flowpilot.role_output_envelope.v1"
 EVENT_ENVELOPE_SCHEMA = "flowpilot.event_envelope.v1"
 LIVE_CARD_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
@@ -79,9 +208,6 @@ EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 CURRENT_STATUS_SUMMARY_SCHEMA = "flowpilot.current_status_summary.v1"
-ROUTER_DAEMON_LOCK_SCHEMA = "flowpilot.router_daemon_lock.v1"
-ROUTER_DAEMON_STATUS_SCHEMA = "flowpilot.router_daemon_status.v1"
-ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
 CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
@@ -90,50 +216,8 @@ ROUTER_SCHEDULER_LEDGER_SCHEMA = "flowpilot.router_scheduler_ledger.v1"
 ROUTER_SCHEDULER_ROW_SCHEMA = "flowpilot.router_scheduler_row.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA = "flowpilot.deterministic_bootstrap_seed_evidence.v1"
-ROUTER_DAEMON_TICK_SECONDS = 1
-ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 5.0
-ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
-ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
-ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
-ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK = 16
-RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
-RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS = 30.0
-RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
-FOREGROUND_CONTROLLER_STANDBY_DEFAULT_MAX_SECONDS = 300.0
-FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
 CONTROLLER_PATROL_TIMER_SCHEMA = "flowpilot.controller_patrol_timer.v1"
-CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS = 10.0
-CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE = "continuous_controller_standby"
-WAIT_TARGET_REMINDER_ACTION_TYPE = "send_wait_target_reminder"
-PASSIVE_WAIT_STATUS_ACTION_TYPES = frozenset(
-    {
-        "await_role_decision",
-        "await_card_return_event",
-        "await_card_bundle_return_event",
-        "await_current_scope_reconciliation",
-    }
-)
-WAIT_TARGET_ACK_REMINDER_SECONDS = 180
-WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
-WAIT_TARGET_REPORT_REMINDER_SECONDS = 600
-WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS = {"missing", "cancelled", "unknown", "unresponsive", "blocked", "lost"}
-WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS = {
-    "no_output",
-    "alive_no_output",
-    "not_working_no_output",
-    "completed",
-    "completed_without_expected_event",
-}
-ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS = 2
-CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
-CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped", "resolved", "superseded"}
-CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES = {"incomplete", "repair_pending", "resolved", "superseded"}
-CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE = "complete_missing_controller_deliverable"
-CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS = 2
-CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE = "controller_action_receipt_missing_router_postcondition"
-CONTROLLER_POSTCONDITION_RECONCILIATION_MAX_ATTEMPTS = CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS
-CONTROLLER_RUNTIME_HELPER_AGENT_ID = "controller-runtime-helper"
 CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE = role_output_runtime.CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE
 CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID = role_output_runtime.CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID
 CONTROLLER_STATEFUL_VALIDATOR_TABLE = {
@@ -162,26 +246,7 @@ USER_REQUEST_REF_SCHEMA = "flowpilot.user_request_ref.v1"
 USER_REQUEST_PROVENANCE = "explicit_user_request"
 DISPLAY_CONFIRMATION_PROVENANCE = "controller_user_dialog_render"
 DISPLAY_CONFIRMATION_TARGET = "user_dialog"
-FLOWPILOT_PROJECT_URL = "https://github.com/liuyingxuvka/FlowPilot"
-TERMINAL_SUMMARY_ATTRIBUTION = (
-    f"Generated with [FlowPilot]({FLOWPILOT_PROJECT_URL}) - a project-control workflow for AI coding agents."
-)
-TERMINAL_SUMMARY_READ_SCOPE = "current_run_root_all_files"
 ROUTER_TRUSTED_PROOF_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
-
-
-def _format_seconds_for_command(seconds: float) -> str:
-    seconds_float = float(seconds)
-    if seconds_float.is_integer():
-        return str(int(seconds_float))
-    return f"{seconds_float:g}"
-
-
-def _controller_patrol_timer_command(seconds: float = CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS) -> str:
-    return (
-        "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json "
-        f"controller-patrol-timer --seconds {_format_seconds_for_command(seconds)}"
-    )
 
 
 ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS = {
@@ -1643,18 +1708,6 @@ CARD_REQUIRED_SOURCE_PATHS = {
     },
 }
 
-RUN_TERMINAL_STATUSES = {"stopped_by_user", "cancelled_by_user", "protocol_dead_end", "completed", "closed", "stopped"}
-
-MAIL_SEQUENCE: tuple[dict[str, str], ...] = (
-    {
-        "flag": "user_intake_delivered_to_pm",
-        "label": "user_intake_delivered_to_pm",
-        "mail_id": "user_intake",
-        "to_role": "project_manager",
-        "requires_flag": "startup_activation_approved",
-    },
-)
-
 EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "user_requests_run_stop": {
         "flag": "run_stopped_by_user",
@@ -2735,31 +2788,6 @@ def _sync_model_gate_alias_flags(run_state: dict[str, Any], event: str) -> None:
         flags["process_officer_route_check_blocked"] = True
 
 
-class RouterError(ValueError):
-    """Raised when a router operation violates the state machine."""
-
-    def __init__(self, message: str, *, control_blocker: dict[str, Any] | None = None):
-        super().__init__(message)
-        self.control_blocker = control_blocker
-
-
-class RouterLedgerCorruptionError(RouterError):
-    """Raised when a daemon-critical runtime ledger is not parseable."""
-
-    def __init__(self, path: Path, message: str):
-        self.path = path
-        super().__init__(f"runtime ledger is not valid JSON: {path} ({message})")
-
-
-class RouterLedgerWriteInProgress(RouterError):
-    """Raised when a daemon-critical runtime ledger is temporarily locked by a writer."""
-
-    def __init__(self, path: Path, write_lock: dict[str, Any], message: str):
-        self.path = path
-        self.write_lock = write_lock
-        super().__init__(f"runtime ledger write is still in progress: {path} ({message})")
-
-
 def _active_model_miss_review_block_flags(run_state: dict[str, Any]) -> tuple[str, ...]:
     flags = run_state.get("flags", {})
     return tuple(flag for flag in MODEL_MISS_REVIEW_BLOCK_FLAGS if flags.get(flag))
@@ -2778,337 +2806,6 @@ def _require_single_active_model_miss_review_block(run_state: dict[str, Any], pu
             f"active flags: {', '.join(active_flags)}"
         )
     return active_flags[0]
-
-
-def utc_now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
-
-
-def _parse_utc_timestamp(raw: object) -> datetime | None:
-    if not isinstance(raw, str) or not raw.strip():
-        return None
-    text = raw.strip()
-    if text.endswith("Z"):
-        text = f"{text[:-1]}+00:00"
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc)
-
-
-def skill_root() -> Path:
-    return Path(__file__).resolve().parents[1]
-
-
-def runtime_kit_source() -> Path:
-    return Path(__file__).resolve().parent / "runtime_kit"
-
-
-def _copy_runtime_kit_into_run_root(run_root: Path) -> None:
-    source = runtime_kit_source()
-    target = run_root / "runtime_kit"
-    try:
-        target.resolve().relative_to(run_root.resolve())
-    except ValueError as exc:
-        raise RouterError(f"runtime kit target outside run root: {target}") from exc
-    if target.name != "runtime_kit":
-        raise RouterError(f"refusing to replace unexpected runtime kit target: {target}")
-    if target.exists():
-        shutil.rmtree(target)
-    shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__"))
-
-
-def legacy_bootstrap_state_path(project_root: Path) -> Path:
-    return project_root / ".flowpilot" / "bootstrap" / "startup_state.json"
-
-
-def run_bootstrap_state_path(run_root: Path) -> Path:
-    return run_root / "bootstrap" / "startup_state.json"
-
-
-def bootstrap_state_path(project_root: Path, state: dict[str, Any] | None = None) -> Path:
-    if state and state.get("run_root"):
-        return run_bootstrap_state_path(project_root / str(state["run_root"]))
-    current = read_json_if_exists(project_root / ".flowpilot" / "current.json")
-    raw = current.get("startup_bootstrap_path")
-    if raw:
-        return project_root / str(raw)
-    raw_root = current.get("current_run_root") or current.get("active_run_root") or current.get("run_root")
-    if raw_root:
-        candidate = run_bootstrap_state_path(project_root / str(raw_root))
-        if candidate.exists():
-            return candidate
-    return legacy_bootstrap_state_path(project_root)
-
-
-def _json_write_lock_path(path: Path) -> Path:
-    return path.with_name(path.name + ".write.lock")
-
-
-def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
-    lock_path = _json_write_lock_path(path)
-    if not lock_path.exists():
-        return {
-            "exists": False,
-            "fresh": False,
-            "stale": False,
-            "path": str(lock_path),
-            "age_seconds": None,
-        }
-    try:
-        age = time.time() - lock_path.stat().st_mtime
-    except OSError:
-        age = None
-    fresh = age is not None and age <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
-    return {
-        "exists": True,
-        "fresh": bool(fresh),
-        "stale": bool(age is not None and not fresh),
-        "path": str(lock_path),
-        "age_seconds": age,
-        "stale_after_seconds": RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
-    }
-
-
-def _raise_if_runtime_write_active(path: Path) -> None:
-    write_lock = _json_write_lock_liveness(path)
-    if write_lock["fresh"]:
-        raise RouterLedgerWriteInProgress(path, write_lock, "fresh runtime JSON write lock")
-
-
-def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) -> dict[str, Any]:
-    path = exc.path
-    lock_path = _json_write_lock_path(path)
-    started = time.monotonic()
-    poll_count = 0
-    last_liveness = dict(exc.write_lock)
-    while True:
-        liveness = _json_write_lock_liveness(path)
-        last_liveness = liveness
-        if not liveness.get("fresh"):
-            return {
-                "path": str(path),
-                "lock_path": str(lock_path),
-                "waited_seconds": max(0.0, time.monotonic() - started),
-                "poll_count": poll_count,
-                "final_liveness": last_liveness,
-            }
-        poll_count += 1
-        time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
-
-
-def _run_foreground_with_runtime_writer_settlement(
-    operation: Callable[[], dict[str, Any]],
-    *,
-    command_name: str,
-) -> dict[str, Any]:
-    waits: list[dict[str, Any]] = []
-    while True:
-        try:
-            result = operation()
-            break
-        except RouterLedgerWriteInProgress as exc:
-            waits.append(_wait_for_runtime_json_writer_to_settle(exc))
-    if waits:
-        result = dict(result)
-        result["runtime_write_settlement"] = {
-            "waited": True,
-            "command": command_name,
-            "wait_count": len(waits),
-            "waits": waits,
-        }
-    return result
-
-
-def _is_transient_runtime_json_scan_artifact(path: Path) -> bool:
-    return path.name.startswith(".tmp-") or path.name.endswith(".write.lock")
-
-
-def _read_json_for_runtime_scan(path: Path) -> dict[str, Any] | None:
-    if _is_transient_runtime_json_scan_artifact(path):
-        return None
-    try:
-        _raise_if_runtime_write_active(path)
-        return read_json_if_exists(path)
-    except FileNotFoundError:
-        return None
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
-        write_lock = _json_write_lock_liveness(path)
-        if write_lock["fresh"]:
-            raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
-        raise
-
-
-def _acquire_json_write_lock(path: Path) -> Path:
-    lock_path = _json_write_lock_path(path)
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-    deadline = time.monotonic() + RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
-    while True:
-        try:
-            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-        except FileExistsError:
-            try:
-                age = time.time() - lock_path.stat().st_mtime
-            except OSError:
-                age = 0.0
-            if age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS:
-                try:
-                    lock_path.unlink()
-                except OSError:
-                    pass
-                continue
-            if time.monotonic() >= deadline:
-                raise RouterError(f"timed out waiting for JSON write lock: {path}")
-            time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
-            continue
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(
-                json.dumps(
-                    {
-                        "schema_version": "flowpilot.runtime_json_write_lock.v1",
-                        "path": str(path),
-                        "pid": os.getpid(),
-                        "created_at": utc_now(),
-                    },
-                    sort_keys=True,
-                )
-                + "\n"
-            )
-        return lock_path
-
-
-def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = True, verify: bool = True) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    lock_path = _acquire_json_write_lock(path)
-    tmp_path = path.with_name(f".tmp-{os.getpid()}-{time.time_ns():x}.json")
-    try:
-        body = json.dumps(payload, indent=2, sort_keys=sort_keys) + "\n"
-        with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
-            handle.write(body)
-            handle.flush()
-            os.fsync(handle.fileno())
-        deadline = time.monotonic() + RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
-        while True:
-            try:
-                os.replace(tmp_path, path)
-                break
-            except PermissionError:
-                if time.monotonic() >= deadline:
-                    raise
-                time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
-        if verify:
-            read_json(path)
-    finally:
-        try:
-            if tmp_path.exists():
-                tmp_path.unlink()
-        except OSError:
-            pass
-        try:
-            lock_path.unlink()
-        except OSError:
-            pass
-
-
-def write_json(path: Path, payload: dict[str, Any]) -> None:
-    write_json_atomic(path, payload, sort_keys=True, verify=True)
-
-
-def read_json(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding="utf-8-sig"))
-    if not isinstance(payload, dict):
-        raise RouterError(f"expected JSON object: {path}")
-    return payload
-
-
-def read_json_if_exists(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    return read_json(path)
-
-
-def read_daemon_critical_json_if_exists(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    try:
-        return read_json(path)
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
-        write_lock = _json_write_lock_liveness(path)
-        if write_lock["fresh"]:
-            raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
-        raise RouterLedgerCorruptionError(path, str(exc)) from exc
-
-
-def read_json_if_valid(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    try:
-        return read_json(path)
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError):
-        return {}
-
-
-def _json_sha256(payload: dict[str, Any]) -> str:
-    return hashlib.sha256((json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8")).hexdigest()
-
-
-def _without_role_output_envelope(payload: dict[str, Any]) -> dict[str, Any]:
-    body = dict(payload)
-    body.pop("_role_output_envelope", None)
-    return body
-
-
-def _role_output_semantic_hash(path: Path) -> str | None:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-        return None
-    if not isinstance(raw, dict):
-        return None
-    return _json_sha256(_without_role_output_envelope(raw))
-
-
-def _role_output_semantic_hashes(path: Path) -> set[str]:
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
-        return set()
-    if not isinstance(raw, dict):
-        return set()
-    body = _without_role_output_envelope(raw)
-    canonical_lf = json.dumps(body, indent=2, sort_keys=True) + "\n"
-    variants = {canonical_lf, canonical_lf.replace("\n", "\r\n")}
-    return {hashlib.sha256(variant.encode("utf-8")).hexdigest() for variant in variants}
-
-
-def _role_output_hashes(path: Path) -> tuple[str, str | None]:
-    raw_hash = hashlib.sha256(path.read_bytes()).hexdigest()
-    return raw_hash, _role_output_semantic_hash(path)
-
-
-def project_relative(project_root: Path, path: Path) -> str:
-    try:
-        return path.resolve().relative_to(project_root.resolve()).as_posix()
-    except ValueError as exc:
-        raise RouterError(f"path is outside project root: {path}") from exc
-
-
-def _project_root_from_run_root(run_root: Path) -> Path:
-    resolved = run_root.resolve()
-    if resolved.parent.name == "runs" and resolved.parent.parent.name == ".flowpilot":
-        return resolved.parent.parent.parent
-    return resolved.parent
-
-
-def _flowpilot_runtime_entrypoint_ref(project_root: Path) -> str:
-    runtime_path = Path(__file__).resolve().with_name("flowpilot_runtime.py")
-    try:
-        return project_relative(project_root, runtime_path)
-    except RouterError:
-        return str(runtime_path)
 
 
 def _card_checkin_instruction(
@@ -4798,13 +4495,6 @@ def _controller_receipt_path(run_root: Path, action_id: str) -> Path:
     return _controller_receipts_dir(run_root) / f"{action_id}.json"
 
 
-def _router_daemon_owner() -> dict[str, Any]:
-    return {
-        "pid": os.getpid(),
-        "host": os.environ.get("COMPUTERNAME") or os.environ.get("HOSTNAME") or "",
-    }
-
-
 def _append_router_daemon_event(run_root: Path, event: str, details: dict[str, Any] | None = None) -> None:
     path = _router_daemon_event_log_path(run_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -4816,137 +4506,6 @@ def _append_router_daemon_event(run_root: Path, event: str, details: dict[str, A
     }
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
-
-
-def _lock_age_seconds(lock: dict[str, Any]) -> float | None:
-    parsed = _parse_utc_timestamp(lock.get("last_tick_at") or lock.get("created_at"))
-    if parsed is None:
-        return None
-    return (datetime.now(timezone.utc) - parsed).total_seconds()
-
-
-def _process_is_live(pid: object) -> bool:
-    try:
-        value = int(pid)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return False
-    if value <= 0:
-        return False
-    if value == os.getpid():
-        return True
-    if sys.platform == "win32":
-        try:
-            import ctypes
-
-            process_query_limited_information = 0x1000
-            still_active = 259
-            handle = ctypes.windll.kernel32.OpenProcess(process_query_limited_information, False, value)
-            if not handle:
-                return False
-            try:
-                exit_code = ctypes.c_ulong()
-                ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
-                return bool(ok) and exit_code.value == still_active
-            finally:
-                ctypes.windll.kernel32.CloseHandle(handle)
-        except Exception:
-            return False
-    try:
-        os.kill(value, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
-
-
-def _router_daemon_lock_liveness(lock: dict[str, Any]) -> dict[str, Any]:
-    owner = lock.get("owner") if isinstance(lock.get("owner"), dict) else {}
-    age = _lock_age_seconds(lock)
-    schema_ok = lock.get("schema_version") == ROUTER_DAEMON_LOCK_SCHEMA
-    status_active = lock.get("status") == "active"
-    fresh = age is not None and age <= ROUTER_DAEMON_LOCK_STALE_SECONDS
-    process_live = _process_is_live(owner.get("pid")) if isinstance(owner, dict) else False
-    reasons: list[str] = []
-    if not schema_ok:
-        reasons.append("invalid_or_missing_lock_schema")
-    if not status_active:
-        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
-    if age is None:
-        reasons.append("missing_or_invalid_lock_timestamp")
-    elif not fresh:
-        reasons.append("lock_stale")
-    if not process_live:
-        reasons.append("owner_process_not_live")
-    return {
-        "live": bool(schema_ok and status_active and fresh and process_live),
-        "schema_ok": schema_ok,
-        "status_active": status_active,
-        "fresh": fresh,
-        "age_seconds": age,
-        "process_live": process_live,
-        "reasons": reasons,
-        "owner": owner,
-    }
-
-
-def _router_daemon_lock_has_live_owner(liveness: dict[str, Any]) -> bool:
-    return bool(
-        liveness.get("schema_ok")
-        and liveness.get("status_active")
-        and liveness.get("process_live")
-    )
-
-
-def _router_daemon_heartbeat_monitor(
-    lock: dict[str, Any],
-    liveness: dict[str, Any],
-    *,
-    status_exists: bool,
-    status_ok: bool,
-) -> dict[str, Any]:
-    age = liveness.get("age_seconds")
-    reasons: list[str] = []
-    if not status_exists:
-        reasons.append("status_file_missing")
-    elif not status_ok:
-        reasons.append("status_file_invalid")
-    if not liveness.get("schema_ok"):
-        reasons.append("lock_schema_missing_or_invalid")
-    if not liveness.get("status_active"):
-        reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
-    if age is None:
-        reasons.append("heartbeat_timestamp_missing_or_invalid")
-    elif float(age) > ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS:
-        reasons.append("heartbeat_older_than_five_seconds")
-    if not liveness.get("process_live"):
-        reasons.append("owner_process_liveness_needs_check")
-    status = "check_liveness" if reasons else "ok"
-    instruction = (
-        "Daemon heartbeat is normal; Controller should stay attached to the existing Router daemon."
-        if status == "ok"
-        else (
-            "Daemon heartbeat needs a Controller liveness check. Check the daemon process, lock, "
-            "and status for this run. If the daemon is alive, stay attached and continue. If it "
-            "is dead, recover the current-run Router daemon without starting a second live writer."
-        )
-    )
-    return {
-        "status": status,
-        "check_after_seconds": ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
-        "age_seconds": age,
-        "last_tick_at": lock.get("last_tick_at") or lock.get("created_at"),
-        "controller_liveness_check_required": status == "check_liveness",
-        "monitor_can_decide_recovery": False,
-        "reasons": reasons,
-        "controller_instruction": instruction,
-    }
-
-
-def _router_daemon_lock_is_live(lock: dict[str, Any]) -> bool:
-    return bool(_router_daemon_lock_liveness(lock).get("live"))
 
 
 def _acquire_router_daemon_lock(
@@ -5036,263 +4595,6 @@ def _release_router_daemon_lock(
     write_json(path, lock)
     _append_router_daemon_event(run_root, "router_daemon_lock_released", {"status": status, "reason": reason})
     return lock
-
-
-def _controller_action_id_for_action(action: dict[str, Any]) -> str:
-    idempotency_key = str(action.get("idempotency_key") or "").strip()
-    if idempotency_key:
-        identity = {
-            "idempotency_key": idempotency_key,
-            "action_type": action.get("action_type"),
-            "label": action.get("label"),
-            "scope_kind": action.get("scope_kind"),
-            "scope_id": action.get("scope_id"),
-        }
-        digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-        return f"controller-action-{digest}"
-    identity = {
-        "source_action_id": action.get("action_id"),
-        "action_type": action.get("action_type"),
-        "label": action.get("label"),
-        "card_id": action.get("card_id"),
-        "card_bundle_id": action.get("card_bundle_id"),
-        "mail_id": action.get("mail_id"),
-        "expected_return_path": action.get("expected_return_path"),
-        "allowed_external_events": action.get("allowed_external_events"),
-        "created_at": action.get("created_at"),
-    }
-    digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
-    return f"controller-action-{digest}"
-
-
-def _action_is_passive_wait_status(action: dict[str, Any] | None) -> bool:
-    if not isinstance(action, dict):
-        return False
-    action_type = str(action.get("action_type") or "")
-    if action_type not in PASSIVE_WAIT_STATUS_ACTION_TYPES:
-        return False
-    return not bool(action.get("controller_side_effect_required"))
-
-
-def _controller_action_projection_kind(action: dict[str, Any] | None) -> str:
-    if _action_is_passive_wait_status(action):
-        return "passive_wait_status"
-    if isinstance(action, dict) and str(action.get("action_type") or "") == CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE:
-        return "continuous_standby"
-    return "ordinary_controller_work"
-
-
-def _controller_action_is_ordinary_work_row(entry_or_action: dict[str, Any] | None) -> bool:
-    if not isinstance(entry_or_action, dict):
-        return False
-    explicit = entry_or_action.get("ordinary_controller_work_row")
-    if explicit is not None:
-        return bool(explicit)
-    action = entry_or_action.get("action") if isinstance(entry_or_action.get("action"), dict) else entry_or_action
-    return not _action_is_passive_wait_status(action)
-
-
-def _controller_action_initial_status(action: dict[str, Any]) -> str:
-    if action.get("action_type") in {
-        "await_card_return_event",
-        "await_card_bundle_return_event",
-        "await_current_scope_reconciliation",
-        "await_role_decision",
-        CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
-    }:
-        return "waiting"
-    return "pending"
-
-
-def _controller_action_counts(actions: list[dict[str, Any]]) -> dict[str, int]:
-    counts = {
-        "pending": 0,
-        "in_progress": 0,
-        "done": 0,
-        "blocked": 0,
-        "waiting": 0,
-        "skipped": 0,
-        "incomplete": 0,
-        "repair_pending": 0,
-        "resolved": 0,
-        "superseded": 0,
-    }
-    for item in actions:
-        status = str(item.get("status") or "pending")
-        counts[status] = counts.get(status, 0) + 1
-    counts["total"] = len(actions)
-    return counts
-
-
-def _controller_action_active_work_count(counts: dict[str, int]) -> int:
-    return sum(
-        int(counts.get(status, 0) or 0)
-        for status in ("pending", "in_progress", "blocked", "incomplete", "repair_pending")
-    )
-
-
-def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "action_id": entry.get("action_id"),
-        "action_type": entry.get("action_type"),
-        "label": entry.get("label"),
-        "summary": entry.get("summary"),
-        "status": entry.get("status"),
-        "to_role": entry.get("to_role"),
-        "completion_class": entry.get("completion_class"),
-        "controller_completion_command": entry.get("controller_completion_command"),
-        "controller_completion_mode": entry.get("controller_completion_mode"),
-        "router_pending_apply_required": entry.get("router_pending_apply_required"),
-        "completion_source": entry.get("completion_source"),
-        "satisfied_by_external_event": entry.get("satisfied_by_external_event"),
-        "controller_receipt_required": entry.get("controller_receipt_required"),
-        "controller_projection_kind": entry.get("controller_projection_kind"),
-        "ordinary_controller_work_row": entry.get("ordinary_controller_work_row"),
-        "router_reconciliation_status": entry.get("router_reconciliation_status"),
-        "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
-        "scope_kind": entry.get("scope_kind"),
-        "scope_id": entry.get("scope_id"),
-        "required_deliverables": entry.get("required_deliverables") or [],
-        "deliverable_status": entry.get("deliverable_status"),
-        "deliverable_repair_attempts": entry.get("deliverable_repair_attempts"),
-        "max_deliverable_repair_attempts": entry.get("max_deliverable_repair_attempts"),
-        "repair_of_controller_action_id": entry.get("repair_of_controller_action_id"),
-        "resolved_by_controller_action_id": entry.get("resolved_by_controller_action_id"),
-        "action_path": entry.get("action_path"),
-        "expected_receipt_path": entry.get("expected_receipt_path"),
-        "updated_at": entry.get("updated_at"),
-    }
-
-
-def _controller_receipt_rule_for_display_action(action_type: str) -> str:
-    return (
-        "First paste display_text exactly into the user dialog, then write a "
-        f"Controller receipt for {action_type} with this payload_template as the "
-        "receipt payload. Generated files, host UI updates, and display paths do "
-        "not satisfy user-dialog display evidence."
-    )
-
-
-def _controller_receipt_display_rule(rule: object, action_type: str) -> str:
-    if isinstance(rule, str) and rule.strip():
-        rewritten = rule.replace("before applying", "before writing the Controller receipt for")
-        rewritten = rewritten.replace("before apply", "before writing the Controller receipt")
-        rewritten = rewritten.replace("apply requires", "the Controller receipt requires")
-        rewritten = rewritten.replace("applying this action", "writing the Controller receipt")
-        rewritten = rewritten.replace("applying the action", "writing the Controller receipt")
-        rewritten = rewritten.replace("applying action", "writing the Controller receipt")
-        if "Controller receipt" in rewritten or "controller-receipt" in rewritten:
-            return rewritten
-    return (
-        f"Paste the required display_text in the user dialog before writing the "
-        f"Controller receipt for {action_type}; the receipt payload must include "
-        "display_confirmation.rendered_to=user_dialog with the matching display_text_sha256."
-    )
-
-
-def _controller_ledger_action_view(
-    action: dict[str, Any],
-    *,
-    action_id: str,
-    receipt_path: str,
-    controller_receipt_required: bool,
-) -> dict[str, Any]:
-    """Project a Router action into Controller action-ledger semantics."""
-
-    view = dict(action)
-    passive_wait_status = _action_is_passive_wait_status(view)
-    original_apply_required = bool(view.get("apply_required", True))
-    original_contract = view.get("next_step_contract") if isinstance(view.get("next_step_contract"), dict) else {}
-    original_contract_apply_required = bool(original_contract.get("apply_required", original_apply_required))
-    router_pending_apply_required = original_apply_required if controller_receipt_required else False
-    contract_router_pending_apply_required = original_contract_apply_required if controller_receipt_required else False
-    completion_command = "controller-receipt" if controller_receipt_required else "router-controlled-wait"
-    completion_mode = "controller_action_ledger_receipt" if controller_receipt_required else "controller_action_ledger_wait"
-
-    view.update(
-        {
-            "controller_action_id": action_id,
-            "controller_receipt_path": receipt_path,
-            "controller_receipt_required": controller_receipt_required,
-            "controller_projection_kind": _controller_action_projection_kind(view),
-            "ordinary_controller_work_row": not passive_wait_status,
-            "controller_completion_command": completion_command,
-            "controller_completion_mode": completion_mode,
-            "controller_row_completion_source": "runtime/controller_action_ledger.json",
-            "router_pending_apply_required": router_pending_apply_required,
-            "apply_required": False,
-        }
-    )
-    if "proof_required_before_apply" in view:
-        view["proof_required_before_controller_receipt"] = bool(view.get("proof_required_before_apply"))
-        view["proof_required_before_apply"] = False
-    if "controller_must_display_text_before_apply" in view:
-        view["controller_must_display_text_before_receipt"] = bool(view.get("controller_must_display_text_before_apply"))
-        view["controller_must_display_text_before_apply"] = False
-    if view.get("payload_template_rule"):
-        view["payload_template_rule"] = _controller_receipt_rule_for_display_action(str(view.get("action_type") or "action"))
-    if view.get("controller_display_rule"):
-        view["controller_display_rule"] = _controller_receipt_display_rule(
-            view.get("controller_display_rule"),
-            str(view.get("action_type") or "action"),
-        )
-    if isinstance(view.get("plain_instruction"), str):
-        plain = str(view["plain_instruction"])
-        legacy_startup_intake_apply_instruction = (
-            "After the UI closes, apply "
-            "this pending action with only the returned startup_intake_result.result_path."
-        )
-        plain = plain.replace(
-            legacy_startup_intake_apply_instruction,
-            "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
-        )
-        view["plain_instruction"] = plain
-    if isinstance(view.get("spawn_policy"), str):
-        view["spawn_policy"] = str(view["spawn_policy"]).replace(
-            "before_applying_action",
-            "before_controller_receipt",
-        )
-    if controller_receipt_required:
-        view["controller_receipt_instruction"] = (
-            "Complete this Controller ledger row by performing the requested host/controller work, "
-            "then run flowpilot_router.py controller-receipt with the required receipt payload."
-        )
-    else:
-        view["controller_receipt_instruction"] = (
-            "This is a Router-controlled wait status projection, not ordinary Controller work. "
-            "Do not apply it; follow Router daemon status, current_wait, and standby/patrol "
-            "metadata until the matching external event or blocker path resolves it."
-        )
-
-    contract = dict(original_contract)
-    contract.update(
-        {
-            "apply_required": False,
-            "router_pending_apply_required": contract_router_pending_apply_required,
-            "controller_completion_command": completion_command,
-            "controller_completion_mode": completion_mode,
-            "controller_receipt_required": controller_receipt_required,
-        }
-    )
-    view["next_step_contract"] = contract
-    return view
-
-
-def _router_scheduler_row_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
-    counts: dict[str, int] = {
-        "queued": 0,
-        "waiting": 0,
-        "receipt_done": 0,
-        "reconciled": 0,
-        "blocked": 0,
-        "skipped": 0,
-        "superseded": 0,
-    }
-    for row in rows:
-        state = str(row.get("router_state") or "queued")
-        counts[state] = counts.get(state, 0) + 1
-    counts["total"] = len(rows)
-    return counts
 
 
 def _empty_router_scheduler_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
@@ -5395,49 +4697,6 @@ def _router_scheduler_scope_for_action(action: dict[str, Any], run_root: Path) -
     if str(frontier.get("status") or "") == "current_node_loop" and frontier.get("active_node_id"):
         return "current_node", str(frontier.get("active_node_id"))
     return "run", "run"
-
-
-def _router_scheduler_idempotency_key(action: dict[str, Any], scope_kind: str, scope_id: str) -> str:
-    action_type = str(action.get("action_type") or "")
-    key_parts: dict[str, Any] = {
-        "action_type": action_type,
-        "scope_kind": scope_kind,
-        "scope_id": scope_id,
-        "label": action.get("label"),
-    }
-    for field in (
-        "card_id",
-        "card_bundle_id",
-        "delivery_attempt_id",
-        "mail_id",
-        "expected_return_path",
-        "postcondition",
-        "projection_hash",
-        "next_card_id",
-    ):
-        value = action.get(field)
-        if value not in (None, "", []):
-            key_parts[field] = value
-    if action_type == "sync_display_plan":
-        key_parts["projection_hash"] = action.get("projection_hash")
-    return "router-scheduler:" + hashlib.sha256(json.dumps(key_parts, sort_keys=True).encode("utf-8")).hexdigest()[:24]
-
-
-def _router_scheduler_row_id_for_action(action: dict[str, Any]) -> str:
-    key = str(action.get("router_scheduler_row_id") or action.get("idempotency_key") or "").strip()
-    if not key:
-        key = json.dumps(
-            {
-                "action_type": action.get("action_type"),
-                "label": action.get("label"),
-                "card_id": action.get("card_id"),
-                "card_bundle_id": action.get("card_bundle_id"),
-                "expected_return_path": action.get("expected_return_path"),
-            },
-            sort_keys=True,
-        )
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:20]
-    return f"router-row-{digest}"
 
 
 def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
@@ -12053,12 +11312,6 @@ DISPATCH_RECIPIENT_GATE_ACTION_TYPES = {
     "deliver_system_card_bundle",
     *FORMAL_WORK_PACKET_RELAY_ACTION_TYPES,
 }
-DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET = {
-    ("project_manager", "user_intake"): "pm.material_scan",
-}
-DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS = {
-    "user_intake": "pm_material_packets_issued",
-}
 DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
     "pm.event.reviewer_report": (
         "pm_accepts_reviewed_material",
@@ -12075,68 +11328,9 @@ DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
     ),
 }
 
-PM_ROLE_WORK_TARGET_BUSY_STATUSES = {"open", "packet_created", "packet_relayed"}
-PM_ROLE_WORK_PM_BUSY_STATUSES = {"result_returned", "result_relayed_to_pm"}
-
-
-def _dispatch_gate_target_roles(action: dict[str, Any]) -> set[str]:
-    return _role_set(str(action.get("to_role") or ""))
-
-
-def _dispatch_gate_candidate_packet_ids(action: dict[str, Any]) -> set[str]:
-    packet_ids: set[str] = set()
-    for key in ("packet_id", "mail_id"):
-        value = str(action.get(key) or "").strip()
-        if value:
-            packet_ids.add(value)
-    raw_packet_ids = action.get("packet_ids")
-    if isinstance(raw_packet_ids, list):
-        packet_ids.update(str(item).strip() for item in raw_packet_ids if str(item).strip())
-    active_holder = action.get("active_holder_fast_lane")
-    packets = active_holder.get("packets") if isinstance(active_holder, dict) else None
-    if isinstance(packets, list):
-        for item in packets:
-            if isinstance(item, dict):
-                packet_id = str(item.get("packet_id") or "").strip()
-                if packet_id:
-                    packet_ids.add(packet_id)
-    return packet_ids
-
-
-def _dispatch_gate_candidate_request_ids(action: dict[str, Any]) -> set[str]:
-    request_ids: set[str] = set()
-    value = str(action.get("request_id") or "").strip()
-    if value:
-        request_ids.add(value)
-    raw_requests = action.get("request_ids")
-    if isinstance(raw_requests, list):
-        request_ids.update(str(item).strip() for item in raw_requests if str(item).strip())
-    return request_ids
-
 
 def _dispatch_gate_card_entry(card_id: str) -> dict[str, Any] | None:
     return next((entry for entry in SYSTEM_CARD_SEQUENCE if entry.get("card_id") == card_id), None)
-
-
-def _dispatch_gate_system_card_ids(action: dict[str, Any]) -> list[str]:
-    action_type = action.get("action_type")
-    if action_type == "deliver_system_card":
-        card_id = str(action.get("card_id") or "").strip()
-        return [card_id] if card_id else []
-    if action_type != "deliver_system_card_bundle":
-        return []
-    card_ids: list[str] = []
-    raw_card_ids = action.get("card_ids")
-    if isinstance(raw_card_ids, list):
-        card_ids.extend(str(item).strip() for item in raw_card_ids if str(item or "").strip())
-    raw_cards = action.get("cards")
-    if isinstance(raw_cards, list):
-        for item in raw_cards:
-            if isinstance(item, dict):
-                card_id = str(item.get("card_id") or item.get("id") or "").strip()
-                if card_id:
-                    card_ids.append(card_id)
-    return list(dict.fromkeys(card_ids))
 
 
 def _dispatch_gate_output_events_for_card_id(card_id: str) -> list[str]:
@@ -12172,59 +11366,6 @@ def _dispatch_gate_action_work_class(action: dict[str, Any]) -> str:
     if action.get("action_type") in {"deliver_system_card", "deliver_system_card_bundle"}:
         return "output_bearing_work_package"
     return "work_dispatch"
-
-
-def _dispatch_gate_wait_events_for_packet_record(record: dict[str, Any]) -> list[str]:
-    packet_family = str(record.get("packet_family") or "").strip()
-    packet_type = str(record.get("packet_type") or "").strip()
-    packet_id = str(record.get("packet_id") or "").strip()
-    holder = str(record.get("active_packet_holder") or "").strip()
-    if holder == "project_manager" and packet_id == "user_intake":
-        return ["pm_issues_material_and_capability_scan_packets"]
-    if holder == "project_manager" and packet_id.startswith("material-scan"):
-        return ["pm_records_material_scan_result_disposition"]
-    if holder == "project_manager" and "research" in packet_id:
-        return ["pm_records_research_result_disposition"]
-    if holder == "project_manager" and "node" in packet_id:
-        return ["pm_completes_current_node_from_reviewed_result"]
-    if packet_family == "pm_role_work" or packet_type == "pm_role_work_request" or packet_id.startswith("pm-role-work-"):
-        return [ROLE_WORK_RESULT_RETURNED_EVENT]
-    if packet_family == "research" or "research" in packet_id:
-        return ["worker_research_report_returned"]
-    if packet_family == "material_scan" or "material" in packet_id:
-        return ["worker_scan_results_returned"]
-    return ["worker_current_node_result_returned", ROLE_WORK_RESULT_RETURNED_EVENT]
-
-
-def _dispatch_gate_packet_completed_by_flow_state(record: dict[str, Any], run_state: dict[str, Any]) -> bool:
-    packet_id = str(record.get("packet_id") or "").strip()
-    completion_flag = DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS.get(packet_id)
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    if completion_flag and flags.get(completion_flag):
-        return True
-    if packet_id.startswith("material-scan") and flags.get("material_scan_results_absorbed_by_pm"):
-        return True
-    if "research" in packet_id and flags.get("research_result_absorbed_for_review_by_pm"):
-        return True
-    if "node" in packet_id and flags.get("current_node_result_absorbed_by_pm"):
-        return True
-    return False
-
-
-def _dispatch_gate_same_obligation_instruction(
-    action: dict[str, Any],
-    record: dict[str, Any],
-    run_state: dict[str, Any],
-) -> bool:
-    if action.get("action_type") != "deliver_system_card":
-        return False
-    holder = str(record.get("active_packet_holder") or "").strip()
-    packet_id = str(record.get("packet_id") or "").strip()
-    expected_card = DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET.get((holder, packet_id))
-    if not expected_card or str(action.get("card_id") or "") != expected_card:
-        return False
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    return bool(flags.get("user_intake_delivered_to_pm") and not flags.get("pm_material_packets_issued"))
 
 
 def _dispatch_gate_same_obligation_instruction_context(
@@ -12502,8 +11643,15 @@ def _dispatch_gate_pm_role_work_blocker(
 def _dispatch_gate_passive_wait_blocker(
     project_root: Path,
     run_root: Path,
+    run_state: dict[str, Any],
     target_roles: set[str],
 ) -> dict[str, Any] | None:
+    _run_router_return_settlement_finalizers(
+        project_root,
+        run_root,
+        run_state,
+        source="dispatch_recipient_gate_passive_wait_recheck",
+    )
     controller_ledger = _controller_action_ledger_summary(run_root)
     passive_waits = controller_ledger.get("passive_waits") if isinstance(controller_ledger, dict) else []
     if not isinstance(passive_waits, list):
@@ -12540,12 +11688,18 @@ def _apply_dispatch_recipient_gate(
     target_roles = _dispatch_gate_target_roles(action)
     if not target_roles:
         return action
+    _run_router_return_settlement_finalizers(
+        project_root,
+        run_root,
+        run_state,
+        source="dispatch_recipient_gate_return_settlement",
+    )
     candidate_packet_ids = _dispatch_gate_candidate_packet_ids(action)
     candidate_request_ids = _dispatch_gate_candidate_request_ids(action)
     wait_action = _dispatch_gate_pending_ack_wait(project_root, run_state, run_root, action, target_roles)
     if wait_action is not None:
         return wait_action
-    blocker = _dispatch_gate_passive_wait_blocker(project_root, run_root, target_roles)
+    blocker = _dispatch_gate_passive_wait_blocker(project_root, run_root, run_state, target_roles)
     same_obligation_instruction = _dispatch_gate_same_obligation_instruction_context(
         run_root,
         run_state,
@@ -15892,42 +15046,8 @@ def _resolve_delivered_control_blocker(
     return resolved
 
 
-def _terminal_lifecycle_mode(run_state: dict[str, Any]) -> str | None:
-    status = str(run_state.get("status") or "")
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    if status == "cancelled_by_user" or flags.get("run_cancelled_by_user"):
-        return "cancelled_by_user"
-    if status == "stopped_by_user" or flags.get("run_stopped_by_user"):
-        return "stopped_by_user"
-    if status == "protocol_dead_end" or flags.get("startup_protocol_dead_end_declared"):
-        return "protocol_dead_end"
-    if status in {"closed", "completed"} or flags.get("terminal_closure_approved"):
-        return "closed"
-    return None
-
-
 def _lifecycle_record_path(run_root: Path) -> Path:
     return run_root / "lifecycle" / "run_lifecycle.json"
-
-
-def _terminal_summary_markdown_path(run_root: Path) -> Path:
-    return run_root / "final_summary.md"
-
-
-def _terminal_summary_json_path(run_root: Path) -> Path:
-    return run_root / "final_summary.json"
-
-
-def _terminal_summary_hash(summary_markdown: str) -> str:
-    return hashlib.sha256(summary_markdown.encode("utf-8")).hexdigest()
-
-
-def _path_is_inside(child: Path, parent: Path) -> bool:
-    try:
-        child.resolve().relative_to(parent.resolve())
-        return True
-    except ValueError:
-        return False
 
 
 def _terminal_summary_index_entry(
@@ -25731,76 +24851,6 @@ def _live_card_delivery_context(
     }
 
 
-def _card_ack_clearance_scope(
-    delivery_context: dict[str, Any] | None,
-    *,
-    card_id: str | None,
-    target_role: str,
-) -> dict[str, Any]:
-    context = delivery_context if isinstance(delivery_context, dict) else {}
-    stage = context.get("current_stage") if isinstance(context.get("current_stage"), dict) else {}
-    current_node_id = stage.get("current_node_id")
-    return {
-        "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
-        "card_id": card_id,
-        "target_role": target_role,
-        "current_phase": stage.get("current_phase"),
-        "card_phase": stage.get("card_phase"),
-        "current_node_id": current_node_id,
-        "current_route_id": stage.get("current_route_id"),
-        "route_version": stage.get("route_version"),
-        "boundary_kind": "node" if current_node_id else "route_or_startup",
-        "required_before": [
-            "gate_or_node_boundary_transition",
-            "formal_work_packet_relay_to_target_role",
-        ],
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-
-
-def _delivery_identity(value: Any) -> str:
-    return str(value or "").strip().replace("\\", "/")
-
-
-def _controller_delivery_action_matches_pending_return(action: dict[str, Any], record: dict[str, Any], *, bundle: bool) -> bool:
-    action_type = str(action.get("action_type") or "")
-    if bundle:
-        if action_type != "deliver_system_card_bundle":
-            return False
-        if record.get("card_bundle_id") and action.get("card_bundle_id") == record.get("card_bundle_id"):
-            return True
-        if _delivery_identity(record.get("card_bundle_envelope_path")) and (
-            _delivery_identity(record.get("card_bundle_envelope_path"))
-            == _delivery_identity(action.get("card_bundle_envelope_path"))
-        ):
-            return True
-        record_attempts = {
-            str(item)
-            for item in (record.get("delivery_attempt_ids") or [])
-            if str(item)
-        }
-        action_attempts = {
-            str(item)
-            for item in (action.get("delivery_attempt_ids") or [])
-            if str(item)
-        }
-        return bool(record_attempts and action_attempts and record_attempts.intersection(action_attempts))
-
-    if action_type != "deliver_system_card":
-        return False
-    if record.get("delivery_attempt_id") and action.get("delivery_attempt_id") == record.get("delivery_attempt_id"):
-        return True
-    if record.get("card_id") and action.get("card_id") == record.get("card_id"):
-        if record.get("expected_return_path") and action.get("expected_return_path") == record.get("expected_return_path"):
-            return True
-        if _delivery_identity(record.get("card_envelope_path")) and (
-            _delivery_identity(record.get("card_envelope_path")) == _delivery_identity(action.get("card_envelope_path"))
-        ):
-            return True
-    return False
-
-
 def _matching_controller_delivery_actions(
     project_root: Path,
     run_root: Path,
@@ -25907,43 +24957,6 @@ def _controller_delivery_fact_for_pending_return(
         "controller_delivery_reissue_reason": reissue_reason,
         "controller_must_not_remind_target_before_delivery_done": True,
     }
-
-
-def _original_card_ack_reminder_policy(
-    record: dict[str, Any],
-    *,
-    bundle: bool = False,
-    delivery_fact: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    envelope_key = "card_bundle_envelope_path" if bundle else "card_envelope_path"
-    receipt_key = "expected_receipt_paths" if bundle else "expected_receipt_path"
-    target_allowed = True
-    if delivery_fact is not None:
-        target_allowed = bool(delivery_fact.get("target_role_ack_reminder_allowed"))
-    policy = {
-        "missing_ack_recovery": "remind_target_role_to_ack_original_committed_card",
-        "reminder_target": "original_committed_card_bundle" if bundle else "original_committed_card",
-        "original_envelope_path": record.get(envelope_key),
-        "original_expected_return_path": record.get("expected_return_path"),
-        "original_expected_receipt_path": record.get(receipt_key),
-        "duplicate_system_card_delivery_allowed": False,
-        "reissue_allowed_only_if_original_invalid_lost_stale_or_role_replaced": True,
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-        "ack_clearance_scope": record.get("ack_clearance_scope"),
-        "controller_delivery_fact": delivery_fact or {},
-        "target_role_ack_reminder_allowed": target_allowed,
-        "controller_delivery_reissue_required_before_target_ack_reminder": not target_allowed,
-    }
-    if not target_allowed:
-        policy.update(
-            {
-                "missing_ack_recovery": "confirm_or_reissue_controller_delivery_before_target_ack_reminder",
-                "reminder_target": "controller_delivery_task",
-                "target_role_ack_reminder_allowed": False,
-            }
-        )
-    return policy
 
 
 def _write_route_draft(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -34719,52 +33732,74 @@ def _try_auto_consume_pending_card_return_ack(
     return {"consumed": True, "result": result}
 
 
-def _pending_action_matches_card_return(pending_action: object, pending_return: dict[str, Any]) -> bool:
-    if not isinstance(pending_action, dict):
-        return False
-    if pending_return.get("return_kind") == "system_card_bundle":
-        return (
-            pending_action.get("card_bundle_id") == pending_return.get("card_bundle_id")
-            or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
-        )
-    return (
-        pending_action.get("delivery_attempt_id") == pending_return.get("delivery_attempt_id")
-        or pending_action.get("expected_return_path") == pending_return.get("expected_return_path")
-    )
+def _startup_pm_card_bundle_ack_record(record: dict[str, Any]) -> bool:
+    return is_startup_pm_card_bundle_ack_record(record, pre_review_startup_card_ids=PRE_REVIEW_STARTUP_CARD_IDS)
 
 
-CARD_BUNDLE_ACK_COMPLETE_STATUSES = {"acknowledged", "returned", "resolved"}
-
-
-def _record_value_for_bundle(record: dict[str, Any], key: str) -> str:
-    nested = record.get("action") if isinstance(record.get("action"), dict) else {}
-    return str(record.get(key) or nested.get(key) or "")
-
-
-def _record_matches_card_bundle_identity(
-    record: dict[str, Any],
+def _reconcile_card_wait_rows(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
     *,
-    bundle_id: str,
+    delivery_attempt_id: str,
     expected_return_path: str,
     card_return_event: str,
-) -> bool:
-    record_bundle = _record_value_for_bundle(record, "card_bundle_id")
-    record_return = _record_value_for_bundle(record, "expected_return_path")
-    record_event = _record_value_for_bundle(record, "card_return_event")
-    return bool(
-        (bundle_id and record_bundle == bundle_id)
-        or (expected_return_path and record_return == expected_return_path)
-        or (card_return_event and record_event == card_return_event and (record_bundle or record_return))
-    )
-
-
-def _startup_pm_card_bundle_ack_record(record: dict[str, Any]) -> bool:
-    target_role = str(record.get("target_role") or record.get("to_role") or record.get("role_key") or "")
-    if target_role not in {"project_manager", "pm"}:
-        return False
-    raw_card_ids = record.get("card_ids") or record.get("member_card_ids") or []
-    card_ids = {str(card_id) for card_id in raw_card_ids if str(card_id or "").strip()} if isinstance(raw_card_ids, list) else set()
-    return bool(card_ids & PRE_REVIEW_STARTUP_CARD_IDS) or str(record.get("card_return_event") or "") == "pm_card_bundle_ack"
+    card_id: str,
+    source: str,
+    ack_path: str | None,
+) -> int:
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return 0
+    reconciled = 0
+    for action_path in sorted(action_dir.glob("*.json")):
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get("action_type") not in {"await_card_return_event", "check_card_return_event"}:
+            continue
+        if not _record_matches_card_identity(
+            entry,
+            delivery_attempt_id=delivery_attempt_id,
+            expected_return_path=expected_return_path,
+            card_return_event=card_return_event,
+            card_id=card_id,
+        ):
+            continue
+        reconciliation = {
+            "source": source,
+            "delivery_attempt_id": delivery_attempt_id,
+            "card_id": card_id,
+            "card_return_event": card_return_event,
+            "expected_return_path": expected_return_path,
+            "ack_path": ack_path,
+            "reconciled_at": utc_now(),
+            "clearance_kind": "ack_wait_only",
+            "ack_does_not_complete_output_bearing_work": True,
+        }
+        if entry.get("status") not in CONTROLLER_ACTION_CLOSED_STATUSES:
+            entry["status"] = "resolved"
+            entry["completed_at"] = reconciliation["reconciled_at"]
+        entry["router_reconciliation_status"] = "reconciled"
+        entry["router_reconciliation"] = reconciliation
+        entry["updated_at"] = utc_now()
+        write_json(action_path, entry)
+        row_id = str(entry.get("router_scheduler_row_id") or "")
+        if row_id:
+            _update_router_scheduler_row(
+                project_root,
+                run_root,
+                run_state,
+                row_id=row_id,
+                router_state="reconciled",
+                reconciliation=reconciliation,
+            )
+        reconciled += 1
+    if reconciled:
+        _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    return reconciled
 
 
 def _reconcile_card_bundle_wait_rows(
@@ -34783,7 +33818,9 @@ def _reconcile_card_bundle_wait_rows(
         return 0
     reconciled = 0
     for action_path in sorted(action_dir.glob("*.json")):
-        entry = read_json_if_exists(action_path)
+        entry = _read_json_for_runtime_scan(action_path)
+        if entry is None:
+            continue
         if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
             continue
         if entry.get("action_type") not in {"await_card_bundle_return_event", "check_card_bundle_return_event"}:
@@ -34862,27 +33899,78 @@ def _run_router_return_settlement_finalizers(
     completed_returns = return_ledger.setdefault("completed_returns", [])
     changed = False
     normalized = 0
+    normalized_card_acks = 0
+    normalized_card_bundle_acks = 0
     wait_rows_reconciled = 0
     startup_release: dict[str, Any] | None = None
-    completed_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    completed_card_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    completed_bundle_by_key: dict[tuple[str, str], dict[str, Any]] = {}
     for completed in completed_returns:
-        if not isinstance(completed, dict) or completed.get("return_kind") != "system_card_bundle":
+        if not isinstance(completed, dict):
             continue
         status = str(completed.get("status") or "")
-        if status not in CARD_BUNDLE_ACK_COMPLETE_STATUSES:
+        if status not in CARD_ACK_COMPLETE_STATUSES:
             continue
-        bundle_id = str(completed.get("card_bundle_id") or "")
         event = str(completed.get("card_return_event") or "")
-        if bundle_id and event:
-            completed_by_key[(bundle_id, event)] = completed
+        if completed.get("return_kind") == "system_card_bundle":
+            bundle_id = str(completed.get("card_bundle_id") or "")
+            if bundle_id and event:
+                completed_bundle_by_key[(bundle_id, event)] = completed
+        else:
+            delivery_attempt_id = str(completed.get("delivery_attempt_id") or "")
+            if delivery_attempt_id and event:
+                completed_card_by_key[(delivery_attempt_id, event)] = completed
 
+    resolved_card_records: list[dict[str, Any]] = []
     resolved_records: list[dict[str, Any]] = []
+    for pending in pending_returns:
+        if not isinstance(pending, dict):
+            continue
+        if pending.get("return_kind") == "system_card_bundle":
+            continue
+        delivery_attempt_id = str(pending.get("delivery_attempt_id") or "")
+        event = str(pending.get("card_return_event") or "")
+        completed = completed_card_by_key.get((delivery_attempt_id, event))
+        status = str(pending.get("status") or "")
+        if status not in CARD_ACK_COMPLETE_STATUSES and completed is None:
+            continue
+        ack_path = str(pending.get("ack_path") or (completed or {}).get("ack_path") or pending.get("expected_return_path") or "")
+        envelope_path = str(pending.get("card_envelope_path") or (completed or {}).get("card_envelope_path") or "")
+        if not ack_path or not envelope_path:
+            continue
+        try:
+            validation = card_runtime.validate_card_ack(project_root, ack_path=ack_path, envelope_path=envelope_path)
+        except card_runtime.CardRuntimeError:
+            continue
+        if pending.get("status") != "resolved":
+            pending["status"] = "resolved"
+            pending["resolved_at"] = utc_now()
+            changed = True
+            normalized += 1
+            normalized_card_acks += 1
+        pending["ack_path"] = validation["ack_path"]
+        pending["ack_hash"] = validation["ack_hash"]
+        pending["receipt_ref_count"] = validation["receipt_ref_count"]
+        record = dict(pending)
+        if completed is not None:
+            if completed.get("status") != "resolved":
+                completed["status"] = "resolved"
+                completed["resolved_at"] = pending.get("resolved_at") or utc_now()
+                changed = True
+                normalized += 1
+                normalized_card_acks += 1
+            completed["ack_path"] = validation["ack_path"]
+            completed["ack_hash"] = validation["ack_hash"]
+            completed["receipt_ref_count"] = validation["receipt_ref_count"]
+            record.update(completed)
+        resolved_card_records.append(record)
+
     for pending in pending_returns:
         if not isinstance(pending, dict) or pending.get("return_kind") != "system_card_bundle":
             continue
         bundle_id = str(pending.get("card_bundle_id") or "")
         event = str(pending.get("card_return_event") or "")
-        completed = completed_by_key.get((bundle_id, event))
+        completed = completed_bundle_by_key.get((bundle_id, event))
         status = str(pending.get("status") or "")
         if status not in CARD_BUNDLE_ACK_COMPLETE_STATUSES and completed is None:
             continue
@@ -34899,6 +33987,7 @@ def _run_router_return_settlement_finalizers(
             pending["resolved_at"] = utc_now()
             changed = True
             normalized += 1
+            normalized_card_bundle_acks += 1
         pending["ack_path"] = validation["ack_path"]
         pending["ack_hash"] = validation["ack_hash"]
         pending["receipt_ref_count"] = validation["receipt_ref_count"]
@@ -34909,6 +33998,7 @@ def _run_router_return_settlement_finalizers(
                 completed["resolved_at"] = pending.get("resolved_at") or utc_now()
                 changed = True
                 normalized += 1
+                normalized_card_bundle_acks += 1
             completed["ack_path"] = validation["ack_path"]
             completed["ack_hash"] = validation["ack_hash"]
             completed["receipt_ref_count"] = validation["receipt_ref_count"]
@@ -34918,6 +34008,37 @@ def _run_router_return_settlement_finalizers(
     if changed:
         return_ledger["updated_at"] = utc_now()
         write_json(_return_event_ledger_path(run_root), return_ledger)
+
+    for record in resolved_card_records:
+        delivery_attempt_id = str(record.get("delivery_attempt_id") or "")
+        event = str(record.get("card_return_event") or "")
+        expected_return_path = str(record.get("expected_return_path") or record.get("ack_path") or "")
+        card_id = str(record.get("card_id") or "")
+        wait_rows_reconciled += _reconcile_card_wait_rows(
+            project_root,
+            run_root,
+            run_state,
+            delivery_attempt_id=delivery_attempt_id,
+            expected_return_path=expected_return_path,
+            card_return_event=event,
+            card_id=card_id,
+            source=source,
+            ack_path=str(record.get("ack_path") or ""),
+        )
+        pending_action = run_state.get("pending_action")
+        if _pending_action_matches_card_return(pending_action, record):
+            run_state["pending_action"] = None
+            append_history(
+                run_state,
+                "router_return_settlement_cleared_pending_card_wait",
+                {
+                    "source": source,
+                    "delivery_attempt_id": delivery_attempt_id,
+                    "card_id": card_id,
+                    "card_return_event": event,
+                    "clearance_kind": "ack_wait_only",
+                },
+            )
 
     for record in resolved_records:
         bundle_id = str(record.get("card_bundle_id") or "")
@@ -34974,14 +34095,18 @@ def _run_router_return_settlement_finalizers(
             "router_return_settlement_finalizers_completed",
             {
                 "source": source,
-                "normalized_card_bundle_acks": normalized,
+                "normalized_return_acks": normalized,
+                "normalized_card_bundle_acks": normalized_card_bundle_acks,
+                "normalized_single_card_acks": normalized_card_acks,
                 "wait_rows_reconciled": wait_rows_reconciled,
                 "startup_user_intake_release": startup_release,
             },
         )
     return {
         "changed": bool(normalized or wait_rows_reconciled or startup_release_changed),
-        "normalized_card_bundle_acks": normalized,
+        "normalized_return_acks": normalized,
+        "normalized_card_bundle_acks": normalized_card_bundle_acks,
+        "normalized_single_card_acks": normalized_card_acks,
         "wait_rows_reconciled": wait_rows_reconciled,
         "startup_user_intake_release": startup_release,
     }
@@ -38594,6 +37719,9 @@ def reconcile_current_run(project_root: Path) -> dict[str, Any]:
         run_state["status"] = recovered_terminal_status
         status = recovered_terminal_status
         repaired["terminal_status_recovered_from_authority"] = True
+        if recovered_terminal_status == "closed":
+            flags["terminal_closure_approved"] = True
+            repaired["terminal_closure_status_recovered"] = True
     if status == "stopped_by_user":
         flags["run_stopped_by_user"] = True
     elif status == "cancelled_by_user":

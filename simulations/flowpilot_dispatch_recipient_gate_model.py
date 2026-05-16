@@ -61,6 +61,7 @@ class State:
     unresolved_ack_for_target: bool = False
     passive_wait_for_target: bool = False
     passive_wait_source: str = "none"  # none | card_ack | role_output | packet | pm_role_work
+    passive_wait_obligation_class: str = "none"  # none | ack_only_prompt | output_bearing_work_package | work_output
     passive_wait_durable_status: str = "none"  # none | open | resolved
     pending_expected_output_for_target: bool = False
     same_output_context_card: bool = False
@@ -186,25 +187,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     )
 
     yield Transition(
-        "allow_user_intake_mail_after_resolved_startup_card_wait",
+        "allow_mail_after_resolved_ack_only_card_wait",
         _gate_pass(
             replace(
                 _base_candidate("mail", "project_manager"),
                 passive_wait_for_target=True,
                 passive_wait_source="card_ack",
+                passive_wait_obligation_class="ack_only_prompt",
                 passive_wait_durable_status="resolved",
             )
         ),
     )
 
     yield Transition(
-        "allow_pm_mail_after_resolved_role_output_wait",
-        _gate_pass(
+        "wait_for_output_bearing_card_output_after_ack",
+        _gate_wait(
             replace(
                 _base_candidate("mail", "project_manager"),
                 passive_wait_for_target=True,
-                passive_wait_source="role_output",
+                passive_wait_source="card_ack",
+                passive_wait_obligation_class="output_bearing_work_package",
                 passive_wait_durable_status="resolved",
+                pending_expected_output_for_target=True,
             )
         ),
     )
@@ -410,10 +414,20 @@ def invariant_failures(state: State) -> list[str]:
     if (
         state.passive_wait_for_target
         and state.passive_wait_durable_status == "resolved"
+        and state.passive_wait_obligation_class != "output_bearing_work_package"
         and not _live_busy_source_except_passive_wait(state)
         and not state.dispatch_exposed
     ):
         failures.append("resolved passive wait did not free the target role")
+
+    if (
+        state.passive_wait_source == "card_ack"
+        and state.passive_wait_obligation_class == "output_bearing_work_package"
+        and state.passive_wait_durable_status == "resolved"
+        and not state.pending_expected_output_for_target
+        and state.dispatch_exposed
+    ):
+        failures.append("output-bearing card ACK cleared busy without output evidence")
 
     if (
         state.same_role_grouped_delivery
@@ -518,15 +532,18 @@ def hazard_states() -> dict[str, State]:
                 _base_candidate("mail", "project_manager"),
                 passive_wait_for_target=True,
                 passive_wait_source="card_ack",
+                passive_wait_obligation_class="ack_only_prompt",
                 passive_wait_durable_status="resolved",
             )
         ),
-        "stale_role_output_passive_wait_blocks_pm_mail": _gate_wait(
+        "output_bearing_card_ack_dispatch_exposed_before_report": _gate_pass(
             replace(
                 _base_candidate("mail", "project_manager"),
                 passive_wait_for_target=True,
-                passive_wait_source="role_output",
+                passive_wait_source="card_ack",
+                passive_wait_obligation_class="output_bearing_work_package",
                 passive_wait_durable_status="resolved",
+                pending_expected_output_for_target=False,
             )
         ),
         "busy_wait_without_concrete_obligation": replace(
