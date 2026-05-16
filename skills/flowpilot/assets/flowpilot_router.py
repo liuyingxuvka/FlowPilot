@@ -28,6 +28,7 @@ import flowpilot_user_flow_diagram
 import card_runtime
 import packet_runtime
 import role_output_runtime
+import flowpilot_runtime_closure
 from flowpilot_router_card_settlement import (
     CARD_ACK_COMPLETE_STATUSES,
     CARD_BUNDLE_ACK_COMPLETE_STATUSES,
@@ -208,6 +209,10 @@ EVENT_IDEMPOTENCY_LEDGER_SCHEMA = "flowpilot.external_event_idempotency.v1"
 DISPLAY_CONFIRMATION_SCHEMA = "flowpilot.user_dialog_display_confirmation.v1"
 DISPLAY_SURFACE_RECEIPT_SCHEMA = "flowpilot.display_surface_receipt.v1"
 CURRENT_STATUS_SUMMARY_SCHEMA = "flowpilot.current_status_summary.v1"
+OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA = flowpilot_runtime_closure.OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA
+CONTINUATION_QUARANTINE_SCHEMA = flowpilot_runtime_closure.CONTINUATION_QUARANTINE_SCHEMA
+FINAL_USER_REPORT_SCHEMA = flowpilot_runtime_closure.FINAL_USER_REPORT_SCHEMA
+ROUTE_DISPLAY_REFRESH_SCHEMA = flowpilot_runtime_closure.ROUTE_DISPLAY_REFRESH_SCHEMA
 CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
 CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
 CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
@@ -4656,7 +4661,7 @@ def _router_scheduler_ledger_summary(run_root: Path) -> dict[str, Any]:
         return {
             "exists": path.exists(),
             "valid_json": False,
-            "write_in_progress": write_lock["fresh"],
+            "write_in_progress": write_lock.get("active", write_lock.get("fresh", False)),
             "write_lock": write_lock,
             "error": str(exc),
             "path": str(path),
@@ -5240,7 +5245,7 @@ def _ensure_controller_action_ledger(project_root: Path, run_root: Path, run_sta
                 return ledger
         except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
             write_lock = _json_write_lock_liveness(path)
-            if write_lock["fresh"]:
+            if write_lock.get("active", write_lock.get("fresh", False)):
                 raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
             pass
     return _rebuild_controller_action_ledger(project_root, run_root, run_state)
@@ -5255,7 +5260,7 @@ def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
         return {
             "exists": path.exists(),
             "valid_json": False,
-            "write_in_progress": write_lock["fresh"],
+            "write_in_progress": write_lock.get("active", write_lock.get("fresh", False)),
             "write_lock": write_lock,
             "error": str(exc),
             "path": str(path),
@@ -7880,6 +7885,47 @@ def _scheduler_row_reconciliation_for_entry(run_root: Path, entry: dict[str, Any
     return None
 
 
+def _backfill_scheduler_row_from_reconciled_controller_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    entry: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    row_id = str(entry.get("router_scheduler_row_id") or "").strip()
+    if not row_id:
+        return {"changed": False, "reason": "controller_action_has_no_router_scheduler_row"}
+    if not (entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at")):
+        return {"changed": False, "reason": "controller_action_not_reconciled"}
+    row = _router_scheduler_row_for_controller_entry(run_root, entry)
+    if not row:
+        return {"changed": False, "reason": "router_scheduler_row_missing", "row_id": row_id}
+    if row.get("router_state") == "reconciled":
+        return {"changed": False, "reason": "router_scheduler_row_already_reconciled", "row_id": row_id}
+    reconciliation = (
+        dict(entry.get("router_reconciliation"))
+        if isinstance(entry.get("router_reconciliation"), dict)
+        else {}
+    )
+    reconciliation.setdefault("applied", True)
+    reconciliation.setdefault("source", source)
+    reconciliation["scheduler_backfill_source"] = source
+    reconciliation["controller_action_id"] = str(entry.get("action_id") or "")
+    reconciliation["controller_action_reconciliation_status"] = entry.get("router_reconciliation_status")
+    if entry.get("router_reconciled_at"):
+        reconciliation["controller_action_reconciled_at"] = entry.get("router_reconciled_at")
+    _update_router_scheduler_row(
+        project_root,
+        run_root,
+        run_state,
+        row_id=row_id,
+        router_state="reconciled",
+        reconciliation=reconciliation,
+    )
+    return {"changed": True, "row_id": row_id, "reconciliation": reconciliation}
+
+
 def _canonicalize_legacy_startup_daemon_reconciliation(
     project_root: Path,
     run_root: Path,
@@ -8047,6 +8093,13 @@ def _reconcile_scheduled_controller_action_receipts(
         if entry.get("status") != "done":
             continue
         if entry.get("router_reconciliation_status") == "reconciled" or entry.get("router_reconciled_at"):
+            scheduler_backfill = _backfill_scheduler_row_from_reconciled_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                entry,
+                source="reconciled_controller_action_scheduler_backfill",
+            )
             blocker_resolution = _resolve_control_blockers_for_reconciled_controller_action(
                 project_root,
                 run_root,
@@ -8055,8 +8108,10 @@ def _reconcile_scheduled_controller_action_receipts(
                 entry=entry,
                 reconciliation=entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else None,
             )
-            if blocker_resolution.get("changed"):
+            if scheduler_backfill.get("changed") or blocker_resolution.get("changed"):
                 changed = True
+                if scheduler_backfill.get("changed"):
+                    reconciled += 1
             continue
         if entry.get("router_reconciliation_status") == "blocked":
             postcondition = _pending_action_postcondition(action)
@@ -12009,6 +12064,7 @@ def _terminal_summary_payload_contract() -> dict[str, Any]:
             "displayed_summary_sha256 must equal sha256(summary_markdown)",
             "source_paths_reviewed, when supplied, may cite only files inside the current run root",
             "Controller must show this same summary text to the user before writing the Controller receipt or applying the direct terminal action",
+            "The final user report is output-only and does not create completion authority",
         ],
         description=(
             "Write the final FlowPilot run summary after terminal mode is reached. "
@@ -15136,6 +15192,7 @@ def _terminal_summary_action(
             "run_lifecycle_status": mode,
             "terminal_for_route": True,
             "summary_schema_version": TERMINAL_SUMMARY_SCHEMA,
+            "final_user_report_schema_version": FINAL_USER_REPORT_SCHEMA,
             "summary_markdown_path": markdown_rel,
             "summary_json_path": json_rel,
             "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
@@ -15147,6 +15204,8 @@ def _terminal_summary_action(
             "controller_may_spawn_new_role_work": False,
             "controller_may_approve_or_reopen_gates": False,
             "controller_may_create_project_evidence": False,
+            "final_user_report_is_completion_authority": False,
+            "report_after_lifecycle_terminal": True,
             "requires_payload": True,
             "payload_contract": _terminal_summary_payload_contract(),
             "postcondition": "terminal_summary_written",
@@ -15192,8 +15251,21 @@ def _validate_terminal_summary_payload(
     written_at = utc_now()
     markdown_path = _terminal_summary_markdown_path(run_root)
     json_path = _terminal_summary_json_path(run_root)
+    final_user_report = flowpilot_runtime_closure.final_user_report_record(
+        run_id=str(run_state.get("run_id") or ""),
+        lifecycle_status=mode,
+        summary_path=project_relative(project_root, markdown_path),
+        summary_json_path=project_relative(project_root, json_path),
+        summary_sha256=summary_hash,
+        displayed_to_user=True,
+        written_at=written_at,
+    )
+    final_report_issues = flowpilot_runtime_closure.validate_final_user_report_record(final_user_report)
+    if final_report_issues:
+        raise RouterError(f"final user report invariant failed: {final_report_issues}")
     record = {
         "schema_version": TERMINAL_SUMMARY_SCHEMA,
+        "final_user_report_schema_version": FINAL_USER_REPORT_SCHEMA,
         "run_id": run_state.get("run_id"),
         "run_lifecycle_status": mode,
         "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
@@ -15209,6 +15281,7 @@ def _validate_terminal_summary_payload(
         "displayed_to_user": True,
         "displayed_summary_sha256": summary_hash,
         "source_paths_reviewed": source_paths,
+        "final_user_report": final_user_report,
         "written_at": written_at,
     }
     return summary_markdown, record
@@ -15253,6 +15326,8 @@ def _write_terminal_summary(
     entry["final_summary_path"] = markdown_rel
     entry["final_summary_json_path"] = json_rel
     entry["final_summary_sha256"] = record["summary_sha256"]
+    entry["final_user_report_schema_version"] = FINAL_USER_REPORT_SCHEMA
+    entry["final_user_report_is_completion_authority"] = False
     entry["flowpilot_project_url"] = FLOWPILOT_PROJECT_URL
     index["current_run_id"] = run_id
     index["updated_at"] = now
@@ -15264,6 +15339,8 @@ def _write_terminal_summary(
         current["status"] = mode
         current["final_summary_path"] = markdown_rel
         current["final_summary_json_path"] = json_rel
+        current["final_user_report_schema_version"] = FINAL_USER_REPORT_SCHEMA
+        current["final_user_report_is_completion_authority"] = False
         current["flowpilot_project_url"] = FLOWPILOT_PROJECT_URL
         current["updated_at"] = now
         write_json(current_path, current)
@@ -15273,6 +15350,7 @@ def _write_terminal_summary(
     flags["terminal_summary_written"] = True
     run_state["terminal_summary"] = {
         "schema_version": TERMINAL_SUMMARY_SCHEMA,
+        "final_user_report_schema_version": FINAL_USER_REPORT_SCHEMA,
         "path": markdown_rel,
         "json_path": json_rel,
         "sha256": record["summary_sha256"],
@@ -15281,6 +15359,7 @@ def _write_terminal_summary(
         "flowpilot_project_url": FLOWPILOT_PROJECT_URL,
         "written_at": now,
     }
+    run_state["final_user_report"] = record["final_user_report"]
     return record
 
 
@@ -16060,11 +16139,19 @@ def _complete_startup_daemon_bootloader_row(
         entry.get("router_reconciliation_status") == "reconciled"
         and existing_reconciliation.get("source") == "startup_bootloader_controller_receipt"
     ):
+        scheduler_backfill = _backfill_scheduler_row_from_reconciled_controller_action(
+            project_root,
+            run_root,
+            run_state,
+            entry,
+            source="startup_bootloader_already_reconciled_scheduler_backfill",
+        )
         return {
             "controller_action_id": action_id,
             "router_scheduler_row_id": row_id,
             "already_reconciled": True,
             "router_reconciliation": existing_reconciliation,
+            "scheduler_backfill": scheduler_backfill,
         }
     receipt = _write_controller_receipt(
         project_root,
@@ -19711,6 +19798,55 @@ def _continuation_binding_path(run_root: Path) -> Path:
     return run_root / "continuation" / "continuation_binding.json"
 
 
+def _continuation_quarantine_path(run_root: Path) -> Path:
+    return run_root / "continuation" / "quarantine.json"
+
+
+def _build_continuation_quarantine_record(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    created_at: str,
+) -> dict[str, Any]:
+    record = flowpilot_runtime_closure.continuation_quarantine_record(
+        run_id=str(run_state.get("run_id") or ""),
+        run_root=project_relative(project_root, run_root),
+        current_pointer=read_json_if_exists(project_root / ".flowpilot" / "current.json") or {},
+        run_index=read_json_if_exists(project_root / ".flowpilot" / "index.json") or {},
+        created_at=created_at,
+    )
+    issues = flowpilot_runtime_closure.validate_continuation_quarantine_record(record)
+    if issues:
+        raise RouterError(f"continuation quarantine invariant failed: {issues}")
+    record["path"] = project_relative(project_root, _continuation_quarantine_path(run_root))
+    return record
+
+
+def _write_continuation_quarantine(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    quarantine = record or _build_continuation_quarantine_record(
+        project_root,
+        run_root,
+        run_state,
+        created_at=utc_now(),
+    )
+    path = _continuation_quarantine_path(run_root)
+    write_json(path, quarantine)
+    run_state["continuation_quarantine"] = {
+        "schema_version": CONTINUATION_QUARANTINE_SCHEMA,
+        "path": project_relative(project_root, path),
+        "prior_run_files_are_evidence_by_default": False,
+        "old_agent_ids_are_current_authority": False,
+        "updated_at": quarantine.get("created_at"),
+    }
+    return quarantine
+
+
 def _stable_resume_launcher_contract() -> dict[str, Any]:
     return {
         "event": "heartbeat_or_manual_resume_requested",
@@ -19746,6 +19882,7 @@ def _write_initial_continuation_binding(project_root: Path, run_root: Path, run_
         "updated_at": utc_now(),
     }
     write_json(_continuation_binding_path(run_root), binding)
+    _write_continuation_quarantine(project_root, run_root, run_state)
 
 
 def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -21823,6 +21960,7 @@ def _write_pm_role_work_request(project_root: Path, run_root: Path, run_state: d
         index["active_batch_id"] = batch_id
         index["active_request_ids"] = [request_id]
     _write_pm_role_work_request_index(run_root, index)
+    _record_officer_lifecycle_request(project_root, run_root, run_state, record)
     run_state["pm_role_work_requests"] = {
         "index_path": project_relative(project_root, _pm_role_work_request_index_path(run_root)),
         "active_request_id": request_id,
@@ -21949,6 +22087,7 @@ def _write_role_work_result_returned(project_root: Path, run_root: Path, run_sta
     record["result_body_hash"] = result.get("result_body_hash")
     record["result_returned_at"] = utc_now()
     index["active_request_id"] = request_id
+    _record_officer_lifecycle_result_returned(project_root, run_root, run_state, record, result)
     _write_pm_role_work_request_index(run_root, index)
     _mark_parallel_batch_results_joined(project_root, run_root, run_state, "pm_role_work")
 
@@ -22021,6 +22160,7 @@ def _write_pm_role_work_result_decision(project_root: Path, run_root: Path, run_
         for mapping in gate_mappings:
             if mapping.get("request_id") == record.get("request_id"):
                 record["pm_result_decision"]["gate_mapping"] = mapping
+        _record_officer_lifecycle_pm_decision(project_root, run_root, run_state, record, decision_record)
     if request_id and index.get("active_request_id") == request_id:
         index["active_request_id"] = None
     if batch_id and index.get("active_batch_id") == batch_id:
@@ -23398,6 +23538,10 @@ def _route_state_snapshot_path(run_root: Path) -> Path:
     return run_root / "route_state_snapshot.json"
 
 
+def _route_display_refresh_path(run_root: Path) -> Path:
+    return run_root / "display" / "route_display_refresh.json"
+
+
 def _optional_source_path(project_root: Path, path: Path) -> str | None:
     return project_relative(project_root, path) if path.exists() else None
 
@@ -23524,6 +23668,21 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
             if display_kind == "startup_waiting_state"
             else "canonical_route_source_unavailable"
         )
+    route_display_refresh = flowpilot_runtime_closure.route_display_refresh_record(
+        run_id=str(run_state.get("run_id") or ""),
+        display_plan_path=project_relative(project_root, _display_plan_path(run_root)),
+        route_state_snapshot_path=project_relative(project_root, snapshot_path),
+        route_state_snapshot_hash=snapshot_digest,
+        projection_hash=digest,
+        route_sign_markdown_path=route_sign.get("markdown_preview_path"),
+        route_sign_mermaid_sha256=route_sign.get("mermaid_sha256"),
+        display_kind=display_kind,
+        refreshed_at=utc_now(),
+    )
+    refresh_issues = flowpilot_runtime_closure.validate_route_display_refresh_record(route_display_refresh)
+    if refresh_issues:
+        raise RouterError(f"route display refresh invariant failed: {refresh_issues}")
+    route_display_refresh["path"] = project_relative(project_root, _route_display_refresh_path(run_root))
     return {
         "display_plan_path": project_relative(project_root, _display_plan_path(run_root)),
         "display_plan_exists": _display_plan_path(run_root).exists(),
@@ -23560,6 +23719,8 @@ def _display_plan_sync_payload(project_root: Path, run_root: Path, run_state: di
         "route_sign_layout": route_sign.get("route_sign_layout"),
         "route_sign_source_route_path": route_sign.get("source_route_path"),
         "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
+        "route_display_refresh_path": route_display_refresh["path"],
+        "route_display_refresh": route_display_refresh,
         **dialog_fields,
     }
 
@@ -24151,13 +24312,21 @@ def _build_route_state_snapshot(
             }
         )
     pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    created_at = utc_now()
+    continuation_quarantine = _build_continuation_quarantine_record(
+        project_root,
+        run_root,
+        run_state,
+        created_at=created_at,
+    )
     return {
         "schema_version": ROUTE_STATE_SNAPSHOT_SCHEMA,
         "run_id": run_id,
         "run_root": run_root_rel,
-        "created_at": utc_now(),
+        "created_at": created_at,
         "source_event": source_event,
         "active_ui_task_catalog": _active_ui_task_catalog(project_root, run_root, run_state),
+        "continuation_quarantine": continuation_quarantine,
         "authority": {
             "active_source": "index_active_runs_with_current_focus",
             "current_pointer_path": ".flowpilot/current.json",
@@ -24221,6 +24390,8 @@ def _write_route_state_snapshot(
         route_payload=route_payload,
         source_event=source_event,
     )
+    if isinstance(snapshot.get("continuation_quarantine"), dict):
+        _write_continuation_quarantine(project_root, run_root, run_state, snapshot["continuation_quarantine"])
     write_json(_route_state_snapshot_path(run_root), snapshot)
     _write_current_status_summary(run_root, run_state, route_payload=route_payload)
 
@@ -25757,6 +25928,164 @@ def _load_pm_role_work_request_index(run_root: Path, run_state: dict[str, Any]) 
 def _write_pm_role_work_request_index(run_root: Path, index: dict[str, Any]) -> None:
     index["updated_at"] = utc_now()
     write_json(_pm_role_work_request_index_path(run_root), index)
+
+
+def _officer_request_lifecycle_index_path(run_root: Path) -> Path:
+    return run_root / "pm_work_requests" / "officer_request_lifecycle_index.json"
+
+
+def _empty_officer_request_lifecycle_index(run_state: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA,
+        "run_id": run_state["run_id"],
+        "authority": "pm_role_work_request_index_and_router_authorized_result_events",
+        "controller_visibility": "packet_and_result_envelopes_only",
+        "controller_may_read_packet_body": False,
+        "controller_may_read_result_body": False,
+        "active_request_ids": [],
+        "requests": [],
+        "written_at": utc_now(),
+        "updated_at": utc_now(),
+    }
+
+
+def _load_officer_request_lifecycle_index(run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    path = _officer_request_lifecycle_index_path(run_root)
+    if not path.exists():
+        return _empty_officer_request_lifecycle_index(run_state)
+    index = read_json(path)
+    if index.get("schema_version") != OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA:
+        raise RouterError("officer request lifecycle index has unsupported schema")
+    if not isinstance(index.get("requests"), list):
+        raise RouterError("officer request lifecycle index requires requests list")
+    index.setdefault("active_request_ids", [])
+    return index
+
+
+def _officer_lifecycle_entry(index: dict[str, Any], request_id: str) -> dict[str, Any] | None:
+    for record in index.get("requests", []):
+        if isinstance(record, dict) and record.get("request_id") == request_id:
+            return record
+    return None
+
+
+def _upsert_officer_lifecycle_entry(index: dict[str, Any], entry: dict[str, Any]) -> None:
+    request_id = str(entry.get("request_id") or "").strip()
+    existing = _officer_lifecycle_entry(index, request_id)
+    if isinstance(existing, dict):
+        existing.update({key: value for key, value in entry.items() if value is not None})
+    else:
+        index.setdefault("requests", []).append(entry)
+
+
+def _write_officer_request_lifecycle_index(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    index: dict[str, Any],
+) -> None:
+    active_request_ids = [
+        str(record.get("request_id"))
+        for record in index.get("requests", [])
+        if isinstance(record, dict)
+        and str(record.get("request_status") or "") in PM_ROLE_WORK_OPEN_STATUSES
+    ]
+    index["active_request_ids"] = active_request_ids
+    index["updated_at"] = utc_now()
+    path = _officer_request_lifecycle_index_path(run_root)
+    write_json(path, index)
+    run_state["officer_request_lifecycle"] = {
+        "schema_version": OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA,
+        "index_path": project_relative(project_root, path),
+        "active_request_ids": active_request_ids,
+        "request_count": len(index.get("requests", [])),
+        "updated_at": index["updated_at"],
+    }
+
+
+def _record_officer_lifecycle_request(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+) -> None:
+    if not flowpilot_runtime_closure.is_officer_request_record(record):
+        return
+    issues = flowpilot_runtime_closure.validate_officer_request_record(record)
+    if issues:
+        raise RouterError(f"officer request lifecycle invariant failed: {issues}")
+    index = _load_officer_request_lifecycle_index(run_root, run_state)
+    entry = flowpilot_runtime_closure.officer_lifecycle_entry_from_request(record, now=utc_now())
+    _upsert_officer_lifecycle_entry(index, entry)
+    _write_officer_request_lifecycle_index(project_root, run_root, run_state, index)
+
+
+def _record_officer_lifecycle_status(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+    *,
+    lifecycle_status: str,
+) -> None:
+    if not flowpilot_runtime_closure.is_officer_request_record(record):
+        return
+    index = _load_officer_request_lifecycle_index(run_root, run_state)
+    if _officer_lifecycle_entry(index, str(record.get("request_id") or "")) is None:
+        _upsert_officer_lifecycle_entry(
+            index,
+            flowpilot_runtime_closure.officer_lifecycle_entry_from_request(record, now=utc_now()),
+        )
+    update = flowpilot_runtime_closure.officer_lifecycle_status_update(
+        record,
+        lifecycle_status=lifecycle_status,
+        now=utc_now(),
+    )
+    _upsert_officer_lifecycle_entry(index, update)
+    _write_officer_request_lifecycle_index(project_root, run_root, run_state, index)
+
+
+def _record_officer_lifecycle_result_returned(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+    result: dict[str, Any],
+) -> None:
+    if not flowpilot_runtime_closure.is_officer_request_record(record):
+        return
+    issues = flowpilot_runtime_closure.validate_officer_result_record(record, result)
+    if issues:
+        raise RouterError(f"officer result lifecycle invariant failed: {issues}")
+    index = _load_officer_request_lifecycle_index(run_root, run_state)
+    if _officer_lifecycle_entry(index, str(record.get("request_id") or "")) is None:
+        _upsert_officer_lifecycle_entry(
+            index,
+            flowpilot_runtime_closure.officer_lifecycle_entry_from_request(record, now=utc_now()),
+        )
+    update = flowpilot_runtime_closure.officer_lifecycle_result_update(record, result, now=utc_now())
+    _upsert_officer_lifecycle_entry(index, update)
+    _write_officer_request_lifecycle_index(project_root, run_root, run_state, index)
+
+
+def _record_officer_lifecycle_pm_decision(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    record: dict[str, Any],
+    decision_record: dict[str, Any],
+) -> None:
+    if not flowpilot_runtime_closure.is_officer_request_record(record):
+        return
+    index = _load_officer_request_lifecycle_index(run_root, run_state)
+    if _officer_lifecycle_entry(index, str(record.get("request_id") or "")) is None:
+        _upsert_officer_lifecycle_entry(
+            index,
+            flowpilot_runtime_closure.officer_lifecycle_entry_from_request(record, now=utc_now()),
+        )
+    update = flowpilot_runtime_closure.officer_lifecycle_decision_update(record, decision_record, now=utc_now())
+    _upsert_officer_lifecycle_entry(index, update)
+    _write_officer_request_lifecycle_index(project_root, run_root, run_state, index)
 
 
 def _pm_role_work_request_record(index: dict[str, Any], request_id: str) -> dict[str, Any] | None:
@@ -30383,6 +30712,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
                 project_relative(project_root, run_root / "crew_ledger.json"),
                 project_relative(project_root, run_root / "crew_memory"),
                 project_relative(project_root, _continuation_binding_path(run_root)),
+                project_relative(project_root, _continuation_quarantine_path(run_root)),
                 project_relative(project_root, _route_history_index_path(run_root)),
                 project_relative(project_root, _pm_prior_path_context_path(run_root)),
                 project_relative(project_root, _display_plan_path(run_root)),
@@ -30392,6 +30722,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
             ],
             allowed_writes=[
                 project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
+                project_relative(project_root, _continuation_quarantine_path(run_root)),
                 project_relative(project_root, run_state_path(run_root)),
                 project_relative(project_root, _route_history_index_path(run_root)),
                 project_relative(project_root, _pm_prior_path_context_path(run_root)),
@@ -30406,6 +30737,7 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
                 "wake_recorded_to_router_required": True,
                 "visible_plan_restore_required": True,
                 "role_rehydration_required_before_pm_resume_decision": True,
+                "continuation_quarantine_required": True,
                 "resume_next_recipient_from_packet_ledger": resume_next,
                 "router_daemon_resume_recovery": _router_daemon_resume_recovery_summary(project_root, run_root),
             },
@@ -30751,6 +31083,8 @@ def _next_display_plan_action(project_root: Path, run_state: dict[str, Any], run
     allowed_writes = [
         project_relative(project_root, run_state_path(run_root)),
         project_relative(project_root, _route_state_snapshot_path(run_root)),
+        project_relative(project_root, _continuation_quarantine_path(run_root)),
+        project_relative(project_root, _route_display_refresh_path(run_root)),
         project_relative(project_root, run_root / "display" / "user_dialog_display_ledger.json"),
     ]
     if not sync_payload["display_plan_exists"]:
@@ -30849,8 +31183,13 @@ def _apply_sync_display_plan_state(
             "route_sign_source_route_path": route_sign.get("source_route_path"),
             "route_sign_source_frontier_path": route_sign.get("source_frontier_path"),
         }
+        if isinstance(sync_payload.get("route_display_refresh"), dict):
+            sync_payload["route_display_refresh"]["route_sign_markdown_path"] = route_sign.get("markdown_preview_path")
+            sync_payload["route_display_refresh"]["route_sign_mermaid_sha256"] = route_sign.get("mermaid_sha256")
     if confirmation is not None:
         _append_user_dialog_display_ledger(project_root, run_root, confirmation)
+    if isinstance(sync_payload.get("route_display_refresh"), dict):
+        write_json(_route_display_refresh_path(run_root), sync_payload["route_display_refresh"])
     run_state["visible_plan_sync"] = {
         "display_plan_path": sync_payload["display_plan_path"],
         "route_state_snapshot_path": sync_payload["route_state_snapshot_path"],
@@ -30871,6 +31210,11 @@ def _apply_sync_display_plan_state(
         "route_sign_layout": sync_payload.get("route_sign_layout"),
         "route_sign_source_route_path": sync_payload.get("route_sign_source_route_path"),
         "route_sign_source_frontier_path": sync_payload.get("route_sign_source_frontier_path"),
+        "route_display_refresh_path": sync_payload.get("route_display_refresh_path"),
+        "route_display_refresh_sha256": packet_runtime.sha256_file(_route_display_refresh_path(run_root))
+        if _route_display_refresh_path(run_root).exists()
+        else None,
+        "display_is_route_authority": False,
         "display_required": sync_payload.get("display_required"),
         "user_visible_display_suppressed": sync_payload.get("user_visible_display_suppressed", False),
         "internal_display_reason": sync_payload.get("internal_display_reason"),
@@ -31959,6 +32303,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
     batch_records = _active_pm_role_work_batch_records(index)
     if batch_records:
         index_path = _pm_role_work_request_index_path(run_root)
+        lifecycle_index_path = _officer_request_lifecycle_index_path(run_root)
         packet_ids = [record.get("packet_id") for record in batch_records]
         to_roles = ",".join(sorted({str(record.get("to_role") or "") for record in batch_records if record.get("to_role")}))
         if any(record.get("status") == "open" for record in batch_records):
@@ -31987,6 +32332,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         project_relative(project_root, run_state_path(run_root)),
                         project_relative(project_root, run_root / "packet_ledger.json"),
                         project_relative(project_root, index_path),
+                        project_relative(project_root, lifecycle_index_path),
                         *active_holder_allowed_writes,
                     ],
                     to_role=to_roles,
@@ -32001,6 +32347,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         "combined_ledger_check_and_relay": True,
                         "ledger_check_receipt_required": True,
                         "pm_work_requests": project_relative(project_root, index_path),
+                        "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                         "active_holder_fast_lane": active_holder_plan,
                     },
                 )
@@ -32013,6 +32360,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 allowed_writes=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    project_relative(project_root, lifecycle_index_path),
                     *active_holder_allowed_writes,
                 ],
                 to_role=to_roles,
@@ -32025,6 +32373,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "controller_visibility": "packet_envelopes_only",
                     "sealed_body_reads_allowed": False,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                     "active_holder_fast_lane": active_holder_plan,
                 },
             )
@@ -32076,6 +32425,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         project_relative(project_root, run_state_path(run_root)),
                         project_relative(project_root, run_root / "packet_ledger.json"),
                         project_relative(project_root, index_path),
+                        project_relative(project_root, lifecycle_index_path),
                     ],
                     to_role="project_manager",
                     extra={
@@ -32089,6 +32439,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                         "combined_ledger_check_and_relay": True,
                         "ledger_check_receipt_required": True,
                         "pm_work_requests": project_relative(project_root, index_path),
+                        "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                     },
                 )
             return make_action(
@@ -32100,6 +32451,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 allowed_writes=[
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    project_relative(project_root, lifecycle_index_path),
                 ],
                 to_role="project_manager",
                 extra={
@@ -32111,6 +32463,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "controller_visibility": "result_envelopes_only",
                     "sealed_body_reads_allowed": False,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                 },
             )
         if all(record.get("status") == "result_relayed_to_pm" for record in batch_records):
@@ -32141,6 +32494,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
     if not isinstance(active, dict):
         return None
     index_path = _pm_role_work_request_index_path(run_root)
+    lifecycle_index_path = _officer_request_lifecycle_index_path(run_root)
     packet_ids = [active.get("packet_id")]
     if active.get("status") == "open":
         active_holder_plan, active_holder_allowed_writes = _packet_active_holder_lease_plan(
@@ -32167,6 +32521,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    project_relative(project_root, lifecycle_index_path),
                     *active_holder_allowed_writes,
                 ],
                 to_role=str(active.get("to_role") or ""),
@@ -32180,6 +32535,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "ledger_check_receipt_required": True,
                     "packet_ids": packet_ids,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                     "active_holder_fast_lane": active_holder_plan,
                 },
             )
@@ -32192,6 +32548,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             allowed_writes=[
                 project_relative(project_root, run_root / "packet_ledger.json"),
                 project_relative(project_root, index_path),
+                project_relative(project_root, lifecycle_index_path),
                 *active_holder_allowed_writes,
             ],
             to_role=str(active.get("to_role") or ""),
@@ -32202,6 +32559,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 "controller_visibility": "packet_envelope_only",
                 "sealed_body_reads_allowed": False,
                 "pm_work_requests": project_relative(project_root, index_path),
+                "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                 "active_holder_fast_lane": active_holder_plan,
             },
         )
@@ -32222,6 +32580,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     project_relative(project_root, run_state_path(run_root)),
                     project_relative(project_root, run_root / "packet_ledger.json"),
                     project_relative(project_root, index_path),
+                    project_relative(project_root, lifecycle_index_path),
                 ],
                 to_role="project_manager",
                 extra={
@@ -32234,6 +32593,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                     "ledger_check_receipt_required": True,
                     "packet_ids": packet_ids,
                     "pm_work_requests": project_relative(project_root, index_path),
+                    "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
                 },
             )
         return make_action(
@@ -32245,6 +32605,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
             allowed_writes=[
                 project_relative(project_root, run_root / "packet_ledger.json"),
                 project_relative(project_root, index_path),
+                project_relative(project_root, lifecycle_index_path),
             ],
             to_role="project_manager",
             extra={
@@ -32254,6 +32615,7 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
                 "controller_visibility": "result_envelope_only",
                 "sealed_body_reads_allowed": False,
                 "pm_work_requests": project_relative(project_root, index_path),
+                "officer_request_lifecycle_index": project_relative(project_root, lifecycle_index_path),
             },
         )
     if active.get("status") == "packet_relayed":
@@ -35624,6 +35986,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         for record in records:
             record["status"] = "packet_relayed"
             record["packet_relayed_at"] = utc_now()
+            _record_officer_lifecycle_status(
+                project_root,
+                run_root,
+                run_state,
+                record,
+                lifecycle_status="packet_relayed",
+            )
         _mark_parallel_batch_packets_relayed(run_root, "pm_role_work")
         result_extra["active_holder_fast_lane"] = _issue_packet_active_holder_leases(
             project_root,
@@ -35665,6 +36034,13 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         for record in records:
             record["status"] = "result_relayed_to_pm"
             record["result_relayed_to_pm_at"] = utc_now()
+            _record_officer_lifecycle_status(
+                project_root,
+                run_root,
+                run_state,
+                record,
+                lifecycle_status="result_relayed_to_pm",
+            )
         batch = _active_parallel_packet_batch(run_root, "pm_role_work")
         if batch:
             batch["status"] = "results_relayed_to_pm"
@@ -35755,6 +36131,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     elif action_type == "load_resume_state":
         resume_next = _derive_resume_next_recipient_from_packet_ledger(run_root)
         daemon_recovery = _router_daemon_resume_recovery_summary(project_root, run_root)
+        continuation_quarantine = _write_continuation_quarantine(project_root, run_root, run_state)
         required_paths = {
             "current_pointer": project_root / ".flowpilot" / "current.json",
             "router_state": run_state_path(run_root),
@@ -35764,6 +36141,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "crew_ledger": run_root / "crew_ledger.json",
             "crew_memory": run_root / "crew_memory",
             "continuation_binding": _continuation_binding_path(run_root),
+            "continuation_quarantine": _continuation_quarantine_path(run_root),
             "route_history_index": _route_history_index_path(run_root),
             "pm_prior_path_context": _pm_prior_path_context_path(run_root),
             "router_daemon_status": _router_daemon_status_path(run_root),
@@ -35830,6 +36208,7 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "role_recovery_report_path": role_recovery_context["report_relpath"] if role_recovery_context else None,
             "pm_resume_decision_required": pm_resume_decision_required,
             "ambiguous_state_blocks_controller_execution": ambiguous_state,
+            "continuation_quarantine": continuation_quarantine,
         }
         write_json(run_root / "continuation" / "resume_reentry.json", resume_record)
         run_state["flags"]["resume_state_loaded"] = True
@@ -35880,6 +36259,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         result_extra["terminal_summary_path"] = record["summary_markdown_path"]
         result_extra["terminal_summary_json_path"] = record["summary_json_path"]
         result_extra["terminal_summary_sha256"] = record["summary_sha256"]
+        result_extra["final_user_report_schema_version"] = record["final_user_report"]["schema_version"]
+        result_extra["final_user_report_is_completion_authority"] = False
     elif action_type == "run_lifecycle_terminal":
         _maybe_write_controller_receipt_for_pending(
             project_root,

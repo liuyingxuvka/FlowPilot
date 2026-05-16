@@ -42,7 +42,9 @@ Risk intent brief:
   startup obligations reconciled without Router-visible proof, reconciled
   scheduler rows downgraded by later receipt sync,
   single-card ACK returns resolved in the return ledger while the matching
-  Controller ACK wait or Router scheduler row remains unreconciled,
+  Controller ACK wait or Router scheduler row remains unreconciled, startup
+  Controller action reconciliation that does not backfill the matching Router
+  scheduler row,
   scheduler ledger partial writes that leave invalid JSON without a fresh write
   lock, fresh write-lock reads reported as corruption instead of deferred,
   standby completion after one monitor check, foreground closure while
@@ -63,7 +65,9 @@ Risk intent brief:
   the Router row, and compute the next startup row unless a real barrier is
   reached;
   single-card ACK settlement must update the return ledger, matching Controller
-  ACK wait row, and Router scheduler row together;
+  ACK wait row, and Router scheduler row together; if a Controller action is
+  already reconciled, the same Router-owned reconciliation pass must backfill
+  the matching Router scheduler row instead of leaving it at receipt_done;
   live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
@@ -100,6 +104,7 @@ TRUE_BARRIERS_STOP_QUEUEING = "true_barriers_stop_queueing"
 STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN = "startup_parallel_obligation_review_join"
 RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC = "reconciled_scheduler_row_status_monotonic"
 SINGLE_CARD_ACK_RETURN_RECONCILES_WAIT_ROWS = "single_card_ack_return_reconciles_wait_rows"
+ACTION_RECONCILED_BACKFILLS_SCHEDULER_ROW = "action_reconciled_backfills_scheduler_row"
 
 CONTROLLER_OWNS_ROUTER_DEPENDENCIES = "controller_owns_router_dependencies"
 DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY = "daemon_duplicates_controller_row_on_retry"
@@ -147,6 +152,7 @@ SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION = "single_card_ack_wait_stale
 SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION = (
     "single_card_ack_scheduler_stale_after_return_resolution"
 )
+ACTION_RECONCILED_SCHEDULER_STAYS_RECEIPT_DONE = "action_reconciled_scheduler_stays_receipt_done"
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -168,6 +174,7 @@ VALID_SCENARIOS = (
     STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN,
     RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC,
     SINGLE_CARD_ACK_RETURN_RECONCILES_WAIT_ROWS,
+    ACTION_RECONCILED_BACKFILLS_SCHEDULER_ROW,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -209,6 +216,7 @@ NEGATIVE_SCENARIOS = (
     SCHEDULER_RECONCILED_ROW_DOWNGRADED,
     SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION,
     SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION,
+    ACTION_RECONCILED_SCHEDULER_STAYS_RECEIPT_DONE,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -300,6 +308,10 @@ class State:
     duplicate_startup_parallel_obligation_rows: bool = False
     scheduler_row_status_reconciled: bool = False
     scheduler_row_status_downgraded_to_receipt_done: bool = False
+    controller_action_already_reconciled: bool = False
+    scheduler_row_receipt_done_for_reconciled_action: bool = False
+    scheduler_row_backfilled_from_action_reconciliation: bool = False
+    scheduler_row_still_receipt_done_after_action_reconciliation: bool = False
     startup_scope_reconciliation_checked: bool = False
     startup_scope_reconciliation_clean: bool = False
     reviewer_startup_fact_review_started: bool = False
@@ -637,6 +649,18 @@ def scenario_state(scenario: str) -> State:
             single_card_scheduler_row_reconciled=True,
             single_card_wait_still_waiting_after_return_resolution=False,
             single_card_scheduler_still_waiting_after_return_resolution=False,
+        )
+    if scenario == ACTION_RECONCILED_BACKFILLS_SCHEDULER_ROW:
+        return _accepted(
+            scenario,
+            **base,
+            receipt_done=True,
+            startup_controller_receipt_done=True,
+            controller_action_already_reconciled=True,
+            scheduler_row_receipt_done_for_reconciled_action=True,
+            scheduler_row_backfilled_from_action_reconciliation=True,
+            scheduler_row_still_receipt_done_after_action_reconciliation=False,
+            startup_router_row_reconciled=True,
         )
     if scenario == CONTROLLER_OWNS_ROUTER_DEPENDENCIES:
         return _rejected(
@@ -1087,6 +1111,18 @@ def scenario_state(scenario: str) -> State:
             single_card_wait_still_waiting_after_return_resolution=False,
             single_card_scheduler_still_waiting_after_return_resolution=True,
         )
+    if scenario == ACTION_RECONCILED_SCHEDULER_STAYS_RECEIPT_DONE:
+        return _rejected(
+            scenario,
+            **base,
+            receipt_done=True,
+            startup_controller_receipt_done=True,
+            controller_action_already_reconciled=True,
+            scheduler_row_receipt_done_for_reconciled_action=True,
+            scheduler_row_backfilled_from_action_reconciliation=False,
+            scheduler_row_still_receipt_done_after_action_reconciliation=True,
+            startup_router_row_reconciled=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -1191,6 +1227,11 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("Controller ACK wait stayed waiting after single-card ACK return resolved")
     if state.single_card_scheduler_still_waiting_after_return_resolution:
         failures.append("Router scheduler row stayed waiting after single-card ACK return resolved")
+    if state.controller_action_already_reconciled and state.scheduler_row_receipt_done_for_reconciled_action:
+        if not state.scheduler_row_backfilled_from_action_reconciliation:
+            failures.append("already-reconciled Controller action left matching Router scheduler row at receipt_done")
+        if state.scheduler_row_still_receipt_done_after_action_reconciliation:
+            failures.append("Router scheduler row stayed receipt_done after Controller action reconciliation")
     if state.controller_action_table_exists and state.controller_table_has_router_dependency_graph:
         failures.append("Controller table owns Router dependency metadata")
     if state.router_scheduler_table_exists and not state.router_table_has_dependency_metadata:

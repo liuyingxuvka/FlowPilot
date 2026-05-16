@@ -80,6 +80,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION: (
         "Router scheduler row stayed waiting after single-card ACK return resolved"
     ),
+    model.ACTION_RECONCILED_SCHEDULER_STAYS_RECEIPT_DONE: (
+        "already-reconciled Controller action left matching Router scheduler row at receipt_done"
+    ),
 }
 
 
@@ -126,7 +129,11 @@ def _state_id(state: model.State) -> str:
         f"continued_after_true_barrier={state.queue_continued_after_true_barrier},"
         f"dup_parallel_rows={state.duplicate_startup_parallel_obligation_rows},"
         f"scheduler_row_reconciled={state.scheduler_row_status_reconciled},"
-        f"scheduler_row_downgraded={state.scheduler_row_status_downgraded_to_receipt_done}|"
+        f"scheduler_row_downgraded={state.scheduler_row_status_downgraded_to_receipt_done},"
+        f"action_reconciled={state.controller_action_already_reconciled},"
+        f"receipt_done_for_action={state.scheduler_row_receipt_done_for_reconciled_action},"
+        f"backfilled_from_action={state.scheduler_row_backfilled_from_action_reconciliation},"
+        f"still_receipt_done_after_action={state.scheduler_row_still_receipt_done_after_action_reconciliation}|"
         f"queue={state.independent_controller_row_pending},{state.independent_row_enqueued},"
         f"{state.next_independent_row_enqueued},barrier={state.barrier_active},"
         f"after_barrier={state.enqueued_after_barrier}|idempotency={state.idempotency_key_used},"

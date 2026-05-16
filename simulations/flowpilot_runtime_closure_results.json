@@ -1,0 +1,92 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=144",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "display_overrides_route_state": {
+        "detected": true,
+        "expected": "display projection used as route authority",
+        "failures": [
+          "display projection used as route authority"
+        ]
+      },
+      "final_report_before_pm_closure": {
+        "detected": true,
+        "expected": "final user report written before clean terminal closure",
+        "failures": [
+          "final user report written before clean terminal closure"
+        ]
+      },
+      "final_report_used_as_closure_input": {
+        "detected": true,
+        "expected": "final user report was used as closure authority",
+        "failures": [
+          "final user report was used as closure authority"
+        ]
+      },
+      "officer_direct_event_without_request": {
+        "detected": true,
+        "expected": "officer gate advanced without PM request packet",
+        "failures": [
+          "officer gate advanced without PM request packet"
+        ]
+      },
+      "officer_invented_event": {
+        "detected": true,
+        "expected": "officer gate advanced without router-authorized report event",
+        "failures": [
+          "officer gate advanced without router-authorized report event"
+        ]
+      },
+      "old_agent_id_reused_as_current": {
+        "detected": true,
+        "expected": "old agent id became current authority",
+        "failures": [
+          "old agent id became current authority"
+        ]
+      },
+      "prior_state_reused_without_quarantine": {
+        "detected": true,
+        "expected": "imported prior state became authority without quarantine",
+        "failures": [
+          "imported prior state became authority without quarantine",
+          "imported control state was not converted to read-only evidence",
+          "old agent id became current authority",
+          "old asset became current evidence without disposition"
+        ]
+      },
+      "stale_display_refresh": {
+        "detected": true,
+        "expected": "display projection refreshed with stale route frontier version",
+        "failures": [
+          "display projection refreshed with stale route frontier version"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "runtime_closure",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "edge_count": 23,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 24,
+    "terminal_state_count": 4
+  }
+}

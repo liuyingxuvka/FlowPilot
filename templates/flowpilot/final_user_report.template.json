@@ -1,0 +1,14 @@
+{
+  "schema_version": "flowpilot.final_user_report.v1",
+  "run_id": "run-001",
+  "run_lifecycle_status": "closed",
+  "report_authority": "terminal_summary_after_lifecycle_terminal",
+  "report_after_lifecycle_terminal": true,
+  "final_report_is_completion_authority": false,
+  "controller_may_continue_route_work": false,
+  "summary_markdown_path": ".flowpilot/runs/run-001/final_summary.md",
+  "summary_json_path": ".flowpilot/runs/run-001/final_summary.json",
+  "summary_sha256": "replace-with-summary-sha256",
+  "displayed_to_user": true,
+  "written_at": "1970-01-01T00:00:00Z"
+}

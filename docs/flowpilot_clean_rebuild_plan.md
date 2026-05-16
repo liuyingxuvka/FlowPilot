@@ -144,7 +144,13 @@ with `python scripts\install_flowpilot.py --sync-repo-owned --json`; both
 `audit_local_install_sync.py --json` and `install_flowpilot.py --check --json`
 now report `source_fresh: true`.
 
-Known residual expansion areas after this rebuild are generalized async officer
-modeling packets, automatic multi-node traversal beyond the current active-node
-resolver, richer old-state import quarantine for continuation runs, and
-closure-suite lifecycle writing.
+The 2026-05-16 runtime-closure pass added explicit officer request lifecycle
+tracking, current-run continuation quarantine, final user-report metadata, and
+route-display refresh evidence, backed by
+`simulations/flowpilot_runtime_closure_model.py` and focused runtime tests.
+
+Known residual expansion areas after this rebuild are automatic multi-node
+traversal beyond the current active-node resolver, richer closure-suite
+reconciliation for defect ledgers and role memory, production replay adapters
+for abstract models promoted to conformance checks, and native Cockpit
+consumption of the current route snapshot.

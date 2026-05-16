@@ -1,0 +1,12 @@
+{
+  "schema_version": "flowpilot.officer_request_lifecycle_index.v1",
+  "run_id": "run-001",
+  "authority": "pm_role_work_request_index_and_router_authorized_result_events",
+  "controller_visibility": "packet_and_result_envelopes_only",
+  "controller_may_read_packet_body": false,
+  "controller_may_read_result_body": false,
+  "active_request_ids": [],
+  "requests": [],
+  "written_at": "1970-01-01T00:00:00Z",
+  "updated_at": "1970-01-01T00:00:00Z"
+}

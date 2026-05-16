@@ -1,0 +1,16 @@
+{
+  "schema_version": "flowpilot.route_display_refresh.v1",
+  "run_id": "run-001",
+  "display_plan_path": ".flowpilot/runs/run-001/display_plan.json",
+  "route_state_snapshot_path": ".flowpilot/runs/run-001/route_state_snapshot.json",
+  "route_state_snapshot_hash": "replace-with-route-state-snapshot-sha256",
+  "projection_hash": "replace-with-projection-sha256",
+  "route_sign_markdown_path": ".flowpilot/runs/run-001/diagrams/user-flow-diagram.md",
+  "route_sign_mermaid_sha256": "replace-with-route-sign-sha256",
+  "display_kind": "route_map",
+  "refresh_authority": "route_state_snapshot_and_execution_frontier",
+  "display_is_route_authority": false,
+  "display_version_matches_frontier": true,
+  "stale_when_any_source_hash_changes": true,
+  "refreshed_at": "1970-01-01T00:00:00Z"
+}

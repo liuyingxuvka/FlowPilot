@@ -4,6 +4,7 @@ import json
 import hashlib
 import contextlib
 import io
+import os
 import shutil
 import subprocess
 import sys
@@ -790,10 +791,15 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(summary.startswith(router.TERMINAL_SUMMARY_ATTRIBUTION))
         summary_record = read_json(run_root / "final_summary.json")
         self.assertEqual(summary_record["schema_version"], router.TERMINAL_SUMMARY_SCHEMA)
+        self.assertEqual(summary_record["final_user_report"]["schema_version"], router.FINAL_USER_REPORT_SCHEMA)
+        self.assertFalse(summary_record["final_user_report"]["final_report_is_completion_authority"])
+        self.assertTrue(summary_record["final_user_report"]["displayed_to_user"])
         self.assertEqual(summary_record["flowpilot_project_url"], router.FLOWPILOT_PROJECT_URL)
         index = read_json(root / ".flowpilot" / "index.json")
         run_entry = next(item for item in index["runs"] if item["run_id"] == read_json(router.run_state_path(run_root))["run_id"])
         self.assertEqual(run_entry["final_summary_path"], self.rel(root, run_root / "final_summary.md"))
+        self.assertEqual(run_entry["final_user_report_schema_version"], router.FINAL_USER_REPORT_SCHEMA)
+        self.assertFalse(run_entry["final_user_report_is_completion_authority"])
         self.assertEqual(run_entry["flowpilot_project_url"], router.FLOWPILOT_PROJECT_URL)
         return result
 
@@ -3029,6 +3035,77 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(index["requests"][0]["status"], "absorbed")
         self.assertIsNone(index["active_request_id"])
 
+    def test_officer_role_work_writes_authorized_lifecycle_index(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-officer-lifecycle")
+        run_root = self.run_root_for(root)
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_officer_lifecycle",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
+        lifecycle_path = run_root / "pm_work_requests" / "officer_request_lifecycle_index.json"
+        lifecycle = read_json(lifecycle_path)
+        self.assertEqual(lifecycle["schema_version"], router.OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA)
+        self.assertEqual(lifecycle["active_request_ids"], ["model-miss-followup-001"])
+        entry = lifecycle["requests"][0]
+        self.assertEqual(entry["lifecycle_status"], "request_registered")
+        self.assertEqual(entry["request_authority"], "pm_role_work_request")
+        self.assertFalse(entry["controller_may_read_packet_body"])
+        self.assertFalse(entry["controller_may_read_result_body"])
+        self.assertTrue(entry["validation_passed"])
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        self.assertEqual(action["officer_request_lifecycle_index"], self.rel(root, lifecycle_path))
+        router.apply_action(root, "relay_pm_role_work_request_packet")
+        lifecycle = read_json(lifecycle_path)
+        self.assertEqual(lifecycle["requests"][0]["lifecycle_status"], "packet_relayed")
+
+        result_path = self.open_role_work_packet_and_write_result(root)
+        router.record_external_event(
+            root,
+            "role_work_result_returned",
+            {
+                "request_id": "model-miss-followup-001",
+                "packet_id": "pm-role-work-model-miss-followup-001",
+                "result_envelope_path": result_path,
+            },
+        )
+        lifecycle = read_json(lifecycle_path)
+        self.assertEqual(lifecycle["requests"][0]["lifecycle_status"], "result_returned")
+        self.assertTrue(lifecycle["requests"][0]["router_result_event_seen"])
+        self.assertEqual(lifecycle["requests"][0]["result_next_recipient"], "project_manager")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_result_to_pm")
+        router.apply_action(root, "relay_pm_role_work_result_to_pm")
+        lifecycle = read_json(lifecycle_path)
+        self.assertEqual(lifecycle["requests"][0]["lifecycle_status"], "result_relayed_to_pm")
+
+        router.record_external_event(
+            root,
+            "pm_records_role_work_result_decision",
+            {
+                "decided_by_role": "project_manager",
+                "request_id": "model-miss-followup-001",
+                "decision": "absorbed",
+                "decision_reason": "PM reviewed the officer model-miss result.",
+            },
+        )
+        lifecycle = read_json(lifecycle_path)
+        self.assertEqual(lifecycle["requests"][0]["lifecycle_status"], "pm_absorbed")
+        self.assertTrue(lifecycle["requests"][0]["closed_by_pm"])
+        self.assertEqual(lifecycle["active_request_ids"], [])
+
     def test_pm_role_work_existing_result_reconciles_before_wait(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-reconcile")
@@ -4519,6 +4596,73 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(row["reconciliation"]["source"], "test_reconciliation")
         self.assertEqual(row["reconciliation"]["latest_receipt_sync"]["source"], "late_receipt_sync")
 
+    def test_reconciled_controller_action_backfills_receipt_done_scheduler_row(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
+        action_path = run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json"
+        action_record = read_json(action_path)
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        scheduler = read_json(scheduler_path)
+        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == row["router_scheduler_row_id"])
+        scheduler_row["router_state"] = "receipt_done"
+        scheduler_row.pop("reconciled_at", None)
+        router.write_json(scheduler_path, scheduler)
+
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        refreshed_scheduler = read_json(scheduler_path)
+        refreshed_row = next(
+            item for item in refreshed_scheduler["rows"] if item.get("row_id") == row["router_scheduler_row_id"]
+        )
+        self.assertEqual(refreshed_row["router_state"], "reconciled")
+        self.assertEqual(refreshed_row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
+        self.assertEqual(
+            refreshed_row["reconciliation"]["scheduler_backfill_source"],
+            "reconciled_controller_action_scheduler_backfill",
+        )
+
+    def test_startup_bootloader_already_reconciled_backfills_scheduler_row(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        bootstrap = self.bootstrap_state(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
+        action_path = run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json"
+        action_record = read_json(action_path)
+
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        scheduler = read_json(scheduler_path)
+        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == row["router_scheduler_row_id"])
+        scheduler_row["router_state"] = "receipt_done"
+        scheduler_row.pop("reconciled_at", None)
+        router.write_json(scheduler_path, scheduler)
+
+        result = router._complete_startup_daemon_bootloader_row(  # type: ignore[attr-defined]
+            root,
+            bootstrap,
+            action_record["action"],
+            applied_action_type="start_role_slots",
+        )
+
+        self.assertTrue(result["already_reconciled"])
+        self.assertTrue(result["scheduler_backfill"]["changed"])
+        refreshed_scheduler = read_json(scheduler_path)
+        refreshed_row = next(
+            item for item in refreshed_scheduler["rows"] if item.get("row_id") == row["router_scheduler_row_id"]
+        )
+        self.assertEqual(refreshed_row["router_state"], "reconciled")
+        self.assertEqual(
+            refreshed_row["reconciliation"]["scheduler_backfill_source"],
+            "startup_bootloader_already_reconciled_scheduler_backfill",
+        )
+
     def test_startup_bootloader_receipt_updates_bootstrap_and_scheduler_row(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
@@ -4738,6 +4882,50 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(result["runtime_write_settlement"]["waited"])
         self.assertEqual(result["runtime_write_settlement"]["command"], "next")
         self.assertGreaterEqual(result["runtime_write_settlement"]["wait_count"], 1)
+        self.assertEqual(read_json(action_path)["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
+
+    def test_foreground_next_waits_on_stale_lock_when_owner_process_is_live(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action_path = sorted((run_root / "runtime" / "controller_actions").glob("*.json"))[0]
+        original_entry = read_json(action_path)
+        action_path.write_text(
+            '{"schema_version": "flowpilot.controller_action.v1"}\nBROKEN',
+            encoding="utf-8",
+        )
+        write_lock = router._json_write_lock_path(action_path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(action_path),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        old = time.time() - router.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
+        os.utime(write_lock, (old, old))
+
+        def finish_write() -> None:
+            time.sleep(0.05)
+            action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+            write_lock.unlink()
+
+        thread = threading.Thread(target=finish_write, daemon=True)
+        thread.start()
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = router.main(["--root", str(root), "next", "--json"])
+        thread.join(timeout=1.0)
+
+        self.assertEqual(exit_code, 0, stdout.getvalue())
+        result = json.loads(stdout.getvalue())
+        self.assertTrue(result["runtime_write_settlement"]["waited"])
+        self.assertTrue(result["runtime_write_settlement"]["waits"][0]["initial_liveness"]["owner_process_live"])
         self.assertEqual(read_json(action_path)["schema_version"], router.CONTROLLER_ACTION_SCHEMA)
 
     def test_router_daemon_status_not_active_after_error_lock_or_missing_pid(self) -> None:
@@ -6101,6 +6289,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(waiting_snapshot["schema_version"], "flowpilot.route_state_snapshot.v1")
         self.assertTrue(waiting_snapshot["authority"]["current_pointer_matches_run"])
         self.assertEqual(waiting_snapshot["active_ui_task_catalog"]["active_tasks"][0]["run_id"], waiting_snapshot["run_id"])
+        self.assertEqual(waiting_snapshot["continuation_quarantine"]["schema_version"], router.CONTINUATION_QUARANTINE_SCHEMA)
+        self.assertFalse(waiting_snapshot["continuation_quarantine"]["prior_run_files_are_evidence_by_default"])
+        waiting_refresh = read_json(run_root / "display" / "route_display_refresh.json")
+        self.assertEqual(waiting_refresh["schema_version"], router.ROUTE_DISPLAY_REFRESH_SCHEMA)
+        self.assertFalse(waiting_refresh["display_is_route_authority"])
+        self.assertEqual(visible_sync["route_display_refresh_path"], self.rel(root, run_root / "display" / "route_display_refresh.json"))
 
         self.complete_pre_route_gates(root)
         route_plan = read_json(run_root / "display_plan.json")
@@ -6177,10 +6371,16 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(visible_sync["display_text_format"], "markdown_mermaid")
         self.assertTrue(visible_sync["route_sign_display_required"])
         self.assertEqual(visible_sync["route_sign_node_count"], 1)
+        self.assertFalse(visible_sync["display_is_route_authority"])
+        active_refresh = read_json(run_root / "display" / "route_display_refresh.json")
+        self.assertEqual(active_refresh["schema_version"], router.ROUTE_DISPLAY_REFRESH_SCHEMA)
+        self.assertTrue(active_refresh["display_version_matches_frontier"])
+        self.assertFalse(active_refresh["display_is_route_authority"])
         self.assertTrue(read_json(router.run_state_path(run_root))["flags"]["visible_plan_synced"])
         active_snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(active_snapshot["route"]["nodes"][0]["id"], "node-001")
         self.assertTrue(active_snapshot["route"]["nodes"][0]["is_active"])
+        self.assertFalse(active_snapshot["continuation_quarantine"]["old_agent_ids_are_current_authority"])
         self.assertEqual(active_snapshot["authority"]["stale_running_index_entries"], [])
         self.assertEqual(
             active_snapshot["authority"]["background_running_index_entries"],

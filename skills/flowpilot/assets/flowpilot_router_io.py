@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import shutil
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,6 +18,43 @@ from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, Ro
 RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
 RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS = 30.0
 RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
+
+
+def _process_is_live(pid: object) -> bool:
+    try:
+        value = int(pid)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return False
+    if value <= 0:
+        return False
+    if value == os.getpid():
+        return True
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            query_limited_information = 0x1000
+            still_active = 259
+            handle = ctypes.windll.kernel32.OpenProcess(query_limited_information, False, value)
+            if not handle:
+                return False
+            try:
+                exit_code = ctypes.c_ulong()
+                ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
+                return bool(ok) and exit_code.value == still_active
+            finally:
+                ctypes.windll.kernel32.CloseHandle(handle)
+        except Exception:
+            return False
+    try:
+        os.kill(value, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
 
 
 def utc_now() -> str:
@@ -93,29 +131,56 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
         return {
             "exists": False,
             "fresh": False,
+            "active": False,
             "stale": False,
             "path": str(lock_path),
             "age_seconds": None,
+            "owner_pid": None,
+            "owner_process_live": False,
         }
     try:
         age = time.time() - lock_path.stat().st_mtime
     except OSError:
         age = None
+    payload: dict[str, Any] = {}
+    try:
+        parsed = json.loads(lock_path.read_text(encoding="utf-8-sig"))
+        if isinstance(parsed, dict):
+            payload = parsed
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        payload = {}
+    owner_pid = payload.get("pid")
+    owner_process_live = _process_is_live(owner_pid)
     fresh = age is not None and age <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
+    active = bool(fresh or owner_process_live)
     return {
         "exists": True,
         "fresh": bool(fresh),
-        "stale": bool(age is not None and not fresh),
+        "active": active,
+        "stale": bool(age is not None and not active),
         "path": str(lock_path),
         "age_seconds": age,
         "stale_after_seconds": RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
+        "owner_pid": owner_pid,
+        "owner_process_live": owner_process_live,
     }
 
 
 def _raise_if_runtime_write_active(path: Path) -> None:
     write_lock = _json_write_lock_liveness(path)
-    if write_lock["fresh"]:
-        raise RouterLedgerWriteInProgress(path, write_lock, "fresh runtime JSON write lock")
+    if write_lock["active"]:
+        raise RouterLedgerWriteInProgress(path, write_lock, "active runtime JSON write lock")
+
+
+def _runtime_write_progress_signature(path: Path, lock_path: Path) -> tuple[object, ...]:
+    def _stat_signature(target: Path) -> tuple[bool, int | None, int | None]:
+        try:
+            stat = target.stat()
+        except OSError:
+            return (False, None, None)
+        return (True, int(stat.st_mtime_ns), int(stat.st_size))
+
+    return (*_stat_signature(path), *_stat_signature(lock_path))
 
 
 def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) -> dict[str, Any]:
@@ -124,15 +189,28 @@ def _wait_for_runtime_json_writer_to_settle(exc: RouterLedgerWriteInProgress) ->
     started = time.monotonic()
     poll_count = 0
     last_liveness = dict(exc.write_lock)
+    last_signature = _runtime_write_progress_signature(path, lock_path)
+    last_progress_at = started
+    progress_count = 0
     while True:
         liveness = _json_write_lock_liveness(path)
         last_liveness = liveness
-        if not liveness.get("fresh"):
+        signature = _runtime_write_progress_signature(path, lock_path)
+        if signature != last_signature:
+            last_signature = signature
+            last_progress_at = time.monotonic()
+            progress_count += 1
+        progress_recent = progress_count > 0 and (
+            time.monotonic() - last_progress_at <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
+        )
+        if not liveness.get("active") and not progress_recent:
             return {
                 "path": str(path),
                 "lock_path": str(lock_path),
                 "waited_seconds": max(0.0, time.monotonic() - started),
                 "poll_count": poll_count,
+                "progress_count": progress_count,
+                "initial_liveness": dict(exc.write_lock),
                 "final_liveness": last_liveness,
             }
         poll_count += 1
@@ -176,7 +254,7 @@ def _read_json_for_runtime_scan(path: Path) -> dict[str, Any] | None:
         return None
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
         write_lock = _json_write_lock_liveness(path)
-        if write_lock["fresh"]:
+        if write_lock["active"]:
             raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
         raise
 
@@ -189,11 +267,8 @@ def _acquire_json_write_lock(path: Path) -> Path:
         try:
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
-            try:
-                age = time.time() - lock_path.stat().st_mtime
-            except OSError:
-                age = 0.0
-            if age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS:
+            liveness = _json_write_lock_liveness(path)
+            if liveness["stale"]:
                 try:
                     lock_path.unlink()
                 except OSError:
@@ -276,7 +351,7 @@ def read_daemon_critical_json_if_exists(path: Path) -> dict[str, Any]:
         return read_json(path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:
         write_lock = _json_write_lock_liveness(path)
-        if write_lock["fresh"]:
+        if write_lock["active"]:
             raise RouterLedgerWriteInProgress(path, write_lock, str(exc)) from exc
         raise RouterLedgerCorruptionError(path, str(exc)) from exc
 

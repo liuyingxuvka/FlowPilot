@@ -3,6 +3,59 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-16 FlowPilot Runtime Closure Maintenance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: v0.9.3 passed release and install checks, but clean-rebuild
+  residuals still left officer model packets, old-state quarantine, final user
+  report output, and route display refresh partially enforced by generic paths
+  or future-work notes.
+- Status: in_progress_model_first_change
+- OpenSpec change: `complete-flowpilot-runtime-closure`
+- Skill decision: use_flowguard
+- Flow type: behavior_flow
+- Mode: model_first_change
+
+### Risk Intent
+
+- Prevent Process/Product FlowGuard officer reports from completing gates
+  through invented direct events or report wording that the current Router wait
+  state did not authorize.
+- Prevent prior-run control files, route/frontier state, old role `agent_id`
+  values, screenshots, icons, route signs, or generated assets from becoming
+  current-run authority without explicit quarantine disposition.
+- Prevent final user-facing reports from creating or substituting for PM
+  closure approval, final ledger cleanliness, or terminal human backward
+  replay.
+- Prevent stale display projections from overriding route/frontier source of
+  truth.
+
+### Pre-Implementation Model Hardening Gate
+
+| Planned change | Bug class to catch | Model/check boundary |
+| --- | --- | --- |
+| Officer packet lifecycle | direct officer event bypasses PM packet request or Router allowed events | new focused runtime-closure FlowGuard model plus role-output/runtime tests |
+| Continuation quarantine | old route/control state or prior agent ids become current authority | new focused runtime-closure FlowGuard model plus template/install checks |
+| Closure user report | user report file makes an incomplete run look closed | new focused runtime-closure FlowGuard model plus terminal/runtime tests |
+| Route display refresh | stale route sign or UI snapshot hides current frontier | new focused runtime-closure FlowGuard model plus display helper tests |
+
+### Commands So Far
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
+  `1.0`.
+- OK: `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
+  reported installed FlowGuard schema `1.0`.
+- OK: predictive KB preflight returned relevant officer-event, dynamic Router
+  event, and closure-evidence candidate lessons.
+
+### Findings So Far
+
+- This pass is a behavior-bearing maintenance change, not a release or
+  publication action.
+- The focused model must make known-bad officer direct events, old-state
+  authority reuse, premature user-report completion, and stale display
+  authority fail before production runtime edits are trusted.
+
 ## reconcile-daemon-durable-evidence-20260514 - Reconcile durable Router evidence before pending replay
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -13026,6 +13079,74 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - The daemon reconciliation model was corrected so PM startup card-bundle ACK
   resolves its wait row without releasing or queueing `user_intake`; activation
   and Controller mail own that later delivery.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.
+
+## 2026-05-16 Router Runtime Settlement Backfill
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A startup role-slot Controller action was already `done` and
+  Router-reconciled, but the matching Router scheduler row stayed at
+  `receipt_done`, leaving an apparent open startup row after ACK/read receipts
+  had arrived.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `complete-flowpilot-runtime-closure`
+
+### Model And Runtime Evidence
+
+- Two-table scheduler model/result:
+  `simulations/flowpilot_two_table_async_scheduler_model.py`,
+  `simulations/run_flowpilot_two_table_async_scheduler_checks.py`,
+  `simulations/flowpilot_two_table_async_scheduler_results.json`
+- Daemon reconciliation background artifacts:
+  `tmp/flowguard_background/run_flowpilot_daemon_reconciliation_checks.*`
+- Runtime changes:
+  `skills/flowpilot/assets/flowpilot_router.py`,
+  `skills/flowpilot/assets/flowpilot_router_io.py`,
+  `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed:
+  schema version `1.0`.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py
+  --json-out simulations\flowpilot_two_table_async_scheduler_results.json`
+  passed: 119 states / 118 edges, 177 FlowGuard traces, zero violations.
+- Background `python simulations\run_flowpilot_daemon_reconciliation_checks.py`
+  passed with exit code 0; artifacts were written under
+  `tmp/flowguard_background/`.
+- `python -m unittest` focused Router boundary/runtime tests passed: 18 tests.
+- `python simulations\run_flowpilot_process_liveness_checks.py --json
+  --no-write-results` passed with the current run still classified as a
+  controlled `stopped_by_user` history, not a normal completion.
+- `python skills\flowpilot\assets\flowpilot_router.py --root . reconcile-run
+  --json` repaired the current run's startup role-slot scheduler row through
+  the existing reconcile entry.
+- `openspec validate complete-flowpilot-runtime-closure --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\check_install.py --json` passed; installed FlowPilot is
+  source-fresh.
+
+### Findings
+
+- The durable fix is the existing Router-owned reconciliation pass: when a
+  Controller action is already reconciled, Router now backfills the matching
+  scheduler row to `reconciled` instead of leaving it at `receipt_done`.
+- The startup bootloader already-reconciled early return now performs the same
+  scheduler backfill, keeping the path idempotent.
+- Runtime JSON write-lock liveness now treats a stale-aged lock with a live
+  owner process as active, so foreground reads continue waiting/retrying rather
+  than surfacing a false blocker while another writer is still alive.
+- The current run row
+  `router-row-3afb949d275610bfa9dc` was reconciled from the existing action
+  evidence; no second ordinary pusher or daemon was started.
 
 ### Skipped Or Deferred Steps
 

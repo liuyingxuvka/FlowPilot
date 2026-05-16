@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-16T20:16:56.121355+00:00",
+  "created_at": "2026-05-16T20:50:08.411379+00:00",
   "graph": {
     "edge_count": 16,
     "invariant_failure_count": 0,
@@ -296,7 +296,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
-            "result_fingerprint": "ef806f58236d9411116e8a8f467cd6f5c0b4666774e62df8468f1bd18ef52e22",
+            "result_fingerprint": "dc1316a017b0633311574d3e0496dfb3aacde8bd3660ab4ef8c3c8ba9d219b3d",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 1141
