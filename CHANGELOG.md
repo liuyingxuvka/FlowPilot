@@ -2,6 +2,21 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.4 - 2026-05-16
+
+### Added
+
+- Added runtime-closure guards for officer request lifecycle tracking,
+  continuation quarantine, final user-report metadata, and route-display
+  refresh evidence.
+- Added focused FlowGuard coverage and runtime tests for those closure
+  boundaries.
+
+### Changed
+
+- Updated install checks, templates, OpenSpec artifacts, and maintenance docs
+  so the local installed skill can be synchronized from the hardened source.
+
 ## 0.9.3 - 2026-05-16
 
 ### Changed

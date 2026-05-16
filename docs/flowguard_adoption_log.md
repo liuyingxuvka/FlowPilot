@@ -10,7 +10,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   residuals still left officer model packets, old-state quarantine, final user
   report output, and route display refresh partially enforced by generic paths
   or future-work notes.
-- Status: in_progress_model_first_change
+- Status: completed_runtime_closure_maintenance_synced
 - OpenSpec change: `complete-flowpilot-runtime-closure`
 - Skill decision: use_flowguard
 - Flow type: behavior_flow
@@ -39,7 +39,14 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 | Closure user report | user report file makes an incomplete run look closed | new focused runtime-closure FlowGuard model plus terminal/runtime tests |
 | Route display refresh | stale route sign or UI snapshot hides current frontier | new focused runtime-closure FlowGuard model plus display helper tests |
 
-### Commands So Far
+### Model Files
+
+- `simulations/flowpilot_runtime_closure_model.py`
+- `simulations/run_flowpilot_runtime_closure_checks.py`
+- `simulations/flowpilot_runtime_closure_results.json`
+- `openspec/changes/complete-flowpilot-runtime-closure/`
+
+### Commands
 
 - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
   `1.0`.
@@ -47,14 +54,45 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   reported installed FlowGuard schema `1.0`.
 - OK: predictive KB preflight returned relevant officer-event, dynamic Router
   event, and closure-evidence candidate lessons.
+- OK: `openspec validate complete-flowpilot-runtime-closure --strict --json`.
+- OK: `python simulations\run_flowpilot_runtime_closure_checks.py --json-out simulations\flowpilot_runtime_closure_results.json`.
+- OK: focused runtime closure unit tests, terminal suite, dispatch gate suite,
+  Controller suite, and startup daemon suite.
+- OK: `python scripts\smoke_autopilot.py --fast`.
+- OK: `python scripts\check_install.py`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\install_flowpilot.py --check --json`; installed `flowpilot`
+  source is fresh against the repository copy.
+- OK: background `python simulations\run_meta_checks.py` completed with exit
+  `0`; artifacts live under `tmp\flowguard_background\run_meta_checks.*`,
+  proof reuse `false`.
+- OK: background `python simulations\run_capability_checks.py` completed with
+  exit `0`; artifacts live under
+  `tmp\flowguard_background\run_capability_checks.*`, proof reuse `false`.
 
-### Findings So Far
+### Findings
 
 - This pass is a behavior-bearing maintenance change, not a release or
   publication action.
-- The focused model must make known-bad officer direct events, old-state
-  authority reuse, premature user-report completion, and stale display
-  authority fail before production runtime edits are trusted.
+- Officer request/result handling now has a durable lifecycle index instead of
+  relying on report wording alone.
+- Continuation imports now write current-run quarantine metadata before old
+  state can be considered evidence.
+- Final user-facing reports are explicitly metadata/output, not closure
+  authority.
+- Route display refresh records are UI projections only and do not override the
+  Router route/frontier authority.
+- Remaining larger product work stays outside this maintenance pass: native
+  cockpit polish, deeper multi-node traversal, and future specialized
+  validators.
+
+### Counterexamples Checked
+
+- Direct officer events without a PM/Router-authorized request.
+- Old continuation state reused as current authority.
+- Final user report treated as terminal closure proof.
+- Stale route display treated as the route source of truth.
 
 ## reconcile-daemon-durable-evidence-20260514 - Reconcile durable Router evidence before pending replay
 

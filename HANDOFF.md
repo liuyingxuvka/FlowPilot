@@ -442,6 +442,11 @@ FlowGuard caught and fixed these design issues:
   requested.
 - Current project progress is tracked in `.flowpilot/current.json` plus the
   active `.flowpilot/runs/<run-id>/` directory.
+- Runtime closure hardening now writes explicit officer request lifecycle,
+  continuation quarantine, final user report, and route-display refresh
+  artifacts. The focused model and checker are
+  `simulations/flowpilot_runtime_closure_model.py` and
+  `simulations/run_flowpilot_runtime_closure_checks.py`.
 
 ## Remaining Work
 
@@ -449,8 +454,10 @@ Before public release:
 
 1. Extend the router beyond single-node scaffolding into full multi-node route
    resolver validation.
-2. Integrate officer/research packet loops, stale-evidence/resource-ledger
-   writers, and terminal closure-suite artifacts with the new router runtime.
+2. Continue terminal expansion with defect-ledger, role-memory, and broader
+   closure-suite reconciliation. Officer request/report lifecycle, continuation
+   quarantine, final user report, and route-display refresh are now runtime
+   artifacts.
 3. Build a production replay adapter for the abstract resume and router-loop
    FlowGuard models if they are promoted from design models to conformance
    checks.
@@ -475,6 +482,7 @@ python simulations/run_flowpilot_control_transaction_registry_checks.py --json-o
 python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json
 python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
+python simulations/run_flowpilot_runtime_closure_checks.py --json-out simulations/flowpilot_runtime_closure_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

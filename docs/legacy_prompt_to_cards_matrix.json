@@ -46,7 +46,8 @@
         "skills/flowpilot/assets/packet_runtime.py",
         "skills/flowpilot/assets/flowpilot_router.py",
         "simulations/flowpilot_router_loop_model.py",
-        "simulations/flowpilot_resume_model.py"
+        "simulations/flowpilot_resume_model.py",
+        "simulations/flowpilot_runtime_closure_model.py"
       ],
       "current_cards": [
         "controller.core",
@@ -60,7 +61,7 @@
       "legacy_line": 24,
       "legacy_section": "Experimental Packet-Gated Control Plane",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Extend the same packet validation path to research packets and FlowGuard officer packets.",
+      "next_action": "Keep packet checks aligned as specialized report families grow.",
       "priority": "P1",
       "reason": "This is the central anti-contamination mechanism of the new design and already has executable coverage for user intake and current-node packets."
     },
@@ -139,9 +140,9 @@
       "legacy_line": 382,
       "legacy_section": "Startup Hard Gate",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Add old-state import/quarantine import checks and richer display-surface refresh; do not copy the whole old gate.",
+      "next_action": "Expand imported-artifact disposition when old files are intentionally imported; do not copy the whole old gate.",
       "priority": "P1",
-      "reason": "Some old checks can be downgraded because the small launcher prevents prompt overread. Real external authority checks are now split across startup fact-check, PM activation, continuation binding, and crew freshness cards; import quarantine remains the main gap."
+      "reason": "Some old checks can be downgraded because the small launcher prevents prompt overread. Real external authority checks are now split across startup fact-check, PM activation, continuation binding/quarantine, and crew freshness cards."
     },
     {
       "current_artifacts": [],
@@ -299,7 +300,7 @@
       "legacy_line": 958,
       "legacy_section": "Node Acceptance Plans",
       "new_architecture_decision": "preserve_as_system_card",
-      "next_action": "Add visible route-sign refresh; PM high-standard recheck validation is now router-required.",
+      "next_action": "Expand recursive route-tree and repair sibling traversal; PM high-standard recheck validation and route-display refresh are now router-backed.",
       "priority": "P1",
       "reason": "The router now requires a reviewer-passed node acceptance plan, structured PM high-standard recheck, current-node packet registration, and parent backward replay before parent-node completion."
     },
@@ -482,7 +483,9 @@
     {
       "current_artifacts": [
         "templates/flowpilot/diagrams/user-flow-diagram.template.mmd",
-        "simulations/user_flow_diagram_model.py"
+        "simulations/user_flow_diagram_model.py",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py route_display_refresh_record",
+        "templates/flowpilot/route_display_refresh.template.json"
       ],
       "current_cards": [
         "controller.core"
@@ -493,9 +496,9 @@
       "legacy_line": 1497,
       "legacy_section": "User Flow Diagram / Temporary Chat Cockpit",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Add display-surface router state, chat route-sign refresh events, and Cockpit-only evidence deferral.",
+      "next_action": "Add native Cockpit consumption of the route snapshot; chat route-sign refresh is now recorded.",
       "priority": "P2",
-      "reason": "Cockpit-specific evidence can wait until the UI surface resumes, but the chat route sign is the active fallback display contract and must remain a startup/runtime gate."
+      "reason": "Cockpit-specific evidence can wait until the UI surface resumes, but the chat route sign is the active fallback display contract and now has runtime refresh metadata."
     },
     {
       "current_artifacts": [
@@ -513,14 +516,16 @@
       "legacy_line": 1568,
       "legacy_section": "FlowGuard Role",
       "new_architecture_decision": "preserve_as_system_card",
-      "next_action": "Add officer request/report cards when implementing officer async gates.",
+      "next_action": "Keep real-FlowGuard officer packets request-bound; add field-level validators as specialized model-report families grow.",
       "priority": "P2",
-      "reason": "Core role cards already preserve the real-FlowGuard rule; request/report cards are still missing."
+      "reason": "Core role cards preserve the real-FlowGuard rule and the runtime now records PM-authorized officer request lifecycle."
     },
     {
       "current_artifacts": [
         "simulations/meta_model.py",
-        "simulations/capability_model.py"
+        "simulations/capability_model.py",
+        "simulations/flowpilot_runtime_closure_model.py",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py"
       ],
       "current_cards": [
         "process_officer.core",
@@ -532,14 +537,16 @@
       "legacy_line": 1583,
       "legacy_section": "Dual-Layer Product And Process Models",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Implement PM -> officer modeling request/result packet loop.",
+      "next_action": "Add specialized field-level validators as new model-report families appear.",
       "priority": "P2",
-      "reason": "The models exist for FlowPilot itself, but the runtime router does not yet create per-task modeling requests."
+      "reason": "The models exist for FlowPilot itself and the runtime router now records PM-authorized officer request lifecycle; report-specific validators remain future expansion."
     },
     {
       "current_artifacts": [
         "templates/flowpilot/flowguard_modeling_request.template.json",
         "templates/flowpilot/flowguard_modeling_report.template.json",
+        "templates/flowpilot/officer_request_lifecycle.template.json",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py",
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md"
       ],
       "current_cards": [
@@ -553,9 +560,9 @@
       "legacy_line": 1642,
       "legacy_section": "PM-Initiated FlowGuard Modeling",
       "new_architecture_decision": "preserve_as_system_card",
-      "next_action": "Expand the PM officer request/report card into generalized officer packet events.",
+      "next_action": "Keep PM officer work packet-bound and add report-specific validators when needed.",
       "priority": "P2",
-      "reason": "This remains useful and should be delivered as bounded officer packets, not broad context. The PM lifecycle card now exists; generalized packet events remain next."
+      "reason": "This remains useful and should be delivered as bounded officer packets, not broad context. The PM lifecycle card and officer request lifecycle index now exist; specialized report fields remain next."
     },
     {
       "current_artifacts": [
@@ -644,6 +651,8 @@
       "current_artifacts": [
         "skills/flowpilot/assets/flowpilot_router.py create_run_shell",
         "skills/flowpilot/assets/flowpilot_router.py load_resume_state",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py continuation_quarantine_record",
+        "templates/flowpilot/continuation_quarantine.template.json",
         "skills/flowpilot/assets/flowpilot_router.py _build_source_of_truth_final_entries"
       ],
       "current_cards": [
@@ -656,9 +665,9 @@
       "legacy_line": 2048,
       "legacy_section": "`.flowpilot/` Source Of Truth",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Add runtime import quarantine checks for old control files and old assets.",
+      "next_action": "Expand old-file import disposition beyond the current quarantine baseline.",
       "priority": "P1",
-      "reason": "Startup creates run-local state, resume loads run-local state, and final ledgers are rebuilt from source-of-truth artifacts. Continuing old work still needs import/quarantine validation."
+      "reason": "Startup creates run-local state, resume loads run-local state, continuation quarantine blocks old authority by default, and final ledgers are rebuilt from source-of-truth artifacts."
     },
     {
       "current_artifacts": [
@@ -833,8 +842,10 @@
     {
       "current_artifacts": [
         "templates/flowpilot/terminal_closure_suite.template.json",
+        "templates/flowpilot/final_user_report.template.json",
         "scripts/flowpilot_lifecycle.py",
-        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite"
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py final_user_report_record"
       ],
       "current_cards": [
         "pm.closure"
@@ -845,9 +856,9 @@
       "legacy_line": 2603,
       "legacy_section": "Terminal Closure Suite",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Add explicit defect-ledger and role-memory reconciliation plus final user-report artifact.",
+      "next_action": "Add explicit defect-ledger and role-memory reconciliation.",
       "priority": "P1",
-      "reason": "Closure is not only old-prompt protection; it prevents dangling automation/state/role memory. The router now writes the closure suite, disables continuation binding, and blocks dirty evidence/resource/final ledgers; defect and role-memory reconciliation remain expansions."
+      "reason": "Closure is not only old-prompt protection; it prevents dangling automation/state/role memory. The router now writes the closure suite, disables continuation binding, blocks dirty evidence/resource/final ledgers, and records final user-report metadata; defect and role-memory reconciliation remain expansions."
     },
     {
       "current_artifacts": [
@@ -910,7 +921,9 @@
         "simulations/flowpilot_router_loop_model.py",
         "skills/flowpilot/assets/flowpilot_router.py _write_final_route_wide_ledger",
         "skills/flowpilot/assets/flowpilot_router.py _write_terminal_backward_replay",
-        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite"
+        "skills/flowpilot/assets/flowpilot_router.py _write_terminal_closure_suite",
+        "skills/flowpilot/assets/flowpilot_runtime_closure.py final_user_report_record",
+        "templates/flowpilot/final_user_report.template.json"
       ],
       "current_cards": [
         "pm.final_ledger",
@@ -923,9 +936,9 @@
       "legacy_line": 2720,
       "legacy_section": "Completion",
       "new_architecture_decision": "preserve_as_hard_gate",
-      "next_action": "Add final user-report artifact after terminal closure.",
+      "next_action": "Keep closure authority separate from user-facing report output.",
       "priority": "P1",
-      "reason": "The final completion standard remains valid. The router now enforces PM evidence quality, PM final ledger, segmented reviewer terminal replay, PM closure, and closure-suite lifecycle cleanup; final user-report writing remains expansion work."
+      "reason": "The final completion standard remains valid. The router now enforces PM evidence quality, PM final ledger, segmented reviewer terminal replay, PM closure, closure-suite lifecycle cleanup, and final user-report metadata while keeping the report output-only."
     },
     {
       "current_artifacts": [
@@ -946,10 +959,10 @@
     }
   ],
   "recommended_next_batch": [
-    "officer.generalized_packet_runtime_family",
-    "pm.import_quarantine_decision",
-    "pm.final_user_report",
-    "controller.route_sign_refresh",
+    "route.full_recursive_tree_traversal",
+    "closure.imported_artifact_disposition",
+    "cockpit.route_snapshot_consumption",
+    "officer.specialized_report_field_validators",
     "closure.defect_and_role_memory_reconciliation"
   ],
   "schema_version": "flowpilot.legacy_prompt_to_cards_matrix.v1",
