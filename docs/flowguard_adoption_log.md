@@ -12356,3 +12356,75 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Next Actions
 - Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
 - In a later cleanup, consider renaming the legacy PM-resume flag to separate "recovery continuation satisfied" from "PM explicitly decided."
+
+## 2026-05-16 Generic Wait Target Reminder Rows
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a FlowPilot passive wait could say a role reminder was due without materializing an executable Controller action, leaving Controller to search for reminder text instead of sending Router-authored text.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/separate-wait-status-from-controller-actions/`
+- Persistent Router daemon model: `simulations/flowpilot_persistent_router_daemon_model.py`
+- Persistent Router daemon runner: `simulations/run_flowpilot_persistent_router_daemon_checks.py`
+- Two-table async scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Result evidence: `simulations/flowpilot_persistent_router_daemon_results.json`, `simulations/flowpilot_two_table_async_scheduler_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py` passed.
+- Focused runtime tests for report-result reminders, ACK reminders, passive waits, standby behavior, and Controller-local waits passed.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py --json-out simulations\flowpilot_persistent_router_daemon_results.json` passed with zero safe-graph invariant failures and the new reminder-without-action hazard detected.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed with zero safe-graph invariant failures.
+- `openspec validate separate-wait-status-from-controller-actions --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Passive waits remain Router-owned status, not ordinary Controller work.
+- Due reminders are now separate generic Controller work rows: `send_wait_target_reminder` targets the current waiting role, not a reviewer-specific path.
+- Controller sends only Router-authored `reminder_text`, avoids sealed bodies, and receipts the reminder hash plus liveness fields.
+- Report-result reminders require a fresh liveness probe before the wait metadata can be updated.
+- ACK reminders update reminder metadata and matching pending-return status without satisfying the original ACK or result wait.
+
+### Skipped Steps
+- Full `python -m unittest tests.test_flowpilot_router_runtime` was attempted and timed out after five minutes, so it is not treated as pass evidence.
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+- If the full runtime suite remains slow, split it into focused named groups so timeout does not hide the result of unrelated runtime checks.
+
+## 2026-05-16 Work ACK Continuation And No-Output Reissue
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a background role could ACK a work item and then stop, or finish without submitting the Router-visible output; the user asked to harden all work packets and retry same-work no-output waits before role recovery.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/harden-work-packet-ack-and-no-output-retry/`
+- Prompt-boundary model: `simulations/flowpilot_prompt_boundary_model.py`
+- Two-table async scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Result evidence: `simulations/flowpilot_prompt_boundary_results.json`, `simulations/flowpilot_two_table_async_scheduler_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py simulations\flowpilot_prompt_boundary_model.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_prompt_boundary_checks.py simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+- `python -m unittest` focused Router runtime tests for no-output reissue, legacy liveness-fault redirect, two-retry PM escalation, unavailable-role recovery, wait closure, and event registry behavior passed.
+- `openspec validate harden-work-packet-ack-and-no-output-retry --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Work-card and packet prompts now say ACK is receipt only; work remains unfinished until Router receives the expected output or blocker.
+- Router wait status now separates no-output from unavailable-role liveness faults.
+- `controller_reports_role_no_output` creates a durable replacement wait and supersedes the old wait before continuation.
+- Legacy `controller_reports_role_liveness_fault` payloads with `completed` or `completed_without_expected_event` are redirected to no-output reissue instead of role recovery.
+- The no-output path retries twice, then escalates through the PM/control-blocker path.
+- Missing/cancelled/unknown/unresponsive/blocked/lost roles still use unified role recovery.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.

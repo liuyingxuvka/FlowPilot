@@ -7663,6 +7663,23 @@ def _apply_stateful_receipt_postcondition(
     )
     if durable_reclaim.get("applied") or durable_reclaim.get("action_class", {}).get("kind") == "router_owned_durable_artifact":
         return durable_reclaim
+    if action_type == "load_role_recovery_state":
+        _load_role_recovery_state(project_root, run_root, run_state)
+        return {"applied": True, "postcondition": "role_recovery_state_loaded"}
+    if action_type == "recover_role_agents":
+        if "recovered_role_agents" in receipt_payload or "role_agents" in receipt_payload:
+            _write_role_recovery_report(project_root, run_root, run_state, receipt_payload)
+            return {
+                "applied": True,
+                "postcondition": "role_recovery_roles_restored",
+                "source": "controller_receipt_role_recovery_report_write",
+            }
+        return _reclaim_role_recovery_postcondition_from_report(
+            project_root,
+            run_root,
+            run_state,
+            source="controller_receipt_role_recovery_report_reclaim",
+        )
     if action_type == "rehydrate_role_agents":
         _write_resume_role_rehydration_report(project_root, run_root, run_state, receipt_payload)
         return {"applied": True, "postcondition": "resume_roles_restored"}
@@ -8541,6 +8558,47 @@ def _reconcile_scheduled_controller_action_receipts(
                 changed = True
             continue
         if entry.get("router_reconciliation_status") == "blocked":
+            postcondition = _pending_action_postcondition(action)
+            action_type = str(action.get("action_type") or entry.get("action_type") or "")
+            if action_type == "recover_role_agents" or postcondition == "role_recovery_roles_restored":
+                applied = _reclaim_role_recovery_postcondition_from_report(
+                    project_root,
+                    run_root,
+                    run_state,
+                    source="blocked_controller_action_role_recovery_report_reclaim",
+                )
+                if applied.get("applied") and (
+                    not postcondition or _pending_action_postcondition_satisfied(run_state, postcondition)
+                ):
+                    now = utc_now()
+                    entry["status"] = "done"
+                    entry["completed_at"] = entry.get("completed_at") or now
+                    entry["router_reconciliation_status"] = "reconciled"
+                    entry["router_reconciled_at"] = now
+                    entry["router_reconciliation"] = applied
+                    entry["router_reconciliation_recovered_from_blocked_state"] = True
+                    write_json(action_path, entry)
+                    row_id = str(entry.get("router_scheduler_row_id") or "")
+                    if row_id:
+                        _update_router_scheduler_row(
+                            project_root,
+                            run_root,
+                            run_state,
+                            row_id=row_id,
+                            router_state="reconciled",
+                            reconciliation=applied,
+                        )
+                    _resolve_control_blockers_for_reconciled_controller_action(
+                        project_root,
+                        run_root,
+                        run_state,
+                        action=action,
+                        entry=entry,
+                        reconciliation=applied,
+                    )
+                    changed = True
+                    reconciled += 1
+                    continue
             continue
         if not action:
             continue
@@ -17142,6 +17200,122 @@ def _role_recovery_target_roles(raw_roles: object, *, default_all: bool = False)
 
 def _latest_role_recovery_transaction(run_root: Path) -> dict[str, Any]:
     return read_json_if_exists(_role_recovery_latest_transaction_path(run_root))
+
+
+def _role_recovery_ready_context(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any] | None:
+    report_path = _role_recovery_report_path(run_root)
+    report = read_json_if_exists(report_path)
+    if report.get("schema_version") != ROLE_RECOVERY_REPORT_SCHEMA:
+        return None
+    if str(report.get("run_id") or "") != str(run_state.get("run_id") or ""):
+        return None
+    if report.get("all_six_roles_ready") is not True or report.get("environment_blocked") is True:
+        return None
+
+    crew_path = run_root / "crew_ledger.json"
+    crew = read_json_if_exists(crew_path)
+    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    ready_agents: dict[str, str] = {}
+    for slot in slots:
+        if not isinstance(slot, dict):
+            continue
+        role = str(slot.get("role_key") or "")
+        agent_id = slot.get("agent_id")
+        if role in CREW_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip():
+            ready_agents[role] = agent_id.strip()
+    missing_roles = [role for role in CREW_ROLE_KEYS if role not in ready_agents]
+    if missing_roles:
+        return None
+
+    return {
+        "report": report,
+        "report_path": report_path,
+        "report_relpath": project_relative(project_root, report_path),
+        "crew_path": crew_path,
+        "crew_relpath": project_relative(project_root, crew_path),
+        "ready_role_keys": list(CREW_ROLE_KEYS),
+        "ready_agents": ready_agents,
+    }
+
+
+def _reclaim_role_recovery_postcondition_from_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    source: str,
+) -> dict[str, Any]:
+    context = _role_recovery_ready_context(project_root, run_root, run_state)
+    if context is None:
+        return {
+            "applied": False,
+            "reason": "role_recovery_report_not_ready",
+            "postcondition": "role_recovery_roles_restored",
+        }
+
+    report = context["report"]
+    flags = run_state.setdefault("flags", {})
+    flags["role_recovery_state_loaded"] = True
+    flags["role_recovery_roles_restored"] = True
+    flags["role_recovery_report_written"] = True
+    flags["role_recovery_environment_blocked"] = False
+    flags["role_recovery_requested"] = False
+    flags["resume_reentry_requested"] = True
+    flags["resume_state_loaded"] = True
+    flags["resume_roles_restored"] = True
+    flags["resume_role_agents_rehydrated"] = True
+    flags["crew_rehydration_report_written"] = (run_root / "continuation" / "crew_rehydration_report.json").exists()
+
+    pm_required = bool(report.get("pm_decision_required_before_normal_work"))
+    replay_path = report.get("role_recovery_obligation_replay_path")
+    replay: dict[str, Any] = {}
+    if isinstance(replay_path, str) and replay_path.strip():
+        replay = read_json_if_exists(resolve_project_path(project_root, replay_path))
+    if replay.get("schema_version") == ROLE_RECOVERY_OBLIGATION_REPLAY_SCHEMA:
+        pm_required = bool(replay.get("pm_escalation_required"))
+        flags["role_recovery_obligations_scanned"] = True
+        flags["role_recovery_obligation_replay_completed"] = not pm_required
+        flags["role_recovery_pm_escalation_required"] = pm_required
+        run_state["role_recovery_obligation_replay"] = {
+            "path": replay_path,
+            "transaction_id": replay.get("transaction_id") or report.get("transaction_id"),
+            "replacement_count": replay.get("replacement_count"),
+            "settled_existing_count": replay.get("settled_existing_count"),
+            "pm_escalation_required": pm_required,
+        }
+    elif "mechanical_obligation_replay_completed" in report:
+        flags["role_recovery_obligations_scanned"] = True
+        flags["role_recovery_obligation_replay_completed"] = bool(report.get("mechanical_obligation_replay_completed"))
+        flags["role_recovery_pm_escalation_required"] = pm_required
+
+    if pm_required:
+        flags["pm_resume_recovery_decision_returned"] = bool(flags.get("pm_resume_recovery_decision_returned"))
+    else:
+        flags["pm_resume_recovery_decision_returned"] = True
+
+    append_history(
+        run_state,
+        "router_reclaimed_role_recovery_report_postcondition",
+        {
+            "source": source,
+            "transaction_id": report.get("transaction_id"),
+            "role_recovery_report_path": context["report_relpath"],
+            "role_recovery_obligation_replay_path": replay_path if isinstance(replay_path, str) else None,
+            "pm_decision_required_before_normal_work": pm_required,
+        },
+    )
+    return {
+        "applied": True,
+        "source": source,
+        "postcondition": "role_recovery_roles_restored",
+        "role_recovery_report_path": context["report_relpath"],
+        "role_recovery_obligation_replay_path": replay_path if isinstance(replay_path, str) else None,
+        "pm_decision_required_before_normal_work": pm_required,
+    }
 
 
 def _current_crew_generation(crew: dict[str, Any]) -> int:
@@ -35237,6 +35411,15 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         ]
         crew_memory_files = sorted((run_root / "crew_memory").glob("*.json")) if (run_root / "crew_memory").exists() else []
         display_payload = _display_plan_sync_payload(project_root, run_root, run_state)
+        role_recovery_context = _role_recovery_ready_context(project_root, run_root, run_state)
+        roles_ready_from_recovery = role_recovery_context is not None
+        pm_resume_decision_required = True
+        if role_recovery_context is not None:
+            recovery_report = role_recovery_context["report"]
+            pm_resume_decision_required = bool(recovery_report.get("pm_decision_required_before_normal_work"))
+        ambiguous_state = bool(missing) or (
+            len(crew_memory_files) != len(CREW_ROLE_KEYS) and not roles_ready_from_recovery
+        )
         resume_record = {
             "schema_version": RESUME_EVIDENCE_SCHEMA,
             "run_id": run_state["run_id"],
@@ -35259,8 +35442,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "missing_paths": missing,
             "crew_memory_count": len(crew_memory_files),
             "crew_memory_ready_for_rehydration": len(crew_memory_files) == len(CREW_ROLE_KEYS),
-            "roles_restored_or_replaced": False,
-            "role_rehydration_required": True,
+            "roles_restored_or_replaced": roles_ready_from_recovery,
+            "role_rehydration_required": not roles_ready_from_recovery,
             "controller_visibility": "state_and_envelopes_only",
             "controller_may_read_packet_body": False,
             "controller_may_read_result_body": False,
@@ -35278,13 +35461,23 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "router_daemon_restarted_if_dead": daemon_recovery["decision"] == "restart_router_daemon_from_current_state",
             "controller_action_ledger_loaded": daemon_recovery["controller_action_ledger_exists"],
             "controller_action_ledger_rescanned": daemon_recovery["controller_action_ledger_rescanned"],
-            "pm_resume_decision_required": True,
-            "ambiguous_state_blocks_controller_execution": bool(missing) or len(crew_memory_files) != len(CREW_ROLE_KEYS),
+            "role_recovery_report_reclaimed": roles_ready_from_recovery,
+            "role_recovery_report_path": role_recovery_context["report_relpath"] if role_recovery_context else None,
+            "pm_resume_decision_required": pm_resume_decision_required,
+            "ambiguous_state_blocks_controller_execution": ambiguous_state,
         }
         write_json(run_root / "continuation" / "resume_reentry.json", resume_record)
         run_state["flags"]["resume_state_loaded"] = True
         run_state["flags"]["resume_state_ambiguous"] = bool(resume_record["ambiguous_state_blocks_controller_execution"])
-        run_state["flags"]["resume_roles_restored"] = False
+        if roles_ready_from_recovery:
+            _reclaim_role_recovery_postcondition_from_report(
+                project_root,
+                run_root,
+                run_state,
+                source="load_resume_state_role_recovery_report_reclaim",
+            )
+        else:
+            run_state["flags"]["resume_roles_restored"] = False
         if _latest_role_recovery_transaction(run_root).get("schema_version") == ROLE_RECOVERY_TRANSACTION_SCHEMA:
             run_state["flags"]["role_recovery_state_loaded"] = True
     elif action_type == "rehydrate_role_agents":

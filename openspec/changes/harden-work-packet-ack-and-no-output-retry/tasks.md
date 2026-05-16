@@ -12,15 +12,15 @@
 
 ## 3. Router Wait-Target Reissue
 
-- [ ] 3.1 Add no-output wait-target classification separate from unavailable-role liveness faults.
-- [ ] 3.2 Add Router-owned no-output replacement row creation with durable replacement-before-supersede ordering.
-- [ ] 3.3 Add a bounded retry budget and PM/control-blocker escalation when the budget is exhausted.
-- [ ] 3.4 Preserve existing role recovery for unavailable roles.
+- [x] 3.1 Add no-output wait-target classification separate from unavailable-role liveness faults.
+- [x] 3.2 Add Router-owned no-output replacement row creation with durable replacement-before-supersede ordering.
+- [x] 3.3 Add a bounded retry budget and PM/control-blocker escalation when the budget is exhausted.
+- [x] 3.4 Preserve existing role recovery for unavailable roles.
 
 ## 4. Verification And Sync
 
-- [ ] 4.1 Add focused runtime tests for no-output reissue and liveness recovery separation.
-- [ ] 4.2 Run focused FlowGuard checks and focused runtime tests.
+- [x] 4.1 Add focused runtime tests for no-output reissue and liveness recovery separation.
+- [x] 4.2 Run focused FlowGuard checks and focused runtime tests.
 - [x] 4.3 Record the user-approved skip for heavyweight FlowGuard meta/capability regressions because they are too heavy for this pass.
 - [x] 4.4 Sync repository-owned FlowPilot skill to the local installed version and verify source freshness.
 - [x] 4.5 Review the combined worktree, preserving compatible parallel-agent work for final git submission.

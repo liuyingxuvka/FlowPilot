@@ -10342,6 +10342,99 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["blocker_id"], blocker["blocker_id"])
 
+    def test_blocked_role_recovery_receipt_reclaims_existing_report(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        report = self.recover_worker_a_after_liveness_fault(root)
+        self.assertTrue(report["all_six_roles_ready"])
+
+        action_path = next(
+            path
+            for path in sorted((run_root / "runtime" / "controller_actions").glob("*.json"))
+            if read_json(path).get("action_type") == "recover_role_agents"
+        )
+        entry = read_json(action_path)
+        entry["status"] = "done"
+        entry["router_reconciliation_status"] = "blocked"
+        entry["router_reconciliation_blocker"] = {"reason": "stale_role_recovery_projection"}
+        entry.pop("router_reconciled_at", None)
+        entry.pop("router_reconciliation", None)
+        router.write_json(action_path, entry)
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["role_recovery_roles_restored"] = False
+        state["flags"]["resume_roles_restored"] = False
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            read_json(router.run_state_path(run_root)),
+            source=router.CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE,
+            error_message=(
+                "Controller action recover_role_agents was marked done, but Router could not "
+                "apply its required postcondition before reconciliation."
+            ),
+            action_type="recover_role_agents",
+            payload={
+                "controller_action_id": entry["action_id"],
+                "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
+                "postcondition": "role_recovery_roles_restored",
+                "direct_retry_attempts_used": 2,
+                "direct_retry_budget": 2,
+            },
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["blocked"], 0)
+        refreshed = read_json(action_path)
+        self.assertEqual(refreshed["router_reconciliation_status"], "reconciled")
+        self.assertTrue(refreshed["router_reconciliation_recovered_from_blocked_state"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["role_recovery_roles_restored"])
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        blocker_record = read_json(self.control_blocker_path(root, blocker))
+        self.assertEqual(blocker_record["resolution_status"], "resolved_by_controller_action_reconciliation")
+
+    def test_load_resume_state_does_not_downgrade_existing_role_recovery_report(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        report = self.recover_worker_a_after_liveness_fault(root)
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["resume_reentry_requested"] = True
+        state["flags"]["resume_state_loaded"] = False
+        state["flags"]["resume_roles_restored"] = False
+        state["flags"]["resume_role_agents_rehydrated"] = False
+        state["flags"]["crew_rehydration_report_written"] = False
+        state["flags"]["pm_resume_recovery_decision_returned"] = False
+        state["flags"]["role_recovery_roles_restored"] = False
+        state["flags"]["role_recovery_obligation_replay_completed"] = False
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+
+        resume = read_json(run_root / "continuation" / "resume_reentry.json")
+        self.assertTrue(resume["roles_restored_or_replaced"])
+        self.assertFalse(resume["role_rehydration_required"])
+        self.assertTrue(resume["role_recovery_report_reclaimed"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["role_recovery_roles_restored"])
+        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+
     def test_role_no_output_report_reissues_same_work_before_role_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
