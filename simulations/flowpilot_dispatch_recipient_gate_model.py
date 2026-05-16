@@ -17,6 +17,10 @@ Risk purpose:
   grouped delivery, different idle roles can work in parallel, illegal packets
   stay rejected, and PM remains busy while returned role-work results await PM
   disposition.
+- Guards against cross-ledger stale waits: a Controller passive wait whose
+  matching durable ACK, role output, packet result, or PM role-work obligation
+  is already resolved must not make the target role look busy, and any exposed
+  wait must identify the concrete unresolved obligation.
 - Future agents should update this model when adding new role-facing dispatch
   action types, new unfinished-work ledgers, or new terminal status names.
 - Companion command: python simulations/run_flowpilot_dispatch_recipient_gate_checks.py
@@ -56,6 +60,8 @@ class State:
 
     unresolved_ack_for_target: bool = False
     passive_wait_for_target: bool = False
+    passive_wait_source: str = "none"  # none | card_ack | role_output | packet | pm_role_work
+    passive_wait_durable_status: str = "none"  # none | open | resolved
     pending_expected_output_for_target: bool = False
     same_output_context_card: bool = False
     active_packet_held_by_target: bool = False
@@ -70,6 +76,7 @@ class State:
     block_exposed: bool = False
     wait_target_role: str = ""
     wait_source_named: bool = True
+    wait_obligation_identity_present: bool = True
     sealed_body_exposed_in_wait: bool = False
 
 
@@ -86,10 +93,30 @@ def _base_candidate(kind: str, target_role: str) -> State:
     return State(status="running", candidate_kind=kind, target_role=target_role)
 
 
+def _passive_wait_is_live(state: State) -> bool:
+    return state.passive_wait_for_target and state.passive_wait_durable_status != "resolved"
+
+
+def _live_busy_source_except_passive_wait(state: State) -> bool:
+    if state.unresolved_ack_for_target:
+        return True
+    if not state.candidate_output_bearing:
+        return False
+    if state.pending_expected_output_for_target and not state.same_output_context_card:
+        return True
+    if (
+        state.active_packet_held_by_target
+        and not state.same_obligation_instruction
+        and not state.prior_packet_completed_by_flow_state
+    ):
+        return True
+    return state.pm_role_work_status_for_target in {"open", "packet_relayed"}
+
+
 def _target_role_busy(state: State) -> bool:
     if state.unresolved_ack_for_target:
         return True
-    if state.passive_wait_for_target:
+    if _passive_wait_is_live(state):
         return True
     if not state.candidate_output_bearing:
         return False
@@ -148,7 +175,38 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     yield Transition(
         "wait_for_passive_role_result_before_dispatch",
-        _gate_wait(replace(_base_candidate("system_card", "process_flowguard_officer"), passive_wait_for_target=True)),
+        _gate_wait(
+            replace(
+                _base_candidate("system_card", "process_flowguard_officer"),
+                passive_wait_for_target=True,
+                passive_wait_source="role_output",
+                passive_wait_durable_status="open",
+            )
+        ),
+    )
+
+    yield Transition(
+        "allow_user_intake_mail_after_resolved_startup_card_wait",
+        _gate_pass(
+            replace(
+                _base_candidate("mail", "project_manager"),
+                passive_wait_for_target=True,
+                passive_wait_source="card_ack",
+                passive_wait_durable_status="resolved",
+            )
+        ),
+    )
+
+    yield Transition(
+        "allow_pm_mail_after_resolved_role_output_wait",
+        _gate_pass(
+            replace(
+                _base_candidate("mail", "project_manager"),
+                passive_wait_for_target=True,
+                passive_wait_source="role_output",
+                passive_wait_durable_status="resolved",
+            )
+        ),
     )
 
     yield Transition(
@@ -343,8 +401,19 @@ def invariant_failures(state: State) -> list[str]:
     if state.wait_exposed and not state.wait_source_named:
         failures.append("busy-recipient wait did not name the blocking source")
 
+    if state.wait_exposed and not state.wait_obligation_identity_present:
+        failures.append("busy-recipient wait did not name a concrete blocking obligation")
+
     if state.wait_exposed and state.sealed_body_exposed_in_wait:
         failures.append("busy-recipient wait exposed sealed body content")
+
+    if (
+        state.passive_wait_for_target
+        and state.passive_wait_durable_status == "resolved"
+        and not _live_busy_source_except_passive_wait(state)
+        and not state.dispatch_exposed
+    ):
+        failures.append("resolved passive wait did not free the target role")
 
     if (
         state.same_role_grouped_delivery
@@ -441,6 +510,35 @@ def hazard_states() -> dict[str, State]:
             safe,
             target_role="process_flowguard_officer",
             passive_wait_for_target=True,
+            passive_wait_source="role_output",
+            passive_wait_durable_status="open",
+        ),
+        "stale_card_ack_passive_wait_blocks_user_intake": _gate_wait(
+            replace(
+                _base_candidate("mail", "project_manager"),
+                passive_wait_for_target=True,
+                passive_wait_source="card_ack",
+                passive_wait_durable_status="resolved",
+            )
+        ),
+        "stale_role_output_passive_wait_blocks_pm_mail": _gate_wait(
+            replace(
+                _base_candidate("mail", "project_manager"),
+                passive_wait_for_target=True,
+                passive_wait_source="role_output",
+                passive_wait_durable_status="resolved",
+            )
+        ),
+        "busy_wait_without_concrete_obligation": replace(
+            _gate_wait(
+                replace(
+                    _base_candidate("system_card", "process_flowguard_officer"),
+                    passive_wait_for_target=True,
+                    passive_wait_source="role_output",
+                    passive_wait_durable_status="open",
+                )
+            ),
+            wait_obligation_identity_present=False,
         ),
         "ack_only_prompt_blocked_as_work": _gate_wait(
             replace(

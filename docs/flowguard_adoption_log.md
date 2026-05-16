@@ -13098,3 +13098,53 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   direction because it is too heavy for this focused Router dispatch-gate pass.
 - `python simulations\run_capability_checks.py` was skipped by explicit user
   direction because it is too heavy for this focused Router dispatch-gate pass.
+
+## 2026-05-16 Stale Passive Wait Model Miss Review
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot runtime run `run-20260516-151449` treated PM as
+  busy because a Controller passive wait row stayed `waiting` after the durable
+  PM startup card ACK return had already resolved.
+- Status: completed_focused_model_upgrade_meta_capability_skipped_by_user_direction
+- Miss type: state_too_coarse. The dispatch model had a boolean
+  `passive_wait_for_target`, but did not record whether the matching durable
+  ACK, role-output, packet, or PM-role-work evidence was still open or already
+  resolved. The scheduler model also covered broad ACK joins but not
+  single-card ACK return settlement across the return ledger, Controller wait
+  row, and Router scheduler row.
+
+### Model Evidence
+
+- Dispatch recipient gate model/result:
+  `simulations/flowpilot_dispatch_recipient_gate_model.py`,
+  `simulations/flowpilot_dispatch_recipient_gate_results.json`
+- Two-table async scheduler model/result:
+  `simulations/flowpilot_two_table_async_scheduler_model.py`,
+  `simulations/flowpilot_two_table_async_scheduler_results.json`
+
+### Commands
+
+- `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py --json-out simulations\flowpilot_dispatch_recipient_gate_results.json` passed: 19 states / 18 edges, 54 FlowGuard traces, zero violations.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed: 115 states / 114 edges, 171 FlowGuard traces, zero violations.
+- `python -m py_compile simulations\flowpilot_dispatch_recipient_gate_model.py simulations\run_flowpilot_dispatch_recipient_gate_checks.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed.
+
+### Findings
+
+- A resolved passive wait is not a live busy source unless another concrete
+  unresolved obligation still exists.
+- Any exposed busy-recipient wait must name the concrete unresolved obligation,
+  not only the target role.
+- Single-card ACK return settlement must reconcile all three durable views
+  together: return ledger, Controller passive wait row, and Router scheduler
+  row.
+- The focused models now reject both stale Controller wait rows and stale Router
+  scheduler rows after a single-card ACK return resolves.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused model-miss pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused model-miss pass.
+- Runtime implementation and regression tests are deferred to the next repair
+  pass; this entry records the model upgrade and the minimal root-fix boundary.

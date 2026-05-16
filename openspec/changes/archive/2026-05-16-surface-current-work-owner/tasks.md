@@ -14,4 +14,4 @@
 - [x] 3.1 Add focused runtime tests for packet-holder and passive-reconciliation ownership with `pending_action` null.
 - [x] 3.2 Run focused model and runtime tests, then run heavyweight meta/capability checks in the background log contract.
 - [x] 3.3 Sync and audit the locally installed FlowPilot skill from the repository source.
-- [ ] 3.4 Review git status, preserve compatible parallel-agent changes, and commit the complete local repository state requested by the user.
+- [x] 3.4 Review git status, preserve compatible parallel-agent changes, and commit the complete local repository state requested by the user.

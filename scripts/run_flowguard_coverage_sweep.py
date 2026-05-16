@@ -231,7 +231,7 @@ def _classify_finding(finding: dict[str, Any]) -> str:
 
 def _run_runner(path: Path, text: str, timeout_seconds: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     command = [sys.executable, str(path.relative_to(ROOT))]
-    if 'add_argument("--json"' in text and "--json-out" not in text:
+    if 'add_argument("--json"' in text:
         command.append("--json")
     try:
         completed = subprocess.run(

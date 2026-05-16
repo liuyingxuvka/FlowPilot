@@ -74,6 +74,12 @@ HAZARD_EXPECTED_FAILURES = {
     model.SCHEDULER_RECONCILED_ROW_DOWNGRADED: (
         "Router scheduler row reconciliation status was downgraded after receipt sync"
     ),
+    model.SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION: (
+        "Controller passive wait stayed waiting after single-card ACK return resolved"
+    ),
+    model.SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION: (
+        "Router scheduler row stayed waiting after single-card ACK return resolved"
+    ),
 }
 
 
@@ -131,6 +137,10 @@ def _state_id(state: model.State) -> str:
         f"{state.startup_scope_reconciliation_checked},{state.startup_scope_reconciliation_clean},"
         f"review={state.reviewer_startup_fact_review_started}|pm={state.reviewer_fact_report_recorded},"
         f"{state.pm_startup_activation_card_sent},{state.pm_startup_activation_ack_clean},"
+        f"single_ack={state.single_card_ack_return_resolved},"
+        f"{state.single_card_controller_wait_row_reconciled},{state.single_card_scheduler_row_reconciled},"
+        f"{state.single_card_wait_still_waiting_after_return_resolution},"
+        f"{state.single_card_scheduler_still_waiting_after_return_resolution},"
         f"decision={state.pm_activation_decision_accepted},second_join={state.pm_activation_second_global_join_required},"
         f"route={state.route_work_started}|running={state.flowpilot_still_running},{state.running_wait_state_kind}|"
         f"passive_wait={state.passive_wait_status_present},"

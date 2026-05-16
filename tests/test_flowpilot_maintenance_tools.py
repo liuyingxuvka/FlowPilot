@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -36,6 +38,10 @@ flowpilot_runtime_retention = load_module(
 flowpilot_paths_wrapper = load_module(
     "flowpilot_test_script_flowpilot_paths",
     ROOT / "scripts" / "flowpilot_paths.py",
+)
+run_flowguard_coverage_sweep = load_module(
+    "flowpilot_test_run_flowguard_coverage_sweep",
+    ROOT / "scripts" / "run_flowguard_coverage_sweep.py",
 )
 
 
@@ -107,6 +113,37 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
         resolved = flowpilot_paths_wrapper.resolve_flowpilot_paths(ROOT)
         self.assertIn("flowpilot_root", resolved)
         self.assertEqual(resolved["project_root"], ROOT.resolve())
+
+    def test_coverage_sweep_requests_json_stdout_when_runner_also_has_json_out(self) -> None:
+        script_path = ROOT / "simulations" / "run_flowpilot_dispatch_recipient_gate_checks.py"
+        script_text = """
+parser.add_argument("--json", action="store_true")
+parser.add_argument("--json-out", type=Path)
+if args.json_out:
+    args.json_out.write_text(payload, encoding="utf-8")
+"""
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout='{"ok": true}\n',
+            stderr="",
+        )
+        with mock.patch.object(
+            run_flowguard_coverage_sweep.subprocess,
+            "run",
+            return_value=completed,
+        ) as run_mock:
+            payload, metadata = run_flowguard_coverage_sweep._run_runner(
+                script_path,
+                script_text,
+                timeout_seconds=10,
+            )
+
+        command = run_mock.call_args.args[0]
+        self.assertIn("--json", command)
+        self.assertNotIn("--json-out", command)
+        self.assertEqual(payload, {"ok": True})
+        self.assertIsNone(metadata["parse_error"])
 
 
 if __name__ == "__main__":

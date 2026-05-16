@@ -20,4 +20,4 @@
 
 - [x] 4.1 Check whether Step 3 active-writer waiting and Step 4 monitor current-work ownership are already owned by parallel changes.
 - [x] 4.2 Defer heavyweight meta/capability checks after user confirmed they are too heavy for this pass; stop any started background run and record no pass/fail claim.
-- [ ] 4.3 Preserve compatible peer-agent changes and prepare the combined local git state requested by the user.
+- [x] 4.3 Preserve compatible peer-agent changes and prepare the combined local git state requested by the user.

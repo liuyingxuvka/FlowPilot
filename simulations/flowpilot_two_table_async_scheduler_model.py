@@ -13,8 +13,10 @@ Risk purpose:
   a daemon that starts but only waits for Controller core instead of driving
   startup, Controller receipts that leave bootstrap `pending_action` stale and
   reissue the same startup row forever, treating a fresh runtime write lock as
-  ledger corruption instead of waiting for the next tick, and PM startup
-  activation gaining a redundant global ACK gate.
+  ledger corruption instead of waiting for the next tick, PM startup activation
+  gaining a redundant global ACK gate, and cross-ledger drift where a durable
+  single-card ACK resolution leaves the matching Controller passive wait or
+  Router scheduler row stuck as waiting.
 - Update and run this model whenever Router daemon queue filling, Controller
   action ledger schema, startup pre-review gating, or card ACK reconciliation
   behavior changes.
@@ -39,6 +41,8 @@ Risk intent brief:
   are ready, true barriers accidentally demoted to nonblocking obligations,
   startup obligations reconciled without Router-visible proof, reconciled
   scheduler rows downgraded by later receipt sync,
+  single-card ACK returns resolved in the return ledger while the matching
+  Controller wait or Router scheduler row remains unreconciled,
   scheduler ledger partial writes that leave invalid JSON without a fresh write
   lock, fresh write-lock reads reported as corruption instead of deferred,
   standby completion after one monitor check, foreground closure while
@@ -58,6 +62,8 @@ Risk intent brief:
   update the matching bootstrap flag, clear bootstrap pending_action, reconcile
   the Router row, and compute the next startup row unless a real barrier is
   reached;
+  single-card ACK settlement must update the return ledger, Controller
+  passive-wait row, and Router scheduler row together;
   live waits keep a continuous Controller
   standby row and Codex-plan sync duty; running FlowPilot keeps foreground
   Controller attached; PM activation uses same-role ACK only.
@@ -93,6 +99,7 @@ STARTUP_ROLE_SLOTS_LOCAL_DEPENDENCY = "startup_role_slots_local_dependency"
 TRUE_BARRIERS_STOP_QUEUEING = "true_barriers_stop_queueing"
 STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN = "startup_parallel_obligation_review_join"
 RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC = "reconciled_scheduler_row_status_monotonic"
+SINGLE_CARD_ACK_RETURN_RECONCILES_WAIT_ROWS = "single_card_ack_return_reconciles_wait_rows"
 
 CONTROLLER_OWNS_ROUTER_DEPENDENCIES = "controller_owns_router_dependencies"
 DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY = "daemon_duplicates_controller_row_on_retry"
@@ -136,6 +143,10 @@ STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF = (
     "startup_obligation_reconciled_without_router_proof"
 )
 SCHEDULER_RECONCILED_ROW_DOWNGRADED = "scheduler_reconciled_row_downgraded"
+SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION = "single_card_ack_wait_stale_after_return_resolution"
+SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION = (
+    "single_card_ack_scheduler_stale_after_return_resolution"
+)
 
 VALID_SCENARIOS = (
     ASYNC_STARTUP_ROWS_UNTIL_BARRIER,
@@ -156,6 +167,7 @@ VALID_SCENARIOS = (
     TRUE_BARRIERS_STOP_QUEUEING,
     STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN,
     RECONCILED_SCHEDULER_ROW_STATUS_MONOTONIC,
+    SINGLE_CARD_ACK_RETURN_RECONCILES_WAIT_ROWS,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -195,6 +207,8 @@ NEGATIVE_SCENARIOS = (
     DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW,
     STARTUP_OBLIGATION_RECONCILED_WITHOUT_ROUTER_PROOF,
     SCHEDULER_RECONCILED_ROW_DOWNGRADED,
+    SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION,
+    SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -293,6 +307,11 @@ class State:
     reviewer_fact_report_recorded: bool = False
     pm_startup_activation_card_sent: bool = False
     pm_startup_activation_ack_clean: bool = False
+    single_card_ack_return_resolved: bool = False
+    single_card_controller_wait_row_reconciled: bool = False
+    single_card_scheduler_row_reconciled: bool = False
+    single_card_wait_still_waiting_after_return_resolution: bool = False
+    single_card_scheduler_still_waiting_after_return_resolution: bool = False
     pm_activation_decision_accepted: bool = False
     pm_activation_second_global_join_required: bool = False
     route_work_started: bool = False
@@ -605,6 +624,19 @@ def scenario_state(scenario: str) -> State:
             router_marked_row_reconciled=True,
             scheduler_row_status_reconciled=True,
             scheduler_row_status_downgraded_to_receipt_done=False,
+        )
+    if scenario == SINGLE_CARD_ACK_RETURN_RECONCILES_WAIT_ROWS:
+        return _accepted(
+            scenario,
+            **{**base, "controller_core_loaded": True},
+            reviewer_fact_report_recorded=True,
+            pm_startup_activation_card_sent=True,
+            pm_startup_activation_ack_clean=True,
+            single_card_ack_return_resolved=True,
+            single_card_controller_wait_row_reconciled=True,
+            single_card_scheduler_row_reconciled=True,
+            single_card_wait_still_waiting_after_return_resolution=False,
+            single_card_scheduler_still_waiting_after_return_resolution=False,
         )
     if scenario == CONTROLLER_OWNS_ROUTER_DEPENDENCIES:
         return _rejected(
@@ -1029,6 +1061,32 @@ def scenario_state(scenario: str) -> State:
             scheduler_row_status_reconciled=True,
             scheduler_row_status_downgraded_to_receipt_done=True,
         )
+    if scenario == SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION:
+        return _rejected(
+            scenario,
+            **{**base, "controller_core_loaded": True},
+            reviewer_fact_report_recorded=True,
+            pm_startup_activation_card_sent=True,
+            pm_startup_activation_ack_clean=True,
+            single_card_ack_return_resolved=True,
+            single_card_controller_wait_row_reconciled=False,
+            single_card_scheduler_row_reconciled=True,
+            single_card_wait_still_waiting_after_return_resolution=True,
+            single_card_scheduler_still_waiting_after_return_resolution=False,
+        )
+    if scenario == SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION:
+        return _rejected(
+            scenario,
+            **{**base, "controller_core_loaded": True},
+            reviewer_fact_report_recorded=True,
+            pm_startup_activation_card_sent=True,
+            pm_startup_activation_ack_clean=True,
+            single_card_ack_return_resolved=True,
+            single_card_controller_wait_row_reconciled=True,
+            single_card_scheduler_row_reconciled=False,
+            single_card_wait_still_waiting_after_return_resolution=False,
+            single_card_scheduler_still_waiting_after_return_resolution=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -1125,6 +1183,14 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("startup obligation was reconciled without Router-visible proof")
     if state.scheduler_row_status_reconciled and state.scheduler_row_status_downgraded_to_receipt_done:
         failures.append("Router scheduler row reconciliation status was downgraded after receipt sync")
+    if state.single_card_ack_return_resolved and not (
+        state.single_card_controller_wait_row_reconciled and state.single_card_scheduler_row_reconciled
+    ):
+        failures.append("single-card ACK return resolved without reconciling Controller wait row and Router scheduler row")
+    if state.single_card_wait_still_waiting_after_return_resolution:
+        failures.append("Controller passive wait stayed waiting after single-card ACK return resolved")
+    if state.single_card_scheduler_still_waiting_after_return_resolution:
+        failures.append("Router scheduler row stayed waiting after single-card ACK return resolved")
     if state.controller_action_table_exists and state.controller_table_has_router_dependency_graph:
         failures.append("Controller table owns Router dependency metadata")
     if state.router_scheduler_table_exists and not state.router_table_has_dependency_metadata:

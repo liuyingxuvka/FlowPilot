@@ -20,5 +20,5 @@
 ## 4. Finalization
 
 - [x] 4.1 Update FlowGuard adoption notes for skipped heavyweight checks and focused validation.
-- [ ] 4.2 Review local peer-agent changes and include compatible work in staging.
-- [ ] 4.3 Commit the synchronized local git version.
+- [x] 4.2 Review local peer-agent changes and include compatible work in staging.
+- [x] 4.3 Commit the synchronized local git version.

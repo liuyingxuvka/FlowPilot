@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=48",
+    "summary": "sequences=2 initial_states=1 traces=54",
     "violation_count": 0
   },
   "hazards": {
@@ -27,7 +27,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -41,6 +43,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "project_manager"
         }
@@ -62,7 +65,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -76,8 +81,47 @@
           "target_role": "worker_a",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
+        }
+      },
+      "busy_wait_without_concrete_obligation": {
+        "detected": true,
+        "expected_failure": "busy-recipient wait did not name a concrete blocking obligation",
+        "failures": [
+          "busy-recipient wait did not name a concrete blocking obligation"
+        ],
+        "state": {
+          "active_holder_legal": true,
+          "active_packet_held_by_target": false,
+          "block_exposed": false,
+          "candidate_kind": "system_card",
+          "candidate_output_bearing": true,
+          "different_idle_roles_parallel": false,
+          "dispatch_exposed": false,
+          "gate_ran": true,
+          "packet_legal": true,
+          "parallel_roles_unique": true,
+          "passive_wait_durable_status": "open",
+          "passive_wait_for_target": true,
+          "passive_wait_source": "role_output",
+          "pending_expected_output_for_target": false,
+          "pm_disposition_pending": false,
+          "pm_role_work_status_for_target": "none",
+          "prior_packet_completed_by_flow_state": false,
+          "same_obligation_instruction": false,
+          "same_output_context_card": false,
+          "same_role_grouped_delivery": false,
+          "sealed_body_exposed_in_wait": false,
+          "status": "complete",
+          "target_identity_valid": true,
+          "target_role": "process_flowguard_officer",
+          "unresolved_ack_for_target": false,
+          "wait_exposed": true,
+          "wait_obligation_identity_present": false,
+          "wait_source_named": true,
+          "wait_target_role": "process_flowguard_officer"
         }
       },
       "different_idle_parallel_blocked": {
@@ -97,7 +141,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -111,6 +157,7 @@
           "target_role": "worker_a,worker_b",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -132,7 +179,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": false,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -146,6 +195,7 @@
           "target_role": "worker_a",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -167,7 +217,9 @@
           "gate_ran": true,
           "packet_legal": false,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -181,6 +233,7 @@
           "target_role": "worker_a",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -202,7 +255,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": true,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -216,6 +271,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -237,7 +293,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -251,6 +309,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -272,7 +331,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -286,6 +347,7 @@
           "target_role": "human_like_reviewer",
           "unresolved_ack_for_target": true,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -307,7 +369,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "open",
           "passive_wait_for_target": true,
+          "passive_wait_source": "role_output",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -321,6 +385,7 @@
           "target_role": "process_flowguard_officer",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -342,7 +407,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": true,
           "pm_role_work_status_for_target": "none",
@@ -356,6 +423,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
         }
@@ -377,7 +445,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": true,
           "pm_role_work_status_for_target": "result_returned",
@@ -391,6 +461,7 @@
           "target_role": "worker_b",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "worker_b"
         }
@@ -412,7 +483,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": true,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -426,6 +499,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "project_manager"
         }
@@ -447,7 +521,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -461,8 +537,85 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": ""
+        }
+      },
+      "stale_card_ack_passive_wait_blocks_user_intake": {
+        "detected": true,
+        "expected_failure": "resolved passive wait did not free the target role",
+        "failures": [
+          "resolved passive wait did not free the target role"
+        ],
+        "state": {
+          "active_holder_legal": true,
+          "active_packet_held_by_target": false,
+          "block_exposed": false,
+          "candidate_kind": "mail",
+          "candidate_output_bearing": true,
+          "different_idle_roles_parallel": false,
+          "dispatch_exposed": false,
+          "gate_ran": true,
+          "packet_legal": true,
+          "parallel_roles_unique": true,
+          "passive_wait_durable_status": "resolved",
+          "passive_wait_for_target": true,
+          "passive_wait_source": "card_ack",
+          "pending_expected_output_for_target": false,
+          "pm_disposition_pending": false,
+          "pm_role_work_status_for_target": "none",
+          "prior_packet_completed_by_flow_state": false,
+          "same_obligation_instruction": false,
+          "same_output_context_card": false,
+          "same_role_grouped_delivery": false,
+          "sealed_body_exposed_in_wait": false,
+          "status": "complete",
+          "target_identity_valid": true,
+          "target_role": "project_manager",
+          "unresolved_ack_for_target": false,
+          "wait_exposed": true,
+          "wait_obligation_identity_present": true,
+          "wait_source_named": true,
+          "wait_target_role": "project_manager"
+        }
+      },
+      "stale_role_output_passive_wait_blocks_pm_mail": {
+        "detected": true,
+        "expected_failure": "resolved passive wait did not free the target role",
+        "failures": [
+          "resolved passive wait did not free the target role"
+        ],
+        "state": {
+          "active_holder_legal": true,
+          "active_packet_held_by_target": false,
+          "block_exposed": false,
+          "candidate_kind": "mail",
+          "candidate_output_bearing": true,
+          "different_idle_roles_parallel": false,
+          "dispatch_exposed": false,
+          "gate_ran": true,
+          "packet_legal": true,
+          "parallel_roles_unique": true,
+          "passive_wait_durable_status": "resolved",
+          "passive_wait_for_target": true,
+          "passive_wait_source": "role_output",
+          "pending_expected_output_for_target": false,
+          "pm_disposition_pending": false,
+          "pm_role_work_status_for_target": "none",
+          "prior_packet_completed_by_flow_state": false,
+          "same_obligation_instruction": false,
+          "same_output_context_card": false,
+          "same_role_grouped_delivery": false,
+          "sealed_body_exposed_in_wait": false,
+          "status": "complete",
+          "target_identity_valid": true,
+          "target_role": "project_manager",
+          "unresolved_ack_for_target": false,
+          "wait_exposed": true,
+          "wait_obligation_identity_present": true,
+          "wait_source_named": true,
+          "wait_target_role": "project_manager"
         }
       },
       "system_card_for_active_holder_blocked": {
@@ -482,7 +635,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -496,6 +651,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "project_manager"
         }
@@ -517,7 +673,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -531,6 +689,7 @@
           "target_role": "project_manager",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "project_manager"
         }
@@ -552,7 +711,9 @@
           "gate_ran": true,
           "packet_legal": true,
           "parallel_roles_unique": true,
+          "passive_wait_durable_status": "none",
           "passive_wait_for_target": false,
+          "passive_wait_source": "none",
           "pending_expected_output_for_target": false,
           "pm_disposition_pending": false,
           "pm_role_work_status_for_target": "none",
@@ -566,6 +727,7 @@
           "target_role": "worker_a",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
+          "wait_obligation_identity_present": true,
           "wait_source_named": true,
           "wait_target_role": "worker_a"
         }
@@ -587,7 +749,9 @@
       "gate_ran": true,
       "packet_legal": true,
       "parallel_roles_unique": true,
+      "passive_wait_durable_status": "none",
       "passive_wait_for_target": false,
+      "passive_wait_source": "none",
       "pending_expected_output_for_target": false,
       "pm_disposition_pending": false,
       "pm_role_work_status_for_target": "none",
@@ -601,6 +765,7 @@
       "target_role": "worker_a",
       "unresolved_ack_for_target": false,
       "wait_exposed": true,
+      "wait_obligation_identity_present": true,
       "wait_source_named": true,
       "wait_target_role": "worker_a"
     }
@@ -612,13 +777,13 @@
     "ok": true,
     "stuck_state_count": 0,
     "stuck_state_samples": [],
-    "success_state_count": 16
+    "success_state_count": 18
   },
   "safe_graph": {
-    "edge_count": 16,
+    "edge_count": 18,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 17
+    "state_count": 19
   }
 }

@@ -17,6 +17,8 @@ REQUIRED_LABELS = (
     "wait_for_busy_active_packet_before_dispatch",
     "wait_for_missing_ack_before_formal_packet",
     "wait_for_passive_role_result_before_dispatch",
+    "allow_user_intake_mail_after_resolved_startup_card_wait",
+    "allow_pm_mail_after_resolved_role_output_wait",
     "allow_ack_only_prompt_while_packet_active",
     "wait_for_pending_pm_output_before_independent_output_card",
     "allow_event_card_for_same_pending_pm_output",
@@ -35,6 +37,9 @@ HAZARD_EXPECTED_FAILURES = {
     "busy_active_packet_dispatch_exposed": "busy target role received a second independent dispatch",
     "missing_ack_dispatch_exposed": "busy target role received a second independent dispatch",
     "passive_wait_dispatch_exposed": "busy target role received a second independent dispatch",
+    "stale_card_ack_passive_wait_blocks_user_intake": "resolved passive wait did not free the target role",
+    "stale_role_output_passive_wait_blocks_pm_mail": "resolved passive wait did not free the target role",
+    "busy_wait_without_concrete_obligation": "busy-recipient wait did not name a concrete blocking obligation",
     "ack_only_prompt_blocked_as_work": "ACK-only prompt card was treated as independent work",
     "independent_output_card_exposed_while_pm_output_pending": "busy target role received a second independent dispatch",
     "same_output_context_card_blocked": "same-output event/context card was blocked",
@@ -58,12 +63,14 @@ def _state_id(state: model.State) -> str:
         f"group={state.same_role_grouped_delivery}|parallel={state.parallel_roles_unique},"
         f"{state.different_idle_roles_parallel}|output={state.candidate_output_bearing}|"
         f"busy={state.unresolved_ack_for_target},"
-        f"{state.passive_wait_for_target},{state.pending_expected_output_for_target},"
+        f"{state.passive_wait_for_target},{state.passive_wait_source},"
+        f"{state.passive_wait_durable_status},{state.pending_expected_output_for_target},"
         f"{state.same_output_context_card},{state.active_packet_held_by_target},"
         f"{state.same_obligation_instruction},{state.prior_packet_completed_by_flow_state},"
         f"{state.pm_role_work_status_for_target},{state.pm_disposition_pending}|"
         f"out={state.dispatch_exposed},{state.wait_exposed},{state.block_exposed}|"
-        f"wait={state.wait_target_role},{state.wait_source_named},{state.sealed_body_exposed_in_wait}"
+        f"wait={state.wait_target_role},{state.wait_source_named},"
+        f"{state.wait_obligation_identity_present},{state.sealed_body_exposed_in_wait}"
     )
 
 
