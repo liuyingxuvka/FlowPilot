@@ -13033,9 +13033,91 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   direction because it is too heavy for this focused pass.
 - `python simulations\run_capability_checks.py` was skipped by explicit user
   direction because it is too heavy for this focused pass.
-- Live daemon projection was skipped in the daemon model command with
-  `--skip-live-projection`; the model-only reconciliation boundary was enough
-  for this startup protocol correction.
+
+## 2026-05-16 Router Runtime Boundary Modularization
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: `skills/flowpilot/assets/flowpilot_router.py` has become a
+  37k-line runtime monolith, making future protocol fixes difficult to isolate
+  and verify.
+- Status: completed_behavior_preserving_boundary_extraction
+- OpenSpec change: `split-flowpilot-router-runtime-boundaries`
+
+### Risk Intent
+
+This refactor uses FlowGuard in a behavior-preserving maintenance mode. The
+protected harms are accidental CLI drift, runtime schema drift, Controller/PM/
+Reviewer authority drift, ACK settlement being confused with semantic work
+completion, passive waits becoming ordinary Controller work, and stale install
+sync evidence.
+
+### Extracted Boundaries
+
+- Error types: `flowpilot_router_errors.py`.
+- Time, path, project-relative, runtime-kit, JSON, atomic write-lock, and
+  runtime scan helpers: `flowpilot_router_io.py`.
+- Pure system-card ACK identity/status predicates:
+  `flowpilot_router_card_settlement.py`.
+- Controller-facing passive-wait/status constants and patrol command helpers:
+  `flowpilot_router_controller_boundary.py`.
+- Static protocol tables for mail sequence and terminal statuses:
+  `flowpilot_router_protocol_tables.py`.
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema `1.0`.
+- `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
+  passed with installed FlowGuard schema `1.0`.
+- `python -m py_compile` for the router facade and extracted helper modules
+  passed.
+- `python -m unittest tests.test_flowpilot_router_boundaries` passed: 7 tests.
+- Focused router runtime checks passed: 18 tests covering runtime JSON locks,
+  single-card ACK settlement, incomplete bundle ACKs, dispatch-recipient
+  output-busy protection, passive-wait projection, standby/patrol, and terminal
+  return.
+- `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py` passed:
+  19 states / 18 edges, 54 FlowGuard traces, zero violations.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed:
+  115 states / 114 edges, 171 FlowGuard traces, zero violations.
+- Background `python simulations\run_meta_checks.py` completed with exit `0`;
+  log root `tmp\flowguard_background\run_meta_checks.*`, stdout/stderr/
+  combined/exit/meta artifacts present, valid full proof reused for the legacy
+  full regression and thin parent graph passed.
+- Background `python simulations\run_capability_checks.py` completed with exit
+  `0`; log root `tmp\flowguard_background\run_capability_checks.*`, stdout/
+  stderr/combined/exit/meta artifacts present, valid full proof reused for the
+  legacy full regression and thin parent graph passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed; the
+  installed local `flowpilot` skill is source-fresh.
+- `python scripts\audit_local_install_sync.py --json` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\smoke_autopilot.py --fast` passed; Meta and Capability used
+  valid thin-parent proofs where available.
+- `openspec validate split-flowpilot-router-runtime-boundaries --strict`
+  passed.
+
+### Findings
+
+- The router facade still re-exports the moved helpers, so existing imports,
+  private test hooks, and CLI behavior remain compatible.
+- The behavior-bearing settlement, startup, daemon, Controller receipt, and
+  scheduler reconciliation flows remain in `flowpilot_router.py` because their
+  write paths are tightly coupled to run state, controller action ledgers,
+  router scheduler rows, history, and install evidence.
+- ACK-only waits are still distinct from output-bearing work completion; the
+  extracted predicates are pure identity/status helpers only.
+- Static mail and terminal protocol tables can move safely; packet schema and
+  authority-changing orchestration should wait for a separate change.
+
+### Skipped Or Deferred Steps
+
+- Full `tests.test_flowpilot_router_runtime` was attempted but timed out after
+  15 minutes without a pass/fail conclusion. Focused runtime, model, install,
+  and smoke evidence passed.
+- Deeper Controller receipt, startup/daemon, packet orchestration, and terminal
+  closure extraction is deferred to a separate OpenSpec change with its own
+  model and runtime evidence.
 
 ## 2026-05-16 Dispatch Recipient Gate Unification
 
@@ -13148,3 +13230,62 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   direction because it is too heavy for this focused model-miss pass.
 - Runtime implementation and regression tests are deferred to the next repair
   pass; this entry records the model upgrade and the minimal root-fix boundary.
+
+## 2026-05-16 ACK Output Busy Clearance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A Controller passive ACK wait could stay visible after durable
+  ACK evidence returned, but clearing ACKs too broadly could also free
+  output-bearing PM or role work before its report, result, decision, or
+  packet-spec event.
+- Status: completed_focused_runtime_update
+- OpenSpec change: `fix-ack-output-busy-clearance`
+
+### Model And Runtime Evidence
+
+- Dispatch recipient gate model/result:
+  `simulations/flowpilot_dispatch_recipient_gate_model.py`,
+  `simulations/run_flowpilot_dispatch_recipient_gate_checks.py`
+- Two-table scheduler model/result:
+  `simulations/flowpilot_two_table_async_scheduler_model.py`,
+  `simulations/flowpilot_two_table_async_scheduler_results.json`
+- Runtime changes:
+  `skills/flowpilot/assets/flowpilot_router.py`,
+  `skills/flowpilot/assets/runtime_kit/README.md`,
+  `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py` passed:
+  19 states / 18 edges, 54 FlowGuard traces, zero violations.
+- `python simulations\run_flowpilot_card_envelope_checks.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py` passed:
+  115 states / 114 edges, 171 FlowGuard traces, zero violations.
+- `python -m unittest` focused ACK/busy/write-lock tests passed: 9 tests.
+- `openspec validate fix-ack-output-busy-clearance --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\check_install.py --json` passed; installed FlowPilot is
+  source-fresh.
+
+### Findings
+
+- Existing two-class behavior is preserved: ACK-only system cards clear the
+  ACK/read wait on ACK, while output-bearing work remains busy until the named
+  output event is recorded.
+- Router return settlement now normalizes single-card ACK returns and
+  reconciles matching Controller ACK wait rows and Router scheduler rows.
+- Dispatch-recipient gating runs existing return settlement before treating
+  passive waits as busy, so stale ACK waits stop blocking new work.
+- Output-bearing work remains protected by `pending_expected_output`, packet,
+  role-output, and PM role-work evidence rather than by the ACK wait row.
+- Existing runtime JSON write-lock wait/retry behavior remains the mechanism
+  for active writers.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.

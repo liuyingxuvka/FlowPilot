@@ -470,7 +470,7 @@
         "id": "flowpilot_model_mesh.packet_authority_unchecked",
         "message": "Current FlowPilot run is not permitted to continue: packet_authority_unchecked",
         "reason": "packet_authority_unchecked",
-        "run_id": "run-20260516-110604",
+        "run_id": "run-20260516-151449",
         "severity": "blocking"
       }
     ],
@@ -519,8 +519,8 @@
       "status": "selected",
       "status_summary_reports_blocked": false
     },
-    "run_id": "run-20260516-110604",
-    "run_root": ".flowpilot\\runs\\run-20260516-110604",
+    "run_id": "run-20260516-151449",
+    "run_root": ".flowpilot\\runs\\run-20260516-151449",
     "sealed_body_opened_by_mesh": false
   },
   "model": "flowpilot_model_mesh",

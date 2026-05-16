@@ -234,7 +234,7 @@
         "state_count": 9,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-16T12:14:20.017936+00:00",
+            "created_at": "2026-05-16T17:39:02.993919+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -302,7 +302,7 @@
         "state_count": 7,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-16T12:14:20.116339+00:00",
+            "created_at": "2026-05-16T17:39:02.952539+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",

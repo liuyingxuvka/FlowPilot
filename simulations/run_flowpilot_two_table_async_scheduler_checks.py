@@ -75,7 +75,7 @@ HAZARD_EXPECTED_FAILURES = {
         "Router scheduler row reconciliation status was downgraded after receipt sync"
     ),
     model.SINGLE_CARD_ACK_WAIT_STALE_AFTER_RETURN_RESOLUTION: (
-        "Controller passive wait stayed waiting after single-card ACK return resolved"
+        "Controller ACK wait stayed waiting after single-card ACK return resolved"
     ),
     model.SINGLE_CARD_ACK_SCHEDULER_STALE_AFTER_RETURN_RESOLUTION: (
         "Router scheduler row stayed waiting after single-card ACK return resolved"

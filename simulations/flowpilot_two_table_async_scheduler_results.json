@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-05-16T16:47:48.267620+00:00",
+  "checked_at": "2026-05-16T17:40:57.001067+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -2569,7 +2569,7 @@
         "detected": true,
         "expected_failure": "Router scheduler row stayed waiting after single-card ACK return resolved",
         "failures": [
-          "single-card ACK return resolved without reconciling Controller wait row and Router scheduler row",
+          "single-card ACK return resolved without reconciling Controller ACK wait row and Router scheduler row",
           "Router scheduler row stayed waiting after single-card ACK return resolved"
         ],
         "state": {
@@ -2689,10 +2689,10 @@
       },
       "single_card_ack_wait_stale_after_return_resolution": {
         "detected": true,
-        "expected_failure": "Controller passive wait stayed waiting after single-card ACK return resolved",
+        "expected_failure": "Controller ACK wait stayed waiting after single-card ACK return resolved",
         "failures": [
-          "single-card ACK return resolved without reconciling Controller wait row and Router scheduler row",
-          "Controller passive wait stayed waiting after single-card ACK return resolved"
+          "single-card ACK return resolved without reconciling Controller ACK wait row and Router scheduler row",
+          "Controller ACK wait stayed waiting after single-card ACK return resolved"
         ],
         "state": {
           "barrier_active": false,

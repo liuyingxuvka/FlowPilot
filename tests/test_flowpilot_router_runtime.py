@@ -5762,6 +5762,51 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertNotEqual((after.get("pending_action") or {}).get("action_id"), action.get("action_id"))
 
+    def test_router_daemon_card_ack_reconciles_matching_controller_ack_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        action = self.deliver_startup_fact_check_card_without_ack(root)
+        state = read_json(router.run_state_path(run_root))
+        wait_action = router.make_action(
+            action_type="await_card_return_event",
+            actor="controller",
+            label="controller_waits_for_reviewer_startup_fact_card_ack",
+            summary="Controller waits for Reviewer startup fact card ACK.",
+            to_role=str(action["to_role"]),
+            extra={
+                "waiting_for_role": str(action["to_role"]),
+                "delivery_attempt_id": action["delivery_attempt_id"],
+                "card_id": action["card_id"],
+                "card_return_event": action["card_return_event"],
+                "expected_return_path": action["expected_return_path"],
+            },
+        )
+        wait_entry = router._write_controller_action_entry(root, run_root, state, wait_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        self.submit_system_card_ack_without_router_next(root, action)
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 1)
+        reconciled_wait = read_json(root / wait_entry["action_path"])
+        self.assertEqual(reconciled_wait["status"], "resolved")
+        self.assertEqual(reconciled_wait["router_reconciliation_status"], "reconciled")
+        self.assertEqual(reconciled_wait["router_reconciliation"]["clearance_kind"], "ack_wait_only")
+        self.assertTrue(reconciled_wait["router_reconciliation"]["ack_does_not_complete_output_bearing_work"])
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item.get("row_id") == wait_entry["router_scheduler_row_id"])
+        self.assertEqual(row["router_state"], "reconciled")
+        summary = router._controller_action_ledger_summary(run_root)  # type: ignore[attr-defined]
+        matching_waits = [
+            item
+            for item in summary["passive_waits"]
+            if item.get("action_id") == wait_entry["action_id"]
+        ]
+        self.assertEqual(len(matching_waits), 1)
+        self.assertEqual(matching_waits[0]["status"], "resolved")
+        self.assertEqual(matching_waits[0]["router_reconciliation_status"], "reconciled")
+
     def test_router_daemon_invalid_card_ack_variants_do_not_advance(self) -> None:
         variants = {
             "wrong_role": lambda ack: ack.update({"role_key": "project_manager"}),
@@ -11417,6 +11462,99 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(gate["passed"])
         self.assertEqual(gate["work_package_class"], "ack_only_prompt")
         self.assertEqual(gate["output_events"], [])
+
+    def test_dispatch_recipient_gate_allows_work_after_resolved_ack_only_card_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-dispatch-gate-resolved-ack-only-wait")
+        state = read_json(router.run_state_path(run_root))
+        wait_action = router.make_action(
+            action_type="await_card_return_event",
+            actor="controller",
+            label="controller_waits_for_pm_core_card_ack",
+            summary="Controller waits for PM core card ACK.",
+            to_role="project_manager",
+            extra={
+                "waiting_for_role": "project_manager",
+                "delivery_attempt_id": "pm-core-attempt",
+                "card_id": "pm.core",
+                "card_return_event": "pm_card_ack",
+                "expected_return_path": "mailbox/outbox/card_acks/pm_core.ack.json",
+            },
+        )
+        wait_entry = router._write_controller_action_entry(root, run_root, state, wait_action)  # type: ignore[attr-defined]
+        wait_entry["status"] = "resolved"
+        wait_entry["completed_at"] = router.utc_now()
+        wait_entry["router_reconciliation_status"] = "reconciled"
+        wait_entry["router_reconciliation"] = {"clearance_kind": "ack_wait_only"}
+        router.write_json(root / wait_entry["action_path"], wait_entry)
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+
+        action = router.make_action(
+            action_type="deliver_mail",
+            actor="controller",
+            label="deliver_pm_mail_after_ack_only_wait",
+            summary="Deliver PM mail after ACK-only card wait resolved.",
+            mail_id="new-pm-mail",
+            to_role="project_manager",
+        )
+
+        gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)  # type: ignore[attr-defined]
+
+        self.assertEqual(gated["action_type"], "deliver_mail")
+        self.assertTrue(gated["dispatch_recipient_gate"]["passed"])
+        self.assertEqual(gated["dispatch_recipient_gate"]["target_roles"], ["project_manager"])
+
+    def test_dispatch_recipient_gate_keeps_output_work_busy_after_card_ack_only(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-dispatch-gate-output-card-ack-only")
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["node_review_blocked"] = True
+        state["flags"]["pm_model_miss_triage_card_delivered"] = True
+        router.write_json(router.run_state_path(run_root), state)
+        wait_action = router.make_action(
+            action_type="await_card_return_event",
+            actor="controller",
+            label="controller_waits_for_pm_model_miss_triage_card_ack",
+            summary="Controller waits for PM model-miss triage card ACK.",
+            to_role="project_manager",
+            extra={
+                "waiting_for_role": "project_manager",
+                "delivery_attempt_id": "pm-model-miss-triage-attempt",
+                "card_id": "pm.model_miss_triage",
+                "card_return_event": "pm_card_ack",
+                "expected_return_path": "mailbox/outbox/card_acks/pm_model_miss_triage.ack.json",
+            },
+        )
+        wait_entry = router._write_controller_action_entry(root, run_root, state, wait_action)  # type: ignore[attr-defined]
+        wait_entry["status"] = "resolved"
+        wait_entry["completed_at"] = router.utc_now()
+        wait_entry["router_reconciliation_status"] = "reconciled"
+        wait_entry["router_reconciliation"] = {
+            "clearance_kind": "ack_wait_only",
+            "ack_does_not_complete_output_bearing_work": True,
+        }
+        router.write_json(root / wait_entry["action_path"], wait_entry)
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+
+        route_action = router.make_action(
+            action_type="deliver_system_card",
+            actor="controller",
+            label="pm_route_skeleton_phase_card_delivered",
+            summary="Deliver an independent PM route card.",
+            card_id="pm.route_skeleton",
+            to_role="project_manager",
+        )
+
+        gated = router._apply_dispatch_recipient_gate(root, state, run_root, route_action)  # type: ignore[attr-defined]
+
+        self.assertEqual(gated["action_type"], "await_role_decision")
+        self.assertEqual(gated["to_role"], "project_manager")
+        self.assertEqual(gated["allowed_external_events"], ["pm_records_model_miss_triage_decision"])
+        gate = gated["dispatch_recipient_gate"]
+        self.assertFalse(gate["passed"])
+        self.assertEqual(gate["busy_source"], "pending_expected_output")
+        self.assertEqual(gate["busy_reason"], "target_role_output_obligation_already_pending")
+        self.assertEqual(gate["blocked_work_package_class"], "output_bearing_work_package")
 
     def test_dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending(self) -> None:
         root = self.make_project()
