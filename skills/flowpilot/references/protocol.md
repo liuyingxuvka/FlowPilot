@@ -60,9 +60,19 @@ long-form public explanation lives in `docs/protocol.md`.
    heartbeat-resume, repair, and completion decisions from this point forward.
    The main assistant becomes the controller for packet flow, not the default
    implementation worker.
+   Before startup activation, PM sees startup authorization metadata only:
+   startup answers, run/role/continuation/display evidence, and sealed
+   user-intake envelope path/hash. The full user work-request body stays
+   Router-held.
 10. Before PM product-function synthesis or route decisions, require a
     PM-authored material-intake packet envelope/body pair that passes router
     direct-dispatch preflight.
+    Router exposes the full `user_intake` packet as PM mail only after PM
+    approves startup activation from the reviewer startup fact report.
+    Controller must relay the envelope and write the Controller relay
+    signature before PM opens the body; that Controller-relayed delivery comes
+    before material scan, product-function synthesis, route design, or
+    implementation work.
     The authorized worker writes
     `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,

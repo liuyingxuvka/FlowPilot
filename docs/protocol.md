@@ -52,7 +52,18 @@ branches, heartbeat behavior, and any task-local behavior models.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
-10. Before PM product-function synthesis or route decisions, require the main
+   Before startup activation, PM receives startup authorization metadata only:
+   startup answers, run/role/continuation/display evidence, and sealed
+   user-intake envelope path/hash. The full user work-request body remains
+   Router-held.
+10. After the reviewer startup fact report, PM approves startup activation,
+    requests a targeted startup repair, or declares startup protocol dead-end.
+    Only after PM approval may Router expose the full `user_intake` packet as
+    PM mail. Controller must relay the envelope and write the Controller relay
+    signature before PM opens the body. That Controller-relayed delivery must
+    happen before material scan, product-function synthesis, route design, or
+    implementation work.
+11. Before PM product-function synthesis or route decisions, require the main
     executor to write `.flowpilot/runs/<run-id>/material_intake_packet.json`: inventory,
     source summaries, source authority/freshness/contradiction classification,
     local skill and host capability inventory, coverage map, and unread or

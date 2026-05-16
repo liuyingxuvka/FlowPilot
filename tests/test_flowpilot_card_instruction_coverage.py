@@ -183,8 +183,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         packet_runtime_text = normalized(ROOT / "skills/flowpilot/assets/packet_runtime.py")
         packet_template = normalized(ROOT / "templates/flowpilot/packets/packet_body.template.md")
         pm_card = normalized(ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md")
-        pm_startup_cards = [
-            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md",
+        pm_startup_intake_card = ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md"
+        pm_verified_open_cards = [
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md",
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
         ]
@@ -206,7 +206,12 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("pm_control_blocker_repair_decision", text)
             self.assertIn("ordinary blocker back to pm", text)
 
-        for path in pm_startup_cards:
+        intake_text = normalized(pm_startup_intake_card)
+        self.assertIn("do not run `open-packet`", intake_text)
+        self.assertIn("full `user_intake` body remains router-held until pm approves startup activation", intake_text)
+        self.assertIn("ordinary blocker back to pm", intake_text)
+
+        for path in pm_verified_open_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
                 self.assertIn("verified open", text)

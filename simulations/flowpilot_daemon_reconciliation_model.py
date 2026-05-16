@@ -419,14 +419,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     ):
         if state.user_intake_router_owned and state.user_intake_packet_to_pm:
             yield Transition(
-                "daemon_reconciles_card_bundle_ack_wait_and_releases_user_intake",
+                "daemon_reconciles_card_bundle_ack_wait_without_user_intake_release",
                 _step(
                     state,
                     startup_card_bundle_wait_action_reconciled=True,
                     startup_card_bundle_wait_scheduler_reconciled=True,
                     startup_card_bundle_ack_completion_normalized=True,
-                    user_intake_released_to_pm=True,
-                    user_intake_release_count=1,
+                    user_intake_released_to_pm=False,
+                    user_intake_release_count=0,
                     user_intake_delivery_action_queued=False,
                     pending_action_kind="none",
                     pending_action_status="none",
@@ -1019,18 +1019,6 @@ def hazard_states() -> dict[str, State]:
             startup_card_bundle_ack_completion_normalized=False,
             next_action_computed=True,
         ),
-        "card_bundle_ack_resolved_user_intake_not_dispatched": replace(
-            safe,
-            startup_card_bundle_ack_resolved=True,
-            startup_card_bundle_wait_action_reconciled=True,
-            startup_card_bundle_wait_scheduler_reconciled=True,
-            startup_card_bundle_ack_completion_normalized=True,
-            user_intake_router_owned=True,
-            user_intake_packet_to_pm=True,
-            user_intake_released_to_pm=False,
-            user_intake_delivery_action_queued=False,
-            next_action_computed=True,
-        ),
         "startup_user_intake_controller_owned": replace(
             safe,
             startup_card_bundle_ack_resolved=True,
@@ -1052,6 +1040,19 @@ def hazard_states() -> dict[str, State]:
             user_intake_packet_to_pm=True,
             user_intake_released_to_pm=False,
             user_intake_delivery_action_queued=True,
+            next_action_computed=True,
+        ),
+        "card_bundle_ack_released_user_intake_before_activation": replace(
+            safe,
+            startup_card_bundle_ack_resolved=True,
+            startup_card_bundle_wait_action_reconciled=True,
+            startup_card_bundle_wait_scheduler_reconciled=True,
+            startup_card_bundle_ack_completion_normalized=True,
+            user_intake_router_owned=True,
+            user_intake_packet_to_pm=True,
+            user_intake_released_to_pm=True,
+            user_intake_release_count=1,
+            user_intake_delivery_action_queued=False,
             next_action_computed=True,
         ),
         "card_bundle_ack_duplicate_user_intake_release": replace(
@@ -1721,25 +1722,17 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("system-card bundle ACK wait action and scheduler reconciliation disagreed")
         if state.next_action_computed and not state.startup_card_bundle_ack_completion_normalized:
             failures.append("system-card bundle ACK completion was not normalized to resolved")
-        if (
-            state.next_action_computed
-            and state.user_intake_router_owned
-            and state.user_intake_packet_to_pm
-            and not state.user_intake_released_to_pm
-            and not state.control_blocker_written
-        ):
-            failures.append("PM system-card ACK resolved while Router-owned user_intake was not released to PM")
         if state.next_action_computed and state.user_intake_delivery_action_queued:
-            failures.append("PM system-card ACK queued a Controller deliver_mail row instead of Router release")
-        if state.user_intake_release_count > 1:
-            failures.append("Router released startup user_intake more than once")
+            failures.append("PM system-card ACK queued user_intake deliver_mail before startup activation")
+        if state.user_intake_released_to_pm or state.user_intake_release_count > 0:
+            failures.append("PM system-card ACK released startup user_intake before startup activation")
         if (
             state.unrelated_controller_action_repeated_after_ack
             and state.user_intake_router_owned
             and state.user_intake_packet_to_pm
             and not state.user_intake_released_to_pm
         ):
-            failures.append("Router repeated unrelated Controller work after PM ACK instead of releasing user_intake")
+            failures.append("Router repeated unrelated Controller work after PM ACK before startup fact review")
 
     if state.controller_receipt_action_class == "startup_bootloader":
         startup_fold_complete = (
@@ -1944,10 +1937,9 @@ INVARIANTS = (
     _invariant("card_bundle_ack_action_scheduler_agree", "system-card bundle ACK wait action and scheduler reconciliation disagreed"),
     _invariant("card_bundle_ack_completion_normalized", "system-card bundle ACK completion was not normalized to resolved"),
     _invariant("startup_user_intake_router_owned", "startup user_intake was Controller-held instead of Router-owned startup material"),
-    _invariant("pm_ack_releases_user_intake", "PM system-card ACK resolved while Router-owned user_intake was not released to PM"),
-    _invariant("pm_ack_does_not_queue_controller_user_intake_delivery", "PM system-card ACK queued a Controller deliver_mail row instead of Router release"),
-    _invariant("pm_ack_user_intake_release_idempotent", "Router released startup user_intake more than once"),
-    _invariant("pm_ack_preempts_unrelated_controller_loop", "Router repeated unrelated Controller work after PM ACK instead of releasing user_intake"),
+    _invariant("pm_ack_does_not_queue_controller_user_intake_delivery", "PM system-card ACK queued user_intake deliver_mail before startup activation"),
+    _invariant("pm_ack_does_not_release_user_intake_before_activation", "PM system-card ACK released startup user_intake before startup activation"),
+    _invariant("pm_ack_preempts_unrelated_controller_loop", "Router repeated unrelated Controller work after PM ACK before startup fact review"),
     _invariant("startup_receipt_does_not_depend_on_later_apply_path", "startup Controller receipt required a separate apply path to advance"),
     _invariant("startup_receipt_single_owner_before_next_action", "startup Controller receipt reached next action through split receipt/apply ownership"),
     _invariant("startup_receipt_single_owner_fold_updates_all_projections", "startup bootloader receipt single-owner fold did not update every durable projection"),

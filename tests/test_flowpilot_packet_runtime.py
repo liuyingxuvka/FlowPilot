@@ -621,6 +621,39 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             "expected_pm_packet_output_or_existing_pm_recovery_decision",
         )
 
+    def test_user_intake_router_startup_release_does_not_authorize_body_open(self) -> None:
+        root = self.make_project()
+        envelope = packet_runtime.create_user_intake_packet(
+            root,
+            packet_id="user-intake-router-only",
+            node_id="startup",
+            body_text="user task prompt",
+            body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+            router_owned_startup_material=True,
+        )
+        released = packet_runtime.router_release_startup_user_intake(
+            root,
+            envelope=envelope,
+            envelope_path=self.packet_envelope_path(root, "user-intake-router-only"),
+            released_to_role="project_manager",
+        )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "missing controller relay"):
+            packet_runtime.read_packet_body_for_role(root, released, role="project_manager")
+
+        relayed = packet_runtime.controller_relay_envelope(
+            root,
+            envelope=released,
+            envelope_path=self.packet_envelope_path(root, "user-intake-router-only"),
+            controller_agent_id="agent-controller-1",
+            received_from_role="user",
+            relayed_to_role="project_manager",
+        )
+        body = packet_runtime.read_packet_body_for_role(root, relayed, role="project_manager")
+        self.assertIn("user task prompt", body)
+        opened = self.read_json(self.packet_envelope_path(root, "user-intake-router-only"))
+        self.assertEqual(opened["packet_open_work_authority"]["source"], "controller_relay")
+
     def test_packet_identity_boundary_is_required_on_read(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root, body_text="worker work"))

@@ -1102,7 +1102,7 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "record_user_request",
         "flag": "user_request_recorded",
         "label": "user_request_recorded_from_explicit_user_request",
-        "summary": "Record the exact current FlowPilot task text from explicit user input before PM receives user_intake.",
+        "summary": "Record the exact current FlowPilot task text from explicit user input while the full user_intake remains sealed until startup activation.",
         "actor": "bootloader",
         "requires_user": True,
         "requires_payload": "user_request",
@@ -1232,7 +1232,7 @@ SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_material_scan_card_delivered",
         "label": "pm_material_scan_card_delivered",
         "card_id": "pm.material_scan",
-        "requires_flag": "startup_activation_approved",
+        "requires_flag": "user_intake_delivered_to_pm",
         "to_role": "project_manager",
     },
     {
@@ -1651,6 +1651,7 @@ MAIL_SEQUENCE: tuple[dict[str, str], ...] = (
         "label": "user_intake_delivered_to_pm",
         "mail_id": "user_intake",
         "to_role": "project_manager",
+        "requires_flag": "startup_activation_approved",
     },
 )
 
@@ -6472,6 +6473,26 @@ def _mail_sequence_entry(mail_id: str) -> dict[str, str] | None:
     return next((entry for entry in MAIL_SEQUENCE if entry["mail_id"] == mail_id), None)
 
 
+def _mail_role_obligation_contract(entry: dict[str, str]) -> dict[str, Any] | None:
+    if entry.get("mail_id") != "user_intake":
+        return None
+    return {
+        "schema_version": "flowpilot.mail_role_obligation.v1",
+        "mail_id": "user_intake",
+        "target_role": "project_manager",
+        "mail_is_formal_work_material": True,
+        "not_prompt_or_instruction_card": True,
+        "first_output_instruction_card_id": "pm.material_scan",
+        "first_expected_output_event": "pm_issues_material_and_capability_scan_packets",
+        "first_expected_output_summary": (
+            "PM opens user_intake, reads the full user request through the runtime, "
+            "then produces material/capability scan packet specs for Router."
+        ),
+        "blocks_independent_pm_dispatch_until_first_output": True,
+        "controller_visibility": "metadata_only",
+    }
+
+
 def _mail_delivery_matches(item: object, *, mail_id: str, to_role: str) -> bool:
     return (
         isinstance(item, dict)
@@ -6536,16 +6557,6 @@ def _mail_delivery_packet_released(record: dict[str, Any] | None, *, to_role: st
     relay = record.get("packet_controller_relay")
     if not isinstance(relay, dict):
         relay = record.get("controller_relay")
-    router_release = record.get("packet_router_release") or record.get("router_startup_release")
-    if isinstance(router_release, dict):
-        return (
-            str(record.get("active_packet_holder") or "") == to_role
-            and str(record.get("active_packet_status") or "") == "envelope-relayed"
-            and router_release.get("delivered_by_router") is True
-            and str(router_release.get("relayed_to_role") or "") == to_role
-            and router_release.get("body_was_read_by_router") is False
-            and router_release.get("body_was_executed_by_router") is False
-        )
     return (
         str(record.get("active_packet_holder") or "") == to_role
         and str(record.get("active_packet_status") or "") == "envelope-relayed"
@@ -12034,6 +12045,549 @@ def _apply_formal_work_packet_ack_preflight(
     action["next_step_contract"]["ack_is_read_receipt_only"] = True
     action["next_step_contract"]["target_work_completion_evidence_required_separately"] = True
     return action
+
+
+DISPATCH_RECIPIENT_GATE_ACTION_TYPES = {
+    "deliver_mail",
+    "deliver_system_card",
+    "deliver_system_card_bundle",
+    *FORMAL_WORK_PACKET_RELAY_ACTION_TYPES,
+}
+DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET = {
+    ("project_manager", "user_intake"): "pm.material_scan",
+}
+DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS = {
+    "user_intake": "pm_material_packets_issued",
+}
+DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
+    "pm.event.reviewer_report": (
+        "pm_accepts_reviewed_material",
+        "pm_requests_research_after_material_insufficient",
+    ),
+    "pm.event.reviewer_blocked": (
+        PM_MODEL_MISS_TRIAGE_DECISION_EVENT,
+        "pm_revises_node_acceptance_plan",
+        "pm_mutates_route_after_review_block",
+    ),
+    "pm.review_repair": (
+        "pm_revises_node_acceptance_plan",
+        "pm_mutates_route_after_review_block",
+    ),
+}
+
+PM_ROLE_WORK_TARGET_BUSY_STATUSES = {"open", "packet_created", "packet_relayed"}
+PM_ROLE_WORK_PM_BUSY_STATUSES = {"result_returned", "result_relayed_to_pm"}
+
+
+def _dispatch_gate_target_roles(action: dict[str, Any]) -> set[str]:
+    return _role_set(str(action.get("to_role") or ""))
+
+
+def _dispatch_gate_candidate_packet_ids(action: dict[str, Any]) -> set[str]:
+    packet_ids: set[str] = set()
+    for key in ("packet_id", "mail_id"):
+        value = str(action.get(key) or "").strip()
+        if value:
+            packet_ids.add(value)
+    raw_packet_ids = action.get("packet_ids")
+    if isinstance(raw_packet_ids, list):
+        packet_ids.update(str(item).strip() for item in raw_packet_ids if str(item).strip())
+    active_holder = action.get("active_holder_fast_lane")
+    packets = active_holder.get("packets") if isinstance(active_holder, dict) else None
+    if isinstance(packets, list):
+        for item in packets:
+            if isinstance(item, dict):
+                packet_id = str(item.get("packet_id") or "").strip()
+                if packet_id:
+                    packet_ids.add(packet_id)
+    return packet_ids
+
+
+def _dispatch_gate_candidate_request_ids(action: dict[str, Any]) -> set[str]:
+    request_ids: set[str] = set()
+    value = str(action.get("request_id") or "").strip()
+    if value:
+        request_ids.add(value)
+    raw_requests = action.get("request_ids")
+    if isinstance(raw_requests, list):
+        request_ids.update(str(item).strip() for item in raw_requests if str(item).strip())
+    return request_ids
+
+
+def _dispatch_gate_card_entry(card_id: str) -> dict[str, Any] | None:
+    return next((entry for entry in SYSTEM_CARD_SEQUENCE if entry.get("card_id") == card_id), None)
+
+
+def _dispatch_gate_system_card_ids(action: dict[str, Any]) -> list[str]:
+    action_type = action.get("action_type")
+    if action_type == "deliver_system_card":
+        card_id = str(action.get("card_id") or "").strip()
+        return [card_id] if card_id else []
+    if action_type != "deliver_system_card_bundle":
+        return []
+    card_ids: list[str] = []
+    raw_card_ids = action.get("card_ids")
+    if isinstance(raw_card_ids, list):
+        card_ids.extend(str(item).strip() for item in raw_card_ids if str(item or "").strip())
+    raw_cards = action.get("cards")
+    if isinstance(raw_cards, list):
+        for item in raw_cards:
+            if isinstance(item, dict):
+                card_id = str(item.get("card_id") or item.get("id") or "").strip()
+                if card_id:
+                    card_ids.append(card_id)
+    return list(dict.fromkeys(card_ids))
+
+
+def _dispatch_gate_output_events_for_card_id(card_id: str) -> list[str]:
+    entry = _dispatch_gate_card_entry(card_id)
+    if not isinstance(entry, dict):
+        return []
+    card_flag = str(entry.get("flag") or "")
+    output_events: list[str] = []
+    for event, meta in EXTERNAL_EVENTS.items():
+        if meta.get("requires_flag") == card_flag:
+            output_events.append(event)
+    output_events.extend(DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS.get(card_id, ()))
+    return list(dict.fromkeys(output_events))
+
+
+def _dispatch_gate_output_events_for_action(action: dict[str, Any]) -> list[str]:
+    output_events: list[str] = []
+    for card_id in _dispatch_gate_system_card_ids(action):
+        output_events.extend(_dispatch_gate_output_events_for_card_id(card_id))
+    return list(dict.fromkeys(output_events))
+
+
+def _dispatch_gate_action_is_ack_only_prompt(action: dict[str, Any]) -> bool:
+    if action.get("action_type") not in {"deliver_system_card", "deliver_system_card_bundle"}:
+        return False
+    card_ids = _dispatch_gate_system_card_ids(action)
+    return bool(card_ids) and not _dispatch_gate_output_events_for_action(action)
+
+
+def _dispatch_gate_action_work_class(action: dict[str, Any]) -> str:
+    if _dispatch_gate_action_is_ack_only_prompt(action):
+        return "ack_only_prompt"
+    if action.get("action_type") in {"deliver_system_card", "deliver_system_card_bundle"}:
+        return "output_bearing_work_package"
+    return "work_dispatch"
+
+
+def _dispatch_gate_wait_events_for_packet_record(record: dict[str, Any]) -> list[str]:
+    packet_family = str(record.get("packet_family") or "").strip()
+    packet_type = str(record.get("packet_type") or "").strip()
+    packet_id = str(record.get("packet_id") or "").strip()
+    holder = str(record.get("active_packet_holder") or "").strip()
+    if holder == "project_manager" and packet_id == "user_intake":
+        return ["pm_issues_material_and_capability_scan_packets"]
+    if holder == "project_manager" and packet_id.startswith("material-scan"):
+        return ["pm_records_material_scan_result_disposition"]
+    if holder == "project_manager" and "research" in packet_id:
+        return ["pm_records_research_result_disposition"]
+    if holder == "project_manager" and "node" in packet_id:
+        return ["pm_completes_current_node_from_reviewed_result"]
+    if packet_family == "pm_role_work" or packet_type == "pm_role_work_request" or packet_id.startswith("pm-role-work-"):
+        return [ROLE_WORK_RESULT_RETURNED_EVENT]
+    if packet_family == "research" or "research" in packet_id:
+        return ["worker_research_report_returned"]
+    if packet_family == "material_scan" or "material" in packet_id:
+        return ["worker_scan_results_returned"]
+    return ["worker_current_node_result_returned", ROLE_WORK_RESULT_RETURNED_EVENT]
+
+
+def _dispatch_gate_packet_completed_by_flow_state(record: dict[str, Any], run_state: dict[str, Any]) -> bool:
+    packet_id = str(record.get("packet_id") or "").strip()
+    completion_flag = DISPATCH_RECIPIENT_GATE_PACKET_COMPLETION_FLAGS.get(packet_id)
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if completion_flag and flags.get(completion_flag):
+        return True
+    if packet_id.startswith("material-scan") and flags.get("material_scan_results_absorbed_by_pm"):
+        return True
+    if "research" in packet_id and flags.get("research_result_absorbed_for_review_by_pm"):
+        return True
+    if "node" in packet_id and flags.get("current_node_result_absorbed_by_pm"):
+        return True
+    return False
+
+
+def _dispatch_gate_same_obligation_instruction(
+    action: dict[str, Any],
+    record: dict[str, Any],
+    run_state: dict[str, Any],
+) -> bool:
+    if action.get("action_type") != "deliver_system_card":
+        return False
+    holder = str(record.get("active_packet_holder") or "").strip()
+    packet_id = str(record.get("packet_id") or "").strip()
+    expected_card = DISPATCH_RECIPIENT_GATE_SAME_OBLIGATION_CARDS_BY_PACKET.get((holder, packet_id))
+    if not expected_card or str(action.get("card_id") or "") != expected_card:
+        return False
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    return bool(flags.get("user_intake_delivered_to_pm") and not flags.get("pm_material_packets_issued"))
+
+
+def _dispatch_gate_same_obligation_instruction_context(
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    target_roles: set[str],
+) -> dict[str, Any] | None:
+    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json")
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []
+    if not isinstance(packets, list):
+        return None
+    for record in packets:
+        if not isinstance(record, dict):
+            continue
+        holder = str(record.get("active_packet_holder") or "").strip()
+        status = str(record.get("active_packet_status") or record.get("status") or "").strip()
+        if holder not in target_roles or not _packet_status_allows_current_work(status):
+            continue
+        if _dispatch_gate_same_obligation_instruction(action, record, run_state):
+            return {
+                "packet_id": record.get("packet_id"),
+                "active_packet_holder": holder,
+                "instruction_card_id": action.get("card_id"),
+                "expected_first_output_event": "pm_issues_material_and_capability_scan_packets",
+            }
+    return None
+
+
+def _dispatch_gate_wait_action(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    *,
+    blocked_action: dict[str, Any],
+    blocker: dict[str, Any],
+) -> dict[str, Any]:
+    target_role = str(blocker.get("target_role") or "").strip()
+    if not target_role:
+        target_role = ",".join(sorted(_dispatch_gate_target_roles(blocked_action))) or "project_manager"
+    allowed_events = [str(item) for item in blocker.get("allowed_external_events") or [] if str(item)]
+    if not allowed_events:
+        if target_role == "project_manager":
+            allowed_events = [PM_ROLE_WORK_RESULT_DECISION_EVENT]
+        else:
+            allowed_events = [ROLE_WORK_RESULT_RETURNED_EVENT]
+    source_path = str(blocker.get("source_path") or "").strip()
+    allowed_reads = [project_relative(project_root, run_state_path(run_root))]
+    if source_path and source_path not in allowed_reads:
+        allowed_reads.append(source_path)
+    payload_contract = {
+        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+        "name": "dispatch_recipient_gate_wait",
+        "required_fields": [],
+        "blocked_action_type": blocked_action.get("action_type"),
+        "blocked_label": blocked_action.get("label"),
+        "target_role": target_role,
+        "busy_source": blocker.get("source"),
+        "busy_reason": blocker.get("reason"),
+        "packet_id": blocker.get("packet_id"),
+        "request_id": blocker.get("request_id"),
+        "blocked_work_package_class": blocker.get("blocked_work_package_class"),
+        "blocked_output_events": blocker.get("blocked_output_events") or [],
+        "controller_visibility": "metadata_only",
+        "sealed_body_reads_allowed": False,
+    }
+    wait_action = make_action(
+        action_type="await_role_decision",
+        actor="controller",
+        label=f"controller_waits_for_dispatch_recipient_idle_{_safe_delivery_component(target_role)}",
+        summary=(
+            "Controller must wait because Router blocked a new dispatch until "
+            f"{target_role} finishes the prior unfinished obligation."
+        ),
+        allowed_reads=allowed_reads,
+        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
+        to_role=target_role,
+        extra={
+            "allowed_external_events": allowed_events,
+            "controller_only_mode_active": True,
+            "controller_may_create_project_evidence": False,
+            "expected_wait_is_not_control_blocker": True,
+            "payload_contract": payload_contract,
+            "dispatch_recipient_gate": {
+                "schema_version": "flowpilot.dispatch_recipient_gate.v1",
+                "passed": False,
+                "blocked_action_type": blocked_action.get("action_type"),
+                "blocked_label": blocked_action.get("label"),
+                "target_role": target_role,
+                "busy_source": blocker.get("source"),
+                "busy_reason": blocker.get("reason"),
+                "packet_id": blocker.get("packet_id"),
+                "request_id": blocker.get("request_id"),
+                "blocked_work_package_class": blocker.get("blocked_work_package_class"),
+                "blocked_output_events": blocker.get("blocked_output_events") or [],
+                "source_path": source_path or None,
+                "sealed_body_reads_allowed": False,
+            },
+        },
+    )
+    wait_action["nonblocking_wait"] = False
+    return wait_action
+
+
+def _dispatch_gate_pending_ack_wait(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    action: dict[str, Any],
+    target_roles: set[str],
+) -> dict[str, Any] | None:
+    pending = [
+        record
+        for record in _pending_return_records(run_root, str(run_state["run_id"]))
+        if str(record.get("target_role") or "") in target_roles
+    ]
+    if not pending:
+        return None
+    wait_action = _next_pending_card_return_action(
+        project_root,
+        run_state,
+        run_root,
+        pending,
+        clearance_reason="dispatch_recipient_gate",
+    )
+    if wait_action is None:
+        return None
+    wait_action["dispatch_recipient_gate"] = {
+        "schema_version": "flowpilot.dispatch_recipient_gate.v1",
+        "passed": False,
+        "blocked_action_type": action.get("action_type"),
+        "blocked_label": action.get("label"),
+        "target_roles": sorted(target_roles),
+        "busy_source": "pending_return_ledger",
+        "busy_reason": "target_role_ack_or_bundle_return_unresolved",
+        "pending_return_count": len(pending),
+        "blocked_work_package_class": _dispatch_gate_action_work_class(action),
+        "blocked_output_events": _dispatch_gate_output_events_for_action(action),
+        "source_path": project_relative(project_root, _return_event_ledger_path(run_root)),
+        "sealed_body_reads_allowed": False,
+    }
+    wait_action.setdefault("next_step_contract", {})["dispatch_recipient_gate"] = wait_action["dispatch_recipient_gate"]
+    return wait_action
+
+
+def _dispatch_gate_packet_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    target_roles: set[str],
+    candidate_packet_ids: set[str],
+) -> dict[str, Any] | None:
+    if _dispatch_gate_action_is_ack_only_prompt(action):
+        return None
+    packet_ledger_path = run_root / "packet_ledger.json"
+    packet_ledger = read_json_if_exists(packet_ledger_path)
+    packets = packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []
+    if not isinstance(packets, list):
+        return None
+    for record in packets:
+        if not isinstance(record, dict):
+            continue
+        packet_id = str(record.get("packet_id") or "").strip()
+        if packet_id and packet_id in candidate_packet_ids:
+            continue
+        if _dispatch_gate_packet_completed_by_flow_state(record, run_state):
+            continue
+        holder = str(record.get("active_packet_holder") or "").strip()
+        status = str(record.get("active_packet_status") or record.get("status") or "").strip()
+        if holder not in target_roles or not _packet_status_allows_current_work(status):
+            continue
+        if _dispatch_gate_same_obligation_instruction(action, record, run_state):
+            continue
+        return {
+            "source": "packet_ledger",
+            "source_path": project_relative(project_root, packet_ledger_path),
+            "reason": "target_role_holds_unfinished_packet",
+            "target_role": holder,
+            "packet_id": packet_id or None,
+            "active_packet_status": status,
+            "blocked_work_package_class": _dispatch_gate_action_work_class(action),
+            "blocked_output_events": _dispatch_gate_output_events_for_action(action),
+            "allowed_external_events": _dispatch_gate_wait_events_for_packet_record(record),
+        }
+    return None
+
+
+def _dispatch_gate_pending_expected_output_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    target_roles: set[str],
+) -> dict[str, Any] | None:
+    if _dispatch_gate_action_is_ack_only_prompt(action):
+        return None
+    candidate_output_events = set(_dispatch_gate_output_events_for_action(action))
+    for group in _pending_expected_external_event_groups(run_state, run_root):
+        wait_group = _gate_completion_wait_group(group)
+        group_events = [event for event, _meta in wait_group]
+        allowed_events = _filter_events_by_legal_route_actions(project_root, run_root, run_state, group_events)
+        if not allowed_events:
+            continue
+        allowed_event_set = set(allowed_events)
+        filtered_group = [(event, meta) for event, meta in wait_group if event in allowed_event_set]
+        roles = {_event_wait_role(event, meta) for event, meta in filtered_group}
+        overlapping_roles = roles.intersection(target_roles)
+        if not overlapping_roles:
+            continue
+        if candidate_output_events and candidate_output_events.intersection(allowed_event_set):
+            continue
+        target_role = sorted(overlapping_roles)[0]
+        return {
+            "source": "pending_expected_output",
+            "source_path": project_relative(project_root, run_state_path(run_root)),
+            "reason": "target_role_output_obligation_already_pending",
+            "target_role": target_role,
+            "blocked_work_package_class": _dispatch_gate_action_work_class(action),
+            "blocked_output_events": sorted(candidate_output_events),
+            "allowed_external_events": allowed_events,
+        }
+    return None
+
+
+def _dispatch_gate_pm_role_work_blocker(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    target_roles: set[str],
+    candidate_packet_ids: set[str],
+    candidate_request_ids: set[str],
+) -> dict[str, Any] | None:
+    index_path = _pm_role_work_request_index_path(run_root)
+    index = _load_pm_role_work_request_index(run_root, run_state)
+    for record in index.get("requests", []):
+        if not isinstance(record, dict):
+            continue
+        request_id = str(record.get("request_id") or "").strip()
+        packet_id = str(record.get("packet_id") or "").strip()
+        if (request_id and request_id in candidate_request_ids) or (packet_id and packet_id in candidate_packet_ids):
+            continue
+        status = str(record.get("status") or "").strip()
+        to_role = str(record.get("to_role") or "").strip()
+        if to_role in target_roles and status in PM_ROLE_WORK_TARGET_BUSY_STATUSES:
+            return {
+                "source": "pm_role_work_index",
+                "source_path": project_relative(project_root, index_path),
+                "reason": "target_role_pm_role_work_unfinished",
+                "target_role": to_role,
+                "packet_id": packet_id or None,
+                "request_id": request_id or None,
+                "pm_role_work_status": status,
+                "blocked_work_package_class": _dispatch_gate_action_work_class(action),
+                "blocked_output_events": _dispatch_gate_output_events_for_action(action),
+                "allowed_external_events": [ROLE_WORK_RESULT_RETURNED_EVENT],
+            }
+        if "project_manager" in target_roles and status in PM_ROLE_WORK_PM_BUSY_STATUSES:
+            return {
+                "source": "pm_role_work_index",
+                "source_path": project_relative(project_root, index_path),
+                "reason": "pm_role_work_result_disposition_pending",
+                "target_role": "project_manager",
+                "packet_id": packet_id or None,
+                "request_id": request_id or None,
+                "pm_role_work_status": status,
+                "blocked_work_package_class": _dispatch_gate_action_work_class(action),
+                "blocked_output_events": _dispatch_gate_output_events_for_action(action),
+                "allowed_external_events": [PM_ROLE_WORK_RESULT_DECISION_EVENT],
+            }
+    return None
+
+
+def _dispatch_gate_passive_wait_blocker(
+    project_root: Path,
+    run_root: Path,
+    target_roles: set[str],
+) -> dict[str, Any] | None:
+    controller_ledger = _controller_action_ledger_summary(run_root)
+    passive_waits = controller_ledger.get("passive_waits") if isinstance(controller_ledger, dict) else []
+    if not isinstance(passive_waits, list):
+        return None
+    for item in passive_waits:
+        if not isinstance(item, dict):
+            continue
+        status = str(item.get("status") or "").strip()
+        reconciled = str(item.get("router_reconciliation_status") or "").strip()
+        if status in {"done", "resolved", "skipped", "superseded"} or reconciled == "reconciled":
+            continue
+        target = str(item.get("waiting_for_role") or item.get("to_role") or item.get("target_role") or "").strip()
+        if target not in target_roles:
+            continue
+        return {
+            "source": "controller_action_ledger.passive_waits",
+            "source_path": controller_ledger.get("path"),
+            "reason": "target_role_wait_already_active",
+            "target_role": target,
+            "action_id": item.get("action_id"),
+            "allowed_external_events": item.get("allowed_external_events") if isinstance(item.get("allowed_external_events"), list) else [],
+        }
+    return None
+
+
+def _apply_dispatch_recipient_gate(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    if action.get("action_type") not in DISPATCH_RECIPIENT_GATE_ACTION_TYPES:
+        return action
+    target_roles = _dispatch_gate_target_roles(action)
+    if not target_roles:
+        return action
+    candidate_packet_ids = _dispatch_gate_candidate_packet_ids(action)
+    candidate_request_ids = _dispatch_gate_candidate_request_ids(action)
+    wait_action = _dispatch_gate_pending_ack_wait(project_root, run_state, run_root, action, target_roles)
+    if wait_action is not None:
+        return wait_action
+    blocker = _dispatch_gate_passive_wait_blocker(project_root, run_root, target_roles)
+    same_obligation_instruction = _dispatch_gate_same_obligation_instruction_context(
+        run_root,
+        run_state,
+        action,
+        target_roles,
+    )
+    if blocker is None:
+        blocker = _dispatch_gate_pending_expected_output_blocker(project_root, run_root, run_state, action, target_roles)
+    if blocker is None:
+        blocker = _dispatch_gate_packet_blocker(project_root, run_root, run_state, action, target_roles, candidate_packet_ids)
+    if blocker is None and not _dispatch_gate_action_is_ack_only_prompt(action):
+        blocker = _dispatch_gate_pm_role_work_blocker(
+            project_root,
+            run_root,
+            run_state,
+            action,
+            target_roles,
+            candidate_packet_ids,
+            candidate_request_ids,
+        )
+    if blocker is None:
+        action["dispatch_recipient_gate"] = {
+            "schema_version": "flowpilot.dispatch_recipient_gate.v1",
+            "passed": True,
+            "target_roles": sorted(target_roles),
+            "candidate_packet_ids": sorted(candidate_packet_ids),
+            "candidate_request_ids": sorted(candidate_request_ids),
+            "grouped_delivery": action.get("action_type") == "deliver_system_card_bundle",
+            "same_obligation_instruction": same_obligation_instruction,
+            "work_package_class": _dispatch_gate_action_work_class(action),
+            "output_events": _dispatch_gate_output_events_for_action(action),
+            "sealed_body_reads_allowed": False,
+        }
+        action.setdefault("next_step_contract", {})["dispatch_recipient_gate"] = action["dispatch_recipient_gate"]
+        return action
+    return _dispatch_gate_wait_action(
+        project_root,
+        run_state,
+        run_root,
+        blocked_action=action,
+        blocker=blocker,
+    )
 
 
 def append_history(state: dict[str, Any], label: str, details: dict[str, Any] | None = None) -> None:
@@ -19871,8 +20425,8 @@ def _derive_resume_next_recipient_from_packet_ledger(run_root: Path) -> dict[str
     if active_packet_id:
         if status == "router-held-startup-material":
             next_recipient = assigned_worker or "project_manager"
-            controller_next_action = "wait_for_router_startup_release_after_pm_card_ack"
-            reason = "Packet ledger says startup user_intake is held by Router until PM system-card ACK settlement releases it."
+            controller_next_action = "wait_for_controller_deliver_mail_after_pm_activation"
+            reason = "Packet ledger says startup user_intake is held by Router until PM approves startup activation, then Controller must relay it."
         elif status == "packet-with-controller":
             next_recipient = assigned_worker or "unknown"
             controller_next_action = "relay_packet_envelope_to_recorded_recipient"
@@ -31821,6 +32375,9 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
     for entry in MAIL_SEQUENCE:
         if flags.get(entry["flag"]):
             continue
+        required_flag = entry.get("requires_flag")
+        if required_flag and not flags.get(required_flag):
+            continue
         if not run_state.get("ledger_check_requested"):
             return make_action(
                 action_type="check_packet_ledger",
@@ -31831,7 +32388,11 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
                 allowed_writes=[project_relative(project_root, run_state_path(run_root))],
                 extra={"next_mail_id": entry["mail_id"], "next_mail_to_role": entry["to_role"]},
             )
-        return make_action(
+        extra = {"postcondition": entry["flag"]}
+        role_obligation = _mail_role_obligation_contract(entry)
+        if role_obligation is not None:
+            extra["mail_role_obligation"] = role_obligation
+        action = make_action(
             action_type="deliver_mail",
             actor="controller",
             label=entry["label"],
@@ -31840,8 +32401,11 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
             allowed_writes=[project_relative(project_root, run_root / "packet_ledger.json")],
             mail_id=entry["mail_id"],
             to_role=entry["to_role"],
-            extra={"postcondition": entry["flag"]},
+            extra=extra,
         )
+        if role_obligation is not None:
+            action["next_step_contract"]["mail_role_obligation"] = role_obligation
+        return action
     return None
 
 
@@ -34269,84 +34833,20 @@ def _router_release_startup_user_intake_to_pm(
     *,
     source: str,
 ) -> dict[str, Any]:
-    packet_ledger_path = run_root / "packet_ledger.json"
-    _raise_if_runtime_write_active(packet_ledger_path)
-    packet_ledger = read_daemon_critical_json_if_exists(packet_ledger_path)
-    packet_record = _packet_record_for_mail_delivery(packet_ledger, packet_id="user_intake")
-    if not isinstance(packet_record, dict):
-        return {"released": False, "reason": "user_intake_packet_missing"}
-    envelope_path_raw = str(packet_record.get("packet_envelope_path") or run_root / "mailbox" / "outbox" / "user_intake.json")
-    envelope_path = resolve_project_path(project_root, envelope_path_raw)
-    if not envelope_path.exists():
-        return {"released": False, "reason": "user_intake_envelope_missing", "packet_envelope_path": envelope_path_raw}
-    already_released = _mail_delivery_packet_released(packet_record, to_role="project_manager")
-    if not already_released:
-        envelope = packet_runtime.load_envelope(project_root, envelope_path)
-        released_envelope = packet_runtime.router_release_startup_user_intake(
-            project_root,
-            envelope=envelope,
-            envelope_path=envelope_path,
-            released_to_role="project_manager",
-            source=source,
-        )
-        outbox_path = run_root / "mailbox" / "outbox" / "user_intake.json"
-        if outbox_path.exists() and outbox_path.resolve() != envelope_path.resolve():
-            write_json(outbox_path, released_envelope)
-    _raise_if_runtime_write_active(packet_ledger_path)
-    packet_ledger = read_daemon_critical_json_if_exists(packet_ledger_path)
-    packet_record = _packet_record_for_mail_delivery(packet_ledger, packet_id="user_intake")
-    if not _mail_delivery_packet_released(packet_record, to_role="project_manager"):
-        return {"released": False, "reason": "router_release_postcondition_missing"}
-
-    delivered_at = utc_now()
-    delivery = {
-        "mail_id": "user_intake",
-        "packet_id": "user_intake",
-        "delivered_by": "router",
-        "delivery_channel": "router_startup_release",
-        "to_role": "project_manager",
-        "packet_envelope_path": project_relative(project_root, envelope_path),
-        "delivered_at": delivered_at,
-        "source": source,
-    }
-    ledger_mail = packet_ledger.setdefault("mail", [])
-    if not isinstance(ledger_mail, list):
-        raise RouterError("packet ledger mail field must be a list")
-    state_mail = run_state.setdefault("delivered_mail", [])
-    if not isinstance(state_mail, list):
-        raise RouterError("run state delivered_mail field must be a list")
-    ledger_changed = _find_mail_delivery(ledger_mail, mail_id="user_intake", to_role="project_manager") is None
-    state_changed = _find_mail_delivery(state_mail, mail_id="user_intake", to_role="project_manager") is None
-    if ledger_changed:
-        ledger_mail.append(delivery)
-    if state_changed:
-        state_mail.append(delivery)
-    run_state.setdefault("flags", {})["user_intake_delivered_to_pm"] = True
-    run_state["ledger_check_requested"] = False
-    run_state["mail_deliveries"] = max(
-        int(run_state.get("mail_deliveries", 0)),
-        _count_unique_mail_deliveries(state_mail),
-        _count_unique_mail_deliveries(ledger_mail),
-    )
-    packet_ledger["updated_at"] = utc_now()
-    write_json(packet_ledger_path, packet_ledger)
-    append_history(
-        run_state,
-        "router_released_startup_user_intake_to_pm",
-        {
-            "source": source,
-            "already_released": already_released,
-            "ledger_changed": ledger_changed,
-            "state_changed": state_changed,
-            "packet_envelope_path": project_relative(project_root, envelope_path),
-        },
-    )
+    del project_root, run_root
+    if not run_state.get("flags", {}).get("startup_activation_approved"):
+        return {
+            "released": False,
+            "reason": "startup_activation_not_approved",
+            "requires_flag": "startup_activation_approved",
+        }
     return {
-        "released": True,
-        "already_released": already_released,
-        "ledger_changed": ledger_changed,
-        "state_changed": state_changed,
-        "packet_envelope_path": project_relative(project_root, envelope_path),
+        "released": False,
+        "reason": "controller_deliver_mail_required",
+        "requires_action": "deliver_mail",
+        "mail_id": "user_intake",
+        "to_role": "project_manager",
+        "source": source,
     }
 
 
@@ -34446,14 +34946,29 @@ def _run_router_return_settlement_finalizers(
                 },
             )
         if _startup_pm_card_bundle_ack_record(record):
-            startup_release = _router_release_startup_user_intake_to_pm(
-                project_root,
-                run_root,
-                run_state,
-                source=source,
-            )
+            startup_release = {
+                "released": False,
+                "reason": (
+                    "controller_deliver_mail_required"
+                    if run_state.get("flags", {}).get("startup_activation_approved")
+                    else "startup_activation_not_approved"
+                ),
+                "requires_flag": "startup_activation_approved",
+                "requires_action": "deliver_mail",
+                "mail_id": "user_intake",
+                "to_role": "project_manager",
+                "source": source,
+            }
 
-    if normalized or wait_rows_reconciled or startup_release:
+    startup_release_changed = bool(
+        startup_release
+        and (
+            startup_release.get("ledger_changed")
+            or startup_release.get("state_changed")
+            or (startup_release.get("released") and not startup_release.get("already_released"))
+        )
+    )
+    if normalized or wait_rows_reconciled or startup_release_changed:
         append_history(
             run_state,
             "router_return_settlement_finalizers_completed",
@@ -34465,7 +34980,7 @@ def _run_router_return_settlement_finalizers(
             },
         )
     return {
-        "changed": bool(normalized or wait_rows_reconciled or startup_release),
+        "changed": bool(normalized or wait_rows_reconciled or startup_release_changed),
         "normalized_card_bundle_acks": normalized,
         "wait_rows_reconciled": wait_rows_reconciled,
         "startup_user_intake_release": startup_release,
@@ -35300,12 +35815,22 @@ def compute_controller_action(
         and pending_action.get("action_type") == "deliver_system_card"
         and pending_action.get("artifact_committed") is not True
     ):
+        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, pending_action)
+        if gated_action.get("action_type") != "deliver_system_card":
+            run_state["pending_action"] = gated_action
+            save_run_state(run_root, run_state)
+            return gated_action
         return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
     elif (
         isinstance(pending_action, dict)
         and pending_action.get("action_type") == "deliver_system_card_bundle"
         and pending_action.get("artifact_committed") is not True
     ):
+        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, pending_action)
+        if gated_action.get("action_type") != "deliver_system_card_bundle":
+            run_state["pending_action"] = gated_action
+            save_run_state(run_root, run_state)
+            return gated_action
         return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, pending_action)
     elif _pending_card_return_ack_exists(project_root, pending_action):
         auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, pending_action)
@@ -35518,8 +36043,18 @@ def compute_controller_action(
             clearance_reason=clearance_reason,
         )
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
+        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
+        if gated_action.get("action_type") != "deliver_system_card":
+            run_state["pending_action"] = gated_action
+            save_run_state(run_root, run_state)
+            return gated_action
         return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
     if isinstance(action, dict) and action.get("action_type") == "deliver_system_card_bundle":
+        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
+        if gated_action.get("action_type") != "deliver_system_card_bundle":
+            run_state["pending_action"] = gated_action
+            save_run_state(run_root, run_state)
+            return gated_action
         return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, action)
     if action is None and _resume_waits_for_pm_decision(run_state):
         action = _expected_role_decision_wait_action(
@@ -35574,6 +36109,7 @@ def compute_controller_action(
         if action is None:
             raise RouterError("no legal next action control blocker was not materialized")
     action = _apply_formal_work_packet_ack_preflight(project_root, run_state, run_root, action)
+    action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
     if _action_is_router_internal_mechanical(action):
         if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
             raise RouterError("Router-internal mechanical action chain exceeded max hops")
@@ -37098,6 +37634,16 @@ def _record_external_event_unchecked(
         run_state["flags"]["material_accepted_by_pm"] = True
     run_state["events"].append(record)
     _mark_scoped_event_recorded(run_state, scoped_identity)
+    startup_release: dict[str, Any] | None = None
+    if event == "pm_approves_startup_activation":
+        startup_release = {
+            "released": False,
+            "reason": "controller_deliver_mail_required",
+            "requires_action": "deliver_mail",
+            "mail_id": "user_intake",
+            "to_role": "project_manager",
+            "source": "pm_startup_activation",
+        }
     wait_closure = _close_waiting_controller_actions_for_external_event(
         project_root,
         run_root,
@@ -37116,7 +37662,10 @@ def _record_external_event_unchecked(
         run_state["material_review"] = "sufficient"
     elif event == "reviewer_reports_material_insufficient":
         run_state["material_review"] = "insufficient"
-    append_history(run_state, event, {"payload": payload, "wait_closure": wait_closure})
+    history_payload = {"payload": payload, "wait_closure": wait_closure}
+    if startup_release is not None:
+        history_payload["startup_user_intake_release"] = startup_release
+    append_history(run_state, event, history_payload)
     role_memory_delta = _append_role_memory_delta(run_root, run_state, event=event, payload=payload)
     if role_memory_delta is not None:
         deltas = run_state.setdefault("role_memory_deltas", [])

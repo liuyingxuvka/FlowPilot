@@ -29,6 +29,8 @@ Risk intent brief:
   is a model failure.
 - Ensure startup findings are followed by a PM decision instead of a reviewer
   hard stop.
+- Keep the full user task body sealed from PM until PM approves startup
+  activation; PM may use startup authorization metadata before that gate.
 - Keep router repair packets sealed and addressed to the responsible role while
   Controller sees only envelope metadata.
 - Ensure a formal user stop or cancel signal is terminal for future next
@@ -80,6 +82,7 @@ REQUIRED_LABELS = (
     "pm_waives_startup_findings_with_reason",
     "pm_declares_protocol_dead_end_for_unroutable_startup_findings",
     "pm_allows_work_beyond_startup_after_pass_or_pm_decision",
+    "controller_relays_full_user_intake_after_startup_activation",
     "pm_material_scan_card_delivered_after_startup_activation",
     "pm_activates_route_after_startup_activation",
     "router_issues_next_action_after_startup_pass",
@@ -162,6 +165,8 @@ class State:
     protocol_dead_end_has_no_repair_path: bool = False
     protocol_dead_end_pending_mail_suspended: bool = False
     work_beyond_startup_allowed: bool = False
+    full_user_intake_delivered_to_pm: bool = False
+    full_user_intake_controller_relayed: bool = False
     material_scan_card_delivered: bool = False
     active_route_exists: bool = False
     controller_product_work_started: bool = False
@@ -605,6 +610,20 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
 
+    if not state.full_user_intake_delivered_to_pm:
+        return lifecycle + (
+            Transition(
+                "controller_relays_full_user_intake_after_startup_activation",
+                "project_manager",
+                replace(
+                    state,
+                    holder="project_manager",
+                    full_user_intake_delivered_to_pm=True,
+                    full_user_intake_controller_relayed=True,
+                ),
+            ),
+        )
+
     if not state.material_scan_card_delivered:
         return lifecycle + (
             Transition(
@@ -866,6 +885,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("startup control issued further work after protocol dead-end")
     if state.material_scan_card_delivered and not state.work_beyond_startup_allowed:
         failures.append("material/product card was delivered before PM allowed work beyond startup")
+    if state.full_user_intake_delivered_to_pm and not state.work_beyond_startup_allowed:
+        failures.append("full user intake was delivered to PM before startup activation")
+    if state.full_user_intake_delivered_to_pm and not state.full_user_intake_controller_relayed:
+        failures.append("full user intake was delivered without Controller relay")
+    if state.material_scan_card_delivered and not state.full_user_intake_delivered_to_pm:
+        failures.append("material/product card was delivered before PM received full user intake")
+    if state.material_scan_card_delivered and not state.full_user_intake_controller_relayed:
+        failures.append("material/product card was delivered before full user intake Controller relay")
     if state.active_route_exists and not (
         state.work_beyond_startup_allowed and state.material_scan_card_delivered
     ):
@@ -1027,6 +1054,8 @@ def _startup_passed(**changes: object) -> State:
         all_startup_fact_review_owners_assigned=True,
         reviewer_aggressive_external_checks_preserved=True,
         work_beyond_startup_allowed=True,
+        full_user_intake_delivered_to_pm=True,
+        full_user_intake_controller_relayed=True,
         material_scan_card_delivered=True,
         active_route_exists=True,
         next_action_issued=True,
@@ -1229,6 +1258,18 @@ def hazard_states() -> dict[str, State]:
             protocol_dead_end_file_backed=False,
         ),
         "material_card_before_startup_activation": _ready_for_apply(
+            material_scan_card_delivered=True,
+        ),
+        "full_user_intake_before_startup_activation": _ready_for_apply(
+            full_user_intake_delivered_to_pm=True,
+            full_user_intake_controller_relayed=True,
+        ),
+        "full_user_intake_without_controller_relay": _ready_for_apply(
+            work_beyond_startup_allowed=True,
+            full_user_intake_delivered_to_pm=True,
+        ),
+        "material_card_before_full_user_intake": _ready_for_apply(
+            work_beyond_startup_allowed=True,
             material_scan_card_delivered=True,
         ),
         "route_activation_before_startup_activation": _ready_for_apply(

@@ -1425,10 +1425,12 @@ def router_release_startup_user_intake(
         "body_was_read_by_router": False,
         "body_was_executed_by_router": False,
         "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
-        "startup_release_condition": "pm_system_card_bundle_ack_resolved",
+        "startup_release_condition": "legacy_startup_router_release_only",
         "recipient_must_verify_before_body_open": True,
         "controller_bypass_scope": "startup_user_intake_only",
         "normal_role_packet_relay_unchanged": True,
+        "deprecated_for_open_authority": True,
+        "recipient_open_authority": "controller_relay_required",
         "envelope_hash": envelope_hash(envelope),
     }
     envelope["router_startup_release"] = release
@@ -1464,7 +1466,7 @@ def router_release_startup_user_intake(
         envelope,
         holder=released_to_role,
         status="envelope-relayed",
-        message=f"Router released startup user_intake to {released_to_role}.",
+        message=f"Legacy Router startup release recorded for {released_to_role}; Controller relay remains required before body open.",
         progress=0,
     )
     return envelope
@@ -1979,15 +1981,8 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
     envelope.update(normalize_envelope_aliases(envelope))
-    if isinstance(envelope.get("controller_relay"), dict):
-        verify_controller_relay(envelope, recipient_role=role)
-        open_source = "controller_relay"
-    elif envelope.get("packet_type") == "user_intake":
-        verify_router_startup_release(envelope, recipient_role=role)
-        open_source = "router_startup_release"
-    else:
-        verify_controller_relay(envelope, recipient_role=role)
-        open_source = "controller_relay"
+    verify_controller_relay(envelope, recipient_role=role)
+    open_source = "controller_relay"
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
     output_contract = envelope.get("output_contract")

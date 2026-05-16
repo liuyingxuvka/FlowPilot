@@ -21,33 +21,38 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Current task: read the `user_intake` mail after Controller ledger delivery.
-For native startup intake runs, treat
-`startup_intake/startup_intake_record.json` plus the delivered `user_intake`
-packet as the startup authority. Do not ask Controller to recover the user's
-work request from chat history; Controller may relay only paths, hashes,
-status, and envelopes.
+Current task: review startup authorization context, not the full user work
+request body. Before startup activation, PM may use
+`startup_intake/startup_intake_record.json`, startup answers, route/run
+identity, display evidence, role/continuation evidence, and user-intake
+envelope path/hash metadata. The full `user_intake` body remains Router-held
+until PM approves startup activation, then Controller relays it as the first
+post-startup PM mail item.
 
-After `flowpilot_runtime.py open-packet` succeeds for the delivered
-`user_intake` packet, PM has verified runtime authority to perform this startup
-intake task. This verified open is enough to continue; do not wait for an
-additional corrected Controller relay. If the
-startup packet or evidence cannot legally support the next PM decision, submit
-an existing PM exit: `pm_startup_repair_request` when a legal repair target
-exists, `pm_startup_protocol_dead_end` when no legal path exists, or
+Do not run `open-packet` for the full `user_intake` packet from this phase. Do
+not ask Controller to recover the user's work request from chat history;
+Controller may relay only paths, hashes, status, and envelopes.
+
+If startup metadata cannot legally support the later startup-activation
+decision, submit an existing PM exit after the startup fact report:
+`pm_startup_repair_request` when a legal repair target exists,
+`pm_startup_protocol_dead_end` when no legal path exists, or
 `pm_control_blocker_repair_decision` when Router delivered a control blocker.
 Do not submit an ordinary blocker back to PM.
 
 Allowed PM decisions:
 
 - reset Controller role;
-- request material and capability scan packets;
+- prepare to decide startup activation after reviewer facts;
 - request prior-work import boundaries;
 - request startup cleanup or capability evidence;
 - block for user if startup answers are incomplete or contradictory.
 
 Forbidden:
 
+- do not open the full `user_intake` body before startup activation and
+  Controller relay;
+- do not request material or capability scan packets yet;
 - do not write the final route yet;
 - do not issue implementation packets;
 - do not use worker material before PM package-result disposition and reviewer

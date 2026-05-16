@@ -26,6 +26,13 @@ You may open work beyond startup after receiving the reviewer startup fact
 report and making a file-backed PM decision. Do not approve from Controller
 status, chat history, old route files, or your own assumptions.
 
+Before approval, the full `user_intake` body is still sealed from PM. Use the
+startup record, startup answers, reviewer fact report, and envelope/path/hash
+metadata for this decision. After approval, Router exposes the full
+`user_intake` packet as the first post-startup PM mail item; Controller must
+relay the envelope before PM opens the body, and this happens before material
+scan, product architecture, or route work.
+
 If PM opened the relevant startup packet or control-blocker packet through the
 runtime and the open succeeded, that verified open is enough authority to make
 the PM decision required by this card. Do not wait for another Controller relay

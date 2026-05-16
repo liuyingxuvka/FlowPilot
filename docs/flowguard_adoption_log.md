@@ -12854,3 +12854,247 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 - Run Meta and Capability checks later before release-level confidence claims.
 - Preserve compatible peer-agent changes and the untracked parallel OpenSpec work when preparing any combined git commit.
+
+## 2026-05-16 Thin Parent Meta/Capability Validation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Meta and Capability parent regressions were still release-scale graphs, making routine validation depend on long proof reuse or heavyweight foreground runs.
+- Status: completed_with_background_full_regression
+
+### Risk Intent
+
+- Make routine Meta and Capability validation foreground-friendly through thin parent evidence aggregation.
+- Keep full legacy Meta and Capability graph exploration available as explicit forced/background release evidence.
+- Preserve release confidence boundaries so thin parent success cannot silently replace full-regression proof.
+- Treat the hierarchy as recursive: any child model that crosses the heavyweight threshold must become a domain parent or remain full-regression-only.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/thin-heavy-flowguard-parent-models/`
+- Parent ledger: `simulations/flowpilot_parent_responsibility_ledger.json`
+- Thin parent helper: `simulations/flowpilot_thin_parent_checks.py`
+- Parent runners: `simulations/run_meta_checks.py`, `simulations/run_capability_checks.py`
+- Hierarchy runner/result: `simulations/run_flowpilot_model_hierarchy_checks.py`, `simulations/flowpilot_model_hierarchy_results.json`
+- Thin results: `simulations/meta_thin_parent_results.json`, `simulations/capability_thin_parent_results.json`
+- Full background log root: `tmp/flowguard_background/`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate thin-heavy-flowguard-parent-models --strict` passed.
+- `python -m py_compile simulations\flowpilot_thin_parent_checks.py simulations\run_meta_checks.py simulations\run_capability_checks.py simulations\run_flowpilot_model_hierarchy_checks.py scripts\run_flowguard_coverage_sweep.py tests\test_flowpilot_thin_parent_checks.py` passed.
+- `python simulations\run_meta_checks.py --fast` refreshed/reused the thin parent proof; thin Meta result is `9` states / `16` edges, routine confidence `current`, release confidence `current_with_full_regression`.
+- `python simulations\run_capability_checks.py --fast` refreshed/reused the thin parent proof; thin Capability result is `7` states / `12` edges, routine confidence `current`, release confidence `current_with_full_regression`.
+- `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out simulations\flowpilot_model_hierarchy_results.json` passed and reported release confidence `current`, with no heavy parent full-regression obligations.
+- Full Meta regression ran in the background with base name `run_meta_checks`: stdout `tmp/flowguard_background/run_meta_checks.out.txt`, stderr `tmp/flowguard_background/run_meta_checks.err.txt`, combined `tmp/flowguard_background/run_meta_checks.combined.txt`, exit `tmp/flowguard_background/run_meta_checks.exit.txt`, meta `tmp/flowguard_background/run_meta_checks.meta.json`, exit code `0`, proof reuse `false`.
+- Full Capability regression ran in the background with base name `run_capability_checks`: stdout `tmp/flowguard_background/run_capability_checks.out.txt`, stderr `tmp/flowguard_background/run_capability_checks.err.txt`, combined `tmp/flowguard_background/run_capability_checks.combined.txt`, exit `tmp/flowguard_background/run_capability_checks.exit.txt`, meta `tmp/flowguard_background/run_capability_checks.meta.json`, exit code `0`, proof reuse `false`.
+- `python -m unittest tests.test_flowpilot_thin_parent_checks tests.test_flowguard_result_proof tests.test_flowguard_legacy_runner_progress` passed.
+- `python scripts\smoke_autopilot.py --fast` passed.
+- `python scripts\check_install.py` passed.
+- `python scripts\run_flowguard_coverage_sweep.py --timeout-seconds 60 --json-out tmp\flowguard_coverage_sweep_after_full.json` passed with `72` runners parsed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\audit_local_install_sync.py --json` passed; installed `flowpilot` was source-fresh.
+
+### Findings
+
+- Default Meta and Capability validation now reads bounded child evidence contracts instead of expanding the full legacy parent graph.
+- Full legacy regressions remain explicit release or forced checks, so routine confidence and release confidence are no longer conflated.
+- Hierarchy inventory now shows thin parent result type, thin proof status, legacy full proof status, and full-regression obligations separately.
+- The old full parent graphs are still expensive and should be retired from mandatory release gating only after equivalence coverage is strong enough; until then they remain background oracle evidence.
+- Recursive split policy is now documented: if a child evidence model crosses the heavyweight threshold, split it into a domain parent rather than letting routine validation grow again.
+
+### Skipped Or Deferred Steps
+
+- No required validation was skipped. Coverage sweep still reports live/current-state findings from the active local FlowPilot run, but the sweep itself parsed all runners and returned ok.
+
+### Next Actions
+
+- Add domain-parent layers when any child or shared-kernel evidence model crosses the heavyweight threshold.
+- Consider replacing mandatory full release oracle runs with approved equivalence proof plus periodic or sampled full regression after the hierarchy has more release history.
+
+## 2026-05-16 Startup Intake Release Boundary Integration
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified that PM could receive and open the full startup `user_intake` before the startup activation gate had opened.
+- Status: completed_focused_validation_meta_capability_skipped_by_user_direction
+
+### Risk Intent
+
+- Preserve the hard startup activation boundary.
+- Prevent full task-body delivery to PM before reviewer facts and PM startup activation approval.
+- Keep post-activation material scan dependent on full `user_intake` delivery.
+- Keep pre-activation PM work limited to startup authorization metadata: startup answers, run/role/continuation/display evidence, and sealed user-intake path/hash.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/delay-full-user-intake-release/`
+- Startup-control model/result: `simulations/flowpilot_startup_control_model.py`, `simulations/flowpilot_startup_control_checks_results.json`
+- Prompt-isolation model/result: `simulations/prompt_isolation_model.py`, `simulations/prompt_isolation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `openspec validate delay-full-user-intake-release --strict` passed.
+- `python simulations\run_flowpilot_startup_control_checks.py` passed: safe graph `298` states / `313` edges, zero invariant failures, FlowGuard Explorer `21920` traces / zero violations.
+- `python simulations\run_prompt_isolation_checks.py` passed: safe graph `346` states / `345` edges, zero invariant failures.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "user_intake or card_bundle or startup_activation or material_work_packet_records_target_ack_preflight_passed" -q` passed with `8` selected tests.
+- `python -m pytest tests\test_flowpilot_packet_runtime.py -k "user_intake or startup_visibility or relays_to_pm" -q` passed with `1` selected test.
+- `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q` passed with `7` tests and `75` subtests.
+- `python -m py_compile simulations\flowpilot_startup_control_model.py simulations\run_flowpilot_startup_control_checks.py simulations\prompt_isolation_model.py simulations\run_prompt_isolation_checks.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_card_instruction_coverage.py` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\audit_local_install_sync.py --json` passed; installed `flowpilot` is source-fresh.
+
+### Findings
+
+- The startup `user_intake` packet is now router-held startup material before activation instead of being PM-delivered after PM startup card ACK.
+- The finalizer waits for `startup_activation_approved` before releasing full `user_intake` and remains idempotent afterward.
+- PM startup-intake and activation cards now frame pre-activation work around startup metadata, not the full task body.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user direction because it is too heavy for this focused pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user direction because it is too heavy for this focused pass.
+- Broader full-router runtime coverage remains expensive, so this focused integration evidence uses the startup/prompt models, focused runtime tests, card/packet coverage, and install sync checks.
+
+## 2026-05-16 Startup Intake Controller Relay Correction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Follow-up review showed the delayed startup `user_intake`
+  path still used Router-only release evidence. The intended rule is narrower:
+  Router may authorize that the packet is next, but PM may open the formal
+  packet only after Controller relay.
+- Status: completed_focused_validation_meta_capability_skipped_by_user_direction
+
+### Risk Intent
+
+- Preserve the existing formal-mail safety gate: all formal packet bodies need
+  Controller relay before recipient open.
+- Keep `user_intake` sealed and Router-held before startup activation.
+- After `startup_activation_approved`, expose normal `deliver_mail` for
+  `user_intake`; Controller writes `packet_controller_relay`, then PM can open.
+- Prevent stale `router_startup_release` evidence from acting as body-open
+  authority.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/delay-full-user-intake-release/`
+- Startup-control model/result:
+  `simulations/flowpilot_startup_control_model.py`,
+  `simulations/flowpilot_startup_control_checks_results.json`
+- Prompt-isolation model/result: `simulations/prompt_isolation_model.py`,
+  `simulations/prompt_isolation_results.json`
+- Daemon reconciliation model/result:
+  `simulations/flowpilot_daemon_reconciliation_model.py`,
+  `simulations/flowpilot_daemon_reconciliation_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`,
+  `skills/flowpilot/assets/packet_runtime.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`,
+  `tests/test_flowpilot_packet_runtime.py`
+
+### Commands
+
+- `openspec validate delay-full-user-intake-release --strict` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py skills\flowpilot\assets\packet_runtime.py simulations\flowpilot_startup_control_model.py simulations\run_flowpilot_startup_control_checks.py simulations\prompt_isolation_model.py simulations\run_prompt_isolation_checks.py simulations\flowpilot_daemon_reconciliation_model.py simulations\run_flowpilot_daemon_reconciliation_checks.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_packet_runtime.py` passed.
+- `python simulations\run_flowpilot_startup_control_checks.py` passed:
+  safe graph `298` states / `313` edges, FlowGuard Explorer `21920` traces,
+  zero violations.
+- `python simulations\run_prompt_isolation_checks.py` passed: safe graph
+  `346` states / `345` edges, zero invariant failures.
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection`
+  passed: safe graph `1141` states / `1201` edges, FlowGuard Explorer
+  `14694` traces, zero violations.
+- `python -m pytest tests\test_flowpilot_packet_runtime.py -k "user_intake" -q`
+  passed: `2` selected tests.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "user_intake or startup_activation or material_work_packet_records_target_ack_preflight_passed or card_bundle" -q`
+  passed: `8` selected tests.
+- `python -m pytest tests\test_flowpilot_card_instruction_coverage.py -q`
+  passed: `7` tests and `75` subtests.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed;
+  installed `flowpilot` was source-fresh.
+- `python scripts\install_flowpilot.py --check --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\check_install.py` passed.
+
+### Findings
+
+- `read_packet_body_for_role` now requires a valid Controller relay for
+  `user_intake`; `router_startup_release` is no longer accepted as open
+  authority.
+- PM startup activation no longer directly releases `user_intake`. The next
+  legal path is `check_packet_ledger` followed by Controller `deliver_mail`.
+- PM startup cards and protocol docs now say post-activation `user_intake`
+  delivery is Controller-relayed mail, not Router-only release.
+- The daemon reconciliation model was corrected so PM startup card-bundle ACK
+  resolves its wait row without releasing or queueing `user_intake`; activation
+  and Controller mail own that later delivery.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused pass.
+- Live daemon projection was skipped in the daemon model command with
+  `--skip-live-projection`; the model-only reconciliation boundary was enough
+  for this startup protocol correction.
+
+## 2026-05-16 Dispatch Recipient Gate Unification
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Router could expose a new role-facing package without first
+  proving the recipient had finished the prior output-bearing obligation.
+- Status: completed_focused_validation_meta_capability_skipped_by_user_direction
+
+### Risk Intent
+
+- Add one Router-owned pre-dispatch recipient gate for mail, system cards,
+  system-card bundles, and formal work-packet relay actions.
+- Treat only ACK-only packages as prompt/material packages.
+- Treat any card, bundle, mail, or packet that asks for a decision, report,
+  packet spec, result, blocker, or next instruction as an output-bearing work
+  package.
+- Keep `user_intake` as PM's first formal work chain: PM may receive the
+  same-obligation `pm.material_scan` instruction, but independent PM work waits
+  until `pm_issues_material_and_capability_scan_packets`.
+- Preserve same-role ACK-only card bundles, different-role parallel work, and
+  PM role-work result disposition behavior.
+
+### Model Evidence
+
+- OpenSpec change: `openspec/changes/unify-dispatch-recipient-gate/`
+- Dispatch recipient gate model/result:
+  `simulations/flowpilot_dispatch_recipient_gate_model.py`,
+  `simulations/flowpilot_dispatch_recipient_gate_results.json`
+- Runtime implementation: `skills/flowpilot/assets/flowpilot_router.py`
+- Runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_dispatch_recipient_gate_model.py simulations\run_flowpilot_dispatch_recipient_gate_checks.py` passed.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_user_intake_mail_declares_first_pm_output_obligation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_busy_packet_holder tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_system_card_for_active_holder tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_pm_after_user_intake_first_output tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_followup_when_role_wait_is_active tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_same_role_system_card_bundle tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_classifies_ack_only_card_as_prompt tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending` passed: 10 tests.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_requires_officer_report_refs tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_non_authorizing_model_miss_decision_does_not_unlock_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_existing_result_reconciles_before_wait tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_advisory_pm_role_work_wait_is_marked_nonblocking tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_request_requires_valid_recipient_and_contract tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_unlocks_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_out_of_scope_model_miss_triage_unlocks_review_repair_with_reason` passed: 10 tests.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_user_intake_settlement_finalizer_waits_for_controller_mail_after_activation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_card_bundle_ack_keeps_router_owned_user_intake_sealed_until_activation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_current_node_packet_relay_uses_router_direct_dispatch tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel` passed: 4 tests.
+- `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py --json-out simulations\flowpilot_dispatch_recipient_gate_results.json` passed: 17 states / 16 edges, 48 FlowGuard traces, zero violations.
+- `openspec validate unify-dispatch-recipient-gate --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` passed; installed `flowpilot` was refreshed to the repository source digest.
+- `python scripts\install_flowpilot.py --check --json` passed; installed `flowpilot` is source-fresh.
+- `python scripts\audit_local_install_sync.py --json` passed; repo-owned installed skills are fresh.
+
+### Findings
+
+- The gate now classifies system-card actions as `ack_only_prompt` only when
+  the card or bundle has no ACK-plus output obligation.
+- Output-bearing system cards and event cards participate in the busy-recipient
+  rule. For example, unrelated PM work waits while
+  `pm_records_model_miss_triage_decision` is pending.
+- Same-output context cards such as `pm.event.reviewer_blocked` may still be
+  exposed for the already-pending PM obligation, but PM must ACK the card before
+  submitting the decision.
+- Existing model-miss tests were corrected to deliver and ACK the reviewer
+  event card before PM submits the model-miss decision.
+
+### Skipped Or Deferred Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused Router dispatch-gate pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  direction because it is too heavy for this focused Router dispatch-gate pass.

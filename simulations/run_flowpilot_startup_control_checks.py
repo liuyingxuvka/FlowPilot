@@ -36,6 +36,9 @@ HAZARD_EXPECTED_FAILURES = {
     "reviewer_findings_without_pm_decision": "reviewer startup findings had no PM repair, waiver/demotion, or protocol dead-end decision",
     "protocol_dead_end_without_file_backed_record": "protocol dead-end did not stop startup with a complete file-backed emergency record",
     "material_card_before_startup_activation": "material/product card was delivered before PM allowed work beyond startup",
+    "full_user_intake_before_startup_activation": "full user intake was delivered to PM before startup activation",
+    "full_user_intake_without_controller_relay": "full user intake was delivered without Controller relay",
+    "material_card_before_full_user_intake": "material/product card was delivered before PM received full user intake",
     "route_activation_before_startup_activation": "route was activated before startup activation and material scan entry",
     "product_work_without_active_route": "Controller or outer thread started product work before an active route existed",
     "next_action_before_active_route": "next action was issued before PM activated a route",
@@ -84,6 +87,8 @@ def _state_id(state: model.State) -> str:
         f"aggressive={state.reviewer_aggressive_external_checks_preserved},"
         f"finding_kind={state.reviewer_finding_reason_kind}|"
         f"work={state.work_beyond_startup_allowed}|material={state.material_scan_card_delivered}|"
+        f"full_intake={state.full_user_intake_delivered_to_pm},"
+        f"relay={state.full_user_intake_controller_relayed}|"
         f"route={state.active_route_exists}|next={state.next_action_issued}|"
         f"route_done={state.route_work_completed}|closure={state.pm_closure_approved}|"
         f"heartbeat_removed={state.heartbeat_removed}|"

@@ -57,7 +57,7 @@ REQUIRED_LABELS = (
     "pm_mail_delivery_repair_decision_submitted",
     "daemon_consumes_pm_mail_delivery_decision_as_reissue",
     "card_bundle_ack_arrives_while_user_intake_waits",
-    "daemon_reconciles_card_bundle_ack_wait_and_releases_user_intake",
+    "daemon_reconciles_card_bundle_ack_wait_without_user_intake_release",
     "daemon_resolves_prior_startup_blocker_and_supersedes_pm_row",
     "controller_boundary_receipt_artifact_seen_with_stale_flags",
     "daemon_reclaims_controller_boundary_projection_from_artifact",
@@ -84,11 +84,11 @@ HAZARD_EXPECTED_FAILURES = {
     "card_bundle_ack_wait_row_left_open": "system-card bundle ACK resolved but its wait row stayed open",
     "card_bundle_ack_wait_action_scheduler_disagree": "system-card bundle ACK wait action and scheduler reconciliation disagreed",
     "card_bundle_ack_completion_status_not_normalized": "system-card bundle ACK completion was not normalized to resolved",
-    "card_bundle_ack_resolved_user_intake_not_dispatched": "PM system-card ACK resolved while Router-owned user_intake was not released to PM",
     "startup_user_intake_controller_owned": "startup user_intake was Controller-held instead of Router-owned startup material",
-    "card_bundle_ack_queued_controller_delivery": "PM system-card ACK queued a Controller deliver_mail row instead of Router release",
-    "card_bundle_ack_duplicate_user_intake_release": "Router released startup user_intake more than once",
-    "card_bundle_ack_resolved_unrelated_action_loop": "PM system-card ACK resolved while Router-owned user_intake was not released to PM",
+    "card_bundle_ack_queued_controller_delivery": "PM system-card ACK queued user_intake deliver_mail before startup activation",
+    "card_bundle_ack_released_user_intake_before_activation": "PM system-card ACK released startup user_intake before startup activation",
+    "card_bundle_ack_duplicate_user_intake_release": "PM system-card ACK released startup user_intake before startup activation",
+    "card_bundle_ack_resolved_unrelated_action_loop": "Router repeated unrelated Controller work after PM ACK before startup fact review",
     "submitted_role_output_left_in_ledger": "submitted expected role output was left only in durable storage",
     "canonical_artifact_flag_not_synced": "canonical role-output artifact existed without synced Router event flag",
     "stale_snapshot_overwrites_role_output_event": "daemon saved a stale router_state snapshot over newer durable role output",
@@ -902,6 +902,9 @@ def _user_intake_packet_summary(packet_ledger: dict[str, Any]) -> dict[str, Any]
         router_release = packet.get("packet_router_release") or packet.get("router_startup_release")
         if not isinstance(router_release, dict):
             router_release = {}
+        controller_relay = packet.get("packet_controller_relay") or packet.get("controller_relay")
+        if not isinstance(controller_relay, dict):
+            controller_relay = {}
         return {
             "packet_id": packet.get("packet_id"),
             "packet_holder": holder,
@@ -914,6 +917,11 @@ def _user_intake_packet_summary(packet_ledger: dict[str, Any]) -> dict[str, Any]
                 router_release
                 and router_release.get("delivered_by_router") is True
                 and str(router_release.get("relayed_to_role") or "") == "project_manager"
+            ),
+            "controller_relay_recorded": bool(
+                controller_relay
+                and controller_relay.get("delivered_via_controller") is True
+                and str(controller_relay.get("relayed_to_role") or "") == "project_manager"
             ),
             "top_level_active_packet_status": packet_ledger.get("active_packet_status"),
             "terminal_lifecycle": packet_ledger.get("terminal_lifecycle"),
@@ -958,7 +966,7 @@ def _user_intake_router_released(packet: dict[str, Any] | None, packet_ledger: d
     return (
         str(packet.get("packet_holder") or "") == "project_manager"
         and packet_status in released_statuses
-        and packet.get("router_release_recorded") is True
+        and packet.get("controller_relay_recorded") is True
         and (
             (
                 packet_ledger.get("active_packet_holder") == "project_manager"
@@ -1026,6 +1034,8 @@ def _card_ack_handoff_projection_findings(
     user_intake_released = _user_intake_router_released(user_intake_packet, packet_ledger)
     user_intake_delivery_exists = _user_intake_delivery_action_exists(actions)
     user_intake_mail_folded = _mail_ledger_has_user_intake(packet_ledger)
+    flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
+    startup_activation_approved = flags.get("startup_activation_approved") is True
 
     for key, resolved in sorted(resolved_by_bundle.items()):
         bundle_id, expected_return_path, event = key
@@ -1090,10 +1100,10 @@ def _card_ack_handoff_projection_findings(
                     "user_intake_packet": user_intake_packet,
                 }
             )
-        if user_intake_delivery_exists:
+        if user_intake_delivery_exists and not startup_activation_approved:
             findings.append(
                 {
-                    "id": "pm_ack_resolved_queued_controller_user_intake_delivery",
+                    "id": "pm_ack_resolved_queued_controller_user_intake_delivery_before_activation",
                     "card_bundle_id": bundle_id,
                     "card_return_event": event,
                     "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
@@ -1104,30 +1114,29 @@ def _card_ack_handoff_projection_findings(
             user_intake_packet
             and str(user_intake_packet.get("to_role") or user_intake_packet.get("next_holder") or "") == "project_manager"
             and not user_intake_released
+            and startup_activation_approved
         ):
             findings.append(
                 {
-                    "id": "pm_ack_resolved_user_intake_not_released",
+                    "id": "startup_activation_user_intake_not_controller_relayed",
                     "card_bundle_id": bundle_id,
                     "card_return_event": event,
                     "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
                     "user_intake_packet": user_intake_packet,
                     "user_intake_mail_folded": user_intake_mail_folded,
-                    "user_intake_router_released": user_intake_released,
+                    "user_intake_controller_relayed": user_intake_released,
                 }
             )
-            ack_time = str(resolved.get("resolved_at") or resolved.get("returned_at") or resolved.get("checked_at") or "")
-            computed_actions = _computed_actions_after(router_state, ack_time)
-            unrelated = [action for action in computed_actions if action != "router_release_startup_user_intake"]
-            if len(unrelated) >= 3:
-                findings.append(
-                    {
-                        "id": "pm_ack_resolved_unrelated_action_loop_before_user_intake_release",
-                        "card_bundle_id": bundle_id,
-                        "after_ack_time": ack_time,
-                        "sample_computed_actions": unrelated[:10],
-                    }
-                )
+        if user_intake_packet and user_intake_packet.get("router_release_recorded") is True and not startup_activation_approved:
+            findings.append(
+                {
+                    "id": "pm_ack_resolved_user_intake_router_released_before_activation",
+                    "card_bundle_id": bundle_id,
+                    "card_return_event": event,
+                    "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
+                    "user_intake_packet": user_intake_packet,
+                }
+            )
 
     return findings
 

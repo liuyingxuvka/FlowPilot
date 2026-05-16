@@ -65,7 +65,12 @@ class State:
     pm_controller_reset_card_delivered: bool = False
     pm_phase_map_delivered: bool = False
     pm_startup_intake_card_delivered: bool = False
+    reviewer_startup_fact_check_card_delivered: bool = False
+    startup_fact_reported: bool = False
+    pm_startup_activation_card_delivered: bool = False
+    startup_activation_approved: bool = False
     user_intake_delivered_to_pm: bool = False
+    user_intake_controller_relayed: bool = False
     pm_controller_reset_decision_returned: bool = False
     controller_role_confirmed: bool = False
 
@@ -407,9 +412,21 @@ def _next_required_channel(state: State) -> str:
             and state.pm_startup_intake_card_delivered
         ):
             return "prompt"
-        if not state.user_intake_delivered_to_pm and state.user_intake_ready:
+        if not state.reviewer_startup_fact_check_card_delivered:
+            return "prompt"
+        if state.startup_fact_reported and not state.pm_startup_activation_card_delivered:
+            return "prompt"
+        if (
+            state.startup_activation_approved
+            and not state.user_intake_delivered_to_pm
+            and state.user_intake_ready
+        ):
             return "mail"
-    if state.controller_role_confirmed and not state.pm_material_scan_card_delivered:
+    if (
+        state.controller_role_confirmed
+        and state.user_intake_delivered_to_pm
+        and not state.pm_material_scan_card_delivered
+    ):
         return "prompt"
     if state.pm_material_scan_packets_issued and not state.reviewer_dispatch_allowed:
         return "mail"
@@ -736,10 +753,39 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _prompt(state, pm_startup_intake_card_delivered=True, phase="startup_intake"),
         )
         return
+    if not state.reviewer_startup_fact_check_card_delivered:
+        yield Transition(
+            "reviewer_startup_fact_check_card_delivered",
+            _prompt(state, reviewer_startup_fact_check_card_delivered=True, holder="reviewer"),
+        )
+        return
+    if not state.startup_fact_reported:
+        yield Transition(
+            "reviewer_reports_startup_facts_for_pm_activation",
+            _role_return(state, startup_fact_reported=True, holder="controller"),
+        )
+        return
+    if not state.pm_startup_activation_card_delivered:
+        yield Transition(
+            "pm_startup_activation_phase_card_delivered",
+            _prompt(state, pm_startup_activation_card_delivered=True, holder="pm"),
+        )
+        return
+    if not state.startup_activation_approved:
+        yield Transition(
+            "pm_approves_startup_activation_from_reviewed_facts",
+            _role_return(state, startup_activation_approved=True, holder="controller"),
+        )
+        return
     if not state.user_intake_delivered_to_pm:
         yield Transition(
-            "user_intake_delivered_to_pm",
-            _mail(state, user_intake_delivered_to_pm=True, holder="pm"),
+            "controller_relays_user_intake_to_pm",
+            _mail(
+                state,
+                user_intake_delivered_to_pm=True,
+                user_intake_controller_relayed=True,
+                holder="pm",
+            ),
         )
         return
     if not state.pm_material_scan_card_delivered:
@@ -1493,14 +1539,23 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("roles started before copied kit, placeholders, and mailbox were ready")
     if state.roles_started and not state.fresh_role_agents_started:
         failures.append("roles were marked started without fresh live role-agent evidence")
+    if state.startup_fact_reported and not state.reviewer_startup_fact_check_card_delivered:
+        failures.append("reviewer startup fact report was accepted before startup fact-check card delivery")
+    if state.startup_activation_approved and not (
+        state.startup_fact_reported and state.pm_startup_activation_card_delivered
+    ):
+        failures.append("startup activation was approved before reviewer facts and PM activation card")
     if state.user_intake_delivered_to_pm and not (
         state.controller_core_loaded
         and state.pm_core_delivered
         and state.pm_phase_map_delivered
         and state.pm_startup_intake_card_delivered
+        and state.startup_activation_approved
         and state.user_intake_ready
     ):
-        failures.append("user intake delivered before Controller and PM bootstrap prompt cards were delivered")
+        failures.append("user intake delivered before Controller, PM startup cards, and startup activation")
+    if state.user_intake_delivered_to_pm and not state.user_intake_controller_relayed:
+        failures.append("user intake delivered to PM without Controller relay")
     if state.controller_role_confirmed and not (
         state.controller_core_loaded
         and state.controller_boundary_confirmation_written
@@ -1509,6 +1564,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller role confirmed without Router-owned controller.core boundary confirmation")
     role_output_exists = any(
         (
+            state.startup_fact_reported,
+            state.startup_activation_approved,
             state.pm_controller_reset_decision_returned,
             state.pm_material_scan_packets_issued,
             state.reviewer_dispatch_allowed,
@@ -1572,13 +1629,18 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller inspected router hard-check internals instead of using black-box router actions")
     if state.pm_material_scan_card_delivered and not state.controller_role_confirmed:
         failures.append("PM material scan card delivered before Controller boundary confirmation")
+    if state.pm_material_scan_card_delivered and not state.user_intake_delivered_to_pm:
+        failures.append("PM material scan card delivered before PM received full user intake")
+    if state.pm_material_scan_card_delivered and not state.user_intake_controller_relayed:
+        failures.append("PM material scan card delivered before user intake Controller relay")
     if state.pm_material_scan_packets_issued and not (
         state.controller_role_confirmed
         and state.pm_startup_intake_card_delivered
+        and state.user_intake_delivered_to_pm
         and state.pm_material_scan_card_delivered
     ):
         failures.append(
-            "PM issued material packets before Controller boundary confirmation, startup-intake card, and material scan card"
+            "PM issued material packets before Controller boundary confirmation, full intake delivery, and material scan card"
         )
     if state.worker_packets_delivered and not state.reviewer_dispatch_allowed:
         failures.append("worker packet bodies delivered before router direct dispatch approval")
@@ -2009,11 +2071,16 @@ def _ready(**changes: object) -> State:
         pm_core_delivered=True,
         pm_phase_map_delivered=True,
         pm_startup_intake_card_delivered=True,
+        reviewer_startup_fact_check_card_delivered=True,
+        startup_fact_reported=True,
+        pm_startup_activation_card_delivered=True,
+        startup_activation_approved=True,
         user_intake_delivered_to_pm=True,
+        user_intake_controller_relayed=True,
         controller_role_confirmed=True,
-        prompt_deliveries=3,
-        manifest_check_requests=3,
-        manifest_checks=3,
+        prompt_deliveries=5,
+        manifest_check_requests=5,
+        manifest_checks=5,
         mail_deliveries=1,
         ledger_check_requests=1,
         ledger_checks=1,
@@ -2189,6 +2256,20 @@ def hazard_states() -> dict[str, State]:
             roles_started=True,
         ),
         "user_intake_before_pm_cards": _ready(pm_phase_map_delivered=False),
+        "startup_activation_without_reviewer_facts": _ready(
+            startup_fact_reported=False,
+            startup_activation_approved=True,
+        ),
+        "user_intake_before_startup_activation": _ready(startup_activation_approved=False),
+        "user_intake_without_controller_relay": _ready(
+            user_intake_delivered_to_pm=True,
+            user_intake_controller_relayed=False,
+        ),
+        "material_scan_before_full_user_intake": _ready(
+            user_intake_delivered_to_pm=False,
+            user_intake_controller_relayed=False,
+            pm_material_scan_card_delivered=True,
+        ),
         "material_scan_without_card": _ready(pm_material_scan_packets_issued=True),
         "worker_body_without_dispatch": _ready(
             pm_material_scan_card_delivered=True,
