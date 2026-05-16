@@ -17,12 +17,15 @@ REQUIRED_LABELS = (
     "pm_proposes_return_repair_candidate_route",
     "pm_proposes_supersede_replacement_candidate_route",
     "pm_proposes_branch_then_continue_candidate_route",
+    "pm_proposes_sibling_branch_replacement_candidate_route",
     "controller_records_stale_evidence_before_route_recheck",
+    "controller_supersedes_old_current_node_packet_for_route_mutation",
     "process_flowguard_officer_simulates_candidate_route",
     "product_flowguard_officer_checks_candidate_route",
     "human_like_reviewer_challenges_candidate_route",
     "pm_activates_checked_candidate_route",
     "execution_frontier_enters_activated_mutation_node",
+    "reviewer_reruns_same_scope_replay_after_route_mutation",
     "route_sign_displays_activated_current_mutation_node",
     "route_mutation_activation_display_complete",
 )
@@ -37,6 +40,11 @@ HAZARD_EXPECTED_FAILURES = {
     "missing_topology_strategy": "route mutation proposal lacks an explicit topology strategy",
     "supersede_original_forced_to_return": "supersede_original mutation was incorrectly forced to return to the old node",
     "return_repair_without_return_target": "return_to_original mutation lacks repair_return_to_node_id",
+    "sibling_replacement_without_affected_siblings": "sibling_branch_replacement mutation lacks affected sibling nodes",
+    "sibling_replacement_without_replay_scope": "sibling_branch_replacement mutation lacks replay scope",
+    "old_sibling_evidence_reused_after_replacement": "old sibling evidence was reused as current proof after replacement",
+    "route_recheck_before_old_packet_superseded": "route recheck started while the old current-node packet still blocked PM work",
+    "final_scan_before_same_scope_replay_after_mutation": "final ledger started before same-scope replay after route mutation",
     "repair_rendered_as_final_mainline": "repair node was rendered as a final sequential mainline stage",
     "superseded_node_visible_as_pending": "superseded old node remained visible as a pending or active obligation",
     "stale_evidence_reused_before_activation": "PM activated candidate route before stale evidence was invalidated",
@@ -51,14 +59,18 @@ def _state_id(state: model.State) -> str:
         f"proposal={state.pm_mutation_proposed},{state.topology_strategy}|"
         f"fields=repair:{state.repair_node_id_declared},of:{state.repair_of_node_id_declared},"
         f"return:{state.return_target_declared},superseded:{state.superseded_nodes_declared},"
-        f"continue:{state.continue_target_declared}|early=active:{state.active_route_overwritten_before_activation},"
+        f"continue:{state.continue_target_declared},affected_siblings:{state.affected_sibling_nodes_declared},"
+        f"replay_scope:{state.replay_scope_declared}|early=active:{state.active_route_overwritten_before_activation},"
         f"frontier:{state.frontier_entered_candidate_before_activation},display:{state.candidate_route_displayed_as_current}|"
-        f"checks=stale:{state.stale_evidence_invalidated},process:{state.process_recheck_passed},"
+        f"checks=stale:{state.stale_evidence_invalidated},packet_superseded:{state.old_current_node_packet_superseded},"
+        f"process:{state.process_recheck_passed},"
         f"product:{state.product_recheck_passed},review:{state.reviewer_recheck_passed},pm:{state.pm_activation_recorded}|"
-        f"entry={state.candidate_node_entry_recorded}|visible={state.route_visible_as_current},"
+        f"entry={state.candidate_node_entry_recorded},same_scope_replay:{state.same_scope_replay_rerun_after_mutation},"
+        f"final_ledger:{state.final_ledger_started}|visible={state.route_visible_as_current},"
         f"receipt:{state.display_receipt_recorded},topology:{state.mermaid_topology_projected},"
         f"final_append:{state.repair_rendered_as_final_mainline},sup_pending:{state.superseded_node_shown_as_pending},"
-        f"forced_return:{state.forced_return_for_supersede},files_only:{state.generated_files_only_display},"
+        f"forced_return:{state.forced_return_for_supersede},old_sibling_evidence:{state.old_sibling_evidence_reused_as_current},"
+        f"files_only:{state.generated_files_only_display},"
         f"sealed:{state.sealed_body_boundary_preserved}"
     )
 

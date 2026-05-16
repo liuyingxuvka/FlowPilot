@@ -3,6 +3,96 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-16 FlowPilot Route Repair/Replacement Pre-Release Maintenance
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Small pre-release maintenance focused on route
+  repair/replacement strategy, README/privacy checks, install sync, and remote
+  sync while preserving parallel AI work and skipping heavyweight Meta and
+  Capability simulations by user request.
+- Status: completed_focused_runtime_update_synced
+- OpenSpec change: `pre-release-repair-privacy-sync`
+- Skill decision: use_openspec_then_flowguard
+- Flow type: behavior_flow
+- Mode: model_first_change
+
+### Risk Intent
+
+- Prevent sibling branch replacement from silently behaving like a forced
+  return repair.
+- Prevent old sibling evidence or old current-node packet obligations from
+  remaining current after a route mutation.
+- Prevent final route-wide ledgers from starting before route mutation recheck,
+  activation, and same-scope replay.
+- Preserve user-visible route topology for replacements and replay scope.
+
+### Model Files
+
+- `simulations/flowpilot_route_mutation_activation_model.py`
+- `simulations/run_flowpilot_route_mutation_activation_checks.py`
+- `simulations/flowpilot_route_mutation_activation_results.json`
+- `openspec/changes/pre-release-repair-privacy-sync/`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
+  `1.0`.
+- OK: `openspec validate pre-release-repair-privacy-sync --strict --json`.
+- OK: `python simulations\run_flowpilot_route_mutation_activation_checks.py --json-out simulations\flowpilot_route_mutation_activation_results.json`.
+- OK: focused route mutation runtime tests for topology reset, final-ledger
+  preconditions, duplicate mutation transactions, supersede replacement, and
+  sibling branch replacement.
+- OK: focused route-sign tests for supersede and sibling replacement replay
+  projection.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python scripts\smoke_autopilot.py --fast`; this reused existing
+  Meta/Capability proof artifacts and did not rerun the heavyweight
+  `run_meta_checks.py` or `run_capability_checks.py` commands.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python scripts\check_public_release.py --json`; the only warning was
+  the expected dirty worktree before commit.
+
+### Findings
+
+- `sibling_branch_replacement` now records affected siblings and replay scope,
+  folds affected siblings into effective supersession, and renders replacement
+  and replay edges in route signs.
+- Route mutation now supersedes the old current-node packet obligation before
+  fresh route recheck, preventing stale PM packet work from blocking the PM
+  process-route decision card.
+- Final route-wide ledger creation is blocked while route mutation is pending
+  recheck or while same-scope replay has not completed.
+- Public-release privacy scanning initially caught a historical local user path
+  in this adoption log; the entry was scrubbed to a placeholder before final
+  release preflight.
+- Version, README, HANDOFF, and legacy coverage docs were synchronized to
+  v0.9.6 for the focused maintenance scope.
+
+### Counterexamples Checked
+
+- sibling replacement missing affected siblings;
+- sibling replacement missing replay scope;
+- old sibling evidence reused as current;
+- route recheck started while old current-node packet still blocked PM work;
+- final ledger started before same-scope replay after mutation.
+
+### Skipped Steps
+
+- `python simulations\run_meta_checks.py` was skipped by explicit user request
+  because it is too heavy for this pass.
+- `python simulations\run_capability_checks.py` was skipped by explicit user
+  request because it is too heavy for this pass.
+
+### Next Actions
+
+- Run heavyweight Meta and Capability checks later before any release-level
+  confidence claim.
+- Keep native Cockpit snapshot consumption and future officer field validators
+  as separate follow-up work.
+
 ## 2026-05-16 FlowPilot Runtime Closure Maintenance
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -50,7 +140,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
   `1.0`.
-- OK: `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
+- OK: `python <codex-home>\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
   reported installed FlowGuard schema `1.0`.
 - OK: predictive KB preflight returned relevant officer-event, dynamic Router
   event, and closure-evidence candidate lessons.

@@ -300,7 +300,7 @@
       "legacy_line": 958,
       "legacy_section": "Node Acceptance Plans",
       "new_architecture_decision": "preserve_as_system_card",
-      "next_action": "Parent/module sibling traversal is router-backed; expand full repair sibling replacement policy later.",
+      "next_action": "Parent/module sibling traversal and sibling branch replacement are router-backed; keep repair packet loops aligned.",
       "priority": "P1",
       "reason": "The router now requires a reviewer-passed node acceptance plan, structured PM high-standard recheck, current-node packet registration, and parent backward replay before parent-node completion."
     },
@@ -604,9 +604,9 @@
       "legacy_line": 1809,
       "legacy_section": "Recursive Route Tree Planning",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Parent/module sibling traversal is covered; expand full repair sibling replacement policy later.",
+      "next_action": "Parent/module sibling traversal and sibling branch replacement are covered; add production replay adapters if abstract route models become conformance checks.",
       "priority": "P1",
-      "reason": "The router now auto-advances effective route nodes, enters sibling parent/module scopes before descendants, and gates parent closure on backward replay. Full repair sibling replacement remains an expansion."
+      "reason": "The router now auto-advances effective route nodes, enters sibling parent/module scopes before descendants, gates parent closure on backward replay, and supports sibling branch replacement with stale packet disposition."
     },
     {
       "current_artifacts": [
@@ -878,9 +878,9 @@
       "legacy_line": 2640,
       "legacy_section": "Route Updates",
       "new_architecture_decision": "preserve_as_router_validator",
-      "next_action": "Expand route mutation from active repair nodes to full branch/sibling route replacement policies.",
+      "next_action": "Keep replacement strategies covered by focused FlowGuard and runtime tests.",
       "priority": "P1",
-      "reason": "Route mutation now preserves superseded history, appends repair nodes, updates frontier, and writes stale-evidence records when backward review blocks continuation."
+      "reason": "Route mutation now preserves superseded history, appends repair/replacement nodes, updates frontier, writes stale-evidence records, supersedes old current-node packets, and records sibling replacement topology."
     },
     {
       "current_artifacts": [

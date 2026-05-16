@@ -56,6 +56,10 @@ skill. The current model boundary covers:
   commitments, failure hypotheses, task-specific challenge actions, direct
   evidence or approved waiver, blocker triage, and PM reroute/repair request
   when hard issues are found;
+- route mutation repair/replacement, including sibling branch replacement,
+  stale sibling evidence, old current-node packet supersession before route
+  recheck, replay-scope projection, and final-ledger blocking before same-scope
+  replay;
 - terminal closure, final route-wide gate ledgers, residual-risk review,
   defect-ledger/role-memory/quarantine reconciliation, and recursive
   parent/module route entry.
@@ -95,6 +99,24 @@ Results:
 - recursive closure reconciliation model: passed, including parent/module
   traversal and dirty terminal-closure hazard detection;
 - smoke autopilot: passed.
+
+## 2026-05-16 Small Pre-Release Maintenance Note
+
+The route mutation activation/display model now also covers
+`sibling_branch_replacement`, affected sibling declarations, replay-scope
+declarations, old current-node packet supersession, stale sibling evidence, and
+final-ledger blocking before same-scope replay. Focused validation passed:
+
+```powershell
+python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
+python simulations\run_flowpilot_route_mutation_activation_checks.py --json-out simulations\flowpilot_route_mutation_activation_results.json
+python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_mutation_requires_topology_and_resets_route_hard_gates tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_mutation_supersede_strategy_does_not_require_return_to_original tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof
+python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_supersede_replacement_marks_old_node_without_forcing_return_edge
+```
+
+The heavyweight Meta and Capability model simulations were intentionally not
+run in this pass by user request. They should be treated as skipped, not
+passed, until a later release-level validation run.
 
 ## Historical Note
 

@@ -154,7 +154,7 @@
     {
       "id": "route_frontier_and_current_node_loop",
       "legacy_obligation": "The active route/frontier drive current node work; PM chooses current-node packets, reviewer checks results, and Controller does not create new nodes.",
-      "missing_work": "Parent/module sibling traversal is covered. Add full repair sibling replacement policy beyond the current active subtree resolver.",
+      "missing_work": "Parent/module sibling traversal and sibling branch replacement are covered. Add production replay adapters if abstract route models become conformance checks.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
@@ -165,6 +165,7 @@
         "skills/flowpilot/assets/flowpilot_router.py _write_node_acceptance_plan",
         "skills/flowpilot/assets/flowpilot_router.py _next_effective_node_id",
         "simulations/flowpilot_recursive_closure_reconciliation_model.py",
+        "simulations/flowpilot_route_mutation_activation_model.py",
         "simulations/flowpilot_router_loop_model.py",
         "tests/test_flowpilot_router_runtime.py test_parent_node_requires_backward_replay_before_completion"
       ],
@@ -173,16 +174,18 @@
     {
       "id": "route_mutation_and_stale_evidence",
       "legacy_obligation": "Blocking findings structurally mutate the route and mark affected evidence stale before work continues.",
-      "missing_work": "Add dedicated route mutation card, stale evidence ledger updates, and a FlowGuard route-mutation/current-node-loop model.",
+      "missing_work": "Keep dedicated route mutation card wording and stale-evidence fields aligned as new replacement strategies appear.",
       "new_enforcement": [
         "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
         "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md",
         "skills/flowpilot/assets/flowpilot_router.py _write_route_mutation",
+        "skills/flowpilot/assets/flowpilot_router.py _supersede_active_current_node_packet_for_route_mutation",
+        "simulations/flowpilot_route_mutation_activation_model.py",
         "simulations/flowpilot_router_loop_model.py",
         "simulations/meta_model.py",
         "simulations/capability_model.py"
       ],
-      "status": "partially_covered"
+      "status": "covered"
     },
     {
       "id": "heartbeat_manual_resume_reentry",

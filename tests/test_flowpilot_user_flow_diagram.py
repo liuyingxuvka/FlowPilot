@@ -769,6 +769,51 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn("superseded by", payload["mermaid"])
         self.assertNotIn("returns for repair", payload["mermaid"])
 
+    def test_sibling_branch_replacement_draws_replacement_and_replay_scope(self) -> None:
+        root = self.make_project(active_node="node-004-desktop-implementation-v2")
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        route_path = run_root / "routes" / "route-001" / "flow.json"
+        route = json.loads(route_path.read_text(encoding="utf-8"))
+        route["active_node_id"] = "node-004-desktop-implementation-v2"
+        for node in route["nodes"]:
+            if node["id"] == "node-004-desktop-implementation":
+                node["status"] = "superseded"
+                node["superseded_by"] = "node-004-desktop-implementation-v2"
+        route["nodes"].append(
+            {
+                "node_id": "node-004-desktop-implementation-v2",
+                "title": "Replacement sibling branch",
+                "status": "active",
+                "created_by_mutation": True,
+                "topology_strategy": "sibling_branch_replacement",
+                "repair_of_node_id": "node-004-desktop-implementation",
+                "affected_sibling_nodes": ["node-004-desktop-implementation"],
+                "replay_scope_node_id": "node-003-design-language-concepts",
+            }
+        )
+        route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
+        frontier_path = run_root / "execution_frontier.json"
+        frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
+        frontier["active_node"] = "node-004-desktop-implementation-v2"
+        frontier["active_node_id"] = "node-004-desktop-implementation-v2"
+        frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
+
+        payload = route_sign.generate(
+            root,
+            write=False,
+            trigger="major_node_entry",
+            cockpit_open=False,
+            display_surface="chat",
+            mark_chat_displayed=False,
+            mark_ui_displayed=False,
+            reviewer_check=False,
+        )
+
+        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-004-desktop-implementation-v2")
+        self.assertIn("replaced by", payload["mermaid"])
+        self.assertIn("replays scope", payload["mermaid"])
+        self.assertNotIn("returns for repair", payload["mermaid"])
+
     def test_reviewer_blocks_closed_cockpit_without_chat_display(self) -> None:
         root = self.make_project(active_node="node-006-final-verification")
         payload = route_sign.generate(

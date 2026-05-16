@@ -520,11 +520,16 @@ def _node_topology(node: dict[str, Any]) -> dict[str, Any]:
     superseded = node.get("supersedes_node_ids")
     if superseded is None:
         superseded = topology.get("superseded_nodes")
+    affected_siblings = node.get("affected_sibling_nodes")
+    if affected_siblings is None:
+        affected_siblings = topology.get("affected_sibling_nodes")
     return {
         "topology_strategy": strategy,
         "repair_of_node_id": node.get("repair_of_node_id") or topology.get("repair_of_node_id"),
         "repair_return_to_node_id": node.get("repair_return_to_node_id") or topology.get("repair_return_to_node_id"),
         "superseded_nodes": [str(item) for item in (superseded or [])],
+        "affected_sibling_nodes": [str(item) for item in (affected_siblings or [])],
+        "replay_scope_node_id": node.get("replay_scope_node_id") or topology.get("replay_scope_node_id"),
         "continue_after_node_id": node.get("continue_after_node_id") or topology.get("continue_after_node_id"),
     }
 
@@ -681,8 +686,8 @@ def _build_route_node_mermaid(
     topology_by_id = {node_id: _node_topology(node) for node_id, node in zip(node_ids, nodes)}
     replacement_by_superseded: dict[str, str] = {}
     for node_id, topology in topology_by_id.items():
-        if topology["topology_strategy"] == "supersede_original":
-            for superseded_node in topology["superseded_nodes"]:
+        if topology["topology_strategy"] in {"supersede_original", "sibling_branch_replacement"}:
+            for superseded_node in topology["superseded_nodes"] + topology["affected_sibling_nodes"]:
                 replacement_by_superseded[str(superseded_node)] = node_id
 
     mainline_ids: list[str] = []
@@ -739,6 +744,15 @@ def _build_route_node_mermaid(
                 topology_edge_present = True
             if continue_after in mermaid_ids:
                 add_edge(f"  {mermaid_ids[node_id]} --> {mermaid_ids[continue_after]}", edge_lines)
+                topology_edge_present = True
+        elif strategy == "sibling_branch_replacement":
+            for sibling_node in topology.get("affected_sibling_nodes") or []:
+                if sibling_node in mermaid_ids:
+                    add_edge(f'  {mermaid_ids[sibling_node]} -. "replaced by" .-> {mermaid_ids[node_id]}', edge_lines)
+                    topology_edge_present = True
+            replay_scope = str(topology.get("replay_scope_node_id") or "")
+            if replay_scope in mermaid_ids:
+                add_edge(f'  {mermaid_ids[node_id]} -- "replays scope" --> {mermaid_ids[replay_scope]}', edge_lines)
                 topology_edge_present = True
 
     if return_path["edge_present"] and not topology_edge_present:

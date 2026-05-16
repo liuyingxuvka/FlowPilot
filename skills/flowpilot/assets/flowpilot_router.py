@@ -20240,6 +20240,9 @@ def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
     final_ledger = read_json_if_exists(run_root / "final_route_wide_gate_ledger.json")
     terminal = read_json_if_exists(run_root / "reviews" / "terminal_backward_replay.json")
     task_projection = read_json_if_exists(_task_completion_projection_path(run_root))
+    frontier = read_json_if_exists(run_root / "execution_frontier.json")
+    route_id = str(frontier.get("active_route_id") or "route-001")
+    mutations = read_json_if_exists(run_root / "routes" / route_id / "mutations.json")
     pm_suggestion_status = _pm_suggestion_ledger_status(run_root)
     self_interrogation_status = _self_interrogation_status(project_root, run_root)
     closure_reconciliation = _terminal_closure_reconciliation_status(project_root, run_root, {})
@@ -20255,6 +20258,7 @@ def _current_closure_state_clean(project_root: Path, run_root: Path) -> bool:
         and pm_suggestion_status["clean"]
         and self_interrogation_status["clean"]
         and closure_reconciliation["clean"]
+        and not _route_mutation_completion_issues(frontier, mutations)
     )
 
 
@@ -23674,12 +23678,24 @@ def _node_kind(node: dict[str, Any]) -> str:
     return "leaf"
 
 
+def _route_mutation_superseded_nodes(item: dict[str, Any]) -> list[str]:
+    seen: set[str] = set()
+    merged: list[str] = []
+    for key in ("superseded_nodes", "affected_sibling_nodes"):
+        for node_id in item.get(key) or []:
+            node_id_text = str(node_id)
+            if node_id_text and node_id_text not in seen:
+                seen.add(node_id_text)
+                merged.append(node_id_text)
+    return merged
+
+
 def _effective_route_nodes(route: dict[str, Any], mutations: dict[str, Any]) -> list[dict[str, Any]]:
     superseded = {
         str(node_id)
         for item in mutations.get("items", [])
         if isinstance(item, dict)
-        for node_id in (item.get("superseded_nodes") or [])
+        for node_id in _route_mutation_superseded_nodes(item)
     }
     effective = []
     for node in _route_nodes(route):
@@ -24962,7 +24978,7 @@ def _refresh_route_memory(project_root: Path, run_root: Path, run_state: dict[st
         {
             str(node_id)
             for item in mutation_items
-            for node_id in (item.get("superseded_nodes") or [])
+            for node_id in _route_mutation_superseded_nodes(item)
         }
     )
     stale_evidence = sorted(
@@ -25054,7 +25070,9 @@ def _refresh_route_memory(project_root: Path, run_root: Path, run_state: dict[st
                     "route_version": item.get("route_version"),
                     "active_node_id": item.get("active_node_id"),
                     "reason": item.get("reason"),
-                    "superseded_nodes": item.get("superseded_nodes") or [],
+                    "superseded_nodes": _route_mutation_superseded_nodes(item),
+                    "affected_sibling_nodes": item.get("affected_sibling_nodes") or [],
+                    "replay_scope_node_id": item.get("replay_scope_node_id"),
                     "stale_evidence": item.get("stale_evidence") or [],
                     "recorded_at": item.get("recorded_at"),
                 }
@@ -25519,6 +25537,60 @@ def _route_product_check_path(run_root: Path) -> Path:
 
 def _require_route_process_pass(project_root: Path, run_root: Path) -> Path:
     return _require_process_route_model_report(project_root, run_root)
+
+
+def _supersede_active_current_node_packet_for_route_mutation(
+    project_root: Path,
+    run_root: Path,
+    *,
+    frontier: dict[str, Any],
+    mutation_record: dict[str, Any],
+) -> None:
+    ledger_path = run_root / "packet_ledger.json"
+    ledger = read_json_if_exists(ledger_path)
+    packets = ledger.get("packets") if isinstance(ledger, dict) else []
+    if not isinstance(packets, list):
+        return
+    active_packet_id = str(ledger.get("active_packet_id") or "").strip()
+    active_node_id = str(frontier.get("active_node_id") or "").strip()
+    if not active_packet_id and not active_node_id:
+        return
+    superseded_at = utc_now()
+    disposition = {
+        "schema_version": "flowpilot.route_mutation_packet_disposition.v1",
+        "status": "superseded_by_route_mutation",
+        "route_id": frontier.get("active_route_id"),
+        "from_route_version": frontier.get("route_version"),
+        "candidate_route_version": mutation_record.get("route_version"),
+        "candidate_node_id": mutation_record.get("active_node_id"),
+        "topology_strategy": mutation_record.get("topology_strategy"),
+        "reason": mutation_record.get("reason") or "route mutation replaces current node obligation",
+        "recorded_at": superseded_at,
+    }
+    changed = False
+    for record in packets:
+        if not isinstance(record, dict):
+            continue
+        packet_id = str(record.get("packet_id") or "").strip()
+        node_id = str(record.get("node_id") or record.get("current_node_id") or "").strip()
+        status = str(record.get("active_packet_status") or record.get("status") or "").strip()
+        if not _packet_status_allows_current_work(status):
+            continue
+        if packet_id != active_packet_id and node_id != active_node_id:
+            continue
+        record["status"] = "superseded"
+        record["active_packet_status"] = "superseded"
+        record["active_packet_holder"] = "controller"
+        record["router_reconciliation_status"] = "superseded_by_route_mutation"
+        record["route_mutation_disposition"] = disposition
+        changed = True
+    if not changed:
+        return
+    ledger["active_packet_status"] = "superseded"
+    ledger["active_packet_holder"] = "controller"
+    ledger["route_mutation_packet_disposition"] = disposition
+    ledger["updated_at"] = superseded_at
+    write_json(ledger_path, ledger)
 
 
 def _require_route_product_pass(project_root: Path, run_root: Path) -> Path:
@@ -29253,6 +29325,21 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
     ).strip()
     route_version = int(payload.get("route_version") or int(frontier.get("route_version") or 1) + 1)
     superseded_nodes = [str(item) for item in (payload.get("superseded_nodes") or [])]
+    affected_sibling_nodes = [
+        str(item)
+        for item in (
+            payload.get("affected_sibling_nodes")
+            or payload.get("sibling_nodes_to_replace")
+            or payload.get("replaced_sibling_nodes")
+            or []
+        )
+    ]
+    replay_scope_node_id = str(
+        payload.get("replay_scope_node_id")
+        or payload.get("ancestor_replay_scope_node_id")
+        or payload.get("affected_ancestor_node_id")
+        or ""
+    ).strip()
     stale_evidence = [str(item) for item in (payload.get("stale_evidence") or [])]
     _validate_route_mutation_phase_boundary(
         run_root,
@@ -29276,10 +29363,15 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
             topology_strategy = "return_to_original"
         elif superseded_nodes:
             topology_strategy = "supersede_original"
+        elif affected_sibling_nodes:
+            topology_strategy = "sibling_branch_replacement"
         elif continue_after_node_id:
             topology_strategy = "branch_then_continue"
-    if topology_strategy not in {"return_to_original", "supersede_original", "branch_then_continue"}:
-        raise RouterError("route mutation requires topology_strategy=return_to_original, supersede_original, or branch_then_continue")
+    if topology_strategy not in {"return_to_original", "supersede_original", "branch_then_continue", "sibling_branch_replacement"}:
+        raise RouterError(
+            "route mutation requires topology_strategy=return_to_original, supersede_original, "
+            "branch_then_continue, or sibling_branch_replacement"
+        )
     if not repair_of_node_id:
         raise RouterError("route mutation requires repair_of_node_id")
     if topology_strategy == "return_to_original" and not repair_return_to_node_id:
@@ -29291,12 +29383,23 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
             raise RouterError("supersede_original route mutation must not force repair_return_to_node_id")
     if topology_strategy == "branch_then_continue" and not continue_after_node_id:
         raise RouterError("branch_then_continue route mutation requires continue_after_node_id")
+    if topology_strategy == "sibling_branch_replacement":
+        if not affected_sibling_nodes:
+            raise RouterError("sibling_branch_replacement route mutation requires affected_sibling_nodes")
+        if not replay_scope_node_id:
+            raise RouterError("sibling_branch_replacement route mutation requires replay_scope_node_id")
+        if repair_return_to_node_id:
+            raise RouterError("sibling_branch_replacement route mutation must not force repair_return_to_node_id")
+        superseded_nodes = sorted({*superseded_nodes, *affected_sibling_nodes})
     route_topology = {
         "topology_strategy": topology_strategy,
         "inserted_node_id": active_node_id,
+        "replacement_branch_root_node_id": active_node_id if topology_strategy == "sibling_branch_replacement" else None,
         "repair_of_node_id": repair_of_node_id,
         "repair_return_to_node_id": repair_return_to_node_id or None,
         "superseded_nodes": superseded_nodes,
+        "affected_sibling_nodes": affected_sibling_nodes,
+        "replay_scope_node_id": replay_scope_node_id or None,
         "continue_after_node_id": continue_after_node_id or None,
         "process_officer_recheck_required": True,
         "route_activation_recheck_required": True,
@@ -29312,6 +29415,8 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         "current_node_cannot_contain_repair_reason": current_node_incapability_reason or None,
         "stale_evidence": stale_evidence,
         "superseded_nodes": superseded_nodes,
+        "affected_sibling_nodes": affected_sibling_nodes,
+        "replay_scope_node_id": replay_scope_node_id or None,
         "prior_path_context_review": prior_review,
         "topology_strategy": topology_strategy,
         "route_topology": route_topology,
@@ -29320,6 +29425,8 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
             "repair_of_node_id": repair_of_node_id,
             "repair_return_to_node_id": repair_return_to_node_id or None,
             "superseded_nodes": superseded_nodes,
+            "affected_sibling_nodes": affected_sibling_nodes,
+            "replay_scope_node_id": replay_scope_node_id or None,
             "continue_after_node_id": continue_after_node_id or None,
             "topology_strategy": topology_strategy,
             "process_officer_recheck_required": True,
@@ -29391,6 +29498,9 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
                 "repair_of_node_id": repair_of_node_id,
                 "repair_return_to_node_id": repair_return_to_node_id or None,
                 "supersedes_node_ids": superseded_nodes,
+                "affected_sibling_nodes": affected_sibling_nodes,
+                "replacement_branch_root_node_id": active_node_id if topology_strategy == "sibling_branch_replacement" else None,
+                "replay_scope_node_id": replay_scope_node_id or None,
                 "continue_after_node_id": continue_after_node_id or None,
                 "route_topology": route_topology,
             }
@@ -29411,6 +29521,12 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
         )
     stale_ledger["updated_at"] = utc_now()
     write_json(stale_ledger_path, stale_ledger)
+    _supersede_active_current_node_packet_for_route_mutation(
+        project_root,
+        run_root,
+        frontier=frontier,
+        mutation_record=mutation_record,
+    )
     frontier.update(
         {
             "schema_version": "flowpilot.execution_frontier.v1",
@@ -29424,6 +29540,8 @@ def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[st
                 "candidate_route_version": route_version,
                 "candidate_route_draft_path": project_relative(project_root, run_root / "routes" / route_id / "flow.draft.json"),
                 "topology_strategy": topology_strategy,
+                "affected_sibling_nodes": affected_sibling_nodes,
+                "replay_scope_node_id": replay_scope_node_id or None,
                 "display_current_route_on_node_entry_only": True,
             },
             "updated_at": utc_now(),
@@ -29810,7 +29928,7 @@ def _build_source_of_truth_final_entries(
     for item in mutations.get("items") or []:
         if not isinstance(item, dict):
             continue
-        for node_id in item.get("superseded_nodes") or []:
+        for node_id in _route_mutation_superseded_nodes(item):
             entries.append(
                 {
                     "entry_id": f"superseded:{node_id}",
@@ -29872,10 +29990,42 @@ def _build_source_of_truth_final_entries(
     return entries
 
 
+def _route_mutation_completion_issues(frontier: dict[str, Any], mutations: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    if frontier.get("status") == "route_mutation_pending_recheck":
+        pending = frontier.get("pending_route_mutation") or {}
+        candidate = pending.get("candidate_node_id") or "unknown candidate"
+        issues.append(f"route mutation pending recheck for {candidate}")
+    completed = {str(item) for item in (frontier.get("completed_nodes") or [])}
+    active_node_id = str(frontier.get("active_node_id") or "")
+    for item in mutations.get("items") or []:
+        if not isinstance(item, dict):
+            continue
+        restart_policy = item.get("repair_restart_policy") or {}
+        if restart_policy.get("same_scope_replay_rerun_required") is not True:
+            continue
+        mutation_node_id = str(item.get("active_node_id") or "")
+        if not mutation_node_id:
+            issues.append(f"route mutation {item.get('route_version', 'unknown')} lacks active mutation node")
+            continue
+        if mutation_node_id not in completed:
+            if mutation_node_id == active_node_id:
+                issues.append(f"route mutation node {mutation_node_id} is active but not completed")
+            else:
+                issues.append(f"route mutation node {mutation_node_id} is not completed after replacement")
+    return issues
+
+
 def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="final route-wide ledger")
     if payload.get("pm_owned", True) is not True:
         raise RouterError("final route-wide ledger must be PM-owned")
+    frontier = _active_frontier(run_root)
+    route_id = str(frontier["active_route_id"])
+    mutations = read_json_if_exists(run_root / "routes" / route_id / "mutations.json")
+    mutation_issues = _route_mutation_completion_issues(frontier, mutations)
+    if mutation_issues:
+        raise RouterError("final ledger requires completed route mutation replay: " + "; ".join(mutation_issues[:5]))
     required_paths = [
         run_root / "evidence" / "evidence_ledger.json",
         run_root / "generated_resource_ledger.json",
@@ -29897,8 +30047,6 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
     if contract.get("status") != "frozen":
         raise RouterError("final ledger requires frozen root acceptance contract")
     child_manifest = read_json(run_root / "child_skill_gate_manifest.json")
-    frontier = _active_frontier(run_root)
-    route_id = str(frontier["active_route_id"])
     route_version = int(frontier.get("route_version") or 0)
     node_completion_ledger_path = _active_node_completion_ledger_path(run_root, frontier)
     if not run_state["flags"].get("node_completion_ledger_updated") or not node_completion_ledger_path.exists():
@@ -29939,7 +30087,6 @@ def _write_final_route_wide_ledger(project_root: Path, run_root: Path, run_state
         raise RouterError("final ledger forbids completion report-only closure")
     route_path = _active_route_path(run_root, frontier)
     route = read_json(route_path)
-    mutations = read_json_if_exists(run_root / "routes" / route_id / "mutations.json")
     root_replay = _validated_root_replay(payload, _root_requirement_ids(contract))
     requirement_trace_closure = _requirement_trace_closure_from_root_replay(contract, root_replay)
     effective_requirement_count = len(requirement_trace_closure)

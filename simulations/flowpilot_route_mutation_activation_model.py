@@ -13,7 +13,8 @@ Risk intent brief:
   before activation, missing topology strategy, forced return for replacement
   nodes, missing return target for return repairs, list-order Mermaid appending
   repair nodes after terminal stages, unresolved superseded nodes, stale
-  evidence reuse, generated-files-only display, and sealed-body leakage.
+  evidence reuse, old current-node packet obligations blocking route recheck,
+  generated-files-only display, and sealed-body leakage.
 - Hard invariant: a mutation proposal is not the current route; only a checked
   and PM-activated route may become current, and only node entry may publish
   the new current route position to the user-visible route sign.
@@ -30,11 +31,13 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 RETURN_TO_ORIGINAL = "return_to_original"
 SUPERSEDE_ORIGINAL = "supersede_original"
 BRANCH_THEN_CONTINUE = "branch_then_continue"
+SIBLING_BRANCH_REPLACEMENT = "sibling_branch_replacement"
 TOPOLOGY_STRATEGIES = frozenset(
     {
         RETURN_TO_ORIGINAL,
         SUPERSEDE_ORIGINAL,
         BRANCH_THEN_CONTINUE,
+        SIBLING_BRANCH_REPLACEMENT,
     }
 )
 
@@ -62,17 +65,22 @@ class State:
     return_target_declared: bool = False
     superseded_nodes_declared: bool = False
     continue_target_declared: bool = False
+    affected_sibling_nodes_declared: bool = False
+    replay_scope_declared: bool = False
 
     active_route_overwritten_before_activation: bool = False
     frontier_entered_candidate_before_activation: bool = False
     candidate_route_displayed_as_current: bool = False
 
     stale_evidence_invalidated: bool = False
+    old_current_node_packet_superseded: bool = False
     process_recheck_passed: bool = False
     product_recheck_passed: bool = False
     reviewer_recheck_passed: bool = False
     pm_activation_recorded: bool = False
     candidate_node_entry_recorded: bool = False
+    same_scope_replay_rerun_after_mutation: bool = False
+    final_ledger_started: bool = False
 
     route_visible_as_current: bool = False
     display_receipt_recorded: bool = False
@@ -80,6 +88,7 @@ class State:
     repair_rendered_as_final_mainline: bool = False
     superseded_node_shown_as_pending: bool = False
     forced_return_for_supersede: bool = False
+    old_sibling_evidence_reused_as_current: bool = False
     generated_files_only_display: bool = False
     sealed_body_boundary_preserved: bool = True
 
@@ -105,6 +114,8 @@ def _proposal(
     return_target: bool = False,
     superseded: bool = False,
     continue_target: bool = False,
+    affected_siblings: bool = False,
+    replay_scope: bool = False,
 ) -> State:
     return _running(
         state,
@@ -116,6 +127,8 @@ def _proposal(
         return_target_declared=return_target,
         superseded_nodes_declared=superseded,
         continue_target_declared=continue_target,
+        affected_sibling_nodes_declared=affected_siblings,
+        replay_scope_declared=replay_scope,
     )
 
 
@@ -201,12 +214,29 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 continue_target=True,
             ),
         )
+        yield Transition(
+            "pm_proposes_sibling_branch_replacement_candidate_route",
+            _proposal(
+                state,
+                label_holder="project_manager",
+                strategy=SIBLING_BRANCH_REPLACEMENT,
+                affected_siblings=True,
+                replay_scope=True,
+            ),
+        )
         return
 
     if not state.stale_evidence_invalidated:
         yield Transition(
             "controller_records_stale_evidence_before_route_recheck",
             _running(state, holder="controller", stale_evidence_invalidated=True),
+        )
+        return
+
+    if not state.old_current_node_packet_superseded:
+        yield Transition(
+            "controller_supersedes_old_current_node_packet_for_route_mutation",
+            _running(state, holder="controller", old_current_node_packet_superseded=True),
         )
         return
 
@@ -242,6 +272,17 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "execution_frontier_enters_activated_mutation_node",
             _running(state, holder="controller", candidate_node_entry_recorded=True),
+        )
+        return
+
+    if not state.same_scope_replay_rerun_after_mutation:
+        yield Transition(
+            "reviewer_reruns_same_scope_replay_after_route_mutation",
+            _running(
+                state,
+                holder="human_like_reviewer",
+                same_scope_replay_rerun_after_mutation=True,
+            ),
         )
         return
 
@@ -283,6 +324,11 @@ def invariant_failures(state: State) -> list[str]:
                 failures.append("supersede_original mutation was incorrectly forced to return to the old node")
         if state.topology_strategy == BRANCH_THEN_CONTINUE and not state.continue_target_declared:
             failures.append("branch_then_continue mutation lacks continue_after_node_id")
+        if state.topology_strategy == SIBLING_BRANCH_REPLACEMENT:
+            if not state.affected_sibling_nodes_declared:
+                failures.append("sibling_branch_replacement mutation lacks affected sibling nodes")
+            if not state.replay_scope_declared:
+                failures.append("sibling_branch_replacement mutation lacks replay scope")
 
     if state.active_route_overwritten_before_activation:
         failures.append("candidate route overwrote active flow.json before checked PM activation")
@@ -294,6 +340,8 @@ def invariant_failures(state: State) -> list[str]:
     if state.pm_activation_recorded:
         if not state.stale_evidence_invalidated:
             failures.append("PM activated candidate route before stale evidence was invalidated")
+        if not state.old_current_node_packet_superseded:
+            failures.append("PM activated candidate route while the old current-node packet still blocked recheck")
         if not state.process_recheck_passed:
             failures.append("PM activated candidate route before process FlowGuard recheck")
         if not state.product_recheck_passed:
@@ -314,6 +362,15 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("repair node was rendered as a final sequential mainline stage")
         if state.superseded_node_shown_as_pending:
             failures.append("superseded old node remained visible as a pending or active obligation")
+
+    if state.old_sibling_evidence_reused_as_current:
+        failures.append("old sibling evidence was reused as current proof after replacement")
+    if state.process_recheck_passed and not state.old_current_node_packet_superseded:
+        failures.append("route recheck started while the old current-node packet still blocked PM work")
+    if state.final_ledger_started and not state.same_scope_replay_rerun_after_mutation:
+        failures.append("final ledger started before same-scope replay after route mutation")
+    if state.status == "complete" and not state.same_scope_replay_rerun_after_mutation:
+        failures.append("route mutation completed before same-scope replay rerun")
 
     if not state.sealed_body_boundary_preserved:
         failures.append("route mutation display weakened the sealed packet/result body boundary")
@@ -355,6 +412,8 @@ def _proposal_state(strategy: str, **changes: object) -> State:
         return_target_declared=strategy == RETURN_TO_ORIGINAL,
         superseded_nodes_declared=strategy == SUPERSEDE_ORIGINAL,
         continue_target_declared=strategy == BRANCH_THEN_CONTINUE,
+        affected_sibling_nodes_declared=strategy == SIBLING_BRANCH_REPLACEMENT,
+        replay_scope_declared=strategy == SIBLING_BRANCH_REPLACEMENT,
     )
     return replace(base, **changes)
 
@@ -363,11 +422,13 @@ def _activated_display_state(strategy: str, **changes: object) -> State:
     base = _proposal_state(
         strategy,
         stale_evidence_invalidated=True,
+        old_current_node_packet_superseded=True,
         process_recheck_passed=True,
         product_recheck_passed=True,
         reviewer_recheck_passed=True,
         pm_activation_recorded=True,
         candidate_node_entry_recorded=True,
+        same_scope_replay_rerun_after_mutation=True,
         route_visible_as_current=True,
         display_receipt_recorded=True,
         mermaid_topology_projected=True,
@@ -392,6 +453,7 @@ def hazard_states() -> dict[str, State]:
         "activation_without_process_recheck": _proposal_state(
             RETURN_TO_ORIGINAL,
             stale_evidence_invalidated=True,
+            old_current_node_packet_superseded=True,
             product_recheck_passed=True,
             reviewer_recheck_passed=True,
             pm_activation_recorded=True,
@@ -399,6 +461,7 @@ def hazard_states() -> dict[str, State]:
         "activation_without_product_or_reviewer_recheck": _proposal_state(
             RETURN_TO_ORIGINAL,
             stale_evidence_invalidated=True,
+            old_current_node_packet_superseded=True,
             process_recheck_passed=True,
             pm_activation_recorded=True,
         ),
@@ -416,6 +479,34 @@ def hazard_states() -> dict[str, State]:
             RETURN_TO_ORIGINAL,
             return_target_declared=False,
         ),
+        "sibling_replacement_without_affected_siblings": _proposal_state(
+            SIBLING_BRANCH_REPLACEMENT,
+            affected_sibling_nodes_declared=False,
+        ),
+        "sibling_replacement_without_replay_scope": _proposal_state(
+            SIBLING_BRANCH_REPLACEMENT,
+            replay_scope_declared=False,
+        ),
+        "old_sibling_evidence_reused_after_replacement": _activated_display_state(
+            SIBLING_BRANCH_REPLACEMENT,
+            old_sibling_evidence_reused_as_current=True,
+        ),
+        "route_recheck_before_old_packet_superseded": _proposal_state(
+            RETURN_TO_ORIGINAL,
+            stale_evidence_invalidated=True,
+            process_recheck_passed=True,
+        ),
+        "final_scan_before_same_scope_replay_after_mutation": _proposal_state(
+            RETURN_TO_ORIGINAL,
+            stale_evidence_invalidated=True,
+            old_current_node_packet_superseded=True,
+            process_recheck_passed=True,
+            product_recheck_passed=True,
+            reviewer_recheck_passed=True,
+            pm_activation_recorded=True,
+            candidate_node_entry_recorded=True,
+            final_ledger_started=True,
+        ),
         "repair_rendered_as_final_mainline": _activated_display_state(
             RETURN_TO_ORIGINAL,
             repair_rendered_as_final_mainline=True,
@@ -426,6 +517,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "stale_evidence_reused_before_activation": _proposal_state(
             RETURN_TO_ORIGINAL,
+            old_current_node_packet_superseded=True,
             process_recheck_passed=True,
             product_recheck_passed=True,
             reviewer_recheck_passed=True,
@@ -469,6 +561,7 @@ __all__ = [
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
     "RETURN_TO_ORIGINAL",
+    "SIBLING_BRANCH_REPLACEMENT",
     "SUPERSEDE_ORIGINAL",
     "TOPOLOGY_STRATEGIES",
     "Action",

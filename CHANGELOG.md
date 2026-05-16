@@ -2,6 +2,25 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.6 - 2026-05-16
+
+### Added
+
+- Added focused FlowGuard coverage for sibling branch replacement, replay-scope
+  declaration, old current-node packet disposition, stale sibling evidence, and
+  final-ledger blocking after route mutation.
+- Added route-sign coverage for sibling replacement edges and replay-scope
+  projection.
+
+### Fixed
+
+- Allowed `sibling_branch_replacement` route mutations to explicitly replace
+  affected sibling nodes without forcing a return edge to the old node.
+- Marked old current-node packets as superseded by route mutation so stale PM
+  packet obligations no longer block the fresh route recheck path.
+- Kept final route-wide ledgers blocked until pending route mutations are
+  rechecked, activated, and same-scope replay has run.
+
 ## 0.9.5 - 2026-05-16
 
 ### Added
