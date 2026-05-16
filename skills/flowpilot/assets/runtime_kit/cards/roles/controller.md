@@ -173,6 +173,12 @@ Allowed actions:
   follow the router's unified role-recovery actions. This recovery preempts
   normal waits, packets, gates, route advancement, and control blockers because
   the blocked work may depend on the lost role.
+- if Router is waiting for a role output and a fresh liveness check proves the
+  role is still reachable, or has ended, but the expected Router output is still
+  absent and the role is not continuing the work, record
+  `controller_reports_role_no_output` with the Router-visible wait metadata.
+  Do not report a role liveness fault for this case; Router will reissue the
+  same work before considering role recovery or PM escalation.
 
 Forbidden actions:
 

@@ -125,6 +125,9 @@ class State:
     wait_target_names_role: bool = False
     wait_target_expected_evidence_visible: bool = False
     wait_target_reminder_text_present: bool = False
+    wait_target_reminder_controller_action_ready: bool = False
+    wait_target_reminder_receipt_recorded: bool = False
+    wait_target_reminder_updates_wait_metadata: bool = False
     ack_wait_age_minutes: int = 0
     ack_wait_reminder_sent: bool = False
     ack_wait_blocker_recorded: bool = False
@@ -719,7 +722,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if state.ack_wait_age_minutes >= 3 and not state.ack_wait_reminder_sent:
             yield Transition(
                 "controller_sends_ack_wait_reminder_at_three_minutes",
-                _step(state, ack_wait_reminder_sent=True),
+                _step(
+                    state,
+                    ack_wait_reminder_sent=True,
+                    wait_target_reminder_controller_action_ready=True,
+                    wait_target_reminder_receipt_recorded=True,
+                    wait_target_reminder_updates_wait_metadata=True,
+                ),
             )
             return
         if state.ack_wait_age_minutes < 10:
@@ -748,6 +757,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 _step(
                     state,
                     report_reminder_sent=True,
+                    wait_target_reminder_controller_action_ready=True,
+                    wait_target_reminder_receipt_recorded=True,
+                    wait_target_reminder_updates_wait_metadata=True,
                     liveness_check_required=True,
                     liveness_probe_fresh=True,
                     liveness_probe_outcome="working",
@@ -758,6 +770,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 _step(
                     state,
                     report_reminder_sent=True,
+                    wait_target_reminder_controller_action_ready=True,
+                    wait_target_reminder_receipt_recorded=True,
+                    wait_target_reminder_updates_wait_metadata=True,
                     liveness_check_required=True,
                     liveness_probe_fresh=True,
                     liveness_probe_outcome="lost",
@@ -767,7 +782,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if state.report_reminder_sent and state.liveness_probe_outcome == "working":
             yield Transition(
                 "healthy_role_continues_report_wait_after_probe",
-                _step(state, report_reminder_sent=False, report_wait_age_minutes=0),
+                _step(
+                    state,
+                    report_reminder_sent=False,
+                    report_wait_age_minutes=0,
+                    wait_target_reminder_controller_action_ready=False,
+                    wait_target_reminder_receipt_recorded=False,
+                    wait_target_reminder_updates_wait_metadata=False,
+                ),
             )
 
     if state.current_wait == "controller_local":
@@ -991,6 +1013,19 @@ def hazard_states() -> dict[str, State]:
             report_reminder_sent=True,
             liveness_check_required=True,
             liveness_probe_fresh=False,
+        ),
+        "wait_target_reminder_without_controller_action": replace(
+            safe_active,
+            current_wait="ack",
+            wait_target_metadata_present=True,
+            wait_target_names_role=True,
+            wait_target_expected_evidence_visible=True,
+            wait_target_reminder_text_present=True,
+            ack_wait_age_minutes=3,
+            ack_wait_reminder_sent=True,
+            wait_target_reminder_controller_action_ready=False,
+            wait_target_reminder_receipt_recorded=False,
+            wait_target_reminder_updates_wait_metadata=False,
         ),
         "cached_liveness_trusted_as_current_truth": replace(
             safe_active,
@@ -1291,6 +1326,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("wait target metadata does not name role, evidence, and reminder text")
     if state.current_wait == "report" and state.report_reminder_sent and not state.liveness_probe_fresh:
         failures.append("report reminder was sent without a fresh role liveness probe")
+    if (state.ack_wait_reminder_sent or state.report_reminder_sent) and not (
+        state.wait_target_reminder_controller_action_ready
+        and state.wait_target_reminder_receipt_recorded
+        and state.wait_target_reminder_updates_wait_metadata
+    ):
+        failures.append("wait target reminder was not handled as an executable Controller action with receipt metadata")
     if state.stale_liveness_cached_as_truth:
         failures.append("Controller trusted cached role liveness instead of probing during standby")
     if state.current_wait == "ack" and state.ack_wait_age_minutes >= 10 and not state.ack_wait_blocker_recorded and not state.mailbox_evidence_present:
@@ -1488,6 +1529,10 @@ INVARIANTS = (
     _invariant("daemon_wait_has_wait_target_metadata", "daemon-owned role wait lacks Router-authored wait target metadata"),
     _invariant("wait_target_names_role_evidence_and_reminder", "wait target metadata does not name role, evidence, and reminder text"),
     _invariant("report_reminder_requires_fresh_liveness_probe", "report reminder was sent without a fresh role liveness probe"),
+    _invariant(
+        "wait_target_reminder_is_executable_controller_work",
+        "wait target reminder was not handled as an executable Controller action with receipt metadata",
+    ),
     _invariant("controller_does_not_trust_cached_liveness", "Controller trusted cached role liveness instead of probing during standby"),
     _invariant("ack_wait_ten_minutes_routes_blocker", "ACK wait reached ten minutes without Router-visible blocker"),
     _invariant("lost_role_routes_to_pm_blocker", "lost role wait did not route to PM blocker recovery"),

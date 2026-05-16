@@ -15,6 +15,8 @@ import flowpilot_startup_control_model as model
 HAZARD_EXPECTED_FAILURES = {
     "apply_without_task_contract": "startup action was applied before router task contract authority was established",
     "apply_without_payload_contract": "startup action was applied before an action payload contract existed",
+    "core_loaded_without_boundary_evidence": "Controller core loaded without durable boundary confirmation evidence",
+    "standalone_boundary_action_after_core_load": "standalone Controller boundary action was queued after core-load-owned boundary confirmation",
     "fact_report_pass_before_apply": "reviewer startup fact report was written before startup action apply",
     "reviewer_user_authenticity_gate_required": "reviewer was required to prove unreviewable user-chat authenticity",
     "reviewer_reproves_router_computable_startup_facts": "reviewer was required to re-prove router-computable startup facts",
@@ -23,6 +25,13 @@ HAZARD_EXPECTED_FAILURES = {
     "unreviewable_startup_finding_without_pm_decision": "reviewer startup findings had no PM repair, waiver/demotion, or protocol dead-end decision",
     "startup_report_without_aggressive_external_checks": "reviewer startup fact report did not preserve aggressive checks for reviewable external facts",
     "fact_report_without_mechanical_audit": "reviewer startup fact report was accepted without the current prewritten startup mechanical audit",
+    "fact_report_without_display_status": "reviewer startup fact report was accepted before startup display status was reconciled",
+    "mechanical_audit_artifact_without_flag": "router-owned startup mechanical audit artifact existed without reconciled startup flag",
+    "display_status_artifact_without_flag": "startup display status artifact existed without reconciled startup flag",
+    "reconciliation_wait_hides_missing_mechanical_audit": "startup reconciliation wait hid the router-owned action that could satisfy its own blocker",
+    "reconciliation_wait_hides_missing_display_status": "startup reconciliation wait hid the router-owned action that could satisfy its own blocker",
+    "stale_reconciliation_wait_after_flags": "startup reconciliation wait remained open after all blockers were cleared",
+    "reconciliation_wait_resolved_before_flags": "startup reconciliation wait was marked resolved before all startup blockers were cleared",
     "reviewer_findings_allow_work_without_pm_decision": "reviewer findings allowed work without a PM repair/waiver/demotion decision",
     "reviewer_findings_without_pm_decision": "reviewer startup findings had no PM repair, waiver/demotion, or protocol dead-end decision",
     "protocol_dead_end_without_file_backed_record": "protocol dead-end did not stop startup with a complete file-backed emergency record",
@@ -50,12 +59,24 @@ def _state_id(state: model.State) -> str:
         f"lifecycle={state.formal_lifecycle_signal}|"
         f"future_prevented={state.future_actions_prevented}|"
         f"issued_after_lifecycle={state.action_issued_after_lifecycle_signal}|"
+        f"core={state.controller_core_loaded},"
+        f"boundary_artifact={state.controller_boundary_artifact_written},"
+        f"boundary_receipt={state.controller_boundary_receipt_written},"
+        f"boundary_flags={state.controller_boundary_flags_synced},"
+        f"boundary_owned_by_core={state.controller_boundary_owned_by_core_load},"
+        f"standalone_boundary={state.standalone_boundary_action_queued}|"
         f"receipt={state.interpretation_receipt_written},"
         f"{state.receipt_reviewed_against_user_text},{state.receipt_matches_user_text}|"
         f"action={state.pending_action_type},contract={state.payload_contract_exists},"
         f"applied={state.startup_action_applied}|"
         f"fact_report={state.startup_fact_report_status},"
         f"file={state.startup_fact_report_file_backed},"
+        f"audit_artifact={state.startup_mechanical_audit_artifact_written},"
+        f"audit_flag={state.startup_mechanical_audit_written},"
+        f"audit_proof={state.startup_mechanical_audit_proof_written},"
+        f"display_artifact={state.startup_display_status_artifact_written},"
+        f"display_flag={state.startup_display_status_written},"
+        f"route_sign_displayed={state.startup_route_sign_displayed_to_user},"
         f"router_owned={state.router_owned_mechanical_facts_enforced},"
         f"reprove_router={state.reviewer_required_to_reprove_router_owned_facts},"
         f"owners={state.all_startup_fact_review_owners_assigned},"
@@ -67,6 +88,9 @@ def _state_id(state: model.State) -> str:
         f"route_done={state.route_work_completed}|closure={state.pm_closure_approved}|"
         f"heartbeat_removed={state.heartbeat_removed}|"
         f"stage_precondition_blocker={state.stage_precondition_error_materialized_as_control_blocker}|"
+        f"pre_review_wait={state.pre_review_reconciliation_wait_open},"
+        f"wait_resolved={state.pre_review_reconciliation_wait_resolved},"
+        f"wait_allows_obligation_progress={state.reconciliation_wait_allows_router_owned_obligation_progress}|"
         f"error={state.router_error_seen}|repair="
         f"{state.repair_packet_registered},{state.repair_packet_sealed},"
         f"{state.repair_packet_responsible_role}->{state.repair_packet_recipient},"

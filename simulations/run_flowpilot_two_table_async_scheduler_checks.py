@@ -31,11 +31,17 @@ HAZARD_EXPECTED_FAILURES = {
     model.PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN: "PM startup activation required redundant all-startup ACK join",
     model.STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION: "Router reconciled stateful receipt without Router-visible postcondition evidence",
     model.LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN: "live daemon wait exposed an empty Controller plan instead of a continuous standby row",
+    model.PASSIVE_WAIT_WRITTEN_AS_CONTROLLER_WORK: "passive wait status was written as ordinary Controller work",
+    model.PASSIVE_WAIT_HIDES_ROUTER_LOCAL_OBLIGATION: "passive wait hid a Router-local obligation that should have preempted waiting",
+    model.STANDBY_WITHOUT_WAIT_TARGET_STATUS: "passive wait status was not projected into Router monitor status",
     model.CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN: "Controller action ledger lacks table-local top-to-bottom prompt coverage",
     model.FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED: "foreground Controller closure was allowed while FlowPilot was still running",
     model.STANDBY_COMPLETES_AFTER_ONE_CHECK: "continuous standby row was completed after one monitor check",
     model.STANDBY_TIMEOUT_TREATED_AS_COMPLETION: "timeout_still_waiting was treated as standby completion",
     model.STANDBY_NEW_WORK_IGNORED: "continuous standby ignored new Controller work instead of returning to top-to-bottom row processing",
+    model.NO_OUTPUT_WAIT_TRIGGERS_ROLE_RECOVERY: "no-output wait requested role recovery before bounded same-work reissue",
+    model.NO_OUTPUT_REISSUE_WITHOUT_SUPERSEDE: "no-output replacement was not durable before continuation",
+    model.UNAVAILABLE_WAIT_REISSUED_INSTEAD_OF_RECOVERY: "unavailable role did not enter role recovery",
     model.STARTUP_UI_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
     model.STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
     model.DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP: "Router daemon waited for Controller core instead of driving startup work",
@@ -49,6 +55,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
     model.STARTUP_HEARTBEAT_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
     model.STARTUP_ROLE_SPAWN_GLOBAL_BARRIER: "startup role-slot dependency blocked unrelated startup queueing",
+    model.STARTUP_OBLIGATION_BEFORE_CONTROLLER_CORE: (
+        "Controller-ledger startup obligation was exposed before Controller core loaded"
+    ),
     model.ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY: (
         "role-dependent startup work was queued before role slots were ready"
     ),
@@ -124,6 +133,11 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_startup_activation_card_sent},{state.pm_startup_activation_ack_clean},"
         f"decision={state.pm_activation_decision_accepted},second_join={state.pm_activation_second_global_join_required},"
         f"route={state.route_work_started}|running={state.flowpilot_still_running},{state.running_wait_state_kind}|"
+        f"passive_wait={state.passive_wait_status_present},"
+        f"ordinary_row={state.passive_wait_written_as_ordinary_controller_row},"
+        f"monitor={state.passive_wait_metadata_in_monitor},"
+        f"local_obligation={state.router_local_obligation_available},"
+        f"hidden_by_wait={state.router_local_obligation_hidden_by_passive_wait}|"
         f"standby={state.live_wait_without_ordinary_controller_row},"
         f"row={state.continuous_standby_row_present},stable={state.standby_row_stable_idempotency},"
         f"names_wait={state.standby_row_names_wait_target},plan_sync={state.standby_codex_plan_sync_required},"
@@ -133,7 +147,13 @@ def _state_id(state: model.State) -> str:
         f"foreground_stopped={state.foreground_controller_stopped_during_standby},"
         f"new_work={state.new_controller_work_exposed_during_standby},"
         f"ledger_update={state.standby_updates_ledger_on_new_work},"
-        f"top_down_return={state.standby_returns_to_top_down_row_processing}|reason={state.terminal_reason}"
+        f"top_down_return={state.standby_returns_to_top_down_row_processing}|"
+        f"wait_status={state.wait_target_status},no_output_reissue={state.no_output_reissue_created},"
+        f"budget_exhausted={state.no_output_retry_budget_exhausted},"
+        f"pm_escalation={state.no_output_pm_escalation_recorded},"
+        f"replacement_durable={state.no_output_replacement_wait_durable},"
+        f"original_superseded={state.no_output_original_wait_superseded},"
+        f"role_recovery={state.role_recovery_requested}|reason={state.terminal_reason}"
     )
 
 

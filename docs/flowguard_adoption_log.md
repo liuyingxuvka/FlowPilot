@@ -12199,3 +12199,160 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Rerun heavyweight Meta/Capability checks before a release-level global claim, or if later changes broaden beyond the focused startup ACK settlement boundary.
+
+## 2026-05-16 Startup Intake Ledger-Return Prompt Boundary
+
+- Project: FlowGuardProjectAutopilot_20260430
+- OpenSpec change: `clarify-startup-intake-ledger-return`
+- Trigger reason: native startup intake wording still told Controller to directly apply the UI result after the Router daemon had taken ownership of startup progress through daemon status and the Controller action ledger.
+- Status: completed_focused_prompt_update_synced
+
+### Model Evidence
+- Prompt-boundary model: `simulations/flowpilot_prompt_boundary_model.py`
+- Prompt-boundary runner/source projection: `simulations/run_flowpilot_prompt_boundary_checks.py`
+- Focused runtime tests: `tests/test_flowpilot_router_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json` reported installed FlowGuard schema `1.0`.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out tmp\flowguard_background\prompt_boundary_pre_fix.json` failed before the production prompt edit, with source failures for stale startup intake direct-apply wording.
+- `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out simulations\flowpilot_prompt_boundary_results.json` passed after the prompt edit.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_waits_for_answers_before_banner_or_controller tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_daemon_defers_banner_and_queues_next_boot_row` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_prompt_boundary_model.py simulations\run_flowpilot_prompt_boundary_checks.py tests\test_flowpilot_router_runtime.py` passed.
+- `openspec validate clarify-startup-intake-ledger-return --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+- Background heavyweight checks were launched with the stable log contract: `tmp\flowguard_background\run_meta_checks.*` and `tmp\flowguard_background\run_capability_checks.*`.
+
+### Findings
+- The startup intake instruction now returns Controller to Router daemon status and the Controller action ledger after the UI closes.
+- The change intentionally avoids a long conditional prompt; Router-owned status and the existing work board remain the authority.
+- The sealed body boundary is unchanged: Controller is still told not to paste the user's work request into chat or include body text in the Router payload.
+- The prompt-boundary model now includes a known-bad `startup_intake_prompt_direct_apply` scenario and a valid `startup_intake_ledger_return_prompt` scenario.
+
+### Skipped Or Deferred Steps
+- Heavyweight Meta and Capability checks were not used as a foreground gate for this narrow prompt wording change; they were started in the background at user direction.
+
+### Next Actions
+- Inspect `tmp\flowguard_background\run_meta_checks.exit.txt` and `tmp\flowguard_background\run_capability_checks.exit.txt` before making any release-level global confidence claim.
+
+## 2026-05-16 Startup Pre-Review Reconciliation Wait Visibility
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a live FlowPilot startup run exposed a pre-review reconciliation deadlock where an `await_current_scope_reconciliation` row waited for Router-owned startup mechanical audit and display-status obligations while also hiding the Router-owned actions that could satisfy those blockers.
+- Status: completed_focused_model_update
+
+### Model Evidence
+- Startup control model: `simulations/flowpilot_startup_control_model.py`
+- Startup control runner: `simulations/run_flowpilot_startup_control_checks.py`
+- Result evidence: `simulations/flowpilot_startup_control_checks_results.json`, `simulations/flowpilot_startup_control_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile simulations\flowpilot_startup_control_model.py simulations\run_flowpilot_startup_control_checks.py` passed.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_results.json` passed with 22,856 explored traces, zero explorer violations, zero stuck states, and the new wait-visibility hazards detected.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_checks_results.json` passed with the same focused startup-control result.
+
+### Findings
+- The previous startup-control model was too coarse: it treated startup mechanical audit as a single flag and did not model the durable artifact versus reconciled state flag split.
+- The model also did not represent startup display status as a required pre-review obligation and did not model whether a visible wait row can block the Router-owned action needed to clear itself.
+- The upgraded model now rejects audit/display artifacts without reconciled flags, reconciled flags without durable evidence, reviewer fact reporting before display status, self-blocking pre-review waits, stale waits after blockers clear, and waits resolved before startup blockers are actually clear.
+- A valid wait row remains allowed only when it represents a true external wait or still leaves a Router-owned progress path for local obligations.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because this pass only changed the focused startup-control model.
+- Concrete conformance replay remains skipped for this abstract model because there is no production replay adapter in the allowed write set.
+
+### Next Actions
+- Minimal runtime repair should centralize startup pre-review obligation reconciliation in the Router before it creates or returns a wait row. The wait row should be a status projection, not the owner of Router-local startup work.
+## 2026-05-16 - Controller core before startup obligations
+
+- Trigger reason: The live FlowPilot startup queue exposed `emit_startup_banner`
+  as Controller-ledger work before `load_controller_core`, making Controller
+  appear to handle a row before the Controller core handoff was complete.
+- Applicability: `use_flowguard`; behavior-flow model-first change for
+  startup ordering, Controller action ledger authority, heartbeat binding, and
+  role-slot startup side effects.
+- Risk Intent Brief: prevent Controller-ledger startup obligations from being
+  exposed before Controller core is loaded; preserve daemon single-writer
+  ordering, Controller receipt reconciliation, sealed startup intake bodies,
+  current-run heartbeat binding, and fresh role-slot proof before work beyond
+  startup. Known-bad hazards include banner/heartbeat/role rows before
+  Controller core, heartbeat missing before startup review or PM activation,
+  and stale reconciliation creating false PM blockers.
+- Pre-implementation check: `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed after adding the
+  `startup_obligation_before_controller_core` rejected scenario.
+- Heavyweight checks: `python simulations\run_meta_checks.py` and
+  `python simulations\run_capability_checks.py` were explicitly skipped by
+  user direction for this pass because they are too heavy. Focused startup,
+  prompt-boundary, startup-control, role-recovery model, runtime, install, and
+  OpenSpec checks remain the completion evidence for this scoped integration.
+
+## 2026-05-16 Passive Wait Status Not Controller Work
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a live FlowPilot run showed a startup reconciliation wait occupying the Controller action slot even though Controller could not execute that row; the wait also hid Router-owned obligations that would clear it.
+- Status: completed_runtime_repair
+
+### Model Evidence
+- Two-table async scheduler model: `simulations/flowpilot_two_table_async_scheduler_model.py`
+- Two-table scheduler runner: `simulations/run_flowpilot_two_table_async_scheduler_checks.py`
+- Startup control model: `simulations/flowpilot_startup_control_model.py`
+- Result evidence: `simulations/flowpilot_two_table_async_scheduler_results.json`, `simulations/flowpilot_startup_control_checks_results.json`, `simulations/flowpilot_startup_control_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_two_table_async_scheduler_model.py simulations\run_flowpilot_two_table_async_scheduler_checks.py tests\test_flowpilot_router_runtime.py` passed.
+- `python simulations\run_flowpilot_two_table_async_scheduler_checks.py --json-out simulations\flowpilot_two_table_async_scheduler_results.json` passed with zero explorer violations and the new passive-wait hazards detected.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_checks_results.json` passed with 22,856 explored traces, zero explorer violations, and zero stuck states.
+- `python simulations\run_flowpilot_startup_control_checks.py --json-out simulations\flowpilot_startup_control_results.json` passed with the same focused startup-control result.
+- Focused runtime unittests covering passive wait projection, startup local obligation preemption, foreground standby, current-node reconciliation, and ACK reminders passed.
+- `openspec validate separate-wait-status-from-controller-actions --strict` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- The root issue was not that Controller lacked a longer prompt. The problem was that Router could put a non-executable wait row on the Controller work board.
+- Passive waits are now treated as Router-owned status projections. They remain visible in daemon/current-wait/standby status, but they are excluded from ordinary executable Controller action rows and active work counts.
+- Router-local startup obligations now preempt passive reconciliation waits, so a wait cannot hide the exact Router action required to clear itself.
+- Continuous standby remains the foreground Controller duty when there is no ordinary executable Controller work and FlowPilot is legitimately waiting on another role or event.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction for this pass.
+- Concrete conformance replay remains skipped for the abstract scheduler/startup models where no production replay adapter exists.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
+## 2026-05-16 Role Recovery Obligation Replay
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: mechanical role recovery still routed a recovered-role confirmation through PM even when the Router could mechanically restore memory and replay or settle the recovered role's outstanding waits.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/replay-role-recovery-obligations/`
+- Role recovery model: `simulations/flowpilot_role_recovery_model.py`
+- Role recovery runner: `simulations/run_flowpilot_role_recovery_checks.py`
+- Result evidence: `simulations/flowpilot_role_recovery_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `openspec validate replay-role-recovery-obligations --strict` passed.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py` passed.
+- `python simulations\run_flowpilot_role_recovery_checks.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "mid_run_role_liveness_fault or role_recovery"` passed with 4 tests selected.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\audit_local_install_sync.py --json` passed after sequential rerun.
+
+### Findings
+- Mechanical recovery now scans current-run waits for the recovered role before involving PM.
+- Existing valid ACK or output evidence settles the original wait without asking the role to redo work.
+- Missing evidence creates ordered replacement work rows linked to the original wait, then marks the original wait `superseded` only after the replacement row is durable.
+- Multiple replacements preserve original wait order.
+- PM escalation remains reserved for semantic ambiguity, conflicts, repeated recovery failure, or route/acceptance/task-semantics changes.
+- The Router bridges the legacy `pm_resume_recovery_decision_returned` flag after successful mechanical replay so older expected-event waits do not reintroduce a PM notification path.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were intentionally skipped at user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+- In a later cleanup, consider renaming the legacy PM-resume flag to separate "recovery continuation satisfied" from "PM explicitly decided."

@@ -87,6 +87,9 @@ HAZARD_EXPECTED_FAILURES = {
     "foreground_controller_ended_while_daemon_active_no_action": "Foreground Controller ended while the Router daemon was live and no Controller action was ready",
     "role_wait_missing_wait_target_metadata": "daemon-owned role wait lacks Router-authored wait target metadata",
     "report_reminder_without_fresh_liveness_probe": "report reminder was sent without a fresh role liveness probe",
+    "wait_target_reminder_without_controller_action": (
+        "wait target reminder was not handled as an executable Controller action with receipt metadata"
+    ),
     "cached_liveness_trusted_as_current_truth": "Controller trusted cached role liveness instead of probing during standby",
     "recorded_external_event_left_wait_row_open": "recorded external event left matching Controller wait row open",
     "next_wait_opened_before_satisfied_wait_closed": "Router opened next wait before closing satisfied external-event wait",
@@ -140,6 +143,9 @@ def _state_id(state: model.State) -> str:
         f"controller_closed={state.controller_closed_event_wait}|"
         f"wait_target={state.wait_target_metadata_present},{state.wait_target_names_role},"
         f"{state.wait_target_expected_evidence_visible},{state.wait_target_reminder_text_present},"
+        f"reminder_action={state.wait_target_reminder_controller_action_ready},"
+        f"reminder_receipt={state.wait_target_reminder_receipt_recorded},"
+        f"reminder_updates_wait={state.wait_target_reminder_updates_wait_metadata},"
         f"ack_age={state.ack_wait_age_minutes},ack_remind={state.ack_wait_reminder_sent},"
         f"ack_blocker={state.ack_wait_blocker_recorded},report_age={state.report_wait_age_minutes},"
         f"report_remind={state.report_reminder_sent},live_req={state.liveness_check_required},"

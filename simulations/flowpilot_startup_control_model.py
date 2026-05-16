@@ -17,6 +17,16 @@ Risk intent brief:
   findings; PM owns repair, waiver/demotion, user escalation, or dead-end.
 - Ensure the router writes and exposes startup mechanical audit/proof before
   reviewer fact reporting.
+- Ensure startup display status is recorded from a user-visible Route Sign
+  before reviewer fact reporting.
+- Ensure Controller core load records durable boundary confirmation evidence
+  before startup work advances, without queuing a redundant fresh-start
+  `confirm_controller_core_boundary` action after that evidence exists.
+- Ensure startup pre-review reconciliation cannot create a self-blocking wait
+  that hides the router-owned actions needed to satisfy its own blockers.
+- Ensure router-owned durable artifacts and run-state flags stay reconciled:
+  an audit/display artifact without its flag, or a flag without its evidence,
+  is a model failure.
 - Ensure startup findings are followed by a PM decision instead of a reviewer
   hard stop.
 - Keep router repair packets sealed and addressed to the responsible role while
@@ -53,9 +63,11 @@ REQUIRED_LABELS = (
     "formal_user_cancel_recorded",
     "router_records_startup_task_contract",
     "startup_user_authenticity_gate_demoted_to_router_contract",
+    "controller_loads_core_and_records_boundary",
     "router_issues_startup_apply_action_with_payload_contract",
     "controller_applies_startup_action_after_payload_contract",
     "router_writes_startup_mechanical_audit_for_reviewer",
+    "router_writes_startup_display_status_for_reviewer",
     "router_delivers_startup_mechanical_audit_to_reviewer",
     "router_accepts_mechanical_facts_without_reviewer_reproof",
     "router_assigns_all_startup_fact_review_owners",
@@ -116,13 +128,23 @@ class State:
 
     pending_action_type: str = "none"
     payload_contract_exists: bool = False
+    controller_core_loaded: bool = False
+    controller_boundary_artifact_written: bool = False
+    controller_boundary_receipt_written: bool = False
+    controller_boundary_flags_synced: bool = False
+    controller_boundary_owned_by_core_load: bool = False
+    standalone_boundary_action_queued: bool = False
     startup_action_applied: bool = False
 
     startup_fact_report_status: str = "none"  # none | pass | findings
     startup_fact_report_file_backed: bool = False
+    startup_mechanical_audit_artifact_written: bool = False
     startup_mechanical_audit_written: bool = False
     startup_mechanical_audit_proof_written: bool = False
     startup_mechanical_audit_delivered_to_reviewer: bool = False
+    startup_display_status_artifact_written: bool = False
+    startup_display_status_written: bool = False
+    startup_route_sign_displayed_to_user: bool = False
     router_owned_mechanical_facts_enforced: bool = False
     startup_fact_report_references_current_audit: bool = False
     reviewer_required_to_reprove_router_owned_facts: bool = False
@@ -148,6 +170,10 @@ class State:
     pm_closure_approved: bool = False
     heartbeat_removed: bool = False
     stage_precondition_error_materialized_as_control_blocker: bool = False
+
+    pre_review_reconciliation_wait_open: bool = False
+    pre_review_reconciliation_wait_resolved: bool = False
+    reconciliation_wait_allows_router_owned_obligation_progress: bool = True
 
     router_error_seen: bool = False
     repair_packet_registered: bool = False
@@ -331,6 +357,23 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
 
+    if not state.controller_core_loaded:
+        return lifecycle + (
+            Transition(
+                "controller_loads_core_and_records_boundary",
+                "controller",
+                replace(
+                    state,
+                    holder="controller",
+                    controller_core_loaded=True,
+                    controller_boundary_artifact_written=True,
+                    controller_boundary_receipt_written=True,
+                    controller_boundary_flags_synced=True,
+                    controller_boundary_owned_by_core_load=True,
+                ),
+            ),
+        )
+
     if state.pending_action_type == "none":
         return lifecycle + (
             Transition(
@@ -355,6 +398,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         )
 
     if not (
+        state.startup_mechanical_audit_artifact_written
+        and
         state.startup_mechanical_audit_written
         and state.startup_mechanical_audit_proof_written
     ):
@@ -365,8 +410,28 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(
                     state,
                     holder="controller",
+                    startup_mechanical_audit_artifact_written=True,
                     startup_mechanical_audit_written=True,
                     startup_mechanical_audit_proof_written=True,
+                ),
+            ),
+        )
+
+    if not (
+        state.startup_display_status_artifact_written
+        and state.startup_display_status_written
+        and state.startup_route_sign_displayed_to_user
+    ):
+        return lifecycle + (
+            Transition(
+                "router_writes_startup_display_status_for_reviewer",
+                "controller",
+                replace(
+                    state,
+                    holder="controller",
+                    startup_display_status_artifact_written=True,
+                    startup_display_status_written=True,
+                    startup_route_sign_displayed_to_user=True,
                 ),
             ),
         )
@@ -462,9 +527,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                         startup_fact_report_status="none",
                         startup_fact_report_file_backed=False,
                         reviewer_finding_reason_kind="none",
+                        startup_mechanical_audit_artifact_written=False,
                         startup_mechanical_audit_written=False,
                         startup_mechanical_audit_proof_written=False,
                         startup_mechanical_audit_delivered_to_reviewer=False,
+                        startup_display_status_artifact_written=False,
+                        startup_display_status_written=False,
+                        startup_route_sign_displayed_to_user=False,
                         startup_repair_request_file_backed=True,
                         startup_repair_request_targeted=True,
                     ),
@@ -668,6 +737,31 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("startup apply action was issued before router task contract authority was established")
     if state.payload_contract_exists and state.pending_action_type == "none":
         failures.append("payload contract exists without a pending action")
+    if state.controller_core_loaded and not (
+        state.controller_boundary_artifact_written
+        and state.controller_boundary_receipt_written
+        and state.controller_boundary_flags_synced
+        and state.controller_boundary_owned_by_core_load
+    ):
+        failures.append("Controller core loaded without durable boundary confirmation evidence")
+    if state.controller_boundary_flags_synced and not (
+        state.controller_boundary_artifact_written and state.controller_boundary_receipt_written
+    ):
+        failures.append("Controller boundary flags were synced without durable boundary evidence")
+    if state.standalone_boundary_action_queued and (
+        state.controller_core_loaded
+        and state.controller_boundary_artifact_written
+        and state.controller_boundary_receipt_written
+        and state.controller_boundary_flags_synced
+    ):
+        failures.append("standalone Controller boundary action was queued after core-load-owned boundary confirmation")
+    if state.startup_action_applied and not (
+        state.controller_core_loaded
+        and state.controller_boundary_artifact_written
+        and state.controller_boundary_receipt_written
+        and state.controller_boundary_flags_synced
+    ):
+        failures.append("startup action advanced before Controller core boundary confirmation evidence")
     if state.startup_action_applied and not state.payload_contract_exists:
         failures.append("startup action was applied before an action payload contract existed")
     if state.startup_action_applied and state.pending_action_type != "apply_startup_answers":
@@ -680,13 +774,33 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer startup fact report was written before startup action apply")
     if state.startup_fact_report_status in {"pass", "findings"} and not state.startup_fact_report_file_backed:
         failures.append("reviewer startup fact report was accepted without a file-backed report")
+    if state.startup_mechanical_audit_artifact_written and state.startup_mechanical_audit_proof_written and not state.startup_mechanical_audit_written:
+        failures.append("router-owned startup mechanical audit artifact existed without reconciled startup flag")
+    if state.startup_mechanical_audit_written and not (
+        state.startup_mechanical_audit_artifact_written and state.startup_mechanical_audit_proof_written
+    ):
+        failures.append("startup mechanical audit flag was reconciled without durable audit and proof artifacts")
+    if state.startup_display_status_artifact_written and state.startup_route_sign_displayed_to_user and not state.startup_display_status_written:
+        failures.append("startup display status artifact existed without reconciled startup flag")
+    if state.startup_display_status_written and not (
+        state.startup_display_status_artifact_written and state.startup_route_sign_displayed_to_user
+    ):
+        failures.append("startup display status flag was reconciled without user-visible display evidence")
     if state.startup_fact_report_status in {"pass", "findings"} and not (
+        state.startup_mechanical_audit_artifact_written
+        and
         state.startup_mechanical_audit_written
         and state.startup_mechanical_audit_proof_written
         and state.startup_mechanical_audit_delivered_to_reviewer
         and state.router_owned_mechanical_facts_enforced
     ):
         failures.append("reviewer startup fact report was accepted without the current prewritten startup mechanical audit")
+    if state.startup_fact_report_status in {"pass", "findings"} and not (
+        state.startup_display_status_artifact_written
+        and state.startup_display_status_written
+        and state.startup_route_sign_displayed_to_user
+    ):
+        failures.append("reviewer startup fact report was accepted before startup display status was reconciled")
     if state.startup_fact_report_status in {"pass", "findings"} and not state.reviewer_aggressive_external_checks_preserved:
         failures.append("reviewer startup fact report did not preserve aggressive checks for reviewable external facts")
     if state.startup_fact_report_status not in {"none", "pass", "findings"}:
@@ -768,6 +882,34 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM closure was approved before route work completed")
     if state.heartbeat_removed and not state.pm_closure_approved:
         failures.append("heartbeat was removed before PM closure approval")
+
+    startup_pre_review_obligations_met = (
+        state.controller_core_loaded
+        and state.controller_boundary_artifact_written
+        and state.controller_boundary_receipt_written
+        and state.controller_boundary_flags_synced
+        and
+        state.startup_mechanical_audit_artifact_written
+        and state.startup_mechanical_audit_written
+        and state.startup_mechanical_audit_proof_written
+        and state.startup_display_status_artifact_written
+        and state.startup_display_status_written
+        and state.startup_route_sign_displayed_to_user
+    )
+    if (
+        state.pre_review_reconciliation_wait_open
+        and not startup_pre_review_obligations_met
+        and not state.reconciliation_wait_allows_router_owned_obligation_progress
+    ):
+        failures.append("startup reconciliation wait hid the router-owned action that could satisfy its own blocker")
+    if (
+        state.pre_review_reconciliation_wait_open
+        and startup_pre_review_obligations_met
+        and not state.pre_review_reconciliation_wait_resolved
+    ):
+        failures.append("startup reconciliation wait remained open after all blockers were cleared")
+    if state.pre_review_reconciliation_wait_resolved and not startup_pre_review_obligations_met:
+        failures.append("startup reconciliation wait was marked resolved before all startup blockers were cleared")
 
     if state.formal_lifecycle_signal in {"stop", "cancel"}:
         if state.status not in {"stopped", "cancelled"}:
@@ -858,6 +1000,11 @@ def _ready_for_apply(**changes: object) -> State:
         user_text_recorded=True,
         startup_task_contract_recorded=True,
         user_authenticity_gate_demoted=True,
+        controller_core_loaded=True,
+        controller_boundary_artifact_written=True,
+        controller_boundary_receipt_written=True,
+        controller_boundary_flags_synced=True,
+        controller_boundary_owned_by_core_load=True,
         pending_action_type="apply_startup_answers",
         payload_contract_exists=True,
     )
@@ -867,9 +1014,13 @@ def _ready_for_apply(**changes: object) -> State:
 def _startup_passed(**changes: object) -> State:
     base = _ready_for_apply(
         startup_action_applied=True,
+        startup_mechanical_audit_artifact_written=True,
         startup_mechanical_audit_written=True,
         startup_mechanical_audit_proof_written=True,
         startup_mechanical_audit_delivered_to_reviewer=True,
+        startup_display_status_artifact_written=True,
+        startup_display_status_written=True,
+        startup_route_sign_displayed_to_user=True,
         startup_fact_report_status="pass",
         startup_fact_report_file_backed=True,
         router_owned_mechanical_facts_enforced=True,
@@ -899,8 +1050,24 @@ def hazard_states() -> dict[str, State]:
             user_text_recorded=True,
             startup_task_contract_recorded=True,
             user_authenticity_gate_demoted=True,
+            controller_core_loaded=True,
+            controller_boundary_artifact_written=True,
+            controller_boundary_receipt_written=True,
+            controller_boundary_flags_synced=True,
+            controller_boundary_owned_by_core_load=True,
             pending_action_type="apply_startup_answers",
             startup_action_applied=True,
+        ),
+        "core_loaded_without_boundary_evidence": State(
+            status="running",
+            startup_questions_asked=True,
+            user_text_recorded=True,
+            startup_task_contract_recorded=True,
+            user_authenticity_gate_demoted=True,
+            controller_core_loaded=True,
+        ),
+        "standalone_boundary_action_after_core_load": _ready_for_apply(
+            standalone_boundary_action_queued=True,
         ),
         "fact_report_pass_before_apply": State(
             status="running",
@@ -963,9 +1130,66 @@ def hazard_states() -> dict[str, State]:
         ),
         "fact_report_without_mechanical_audit": _ready_for_apply(
             startup_action_applied=True,
+            startup_display_status_artifact_written=True,
+            startup_display_status_written=True,
+            startup_route_sign_displayed_to_user=True,
             startup_fact_report_status="pass",
             startup_fact_report_file_backed=True,
             reviewer_aggressive_external_checks_preserved=True,
+        ),
+        "fact_report_without_display_status": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_artifact_written=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_mechanical_audit_delivered_to_reviewer=True,
+            router_owned_mechanical_facts_enforced=True,
+            all_startup_fact_review_owners_assigned=True,
+            startup_fact_report_status="pass",
+            startup_fact_report_file_backed=True,
+            reviewer_aggressive_external_checks_preserved=True,
+        ),
+        "mechanical_audit_artifact_without_flag": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_artifact_written=True,
+            startup_mechanical_audit_proof_written=True,
+        ),
+        "display_status_artifact_without_flag": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_artifact_written=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_display_status_artifact_written=True,
+            startup_route_sign_displayed_to_user=True,
+        ),
+        "reconciliation_wait_hides_missing_mechanical_audit": _ready_for_apply(
+            startup_action_applied=True,
+            pre_review_reconciliation_wait_open=True,
+            reconciliation_wait_allows_router_owned_obligation_progress=False,
+        ),
+        "reconciliation_wait_hides_missing_display_status": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_artifact_written=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            pre_review_reconciliation_wait_open=True,
+            reconciliation_wait_allows_router_owned_obligation_progress=False,
+        ),
+        "stale_reconciliation_wait_after_flags": _ready_for_apply(
+            startup_action_applied=True,
+            startup_mechanical_audit_artifact_written=True,
+            startup_mechanical_audit_written=True,
+            startup_mechanical_audit_proof_written=True,
+            startup_display_status_artifact_written=True,
+            startup_display_status_written=True,
+            startup_route_sign_displayed_to_user=True,
+            pre_review_reconciliation_wait_open=True,
+            pre_review_reconciliation_wait_resolved=False,
+        ),
+        "reconciliation_wait_resolved_before_flags": _ready_for_apply(
+            startup_action_applied=True,
+            pre_review_reconciliation_wait_open=True,
+            pre_review_reconciliation_wait_resolved=True,
         ),
         "reviewer_findings_allow_work_without_pm_decision": _ready_for_apply(
             startup_action_applied=True,

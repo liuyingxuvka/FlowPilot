@@ -8,7 +8,10 @@ Risk intent brief:
   targeted replacement, then reconcile slots, then recycle the full six-role
   crew only when targeted repair cannot succeed.
 - Recovered agents are not usable until current-run memory and packet context
-  have been injected. PM owns the post-recovery decision.
+  have been injected. Router then settles or reissues the recovered role's
+  outstanding obligations mechanically when metadata is unambiguous.
+- PM owns only semantic ambiguity, conflict, repeated recovery failure, or
+  route/acceptance drift after role recovery.
 - Old-generation late output must be quarantined, never accepted as current
   packet or gate progress.
 
@@ -75,9 +78,22 @@ class State:
     stale_generation_output_accepted: bool = False
 
     recovery_report_written: bool = False
+    obligations_scanned: bool = False
+    valid_existing_evidence_seen: bool = False
+    existing_evidence_settled: bool = False
+    replacement_required_count: int = 0
+    replacement_rows_created: int = 0
+    original_rows_superseded: int = 0
+    replacement_order_preserved: bool = False
+    replacement_creation_failed: bool = False
+    later_replay_skipped_after_failure: bool = False
+    replay_plan_complete: bool = False
+    semantic_ambiguity_seen: bool = False
+    pm_escalation_required: bool = False
     pm_decision_requested: bool = False
     pm_decision_returned: bool = False
     controller_auto_continued_after_recovery: bool = False
+    pm_notified_for_mechanical_replay: bool = False
 
 
 class Transition(NamedTuple):
@@ -110,6 +126,8 @@ class UnifiedRoleRecoveryStep:
         "memory_context",
         "packet_ownership",
         "generation_epoch",
+        "obligation_ledger",
+        "ack_output_envelopes",
         "pm_decision",
     )
     writes = (
@@ -117,6 +135,8 @@ class UnifiedRoleRecoveryStep:
         "recovery_attempt",
         "quarantine_record",
         "recovery_report",
+        "replacement_obligation",
+        "superseded_wait_link",
         "terminal_status",
     )
     input_description = "Controller recovery tick"
@@ -359,7 +379,116 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.recovery_report_written and not state.pm_decision_requested:
+    if state.recovery_report_written and not state.obligations_scanned:
+        yield Transition(
+            "recovered_role_obligations_scanned_existing_evidence",
+            replace(
+                state,
+                obligations_scanned=True,
+                valid_existing_evidence_seen=True,
+            ),
+        )
+        yield Transition(
+            "recovered_role_obligations_scanned_missing_evidence",
+            replace(
+                state,
+                obligations_scanned=True,
+                replacement_required_count=2,
+            ),
+        )
+        yield Transition(
+            "recovered_role_obligations_scanned_semantic_ambiguity",
+            replace(
+                state,
+                obligations_scanned=True,
+                semantic_ambiguity_seen=True,
+                pm_escalation_required=True,
+            ),
+        )
+        return
+
+    if (
+        state.obligations_scanned
+        and state.valid_existing_evidence_seen
+        and not state.existing_evidence_settled
+    ):
+        yield Transition(
+            "existing_ack_and_output_settled_without_replay",
+            replace(
+                state,
+                existing_evidence_settled=True,
+                replay_plan_complete=True,
+            ),
+        )
+        return
+
+    if (
+        state.replacement_required_count
+        and state.replacement_rows_created == 0
+        and not state.replacement_creation_failed
+    ):
+        yield Transition(
+            "replacement_row_created_for_original_order_1",
+            replace(
+                state,
+                replacement_rows_created=1,
+                replacement_order_preserved=True,
+            ),
+        )
+        yield Transition(
+            "replacement_creation_failure_blocks_later_replay",
+            replace(
+                state,
+                status="blocked",
+                recovery_pending=False,
+                replacement_creation_failed=True,
+                later_replay_skipped_after_failure=True,
+            ),
+        )
+        return
+
+    if (
+        state.replacement_required_count
+        and state.replacement_rows_created == 1
+        and state.original_rows_superseded == 0
+    ):
+        yield Transition(
+            "original_wait_superseded_after_replacement_1",
+            replace(state, original_rows_superseded=1),
+        )
+        return
+
+    if (
+        state.replacement_required_count
+        and state.replacement_rows_created == 1
+        and state.original_rows_superseded == 1
+    ):
+        yield Transition(
+            "replacement_row_created_for_original_order_2",
+            replace(state, replacement_rows_created=2),
+        )
+        return
+
+    if (
+        state.replacement_required_count
+        and state.replacement_rows_created == 2
+        and state.original_rows_superseded == 1
+    ):
+        yield Transition(
+            "original_wait_superseded_after_replacement_2",
+            replace(
+                state,
+                original_rows_superseded=2,
+                replay_plan_complete=True,
+            ),
+        )
+        return
+
+    if (
+        state.pm_escalation_required
+        and state.recovery_report_written
+        and not state.pm_decision_requested
+    ):
         yield Transition(
             "pm_decision_requested_after_recovery",
             replace(state, pm_decision_requested=True),
@@ -370,6 +499,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "pm_recovery_decision_returned",
             replace(state, pm_decision_returned=True),
+        )
+        return
+
+    if state.replay_plan_complete and not state.pm_decision_requested:
+        yield Transition(
+            "mechanical_replay_completed_without_pm_notification",
+            replace(state, status="complete", recovery_pending=False),
         )
         return
 
@@ -451,8 +587,36 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("recovery report was written without a recovery transaction")
     if state.pm_decision_requested and not state.recovery_report_written:
         failures.append("PM decision was requested before recovery report")
-    if state.status == "complete" and not state.pm_decision_returned:
-        failures.append("recovery completed without PM recovery decision")
+    if state.pm_decision_requested and not state.pm_escalation_required:
+        failures.append("PM decision was requested for mechanical role recovery")
+    if state.pm_notified_for_mechanical_replay:
+        failures.append("PM was notified for a mechanically settled recovery")
+    if state.replay_plan_complete and not state.obligations_scanned:
+        failures.append("role recovery replay completed without scanning obligations")
+    if state.existing_evidence_settled and state.replacement_rows_created:
+        failures.append("existing evidence settlement also created replacement rows")
+    if state.valid_existing_evidence_seen and state.replacement_required_count:
+        failures.append("valid existing evidence was mixed with replacement replay")
+    if state.replacement_rows_created > state.replacement_required_count:
+        failures.append("more replacement rows were created than required")
+    if state.original_rows_superseded > state.replacement_rows_created:
+        failures.append("original waits were superseded before replacement rows existed")
+    if state.replacement_rows_created and not state.replacement_order_preserved:
+        failures.append("replacement obligations were not issued in original order")
+    if (
+        state.replacement_required_count
+        and state.replay_plan_complete
+        and state.original_rows_superseded != state.replacement_required_count
+    ):
+        failures.append("replay completed before all original waits were superseded")
+    if state.replacement_creation_failed and not state.later_replay_skipped_after_failure:
+        failures.append("later replay continued after replacement creation failed")
+    if state.pm_escalation_required and state.replay_plan_complete:
+        failures.append("ambiguous role recovery was mechanically replayed")
+    if state.status == "complete" and not (
+        state.replay_plan_complete or state.pm_decision_returned
+    ):
+        failures.append("recovery completed without replay completion or PM recovery decision")
 
     return failures
 
@@ -473,7 +637,8 @@ INVARIANTS = (
             "heartbeat/manual and mid-run faults, escalates from restore to "
             "targeted replacement to full crew recycle, injects current-run "
             "memory/context before readiness, quarantines old-generation "
-            "output, reconciles packet ownership, and waits for PM decision."
+            "output, reconciles packet ownership, replays obligations "
+            "mechanically when safe, and reserves PM decisions for ambiguity."
         ),
         predicate=role_recovery_invariant,
     ),
@@ -519,6 +684,12 @@ def _ready_state(**changes: object) -> State:
         stale_generation_output_seen=True,
         stale_generation_output_quarantined=True,
         recovery_report_written=True,
+        obligations_scanned=True,
+        replacement_required_count=2,
+        replacement_rows_created=2,
+        original_rows_superseded=2,
+        replacement_order_preserved=True,
+        replay_plan_complete=True,
     )
     return replace(base, **changes)
 
@@ -578,6 +749,31 @@ def hazard_states() -> dict[str, State]:
         ),
         "controller_auto_continues_after_recovery": _ready_state(
             controller_auto_continued_after_recovery=True,
+        ),
+        "pm_notified_for_mechanical_replay": _ready_state(
+            pm_notified_for_mechanical_replay=True,
+            pm_decision_requested=True,
+            pm_escalation_required=False,
+        ),
+        "replay_complete_without_obligation_scan": _ready_state(
+            obligations_scanned=False,
+            replay_plan_complete=True,
+        ),
+        "replacement_supersedes_before_durable_row": _ready_state(
+            replacement_required_count=2,
+            replacement_rows_created=1,
+            original_rows_superseded=2,
+        ),
+        "replacement_reorders_obligations": _ready_state(
+            replacement_required_count=2,
+            replacement_rows_created=2,
+            original_rows_superseded=2,
+            replacement_order_preserved=False,
+        ),
+        "ambiguous_recovery_mechanically_replayed": _ready_state(
+            semantic_ambiguity_seen=True,
+            pm_escalation_required=True,
+            replay_plan_complete=True,
         ),
         "recovery_blocks_user_stop": State(
             status="running",

@@ -14,6 +14,7 @@
         "detected": true,
         "expected_failure": "ACK wait reached ten minutes without Router-visible blocker",
         "failures": [
+          "wait target reminder was not handled as an executable Controller action with receipt metadata",
           "ACK wait reached ten minutes without Router-visible blocker",
           "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
           "Foreground standby did not poll daemon status and Controller action ledger"
@@ -116,7 +117,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "ack_wait_without_daemon": {
@@ -228,7 +232,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "cached_liveness_trusted_as_current_truth": {
@@ -337,7 +344,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_action_ledger_corrupted_by_partial_write": {
@@ -445,7 +455,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_closed_external_event_wait": {
@@ -553,7 +566,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_core_loaded_after_skipped_daemon_start": {
@@ -660,7 +676,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_done_without_receipt": {
@@ -767,7 +786,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_local_wait_reminded_itself": {
@@ -875,7 +897,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_role_confirmed_without_boundary_artifact": {
@@ -982,7 +1007,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_stopped_at_ordinary_wait": {
@@ -1091,7 +1119,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "controller_used_router_next_as_metronome": {
@@ -1198,7 +1229,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "daemon_status_active_after_lock_error": {
@@ -1306,7 +1340,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "daemon_status_active_without_process": {
@@ -1414,7 +1451,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "duplicate_ack_consumption": {
@@ -1521,7 +1561,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "duplicate_router_writers": {
@@ -1629,7 +1672,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "foreground_controller_ended_during_live_daemon_wait": {
@@ -1737,7 +1783,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "foreground_controller_ended_while_daemon_active_no_action": {
@@ -1844,7 +1893,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "foreground_controller_ended_with_pending_controller_action": {
@@ -1951,7 +2003,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "formal_startup_continued_after_daemon_failure": {
@@ -2059,7 +2114,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "fresh_runtime_ledger_write_lock_reported_corrupt": {
@@ -2167,7 +2225,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "heartbeat_started_second_live_daemon": {
@@ -2276,13 +2337,17 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "lost_role_without_pm_blocker": {
         "detected": true,
         "expected_failure": "lost role wait did not route to PM blocker recovery",
         "failures": [
+          "wait target reminder was not handled as an executable Controller action with receipt metadata",
           "lost role wait did not route to PM blocker recovery",
           "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
           "Foreground standby did not poll daemon status and Controller action ledger"
@@ -2385,7 +2450,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "next_wait_opened_before_satisfied_wait_closed": {
@@ -2496,7 +2564,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "recorded_external_event_left_wait_row_open": {
@@ -2606,7 +2677,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "report_reminder_without_fresh_liveness_probe": {
@@ -2614,6 +2688,7 @@
         "expected_failure": "report reminder was sent without a fresh role liveness probe",
         "failures": [
           "report reminder was sent without a fresh role liveness probe",
+          "wait target reminder was not handled as an executable Controller action with receipt metadata",
           "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
           "Foreground standby did not poll daemon status and Controller action ledger"
         ],
@@ -2715,7 +2790,10 @@
           "wait_target_expected_evidence_visible": true,
           "wait_target_metadata_present": true,
           "wait_target_names_role": true,
-          "wait_target_reminder_text_present": true
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "role_wait_missing_wait_target_metadata": {
@@ -2825,7 +2903,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "router_cleared_controller_receipt_without_internal_fact": {
@@ -2932,7 +3013,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "router_cleared_stateful_receipt_without_postcondition_evidence": {
@@ -3040,7 +3124,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "router_scheduler_ledger_corrupted_by_partial_write": {
@@ -3149,7 +3236,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "router_scheduler_ledger_multi_writer": {
@@ -3258,7 +3348,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "same_controller_action_reissued_after_done_receipt": {
@@ -3365,7 +3458,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "startup_done_receipt_reissued_from_stale_bootstrap_pending": {
@@ -3474,7 +3570,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "stateful_controller_receipt_done_without_postcondition_evidence": {
@@ -3581,7 +3680,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "stateful_missing_deliverable_blocker_while_second_repair_pending": {
@@ -3689,7 +3791,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "stateful_missing_deliverable_escalated_before_repair_budget": {
@@ -3796,7 +3901,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "stateful_missing_deliverable_exhausted_without_blocker": {
@@ -3903,7 +4011,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "stateful_missing_deliverable_issue_count_treated_as_failure_count": {
@@ -4010,7 +4121,10 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       },
       "terminal_left_runtime_active": {
@@ -4119,7 +4233,122 @@
           "wait_target_expected_evidence_visible": false,
           "wait_target_metadata_present": false,
           "wait_target_names_role": false,
-          "wait_target_reminder_text_present": false
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": false,
+          "wait_target_reminder_updates_wait_metadata": false
+        }
+      },
+      "wait_target_reminder_without_controller_action": {
+        "detected": true,
+        "expected_failure": "wait target reminder was not handled as an executable Controller action with receipt metadata",
+        "failures": [
+          "wait target reminder was not handled as an executable Controller action with receipt metadata",
+          "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait",
+          "Foreground standby did not poll daemon status and Controller action ledger"
+        ],
+        "state": {
+          "ack_wait_age_minutes": 3,
+          "ack_wait_blocker_recorded": false,
+          "ack_wait_reminder_sent": true,
+          "controller_action_done": false,
+          "controller_action_ledger_valid_json": true,
+          "controller_action_pending": false,
+          "controller_action_ready": false,
+          "controller_action_requires_stateful_postcondition": false,
+          "controller_attached": true,
+          "controller_boundary_confirmation_written": false,
+          "controller_called_router_next_as_metronome": false,
+          "controller_closed_event_wait": false,
+          "controller_core_loaded": true,
+          "controller_finaled_at_wait": false,
+          "controller_local_blocker_recorded": false,
+          "controller_local_self_audit_done": false,
+          "controller_marked_done_without_receipt": false,
+          "controller_missing_deliverable_blocker_recorded": false,
+          "controller_missing_deliverable_escalated_before_budget": false,
+          "controller_missing_deliverable_pending_attempt": 0,
+          "controller_missing_deliverable_repair_attempts": 0,
+          "controller_missing_deliverable_repair_failed_receipts": 0,
+          "controller_missing_deliverable_repair_pending": false,
+          "controller_receipt_present": false,
+          "controller_receipt_valid": true,
+          "controller_reminded_itself": false,
+          "controller_rescanned_after_receipt": false,
+          "controller_role_confirmed": false,
+          "controller_stateful_postcondition_evidence_written": false,
+          "current_wait": "ack",
+          "daemon_alive": true,
+          "daemon_crashed_after_ledger_decode_error": false,
+          "daemon_deferred_for_runtime_ledger_write": false,
+          "daemon_lock_state": "live",
+          "daemon_mode_enabled": true,
+          "daemon_status_active_after_lock_error": false,
+          "daemon_status_active_without_process": false,
+          "daemon_tick_seconds": 1,
+          "daemon_writer_count": 1,
+          "durable_ledger_writes_atomic": true,
+          "event_wait_action_open": false,
+          "event_wait_closed_by_router": false,
+          "external_event_matches_wait": false,
+          "external_event_recorded": false,
+          "foreground_controller_ended_turn_while_daemon_waiting": false,
+          "foreground_controller_ended_while_controller_action_pending": false,
+          "foreground_controller_ended_while_daemon_active_no_action": false,
+          "foreground_standby_active": false,
+          "foreground_standby_polling_action_ledger": false,
+          "foreground_standby_polling_daemon_status": false,
+          "foreground_standby_timeout_count": 0,
+          "formal_startup_started": true,
+          "heartbeat_active": true,
+          "heartbeat_restarted_dead_daemon": false,
+          "heartbeat_restored_controller": false,
+          "heartbeat_restored_roles": false,
+          "heartbeat_started_second_daemon": false,
+          "heartbeat_woke": false,
+          "lifecycle": "active",
+          "liveness_check_required": false,
+          "liveness_probe_fresh": false,
+          "liveness_probe_outcome": "none",
+          "mailbox_consumption_count": 0,
+          "mailbox_evidence_consumed": false,
+          "mailbox_evidence_present": false,
+          "mailbox_evidence_valid": true,
+          "mailbox_wait_tick_observed": false,
+          "next_wait_opened_before_event_wait_closed": false,
+          "report_reminder_sent": false,
+          "report_wait_age_minutes": 0,
+          "role_liveness_blocker_recorded": false,
+          "roles_live": true,
+          "route_work_allowed": true,
+          "router_can_continue_after_evidence": false,
+          "router_cleared_pending_without_internal_fact": false,
+          "router_cleared_stateful_receipt_without_postcondition_evidence": false,
+          "router_internal_action_fact_current": false,
+          "router_internal_fact_updated_from_receipt": false,
+          "router_scheduler_ledger_valid_json": true,
+          "router_scheduler_single_writer": true,
+          "runtime_ledger_write_lock_fresh": false,
+          "same_controller_action_reissue_count": 0,
+          "stale_event_wait_row_open": false,
+          "stale_liveness_cached_as_truth": false,
+          "startup_bootstrap_flag_current": true,
+          "startup_bootstrap_pending_action_open": false,
+          "startup_controller_receipt_consumed": true,
+          "startup_controller_receipt_present": true,
+          "startup_daemon_failed": false,
+          "startup_daemon_step_completed": true,
+          "startup_next_row_scheduled_after_receipt": true,
+          "startup_router_row_reconciled": true,
+          "startup_same_action_reissue_count": 0,
+          "stop_requested": false,
+          "wait_target_expected_evidence_visible": true,
+          "wait_target_metadata_present": true,
+          "wait_target_names_role": true,
+          "wait_target_reminder_controller_action_ready": false,
+          "wait_target_reminder_receipt_recorded": false,
+          "wait_target_reminder_text_present": true,
+          "wait_target_reminder_updates_wait_metadata": false
         }
       }
     },

@@ -25,6 +25,8 @@ VALID_PRE_DAEMON_BOOTLOADER_PROMPT = "valid_pre_daemon_bootloader_prompt"
 VALID_HEARTBEAT_LIVE_DAEMON_RESUME = "valid_heartbeat_live_daemon_resume"
 VALID_HEARTBEAT_STALE_DAEMON_REPAIR = "valid_heartbeat_stale_daemon_repair"
 VALID_CONTROLLER_LEDGER_RECEIPT_METADATA = "valid_controller_ledger_receipt_metadata"
+VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT = "valid_startup_intake_ledger_return_prompt"
+VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT = "valid_work_item_ack_continues_to_output"
 
 DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT = "daemon_prompt_prefers_run_until_wait"
 HEARTBEAT_CONTINUES_ROUTER_LOOP = "heartbeat_continues_router_loop"
@@ -33,6 +35,8 @@ ROW_TO_ROW_USES_ROUTER_COMMAND = "row_to_row_uses_router_command"
 PARTIAL_TABLE_READ_ERRORS = "partial_table_read_errors"
 MISSING_STARTUP_PHASE_SPLIT = "missing_startup_phase_split"
 CONTROLLER_LEDGER_METADATA_USES_APPLY = "controller_ledger_metadata_uses_apply"
+STARTUP_INTAKE_PROMPT_DIRECT_APPLY = "startup_intake_prompt_direct_apply"
+WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT = "work_item_ack_stops_before_output"
 
 VALID_SCENARIOS = (
     VALID_DAEMON_LEDGER_PROMPT_SET,
@@ -40,6 +44,8 @@ VALID_SCENARIOS = (
     VALID_HEARTBEAT_LIVE_DAEMON_RESUME,
     VALID_HEARTBEAT_STALE_DAEMON_REPAIR,
     VALID_CONTROLLER_LEDGER_RECEIPT_METADATA,
+    VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT,
+    VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT,
 )
 NEGATIVE_SCENARIOS = (
     DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT,
@@ -49,6 +55,8 @@ NEGATIVE_SCENARIOS = (
     PARTIAL_TABLE_READ_ERRORS,
     MISSING_STARTUP_PHASE_SPLIT,
     CONTROLLER_LEDGER_METADATA_USES_APPLY,
+    STARTUP_INTAKE_PROMPT_DIRECT_APPLY,
+    WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -60,6 +68,8 @@ EXPECTED_REJECTIONS = {
     PARTIAL_TABLE_READ_ERRORS: "partial_table_read_not_deferred",
     MISSING_STARTUP_PHASE_SPLIT: "pre_daemon_and_daemon_phases_not_distinguished",
     CONTROLLER_LEDGER_METADATA_USES_APPLY: "controller_ledger_metadata_confuses_apply_with_receipt",
+    STARTUP_INTAKE_PROMPT_DIRECT_APPLY: "startup_intake_prompt_bypasses_daemon_work_board",
+    WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT: "work_item_ack_treated_as_completion",
 }
 
 
@@ -100,6 +110,14 @@ class State:
     controller_row_metadata_receipt_command: bool = False
     controller_row_metadata_apply_required: bool = False
     controller_row_metadata_preserves_router_apply_intent: bool = False
+    startup_intake_returns_to_work_board: bool = False
+    startup_intake_direct_apply_prompt: bool = False
+    startup_intake_body_sealed_from_controller: bool = False
+    work_item_ack_receipt_only: bool = False
+    work_item_ack_continues_after_ack: bool = False
+    work_item_submission_to_router_required: bool = False
+    work_item_unfinished_until_router_output: bool = False
+    work_item_ack_treated_as_completion: bool = False
     rejection_reason: str = "none"
 
 
@@ -243,6 +261,37 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.scenario == VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT:
+        yield Transition(
+            f"accept_{VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT}",
+            replace(
+                state,
+                status="accepted",
+                daemon_started=True,
+                controller_attaches_to_daemon_status=True,
+                controller_reads_action_ledger=True,
+                diagnostic_router_commands_only=True,
+                startup_external_work_after_daemon=True,
+                startup_intake_returns_to_work_board=True,
+                startup_intake_body_sealed_from_controller=True,
+            ),
+        )
+        return
+
+    if state.scenario == VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT:
+        yield Transition(
+            f"accept_{VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT}",
+            replace(
+                state,
+                status="accepted",
+                work_item_ack_receipt_only=True,
+                work_item_ack_continues_after_ack=True,
+                work_item_submission_to_router_required=True,
+                work_item_unfinished_until_router_output=True,
+            ),
+        )
+        return
+
     if state.scenario in EXPECTED_REJECTIONS:
         updates = {"status": "rejected", "rejection_reason": EXPECTED_REJECTIONS[state.scenario]}
         if state.scenario == DAEMON_PROMPT_PREFERS_RUN_UNTIL_WAIT:
@@ -263,6 +312,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_reads_action_ledger=True,
                 controller_row_metadata_apply_required=True,
                 controller_row_metadata_receipt_command=False,
+            )
+        elif state.scenario == STARTUP_INTAKE_PROMPT_DIRECT_APPLY:
+            updates.update(
+                daemon_started=True,
+                startup_external_work_after_daemon=True,
+                startup_intake_direct_apply_prompt=True,
+                startup_intake_body_sealed_from_controller=True,
+            )
+        elif state.scenario == WORK_ITEM_ACK_STOPS_BEFORE_OUTPUT:
+            updates.update(
+                work_item_ack_receipt_only=False,
+                work_item_ack_continues_after_ack=False,
+                work_item_submission_to_router_required=False,
+                work_item_unfinished_until_router_output=False,
+                work_item_ack_treated_as_completion=True,
             )
         yield Transition(f"reject_{state.scenario}", replace(state, **updates))
         return
@@ -342,6 +406,32 @@ def accepted_controller_ledger_metadata_uses_receipt_projection(state: State, _t
     return InvariantResult.pass_()
 
 
+def accepted_startup_intake_prompts_return_to_work_board(state: State, _trace) -> InvariantResult:
+    if state.status == "accepted" and state.scenario == VALID_STARTUP_INTAKE_LEDGER_RETURN_PROMPT:
+        if not state.startup_intake_returns_to_work_board:
+            return InvariantResult.fail("accepted startup intake prompt does not return to Router work board")
+        if state.startup_intake_direct_apply_prompt:
+            return InvariantResult.fail("accepted startup intake prompt still uses direct apply wording")
+        if not state.startup_intake_body_sealed_from_controller:
+            return InvariantResult.fail("accepted startup intake prompt exposes body text to Controller")
+    return InvariantResult.pass_()
+
+
+def accepted_work_item_ack_prompts_continue_to_router_output(state: State, _trace) -> InvariantResult:
+    if state.status == "accepted" and state.scenario == VALID_WORK_ITEM_ACK_CONTINUES_TO_OUTPUT:
+        if not state.work_item_ack_receipt_only:
+            return InvariantResult.fail("accepted work item prompt does not say ACK is receipt only")
+        if not state.work_item_ack_continues_after_ack:
+            return InvariantResult.fail("accepted work item prompt does not continue after ACK")
+        if not state.work_item_submission_to_router_required:
+            return InvariantResult.fail("accepted work item prompt does not require Router-directed output submission")
+        if not state.work_item_unfinished_until_router_output:
+            return InvariantResult.fail("accepted work item prompt does not say task remains unfinished until Router output")
+        if state.work_item_ack_treated_as_completion:
+            return InvariantResult.fail("accepted work item prompt treats ACK as completion")
+    return InvariantResult.pass_()
+
+
 def negative_scenarios_rejected(state: State, _trace) -> InvariantResult:
     if state.scenario in NEGATIVE_SCENARIOS and state.status == "accepted":
         return InvariantResult.fail(f"known-bad prompt scenario was accepted: {state.scenario}")
@@ -384,6 +474,16 @@ INVARIANTS = (
         name="accepted_controller_ledger_metadata_uses_receipt_projection",
         description="Controller ledger row metadata exposes receipt completion while preserving original Router apply intent separately.",
         predicate=accepted_controller_ledger_metadata_uses_receipt_projection,
+    ),
+    Invariant(
+        name="accepted_startup_intake_prompts_return_to_work_board",
+        description="Startup intake prompts return Controller to daemon status and the Controller action ledger without direct-apply wording.",
+        predicate=accepted_startup_intake_prompts_return_to_work_board,
+    ),
+    Invariant(
+        name="accepted_work_item_ack_prompts_continue_to_router_output",
+        description="Work-card and packet ACK prompts continue to Router-directed output submission instead of stopping at ACK.",
+        predicate=accepted_work_item_ack_prompts_continue_to_router_output,
     ),
     Invariant(
         name="negative_scenarios_rejected",

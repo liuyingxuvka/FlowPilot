@@ -1829,17 +1829,6 @@ class AutopilotStep:
                 startup_display_surface_answered=True,
                 startup_answer_values_valid=True,
                 startup_answer_provenance="explicit_user_reply",
-                active_node="emit_startup_banner",
-            )
-            return
-
-        if not state.startup_banner_emitted:
-            yield _step(
-                state,
-                label="startup_banner_emitted",
-                action="emit the FlowPilot startup banner in the user dialog only after the three startup answers",
-                startup_banner_emitted=True,
-                startup_banner_user_dialog_confirmed=True,
                 active_node="create_run_directory",
             )
             return
@@ -2188,44 +2177,6 @@ class AutopilotStep:
             )
             return
 
-        if not state.continuation_probe_done:
-            yield _step(
-                state,
-                label="host_continuation_capability_supported",
-                action="during startup bootstrap, probe host automation capability, record host-kind continuation evidence, and confirm real heartbeat setup is supported before Controller core loads",
-                continuation_probe_done=True,
-                continuation_host_kind_recorded=True,
-                continuation_evidence_written=True,
-                host_continuation_supported=True,
-                active_node="create_startup_heartbeat_before_controller_core",
-            )
-            yield _step(
-                state,
-                label="host_continuation_capability_unsupported_manual_resume",
-                action="during startup bootstrap, record manual-resume mode when host automation is unavailable or not requested, without creating heartbeat automation before Controller core loads",
-                continuation_probe_done=True,
-                continuation_host_kind_recorded=True,
-                continuation_evidence_written=True,
-                host_continuation_supported=False,
-                manual_resume_mode_recorded=True,
-                active_node="load_controller_core",
-            )
-            return
-
-        if state.host_continuation_supported and not state.heartbeat_schedule_created:
-            yield _step(
-                state,
-                label="heartbeat_schedule_created",
-                action="create one-minute route heartbeat as a stable launcher bound to the current run before loading Controller core",
-                heartbeat_schedule_created=True,
-                route_heartbeat_interval_minutes=1,
-                stable_heartbeat_launcher_recorded=True,
-                heartbeat_bound_to_current_run=True,
-                heartbeat_same_name_only_checked=False,
-                active_node="load_controller_core",
-            )
-            return
-
         if not state.router_daemon_started and not state.terminal_router_daemon_stopped:
             yield _step(
                 state,
@@ -2245,9 +2196,58 @@ class AutopilotStep:
         if not state.controller_core_loaded:
             yield _step(
                 state,
-                label="controller_core_loaded_after_startup_continuation_bootstrap",
-                action="load Controller core only after startup continuation is either a bound heartbeat or recorded manual-resume mode",
+                label="controller_core_loaded_before_startup_obligations",
+                action="load Controller core after the Router daemon and Controller action ledger are ready, before Controller-ledger startup obligations",
                 controller_core_loaded=True,
+                active_node="emit_startup_banner",
+            )
+            return
+
+        if not state.startup_banner_emitted:
+            yield _step(
+                state,
+                label="startup_banner_emitted_after_controller_core",
+                action="emit the FlowPilot startup banner in the user dialog after Controller core is loaded",
+                startup_banner_emitted=True,
+                startup_banner_user_dialog_confirmed=True,
+                active_node="record_startup_continuation_mode",
+            )
+            return
+
+        if not state.continuation_probe_done:
+            yield _step(
+                state,
+                label="host_continuation_capability_supported",
+                action="after Controller core loads, record host-kind continuation evidence and confirm real heartbeat setup is supported before startup review or route work",
+                continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
+                host_continuation_supported=True,
+                active_node="create_startup_heartbeat",
+            )
+            yield _step(
+                state,
+                label="host_continuation_capability_unsupported_manual_resume",
+                action="after Controller core loads, record manual-resume mode when host automation is unavailable or not requested",
+                continuation_probe_done=True,
+                continuation_host_kind_recorded=True,
+                continuation_evidence_written=True,
+                host_continuation_supported=False,
+                manual_resume_mode_recorded=True,
+                active_node="pm_ratify_startup_self_interrogation",
+            )
+            return
+
+        if state.host_continuation_supported and not state.heartbeat_schedule_created:
+            yield _step(
+                state,
+                label="heartbeat_schedule_created",
+                action="create one-minute route heartbeat as a stable launcher bound to the current run before startup review or route work",
+                heartbeat_schedule_created=True,
+                route_heartbeat_interval_minutes=1,
+                stable_heartbeat_launcher_recorded=True,
+                heartbeat_bound_to_current_run=True,
+                heartbeat_same_name_only_checked=False,
                 active_node="pm_ratify_startup_self_interrogation",
             )
             return
@@ -5716,6 +5716,8 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
         return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
     if state.startup_banner_emitted and not state.startup_banner_user_dialog_confirmed:
         return InvariantResult.fail("startup banner emitted without confirmed user-dialog display")
+    if state.startup_banner_emitted and not state.controller_core_loaded:
+        return InvariantResult.fail("startup banner emitted before Controller core was loaded")
     if (
         state.startup_background_agents_answered
         and state.startup_scheduled_continuation_answered
@@ -6313,7 +6315,7 @@ def stable_heartbeat_prompt_not_route_state(state: State, trace) -> InvariantRes
     return InvariantResult.pass_()
 
 
-def startup_continuation_bootstraps_before_controller_core(state: State, trace) -> InvariantResult:
+def startup_continuation_gates_work_beyond_startup(state: State, trace) -> InvariantResult:
     del trace
     if state.terminal_router_daemon_stopped:
         if (
@@ -6323,10 +6325,6 @@ def startup_continuation_bootstraps_before_controller_core(state: State, trace) 
         ):
             return InvariantResult.fail("terminal Router daemon stop left daemon, lock, or Controller watch active")
         return InvariantResult.pass_()
-    if state.controller_core_loaded and not _continuation_ready(state):
-        return InvariantResult.fail(
-            "Controller core loaded before startup continuation was bound to heartbeat or manual resume"
-        )
     if state.controller_core_loaded and not state.terminal_router_daemon_stopped and not (
         state.router_daemon_started
         and state.router_daemon_lock_acquired
@@ -6340,13 +6338,25 @@ def startup_continuation_bootstraps_before_controller_core(state: State, trace) 
         )
     if state.router_daemon_started and state.router_daemon_tick_seconds != 1:
         return InvariantResult.fail("persistent Router daemon did not use a fixed one-second tick")
-    if state.controller_core_loaded and state.host_continuation_supported and not _automated_continuation_configured(state):
+    startup_or_route_work_started = (
+        state.startup_preflight_review_report_written
+        or state.pm_start_gate_opened
+        or state.work_beyond_startup_allowed
+        or state.route_checked
+        or state.chunk_state != "none"
+        or state.final_report_emitted
+    )
+    if startup_or_route_work_started and not _continuation_ready(state):
         return InvariantResult.fail(
-            "Controller core loaded before scheduled-continuation heartbeat was fully configured"
+            "startup review or route work started before continuation was bound to heartbeat or manual resume"
         )
-    if state.controller_core_loaded and state.manual_resume_mode_recorded and state.heartbeat_schedule_created:
+    if startup_or_route_work_started and state.host_continuation_supported and not _automated_continuation_configured(state):
         return InvariantResult.fail(
-            "Controller core loaded after manual-resume startup that still created heartbeat automation"
+            "startup review or route work started before scheduled-continuation heartbeat was fully configured"
+        )
+    if startup_or_route_work_started and state.manual_resume_mode_recorded and state.heartbeat_schedule_created:
+        return InvariantResult.fail(
+            "startup review or route work started after manual-resume startup that still created heartbeat automation"
         )
     return InvariantResult.pass_()
 
@@ -6974,9 +6984,9 @@ INVARIANTS = (
         predicate=stable_heartbeat_prompt_not_route_state,
     ),
     Invariant(
-        name="startup_continuation_bootstraps_before_controller_core",
-        description="Startup establishes heartbeat or manual-resume continuation before Controller core handoff.",
-        predicate=startup_continuation_bootstraps_before_controller_core,
+        name="startup_continuation_gates_work_beyond_startup",
+        description="Startup loads Controller core before Controller-ledger obligations, then establishes heartbeat or manual-resume continuation before startup review and route work.",
+        predicate=startup_continuation_gates_work_beyond_startup,
     ),
     Invariant(
         name="heartbeat_continuation_is_lifecycle_state",

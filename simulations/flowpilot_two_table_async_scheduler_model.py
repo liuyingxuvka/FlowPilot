@@ -80,7 +80,10 @@ STATEFUL_RECEIPT_RECONCILED_WITH_POSTCONDITION = "stateful_receipt_reconciled_wi
 STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION = "startup_review_waits_for_current_scope_reconciliation"
 PM_ACTIVATION_SAME_ROLE_ACK_ONLY = "pm_activation_same_role_ack_only"
 CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT = "continuous_standby_row_during_live_wait"
+PASSIVE_WAIT_STATUS_NOT_CONTROLLER_WORK = "passive_wait_status_not_controller_work"
 STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK = "standby_reenters_top_down_on_new_work"
+NO_OUTPUT_WAIT_REISSUES_BEFORE_RECOVERY = "no_output_wait_reissues_before_recovery"
+UNAVAILABLE_WAIT_USES_ROLE_RECOVERY = "unavailable_wait_uses_role_recovery"
 TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS = "transient_scheduler_write_lock_waits"
 STARTUP_BOOTLOADER_RECEIPT_CONSUMES_PENDING_AND_ADVANCES = (
     "startup_bootloader_receipt_consumes_pending_and_advances"
@@ -98,11 +101,17 @@ DAEMON_ENQUEUES_PAST_BARRIER = "daemon_enqueues_past_barrier"
 PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN = "pm_activation_requires_second_global_join"
 STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION = "stateful_receipt_cleared_without_postcondition"
 LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN = "live_wait_with_empty_controller_plan"
+PASSIVE_WAIT_WRITTEN_AS_CONTROLLER_WORK = "passive_wait_written_as_controller_work"
+PASSIVE_WAIT_HIDES_ROUTER_LOCAL_OBLIGATION = "passive_wait_hides_router_local_obligation"
+STANDBY_WITHOUT_WAIT_TARGET_STATUS = "standby_without_wait_target_status"
 CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN = "controller_ledger_prompt_missing_top_down"
 FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED = "flowpilot_running_foreground_closure_allowed"
 STANDBY_COMPLETES_AFTER_ONE_CHECK = "standby_completes_after_one_check"
 STANDBY_TIMEOUT_TREATED_AS_COMPLETION = "standby_timeout_treated_as_completion"
 STANDBY_NEW_WORK_IGNORED = "standby_new_work_ignored"
+NO_OUTPUT_WAIT_TRIGGERS_ROLE_RECOVERY = "no_output_wait_triggers_role_recovery"
+NO_OUTPUT_REISSUE_WITHOUT_SUPERSEDE = "no_output_reissue_without_supersede"
+UNAVAILABLE_WAIT_REISSUED_INSTEAD_OF_RECOVERY = "unavailable_wait_reissued_instead_of_recovery"
 STARTUP_UI_BEFORE_DAEMON = "startup_ui_before_daemon"
 STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON = "startup_roles_or_heartbeat_before_daemon"
 DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP = "daemon_waits_for_controller_core_during_startup"
@@ -116,6 +125,7 @@ STARTUP_BOOTLOADER_RECEIPT_LEAVES_STALE_PENDING_ACTION = (
 STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER = "startup_banner_display_global_barrier"
 STARTUP_HEARTBEAT_GLOBAL_BARRIER = "startup_heartbeat_global_barrier"
 STARTUP_ROLE_SPAWN_GLOBAL_BARRIER = "startup_role_spawn_global_barrier"
+STARTUP_OBLIGATION_BEFORE_CONTROLLER_CORE = "startup_obligation_before_controller_core"
 ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY = "role_dependent_work_before_role_slots_ready"
 REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN = (
     "reviewer_starts_before_parallel_startup_obligations_clean"
@@ -135,7 +145,10 @@ VALID_SCENARIOS = (
     STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION,
     PM_ACTIVATION_SAME_ROLE_ACK_ONLY,
     CONTINUOUS_STANDBY_ROW_DURING_LIVE_WAIT,
+    PASSIVE_WAIT_STATUS_NOT_CONTROLLER_WORK,
     STANDBY_REENTERS_TOP_DOWN_ON_NEW_WORK,
+    NO_OUTPUT_WAIT_REISSUES_BEFORE_RECOVERY,
+    UNAVAILABLE_WAIT_USES_ROLE_RECOVERY,
     TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS,
     STARTUP_BOOTLOADER_RECEIPT_CONSUMES_PENDING_AND_ADVANCES,
     PARALLEL_STARTUP_OBLIGATIONS_QUEUE_UNRELATED_WORK,
@@ -153,11 +166,17 @@ NEGATIVE_SCENARIOS = (
     PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN,
     STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION,
     LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN,
+    PASSIVE_WAIT_WRITTEN_AS_CONTROLLER_WORK,
+    PASSIVE_WAIT_HIDES_ROUTER_LOCAL_OBLIGATION,
+    STANDBY_WITHOUT_WAIT_TARGET_STATUS,
     CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN,
     FLOWPILOT_RUNNING_FOREGROUND_CLOSURE_ALLOWED,
     STANDBY_COMPLETES_AFTER_ONE_CHECK,
     STANDBY_TIMEOUT_TREATED_AS_COMPLETION,
     STANDBY_NEW_WORK_IGNORED,
+    NO_OUTPUT_WAIT_TRIGGERS_ROLE_RECOVERY,
+    NO_OUTPUT_REISSUE_WITHOUT_SUPERSEDE,
+    UNAVAILABLE_WAIT_REISSUED_INSTEAD_OF_RECOVERY,
     STARTUP_UI_BEFORE_DAEMON,
     STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON,
     DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP,
@@ -169,6 +188,7 @@ NEGATIVE_SCENARIOS = (
     STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER,
     STARTUP_HEARTBEAT_GLOBAL_BARRIER,
     STARTUP_ROLE_SPAWN_GLOBAL_BARRIER,
+    STARTUP_OBLIGATION_BEFORE_CONTROLLER_CORE,
     ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY,
     REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN,
     TRUE_BARRIER_DEMOTED_TO_PARALLEL,
@@ -278,6 +298,11 @@ class State:
     route_work_started: bool = False
     flowpilot_still_running: bool = False
     running_wait_state_kind: str = "none"
+    passive_wait_status_present: bool = False
+    passive_wait_written_as_ordinary_controller_row: bool = False
+    passive_wait_metadata_in_monitor: bool = False
+    router_local_obligation_available: bool = False
+    router_local_obligation_hidden_by_passive_wait: bool = False
     live_wait_without_ordinary_controller_row: bool = False
     continuous_standby_row_present: bool = False
     standby_row_stable_idempotency: bool = False
@@ -292,6 +317,13 @@ class State:
     new_controller_work_exposed_during_standby: bool = False
     standby_updates_ledger_on_new_work: bool = False
     standby_returns_to_top_down_row_processing: bool = False
+    wait_target_status: str = "none"  # none | still_working | no_output | unavailable | ambiguous
+    no_output_reissue_created: bool = False
+    no_output_retry_budget_exhausted: bool = False
+    no_output_pm_escalation_recorded: bool = False
+    no_output_original_wait_superseded: bool = False
+    no_output_replacement_wait_durable: bool = False
+    role_recovery_requested: bool = False
     terminal_reason: str = "none"
 
 
@@ -378,7 +410,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == STARTUP_REVIEW_WAITS_FOR_CURRENT_SCOPE_RECONCILIATION:
         return _accepted(
             scenario,
-            **base,
+            **{**base, "controller_core_loaded": True},
             startup_local_rows_clean=True,
             startup_prep_cards_sent=True,
             startup_prep_acks_clean=True,
@@ -390,7 +422,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == PM_ACTIVATION_SAME_ROLE_ACK_ONLY:
         return _accepted(
             scenario,
-            **base,
+            **{**base, "controller_core_loaded": True},
             startup_local_rows_clean=True,
             startup_prep_cards_sent=True,
             startup_prep_acks_clean=True,
@@ -410,6 +442,24 @@ def scenario_state(scenario: str) -> State:
             scenario,
             **base,
             barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+        )
+    if scenario == PASSIVE_WAIT_STATUS_NOT_CONTROLLER_WORK:
+        return _accepted(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            passive_wait_written_as_ordinary_controller_row=False,
             live_wait_without_ordinary_controller_row=True,
             continuous_standby_row_present=True,
             standby_row_stable_idempotency=True,
@@ -423,6 +473,8 @@ def scenario_state(scenario: str) -> State:
             scenario,
             **base,
             barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
             live_wait_without_ordinary_controller_row=True,
             continuous_standby_row_present=True,
             standby_row_stable_idempotency=True,
@@ -433,6 +485,44 @@ def scenario_state(scenario: str) -> State:
             new_controller_work_exposed_during_standby=True,
             standby_updates_ledger_on_new_work=True,
             standby_returns_to_top_down_row_processing=True,
+        )
+    if scenario == NO_OUTPUT_WAIT_REISSUES_BEFORE_RECOVERY:
+        return _accepted(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            wait_target_status="no_output",
+            no_output_reissue_created=True,
+            no_output_replacement_wait_durable=True,
+            no_output_original_wait_superseded=True,
+            role_recovery_requested=False,
+        )
+    if scenario == UNAVAILABLE_WAIT_USES_ROLE_RECOVERY:
+        return _accepted(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            wait_target_status="unavailable",
+            no_output_reissue_created=False,
+            role_recovery_requested=True,
         )
     if scenario == TRANSIENT_SCHEDULER_WRITE_LOCK_WAITS:
         return _accepted(
@@ -460,7 +550,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == PARALLEL_STARTUP_OBLIGATIONS_QUEUE_UNRELATED_WORK:
         return _accepted(
             scenario,
-            **base,
+            **{**base, "controller_core_loaded": True},
             startup_parallel_obligation_open=True,
             startup_parallel_obligation_proof_written=False,
             startup_parallel_obligation_reconciled=False,
@@ -474,7 +564,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == STARTUP_ROLE_SLOTS_LOCAL_DEPENDENCY:
         return _accepted(
             scenario,
-            **base,
+            **{**base, "controller_core_loaded": True},
             startup_role_slots_open=True,
             startup_role_slots_ready=False,
             unrelated_startup_work_available=True,
@@ -495,7 +585,7 @@ def scenario_state(scenario: str) -> State:
     if scenario == STARTUP_PARALLEL_OBLIGATION_REVIEW_JOIN:
         return _accepted(
             scenario,
-            **base,
+            **{**base, "controller_core_loaded": True},
             startup_parallel_obligation_open=False,
             startup_parallel_obligation_proof_written=True,
             startup_parallel_obligation_reconciled=True,
@@ -573,9 +663,55 @@ def scenario_state(scenario: str) -> State:
             scenario,
             **base,
             barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
             live_wait_without_ordinary_controller_row=True,
             continuous_standby_row_present=False,
             standby_codex_plan_item_in_progress=False,
+        )
+    if scenario == PASSIVE_WAIT_WRITTEN_AS_CONTROLLER_WORK:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            passive_wait_written_as_ordinary_controller_row=True,
+            live_wait_without_ordinary_controller_row=False,
+            continuous_standby_row_present=False,
+        )
+    if scenario == PASSIVE_WAIT_HIDES_ROUTER_LOCAL_OBLIGATION:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            passive_wait_written_as_ordinary_controller_row=False,
+            router_local_obligation_available=True,
+            router_local_obligation_hidden_by_passive_wait=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+        )
+    if scenario == STANDBY_WITHOUT_WAIT_TARGET_STATUS:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=False,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=False,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
         )
     if scenario == CONTROLLER_LEDGER_PROMPT_MISSING_TOP_DOWN:
         prompt_missing_base = {
@@ -645,6 +781,64 @@ def scenario_state(scenario: str) -> State:
             standby_codex_plan_sync_required=True,
             standby_timeout_still_waiting_treated_as_completion=True,
             foreground_controller_stopped_during_standby=True,
+        )
+    if scenario == NO_OUTPUT_WAIT_TRIGGERS_ROLE_RECOVERY:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            wait_target_status="no_output",
+            no_output_reissue_created=False,
+            role_recovery_requested=True,
+        )
+    if scenario == NO_OUTPUT_REISSUE_WITHOUT_SUPERSEDE:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            wait_target_status="no_output",
+            no_output_reissue_created=True,
+            no_output_replacement_wait_durable=False,
+            no_output_original_wait_superseded=False,
+            role_recovery_requested=False,
+        )
+    if scenario == UNAVAILABLE_WAIT_REISSUED_INSTEAD_OF_RECOVERY:
+        return _rejected(
+            scenario,
+            **base,
+            barrier_active=True,
+            passive_wait_status_present=True,
+            passive_wait_metadata_in_monitor=True,
+            live_wait_without_ordinary_controller_row=True,
+            continuous_standby_row_present=True,
+            standby_row_stable_idempotency=True,
+            standby_row_names_wait_target=True,
+            standby_codex_plan_sync_required=True,
+            standby_codex_plan_item_in_progress=True,
+            standby_strict_monitor_wait_policy=True,
+            wait_target_status="unavailable",
+            no_output_reissue_created=True,
+            no_output_replacement_wait_durable=True,
+            no_output_original_wait_superseded=True,
+            role_recovery_requested=False,
         )
     if scenario == STARTUP_UI_BEFORE_DAEMON:
         return _rejected(
@@ -767,6 +961,14 @@ def scenario_state(scenario: str) -> State:
             role_independent_work_enqueued=False,
             startup_role_slots_blocked_unrelated_queue=True,
         )
+    if scenario == STARTUP_OBLIGATION_BEFORE_CONTROLLER_CORE:
+        return _rejected(
+            scenario,
+            **{**base, "controller_core_loaded": False},
+            startup_parallel_obligation_open=True,
+            startup_parallel_obligation_proof_written=False,
+            startup_parallel_obligation_reconciled=False,
+        )
     if scenario == ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY:
         return _rejected(
             scenario,
@@ -872,6 +1074,15 @@ def scheduler_failures(state: State) -> list[str]:
     if state.daemon_waits_for_controller_core_without_startup_drive:
         failures.append("pre-Controller-core daemon tick idled instead of scheduling startup work")
     if (
+        not state.controller_core_loaded
+        and (
+            state.startup_parallel_obligation_open
+            or state.startup_heartbeat_obligation_open
+            or state.startup_role_slots_open
+        )
+    ):
+        failures.append("Controller-ledger startup obligation was exposed before Controller core loaded")
+    if (
         state.startup_controller_receipt_done
         and state.startup_daemon_processed_done_receipt
         and not (
@@ -946,12 +1157,27 @@ def scheduler_failures(state: State) -> list[str]:
         failures.append("Reviewer startup fact review started before startup current-scope reconciliation was clean")
     if state.reviewer_startup_fact_review_started and not state.startup_parallel_obligations_clean:
         failures.append("Reviewer startup fact review started before startup parallel obligations were reconciled")
+    if (
+        not state.controller_core_loaded
+        and (
+            state.reviewer_startup_fact_review_started
+            or state.pm_activation_decision_accepted
+            or state.route_work_started
+        )
+    ):
+        failures.append("startup review, PM activation, or route work started before Controller core loaded")
     if state.pm_activation_second_global_join_required:
         failures.append("PM startup activation required redundant all-startup ACK join")
     if state.route_work_started and not state.pm_activation_decision_accepted:
         failures.append("route work started before PM startup activation decision was accepted")
     if state.live_wait_without_ordinary_controller_row and not state.continuous_standby_row_present:
         failures.append("live daemon wait exposed an empty Controller plan instead of a continuous standby row")
+    if state.passive_wait_status_present and state.passive_wait_written_as_ordinary_controller_row:
+        failures.append("passive wait status was written as ordinary Controller work")
+    if state.passive_wait_status_present and not state.passive_wait_metadata_in_monitor:
+        failures.append("passive wait status was not projected into Router monitor status")
+    if state.passive_wait_status_present and state.router_local_obligation_hidden_by_passive_wait:
+        failures.append("passive wait hid a Router-local obligation that should have preempted waiting")
     if state.continuous_standby_row_present and not state.standby_row_stable_idempotency:
         failures.append("continuous standby row lacks stable idempotency")
     if state.continuous_standby_row_present and not state.standby_row_names_wait_target:
@@ -974,6 +1200,21 @@ def scheduler_failures(state: State) -> list[str]:
         state.standby_updates_ledger_on_new_work and state.standby_returns_to_top_down_row_processing
     ):
         failures.append("continuous standby ignored new Controller work instead of returning to top-to-bottom row processing")
+    if state.wait_target_status == "no_output" and state.role_recovery_requested:
+        failures.append("no-output wait requested role recovery before bounded same-work reissue")
+    if state.wait_target_status == "no_output" and not state.no_output_retry_budget_exhausted:
+        if not state.no_output_reissue_created:
+            failures.append("no-output wait did not create a replacement work attempt")
+        if state.no_output_reissue_created and not state.no_output_replacement_wait_durable:
+            failures.append("no-output replacement was not durable before continuation")
+        if state.no_output_reissue_created and not state.no_output_original_wait_superseded:
+            failures.append("no-output original wait was not superseded after replacement")
+    if state.no_output_retry_budget_exhausted and not state.no_output_pm_escalation_recorded:
+        failures.append("no-output retry budget exhausted without PM/control-blocker escalation")
+    if state.wait_target_status == "unavailable" and not state.role_recovery_requested:
+        failures.append("unavailable role did not enter role recovery")
+    if state.wait_target_status == "unavailable" and state.no_output_reissue_created:
+        failures.append("unavailable role was reissued same-work instead of recovered")
     return failures
 
 

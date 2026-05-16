@@ -34,6 +34,14 @@ def _state_id(state: model.State) -> str:
         f"metadata=receipt:{state.controller_row_metadata_receipt_command},"
         f"apply:{state.controller_row_metadata_apply_required},"
         f"preserve:{state.controller_row_metadata_preserves_router_apply_intent}|"
+        f"startup_intake=work_board:{state.startup_intake_returns_to_work_board},"
+        f"direct_apply:{state.startup_intake_direct_apply_prompt},"
+        f"body_sealed:{state.startup_intake_body_sealed_from_controller}|"
+        f"work_ack=receipt:{state.work_item_ack_receipt_only},"
+        f"continue:{state.work_item_ack_continues_after_ack},"
+        f"router_submit:{state.work_item_submission_to_router_required},"
+        f"unfinished:{state.work_item_unfinished_until_router_output},"
+        f"ack_completion:{state.work_item_ack_treated_as_completion}|"
         f"reason={state.rejection_reason}"
     )
 
@@ -188,6 +196,9 @@ def _source_text(path: str) -> str:
 def _actual_prompt_source_report() -> dict[str, object]:
     skill = _source_text("skills/flowpilot/SKILL.md")
     controller = _source_text("skills/flowpilot/assets/runtime_kit/cards/roles/controller.md")
+    startup_fact_card = _source_text("skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md")
+    packet_body_template = _source_text("templates/flowpilot/packets/packet_body.template.md")
+    packet_runtime = _source_text("skills/flowpilot/assets/packet_runtime.py")
     router = _source_text("skills/flowpilot/assets/flowpilot_router.py")
     heartbeat_template = _source_text("templates/flowpilot/heartbeats/hb.template.md")
 
@@ -257,6 +268,44 @@ def _actual_prompt_source_report() -> dict[str, object]:
         "skill_daemon_rows_distinguish_receipt_from_apply": _contains_all(
             skill,
             ("Controller ledger row", "controller-receipt", "direct pending action"),
+        ),
+        "skill_startup_intake_returns_to_router_work_board": _contains_all(
+            skill,
+            ("open_startup_intake_ui", "After the UI closes", "Router daemon status", "Controller action ledger"),
+        ),
+        "skill_startup_intake_no_direct_apply_wording": (
+            "After the UI closes, apply that same pending action" not in skill
+        ),
+        "router_startup_intake_returns_to_router_work_board": _contains_all(
+            router,
+            ("Open the native FlowPilot startup intake UI", "Router daemon status", "Controller action ledger"),
+        ),
+        "router_startup_intake_no_direct_apply_wording": (
+            "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path." not in router
+        ),
+        "work_card_ack_continues_and_waits_for_router_output": _contains_all(
+            startup_fact_card,
+            (
+                "After work-card ACK, do not stop or wait for another prompt",
+                "immediately continue the assigned work",
+                "task remains unfinished until Router receives",
+            ),
+        ),
+        "packet_ack_continues_and_waits_for_router_result": _contains_all(
+            packet_body_template + packet_runtime,
+            (
+                "Packet ACK is receipt only",
+                "do not stop or wait for another prompt",
+                "remains unfinished until Router receives",
+            ),
+        ),
+        "router_card_checkin_policy_mentions_work_item_output": _contains_all(
+            router,
+            (
+                "work cards that ask for an output, report, decision",
+                "must not stop after ACK",
+                "unfinished until Router receives",
+            ),
         ),
     }
     failures = [name for name, ok in checks.items() if not ok]

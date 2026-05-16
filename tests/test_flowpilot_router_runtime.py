@@ -1204,13 +1204,31 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             elif action_type == "create_heartbeat_automation":
                 router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
             elif action_type == "load_controller_core":
-                self.complete_startup_async_controller_rows(root, startup_answers=startup_answers)
                 router.apply_action(root, action_type, self.payload_for_action(action))
+                self.complete_startup_async_controller_rows(root, startup_answers=startup_answers)
                 break
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
+
+    def legacy_controller_boundary_action(self, root: Path) -> tuple[Path, dict, dict]:
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        boundary_path = run_root / "startup" / "controller_boundary_confirmation.json"
+        if boundary_path.exists():
+            boundary_path.unlink()
+        flags = state.setdefault("flags", {})
+        flags["controller_role_confirmed"] = False
+        flags["controller_role_confirmed_from_router_core"] = False
+        flags["controller_boundary_confirmation_written"] = False
+        flags["controller_boundary_recovery_requested"] = True
+        state.pop("controller_boundary_confirmation", None)
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+        action = router._next_controller_boundary_confirmation_action(root, state, run_root)  # type: ignore[attr-defined]
+        self.assertIsNotNone(action)
+        return run_root, state, action
 
     def boot_to_router_daemon_start(self, root: Path, startup_answers: dict | None = None) -> Path:
         startup_answers = startup_answers or STARTUP_ANSWERS
@@ -1528,6 +1546,48 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 }
             ],
         }
+
+    def write_worker_recovery_wait_action(
+        self,
+        root: Path,
+        *,
+        label: str,
+        allowed_event: str = "worker_scan_results_returned",
+        extra: dict | None = None,
+    ) -> dict:
+        run_root = self.run_root_for(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="await_role_decision",
+            actor="controller",
+            label=label,
+            summary=f"Controller waits for worker_a test output: {label}",
+            allowed_reads=[],
+            allowed_writes=[],
+            to_role="worker_a",
+            extra={"allowed_external_events": [allowed_event], **(extra or {})},
+        )
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        return entry
+
+    def recover_worker_a_after_liveness_fault(self, root: Path) -> dict:
+        router.record_external_event(
+            root,
+            "controller_reports_role_liveness_fault",
+            {
+                "role_key": "worker_a",
+                "host_liveness_status": "missing",
+                "detected_by": "controller",
+            },
+        )
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_role_recovery_state")
+        router.apply_action(root, "load_role_recovery_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "recover_role_agents")
+        router.apply_action(root, "recover_role_agents", self.role_recovery_agent_payload(root, action, role="worker_a"))
+        return read_json(self.run_root_for(root) / "continuation" / "role_recovery_report.json")
 
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
@@ -3500,8 +3560,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue((run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json").exists())
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
-        self.assertIn("emit_startup_banner", startup_types)
-        self.assertIn("start_role_slots", startup_types)
+        self.assertIn("load_controller_core", startup_types)
+        self.assertNotIn("emit_startup_banner", startup_types)
+        self.assertNotIn("start_role_slots", startup_types)
         self.assertNotIn("fill_runtime_placeholders", startup_types)
         self.assertNotIn("initialize_mailbox", startup_types)
         self.assertNotIn("record_user_request", startup_types)
@@ -3523,7 +3584,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         self.assertFalse(self.bootstrap_state(root)["flags"].get("roles_started", False))
 
-    def test_scheduled_startup_heartbeat_is_bootloader_boundary_before_controller_core(self) -> None:
+    def test_scheduled_startup_heartbeat_is_queued_after_controller_core(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         router.apply_action(
@@ -3537,6 +3598,12 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.run_root_for(root)
         run_state = read_json(router.run_state_path(run_root))
         self.assertFalse(run_state["flags"]["controller_core_loaded"])
+        self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertFalse(any(item.get("action_type") == "create_heartbeat_automation" for item in controller_ledger["actions"]))
+        router.apply_action(root, "load_controller_core", self.payload_for_action(action))
+        run_state = read_json(router.run_state_path(run_root))
+        self.assertTrue(run_state["flags"]["controller_core_loaded"])
         self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         heartbeat_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "create_heartbeat_automation")
@@ -3562,7 +3629,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         self.assertTrue(action["startup_daemon_scheduled"])
         self.assertTrue(action["scheduled_by_router_daemon"])
-        router.apply_action(root, "load_controller_core")
         run_state = read_json(router.run_state_path(run_root))
         self.assertTrue(run_state["flags"]["controller_core_loaded"])
         self.assertTrue(run_state["flags"]["formal_router_daemon_started"])
@@ -3570,7 +3636,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(continuation["mode"], "scheduled_heartbeat")
         self.assertTrue(continuation["heartbeat_active"])
 
-    def test_manual_startup_skips_heartbeat_before_controller_core(self) -> None:
+    def test_manual_startup_skips_heartbeat_after_controller_core(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=STARTUP_ANSWERS)
         state = read_json(router.run_state_path(run_root))
@@ -3609,6 +3675,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         entry = read_json(run_root / "runtime" / "controller_actions" / f"{action['controller_action_id']}.json")
         self.assertEqual(entry["action_type"], "open_startup_intake_ui")
         self.assertEqual(entry["scope_kind"], "startup")
+        self.assertIn("Router daemon status", entry["action"]["plain_instruction"])
+        self.assertIn("Controller action ledger", entry["action"]["plain_instruction"])
+        self.assertNotIn("apply this pending action", entry["action"]["plain_instruction"])
+        self.assertNotIn("apply its confirmed or cancelled result", entry["action"]["summary"])
         scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
         row = next(item for item in scheduler["rows"] if item["row_id"] == action["router_scheduler_row_id"])
         self.assertEqual(row["scope_kind"], "startup")
@@ -3634,16 +3704,24 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         banner_rows = [item for item in controller_ledger["actions"] if item.get("action_type") == "emit_startup_banner"]
-        self.assertEqual(len(banner_rows), 1)
+        self.assertEqual(len(banner_rows), 0)
         startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertNotIn("emit_startup_banner", startup_types)
+        self.assertNotIn("start_role_slots", startup_types)
+        self.assertNotIn("create_heartbeat_automation", startup_types)
         self.assertNotIn("fill_runtime_placeholders", startup_types)
         self.assertNotIn("initialize_mailbox", startup_types)
         self.assertNotIn("record_user_request", startup_types)
         self.assertNotIn("write_user_intake", startup_types)
+        self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
+
+        router.apply_action(root, "load_controller_core")
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        banner_rows = [item for item in controller_ledger["actions"] if item.get("action_type") == "emit_startup_banner"]
+        self.assertEqual(len(banner_rows), 1)
         banner_record = read_json(run_root / "runtime" / "controller_actions" / f"{banner_rows[0]['action_id']}.json")
         self.assertEqual(banner_record["status"], "pending")
         self.assertEqual(banner_record["action"]["router_scheduler_progress_class"], "parallel_obligation")
-        self.assertFalse(bootstrap["flags"].get("banner_emitted", False))
 
     def test_deterministic_bootstrap_seed_failure_does_not_create_pm_blocker(self) -> None:
         root = self.make_project()
@@ -3789,8 +3867,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             stale_pm_entry["router_reconciliation_status"],
             "superseded_by_resolved_control_blocker",
         )
-        next_action = router.next_action(root)
-        self.assertNotEqual(next_action["action_type"], "handle_control_blocker")
+        self.assertNotEqual((self.bootstrap_state(root).get("pending_action") or {}).get("action_type"), "handle_control_blocker")
 
     def test_startup_missing_router_postcondition_retries_before_pm_blocker(self) -> None:
         root = self.make_project()
@@ -3864,13 +3941,18 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
-        self.assertEqual(startup_types.count("emit_startup_banner"), 1)
-        self.assertEqual(startup_types.count("start_role_slots"), 1)
-        self.assertEqual(startup_types.count("create_heartbeat_automation"), 1)
+        self.assertEqual(startup_types.count("emit_startup_banner"), 0)
+        self.assertEqual(startup_types.count("start_role_slots"), 0)
+        self.assertEqual(startup_types.count("create_heartbeat_automation"), 0)
         self.assertNotIn("inject_role_core_prompts", startup_types)
         self.assertEqual(self.bootstrap_state(root)["pending_action"]["action_type"], "load_controller_core")
 
-        router.apply_action(root, "load_controller_core")
+        router.apply_action(root, "load_controller_core", self.payload_for_action(action))
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
+        self.assertEqual(startup_types.count("emit_startup_banner"), 1)
+        self.assertEqual(startup_types.count("start_role_slots"), 1)
+        self.assertEqual(startup_types.count("create_heartbeat_automation"), 1)
         state = read_json(router.run_state_path(run_root))
         blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
         blocker_kinds = [item["kind"] for item in blockers]
@@ -3893,6 +3975,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             payload = {} if action["action_type"] == "record_user_request" else self.payload_for_action(action)
             router.apply_action(root, str(action["action_type"]), payload)
 
+        router.apply_action(root, "load_controller_core", self.payload_for_action(action))
         completed = self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         self.assertEqual(set(completed), {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"})
 
@@ -4078,6 +4161,75 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(summary["pending_action_ids"], [])
         self.assertEqual(summary["waiting_action_ids"], [])
 
+    def test_passive_wait_projection_is_not_ordinary_controller_work(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+
+        self.force_startup_fact_role_wait(root)
+
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        ordinary_types = [item.get("action_type") for item in ledger["actions"]]
+        passive_types = [item.get("action_type") for item in ledger["passive_waits"]]
+        self.assertNotIn("await_role_decision", ordinary_types)
+        self.assertIn("await_role_decision", passive_types)
+        self.assertTrue(ledger["controller_actions_are_executable_only"])
+        self.assertTrue(ledger["passive_waits_projected_via_status_not_work_board"])
+        summary = router._controller_action_ledger_summary(run_root)  # type: ignore[attr-defined]
+        self.assertEqual(summary["passive_wait_count"], 1)
+        self.assertEqual(summary["active_work_count"], 0)
+
+    def test_all_passive_wait_types_are_status_projections_not_work_rows(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        passive_actions = [
+            router.make_action(
+                action_type="await_role_decision",
+                actor="controller",
+                label="test_wait_role",
+                summary="Wait for role output.",
+                to_role="project_manager",
+                extra={"allowed_external_events": ["pm_resume_recovery_decision_returned"]},
+            ),
+            router.make_action(
+                action_type="await_card_return_event",
+                actor="controller",
+                label="test_wait_card",
+                summary="Wait for card ACK.",
+                to_role="project_manager",
+                extra={"expected_return_path": "runtime/card_returns/test-card.json"},
+            ),
+            router.make_action(
+                action_type="await_card_bundle_return_event",
+                actor="controller",
+                label="test_wait_bundle",
+                summary="Wait for bundled card ACK.",
+                to_role="project_manager",
+                extra={"expected_return_path": "runtime/card_returns/test-bundle.json"},
+            ),
+            router.make_action(
+                action_type="await_current_scope_reconciliation",
+                actor="controller",
+                label="test_wait_scope_reconciliation",
+                summary="Wait for local reconciliation.",
+                to_role="controller",
+                extra={"scope_kind": "current_node", "scope_id": "node-001", "blockers": [{"kind": "test"}]},
+            ),
+        ]
+
+        for action in passive_actions:
+            router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        ordinary_types = [item.get("action_type") for item in ledger["actions"]]
+        passive_types = [item.get("action_type") for item in ledger["passive_waits"]]
+        for action_type in router.PASSIVE_WAIT_STATUS_ACTION_TYPES:
+            self.assertNotIn(action_type, ordinary_types)
+            self.assertIn(action_type, passive_types)
+        self.assertEqual(ledger["passive_wait_count"], len(router.PASSIVE_WAIT_STATUS_ACTION_TYPES))
+
     def test_router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -4109,8 +4261,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.release_startup_daemon_for_explicit_daemon_test(root)
 
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
-        router.apply_action(root, "confirm_controller_core_boundary")
+        self.assertEqual(action["action_type"], "write_display_surface_status")
 
         result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
@@ -4120,7 +4271,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertNotIn("write_startup_mechanical_audit", queued_types)
         self.assertIn("write_display_surface_status", queued_types)
         self.assertIn("write_startup_mechanical_audit", self.router_internal_action_types(root))
-        self.assertEqual(tick["queue_stop_reason"], "barrier")
+        self.assertIn(tick["queue_stop_reason"], {"barrier", "passive_wait_status"})
         scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
         self.assertEqual(scheduler["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
         self.assertTrue(scheduler["router_is_only_scheduler_writer"])
@@ -4301,6 +4452,9 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        load_action = router.run_until_wait(root)
+        self.assertEqual(load_action["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core", self.payload_for_action(load_action))
         run_root = self.run_root_for(root)
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         banner_row = next(item for item in controller_ledger["actions"] if item["action_type"] == "emit_startup_banner")
@@ -4325,7 +4479,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
         row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
         self.assertEqual(row["router_state"], "reconciled")
-        self.assertNotEqual(router.next_action(root)["action_type"], "emit_startup_banner")
+        self.assertNotEqual((self.bootstrap_state(root).get("pending_action") or {}).get("action_type"), "emit_startup_banner")
 
     def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
         root = self.make_project()
@@ -4502,9 +4656,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def test_controller_boundary_done_receipt_reclaims_router_postcondition(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        state = read_json(router.run_state_path(run_root))
-        action = self.next_after_display_sync(root)
+        self.boot_to_controller(root)
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
@@ -4527,9 +4680,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
     def test_controller_boundary_projection_reclaims_stale_flags_without_pending_action(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        state = read_json(router.run_state_path(run_root))
-        action = self.next_after_display_sync(root)
+        self.boot_to_controller(root)
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
@@ -4895,7 +5047,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             standby_entry["action"]["codex_plan_sync"]["new_controller_work_returns_to_top_down_processing"]
         )
 
-    def test_foreground_controller_standby_returns_report_reminder_and_liveness_probe_due(self) -> None:
+    def test_foreground_controller_standby_materializes_report_reminder_with_liveness_probe(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
@@ -4915,13 +5067,41 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
 
-        self.assertEqual(standby["standby_state"], "wait_target_check_due")
-        self.assertEqual(standby["foreground_required_mode"], "process_wait_target_check")
-        self.assertTrue(standby["controller_must_process_wait_target_before_exit"])
+        self.assertEqual(standby["standby_state"], "controller_action_ready")
+        self.assertEqual(standby["foreground_required_mode"], "process_controller_action")
+        self.assertFalse(standby["controller_must_process_wait_target_before_exit"])
         self.assertTrue(standby["current_wait"]["reminder"]["due"])
         self.assertTrue(standby["current_wait"]["liveness_probe"]["due"])
         self.assertTrue(standby["current_wait"]["liveness_probe"]["required"])
         self.assertTrue(standby["current_wait"]["liveness_probe"]["current_liveness_is_not_cached_authority"])
+        materialized = standby["materialized_wait_target_controller_action"]
+        self.assertEqual(materialized["action_type"], router.WAIT_TARGET_REMINDER_ACTION_TYPE)
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        reminder_action = action_record["action"]
+        self.assertEqual(reminder_action["target_role"], "human_like_reviewer")
+        self.assertEqual(reminder_action["wait_class"], "report_result")
+        self.assertTrue(reminder_action["fresh_liveness_probe_required"])
+        self.assertTrue(reminder_action["controller_must_use_router_authored_text"])
+        self.assertFalse(reminder_action["sealed_body_reads_allowed"])
+
+        receipt = router.record_controller_action_receipt(
+            root,
+            action_id=materialized["controller_action_id"],
+            status="done",
+            payload={
+                "target_role": "human_like_reviewer",
+                "delivered_to_role": "human_like_reviewer",
+                "reminder_text_sha256": reminder_action["reminder_text_sha256"],
+                "sealed_body_reads": False,
+                "liveness_probe": {"checked_at": router.utc_now(), "result": "working"},
+            },
+        )
+        self.assertTrue(receipt["ok"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["pending_action"]["last_wait_reminder_at"])
+        self.assertEqual(state["pending_action"]["last_liveness_probe"]["result"], "working")
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        self.assertEqual(action_record["status"], "done")
 
     def test_foreground_controller_standby_default_waits_past_timeout_until_action(self) -> None:
         root = self.make_project()
@@ -4958,6 +5138,45 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertIsInstance(standby, dict)
         self.assertEqual(standby["standby_state"], "controller_action_ready")
         self.assertIn(ready_action["controller_action_id"], standby["controller_action_ledger"]["pending_action_ids"])
+
+    def test_foreground_controller_standby_returns_no_output_reissue_required(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self.force_startup_fact_role_wait(root)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"]["created_at"] = self.old_utc(minutes=11)
+        state["pending_action"]["last_liveness_probe"] = {
+            "checked_at": router.utc_now(),
+            "result": "completed_without_expected_event",
+            "evidence_path": "runtime/liveness/reviewer-completed-no-output.json",
+        }
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        self.assertEqual(standby["standby_state"], "wait_target_reissue_required")
+        self.assertEqual(standby["foreground_required_mode"], "record_wait_target_no_output_reissue")
+        self.assertTrue(standby["current_wait"]["reissue"]["required"])
+        self.assertEqual(standby["current_wait"]["reissue"]["event"], "controller_reports_role_no_output")
+        self.assertFalse(standby["current_wait"]["blocker"]["required"])
+        self.assertEqual(
+            standby["current_wait"]["reissue"]["record_event_payload"]["role_key"],
+            "human_like_reviewer",
+        )
+        self.assertEqual(
+            standby["current_wait"]["liveness_probe"]["last_result"],
+            "completed_without_expected_event",
+        )
 
     def test_foreground_controller_standby_returns_lost_role_blocker_required(self) -> None:
         root = self.make_project()
@@ -5015,6 +5234,19 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         )
         state["pending_action"] = ack_action
         state["daemon_mode_enabled"] = True
+        return_ledger_path = run_root / "return_event_ledger.json"
+        return_ledger = read_json(return_ledger_path)
+        return_ledger.setdefault("pending_returns", []).append(
+            {
+                "return_id": "pm-core-ack",
+                "return_kind": "system_card",
+                "status": "awaiting_return",
+                "target_role": "project_manager",
+                "card_return_event": "pm_card_ack",
+                "expected_return_path": "mailbox/outbox/card_acks/pm_core.ack.json",
+            }
+        )
+        router.write_json(return_ledger_path, return_ledger)
         router._write_controller_action_entry(root, run_root, state, ack_action)  # type: ignore[attr-defined]
         state["pending_action"]["created_at"] = self.old_utc(minutes=4)
         lock = router._acquire_router_daemon_lock(root, run_root, state)  # type: ignore[attr-defined]
@@ -5030,13 +5262,36 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
 
         reminder = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
 
-        self.assertEqual(reminder["standby_state"], "wait_target_check_due")
+        self.assertEqual(reminder["standby_state"], "controller_action_ready")
         self.assertEqual(reminder["current_wait"]["wait_class"], "ack")
         self.assertTrue(reminder["current_wait"]["reminder"]["due"])
         self.assertFalse(reminder["current_wait"]["blocker"]["required"])
+        materialized = reminder["materialized_wait_target_controller_action"]
+        self.assertEqual(materialized["action_type"], router.WAIT_TARGET_REMINDER_ACTION_TYPE)
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        reminder_action = action_record["action"]
+        self.assertEqual(reminder_action["target_role"], "project_manager")
+        self.assertEqual(reminder_action["wait_class"], "ack")
+        self.assertFalse(reminder_action["fresh_liveness_probe_required"])
+
+        router.record_controller_action_receipt(
+            root,
+            action_id=materialized["controller_action_id"],
+            status="done",
+            payload={
+                "target_role": "project_manager",
+                "delivered_to_role": "project_manager",
+                "reminder_text_sha256": reminder_action["reminder_text_sha256"],
+                "sealed_body_reads": False,
+            },
+        )
+        return_ledger = read_json(return_ledger_path)
+        self.assertEqual(return_ledger["pending_returns"][0]["status"], "reminded")
+        self.assertTrue(return_ledger["pending_returns"][0]["last_wait_reminder_at"])
 
         state = read_json(router.run_state_path(run_root))
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
+        state["pending_action"]["last_wait_reminder_at"] = self.old_utc(minutes=11)
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
         router._write_router_daemon_status(  # type: ignore[attr-defined]
             root,
@@ -6072,6 +6327,10 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["payload_contract"]["payload_key"], "startup_intake_result")
         self.assertIn("flowpilot_startup_intake.ps1", action["startup_intake_ui"]["launcher_path"])
         self.assertTrue(action["startup_intake_ui"]["body_text_is_never_router_payload"])
+        self.assertIn("Router daemon status", action["plain_instruction"])
+        self.assertIn("Controller action ledger", action["plain_instruction"])
+        self.assertNotIn("apply this pending action", action["plain_instruction"])
+        self.assertNotIn("apply its confirmed or cancelled result", action["summary"])
 
         with self.assertRaises(router.RouterError):
             router.apply_action(root, "emit_startup_banner")
@@ -6100,6 +6359,11 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
 
         run_root = self.run_root_for(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        self.assertFalse(any(row["action_type"] == "emit_startup_banner" for row in controller_ledger["actions"]))
+        action = router.run_until_wait(root)
+        self.assertEqual(action["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core", self.payload_for_action(action))
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         banner_row = next(row for row in controller_ledger["actions"] if row["action_type"] == "emit_startup_banner")
         self.assertEqual(banner_row["status"], "pending")
@@ -6610,12 +6874,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.boot_to_controller(root)
 
         first = self.next_after_display_sync(root)
-        self.assertEqual(first["action_type"], "confirm_controller_core_boundary")
-        self.assertEqual(first["next_step_contract"]["recipient_role"], "controller")
-        router.apply_action(root, "confirm_controller_core_boundary")
-
-        first = self.next_after_display_sync(root)
         self.assertEqual(first["action_type"], "write_display_surface_status")
+        self.assertEqual(first["next_step_contract"]["recipient_role"], "controller")
         startup_state = read_json(run_root / "router_state.json")
         self.assertTrue(startup_state["flags"]["startup_mechanical_audit_written"])
         self.assertIn(
@@ -6790,10 +7050,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
     def test_committed_system_card_relay_can_resolve_without_apply_roundtrip(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
-        router.apply_action(root, "confirm_controller_core_boundary")
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "write_display_surface_status")
@@ -10071,43 +10327,244 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         report = read_json(run_root / "continuation" / "role_recovery_report.json")
         self.assertEqual(report["schema_version"], "flowpilot.role_recovery_report.v1")
         self.assertTrue(report["all_six_roles_ready"])
-        self.assertTrue(report["pm_decision_required_before_normal_work"])
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+        self.assertTrue(report["mechanical_obligation_replay_completed"])
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["schema_version"], "flowpilot.role_recovery_obligation_replay.v1")
+        self.assertFalse(replay["pm_escalation_required"])
         self.assertEqual(report["role_records"][0]["recovery_result"], "targeted_replacement_spawned")
         crew = read_json(run_root / "crew_ledger.json")
         worker_slot = next(slot for slot in crew["role_slots"] if slot["role_key"] == "worker_a")
         self.assertEqual(worker_slot["last_role_recovery_result"], "targeted_replacement_spawned")
         self.assertTrue(worker_slot["superseded_agent_output_quarantined"])
 
-        self.deliver_expected_card(root, "controller.resume_reentry")
-        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
-        self.deliver_expected_card(root, "pm.resume_decision")
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
-
-        router.record_external_event(
-            root,
-            "pm_resume_recovery_decision_returned",
-            self.role_decision_envelope(
-                root,
-                "continuation/pm_resume_decision_after_role_recovery",
-                {
-                    "decision_owner": "project_manager",
-                    "decision": "continue_current_packet_loop",
-                    "explicit_recovery_evidence_recorded": True,
-                    **self.prior_path_context_review(root, "PM reviewed the role recovery report before continuing."),
-                    "controller_reminder": {
-                        "controller_only": True,
-                        "controller_may_read_sealed_bodies": False,
-                        "controller_may_infer_from_chat_history": False,
-                        "controller_may_advance_or_close_route": False,
-                    },
-                },
-            ),
-        )
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+
+    def test_role_no_output_report_reissues_same_work_before_role_recovery(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+
+        result = router.record_external_event(
+            root,
+            "controller_reports_role_no_output",
+            {
+                "role_key": "human_like_reviewer",
+                "liveness_probe_result": "completed_without_expected_event",
+                "current_controller_action_id": wait_action["controller_action_id"],
+                "router_scheduler_row_id": wait_action["router_scheduler_row_id"],
+            },
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["role_no_output_reissue_created"])
+        self.assertFalse(result["role_recovery_requested"])
+        self.assertEqual(result["role_no_output_reissue_attempt"], 1)
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["role_recovery_requested"])
+        self.assertTrue(state["flags"]["role_no_output_reissue_recorded"])
+        pending = state["pending_action"]
+        self.assertEqual(pending["action_type"], "await_role_decision")
+        self.assertIn("_no_output_reissue_001", pending["label"])
+        self.assertEqual(pending["replacement_reason"], "role_no_output_missing_expected_event")
+        self.assertEqual(pending["role_no_output_reissue_attempt"], 1)
+        original = read_json(run_root / "runtime" / "controller_actions" / f"{wait_action['controller_action_id']}.json")
+        self.assertEqual(original["status"], "superseded")
+        self.assertEqual(original["superseded_by_controller_action_id"], result["replacement_controller_action_id"])
+        replacement = read_json(run_root / "runtime" / "controller_actions" / f"{result['replacement_controller_action_id']}.json")
+        self.assertEqual(replacement["status"], "waiting")
+        self.assertEqual(replacement["replacement_reason"], "role_no_output_missing_expected_event")
+        self.assertEqual(replacement["replaces_controller_action_id"], wait_action["controller_action_id"])
+
+    def test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+
+        result = router.record_external_event(
+            root,
+            "controller_reports_role_liveness_fault",
+            {
+                "role_key": "human_like_reviewer",
+                "host_liveness_status": "completed",
+                "current_controller_action_id": wait_action["controller_action_id"],
+            },
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["event"], "controller_reports_role_no_output")
+        self.assertEqual(result["source_event"], "controller_reports_role_liveness_fault")
+        self.assertTrue(result["role_no_output_reissue_created"])
+        self.assertFalse(result["role_recovery_requested"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["role_recovery_requested"])
+        self.assertTrue(state["flags"]["role_no_output_reissue_recorded"])
+        self.assertIn("_no_output_reissue_001", state["pending_action"]["label"])
+
+    def test_role_no_output_escalates_to_pm_after_two_reissues(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        wait_action = self.force_startup_fact_role_wait(root)
+
+        first = router.record_external_event(
+            root,
+            "controller_reports_role_no_output",
+            {
+                "role_key": "human_like_reviewer",
+                "liveness_probe_result": "completed_without_expected_event",
+                "current_controller_action_id": wait_action["controller_action_id"],
+            },
+        )
+        second = router.record_external_event(
+            root,
+            "controller_reports_role_no_output",
+            {
+                "role_key": "human_like_reviewer",
+                "liveness_probe_result": "completed_without_expected_event",
+                "current_controller_action_id": first["replacement_controller_action_id"],
+            },
+        )
+        third = router.record_external_event(
+            root,
+            "controller_reports_role_no_output",
+            {
+                "role_key": "human_like_reviewer",
+                "liveness_probe_result": "completed_without_expected_event",
+                "current_controller_action_id": second["replacement_controller_action_id"],
+            },
+        )
+
+        self.assertTrue(first["role_no_output_reissue_created"])
+        self.assertEqual(second["role_no_output_reissue_attempt"], 2)
+        self.assertFalse(third["role_no_output_reissue_created"])
+        self.assertTrue(third["pm_escalation_required"])
+        self.assertIn("control_blocker_id", third)
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["role_recovery_requested"])
+        self.assertTrue(state["flags"]["role_no_output_pm_escalation_required"])
+        self.assertEqual(state["active_control_blocker"]["originating_event"], "controller_reports_role_no_output")
+
+    def test_role_recovery_settles_existing_output_without_replay_or_pm(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        original = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_existing_output")
+        state = read_json(router.run_state_path(run_root))
+        state.setdefault("events", []).append(
+            {
+                "event": "worker_scan_results_returned",
+                "summary": "Worker output already reached Router before recovery replay.",
+                "payload": {"result_envelope_path": self.rel(root, run_root / "test_role_outputs" / "existing.json")},
+                "recorded_at": router.utc_now(),
+            }
+        )
+        router.save_run_state(run_root, state)
+
+        report = self.recover_worker_a_after_liveness_fault(root)
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["settled_existing_count"], 1)
+        self.assertEqual(replay["replacement_count"], 0)
+        self.assertEqual(replay["outcomes"][0]["outcome"], "settled_existing_output")
+        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
+        self.assertEqual(original_after["status"], "done")
+        self.assertEqual(original_after["completion_source"], "role_recovery_obligation_replay")
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+
+    def test_role_recovery_settles_existing_ack_without_replay_or_pm(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        ack_path = run_root / "runtime" / "card_returns" / "worker-existing.ack.json"
+        envelope_path = run_root / "runtime" / "card_envelopes" / "worker-existing.envelope.json"
+        ack_path.parent.mkdir(parents=True, exist_ok=True)
+        envelope_path.parent.mkdir(parents=True, exist_ok=True)
+        ack_path.write_text(json.dumps({"status": "acknowledged"}, indent=2) + "\n", encoding="utf-8")
+        envelope_path.write_text(json.dumps({"status": "delivered"}, indent=2) + "\n", encoding="utf-8")
+        ack_rel = self.rel(root, ack_path)
+        envelope_rel = self.rel(root, envelope_path)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="await_card_return_event",
+            actor="controller",
+            label="controller_waits_for_worker_existing_ack",
+            summary="Controller waits for worker_a card ACK before recovery.",
+            allowed_reads=[envelope_rel],
+            allowed_writes=[],
+            to_role="worker_a",
+            extra={
+                "delivery_attempt_id": "worker-existing-delivery",
+                "card_id": "worker.research_report",
+                "card_return_event": "worker_existing_card_ack",
+                "expected_return_path": ack_rel,
+                "card_envelope_path": envelope_rel,
+                "artifact_committed": True,
+                "relay_allowed": True,
+            },
+        )
+        original = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        return_ledger_path = run_root / "return_event_ledger.json"
+        return_ledger = read_json(return_ledger_path)
+        return_ledger.setdefault("pending_returns", []).append(
+            {
+                "return_kind": "system_card",
+                "status": "pending",
+                "card_id": "worker.research_report",
+                "delivery_attempt_id": "worker-existing-delivery",
+                "card_return_event": "worker_existing_card_ack",
+                "target_role": "worker_a",
+                "expected_return_path": ack_rel,
+                "card_envelope_path": envelope_rel,
+            }
+        )
+        return_ledger_path.write_text(json.dumps(return_ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        router.save_run_state(run_root, state)
+
+        with mock.patch.object(
+            router.card_runtime,
+            "validate_card_ack",
+            return_value={"ack_path": ack_rel, "ack_hash": "valid-existing-ack", "receipt_ref_count": 1},
+        ):
+            report = self.recover_worker_a_after_liveness_fault(root)
+
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["settled_existing_count"], 1)
+        self.assertEqual(replay["replacement_count"], 0)
+        self.assertEqual(replay["outcomes"][0]["outcome"], "settled_existing_ack")
+        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
+        self.assertEqual(original_after["status"], "done")
+        self.assertEqual(original_after["completion_source"], "role_recovery_obligation_replay")
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+
+    def test_role_recovery_reissues_missing_obligations_in_original_order(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        first = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_first")
+        second = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_second")
+
+        report = self.recover_worker_a_after_liveness_fault(root)
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["replacement_count"], 2)
+        self.assertEqual([item["original_order"] for item in replay["replacement_order"]], [1, 2])
+
+        first_after = read_json(run_root / "runtime" / "controller_actions" / f"{first['action_id']}.json")
+        second_after = read_json(run_root / "runtime" / "controller_actions" / f"{second['action_id']}.json")
+        self.assertEqual(first_after["status"], "superseded")
+        self.assertEqual(second_after["status"], "superseded")
+        replacement_ids = [item["replacement_controller_action_id"] for item in replay["replacement_order"]]
+        replacements = [read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json") for action_id in replacement_ids]
+        self.assertEqual([entry["original_order"] for entry in replacements], [1, 2])
+        self.assertEqual([entry["replaces_controller_action_id"] for entry in replacements], [first["action_id"], second["action_id"]])
+        self.assertTrue(all(entry["status"] == "waiting" for entry in replacements))
+        self.assertTrue(all(entry["replacement_reason"] == "role_recovered_missing_or_invalid_output" for entry in replacements))
+        state = read_json(router.run_state_path(run_root))
+        self.assertEqual(state["pending_action"]["controller_action_id"], replacements[0]["action_id"])
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
 
     def test_resume_ambiguous_state_blocks_continue_without_recovery_evidence(self) -> None:
         root = self.make_project()
@@ -10190,7 +10647,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
         action = self.next_after_display_sync(root)
         self.assertNotEqual(action["action_type"], "create_heartbeat_automation")
-        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
+        self.assertEqual(action["action_type"], "write_display_surface_status")
         self.complete_startup_activation(root)
 
         binding_path = run_root / "continuation" / "continuation_binding.json"
@@ -10209,7 +10666,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "load_resume_state")
         self.assertEqual(
             action["resume_next_recipient_from_packet_ledger"]["controller_next_action"],
-            "relay_packet_envelope_to_recorded_recipient",
+            "wait_for_recorded_packet_holder_result",
         )
         self.assertEqual(action["resume_next_recipient_from_packet_ledger"]["next_recipient_role"], "project_manager")
         router.apply_action(root, "load_resume_state")
@@ -10413,6 +10870,35 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(action["future_or_sibling_scopes_touched"])
         self.assertEqual(action["review_trigger"], "reviewer.worker_result_review")
         self.assertTrue(any(blocker["kind"] == "current_node_batch_not_absorbed" for blocker in action["blockers"]))
+
+    def test_startup_reconciliation_wait_does_not_hide_router_local_obligation(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        flags = state.setdefault("flags", {})
+        flags["controller_role_confirmed"] = True
+        flags["startup_mechanical_audit_written"] = False
+        state.pop("startup_mechanical_audit", None)
+        blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
+        wait = router._current_scope_pre_review_reconciliation_action(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            blockers=blockers,
+            review_trigger="reviewer.startup_fact_check",
+        )
+        state["pending_action"] = wait
+        router.save_run_state(run_root, state)
+
+        action = router.next_action(root)
+
+        self.assertNotEqual(action["action_type"], "await_current_scope_reconciliation")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_mechanical_audit_written"])
+        self.assertTrue(any(
+            item.get("label") == "router_local_obligation_preempted_passive_reconciliation_wait"
+            for item in state.get("history", [])
+        ))
 
     def test_current_node_reviewer_pass_event_waits_for_local_reconciliation(self) -> None:
         root = self.make_project()
@@ -12704,16 +13190,17 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
-        result = router.apply_action(root, "confirm_controller_core_boundary")
-
-        self.assertTrue(result["ok"])
+        next_action = self.next_after_display_sync(root)
+        self.assertNotEqual(next_action["action_type"], "confirm_controller_core_boundary")
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
         self.assertTrue(state["flags"]["controller_role_confirmed"])
-        self.assertEqual(state["events"][0]["event"], "controller_role_confirmed_from_router_core")
-        self.assertIn("path", state["events"][0]["payload"])
-        self.assertIn("sha256", state["events"][0]["payload"])
+        boundary_events = [
+            item for item in state["events"]
+            if item.get("event") == "controller_role_confirmed_from_router_core"
+        ]
+        self.assertTrue(boundary_events)
+        self.assertIn("path", boundary_events[-1]["payload"])
+        self.assertIn("sha256", boundary_events[-1]["payload"])
         confirmation = state["controller_boundary_confirmation"]
         self.assertEqual(
             confirmation["output_contract_id"],
@@ -12726,10 +13213,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]
@@ -12764,10 +13249,8 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
         state["pending_action"] = action
@@ -12792,9 +13275,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         body = router._controller_boundary_confirmation_body(root, run_root, state)  # type: ignore[attr-defined]
         router.write_json(run_root / "startup" / "controller_boundary_confirmation.json", body)
@@ -12817,9 +13298,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]
@@ -12850,9 +13329,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]
@@ -12899,9 +13376,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        action = self.next_after_display_sync(root)
-        run_root = self.run_root_for(root)
-        state = read_json(router.run_state_path(run_root))
+        run_root, state, action = self.legacy_controller_boundary_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]

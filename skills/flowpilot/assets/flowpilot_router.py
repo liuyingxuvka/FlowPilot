@@ -52,6 +52,7 @@ REPAIR_TRANSACTION_SCHEMA = "flowpilot.repair_transaction.v1"
 REPAIR_TRANSACTION_INDEX_SCHEMA = "flowpilot.repair_transaction_index.v1"
 ROLE_RECOVERY_TRANSACTION_SCHEMA = "flowpilot.role_recovery_transaction.v1"
 ROLE_RECOVERY_REPORT_SCHEMA = "flowpilot.role_recovery_report.v1"
+ROLE_RECOVERY_OBLIGATION_REPLAY_SCHEMA = "flowpilot.role_recovery_obligation_replay.v1"
 CONTROL_TRANSACTION_REGISTRY_SCHEMA = "flowpilot.control_transaction_registry.v1"
 ROUTE_ACTION_POLICY_REGISTRY_SCHEMA = "flowpilot.route_action_policy_registry.v1"
 TERMINAL_SUMMARY_SCHEMA = "flowpilot.final_summary.v1"
@@ -103,10 +104,27 @@ FOREGROUND_CONTROLLER_STANDBY_POLL_SECONDS = 1.0
 CONTROLLER_PATROL_TIMER_SCHEMA = "flowpilot.controller_patrol_timer.v1"
 CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS = 10.0
 CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE = "continuous_controller_standby"
+WAIT_TARGET_REMINDER_ACTION_TYPE = "send_wait_target_reminder"
+PASSIVE_WAIT_STATUS_ACTION_TYPES = frozenset(
+    {
+        "await_role_decision",
+        "await_card_return_event",
+        "await_card_bundle_return_event",
+        "await_current_scope_reconciliation",
+    }
+)
 WAIT_TARGET_ACK_REMINDER_SECONDS = 180
 WAIT_TARGET_ACK_BLOCKER_SECONDS = 600
 WAIT_TARGET_REPORT_REMINDER_SECONDS = 600
 WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS = {"missing", "cancelled", "unknown", "unresponsive", "blocked", "lost"}
+WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS = {
+    "no_output",
+    "alive_no_output",
+    "not_working_no_output",
+    "completed",
+    "completed_without_expected_event",
+}
+ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS = 2
 CONTROLLER_RECEIPT_STATUSES = {"done", "blocked", "waiting", "skipped"}
 CONTROLLER_ACTION_CLOSED_STATUSES = {"done", "blocked", "skipped", "resolved", "superseded"}
 CONTROLLER_ACTION_RECEIPT_PRESERVED_STATUSES = {"incomplete", "repair_pending", "resolved", "superseded"}
@@ -714,6 +732,11 @@ RUNTIME_FLAG_DEFAULTS = {
     "role_recovery_roles_restored": False,
     "role_recovery_report_written": False,
     "role_recovery_environment_blocked": False,
+    "role_recovery_obligations_scanned": False,
+    "role_recovery_obligation_replay_completed": False,
+    "role_recovery_pm_escalation_required": False,
+    "role_no_output_reissue_recorded": False,
+    "role_no_output_pm_escalation_required": False,
     "continuation_binding_recorded": False,
     "controller_boundary_confirmation_written": False,
     "controller_role_confirmed_from_router_core": False,
@@ -1022,7 +1045,7 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "open_startup_intake_ui",
         "flag": "startup_questions_asked",
         "label": "startup_intake_ui_opened_from_router",
-        "summary": "Open the native FlowPilot startup intake UI, then apply its confirmed or cancelled result without reading the body text in Controller context.",
+        "summary": "Open the native FlowPilot startup intake UI, then return to Router daemon status and the Controller action ledger without reading the body text in Controller context.",
         "actor": "bootloader",
         "requires_host_automation": True,
         "requires_payload": "startup_intake_result",
@@ -1051,14 +1074,6 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "actor": "bootloader",
         "requires_user": True,
         "requires_payload": "startup_answers",
-    },
-    {
-        "action_type": "emit_startup_banner",
-        "flag": "banner_emitted",
-        "label": "startup_banner_emitted_after_answers",
-        "summary": "Display the startup banner in the user dialog after explicit answers, then record the confirmed display.",
-        "actor": "bootloader",
-        "card_id": "startup_banner",
     },
     {
         "action_type": "copy_runtime_kit",
@@ -1098,6 +1113,29 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "actor": "bootloader",
     },
     {
+        "action_type": "load_controller_core",
+        "flag": "controller_core_loaded",
+        "label": "controller_core_loaded",
+        "summary": "End bootloader startup, attach Controller to the Router daemon action ledger, and record Controller boundary confirmation evidence before Controller-ledger startup obligations.",
+        "actor": "bootloader",
+    },
+    {
+        "action_type": "emit_startup_banner",
+        "flag": "banner_emitted",
+        "label": "startup_banner_emitted_after_controller_core",
+        "summary": "Display the startup banner in the user dialog after Controller core is loaded, then record the confirmed display.",
+        "actor": "bootloader",
+        "card_id": "startup_banner",
+    },
+    {
+        "action_type": "create_heartbeat_automation",
+        "flag": "continuation_binding_recorded",
+        "label": "host_bootstraps_startup_heartbeat_automation",
+        "summary": "Create the one-minute Codex heartbeat after Controller core handoff and before startup review or route work.",
+        "actor": "bootloader",
+        "requires_host_automation": True,
+    },
+    {
         "action_type": "start_role_slots",
         "flag": "roles_started",
         "label": "six_roles_started_from_user_answer",
@@ -1105,25 +1143,10 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "actor": "bootloader",
     },
     {
-        "action_type": "create_heartbeat_automation",
-        "flag": "continuation_binding_recorded",
-        "label": "host_bootstraps_startup_heartbeat_automation",
-        "summary": "Create the one-minute Codex heartbeat during startup bootstrap before Controller core handoff.",
-        "actor": "bootloader",
-        "requires_host_automation": True,
-    },
-    {
         "action_type": "inject_role_core_prompts",
         "flag": "role_core_prompts_injected",
         "label": "role_core_prompts_injected_from_copied_kit",
         "summary": "Legacy recovery: deliver each role only its role core card from the copied runtime kit when an older bootstrap state still lacks the delivery receipt.",
-        "actor": "bootloader",
-    },
-    {
-        "action_type": "load_controller_core",
-        "flag": "controller_core_loaded",
-        "label": "controller_core_loaded",
-        "summary": "End bootloader startup and attach Controller to the Router daemon action ledger.",
         "actor": "bootloader",
     },
 )
@@ -1655,6 +1678,10 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     "controller_reports_role_liveness_fault": {
         "flag": "role_recovery_requested",
         "summary": "Controller reported that a background role is missing, cancelled, unknown, timed out, or no longer addressable; unified role recovery must preempt normal work.",
+    },
+    "controller_reports_role_no_output": {
+        "flag": "role_no_output_reissue_recorded",
+        "summary": "Controller reported that the waited role is reachable or completed but Router still lacks the expected output; Router may reissue the same work before role recovery.",
     },
     "host_records_heartbeat_binding": {
         "flag": "continuation_binding_recorded",
@@ -3057,7 +3084,9 @@ def _card_checkin_instruction(
     post_ack_policy = (
         "ACK is receipt only; ACK is not completion. After ACK, follow the card body's "
         "post-ACK rule: role cards wait for authorized phase, event, work packet, or "
-        "output-contract authority; work cards continue assigned work; event cards use "
+        "output-contract authority; work cards that ask for an output, report, decision, "
+        "result, or blocker must continue immediately, must not stop after ACK, and remain "
+        "unfinished until Router receives the expected output or blocker; event cards use "
         "Router-authorized event handling."
     )
     bundle_post_ack_policy = (
@@ -4928,10 +4957,38 @@ def _controller_action_id_for_action(action: dict[str, Any]) -> str:
     return f"controller-action-{digest}"
 
 
+def _action_is_passive_wait_status(action: dict[str, Any] | None) -> bool:
+    if not isinstance(action, dict):
+        return False
+    action_type = str(action.get("action_type") or "")
+    if action_type not in PASSIVE_WAIT_STATUS_ACTION_TYPES:
+        return False
+    return not bool(action.get("controller_side_effect_required"))
+
+
+def _controller_action_projection_kind(action: dict[str, Any] | None) -> str:
+    if _action_is_passive_wait_status(action):
+        return "passive_wait_status"
+    if isinstance(action, dict) and str(action.get("action_type") or "") == CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE:
+        return "continuous_standby"
+    return "ordinary_controller_work"
+
+
+def _controller_action_is_ordinary_work_row(entry_or_action: dict[str, Any] | None) -> bool:
+    if not isinstance(entry_or_action, dict):
+        return False
+    explicit = entry_or_action.get("ordinary_controller_work_row")
+    if explicit is not None:
+        return bool(explicit)
+    action = entry_or_action.get("action") if isinstance(entry_or_action.get("action"), dict) else entry_or_action
+    return not _action_is_passive_wait_status(action)
+
+
 def _controller_action_initial_status(action: dict[str, Any]) -> str:
     if action.get("action_type") in {
         "await_card_return_event",
         "await_card_bundle_return_event",
+        "await_current_scope_reconciliation",
         "await_role_decision",
         CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
     }:
@@ -4962,7 +5019,7 @@ def _controller_action_counts(actions: list[dict[str, Any]]) -> dict[str, int]:
 def _controller_action_active_work_count(counts: dict[str, int]) -> int:
     return sum(
         int(counts.get(status, 0) or 0)
-        for status in ("pending", "in_progress", "waiting", "blocked", "incomplete", "repair_pending")
+        for status in ("pending", "in_progress", "blocked", "incomplete", "repair_pending")
     )
 
 
@@ -4980,6 +5037,8 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "completion_source": entry.get("completion_source"),
         "satisfied_by_external_event": entry.get("satisfied_by_external_event"),
         "controller_receipt_required": entry.get("controller_receipt_required"),
+        "controller_projection_kind": entry.get("controller_projection_kind"),
+        "ordinary_controller_work_row": entry.get("ordinary_controller_work_row"),
         "router_reconciliation_status": entry.get("router_reconciliation_status"),
         "router_scheduler_row_id": entry.get("router_scheduler_row_id"),
         "scope_kind": entry.get("scope_kind"),
@@ -5032,6 +5091,7 @@ def _controller_ledger_action_view(
     """Project a Router action into Controller action-ledger semantics."""
 
     view = dict(action)
+    passive_wait_status = _action_is_passive_wait_status(view)
     original_apply_required = bool(view.get("apply_required", True))
     original_contract = view.get("next_step_contract") if isinstance(view.get("next_step_contract"), dict) else {}
     original_contract_apply_required = bool(original_contract.get("apply_required", original_apply_required))
@@ -5045,6 +5105,8 @@ def _controller_ledger_action_view(
             "controller_action_id": action_id,
             "controller_receipt_path": receipt_path,
             "controller_receipt_required": controller_receipt_required,
+            "controller_projection_kind": _controller_action_projection_kind(view),
+            "ordinary_controller_work_row": not passive_wait_status,
             "controller_completion_command": completion_command,
             "controller_completion_mode": completion_mode,
             "controller_row_completion_source": "runtime/controller_action_ledger.json",
@@ -5067,8 +5129,12 @@ def _controller_ledger_action_view(
         )
     if isinstance(view.get("plain_instruction"), str):
         plain = str(view["plain_instruction"])
+        legacy_startup_intake_apply_instruction = (
+            "After the UI closes, apply "
+            "this pending action with only the returned startup_intake_result.result_path."
+        )
         plain = plain.replace(
-            "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path.",
+            legacy_startup_intake_apply_instruction,
             "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
         )
         view["plain_instruction"] = plain
@@ -5084,7 +5150,8 @@ def _controller_ledger_action_view(
         )
     else:
         view["controller_receipt_instruction"] = (
-            "This is a Router-controlled wait row. Do not apply it; follow Router wait/reminder "
+            "This is a Router-controlled wait status projection, not ordinary Controller work. "
+            "Do not apply it; follow Router daemon status, current_wait, and standby/patrol "
             "metadata until the matching external event or blocker path resolves it."
         )
 
@@ -5426,6 +5493,17 @@ def _record_router_scheduler_row(
         "deliverable_status": controller_entry.get("deliverable_status"),
         "deliverable_repair_attempts": controller_entry.get("deliverable_repair_attempts"),
         "max_deliverable_repair_attempts": controller_entry.get("max_deliverable_repair_attempts"),
+        "replaces": action.get("replaces") or controller_entry.get("replaces"),
+        "replaces_controller_action_id": action.get("replaces_controller_action_id") or controller_entry.get("replaces_controller_action_id"),
+        "replaces_router_scheduler_row_id": action.get("replaces_router_scheduler_row_id") or controller_entry.get("replaces_router_scheduler_row_id"),
+        "replacement_reason": action.get("replacement_reason") or controller_entry.get("replacement_reason"),
+        "original_order": action.get("original_order") or controller_entry.get("original_order"),
+        "role_recovery_transaction_id": action.get("role_recovery_transaction_id") or controller_entry.get("role_recovery_transaction_id"),
+        "role_no_output_reissue_attempt": action.get("role_no_output_reissue_attempt")
+        or controller_entry.get("role_no_output_reissue_attempt"),
+        "max_role_no_output_reissue_attempts": action.get("max_role_no_output_reissue_attempts")
+        or controller_entry.get("max_role_no_output_reissue_attempts"),
+        "target_no_output_role": action.get("target_no_output_role") or controller_entry.get("target_no_output_role"),
         "controller_action_path": controller_entry.get("action_path"),
         "controller_receipt_path": controller_entry.get("expected_receipt_path"),
         "router_only_dependency_metadata": True,
@@ -5660,8 +5738,12 @@ def _record_router_ownership_entry(
 def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str]:
     action_type = str(action.get("action_type") or "")
     postcondition = _pending_action_postcondition(action)
+    if _action_is_passive_wait_status(action):
+        return {"kind": "passive_wait_status", "artifact_kind": "", "postcondition": postcondition}
     if action_type == CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE:
         return {"kind": "continuous_standby_monitor", "artifact_kind": "", "postcondition": ""}
+    if action_type == WAIT_TARGET_REMINDER_ACTION_TYPE:
+        return {"kind": "wait_target_reminder", "artifact_kind": "", "postcondition": ""}
     if action_type == "write_startup_mechanical_audit":
         return {
             "kind": "router_owned_durable_artifact",
@@ -5695,7 +5777,14 @@ def _controller_table_prompt() -> dict[str, Any]:
             "accepted only after the packet runtime ledger proves the packet was released "
             "to the addressed role with a controller relay signature. "
             "Daemon-owned startup rows use the same table: Controller checks off the simple row, "
-            "while Router's scheduler ledger owns ordering, barrier, scope, and dependency metadata.\n\n"
+            "while Router's scheduler ledger owns ordering, barrier, scope, and dependency metadata. "
+            "Pure wait states are not ordinary work rows: when Router is waiting for a role, "
+            "card return, or scope reconciliation, read router_daemon_status.current_wait and "
+            "continue through the standby/patrol duty instead of trying to complete an await row. "
+            "If Router creates a send_wait_target_reminder row, that row is executable Controller "
+            "work: send only the Router-authored reminder_text to the named target role, do not "
+            "edit it or read sealed bodies, then write the Controller receipt with the matching "
+            "reminder_text_sha256 and delivery/liveness fields.\n\n"
             "As long as FlowPilot is still running, keep the foreground Controller work attached. "
             "Do not stop or close the foreground Controller because this table is quiet, blocked, "
             "waiting for a user, waiting for repair, waiting for another role, or waiting for a "
@@ -5737,13 +5826,18 @@ def _write_controller_action_ledger(path: Path, ledger: dict[str, Any]) -> None:
 def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     action_dir = _controller_actions_dir(run_root)
     entries: list[dict[str, Any]] = []
+    passive_waits: list[dict[str, Any]] = []
     if action_dir.exists():
         for path in sorted(action_dir.glob("*.json")):
             entry = _read_json_for_runtime_scan(path)
             if entry is None:
                 continue
             if entry.get("schema_version") == CONTROLLER_ACTION_SCHEMA:
-                entries.append(_controller_action_summary(entry))
+                summary = _controller_action_summary(entry)
+                if _controller_action_is_ordinary_work_row(entry):
+                    entries.append(summary)
+                else:
+                    passive_waits.append(summary)
     ledger = {
         "schema_version": CONTROLLER_ACTION_LEDGER_SCHEMA,
         "run_id": run_state.get("run_id"),
@@ -5751,8 +5845,12 @@ def _rebuild_controller_action_ledger(project_root: Path, run_root: Path, run_st
         "updated_at": utc_now(),
         "controller_table_prompt": _controller_table_prompt(),
         "actions": entries,
+        "passive_waits": passive_waits,
         "counts": _controller_action_counts(entries),
+        "passive_wait_count": len(passive_waits),
         "controller_must_clear_pending_actions": True,
+        "controller_actions_are_executable_only": True,
+        "passive_waits_projected_via_status_not_work_board": True,
         "router_must_not_mark_done_without_controller_receipt": True,
     }
     _write_controller_action_ledger(_controller_action_ledger_path(run_root), ledger)
@@ -5793,8 +5891,10 @@ def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
             "active_work_count": 0,
             "history_done_count": 0,
             "actions": [],
+            "passive_waits": [],
             "pending_action_ids": [],
             "waiting_action_ids": [],
+            "passive_wait_action_ids": [],
         }
     if ledger.get("schema_version") != CONTROLLER_ACTION_LEDGER_SCHEMA:
         return {
@@ -5804,9 +5904,13 @@ def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
             "active_work_count": 0,
             "history_done_count": 0,
             "actions": [],
+            "passive_waits": [],
+            "passive_wait_action_ids": [],
         }
     actions = ledger.get("actions") if isinstance(ledger.get("actions"), list) else []
+    passive_waits = ledger.get("passive_waits") if isinstance(ledger.get("passive_waits"), list) else []
     valid_actions = [item for item in actions if isinstance(item, dict)]
+    valid_passive_waits = [item for item in passive_waits if isinstance(item, dict)]
     counts = ledger.get("counts") or _controller_action_counts(valid_actions)
     return {
         "exists": True,
@@ -5817,6 +5921,13 @@ def _controller_action_ledger_summary(run_root: Path) -> dict[str, Any]:
         "active_work_count": _controller_action_active_work_count(counts),
         "history_done_count": int(counts.get("done", 0) or 0),
         "done_rows_are_audit_history": True,
+        "passive_wait_count": int(ledger.get("passive_wait_count") or len(valid_passive_waits)),
+        "passive_waits": valid_passive_waits,
+        "passive_wait_action_ids": [
+            item.get("action_id")
+            for item in valid_passive_waits
+            if item.get("action_id")
+        ],
         "pending_action_ids": [
             item.get("action_id")
             for item in valid_actions
@@ -5837,11 +5948,13 @@ def _write_controller_action_entry(
     action: dict[str, Any],
 ) -> dict[str, Any]:
     action = _prepare_router_scheduled_action(project_root, run_root, run_state, action)
+    passive_wait_status = _action_is_passive_wait_status(action)
+    projection_kind = _controller_action_projection_kind(action)
     action_id = str(action.get("controller_action_id") or _controller_action_id_for_action(action))
     action_path = _controller_action_path(run_root, action_id)
     receipt_path = _controller_receipt_path(run_root, action_id)
     receipt_rel = project_relative(project_root, receipt_path)
-    controller_receipt_required = action.get("action_type") not in {
+    controller_receipt_required = not passive_wait_status and action.get("action_type") not in {
         "await_card_return_event",
         "await_card_bundle_return_event",
         "await_role_decision",
@@ -5880,6 +5993,8 @@ def _write_controller_action_entry(
             "action_path": project_relative(project_root, action_path),
             "expected_receipt_path": receipt_rel,
             "controller_receipt_required": controller_receipt_required,
+            "controller_projection_kind": projection_kind,
+            "ordinary_controller_work_row": not passive_wait_status,
             "router_must_not_mark_done_without_controller_receipt": controller_receipt_required,
             "action": action,
         }
@@ -5900,6 +6015,21 @@ def _write_controller_action_entry(
         entry["repair_of_controller_action_id"] = action.get("repair_of_controller_action_id")
         entry["repair_target_action_type"] = action.get("repair_target_action_type")
         entry["repair_attempt"] = action.get("repair_attempt")
+    for replacement_field in (
+        "replaces",
+        "replaces_controller_action_id",
+        "replaces_router_scheduler_row_id",
+        "replacement_reason",
+        "original_order",
+        "role_recovery_transaction_id",
+        "role_recovery_replay_kind",
+        "target_recovered_role",
+        "role_no_output_reissue_attempt",
+        "max_role_no_output_reissue_attempts",
+        "target_no_output_role",
+    ):
+        if action.get(replacement_field) not in (None, "", []):
+            entry[replacement_field] = action.get(replacement_field)
     controller_action_view = _controller_ledger_action_view(
         action,
         action_id=action_id,
@@ -5910,6 +6040,8 @@ def _write_controller_action_entry(
     entry["scope_kind"] = action.get("scope_kind")
     entry["scope_id"] = action.get("scope_id")
     entry["controller_receipt_required"] = controller_receipt_required
+    entry["controller_projection_kind"] = projection_kind
+    entry["ordinary_controller_work_row"] = not passive_wait_status
     entry["router_must_not_mark_done_without_controller_receipt"] = controller_receipt_required
     entry["controller_completion_command"] = controller_action_view.get("controller_completion_command")
     entry["controller_completion_mode"] = controller_action_view.get("controller_completion_mode")
@@ -7568,6 +7700,166 @@ def _apply_stateful_receipt_postcondition(
     }
 
 
+def _pending_return_matches_wait_target_reminder(record: dict[str, Any], action: dict[str, Any]) -> bool:
+    expected_return_path = str(action.get("expected_return_path") or "")
+    target_role = str(action.get("target_role") or action.get("waiting_for_role") or "")
+    if expected_return_path and str(record.get("expected_return_path") or "") == expected_return_path:
+        return True
+    if target_role and str(record.get("target_role") or "") != target_role:
+        return False
+    for key in ("card_bundle_id", "delivery_attempt_id", "card_id", "card_return_event"):
+        action_value = str(action.get(key) or "")
+        if action_value and str(record.get(key) or "") == action_value:
+            return True
+    source_identity = action.get("source_wait_identity") if isinstance(action.get("source_wait_identity"), dict) else {}
+    identity_expected_path = str(source_identity.get("expected_return_path") or "")
+    return bool(identity_expected_path and str(record.get("expected_return_path") or "") == identity_expected_path)
+
+
+def _mark_pending_return_wait_reminded(
+    run_root: Path,
+    run_id: str,
+    action: dict[str, Any],
+    *,
+    delivered_at: str,
+    reminder_hash: str,
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    ledger = _read_return_event_ledger(run_root, run_id)
+    changed = False
+    reminded_ids: list[str] = []
+    for record in ledger.setdefault("pending_returns", []):
+        if not isinstance(record, dict):
+            continue
+        if not _pending_return_matches_wait_target_reminder(record, action):
+            continue
+        if record.get("status") in {None, "pending", "awaiting_return", "returned"}:
+            record["status"] = "reminded"
+        record["last_wait_reminder_at"] = delivered_at
+        record["last_wait_reminder_sha256"] = reminder_hash
+        history = record.setdefault("wait_reminder_history", [])
+        if isinstance(history, list):
+            history.append(
+                {
+                    "at": delivered_at,
+                    "reminder_text_sha256": reminder_hash,
+                    "controller_action_id": action.get("controller_action_id"),
+                    "delivered_to_role": receipt_payload.get("delivered_to_role"),
+                }
+            )
+        reminded_ids.append(
+            str(record.get("return_id") or record.get("card_bundle_id") or record.get("delivery_attempt_id") or "")
+        )
+        changed = True
+    if changed:
+        write_json(_return_event_ledger_path(run_root), ledger)
+    return {"changed": changed, "reminded_return_ids": [item for item in reminded_ids if item]}
+
+
+def _apply_wait_target_reminder_receipt(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    del project_root
+    target_role = str(action.get("target_role") or action.get("waiting_for_role") or "").strip()
+    delivered_to = str(receipt_payload.get("delivered_to_role") or receipt_payload.get("target_role") or "").strip()
+    if target_role and delivered_to != target_role:
+        return {
+            "applied": False,
+            "reason": "wait_target_reminder_wrong_role",
+            "target_role": target_role,
+            "delivered_to_role": delivered_to or None,
+        }
+    expected_hash = str(action.get("reminder_text_sha256") or "")
+    actual_hash = str(receipt_payload.get("reminder_text_sha256") or "")
+    if not expected_hash or actual_hash != expected_hash:
+        return {
+            "applied": False,
+            "reason": "wait_target_reminder_text_hash_mismatch",
+            "expected_reminder_text_sha256": expected_hash or None,
+            "actual_reminder_text_sha256": actual_hash or None,
+        }
+    if receipt_payload.get("sealed_body_reads") is not False:
+        return {"applied": False, "reason": "wait_target_reminder_sealed_body_boundary_not_confirmed"}
+
+    delivered_at = str(receipt_payload.get("delivered_at") or utc_now())
+    liveness_payload = receipt_payload.get("liveness_probe") if isinstance(receipt_payload.get("liveness_probe"), dict) else {}
+    liveness_result = str(receipt_payload.get("liveness_probe_result") or liveness_payload.get("result") or "").strip()
+    liveness_checked_at = str(
+        receipt_payload.get("liveness_probe_checked_at")
+        or liveness_payload.get("checked_at")
+        or delivered_at
+    )
+    if action.get("fresh_liveness_probe_required") and not liveness_result:
+        return {"applied": False, "reason": "wait_target_reminder_missing_fresh_liveness_probe"}
+
+    pending = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    pending_updated = False
+    if pending and _action_is_passive_wait_status(pending):
+        current_identity = _wait_target_identity(
+            pending,
+            _pending_wait_summary(run_state, project_root=None),
+        )
+        if current_identity == action.get("source_wait_identity"):
+            pending["last_wait_reminder_at"] = delivered_at
+            pending["wait_reminder_text"] = action.get("reminder_text")
+            pending["wait_reminder_text_sha256"] = expected_hash
+            reminder_history = pending.setdefault("wait_reminder_history", [])
+            if isinstance(reminder_history, list):
+                reminder_history.append(
+                    {
+                        "at": delivered_at,
+                        "target_role": target_role,
+                        "reminder_text_sha256": expected_hash,
+                        "controller_action_id": action.get("controller_action_id"),
+                    }
+                )
+            if liveness_result:
+                pending["last_liveness_probe"] = {
+                    "checked_at": liveness_checked_at,
+                    "result": liveness_result,
+                    "evidence_path": liveness_payload.get("evidence_path") or receipt_payload.get("liveness_probe_evidence_path"),
+                }
+                pending["liveness_probe_result"] = liveness_result
+            run_state["pending_action"] = pending
+            pending_updated = True
+
+    return_update = {"changed": False, "reminded_return_ids": []}
+    if str(action.get("wait_class") or "") == "ack":
+        return_update = _mark_pending_return_wait_reminded(
+            run_root,
+            str(run_state["run_id"]),
+            action,
+            delivered_at=delivered_at,
+            reminder_hash=expected_hash,
+            receipt_payload=receipt_payload,
+        )
+
+    append_history(
+        run_state,
+        "router_recorded_wait_target_reminder_receipt",
+        {
+            "target_role": target_role,
+            "wait_class": action.get("wait_class"),
+            "source_wait_action_type": action.get("source_wait_action_type"),
+            "pending_wait_updated": pending_updated,
+            "return_event_ledger_updated": return_update.get("changed"),
+        },
+    )
+    return {
+        "applied": True,
+        "source": "wait_target_reminder_receipt",
+        "target_role": target_role,
+        "wait_class": action.get("wait_class"),
+        "delivered_at": delivered_at,
+        "pending_wait_updated": pending_updated,
+        "return_event_ledger_update": return_update,
+    }
+
+
 def _boot_action_meta(action_type: str) -> dict[str, Any] | None:
     if action_type == "load_router":
         return {
@@ -7687,6 +7979,18 @@ def _apply_startup_bootloader_receipt_effects(
         run_state["status"] = "controller_ready"
         run_state["holder"] = "controller"
         run_state.setdefault("flags", {})["controller_core_loaded"] = True
+        boundary_reconciliation = _record_controller_boundary_confirmation_from_core_load(
+            project_root,
+            run_root,
+            run_state,
+            action,
+            receipt_payload,
+            source="load_controller_core_receipt_reconciliation",
+        )
+        result["controller_boundary_confirmation"] = boundary_reconciliation.get("controller_boundary_confirmation")
+        result["coalesced_postconditions"] = sorted(
+            set(result.get("coalesced_postconditions") or []) | {"controller_role_confirmed"}
+        )
         result["source"] = "startup_bootloader_controller_receipt"
     else:
         return {
@@ -8058,6 +8362,8 @@ def _apply_done_controller_receipt_effects(
     startup_bootloader_receipt = _apply_startup_bootloader_receipt_effects(project_root, run_root, run_state, action, payload)
     if startup_bootloader_receipt.get("applied") or startup_bootloader_receipt.get("reason") != "not_bootloader_action":
         return startup_bootloader_receipt
+    if action_type == WAIT_TARGET_REMINDER_ACTION_TYPE:
+        return _apply_wait_target_reminder_receipt(project_root, run_root, run_state, action, payload)
     action_class = _controller_action_completion_class(action)
     if action_class.get("kind") == "display_status" and action_type == "sync_display_plan":
         sync_payload = _apply_sync_display_plan_state(project_root, run_root, run_state, action, payload)
@@ -8371,7 +8677,7 @@ def _wait_target_path_exists(project_root: Path | None, raw_path: object) -> boo
 
 def _pending_wait_class(pending: dict[str, Any]) -> str:
     explicit = str(pending.get("wait_class") or pending.get("wait_target_class") or "").strip()
-    if explicit in {"ack", "report_result", "controller_local_action", "none"}:
+    if explicit in {"ack", "report_result", "controller_local_action", "router_reconciliation", "none"}:
         return explicit
     action_type = str(pending.get("action_type") or "")
     if action_type in {
@@ -8385,6 +8691,8 @@ def _pending_wait_class(pending: dict[str, Any]) -> str:
         return "ack"
     if action_type == "await_role_decision":
         return "report_result"
+    if action_type == "await_current_scope_reconciliation":
+        return "router_reconciliation"
     if action_type:
         return "controller_local_action"
     return "none"
@@ -8416,6 +8724,8 @@ def _wait_target_due_state(
     reminder_due = False
     blocker_required = False
     blocker_reason = None
+    reissue_required = False
+    reissue_reason = None
     liveness_check_due = False
     reminder_interval_seconds = None
     blocker_after_seconds = None
@@ -8457,12 +8767,18 @@ def _wait_target_due_state(
                 or last_reminder_elapsed_seconds >= WAIT_TARGET_REPORT_REMINDER_SECONDS
             )
             liveness_check_due = reminder_due
-        if liveness_probe_result in WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS:
+        if liveness_probe_result in WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS:
+            reissue_required = True
+            reissue_reason = f"role_no_output_{liveness_probe_result}"
+        elif liveness_probe_result in WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS:
             blocker_required = True
             blocker_reason = f"role_liveness_{liveness_probe_result}"
         if blocker_required:
             next_due_seconds = 0
             next_due_reason = "role_liveness_blocker"
+        elif reissue_required:
+            next_due_seconds = 0
+            next_due_reason = "role_no_output_reissue"
         elif reminder_due or liveness_check_due:
             next_due_seconds = 0
             next_due_reason = "report_reminder_liveness_check"
@@ -8484,6 +8800,8 @@ def _wait_target_due_state(
         "liveness_check_due": liveness_check_due,
         "blocker_required": blocker_required,
         "blocker_reason": blocker_reason,
+        "reissue_required": reissue_required,
+        "reissue_reason": reissue_reason,
         "next_due_seconds": next_due_seconds,
         "next_due_reason": next_due_reason,
     }
@@ -8563,6 +8881,26 @@ def _pending_wait_summary(run_state: dict[str, Any], *, project_root: Path | Non
             "reason": due_state["next_due_reason"],
             "strict_wait_until_due": wait_class in {"ack", "report_result", "controller_local_action"},
         },
+        "reissue": {
+            "required": due_state["reissue_required"],
+            "reason": due_state["reissue_reason"],
+            "event": "controller_reports_role_no_output" if due_state["reissue_required"] else None,
+            "record_event_payload": {
+                "role_key": target_role,
+                "target_role_keys": [target_role] if target_role else [],
+                "wait_class": wait_class,
+                "wait_reason": wait_reason or None,
+                "expected_return_path": expected_return_path,
+                "liveness_probe_result": liveness_probe_result,
+                "elapsed_seconds": elapsed_seconds,
+                "current_controller_action_id": pending.get("controller_action_id"),
+                "router_scheduler_row_id": pending.get("router_scheduler_row_id"),
+            }
+            if due_state["reissue_required"]
+            else None,
+            "same_work_reissue_before_role_recovery": bool(due_state["reissue_required"]),
+            "pm_recovery_required": False,
+        },
         "blocker": {
             "required": due_state["blocker_required"],
             "reason": due_state["blocker_reason"],
@@ -8581,6 +8919,175 @@ def _pending_wait_summary(run_state: dict[str, Any], *, project_root: Path | Non
             "pm_recovery_required": bool(due_state["blocker_required"]),
         },
     }
+
+
+def _wait_target_reminder_text_sha256(reminder_text: str) -> str:
+    return hashlib.sha256(reminder_text.encode("utf-8")).hexdigest()
+
+
+def _wait_target_identity(pending: dict[str, Any], current_wait: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "action_type": pending.get("action_type") or current_wait.get("action_type"),
+        "label": pending.get("label") or current_wait.get("label"),
+        "wait_class": current_wait.get("wait_class"),
+        "target_role": current_wait.get("target_role") or current_wait.get("waiting_for_role"),
+        "expected_return_path": current_wait.get("expected_return_path"),
+        "allowed_external_events": current_wait.get("allowed_external_events") or [],
+        "source_wait_action_id": pending.get("action_id"),
+        "source_wait_controller_action_id": pending.get("controller_action_id"),
+        "wait_started_at": current_wait.get("started_at") or pending.get("created_at"),
+    }
+
+
+def _wait_target_reminder_payload_contract() -> dict[str, Any]:
+    return _payload_contract(
+        name="wait_target_reminder_receipt",
+        required_object="payload",
+        required_fields=[
+            "target_role",
+            "delivered_to_role",
+            "reminder_text_sha256",
+            "sealed_body_reads",
+        ],
+        optional_fields=[
+            "delivered_at",
+            "delivery_channel",
+            "liveness_probe",
+            "liveness_probe_result",
+            "liveness_probe_checked_at",
+        ],
+        allowed_values={"sealed_body_reads": [False]},
+        conditional_required_fields={
+            "when fresh_liveness_probe_required=true": [
+                "liveness_probe.result",
+                "liveness_probe.checked_at",
+            ],
+        },
+        structural_requirements=[
+            "reminder_text_sha256 must match the Router-authored reminder_text on the action row",
+            "Controller must send the reminder_text exactly as supplied and must not paste sealed result bodies",
+            "target_role and delivered_to_role must name the wait target role",
+        ],
+        description=(
+            "Receipt proving Controller sent the Router-authored wait reminder to the current "
+            "waiting role. This records reminder delivery only; it does not satisfy the role's "
+            "original ACK or result-return obligation."
+        ),
+    )
+
+
+def _next_wait_target_reminder_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    current_wait: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    if not _action_is_passive_wait_status(pending_action):
+        return None
+    current_wait = current_wait or _pending_wait_summary(run_state, project_root=project_root)
+    wait_class = str(current_wait.get("wait_class") or "")
+    if wait_class not in {"ack", "report_result"}:
+        return None
+    if (current_wait.get("blocker") or {}).get("required"):
+        return None
+    reminder = current_wait.get("reminder") if isinstance(current_wait.get("reminder"), dict) else {}
+    liveness_probe = current_wait.get("liveness_probe") if isinstance(current_wait.get("liveness_probe"), dict) else {}
+    reminder_due = bool(reminder.get("due"))
+    liveness_due = bool(liveness_probe.get("due"))
+    if not (reminder_due or liveness_due):
+        return None
+    target_role = str(current_wait.get("target_role") or current_wait.get("waiting_for_role") or "").strip()
+    if not target_role:
+        return None
+    wait_reason = str(current_wait.get("wait_reason") or pending_action.get("summary") or pending_action.get("label") or "").strip()
+    reminder_text = str(reminder.get("text") or _wait_target_reminder_text(wait_class, target_role, wait_reason) or "").strip()
+    if not reminder_text:
+        return None
+    reminder_hash = _wait_target_reminder_text_sha256(reminder_text)
+    identity = _wait_target_identity(pending_action, current_wait)
+    last_sent = str(reminder.get("last_sent_at") or pending_action.get("last_wait_reminder_at") or "initial")
+    safe_target = _safe_delivery_component(target_role)
+    safe_wait_class = _safe_delivery_component(wait_class)
+    label = f"controller_sends_wait_target_reminder_{safe_target}_{safe_wait_class}"
+    return make_action(
+        action_type=WAIT_TARGET_REMINDER_ACTION_TYPE,
+        actor="controller",
+        label=label,
+        summary=(
+            f"Send the Router-authored {wait_class} wait reminder to {target_role}. "
+            "This is a generic wait-target reminder action, not completion of the original wait."
+        ),
+        allowed_reads=[
+            project_relative(project_root, _router_daemon_status_path(run_root)),
+            project_relative(project_root, _controller_action_ledger_path(run_root)),
+        ],
+        allowed_writes=[],
+        extra={
+            "controller_side_effect_required": True,
+            "target_role": target_role,
+            "waiting_for_role": target_role,
+            "waiting_for_agent_id": pending_action.get("waiting_for_agent_id"),
+            "wait_class": wait_class,
+            "wait_reason": wait_reason or None,
+            "source_wait_identity": identity,
+            "source_wait_action_type": pending_action.get("action_type"),
+            "source_wait_label": pending_action.get("label"),
+            "source_wait_action_id": pending_action.get("action_id"),
+            "source_wait_controller_action_id": pending_action.get("controller_action_id"),
+            "expected_return_path": current_wait.get("expected_return_path"),
+            "allowed_external_events": current_wait.get("allowed_external_events") or [],
+            "reminder_text": reminder_text,
+            "reminder_text_sha256": reminder_hash,
+            "controller_must_use_router_authored_text": True,
+            "controller_may_edit_reminder_text": False,
+            "fresh_liveness_probe_required": bool(liveness_due),
+            "liveness_probe_target_role": liveness_probe.get("target_role") or target_role,
+            "liveness_probe_current_liveness_is_not_cached_authority": bool(
+                liveness_probe.get("current_liveness_is_not_cached_authority")
+            ),
+            "payload_contract": _wait_target_reminder_payload_contract(),
+            "controller_receipt_rule": (
+                "Send reminder_text exactly to target_role, do not read or paste sealed bodies, "
+                "then write a Controller receipt whose payload includes target_role, "
+                "delivered_to_role, reminder_text_sha256, sealed_body_reads=false, and a fresh "
+                "liveness_probe when fresh_liveness_probe_required is true."
+            ),
+            "idempotency_key": (
+                "wait-target-reminder:"
+                f"{run_state.get('run_id')}:{hashlib.sha256(json.dumps(identity, sort_keys=True).encode('utf-8')).hexdigest()[:20]}:{last_sent}"
+            ),
+            "scope_kind": pending_action.get("scope_kind") or "wait_target",
+            "scope_id": pending_action.get("scope_id") or identity.get("expected_return_path") or identity.get("label") or target_role,
+            "apply_required": True,
+            "relay_allowed": False,
+            "sealed_body_reads_allowed": False,
+        },
+    )
+
+
+def _ensure_wait_target_reminder_controller_action(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+    current_wait: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    action = _next_wait_target_reminder_action(project_root, run_root, run_state, pending_action, current_wait)
+    if action is None:
+        return None
+    entry = _write_controller_action_entry(project_root, run_root, run_state, action)
+    append_history(
+        run_state,
+        "router_materialized_wait_target_reminder_action",
+        {
+            "controller_action_id": entry.get("action_id"),
+            "target_role": action.get("target_role"),
+            "wait_class": action.get("wait_class"),
+            "source_wait_action_type": action.get("source_wait_action_type"),
+        },
+    )
+    return entry
 
 
 def _continuous_standby_watch_label(current_wait: dict[str, Any]) -> str:
@@ -8824,6 +9331,8 @@ def _write_router_daemon_status(
             "action_type": current_action.get("action_type"),
             "label": current_action.get("label"),
             "controller_action_id": current_action.get("controller_action_id"),
+            "controller_projection_kind": _controller_action_projection_kind(current_action),
+            "ordinary_controller_work_row": not _action_is_passive_wait_status(current_action),
             "apply_required": current_action.get("apply_required"),
             "relay_allowed": current_action.get("relay_allowed"),
         }
@@ -8916,6 +9425,7 @@ def _foreground_standby_pending_action_ids(ledger: dict[str, Any]) -> list[str]:
         for item in actions
         if isinstance(item, dict)
         and item.get("action_id")
+        and _controller_action_is_ordinary_work_row(item)
         and item.get("status") in {"pending", "in_progress"}
     ]
 
@@ -8925,7 +9435,10 @@ def _foreground_standby_waiting_action_ids(ledger: dict[str, Any]) -> list[str]:
     return [
         str(item.get("action_id"))
         for item in actions
-        if isinstance(item, dict) and item.get("action_id") and item.get("status") == "waiting"
+        if isinstance(item, dict)
+        and item.get("action_id")
+        and _controller_action_is_ordinary_work_row(item)
+        and item.get("status") == "waiting"
     ]
 
 
@@ -8995,6 +9508,8 @@ def _build_foreground_controller_standby_snapshot(
         standby_state = "controller_action_ready"
     elif ((current_wait.get("blocker") or {}).get("required")):
         standby_state = "wait_target_blocker_required"
+    elif ((current_wait.get("reissue") or {}).get("required")):
+        standby_state = "wait_target_reissue_required"
     elif (
         ((current_wait.get("reminder") or {}).get("due"))
         or ((current_wait.get("liveness_probe") or {}).get("due"))
@@ -9008,13 +9523,18 @@ def _build_foreground_controller_standby_snapshot(
     controller_must_continue_standby = standby_state in {"waiting_for_role", "daemon_alive_no_controller_action"}
     controller_must_process_pending_action = standby_state == "controller_action_ready"
     controller_stop_allowed = standby_state == "terminal"
-    wait_target_action_ready = standby_state in {"wait_target_check_due", "wait_target_blocker_required"}
+    wait_target_action_ready = standby_state in {
+        "wait_target_check_due",
+        "wait_target_blocker_required",
+        "wait_target_reissue_required",
+    }
     foreground_turn_return_allowed = standby_state in {
         "terminal",
         "user_input_required",
         "daemon_stale_or_missing",
         "wait_target_check_due",
         "wait_target_blocker_required",
+        "wait_target_reissue_required",
     }
     if controller_must_process_pending_action:
         foreground_required_mode = "process_controller_action"
@@ -9022,6 +9542,8 @@ def _build_foreground_controller_standby_snapshot(
         foreground_required_mode = "process_wait_target_check"
     elif standby_state == "wait_target_blocker_required":
         foreground_required_mode = "record_wait_target_blocker"
+    elif standby_state == "wait_target_reissue_required":
+        foreground_required_mode = "record_wait_target_no_output_reissue"
     elif controller_must_continue_standby:
         foreground_required_mode = "watch_router_daemon"
     elif standby_state == "user_input_required":
@@ -9081,6 +9603,12 @@ def _build_foreground_controller_standby_snapshot(
             "schema_ok": ledger_ok,
             "updated_at": ledger.get("updated_at"),
             "counts": ledger.get("counts") if ledger_ok else _controller_action_counts([]),
+            "passive_wait_count": int(ledger.get("passive_wait_count") or 0) if ledger_ok else 0,
+            "passive_waits_projected_via_status_not_work_board": bool(
+                ledger.get("passive_waits_projected_via_status_not_work_board")
+            )
+            if ledger_ok
+            else False,
             "pending_action_ids": pending_action_ids,
             "waiting_action_ids": waiting_action_ids,
         },
@@ -9100,6 +9628,7 @@ def _build_foreground_controller_standby_snapshot(
             "liveness_probe": current_wait.get("liveness_probe"),
             "controller_local_self_audit": current_wait.get("controller_local_self_audit"),
             "next_due": current_wait.get("next_due"),
+            "reissue": current_wait.get("reissue"),
             "blocker": current_wait.get("blocker"),
         },
         "continuous_standby_task": continuous_standby_task,
@@ -9107,6 +9636,9 @@ def _build_foreground_controller_standby_snapshot(
             "action_type": current_action.get("action_type"),
             "label": current_action.get("label"),
             "controller_action_id": current_action.get("controller_action_id"),
+            "controller_projection_kind": current_action.get("controller_projection_kind")
+            or _controller_action_projection_kind(current_action),
+            "ordinary_controller_work_row": not _action_is_passive_wait_status(current_action),
             "apply_required": current_action.get("apply_required"),
         }
         if current_action
@@ -9120,6 +9652,7 @@ def _build_foreground_controller_standby_snapshot(
             "bounded_timeout_is_diagnostic_only": True,
             "returns_on_wait_target_check_due": True,
             "returns_on_wait_target_blocker_required": True,
+            "returns_on_wait_target_reissue_required": True,
             "controller_action_ready_blocks_foreground_exit": True,
             "live_daemon_wait_requires_standby": True,
             "controller_stop_requires_terminal_run": True,
@@ -9159,10 +9692,45 @@ def foreground_controller_standby(
             poll_seconds=poll_seconds,
         )
         snapshot["bounded_diagnostic"] = bounded_diagnostic
+        if snapshot["standby_state"] == "wait_target_check_due":
+            pending_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+            current_wait = snapshot.get("current_wait") if isinstance(snapshot.get("current_wait"), dict) else {}
+            reminder_entry = _ensure_wait_target_reminder_controller_action(
+                project_root,
+                run_root,
+                run_state,
+                pending_action,
+                current_wait,
+            )
+            if reminder_entry is not None:
+                save_run_state(run_root, run_state)
+                snapshot = _build_foreground_controller_standby_snapshot(
+                    project_root,
+                    run_root,
+                    run_state,
+                    started_at=started_at,
+                    start_monotonic=start_monotonic,
+                    poll_count=poll_count,
+                    max_seconds=max_seconds,
+                    poll_seconds=poll_seconds,
+                )
+                snapshot["bounded_diagnostic"] = bounded_diagnostic
+                snapshot["materialized_wait_target_controller_action"] = {
+                    "controller_action_id": reminder_entry.get("action_id"),
+                    "action_type": reminder_entry.get("action_type"),
+                    "target_role": (reminder_entry.get("action") or {}).get("target_role")
+                    if isinstance(reminder_entry.get("action"), dict)
+                    else None,
+                    "wait_class": (reminder_entry.get("action") or {}).get("wait_class")
+                    if isinstance(reminder_entry.get("action"), dict)
+                    else None,
+                }
+                return snapshot
         if snapshot["standby_state"] in {
             "controller_action_ready",
             "wait_target_check_due",
             "wait_target_blocker_required",
+            "wait_target_reissue_required",
             "terminal",
             "user_input_required",
             "daemon_stale_or_missing",
@@ -9870,6 +10438,7 @@ def _pending_card_return_ack_exists(project_root: Path, pending_action: object) 
 CARD_RETURN_EVENT_BYPASS_EVENTS = {
     "heartbeat_or_manual_resume_requested",
     "controller_reports_role_liveness_fault",
+    "controller_reports_role_no_output",
     "host_records_heartbeat_binding",
     "user_requests_run_stop",
     "user_requests_run_cancel",
@@ -10297,6 +10866,29 @@ def _current_scope_reconciliation_wait_still_blocked(
     if pending_action.get("scope_kind") != "current_node":
         return False
     return bool(_current_node_pre_review_reconciliation_blockers(project_root, run_root, run_state))
+
+
+def _next_local_obligation_before_passive_wait(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    pending_action: dict[str, Any],
+) -> dict[str, Any] | None:
+    if pending_action.get("action_type") != "await_current_scope_reconciliation":
+        return None
+    if pending_action.get("scope_kind") != "startup":
+        return None
+    for producer in (
+        _next_controller_boundary_confirmation_action,
+        _next_startup_mechanical_audit_action,
+        _next_startup_display_action,
+    ):
+        action = producer(project_root, run_state, run_root)
+        if action is not None:
+            action["preempts_passive_wait_action_type"] = pending_action.get("action_type")
+            action["preempts_passive_wait_label"] = pending_action.get("label")
+            return action
+    return None
 
 
 def _current_node_scope_exit_reconciliation_blockers(
@@ -14862,6 +15454,18 @@ def _bootstrap_startup_cancelled(state: dict[str, Any]) -> bool:
     return state.get("status") == "startup_cancelled" or state.get("startup_state") == "startup_cancelled"
 
 
+def _startup_bootloader_has_remaining_work(state: dict[str, Any]) -> bool:
+    flags = state.get("flags") if isinstance(state.get("flags"), dict) else {}
+    startup_answers = state.get("startup_answers") if isinstance(state.get("startup_answers"), dict) else {}
+    for action in BOOT_ACTIONS:
+        action_type = str(action.get("action_type") or "")
+        if action_type == "create_heartbeat_automation" and not _scheduled_continuation_requested(startup_answers):
+            continue
+        if not bool(flags.get(str(action.get("flag") or ""))):
+            return True
+    return False
+
+
 def _startup_daemon_controls_bootstrap(state: dict[str, Any]) -> bool:
     if _bootstrap_startup_cancelled(state):
         return False
@@ -14872,7 +15476,7 @@ def _startup_daemon_controls_bootstrap(state: dict[str, Any]) -> bool:
         and bool(flags.get("current_pointer_written"))
         and bool(flags.get("run_index_updated"))
         and bool(flags.get("router_daemon_started"))
-        and not bool(flags.get("controller_core_loaded"))
+        and _startup_bootloader_has_remaining_work(state)
     )
 
 
@@ -15473,7 +16077,7 @@ def _startup_intake_ui_action_extra(project_root: Path, state: dict[str, Any]) -
         "payload_contract": _startup_intake_result_payload_contract(project_root, state),
         "plain_instruction": (
             "Open the native FlowPilot startup intake UI with the provided command. "
-            "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path. "
+            "After the UI closes, return to Router daemon status and the Controller action ledger before continuing. "
             "Do not paste the user's work request into chat and do not include it in the Router payload."
         ),
     }
@@ -16922,6 +17526,795 @@ def _normalize_role_recovery_agent_records(
     return [records_by_role[role] for role in expected_roles], transaction
 
 
+def _role_recovery_obligation_replay_path(run_root: Path, transaction_id: str) -> Path:
+    safe_transaction = _safe_delivery_component(transaction_id or "role-recovery")
+    return _role_recovery_dir(run_root) / f"{safe_transaction}_obligation_replay.json"
+
+
+def _controller_action_entry_view(entry: dict[str, Any]) -> dict[str, Any]:
+    action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
+    if action:
+        return dict(action)
+    return {
+        key: entry.get(key)
+        for key in (
+            "action_type",
+            "label",
+            "summary",
+            "to_role",
+            "allowed_reads",
+            "allowed_writes",
+            "allowed_external_events",
+            "expected_return_path",
+            "card_envelope_path",
+            "card_bundle_envelope_path",
+            "card_return_event",
+            "card_id",
+            "card_bundle_id",
+        )
+        if entry.get(key) not in (None, "", [])
+    }
+
+
+def _controller_action_wait_roles(entry: dict[str, Any]) -> set[str]:
+    action = _controller_action_entry_view(entry)
+    roles = {
+        str(value).strip()
+        for value in (
+            entry.get("to_role"),
+            entry.get("target_role"),
+            entry.get("waiting_for_role"),
+            action.get("to_role"),
+            action.get("target_role"),
+            action.get("waiting_for_role"),
+        )
+        if isinstance(value, str) and value.strip()
+    }
+    if str(entry.get("action_type") or action.get("action_type") or "") == "await_role_decision":
+        for event in _controller_wait_allowed_external_events(entry):
+            meta = EXTERNAL_EVENTS.get(event)
+            if isinstance(meta, dict):
+                role = _event_wait_role(event, meta)
+                if role:
+                    roles.add(role)
+    return roles
+
+
+def _role_recovery_action_sort_key(entry: dict[str, Any]) -> tuple[str, str, str]:
+    return (
+        str(entry.get("created_at") or ""),
+        str(entry.get("router_scheduler_row_id") or ""),
+        str(entry.get("action_id") or ""),
+    )
+
+
+def _role_recovery_pending_return_for_action(
+    run_root: Path,
+    run_id: str,
+    action: dict[str, Any],
+) -> dict[str, Any] | None:
+    for record in _pending_return_records(run_root, run_id):
+        if _pending_action_matches_card_return(action, record):
+            return record
+    return None
+
+
+def _role_recovery_wait_candidates(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    target_roles: set[str],
+) -> list[dict[str, Any]]:
+    del project_root
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return []
+    candidates: list[dict[str, Any]] = []
+    run_id = str(run_state["run_id"])
+    for action_path in sorted(action_dir.glob("*.json")):
+        entry = read_json_if_exists(action_path)
+        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if str(entry.get("status") or "") in CONTROLLER_ACTION_CLOSED_STATUSES:
+            continue
+        action = _controller_action_entry_view(entry)
+        action_type = str(entry.get("action_type") or action.get("action_type") or "")
+        if action_type not in {
+            "await_card_return_event",
+            "check_card_return_event",
+            "await_card_bundle_return_event",
+            "check_card_bundle_return_event",
+            "await_role_decision",
+        }:
+            continue
+        wait_roles = _controller_action_wait_roles(entry)
+        matched_roles = sorted(wait_roles.intersection(target_roles))
+        if not matched_roles:
+            continue
+        pending_return = None
+        replay_kind = "role_output"
+        if action_type in {
+            "await_card_return_event",
+            "check_card_return_event",
+            "await_card_bundle_return_event",
+            "check_card_bundle_return_event",
+        }:
+            replay_kind = "card_ack"
+            pending_return = _role_recovery_pending_return_for_action(run_root, run_id, action)
+        candidates.append(
+            {
+                "entry": entry,
+                "action": action,
+                "action_path": action_path,
+                "kind": replay_kind,
+                "matched_roles": matched_roles,
+                "pending_return": pending_return,
+                "sort_key": _role_recovery_action_sort_key(entry),
+            }
+        )
+    candidates.sort(key=lambda item: item["sort_key"])
+    return candidates
+
+
+def _mark_controller_action_done_by_role_recovery(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    evidence: dict[str, Any],
+) -> dict[str, Any]:
+    action_path = candidate["action_path"]
+    entry = read_json_if_exists(action_path)
+    if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+        entry = dict(candidate["entry"])
+    now = utc_now()
+    entry["status"] = "done"
+    entry["completed_at"] = now
+    entry["completion_source"] = "role_recovery_obligation_replay"
+    entry["router_reconciliation_status"] = "reconciled"
+    entry["router_reconciled_at"] = now
+    entry["satisfied_by_existing_recovery_evidence"] = evidence
+    entry["controller_receipt_required"] = False
+    entry["router_must_not_mark_done_without_controller_receipt"] = False
+    write_json(action_path, entry)
+    row_id = str(entry.get("router_scheduler_row_id") or "")
+    if row_id:
+        _update_router_scheduler_row(
+            project_root,
+            run_root,
+            run_state,
+            row_id=row_id,
+            router_state="reconciled",
+            reconciliation={
+                "source": "role_recovery_obligation_replay",
+                "evidence": evidence,
+                "reconciled_at": now,
+            },
+        )
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and (
+        pending.get("controller_action_id") == entry.get("action_id")
+        or pending.get("router_scheduler_row_id") == entry.get("router_scheduler_row_id")
+        or pending.get("label") == entry.get("label")
+    ):
+        run_state["pending_action"] = None
+    return entry
+
+
+def _role_recovery_existing_event_for_wait(run_state: dict[str, Any], entry: dict[str, Any]) -> dict[str, Any] | None:
+    allowed_events = set(_controller_wait_allowed_external_events(entry))
+    if not allowed_events:
+        return None
+    for record in run_state.get("events") or []:
+        if isinstance(record, dict) and record.get("event") in allowed_events:
+            return record
+    return None
+
+
+def _settle_role_recovery_candidate_if_evidence_exists(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    candidate: dict[str, Any],
+) -> dict[str, Any] | None:
+    action = dict(candidate["action"])
+    if candidate["kind"] == "card_ack":
+        pending_return = candidate.get("pending_return")
+        if isinstance(pending_return, dict):
+            pending = dict(pending_return)
+            pending.update({key: value for key, value in action.items() if value not in (None, "", [])})
+        else:
+            pending = action
+        expected_return_path = str(pending.get("expected_return_path") or "")
+        if not expected_return_path or not resolve_project_path(project_root, expected_return_path).exists():
+            return None
+        result = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, pending)
+        if not result.get("consumed"):
+            return None
+        _run_router_return_settlement_finalizers(
+            project_root,
+            run_root,
+            run_state,
+            source="role_recovery_obligation_replay",
+        )
+        evidence = {
+            "kind": "existing_card_ack",
+            "expected_return_path": expected_return_path,
+            "validation": result.get("result"),
+        }
+        _mark_controller_action_done_by_role_recovery(
+            project_root,
+            run_root,
+            run_state,
+            candidate,
+            evidence=evidence,
+        )
+        return {"outcome": "settled_existing_ack", "evidence": evidence}
+
+    event_record = _role_recovery_existing_event_for_wait(run_state, candidate["entry"])
+    if event_record is None:
+        return None
+    closure = _close_waiting_controller_actions_for_external_event(
+        project_root,
+        run_root,
+        run_state,
+        event=str(event_record.get("event") or ""),
+        payload=event_record.get("payload") if isinstance(event_record.get("payload"), dict) else {},
+        source="role_recovery_obligation_replay",
+    )
+    evidence = {
+        "kind": "existing_role_output_event",
+        "event": event_record.get("event"),
+        "recorded_at": event_record.get("recorded_at"),
+        "wait_closure": closure,
+    }
+    _mark_controller_action_done_by_role_recovery(
+        project_root,
+        run_root,
+        run_state,
+        candidate,
+        evidence=evidence,
+    )
+    return {"outcome": "settled_existing_output", "evidence": evidence}
+
+
+def _role_recovery_replacement_action(
+    transaction: dict[str, Any],
+    candidate: dict[str, Any],
+    *,
+    original_order: int,
+) -> dict[str, Any]:
+    original = candidate["entry"]
+    action = dict(candidate["action"])
+    original_action_id = str(original.get("action_id") or "")
+    original_row_id = str(original.get("router_scheduler_row_id") or "")
+    base_label = str(action.get("label") or original.get("label") or "role_recovery_wait")
+    transaction_id = str(transaction.get("transaction_id") or "")
+    replay_kind = str(candidate["kind"])
+    target_role = str((candidate.get("matched_roles") or [""])[0])
+    if replay_kind == "card_ack":
+        if str(action.get("action_type") or original.get("action_type") or "") in {
+            "await_card_bundle_return_event",
+            "check_card_bundle_return_event",
+        }:
+            action["action_type"] = "await_card_bundle_return_event"
+        else:
+            action["action_type"] = "await_card_return_event"
+        replacement_reason = "role_recovered_missing_or_invalid_ack"
+        action["summary"] = (
+            f"Role {target_role} was mechanically recovered. This replaces the original ACK wait; "
+            "the role must ACK the original committed card or bundle from current-run memory."
+        )
+    else:
+        action["action_type"] = "await_role_decision"
+        replacement_reason = "role_recovered_missing_or_invalid_output"
+        action["summary"] = (
+            f"Role {target_role} was mechanically recovered. This replaces the original role-output wait; "
+            "the role must return the original authorized output contract from current-run memory."
+        )
+    for key in (
+        "controller_action_id",
+        "controller_action_path",
+        "controller_receipt_path",
+        "router_scheduler_row_id",
+        "created_at",
+        "updated_at",
+        "last_seen_at",
+    ):
+        action.pop(key, None)
+    action["label"] = f"{base_label}_role_recovery_replay_{original_order:03d}"
+    action["idempotency_key"] = f"role-recovery-replay:{transaction_id}:{original_action_id or original_row_id}:{original_order}"
+    action["replaces"] = original_action_id
+    action["replaces_controller_action_id"] = original_action_id
+    action["replaces_router_scheduler_row_id"] = original_row_id
+    action["replacement_reason"] = replacement_reason
+    action["original_order"] = original_order
+    action["role_recovery_transaction_id"] = transaction_id
+    action["role_recovery_replay_kind"] = replay_kind
+    action["target_recovered_role"] = target_role
+    action["controller_visibility"] = "metadata_only_recovery_replay"
+    action["sealed_body_reads_allowed"] = False
+    action["chat_history_progress_inference_allowed"] = False
+    return action
+
+
+def _supersede_role_recovery_original_wait(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    candidate: dict[str, Any],
+    replacement_entry: dict[str, Any],
+    *,
+    original_order: int,
+) -> dict[str, Any]:
+    action_path = candidate["action_path"]
+    entry = read_json_if_exists(action_path)
+    if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+        entry = dict(candidate["entry"])
+    if str(entry.get("status") or "") in {"done", "resolved"}:
+        return entry
+    now = utc_now()
+    replacement_action_id = replacement_entry.get("action_id")
+    entry["status"] = "superseded"
+    entry["superseded_at"] = now
+    entry["superseded_by"] = replacement_action_id
+    entry["superseded_by_controller_action_id"] = replacement_action_id
+    entry["superseded_by_router_scheduler_row_id"] = replacement_entry.get("router_scheduler_row_id")
+    entry["replacement_reason"] = replacement_entry.get("replacement_reason")
+    entry["role_recovery_transaction_id"] = replacement_entry.get("role_recovery_transaction_id")
+    entry["original_order"] = original_order
+    entry["completion_source"] = "role_recovery_obligation_replay"
+    write_json(action_path, entry)
+    row_id = str(entry.get("router_scheduler_row_id") or "")
+    if row_id:
+        _update_router_scheduler_row(
+            project_root,
+            run_root,
+            run_state,
+            row_id=row_id,
+            router_state="superseded",
+            reconciliation={
+                "source": "role_recovery_obligation_replay",
+                "superseded_by": replacement_action_id,
+                "replacement_reason": replacement_entry.get("replacement_reason"),
+                "original_order": original_order,
+                "reconciled_at": now,
+            },
+        )
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and (
+        pending.get("controller_action_id") == entry.get("action_id")
+        or pending.get("router_scheduler_row_id") == entry.get("router_scheduler_row_id")
+        or pending.get("label") == entry.get("label")
+    ):
+        run_state["pending_action"] = None
+    return entry
+
+
+def _plan_role_recovery_obligation_replay(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    transaction: dict[str, Any],
+    records: list[dict[str, Any]],
+    report_path: Path,
+) -> dict[str, Any]:
+    target_roles = {
+        str(record.get("role_key") or "")
+        for record in records
+        if record.get("recovery_result") != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT
+    }
+    target_roles.discard("")
+    _reconcile_durable_wait_evidence(project_root, run_root, run_state)
+    _run_router_return_settlement_finalizers(
+        project_root,
+        run_root,
+        run_state,
+        source="role_recovery_obligation_replay_pre_scan",
+    )
+    candidates = _role_recovery_wait_candidates(project_root, run_root, run_state, target_roles)
+    outcomes: list[dict[str, Any]] = []
+    replacement_entries: list[dict[str, Any]] = []
+    first_replacement_action: dict[str, Any] | None = None
+    for original_order, candidate in enumerate(candidates, start=1):
+        settled = _settle_role_recovery_candidate_if_evidence_exists(
+            project_root,
+            run_root,
+            run_state,
+            candidate,
+        )
+        if settled is not None:
+            outcomes.append(
+                {
+                    "original_order": original_order,
+                    "controller_action_id": candidate["entry"].get("action_id"),
+                    "kind": candidate["kind"],
+                    **settled,
+                }
+            )
+            continue
+        replacement_action = _role_recovery_replacement_action(
+            transaction,
+            candidate,
+            original_order=original_order,
+        )
+        replacement_entry = _write_controller_action_entry(project_root, run_root, run_state, replacement_action)
+        for field in (
+            "replaces",
+            "replaces_controller_action_id",
+            "replaces_router_scheduler_row_id",
+            "replacement_reason",
+            "original_order",
+            "role_recovery_transaction_id",
+            "role_recovery_replay_kind",
+            "target_recovered_role",
+        ):
+            if replacement_action.get(field) not in (None, "", []):
+                replacement_entry[field] = replacement_action.get(field)
+        write_json(_controller_action_path(run_root, str(replacement_entry["action_id"])), replacement_entry)
+        _supersede_role_recovery_original_wait(
+            project_root,
+            run_root,
+            run_state,
+            candidate,
+            replacement_entry,
+            original_order=original_order,
+        )
+        if first_replacement_action is None and isinstance(replacement_entry.get("action"), dict):
+            first_replacement_action = dict(replacement_entry["action"])
+        replacement_entries.append(replacement_entry)
+        outcomes.append(
+            {
+                "original_order": original_order,
+                "controller_action_id": candidate["entry"].get("action_id"),
+                "kind": candidate["kind"],
+                "outcome": "replacement_obligation_created",
+                "replacement_controller_action_id": replacement_entry.get("action_id"),
+                "replacement_router_scheduler_row_id": replacement_entry.get("router_scheduler_row_id"),
+                "replacement_reason": replacement_entry.get("replacement_reason"),
+            }
+        )
+    if first_replacement_action is not None:
+        run_state["_pending_action_after_current_apply"] = first_replacement_action
+    replay = {
+        "schema_version": ROLE_RECOVERY_OBLIGATION_REPLAY_SCHEMA,
+        "run_id": run_state["run_id"],
+        "transaction_id": transaction.get("transaction_id"),
+        "role_recovery_report_path": project_relative(project_root, report_path),
+        "target_role_keys": sorted(target_roles),
+        "scanned_at": utc_now(),
+        "candidate_count": len(candidates),
+        "outcomes": outcomes,
+        "replacement_count": len(replacement_entries),
+        "settled_existing_count": len([item for item in outcomes if str(item.get("outcome") or "").startswith("settled_existing")]),
+        "pm_escalation_required": False,
+        "pm_escalation_reasons": [],
+        "controller_visibility": "metadata_only",
+        "sealed_body_reads_allowed": False,
+        "chat_history_progress_inference_allowed": False,
+        "replacement_order": [
+            {
+                "original_order": entry.get("original_order"),
+                "replacement_controller_action_id": entry.get("action_id"),
+                "replaces_controller_action_id": entry.get("replaces_controller_action_id"),
+            }
+            for entry in replacement_entries
+        ],
+    }
+    replay_path = _role_recovery_obligation_replay_path(run_root, str(transaction.get("transaction_id") or ""))
+    write_json(replay_path, replay)
+    run_state["role_recovery_obligation_replay"] = {
+        "path": project_relative(project_root, replay_path),
+        "transaction_id": transaction.get("transaction_id"),
+        "replacement_count": replay["replacement_count"],
+        "settled_existing_count": replay["settled_existing_count"],
+        "pm_escalation_required": False,
+    }
+    run_state["flags"]["role_recovery_obligations_scanned"] = True
+    run_state["flags"]["role_recovery_obligation_replay_completed"] = True
+    run_state["flags"]["role_recovery_pm_escalation_required"] = False
+    append_history(
+        run_state,
+        "router_planned_role_recovery_obligation_replay",
+        {
+            "transaction_id": transaction.get("transaction_id"),
+            "target_role_keys": sorted(target_roles),
+            "candidate_count": len(candidates),
+            "replacement_count": replay["replacement_count"],
+            "settled_existing_count": replay["settled_existing_count"],
+            "replay_path": project_relative(project_root, replay_path),
+        },
+    )
+    _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    return replay
+
+
+def _role_no_output_liveness_result(payload: dict[str, Any] | None) -> str:
+    payload = payload or {}
+    liveness_probe = payload.get("liveness_probe") if isinstance(payload.get("liveness_probe"), dict) else {}
+    for key in (
+        "liveness_probe_result",
+        "host_liveness_status",
+        "bounded_wait_result",
+        "result",
+    ):
+        value = payload.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    value = liveness_probe.get("result")
+    return value.strip() if isinstance(value, str) else ""
+
+
+def _payload_indicates_role_no_output(payload: dict[str, Any] | None) -> bool:
+    return _role_no_output_liveness_result(payload) in WAIT_TARGET_NO_OUTPUT_LIVENESS_RESULTS
+
+
+def _role_no_output_target_roles(payload: dict[str, Any] | None) -> list[str]:
+    payload = payload or {}
+    return _role_recovery_target_roles(
+        payload.get("target_role_keys")
+        or payload.get("role_key")
+        or payload.get("missing_role_key")
+    )
+
+
+def _role_no_output_wait_candidate(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    target_role_keys: list[str],
+    payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    candidates = _role_recovery_wait_candidates(project_root, run_root, run_state, set(target_role_keys))
+    if not candidates:
+        return None
+    wanted_action_id = str(
+        payload.get("controller_action_id")
+        or payload.get("current_controller_action_id")
+        or ""
+    ).strip()
+    wanted_row_id = str(payload.get("router_scheduler_row_id") or "").strip()
+    pending = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else {}
+    pending_action_id = str(pending.get("controller_action_id") or "").strip()
+    pending_row_id = str(pending.get("router_scheduler_row_id") or "").strip()
+    for candidate in candidates:
+        entry = candidate["entry"]
+        if wanted_action_id and entry.get("action_id") == wanted_action_id:
+            return candidate
+        if wanted_row_id and entry.get("router_scheduler_row_id") == wanted_row_id:
+            return candidate
+    for candidate in candidates:
+        entry = candidate["entry"]
+        if pending_action_id and entry.get("action_id") == pending_action_id:
+            return candidate
+        if pending_row_id and entry.get("router_scheduler_row_id") == pending_row_id:
+            return candidate
+    return candidates[0]
+
+
+def _role_no_output_reissue_attempt(candidate: dict[str, Any]) -> int:
+    entry = candidate.get("entry") if isinstance(candidate.get("entry"), dict) else {}
+    action = candidate.get("action") if isinstance(candidate.get("action"), dict) else {}
+    for source in (action, entry):
+        raw = source.get("role_no_output_reissue_attempt") or source.get("no_output_reissue_attempt")
+        if isinstance(raw, int):
+            return max(0, raw)
+        if isinstance(raw, str) and raw.isdigit():
+            return max(0, int(raw))
+    return 0
+
+
+def _role_no_output_replacement_action(candidate: dict[str, Any], *, attempt: int) -> dict[str, Any]:
+    original = candidate["entry"]
+    action = dict(candidate["action"])
+    original_action_id = str(original.get("action_id") or "")
+    original_row_id = str(original.get("router_scheduler_row_id") or "")
+    base_label = str(action.get("label") or original.get("label") or "role_no_output_wait")
+    if "_no_output_reissue_" in base_label:
+        base_label = base_label.split("_no_output_reissue_", 1)[0]
+    target_role = str((candidate.get("matched_roles") or [""])[0])
+    for key in (
+        "controller_action_id",
+        "controller_action_path",
+        "controller_receipt_path",
+        "router_scheduler_row_id",
+        "created_at",
+        "updated_at",
+        "last_seen_at",
+    ):
+        action.pop(key, None)
+    action["action_type"] = "await_role_decision"
+    action["label"] = f"{base_label}_no_output_reissue_{attempt:03d}"
+    action["idempotency_key"] = f"role-no-output-reissue:{original_action_id or original_row_id}:{attempt}"
+    action["replaces"] = original_action_id
+    action["replaces_controller_action_id"] = original_action_id
+    action["replaces_router_scheduler_row_id"] = original_row_id
+    action["replacement_reason"] = "role_no_output_missing_expected_event"
+    action["role_no_output_reissue_attempt"] = attempt
+    action["max_role_no_output_reissue_attempts"] = ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS
+    action["target_no_output_role"] = target_role
+    action["summary"] = (
+        f"Role {target_role} was reachable or completed but Router still lacks the expected output. "
+        "This replaces the prior wait with the same authorized work; the role must submit the "
+        "original output or blocker through the Router-directed runtime path."
+    )
+    action["controller_visibility"] = "metadata_only_no_output_reissue"
+    action["sealed_body_reads_allowed"] = False
+    action["chat_history_progress_inference_allowed"] = False
+    return action
+
+
+def _supersede_role_no_output_original_wait(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    candidate: dict[str, Any],
+    replacement_entry: dict[str, Any],
+) -> dict[str, Any]:
+    action_path = candidate["action_path"]
+    entry = read_json_if_exists(action_path)
+    if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+        entry = dict(candidate["entry"])
+    if str(entry.get("status") or "") in {"done", "resolved"}:
+        return entry
+    now = utc_now()
+    replacement_action_id = replacement_entry.get("action_id")
+    entry["status"] = "superseded"
+    entry["superseded_at"] = now
+    entry["superseded_by"] = replacement_action_id
+    entry["superseded_by_controller_action_id"] = replacement_action_id
+    entry["superseded_by_router_scheduler_row_id"] = replacement_entry.get("router_scheduler_row_id")
+    entry["replacement_reason"] = replacement_entry.get("replacement_reason")
+    entry["completion_source"] = "role_no_output_reissue"
+    write_json(action_path, entry)
+    row_id = str(entry.get("router_scheduler_row_id") or "")
+    if row_id:
+        _update_router_scheduler_row(
+            project_root,
+            run_root,
+            run_state,
+            row_id=row_id,
+            router_state="superseded",
+            reconciliation={
+                "source": "role_no_output_reissue",
+                "superseded_by": replacement_action_id,
+                "replacement_reason": replacement_entry.get("replacement_reason"),
+                "reconciled_at": now,
+            },
+        )
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and (
+        pending.get("controller_action_id") == entry.get("action_id")
+        or pending.get("router_scheduler_row_id") == entry.get("router_scheduler_row_id")
+        or pending.get("label") == entry.get("label")
+    ):
+        run_state["pending_action"] = None
+    return entry
+
+
+def _record_role_no_output_reissue(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any] | None,
+    *,
+    source_event: str,
+) -> dict[str, Any]:
+    payload = dict(payload or {})
+    event = "controller_reports_role_no_output"
+    target_role_keys = _role_no_output_target_roles(payload)
+    _reconcile_durable_wait_evidence(project_root, run_root, run_state)
+    _run_router_return_settlement_finalizers(
+        project_root,
+        run_root,
+        run_state,
+        source="role_no_output_reissue_pre_scan",
+    )
+    candidate = _role_no_output_wait_candidate(
+        project_root,
+        run_root,
+        run_state,
+        target_role_keys=target_role_keys,
+        payload=payload,
+    )
+    if candidate is None:
+        run_state["flags"]["role_no_output_pm_escalation_required"] = True
+        blocker = _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="role_no_output_reissue_no_wait_candidate",
+            error_message="Role no-output report could not find the original Router wait to reissue.",
+            event=event,
+            action_type="role_no_output_reissue",
+            payload={**payload, "target_role_keys": target_role_keys, "source_event": source_event},
+        )
+        return {
+            "ok": False,
+            "event": event,
+            "source_event": source_event,
+            "role_no_output_reissue_created": False,
+            "pm_escalation_required": True,
+            "control_blocker_id": blocker.get("blocker_id"),
+        }
+    attempt = _role_no_output_reissue_attempt(candidate) + 1
+    if attempt > ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS:
+        run_state["flags"]["role_no_output_pm_escalation_required"] = True
+        blocker = _write_control_blocker(
+            project_root,
+            run_root,
+            run_state,
+            source="role_no_output_reissue_budget_exhausted",
+            error_message="Role no-output reissue budget exhausted before the expected Router output arrived.",
+            event=event,
+            action_type="role_no_output_reissue",
+            payload={
+                **payload,
+                "target_role_keys": target_role_keys,
+                "source_event": source_event,
+                "direct_retry_attempts_used": ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS,
+                "direct_retry_budget": ROLE_NO_OUTPUT_REISSUE_MAX_ATTEMPTS,
+            },
+        )
+        return {
+            "ok": False,
+            "event": event,
+            "source_event": source_event,
+            "role_no_output_reissue_created": False,
+            "pm_escalation_required": True,
+            "control_blocker_id": blocker.get("blocker_id"),
+        }
+    replacement_action = _role_no_output_replacement_action(candidate, attempt=attempt)
+    replacement_entry = _write_controller_action_entry(project_root, run_root, run_state, replacement_action)
+    _supersede_role_no_output_original_wait(project_root, run_root, run_state, candidate, replacement_entry)
+    run_state["pending_action"] = dict(replacement_entry["action"])
+    run_state["flags"]["role_no_output_reissue_recorded"] = True
+    run_state["flags"]["role_no_output_pm_escalation_required"] = False
+    record = {
+        "event": event,
+        "summary": EXTERNAL_EVENTS[event]["summary"],
+        "payload": payload,
+        "source_event": source_event,
+        "target_role_keys": target_role_keys,
+        "controller_action_id": candidate["entry"].get("action_id"),
+        "replacement_controller_action_id": replacement_entry.get("action_id"),
+        "replacement_router_scheduler_row_id": replacement_entry.get("router_scheduler_row_id"),
+        "role_no_output_reissue_attempt": attempt,
+        "recorded_at": utc_now(),
+    }
+    run_state["events"].append(record)
+    append_history(
+        run_state,
+        "router_reissued_role_wait_after_no_output",
+        {
+            "source_event": source_event,
+            "target_role_keys": target_role_keys,
+            "controller_action_id": candidate["entry"].get("action_id"),
+            "replacement_controller_action_id": replacement_entry.get("action_id"),
+            "role_no_output_reissue_attempt": attempt,
+            "role_recovery_requested": False,
+        },
+    )
+    _rebuild_controller_action_ledger(project_root, run_root, run_state)
+    _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
+    _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
+    save_run_state(run_root, run_state)
+    return {
+        "ok": True,
+        "event": event,
+        "source_event": source_event,
+        "role_no_output_reissue_created": True,
+        "role_no_output_reissue_attempt": attempt,
+        "replacement_action": replacement_entry.get("action"),
+        "replacement_controller_action_id": replacement_entry.get("action_id"),
+        "role_recovery_requested": False,
+        "pm_escalation_required": False,
+    }
+
+
 def _write_role_recovery_report(
     project_root: Path,
     run_root: Path,
@@ -17007,7 +18400,8 @@ def _write_role_recovery_report(
             or record.get("recovery_result") == ROLE_AGENT_OLD_RESTORE_RESULT
             for record in records
         ) if not environment_blocked else False,
-        "pm_decision_required_before_normal_work": not environment_blocked,
+        "pm_decision_required_before_normal_work": False,
+        "mechanical_obligation_replay_before_pm": True,
         "controller_visibility": "state_and_envelopes_only",
         "sealed_body_reads_allowed": False,
         "chat_history_progress_inference_allowed": False,
@@ -17124,7 +18518,19 @@ def _write_role_recovery_report(
     run_state["flags"]["resume_roles_restored"] = True
     run_state["flags"]["resume_role_agents_rehydrated"] = True
     run_state["flags"]["crew_rehydration_report_written"] = True
-    run_state["flags"]["pm_resume_recovery_decision_returned"] = False
+    replay = _plan_role_recovery_obligation_replay(
+        project_root,
+        run_root,
+        run_state,
+        transaction=transaction,
+        records=ready_records,
+        report_path=report_path,
+    )
+    report["role_recovery_obligation_replay_path"] = run_state["role_recovery_obligation_replay"]["path"]
+    report["pm_decision_required_before_normal_work"] = bool(replay.get("pm_escalation_required"))
+    report["mechanical_obligation_replay_completed"] = not bool(replay.get("pm_escalation_required"))
+    write_json(report_path, report)
+    run_state["flags"]["pm_resume_recovery_decision_returned"] = not bool(replay.get("pm_escalation_required"))
     run_state["flags"]["role_recovery_requested"] = False
 
 
@@ -17933,6 +19339,9 @@ def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
         "role_recovery_roles_restored",
         "role_recovery_report_written",
         "role_recovery_environment_blocked",
+        "role_recovery_obligations_scanned",
+        "role_recovery_obligation_replay_completed",
+        "role_recovery_pm_escalation_required",
     ):
         run_state["flags"][flag] = False
 
@@ -18241,6 +19650,78 @@ def _write_controller_boundary_confirmation(
         "role_output_runtime_receipt_hash": runtime_receipt.get("body_hash")
         and (envelope.get("runtime_receipt_ref") or {}).get("hash"),
     }
+
+
+def _record_controller_boundary_confirmation_from_core_load(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    receipt_payload: dict[str, Any] | None,
+    *,
+    source: str,
+) -> dict[str, Any]:
+    if not run_state.get("flags", {}).get("controller_core_loaded"):
+        raise RouterError("Controller boundary confirmation requires loaded controller.core")
+    action_id = str(action.get("controller_action_id") or action.get("action_id") or "").strip()
+    source_action_id = str(action.get("action_id") or action_id or "load_controller_core")
+    context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
+    if context is None:
+        confirmation = _write_controller_boundary_confirmation(
+            project_root,
+            run_root,
+            run_state,
+            controller_agent_id=CONTROLLER_RUNTIME_HELPER_AGENT_ID,
+            action_id=action_id or None,
+            source_action_id=source_action_id,
+        )
+    else:
+        confirmation = {
+            "path": project_relative(project_root, context["path"]),
+            "sha256": context["sha256"],
+            "controller_core_path": context["confirmation"].get("controller_core_path"),
+            "controller_core_sha256": context["confirmation"].get("controller_core_sha256"),
+            "controller_policy_sha256": context["confirmation"].get("controller_policy_sha256"),
+            "runtime_channel": "role_output_runtime",
+            "output_type": CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE,
+            "output_contract_id": CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID,
+            "role_output_envelope": context.get("role_output_envelope"),
+            "role_output_runtime_receipt_path": (
+                context.get("role_output_envelope", {}).get("runtime_receipt_ref", {}).get("path")
+                if isinstance(context.get("role_output_envelope"), dict)
+                else None
+            ),
+            "role_output_runtime_receipt_hash": (
+                context.get("role_output_envelope", {}).get("runtime_receipt_ref", {}).get("hash")
+                if isinstance(context.get("role_output_envelope"), dict)
+                else None
+            ),
+        }
+    pending_action = dict(action)
+    pending_action.setdefault("action_type", "load_controller_core")
+    pending_action.setdefault("postcondition", "controller_role_confirmed")
+    if action_id:
+        pending_action.setdefault("controller_action_id", action_id)
+        pending_action.setdefault(
+            "controller_receipt_path",
+            project_relative(project_root, _controller_receipt_path(run_root, action_id)),
+        )
+    applied = _sync_controller_boundary_confirmation_from_artifact(
+        project_root,
+        run_root,
+        run_state,
+        pending_action,
+        receipt_payload or {
+            "controller_action_completed": True,
+            "controller_boundary_confirmation_source": "load_controller_core",
+        },
+        source=source,
+    )
+    if not applied.get("applied"):
+        raise RouterError(f"Controller boundary confirmation was not reconciled during core load: {applied.get('reason')}")
+    applied["controller_boundary_confirmation"] = confirmation
+    applied["controller_boundary_confirmation_owned_by"] = "load_controller_core"
+    return applied
 
 
 def _controller_boundary_confirmation_context(
@@ -21899,7 +23380,7 @@ def _build_current_status_summary(
         state_kind = "terminal"
     elif active_blocker:
         state_kind = "blocked"
-    elif pending_action.get("action_type") == "await_role_decision":
+    elif _action_is_passive_wait_status(pending_action):
         state_kind = "waiting_for_role"
     elif pending_action:
         state_kind = "controller_action_ready"
@@ -22025,6 +23506,8 @@ def _build_current_status_summary(
             "counts": controller_ledger.get("counts") or _controller_action_counts([]),
             "active_work_count": controller_ledger.get("active_work_count", 0),
             "history_done_count": controller_ledger.get("history_done_count", 0),
+            "passive_wait_count": controller_ledger.get("passive_wait_count", 0),
+            "passive_wait_action_ids": controller_ledger.get("passive_wait_action_ids") or [],
             "done_rows_are_audit_history": bool(controller_ledger.get("done_rows_are_audit_history", True)),
             "pending_action_ids": pending_controller_action_ids,
             "waiting_action_ids": waiting_controller_action_ids,
@@ -25872,6 +27355,7 @@ def _resume_waits_for_pm_decision(run_state: dict[str, Any]) -> bool:
         and bool(flags.get("resume_roles_restored"))
         and bool(flags.get("crew_rehydration_report_written"))
         and bool(flags.get("pm_resume_decision_card_delivered"))
+        and not bool(flags.get("role_recovery_obligation_replay_completed"))
         and not bool(flags.get("pm_resume_recovery_decision_returned"))
     )
 
@@ -28410,6 +29894,19 @@ def apply_bootloader_action(project_root: Path, action_type: str, payload: dict[
         run_state["status"] = "controller_ready"
         run_state["holder"] = "controller"
         run_state["flags"]["controller_core_loaded"] = True
+        boundary_reconciliation = _record_controller_boundary_confirmation_from_core_load(
+            project_root,
+            run_root,
+            run_state,
+            pending,
+            payload or {
+                "controller_action_completed": True,
+                "controller_boundary_confirmation_source": "load_controller_core",
+            },
+            source="load_controller_core_apply",
+        )
+        result_extra["controller_boundary_confirmation"] = boundary_reconciliation.get("controller_boundary_confirmation")
+        result_extra["coalesced_postconditions"] = ["controller_core_loaded", "controller_role_confirmed"]
         _refresh_route_memory(project_root, run_root, run_state, trigger="load_controller_core")
         write_json(run_state_path(run_root), run_state)
     else:
@@ -28573,7 +30070,10 @@ def _next_role_recovery_action(project_root: Path, run_state: dict[str, Any], ru
             ],
             allowed_writes=[
                 project_relative(project_root, _role_recovery_report_path(run_root)),
+                project_relative(project_root, _role_recovery_dir(run_root)),
                 project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+                project_relative(project_root, _controller_action_ledger_path(run_root)),
+                project_relative(project_root, _router_scheduler_ledger_path(run_root)),
                 project_relative(project_root, run_root / "crew_ledger.json"),
                 project_relative(project_root, run_state_path(run_root)),
             ],
@@ -28607,7 +30107,9 @@ def _next_role_recovery_action(project_root: Path, run_state: dict[str, Any], ru
                 "sealed_body_reads_allowed": False,
                 "chat_history_progress_inference_allowed": False,
                 "normal_waits_allowed_before_recovery": False,
-                "pm_decision_required_after_recovery": True,
+                "mechanical_obligation_replay_after_recovery": True,
+                "pm_decision_required_after_recovery": False,
+                "pm_escalation_only_for_semantic_ambiguity": True,
             },
         )
     return None
@@ -28619,7 +30121,7 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         return None
     if run_state["flags"].get("continuation_binding_recorded") and _host_heartbeat_binding_ready(run_root, run_state):
         return None
-    if run_state["flags"].get("controller_core_loaded"):
+    if not run_state["flags"].get("controller_core_loaded"):
         return None
     automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
     automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
@@ -28645,7 +30147,7 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         action_type="create_heartbeat_automation",
         actor="bootloader",
         label="host_bootstraps_startup_heartbeat_automation",
-        summary="Create the one-minute Codex heartbeat for the current run during startup bootstrap before Controller core handoff.",
+        summary="Create the one-minute Codex heartbeat for the current run after Controller core handoff and before startup review.",
         allowed_reads=[
             ".flowpilot/current.json",
             project_relative(project_root, run_state_path(run_root)),
@@ -28696,6 +30198,8 @@ def _next_controller_boundary_confirmation_action(project_root: Path, run_state:
     if _controller_action_open_for(run_root, action_type="confirm_controller_core_boundary", postcondition="controller_role_confirmed"):
         return None
     if _legacy_pm_reset_boundary_confirmed(run_state):
+        return None
+    if not flags.get("controller_boundary_recovery_requested"):
         return None
     sources = _controller_boundary_sources(run_root)
     return make_action(
@@ -32989,6 +34493,20 @@ def compute_controller_action(
                 run_root,
                 _router_internal_depth=_router_internal_depth + 1,
             )
+        if isinstance(pending_action, dict):
+            reminder_action = _next_wait_target_reminder_action(project_root, run_root, run_state, pending_action)
+            if reminder_action is not None:
+                append_history(
+                    run_state,
+                    "router_exposed_wait_target_reminder_before_passive_wait",
+                    {
+                        "target_role": reminder_action.get("target_role"),
+                        "wait_class": reminder_action.get("wait_class"),
+                        "source_wait_action_type": pending_action.get("action_type"),
+                    },
+                )
+                save_run_state(run_root, run_state)
+                return reminder_action
         if (
             isinstance(pending_action, dict)
             and pending_action.get("action_type") == "await_role_decision"
@@ -33025,6 +34543,42 @@ def compute_controller_action(
             and pending_action.get("action_type") == "await_current_scope_reconciliation"
         ):
             if _current_scope_reconciliation_wait_still_blocked(project_root, run_root, run_state, pending_action):
+                local_obligation = _next_local_obligation_before_passive_wait(project_root, run_root, run_state, pending_action)
+                if local_obligation is not None:
+                    run_state["pending_action"] = None
+                    append_history(
+                        run_state,
+                        "router_local_obligation_preempted_passive_reconciliation_wait",
+                        {
+                            "wait_action_type": pending_action.get("action_type"),
+                            "wait_label": pending_action.get("label"),
+                            "scope_kind": pending_action.get("scope_kind"),
+                            "scope_id": pending_action.get("scope_id"),
+                            "local_obligation_action_type": local_obligation.get("action_type"),
+                            "local_obligation_label": local_obligation.get("label"),
+                        },
+                    )
+                    save_run_state(run_root, run_state)
+                    if _action_is_router_internal_mechanical(local_obligation):
+                        if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
+                            raise RouterError("Router-internal mechanical action chain exceeded max hops")
+                        _consume_router_internal_mechanical_action(project_root, run_root, run_state, local_obligation)
+                        return compute_controller_action(
+                            project_root,
+                            run_state,
+                            run_root,
+                            _router_internal_depth=_router_internal_depth + 1,
+                        )
+                    run_state["pending_action"] = local_obligation
+                    _sync_derived_run_views(
+                        project_root,
+                        run_root,
+                        run_state,
+                        reason="after_router_local_obligation_preempted_passive_wait",
+                        update_display=True,
+                    )
+                    save_run_state(run_root, run_state)
+                    return local_obligation
                 return pending_action
             run_state["pending_action"] = None
             append_history(
@@ -33802,7 +35356,8 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         status="done",
         payload={"applied": action_type},
     )
-    run_state["pending_action"] = None
+    next_pending_after_apply = run_state.pop("_pending_action_after_current_apply", None)
+    run_state["pending_action"] = next_pending_after_apply if isinstance(next_pending_after_apply, dict) else None
     if action_type == "write_terminal_summary":
         _mark_router_daemon_terminal(project_root, run_root, run_state, reason="terminal_summary_written")
         save_run_state(run_root, run_state)
@@ -33877,6 +35432,22 @@ def _record_external_event_unchecked(
         _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
         save_run_state(run_root, run_state)
         return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
+    if event == "controller_reports_role_no_output":
+        return _record_role_no_output_reissue(
+            project_root,
+            run_root,
+            run_state,
+            payload or {},
+            source_event=event,
+        )
+    if event == "controller_reports_role_liveness_fault" and _payload_indicates_role_no_output(payload or {}):
+        return _record_role_no_output_reissue(
+            project_root,
+            run_root,
+            run_state,
+            payload or {},
+            source_event=event,
+        )
     if event == "controller_reports_role_liveness_fault":
         target_role_keys = _role_recovery_target_roles(
             (payload or {}).get("target_role_keys")
@@ -33901,6 +35472,9 @@ def _record_external_event_unchecked(
             "pm_crew_rehydration_freshness_card_delivered",
             "pm_resume_decision_card_delivered",
             "pm_resume_recovery_decision_returned",
+            "role_recovery_obligations_scanned",
+            "role_recovery_obligation_replay_completed",
+            "role_recovery_pm_escalation_required",
         ):
             run_state["flags"][recovery_flag] = False
         run_state["flags"]["role_recovery_requested"] = True
@@ -34754,16 +36328,34 @@ def _router_daemon_fill_action_queue(
             break
         current_action = _prepare_router_scheduled_action(project_root, run_root, run_state, current_action)
         entry = _write_controller_action_entry(project_root, run_root, run_state, current_action)
+        projection_kind = _controller_action_projection_kind(current_action)
         queued_actions.append(
             {
                 "action_type": current_action.get("action_type"),
                 "controller_action_id": entry.get("action_id"),
+                "controller_projection_kind": projection_kind,
+                "ordinary_controller_work_row": not _action_is_passive_wait_status(current_action),
                 "router_scheduler_row_id": current_action.get("router_scheduler_row_id"),
                 "barrier_kind": current_action.get("router_scheduler_barrier_kind"),
                 "scope_kind": current_action.get("scope_kind"),
                 "scope_id": current_action.get("scope_id"),
             }
         )
+        if _action_is_passive_wait_status(current_action):
+            append_history(
+                run_state,
+                "router_projected_passive_wait_status_without_controller_work_row",
+                {
+                    "action_type": current_action.get("action_type"),
+                    "controller_action_id": entry.get("action_id"),
+                    "router_scheduler_row_id": current_action.get("router_scheduler_row_id"),
+                    "scope_kind": current_action.get("scope_kind"),
+                    "scope_id": current_action.get("scope_id"),
+                },
+            )
+            save_run_state(run_root, run_state)
+            stop_reason = "passive_wait_status"
+            break
         if not _router_daemon_can_continue_after_enqueued_action(current_action):
             stop_reason = "barrier"
             break
@@ -34887,7 +36479,8 @@ def _router_daemon_tick(
         source="router_daemon_tick_projection_barrier",
     )
     current_action = run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None
-    if not observe_only and not run_state.get("flags", {}).get("controller_core_loaded"):
+    bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
+    if not observe_only and _startup_daemon_controls_bootstrap(bootstrap):
         startup_schedule = _startup_daemon_schedule_bootloader_action(
             project_root,
             run_root,

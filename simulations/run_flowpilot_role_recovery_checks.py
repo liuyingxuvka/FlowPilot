@@ -35,6 +35,16 @@ REQUIRED_LABELS = (
     "packet_ownership_reconciled",
     "stale_generation_output_quarantined",
     "recovery_report_written",
+    "recovered_role_obligations_scanned_existing_evidence",
+    "recovered_role_obligations_scanned_missing_evidence",
+    "recovered_role_obligations_scanned_semantic_ambiguity",
+    "existing_ack_and_output_settled_without_replay",
+    "replacement_row_created_for_original_order_1",
+    "original_wait_superseded_after_replacement_1",
+    "replacement_row_created_for_original_order_2",
+    "original_wait_superseded_after_replacement_2",
+    "replacement_creation_failure_blocks_later_replay",
+    "mechanical_replay_completed_without_pm_notification",
     "pm_decision_requested_after_recovery",
     "pm_recovery_decision_returned",
     "recovery_loop_complete",
@@ -64,6 +74,18 @@ def _state_id(state: model.State) -> str:
         f"{state.stale_generation_output_quarantined},"
         f"{state.stale_generation_output_accepted}|"
         f"report={state.recovery_report_written}|"
+        f"scan={state.obligations_scanned}|"
+        f"evidence={state.valid_existing_evidence_seen},"
+        f"{state.existing_evidence_settled}|"
+        f"replacement={state.replacement_required_count},"
+        f"{state.replacement_rows_created},"
+        f"{state.original_rows_superseded},"
+        f"{state.replacement_order_preserved},"
+        f"{state.replacement_creation_failed},"
+        f"{state.later_replay_skipped_after_failure}|"
+        f"replay={state.replay_plan_complete}|"
+        f"ambiguity={state.semantic_ambiguity_seen},"
+        f"{state.pm_escalation_required}|"
         f"pm={state.pm_decision_requested},{state.pm_decision_returned}"
     )
 
@@ -112,6 +134,29 @@ def explore_safe_graph() -> dict[str, object]:
         for state in blocked_states
         if state.full_recycle_result == "failed"
     ]
+    mechanical_success = [
+        state
+        for state in complete_states
+        if state.replay_plan_complete and not state.pm_decision_requested
+    ]
+    existing_evidence_success = [
+        state
+        for state in mechanical_success
+        if state.existing_evidence_settled
+    ]
+    ordered_replay_success = [
+        state
+        for state in mechanical_success
+        if state.replacement_required_count
+        and state.replacement_rows_created == state.replacement_required_count
+        and state.original_rows_superseded == state.replacement_required_count
+        and state.replacement_order_preserved
+    ]
+    pm_escalation_success = [
+        state
+        for state in complete_states
+        if state.pm_escalation_required and state.pm_decision_returned
+    ]
 
     missing_labels = sorted(set(REQUIRED_LABELS) - labels)
     return {
@@ -120,7 +165,11 @@ def explore_safe_graph() -> dict[str, object]:
         and bool(targeted_success)
         and bool(heartbeat_success)
         and bool(full_recycle_success)
-        and bool(environment_blocked),
+        and bool(environment_blocked)
+        and bool(mechanical_success)
+        and bool(existing_evidence_success)
+        and bool(ordered_replay_success)
+        and bool(pm_escalation_success),
         "state_count": len(seen),
         "edge_count": edges,
         "labels": sorted(labels),
@@ -131,6 +180,10 @@ def explore_safe_graph() -> dict[str, object]:
         "heartbeat_success_count": len(heartbeat_success),
         "full_recycle_success_count": len(full_recycle_success),
         "environment_blocked_count": len(environment_blocked),
+        "mechanical_success_count": len(mechanical_success),
+        "existing_evidence_success_count": len(existing_evidence_success),
+        "ordered_replay_success_count": len(ordered_replay_success),
+        "pm_escalation_success_count": len(pm_escalation_success),
         "invariant_failures": invariant_failures,
         "states": list(seen),
     }
@@ -247,4 +300,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

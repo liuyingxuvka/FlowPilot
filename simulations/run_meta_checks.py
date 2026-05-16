@@ -141,7 +141,7 @@ REQUIRED_LABELS = (
     "startup_dialog_stopped_for_user_answers",
     "startup_display_surface_answered",
     "startup_display_entry_action_done",
-    "startup_banner_emitted",
+    "startup_banner_emitted_after_controller_core",
     "startup_background_agents_answered",
     "startup_scheduled_continuation_answered",
     "run_directory_created",

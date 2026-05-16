@@ -7,18 +7,27 @@
         "controller_no_unclear_return_to_router": true,
         "controller_partial_table_reads_defer": true,
         "heartbeat_template_disclaims_manual_router_loop": true,
+        "packet_ack_continues_and_waits_for_router_result": true,
+        "router_card_checkin_policy_mentions_work_item_output": true,
         "router_heartbeat_prompt_attaches_daemon_ledger": true,
         "router_heartbeat_prompt_no_continue_router_loop": true,
         "router_projection_disables_controller_apply_required": true,
         "router_projects_controller_rows_to_receipt_metadata": true,
+        "router_startup_intake_no_direct_apply_wording": true,
+        "router_startup_intake_returns_to_router_work_board": true,
         "router_table_prompt_forbids_router_commands_between_rows": true,
         "skill_daemon_rows_distinguish_receipt_from_apply": true,
         "skill_has_pre_daemon_split": true,
         "skill_heartbeat_no_return_to_router": true,
-        "skill_no_broad_wait_boundary_prefer_run_until_wait": true
+        "skill_no_broad_wait_boundary_prefer_run_until_wait": true,
+        "skill_startup_intake_no_direct_apply_wording": true,
+        "skill_startup_intake_returns_to_router_work_board": true,
+        "work_card_ack_continues_and_waits_for_router_output": false
       },
-      "failures": [],
-      "ok": true
+      "failures": [
+        "work_card_ack_continues_and_waits_for_router_output"
+      ],
+      "ok": false
     },
     "expected_rejections": {
       "failures": [],
@@ -30,12 +39,16 @@
         "missing_startup_phase_split": "rejected:pre_daemon_and_daemon_phases_not_distinguished",
         "partial_table_read_errors": "rejected:partial_table_read_not_deferred",
         "row_to_row_uses_router_command": "rejected:row_completion_skips_controller_receipt",
+        "startup_intake_prompt_direct_apply": "rejected:startup_intake_prompt_bypasses_daemon_work_board",
         "unclear_step_returns_to_router": "rejected:unclear_step_router_fallback",
         "valid_controller_ledger_receipt_metadata": "accepted",
         "valid_daemon_ledger_prompt_set": "accepted",
         "valid_heartbeat_live_daemon_resume": "accepted",
         "valid_heartbeat_stale_daemon_repair": "accepted",
-        "valid_pre_daemon_bootloader_prompt": "accepted"
+        "valid_pre_daemon_bootloader_prompt": "accepted",
+        "valid_startup_intake_ledger_return_prompt": "accepted",
+        "valid_work_item_ack_continues_to_output": "accepted",
+        "work_item_ack_stops_before_output": "rejected:work_item_ack_treated_as_completion"
       }
     },
     "flowguard_explorer": {
@@ -44,7 +57,7 @@
       "ok": true,
       "reachability_failure_count": 0,
       "reachability_failures": [],
-      "summary": "sequences=3 initial_states=1 traces=72",
+      "summary": "sequences=3 initial_states=1 traces=96",
       "violation_count": 0
     },
     "progress": {
@@ -59,9 +72,11 @@
         "valid_daemon_ledger_prompt_set",
         "valid_heartbeat_live_daemon_resume",
         "valid_heartbeat_stale_daemon_repair",
-        "valid_pre_daemon_bootloader_prompt"
+        "valid_pre_daemon_bootloader_prompt",
+        "valid_startup_intake_ledger_return_prompt",
+        "valid_work_item_ack_continues_to_output"
       ],
-      "edge_count": 24,
+      "edge_count": 32,
       "invariant_failure_count": 0,
       "invariant_failures": [],
       "missing_labels": [],
@@ -73,11 +88,13 @@
         "missing_startup_phase_split",
         "partial_table_read_errors",
         "row_to_row_uses_router_command",
-        "unclear_step_returns_to_router"
+        "startup_intake_prompt_direct_apply",
+        "unclear_step_returns_to_router",
+        "work_item_ack_stops_before_output"
       ],
-      "state_count": 25
+      "state_count": 33
     }
   },
   "model": "flowpilot_prompt_boundary",
-  "ok": true
+  "ok": false
 }
