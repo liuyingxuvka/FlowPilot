@@ -1,0 +1,563 @@
+{
+  "created_at": "2026-05-16T12:14:19.999323+00:00",
+  "graph": {
+    "edge_count": 16,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "ok": true,
+    "state_count": 9
+  },
+  "legacy_full_regression": {
+    "current": true,
+    "required_for_release": true,
+    "status": {
+      "created_at": "2026-05-16T11:44:29.842028+00:00",
+      "edge_count": 2010665,
+      "proof_file": "simulations/results.proof.json",
+      "reason": "valid full proof",
+      "result_file": "simulations/results.json",
+      "state_count": 1949768,
+      "valid": true
+    }
+  },
+  "loop": {
+    "nonterminating_component_count": 0,
+    "ok": true,
+    "stuck_state_count": 0
+  },
+  "model": "flowpilot_thin_parent",
+  "ok": true,
+  "parent": "meta",
+  "progress": {
+    "nonterminal_without_terminal_path_count": 0,
+    "ok": true,
+    "success_state_count": 1
+  },
+  "release_confidence": "current_with_full_regression",
+  "result_type": "thin_parent",
+  "routine_confidence": "current",
+  "schema_version": "flowpilot.thin_parent_result.v1",
+  "thin_parent": {
+    "failures": [],
+    "full_regression_release_partitions": [
+      "evidence_mesh_and_install_sync"
+    ],
+    "ledger_file": "simulations/flowpilot_parent_responsibility_ledger.json",
+    "ok": true,
+    "partition_count": 8,
+    "partitions": [
+      {
+        "evidence": [
+          {
+            "edge_count": 313,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_startup_control",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_startup_control_checks_results.json",
+            "result_fingerprint": "356a31a0b581379c2676f43e9b5e7b2408a032a9f2d6d71c089c8b4fe68c83e8",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 298
+          },
+          {
+            "edge_count": 3148,
+            "failures": [],
+            "missing": false,
+            "model_id": "startup_pm_review",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/startup_pm_review_results.json",
+            "result_fingerprint": "1ad2204153d5872ea7e9448be3f081de3907f053fbf851ccb6d93a81cc89e853",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 3149
+          },
+          {
+            "edge_count": 24,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_startup_intake_ui",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_startup_intake_ui_checks_results.json",
+            "result_fingerprint": "5a3cb6e301afc08ad316a50725c5b348d99514fe1212220f8076a69528508197",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 25
+          },
+          {
+            "edge_count": 38,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_deterministic_startup_bootstrap",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_deterministic_startup_bootstrap_results.json",
+            "result_fingerprint": "09290c342eadd580aa1522320710065769cdf96f98feb2b1b111b65d0f3ec6b4",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 39
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_startup_control",
+          "startup_pm_review",
+          "flowpilot_startup_intake_ui",
+          "flowpilot_deterministic_startup_bootstrap"
+        ],
+        "id": "startup",
+        "invariant_families": [
+          "startup_questions_before_work",
+          "startup_activation_gate",
+          "fresh_run_pointer"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 30,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_pm_package_absorption",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_pm_package_absorption_checks_results.json",
+            "result_fingerprint": "a3895afe47f0cf7bd53a87a3536576acee56b51102efe902bbc651a187eea4bc",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 31
+          },
+          {
+            "edge_count": 40,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_handoff_artifact_protocol",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_handoff_artifact_protocol_checks_results.json",
+            "result_fingerprint": "8688012b1e84211617175e12bd65c4ea7b5ef97cd98cbd47597548484c08e2ba",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 41
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_pm_package_absorption",
+          "flowpilot_handoff_artifact_protocol"
+        ],
+        "id": "material_intake",
+        "invariant_families": [
+          "material_scan_before_architecture",
+          "pm_package_absorption",
+          "handoff_artifact_integrity"
+        ],
+        "ok": true,
+        "owner_type": "child",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 68,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_planning_quality",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_planning_quality_checks_results.json",
+            "result_fingerprint": "bdde0f36cb029b46defb18583b913892db5c6d90a49b4735a578dc349c106ba9",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 69
+          },
+          {
+            "edge_count": 40,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_model_driven_recursive_route",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_model_driven_recursive_route_checks_results.json",
+            "result_fingerprint": "e9a8d0a9f6f23b6d431f6ad26b8a2fd905470b7c52aaa9a1c995490caedada53",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 41
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_planning_quality",
+          "flowpilot_model_driven_recursive_route"
+        ],
+        "id": "product_architecture",
+        "invariant_families": [
+          "planning_profile",
+          "recursive_route_decomposition",
+          "child_route_projection"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 874,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_resume",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_resume_results.json",
+            "result_fingerprint": "16610b78ac90b130439ea81fb1ef9a05435bb56d97a8a5851701ab7afee5f3ba",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 875
+          },
+          {
+            "edge_count": 153,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_role_recovery",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_role_recovery_results.json",
+            "result_fingerprint": "1e1312bcf9ee74eb2bcfd75be1379e8e2ebbeb770113f2d98b1893b19d1a796c",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 154
+          },
+          {
+            "edge_count": 8,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_daemon_liveness",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_daemon_liveness_results.json",
+            "result_fingerprint": "618c50fd9fee5a41061cb2cb6a974f1c27f55051bf8fb9a722b424e4b42413f1",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 9
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_resume",
+          "flowpilot_role_recovery",
+          "flowpilot_daemon_liveness"
+        ],
+        "id": "crew_and_heartbeat",
+        "invariant_families": [
+          "manual_resume",
+          "crew_rehydration",
+          "daemon_liveness_boundary"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 174,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_router_loop",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_router_loop_checks_results.json",
+            "result_fingerprint": "9ca89cc1fdc03c39140abe23370a7c397b27f90167ca8fd01ee3b52ae789057a",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 175
+          },
+          {
+            "edge_count": 16653,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_persistent_router_daemon",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_persistent_router_daemon_results.json",
+            "result_fingerprint": "499328ac7c4effe7e3ed9541d97b055b0a2aa8b126a889b06e09a8edaafa3932",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 7962
+          },
+          {
+            "edge_count": 1201,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_daemon_reconciliation",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
+            "result_fingerprint": "ef806f58236d9411116e8a8f467cd6f5c0b4666774e62df8468f1bd18ef52e22",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 1141
+          },
+          {
+            "edge_count": 42,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_route_replanning_policy",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_route_replanning_policy_checks_results.json",
+            "result_fingerprint": "614506f54f88588bc63d80f37279bdce5f805697e76bda4630701cba2ee8a326",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 43
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_router_loop",
+          "flowpilot_persistent_router_daemon",
+          "flowpilot_daemon_reconciliation",
+          "flowpilot_route_replanning_policy"
+        ],
+        "id": "router_daemon_resume",
+        "invariant_families": [
+          "router_packet_loop",
+          "daemon_reconciliation",
+          "route_replanning_boundary"
+        ],
+        "ok": true,
+        "owner_type": "child",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 59,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_packet_lifecycle",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_packet_lifecycle_checks_results.json",
+            "result_fingerprint": "9ed790932d809115eb411655146bed4ba90a578db05235cafb982853a9054885",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 60
+          },
+          {
+            "edge_count": 9,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_packet_open_authority",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_packet_open_authority_results.json",
+            "result_fingerprint": "453b6588941bb864cb795ae80a3c7c13508e62510fd81a7a81b970dd0bfc459c",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 10
+          },
+          {
+            "edge_count": 53,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_card_envelope",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_card_envelope_checks_results.json",
+            "result_fingerprint": "63a3702b271642c8c9633e2c637b978182a572a9e826cf59e9c66ecb4a09d84c",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 54
+          },
+          {
+            "edge_count": null,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_role_output_runtime",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_role_output_runtime_checks_results.json",
+            "result_fingerprint": "857e57252c5840e0672e773e9d498f20e8db2b615d1c5df9fbec53bdae93a7cd",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": null
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_packet_lifecycle",
+          "flowpilot_packet_open_authority",
+          "flowpilot_card_envelope",
+          "flowpilot_role_output_runtime"
+        ],
+        "id": "packet_and_role_authority",
+        "invariant_families": [
+          "packet_envelope_authority",
+          "role_output_runtime",
+          "controller_body_boundary"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 28,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_terminal_state_monotonicity",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_terminal_state_monotonicity_checks_results.json",
+            "result_fingerprint": "b8642c4ad3babf7de9fc2d7cd7dfdadd59103d6da17ff50f72b270665a73fd0c",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 29
+          },
+          {
+            "edge_count": 20,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_terminal_summary",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_terminal_summary_checks_results.json",
+            "result_fingerprint": "f9d3f5bad898c82dabcf45b01668f2ff0b5882d744ccc0f40665ee691ba4b496",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 21
+          },
+          {
+            "edge_count": 48,
+            "failures": [],
+            "missing": false,
+            "model_id": "defect_governance",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/defect_governance_results.json",
+            "result_fingerprint": "058f2fd06fd111eddfc95a55c1e8a3dabb98ac63e4163261f295da27a1546329",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 49
+          },
+          {
+            "edge_count": 204,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_repair_transaction",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_repair_transaction_checks_results.json",
+            "result_fingerprint": "496bc95cf67a0ecff522a058e96ccece9014c9284b9dbd2aa6e41a2db2e403d8",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 205
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_terminal_state_monotonicity",
+          "flowpilot_terminal_summary",
+          "defect_governance",
+          "flowpilot_repair_transaction"
+        ],
+        "id": "terminal_ledger",
+        "invariant_families": [
+          "terminal_state_monotonicity",
+          "final_summary_boundary",
+          "repair_transaction_evidence"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 52,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_model_mesh",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_model_mesh_checks_results.json",
+            "result_fingerprint": "6dda410498ceef62986a866133f734744904d14c54597aeba7df142b8df50f6b",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 53
+          },
+          {
+            "edge_count": 48,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_control_transaction_registry",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_control_transaction_registry_checks_results.json",
+            "result_fingerprint": "4791bb7ffe9735dcf48b611128c9a43c4d37004ebbea9acca4cc9309c88a93c2",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 49
+          },
+          {
+            "edge_count": 38,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_legal_next_action",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_legal_next_action_checks_results.json",
+            "result_fingerprint": "a990987d38463857a8d7c937fa48ec9fd65bbb2fd8a3e6db1aaad36b229d6b21",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 39
+          },
+          {
+            "edge_count": 10,
+            "failures": [],
+            "missing": false,
+            "model_id": "proof_carrying",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/proof_carrying_checks_results.json",
+            "result_fingerprint": "15fd2a1a502bae9df2540a4e687f90a03038b2228baa2851bb071371d80d786a",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 11
+          },
+          {
+            "edge_count": 39,
+            "failures": [],
+            "missing": false,
+            "model_id": "release_tooling",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/release_tooling_results.json",
+            "result_fingerprint": "60dba4f08f8e100d03c73eb33dc21b9ad8d14a7e2f62a28d67fac25a4ccb84b3",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 40
+          }
+        ],
+        "evidence_ids": [
+          "flowpilot_model_mesh",
+          "flowpilot_control_transaction_registry",
+          "flowpilot_legal_next_action",
+          "proof_carrying",
+          "release_tooling"
+        ],
+        "id": "evidence_mesh_and_install_sync",
+        "invariant_families": [
+          "model_mesh_authority",
+          "control_transaction_registry",
+          "install_sync_boundary"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "full_regression_required_for_release"
+      }
+    ]
+  }
+}

@@ -188,38 +188,140 @@
     "ok": true,
     "parents": [
       {
-        "edge_count": 2010665,
+        "edge_count": 16,
+        "full_state_count": 1949768,
+        "legacy_full_regression": {
+          "current": true,
+          "proof": {
+            "created_at": "2026-05-16T11:44:29.842028+00:00",
+            "edge_count": 2010665,
+            "proof_file": "simulations/results.proof.json",
+            "reason": "valid full proof",
+            "result_file": "simulations/results.json",
+            "state_count": 1949768,
+            "valid": true
+          },
+          "required_for_release": true,
+          "result": {
+            "edge_count": 2010665,
+            "model_id": "meta",
+            "ok": true,
+            "release_confidence": null,
+            "result_file": "simulations/results.json",
+            "result_type": "legacy_full_parent",
+            "routine_confidence": null,
+            "state_count": 1949768,
+            "tier": "huge"
+          }
+        },
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-16T10:02:44.105769+00:00",
+          "created_at": "2026-05-16T11:44:29.842028+00:00",
+          "edge_count": 2010665,
           "proof_file": "simulations/results.proof.json",
-          "reason": "valid proof",
+          "reason": "valid full proof",
           "result_file": "simulations/results.json",
+          "state_count": 1949768,
           "valid": true
         },
-        "result_file": "simulations/results.json",
-        "role": "heavyweight_parent",
+        "release_confidence": "current_with_full_regression",
+        "result_file": "simulations/meta_thin_parent_results.json",
+        "result_type": "thin_parent",
+        "role": "thin_parent",
+        "routine_confidence": "current",
         "split_review_required": true,
-        "state_count": 1949768,
-        "tier": "huge"
+        "state_count": 9,
+        "thin_parent": {
+          "proof": {
+            "created_at": "2026-05-16T11:49:43.244791+00:00",
+            "proof_file": "simulations/meta_thin_parent_results.proof.json",
+            "reason": "valid proof",
+            "result_file": "simulations/meta_thin_parent_results.json",
+            "result_type": "thin_parent",
+            "valid": true
+          },
+          "result": {
+            "edge_count": 16,
+            "model_id": "meta",
+            "ok": true,
+            "release_confidence": "current_with_full_regression",
+            "result_file": "simulations/meta_thin_parent_results.json",
+            "result_type": "thin_parent",
+            "routine_confidence": "current",
+            "state_count": 9,
+            "tier": "small"
+          }
+        },
+        "tier": "small"
       },
       {
-        "edge_count": 2036030,
+        "edge_count": 12,
+        "full_state_count": 1959064,
+        "legacy_full_regression": {
+          "current": true,
+          "proof": {
+            "created_at": "2026-05-16T11:49:11.742612+00:00",
+            "edge_count": 2036030,
+            "proof_file": "simulations/capability_results.proof.json",
+            "reason": "valid full proof",
+            "result_file": "simulations/capability_results.json",
+            "state_count": 1959064,
+            "valid": true
+          },
+          "required_for_release": true,
+          "result": {
+            "edge_count": 2036030,
+            "model_id": "capability",
+            "ok": true,
+            "release_confidence": null,
+            "result_file": "simulations/capability_results.json",
+            "result_type": "legacy_full_parent",
+            "routine_confidence": null,
+            "state_count": 1959064,
+            "tier": "huge"
+          }
+        },
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-16T10:07:04.242905+00:00",
+          "created_at": "2026-05-16T11:49:11.742612+00:00",
+          "edge_count": 2036030,
           "proof_file": "simulations/capability_results.proof.json",
-          "reason": "valid proof",
+          "reason": "valid full proof",
           "result_file": "simulations/capability_results.json",
+          "state_count": 1959064,
           "valid": true
         },
-        "result_file": "simulations/capability_results.json",
-        "role": "heavyweight_parent",
+        "release_confidence": "current_with_full_regression",
+        "result_file": "simulations/capability_thin_parent_results.json",
+        "result_type": "thin_parent",
+        "role": "thin_parent",
+        "routine_confidence": "current",
         "split_review_required": true,
-        "state_count": 1959064,
-        "tier": "huge"
+        "state_count": 7,
+        "thin_parent": {
+          "proof": {
+            "created_at": "2026-05-16T11:49:43.104563+00:00",
+            "proof_file": "simulations/capability_thin_parent_results.proof.json",
+            "reason": "valid proof",
+            "result_file": "simulations/capability_thin_parent_results.json",
+            "result_type": "thin_parent",
+            "valid": true
+          },
+          "result": {
+            "edge_count": 12,
+            "model_id": "capability",
+            "ok": true,
+            "release_confidence": "current_with_full_regression",
+            "result_file": "simulations/capability_thin_parent_results.json",
+            "result_type": "thin_parent",
+            "routine_confidence": "current",
+            "state_count": 7,
+            "tier": "small"
+          }
+        },
+        "tier": "small"
       }
     ],
     "partition_items": [
@@ -635,7 +737,8 @@
         "tier": "medium"
       }
     ],
-    "release_confidence": "current"
+    "release_confidence": "current",
+    "thin_parent_obligations": []
   },
   "model": "flowpilot_model_hierarchy",
   "ok": true,

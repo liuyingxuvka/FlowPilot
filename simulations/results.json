@@ -335,5 +335,6 @@
     "state_count": 1949768,
     "status": "OK",
     "success_state_count": 3840
-  }
+  },
+  "result_type": "legacy_full_parent"
 }

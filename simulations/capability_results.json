@@ -609,5 +609,6 @@
     "state_count": 1959064,
     "status": "OK",
     "success_state_count": 13104
-  }
+  },
+  "result_type": "legacy_full_parent"
 }

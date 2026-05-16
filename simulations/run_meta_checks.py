@@ -11,13 +11,23 @@ from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
-import flowguard
 import meta_model as model
+from flowpilot_thin_parent_checks import (
+    THIN_PROOF_PATHS,
+    THIN_RESULT_PATHS,
+    legacy_input_fingerprint,
+    run_thin_parent,
+    thin_input_fingerprint,
+    valid_thin_proof,
+    write_thin_proof,
+)
 
 
 ROOT = Path(__file__).resolve().parent
-RESULTS_PATH = ROOT / "results.json"
-PROOF_PATH = ROOT / "results.proof.json"
+LEGACY_RESULTS_PATH = ROOT / "results.json"
+LEGACY_PROOF_PATH = ROOT / "results.proof.json"
+RESULTS_PATH = THIN_RESULT_PATHS["meta"]
+PROOF_PATH = THIN_PROOF_PATHS["meta"]
 GRAPH_STATE_LIMIT = 900_000
 CHECK_STATE_LIMIT = 900_000
 PROOF_SCHEMA = 1
@@ -92,22 +102,24 @@ def _file_sha256(path: Path) -> str:
 
 
 def _current_input_fingerprint() -> str:
-    payload = {
-        "flowguard_schema_version": flowguard.SCHEMA_VERSION,
-        "model": _file_sha256(ROOT / "meta_model.py"),
-        "runner": _file_sha256(Path(__file__).resolve()),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return _sha256_bytes(encoded)
+    return thin_input_fingerprint("meta", Path(__file__).resolve())
 
 
-def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
-    if not PROOF_PATH.exists():
+def _legacy_input_fingerprint() -> str:
+    return legacy_input_fingerprint("meta")
+
+
+def _legacy_file_sha256(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def _valid_legacy_proof(input_fingerprint: str) -> tuple[bool, str]:
+    if not LEGACY_PROOF_PATH.exists():
         return False, "proof missing"
-    if not RESULTS_PATH.exists():
+    if not LEGACY_RESULTS_PATH.exists():
         return False, "results missing"
     try:
-        proof = json.loads(PROOF_PATH.read_text(encoding="utf-8"))
+        proof = json.loads(LEGACY_PROOF_PATH.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return False, "proof is not valid JSON"
 
@@ -119,21 +131,44 @@ def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
         return False, "previous proof was not successful"
     if proof.get("input_fingerprint") != input_fingerprint:
         return False, "input fingerprint changed"
-    if proof.get("result_fingerprint") != _file_sha256(RESULTS_PATH):
+    if proof.get("result_fingerprint") != _legacy_file_sha256(LEGACY_RESULTS_PATH):
         return False, "result fingerprint changed"
     return True, "valid proof"
 
 
-def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
+def _write_legacy_proof(*, ok: bool, input_fingerprint: str) -> None:
     payload = {
         "schema": PROOF_SCHEMA,
         "check": "meta",
         "ok": ok,
         "input_fingerprint": input_fingerprint,
-        "result_fingerprint": _file_sha256(RESULTS_PATH),
+        "result_fingerprint": _legacy_file_sha256(LEGACY_RESULTS_PATH),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
-    PROOF_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    LEGACY_PROOF_PATH.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
+    return valid_thin_proof(
+        parent="meta",
+        runner_path=Path(__file__).resolve(),
+        result_path=RESULTS_PATH,
+        proof_path=PROOF_PATH,
+        input_fingerprint=input_fingerprint,
+    )
+
+
+def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
+    write_thin_proof(
+        parent="meta",
+        result_path=RESULTS_PATH,
+        proof_path=PROOF_PATH,
+        ok=ok,
+        input_fingerprint=input_fingerprint,
+    )
 
 
 REQUIRED_LABELS = (
@@ -1048,12 +1083,21 @@ def _run_sharded_graph_checks() -> tuple[dict, dict, dict]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fast", action="store_true", help="reuse a valid result proof when possible")
-    parser.add_argument("--force", action="store_true", help="ignore any existing proof and rerun")
+    parser.add_argument("--fast", action="store_true", help="reuse a valid thin-parent proof when possible")
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="run the legacy full Meta graph regression instead of the thin parent check",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="force the legacy full Meta graph regression and ignore existing full proof",
+    )
     args = parser.parse_args(argv)
 
     input_fingerprint = _current_input_fingerprint()
-    if args.fast and not args.force:
+    if args.fast and not args.force and not args.full:
         valid, reason = _valid_proof(input_fingerprint)
         if valid:
             _emit_proof_reuse("meta", PROOF_PATH)
@@ -1061,16 +1105,36 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print(f"FlowGuard meta proof not reused: {reason}")
 
+    if not args.force and not args.full:
+        payload = run_thin_parent(
+            "meta",
+            runner_path=Path(__file__).resolve(),
+            result_path=RESULTS_PATH,
+            proof_path=PROOF_PATH,
+        )
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 0 if payload.get("ok") else 1
+
+    legacy_input_fingerprint = _legacy_input_fingerprint()
+    if args.full and args.fast and not args.force:
+        valid, reason = _valid_legacy_proof(legacy_input_fingerprint)
+        if valid:
+            _emit_proof_reuse("meta", LEGACY_PROOF_PATH)
+            print(f"FlowGuard meta full proof reused: {LEGACY_PROOF_PATH}")
+            return 0
+        print(f"FlowGuard meta full proof not reused: {reason}")
+
     graph_report, progress_report, loop_report = _run_sharded_graph_checks()
     ok = graph_report["ok"] and progress_report["ok"] and loop_report["ok"]
 
     payload = {
         "graph": graph_report,
+        "result_type": "legacy_full_parent",
         "progress": progress_report,
         "loop": loop_report,
     }
-    RESULTS_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
-    _write_proof(ok=ok, input_fingerprint=input_fingerprint)
+    LEGACY_RESULTS_PATH.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    _write_legacy_proof(ok=ok, input_fingerprint=legacy_input_fingerprint)
 
     print("=== State Graph ===")
     print(json.dumps(graph_report, indent=2, sort_keys=True))

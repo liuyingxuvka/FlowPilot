@@ -77,6 +77,11 @@ def _script_text(path: Path) -> str:
 
 
 def _declared_result_path(path: Path, text: str) -> Path | None:
+    key = _runner_key(path)
+    if key == "meta":
+        return path.parent / "meta_thin_parent_results.json"
+    if key == "capability":
+        return path.parent / "capability_thin_parent_results.json"
     match = re.search(r'RESULTS_PATH\s*=\s*ROOT\s*/\s*"([^"]+)"', text)
     if match:
         return path.parent / match.group(1)

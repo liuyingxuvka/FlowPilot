@@ -13,6 +13,14 @@ from typing import Any, Mapping, Sequence
 from flowguard import Explorer
 
 import flowpilot_model_hierarchy_model as model
+from flowpilot_thin_parent_checks import (
+    LEGACY_RESULT_PATHS,
+    THIN_PROOF_PATHS,
+    THIN_RESULT_PATHS,
+    legacy_full_status,
+    thin_input_fingerprint,
+    valid_thin_proof,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -212,6 +220,34 @@ def _result_index() -> dict[str, dict[str, Any]]:
     return rows
 
 
+def _result_row_from_path(path: Path, model_id: str) -> dict[str, Any] | None:
+    payload = _read_json(path)
+    if not isinstance(payload, Mapping):
+        return None
+    graph_payload = payload.get("graph") if payload.get("result_type") == "thin_parent" else None
+    if isinstance(graph_payload, Mapping):
+        counts = {
+            "state_count": graph_payload.get("state_count"),
+            "edge_count": graph_payload.get("edge_count"),
+            "ok": graph_payload.get("ok"),
+        }
+    else:
+        counts = _walk_counts(payload)
+    if counts["state_count"] is None and counts["ok"] is None:
+        return None
+    return {
+        "model_id": model_id,
+        "result_file": path.relative_to(ROOT).as_posix(),
+        "state_count": counts["state_count"],
+        "edge_count": counts["edge_count"],
+        "ok": counts["ok"],
+        "tier": _size_tier(counts["state_count"]),
+        "result_type": str(payload.get("result_type") or payload.get("model") or "unknown"),
+        "release_confidence": payload.get("release_confidence"),
+        "routine_confidence": payload.get("routine_confidence"),
+    }
+
+
 def _size_tier(state_count: int | None) -> str:
     if state_count is None:
         return "unknown"
@@ -278,6 +314,40 @@ def _proof_status(parent: str) -> dict[str, Any]:
     }
 
 
+def _thin_proof_status(parent: str) -> dict[str, Any]:
+    if parent == "meta":
+        runner_path = SIMULATIONS / "run_meta_checks.py"
+    elif parent == "capability":
+        runner_path = SIMULATIONS / "run_capability_checks.py"
+    else:
+        return {"valid": False, "reason": "unknown parent"}
+    result_path = THIN_RESULT_PATHS[parent]
+    proof_path = THIN_PROOF_PATHS[parent]
+    proof = _read_json(proof_path)
+    try:
+        input_fingerprint = thin_input_fingerprint(parent, runner_path)
+        valid, reason = valid_thin_proof(
+            parent=parent,
+            runner_path=runner_path,
+            result_path=result_path,
+            proof_path=proof_path,
+            input_fingerprint=input_fingerprint,
+        )
+    except Exception as exc:
+        valid = False
+        reason = f"thin proof check failed: {exc}"
+    row = {
+        "valid": valid,
+        "reason": reason,
+        "proof_file": proof_path.relative_to(ROOT).as_posix(),
+        "result_file": result_path.relative_to(ROOT).as_posix(),
+    }
+    if isinstance(proof, Mapping):
+        row["created_at"] = proof.get("created_at")
+        row["result_type"] = proof.get("result_type")
+    return row
+
+
 def _flowguard_schema_version() -> str:
     try:
         import flowguard
@@ -291,10 +361,32 @@ def build_inventory_report() -> dict[str, Any]:
     results = _result_index()
     parent_rows: list[dict[str, Any]] = []
     for parent in model.PARENT_MODELS:
-        row = dict(results.get(parent, {"model_id": parent, "tier": "unknown"}))
-        row["role"] = "heavyweight_parent"
-        row["split_review_required"] = row.get("state_count", 0) >= HEAVYWEIGHT_STATE_THRESHOLD
-        row["proof"] = _proof_status(parent)
+        thin_row = _result_row_from_path(THIN_RESULT_PATHS[parent], parent)
+        full_row = _result_row_from_path(LEGACY_RESULT_PATHS[parent], parent)
+        legacy_status = legacy_full_status(parent)
+        thin_proof = _thin_proof_status(parent)
+        row = dict(thin_row or full_row or results.get(parent, {"model_id": parent, "tier": "unknown"}))
+        row["role"] = "thin_parent" if thin_row else "heavyweight_parent"
+        row["thin_parent"] = {
+            "result": thin_row,
+            "proof": thin_proof,
+        }
+        row["legacy_full_regression"] = {
+            "result": full_row,
+            "proof": legacy_status,
+            "required_for_release": True,
+            "current": bool(legacy_status.get("valid")),
+        }
+        row["full_state_count"] = full_row.get("state_count") if full_row else None
+        row["split_review_required"] = (
+            (full_row is not None and (full_row.get("state_count") or 0) >= HEAVYWEIGHT_STATE_THRESHOLD)
+            or row.get("role") == "thin_parent"
+        )
+        row["proof"] = legacy_status
+        row["release_confidence"] = (
+            row.get("release_confidence")
+            or ("current" if legacy_status.get("valid") else "requires_background_or_valid_proof")
+        )
         parent_rows.append(row)
 
     child_ids = sorted(
@@ -321,16 +413,22 @@ def build_inventory_report() -> dict[str, Any]:
     heavy_parent_obligations = [
         parent["model_id"]
         for parent in parent_rows
-        if not parent.get("proof", {}).get("valid")
+        if not parent.get("legacy_full_regression", {}).get("current")
+    ]
+    thin_parent_obligations = [
+        parent["model_id"]
+        for parent in parent_rows
+        if not parent.get("thin_parent", {}).get("proof", {}).get("valid")
     ]
     return {
-        "ok": not large_children,
+        "ok": not large_children and not missing_children and not thin_parent_obligations,
         "heavyweight_threshold": HEAVYWEIGHT_STATE_THRESHOLD,
         "parents": parent_rows,
         "registered_child_count": len(child_rows),
         "registered_children": child_rows,
         "missing_child_results": missing_children,
         "large_child_models": large_children,
+        "thin_parent_obligations": thin_parent_obligations,
         "partition_map": PARENT_PARTITION_MAP,
         "partition_items": list(model.PARTITION_ITEMS),
         "heavy_parent_full_regression_obligations": heavy_parent_obligations,
