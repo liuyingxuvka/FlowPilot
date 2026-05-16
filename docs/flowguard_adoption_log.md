@@ -12214,7 +12214,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Commands
 - `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
-- `python C:\Users\liu_y\.codex\skills\model-first-function-flow\assets\toolchain_preflight.py --json` reported installed FlowGuard schema `1.0`.
+- `python <Codex home>\skills\model-first-function-flow\assets\toolchain_preflight.py --json` reported installed FlowGuard schema `1.0`.
 - `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out tmp\flowguard_background\prompt_boundary_pre_fix.json` failed before the production prompt edit, with source failures for stale startup intake direct-apply wording.
 - `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out simulations\flowpilot_prompt_boundary_results.json` passed after the prompt edit.
 - `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_waits_for_answers_before_banner_or_controller tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_daemon_defers_banner_and_queues_next_boot_row` passed.

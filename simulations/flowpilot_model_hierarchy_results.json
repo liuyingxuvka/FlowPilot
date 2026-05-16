@@ -234,7 +234,7 @@
         "state_count": 9,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-16T11:49:43.244791+00:00",
+            "created_at": "2026-05-16T12:14:20.017936+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -302,7 +302,7 @@
         "state_count": 7,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-16T11:49:43.104563+00:00",
+            "created_at": "2026-05-16T12:14:20.116339+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -467,13 +467,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 1129,
+        "edge_count": 1201,
         "model_id": "flowpilot_daemon_reconciliation",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
         "role": "child_evidence",
-        "state_count": 1069,
+        "state_count": 1141,
         "tier": "medium"
       },
       {
@@ -667,13 +667,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 298,
+        "edge_count": 313,
         "model_id": "flowpilot_startup_control",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_startup_control_checks_results.json",
         "role": "child_evidence",
-        "state_count": 283,
+        "state_count": 298,
         "tier": "small"
       },
       {
