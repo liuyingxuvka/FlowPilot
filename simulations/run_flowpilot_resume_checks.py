@@ -44,6 +44,8 @@ REQUIRED_LABELS = (
     "crew_capability_officer_lifecycle_flags_reconciled",
     "resume_state_clear_for_pm_decision",
     "ambiguous_resume_state_blocked_for_pm_recovery",
+    "resume_rehydration_obligations_replayed_mechanically",
+    "resume_rehydration_replay_escalates_to_pm",
     "router_checks_prompt_manifest",
     "status_summary_synced_after_pending_prompt_manifest_action",
     "run_until_wait_folds_prompt_manifest_check_before_pm_card",
@@ -97,6 +99,10 @@ def _state_id(state: model.State) -> str:
         f"{state.crew_roles_ready},restored={state.crew_restored},"
         f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
         f"report={state.crew_rehydration_report_written}|"
+        f"resume_replay={state.resume_obligation_replay_scanned},"
+        f"{state.resume_obligation_replay_completed},"
+        f"{state.resume_obligation_replay_pm_escalation_required},"
+        f"{state.resume_mechanical_replay_skipped_pm}|"
         f"liveness={state.resume_wake_recorded_to_router},batch={state.liveness_probe_batch_started},"
         f"{state.liveness_probe_batch_concurrent},"
         f"{state.all_six_liveness_probes_started_before_wait},"

@@ -12357,6 +12357,44 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
 - In a later cleanup, consider renaming the legacy PM-resume flag to separate "recovery continuation satisfied" from "PM explicitly decided."
 
+## 2026-05-16 Resume Rehydration Obligation Replay
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: heartbeat/manual resume restored all six role memories but still asked PM for the next step before Router compared current-run waits and evidence.
+- Status: completed_focused_runtime_update
+
+### Model Evidence
+- OpenSpec change: `openspec/changes/replay-resume-rehydration-obligations/`
+- Resume model: `simulations/flowpilot_resume_model.py`
+- Resume runner: `simulations/run_flowpilot_resume_checks.py`
+- Role recovery model: `simulations/flowpilot_role_recovery_model.py`
+- Role recovery runner: `simulations/run_flowpilot_role_recovery_checks.py`
+- Result evidence: `simulations/flowpilot_resume_results.json`, `simulations/flowpilot_role_recovery_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py simulations\flowpilot_resume_model.py simulations\run_flowpilot_resume_checks.py` passed.
+- `python simulations\run_flowpilot_resume_checks.py` passed.
+- `python simulations\run_flowpilot_role_recovery_checks.py` passed.
+- `python -m pytest tests\test_flowpilot_router_runtime.py -k "resume or role_recovery or role_no_output" -q` passed with 16 selected tests.
+- `openspec validate replay-resume-rehydration-obligations --strict` passed.
+- `openspec validate --all --strict` was attempted; all changes passed except existing `enforce-flowpilot-daemon-startup`, whose spec lacks delta sections.
+- `python scripts\check_install.py` passed.
+- After clearing Python caches, `python scripts\install_flowpilot.py --sync-repo-owned --skip-self-check --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\install_flowpilot.py --check --json` passed with installed `flowpilot` source-fresh.
+
+### Findings
+- Heartbeat/manual resume now invokes the shared role-recovery obligation replay after successful six-role rehydration and current-run memory injection.
+- Existing Router-visible evidence is settled without PM; missing evidence creates durable replacement rows before superseding original waits.
+- Mechanical replay sets the legacy PM-resume continuation flag so old wait selection does not reintroduce a PM prompt.
+- Ambiguous or memory-incomplete resume still keeps the PM escalation path.
+- Active control blockers can proceed after mechanical replay completes without PM escalation.
+
+### Skipped Steps
+- Heavyweight `python simulations/run_meta_checks.py` and `python simulations/run_capability_checks.py` were explicitly skipped by user direction because they are too heavy for this focused pass.
+
+### Next Actions
+- Before release-level confidence claims, run the heavyweight Meta and Capability checks in the stable background log contract and inspect their exit artifacts.
+
 ## 2026-05-16 Generic Wait Target Reminder Rows
 
 - Project: FlowGuardProjectAutopilot_20260430

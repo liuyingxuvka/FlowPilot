@@ -123,6 +123,10 @@ class State:
     officer_lifecycle_flags_current: bool = False
 
     pm_recovery_requested: bool = False
+    resume_obligation_replay_scanned: bool = False
+    resume_obligation_replay_completed: bool = False
+    resume_obligation_replay_pm_escalation_required: bool = False
+    resume_mechanical_replay_skipped_pm: bool = False
     pm_decision_requested: bool = False
     pm_decision_prompt_delivered: bool = False
     pm_controller_reminder_included: bool = False
@@ -282,16 +286,28 @@ def _lifecycle_flags_current(state: State) -> bool:
     )
 
 
+def _resume_replay_allows_normal_work(state: State) -> bool:
+    return bool(
+        state.pm_decision_returned
+        or (
+            state.resume_obligation_replay_completed
+            and state.resume_mechanical_replay_skipped_pm
+            and not state.resume_obligation_replay_pm_escalation_required
+        )
+    )
+
+
 def _next_required_prompt(state: State) -> str:
     if state.status in {"blocked", "complete"}:
         return "none"
     if (
         state.ambiguous_state == "clear"
         and state.crew_roles_ready
+        and state.resume_obligation_replay_pm_escalation_required
         and not state.pm_decision_prompt_delivered
     ):
         return "prompt"
-    if state.pm_decision_returned and not state.reviewer_dispatch_prompt_delivered:
+    if _resume_replay_allows_normal_work(state) and not state.reviewer_dispatch_prompt_delivered:
         return "prompt"
     if state.reviewer_result_passed and not state.pm_node_decision_prompt_delivered:
         return "prompt"
@@ -620,7 +636,29 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
-    if not state.pm_decision_prompt_delivered:
+    if not state.resume_obligation_replay_scanned:
+        yield Transition(
+            "resume_rehydration_obligations_replayed_mechanically",
+            replace(
+                state,
+                resume_obligation_replay_scanned=True,
+                resume_obligation_replay_completed=True,
+                resume_mechanical_replay_skipped_pm=True,
+            ),
+        )
+        yield Transition(
+            "resume_rehydration_replay_escalates_to_pm",
+            replace(
+                state,
+                resume_obligation_replay_scanned=True,
+                resume_obligation_replay_pm_escalation_required=True,
+            ),
+        )
+        return
+    if (
+        state.resume_obligation_replay_pm_escalation_required
+        and not state.pm_decision_prompt_delivered
+    ):
         yield Transition(
             "pm_decision_card_delivered_with_controller_reminder",
             _prompt(
@@ -632,19 +670,26 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
-    if not state.pm_decision_returned:
+    if (
+        state.resume_obligation_replay_pm_escalation_required
+        and not state.pm_decision_returned
+    ):
         yield Transition(
             "pm_resume_decision_returned",
             replace(state, pm_decision_returned=True, holder="controller"),
         )
         return
-    if state.active_control_blocker_present and not state.control_blocker_handled:
+    if (
+        state.active_control_blocker_present
+        and not state.control_blocker_handled
+        and _resume_replay_allows_normal_work(state)
+    ):
         yield Transition(
             "active_control_blocker_handled_after_pm_resume_decision",
             replace(
                 state,
                 control_blocker_handled=True,
-                control_blocker_handled_after_pm_resume_decision=True,
+                control_blocker_handled_after_pm_resume_decision=state.pm_decision_returned,
             ),
         )
         return
@@ -794,8 +839,8 @@ def invariant_failures(state: State) -> list[str]:
         and not state.control_blocker_handled
     ):
         failures.append("active control blocker was not explicitly deferred during resume")
-    if state.control_blocker_waited_before_resume_ready and not state.pm_decision_returned:
-        failures.append("control blocker wait started before PM resume decision")
+    if state.control_blocker_waited_before_resume_ready and not _resume_replay_allows_normal_work(state):
+        failures.append("control blocker wait started before resume replay or PM decision allowed normal work")
     if state.control_blocker_handled and not _loaded_current_run_state(state):
         failures.append("active control blocker handled before resume state load")
     if state.control_blocker_handled and not (
@@ -806,8 +851,8 @@ def invariant_failures(state: State) -> list[str]:
         and state.crew_rehydration_report_written
     ):
         failures.append("active control blocker handled before role rehydration")
-    if state.control_blocker_handled and not state.pm_decision_returned:
-        failures.append("active control blocker handled before PM resume decision")
+    if state.control_blocker_handled and not _resume_replay_allows_normal_work(state):
+        failures.append("active control blocker handled before resume replay or PM decision allowed normal work")
     if (
         state.control_blocker_handled_after_pm_resume_decision
         and not state.pm_decision_returned
@@ -962,8 +1007,40 @@ def invariant_failures(state: State) -> list[str]:
         and state.run_memory_injected_into_roles
         and state.crew_rehydration_report_written
         and _lifecycle_flags_current(state)
+        and state.resume_obligation_replay_scanned
     ):
-        failures.append("PM resume or closure proceeded before live role rehydration, memory injection, report, and lifecycle reconciliation")
+        failures.append("PM resume or closure proceeded before live role rehydration, memory injection, report, lifecycle reconciliation, and resume obligation replay")
+
+    if (
+        state.crew_rehydration_report_written
+        and _lifecycle_flags_current(state)
+        and state.ambiguous_state == "clear"
+        and not state.resume_obligation_replay_scanned
+        and (
+            state.pm_decision_requested
+            or state.pm_decision_prompt_delivered
+            or state.pm_decision_returned
+            or state.reviewer_dispatch_prompt_delivered
+            or state.route_progress_recorded
+            or state.status == "complete"
+        )
+    ):
+        failures.append("resume proceeded past role rehydration without Router obligation replay")
+    if (
+        state.resume_obligation_replay_completed
+        and state.resume_mechanical_replay_skipped_pm
+        and state.pm_decision_requested
+        and not state.resume_obligation_replay_pm_escalation_required
+    ):
+        failures.append("mechanical resume replay still asked PM for a default resume decision")
+    if state.pm_decision_requested and not state.resume_obligation_replay_pm_escalation_required:
+        failures.append("PM resume decision requested without replay escalation")
+    if state.resume_obligation_replay_pm_escalation_required and (
+        state.reviewer_dispatch_prompt_delivered
+        or state.route_progress_recorded
+        or state.status == "complete"
+    ) and not state.pm_decision_returned:
+        failures.append("resume replay PM escalation was bypassed")
 
     if state.ambiguous_state == "ambiguous" and not (
         state.status == "blocked" and state.pm_recovery_requested
@@ -980,8 +1057,10 @@ def invariant_failures(state: State) -> list[str]:
         and state.all_six_role_liveness_checked
         and state.crew_roles_ready
         and state.ambiguous_state == "clear"
+        and state.resume_obligation_replay_scanned
+        and state.resume_obligation_replay_pm_escalation_required
     ):
-        failures.append("PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, and ambiguity clearance")
+        failures.append("PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation")
     if state.pm_decision_prompt_delivered and not state.pm_controller_reminder_included:
         failures.append("PM decision card omitted the Controller relay-only reminder")
     if (
@@ -1164,6 +1243,8 @@ def _ready_for_pm(**changes: object) -> State:
         capability_lifecycle_flags_current=True,
         officer_lifecycle_flags_current=True,
         ambiguous_state="clear",
+        resume_obligation_replay_scanned=True,
+        resume_obligation_replay_pm_escalation_required=True,
         heartbeat_prompt_continuation_boundary_stated=True,
     )
     return replace(base, **changes)
@@ -1409,6 +1490,61 @@ def hazard_states() -> dict[str, State]:
         "pm_decision_while_ambiguous": _ready_for_pm(
             ambiguous_state="ambiguous",
             pm_decision_requested=True,
+        ),
+        "pm_resume_card_before_obligation_replay": _ready_for_pm(
+            resume_obligation_replay_scanned=False,
+            resume_obligation_replay_pm_escalation_required=False,
+            pm_decision_requested=True,
+            pm_decision_prompt_delivered=True,
+            pm_controller_reminder_included=True,
+            prompt_deliveries=1,
+            manifest_check_requests=1,
+            manifest_checks=1,
+            system_card_identity_boundaries_verified=True,
+            pm_resume_pending_action_status_synced=True,
+            pm_resume_status_next_step_matches_manifest_check=True,
+            pm_resume_manifest_check_folded=True,
+        ),
+        "mechanical_resume_replay_still_asks_pm": _ready_for_pm(
+            resume_obligation_replay_scanned=True,
+            resume_obligation_replay_completed=True,
+            resume_mechanical_replay_skipped_pm=True,
+            resume_obligation_replay_pm_escalation_required=False,
+            pm_decision_requested=True,
+            pm_decision_prompt_delivered=True,
+            pm_controller_reminder_included=True,
+            prompt_deliveries=1,
+            manifest_check_requests=1,
+            manifest_checks=1,
+            system_card_identity_boundaries_verified=True,
+            pm_resume_pending_action_status_synced=True,
+            pm_resume_status_next_step_matches_manifest_check=True,
+            pm_resume_manifest_check_folded=True,
+        ),
+        "normal_work_before_resume_obligation_replay": _ready_for_pm(
+            resume_obligation_replay_scanned=False,
+            resume_obligation_replay_pm_escalation_required=False,
+            reviewer_dispatch_prompt_delivered=True,
+            route_progress_recorded=True,
+            route_progress_source="reviewed_packet",
+            prompt_deliveries=1,
+            manifest_check_requests=1,
+            manifest_checks=1,
+            system_card_identity_boundaries_verified=True,
+        ),
+        "resume_replay_pm_escalation_bypassed": _ready_for_pm(
+            resume_obligation_replay_scanned=True,
+            resume_obligation_replay_pm_escalation_required=True,
+            pm_decision_requested=False,
+            pm_decision_prompt_delivered=False,
+            pm_decision_returned=False,
+            reviewer_dispatch_prompt_delivered=True,
+            route_progress_recorded=True,
+            route_progress_source="reviewed_packet",
+            prompt_deliveries=1,
+            manifest_check_requests=1,
+            manifest_checks=1,
+            system_card_identity_boundaries_verified=True,
         ),
         "pm_card_without_controller_reminder": _ready_for_pm(
             pm_decision_requested=True,

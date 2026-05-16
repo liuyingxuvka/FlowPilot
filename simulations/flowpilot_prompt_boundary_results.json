@@ -22,12 +22,10 @@
         "skill_no_broad_wait_boundary_prefer_run_until_wait": true,
         "skill_startup_intake_no_direct_apply_wording": true,
         "skill_startup_intake_returns_to_router_work_board": true,
-        "work_card_ack_continues_and_waits_for_router_output": false
+        "work_card_ack_continues_and_waits_for_router_output": true
       },
-      "failures": [
-        "work_card_ack_continues_and_waits_for_router_output"
-      ],
-      "ok": false
+      "failures": [],
+      "ok": true
     },
     "expected_rejections": {
       "failures": [],
@@ -96,5 +94,5 @@
     }
   },
   "model": "flowpilot_prompt_boundary",
-  "ok": false
+  "ok": true
 }

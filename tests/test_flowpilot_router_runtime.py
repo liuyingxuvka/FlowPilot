@@ -10016,14 +10016,6 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
         self.assertEqual(rehydration["liveness_preflight"]["replacement_role_keys"], [replaced_role])
         self.assertEqual(rehydration["liveness_preflight"]["decision"], "roles_ready_after_replacement")
-
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "load_resume_state")
-        router.apply_action(root, "load_resume_state")
-        action = router.next_action(root)
-        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
-        rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
         self.assertTrue(rehydration["all_six_roles_ready"])
         self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.CREW_ROLE_KEYS))
         self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
@@ -10039,147 +10031,27 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             if item["resume_tick_id"] == resume_tick_id
         ]
         self.assertEqual(len(resume_receipts), 6)
-        self.assertEqual({item["lifecycle_phase"] for item in resume_receipts}, {"heartbeat_rehydration"})
+        self.assertIn("heartbeat_rehydration", {item["lifecycle_phase"] for item in resume_receipts})
+
+        role_report = read_json(run_root / "continuation" / "role_recovery_report.json")
+        self.assertFalse(role_report["pm_decision_required_before_normal_work"])
+        self.assertTrue(role_report["mechanical_obligation_replay_before_pm"])
+        self.assertTrue(role_report["mechanical_obligation_replay_completed"])
+        replay = read_json(root / role_report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["candidate_count"], 0)
+        self.assertEqual(replay["replacement_count"], 0)
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["role_recovery_obligations_scanned"])
+        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertFalse(state["flags"]["role_recovery_pm_escalation_required"])
+        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
 
         self.deliver_expected_card(root, "controller.resume_reentry")
-        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
-        card_action = self.deliver_expected_card(root, "pm.resume_decision")
-        self.assert_payload_contract_mentions(
-            card_action["payload_contract"],
-            "decision_owner",
-            "decision",
-            "explicit_recovery_evidence_recorded",
-            "prior_path_context_review.reviewed",
-            "prior_path_context_review.source_paths",
-            "prior_path_context_review.completed_nodes_considered",
-            "prior_path_context_review.superseded_nodes_considered",
-            "prior_path_context_review.stale_evidence_considered",
-            "prior_path_context_review.prior_blocks_or_experiments_considered",
-            "prior_path_context_review.impact_on_decision",
-            "prior_path_context_review.controller_summary_used_as_evidence",
-            "controller_reminder.controller_only",
-            "controller_reminder.controller_may_read_sealed_bodies",
-            "controller_reminder.controller_may_infer_from_chat_history",
-            "controller_reminder.controller_may_advance_or_close_route",
-        )
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
-        self.assert_payload_contract_mentions(
-            action["payload_contract"],
-            "pm_resume_decision_role_output",
-            "decision_owner",
-            "prior_path_context_review.source_paths",
-            self.rel(root, run_root / "route_memory" / "pm_prior_path_context.json"),
-            self.rel(root, run_root / "route_memory" / "route_history_index.json"),
-        )
-        progress_status = action["role_output_progress_status"]
-        progress_status_path = progress_status["controller_status_packet_path"]
-        self.assertIn(progress_status_path, action["allowed_reads"])
-        self.assertIn(self.rel(root, run_root / "role_output_status"), progress_status_path)
-        self.assertNotIn(self.rel(root, run_root / "continuation"), action["allowed_reads"])
-        self.assertTrue(progress_status["default_progress_required"])
-        self.assertEqual(progress_status["controller_visibility"], "metadata_only")
-        self.assertFalse(progress_status["progress_is_decision_evidence"])
-        self.assertEqual(
-            action["payload_contract"]["progress_status"]["controller_status_packet_path"],
-            progress_status_path,
-        )
-        self.assertIn("flowpilot_runtime.py progress-output", action["payload_contract"]["structural_requirements"][-1])
-
-        with self.assertRaisesRegex(router.RouterError, "file-backed body path"):
-            router.record_external_event(root, "pm_resume_recovery_decision_returned", {"decision": "continue_current_packet_loop"})
-        with self.assertRaisesRegex(router.RouterError, "decision_owner=project_manager"):
-            router.record_external_event(
-                root,
-                "pm_resume_recovery_decision_returned",
-                self.role_decision_envelope(
-                    root,
-                    "continuation/pm_resume_decision_missing_owner",
-                    {
-                        "decision": "continue_current_packet_loop",
-                        **self.prior_path_context_review(root, "Bad resume decision missing owner"),
-                        "controller_reminder": {
-                            "controller_only": True,
-                            "controller_may_read_sealed_bodies": False,
-                            "controller_may_infer_from_chat_history": False,
-                            "controller_may_advance_or_close_route": False,
-                        },
-                    },
-                ),
-            )
-        with self.assertRaisesRegex(router.RouterError, "prior_path_context_review.reviewed=true"):
-            bad_review = self.prior_path_context_review(root, "Bad resume decision missing reviewed=true")
-            bad_review["prior_path_context_review"].pop("reviewed")
-            router.record_external_event(
-                root,
-                "pm_resume_recovery_decision_returned",
-                self.role_decision_envelope(
-                    root,
-                    "continuation/pm_resume_decision_missing_reviewed",
-                    {
-                        "decision_owner": "project_manager",
-                        "decision": "continue_current_packet_loop",
-                        **bad_review,
-                        "controller_reminder": {
-                            "controller_only": True,
-                            "controller_may_read_sealed_bodies": False,
-                            "controller_may_infer_from_chat_history": False,
-                            "controller_may_advance_or_close_route": False,
-                        },
-                    },
-                ),
-            )
-        with self.assertRaisesRegex(router.RouterError, "current pm_prior_path_context.json"):
-            bad_sources = self.prior_path_context_review(root, "Bad resume decision missing current PM context path")
-            bad_sources["prior_path_context_review"]["source_paths"] = [
-                self.rel(root, run_root / "route_memory" / "route_history_index.json")
-            ]
-            router.record_external_event(
-                root,
-                "pm_resume_recovery_decision_returned",
-                self.role_decision_envelope(
-                    root,
-                    "continuation/pm_resume_decision_missing_pm_context_path",
-                    {
-                        "decision_owner": "project_manager",
-                        "decision": "continue_current_packet_loop",
-                        **bad_sources,
-                        "controller_reminder": {
-                            "controller_only": True,
-                            "controller_may_read_sealed_bodies": False,
-                            "controller_may_infer_from_chat_history": False,
-                            "controller_may_advance_or_close_route": False,
-                        },
-                    },
-                ),
-            )
-
-        router.record_external_event(
-            root,
-            "pm_resume_recovery_decision_returned",
-            self.role_decision_envelope(
-                root,
-                "continuation/pm_resume_decision",
-                {
-                    "decision_owner": "project_manager",
-                    "decision": "continue_current_packet_loop",
-                    **self.prior_path_context_review(root, "PM resume decision considered current route memory."),
-                    "controller_reminder": {
-                        "controller_only": True,
-                        "controller_may_read_sealed_bodies": False,
-                        "controller_may_infer_from_chat_history": False,
-                        "controller_may_advance_or_close_route": False,
-                    },
-                },
-            ),
-        )
-        self.assertTrue((run_root / "continuation" / "pm_resume_decision.json").exists())
-        decision = read_json(run_root / "continuation" / "pm_resume_decision.json")
-        self.assertEqual(
-            decision["source_paths"]["crew_rehydration_report"],
-            self.rel(root, run_root / "continuation" / "crew_rehydration_report.json"),
-        )
+        self.assertNotEqual(action.get("card_id"), "pm.crew_rehydration_freshness")
+        self.assertNotEqual(action.get("card_id"), "pm.resume_decision")
+        self.assertNotEqual(action.get("label"), "controller_waits_for_pm_resume_decision")
+        self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
 
     def test_resume_reentry_attaches_to_live_router_daemon_and_ledger(self) -> None:
         root = self.make_project()
@@ -10229,7 +10101,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
         router.stop_router_daemon(root, reason="test_cleanup")
 
-    def test_resume_reentry_preempts_active_control_blocker_until_pm_decision(self) -> None:
+    def test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -10253,39 +10125,14 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertEqual(action["action_type"], "rehydrate_role_agents")
         router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
 
-        self.deliver_expected_card(root, "controller.resume_reentry")
-        self.deliver_expected_card(root, "pm.crew_rehydration_freshness")
-        self.deliver_expected_card(root, "pm.resume_decision")
-        action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["label"], "controller_waits_for_pm_resume_decision")
-        self.assertTrue(action["controller_after_relay_policy"]["router_ready_preempts_foreground_wait"])
-        self.assertFalse(action["controller_after_relay_policy"]["foreground_wait_agent_allowed"])
-        self.assertTrue(action["controller_after_relay_policy"]["liveness_wait_allowed_only_when_router_requests_recovery"])
-
-        router.record_external_event(
-            root,
-            "pm_resume_recovery_decision_returned",
-            self.role_decision_envelope(
-                root,
-                "continuation/pm_resume_decision_with_deferred_blocker",
-                {
-                    "decision_owner": "project_manager",
-                    "decision": "continue_current_packet_loop",
-                    "explicit_recovery_evidence_recorded": True,
-                    **self.prior_path_context_review(root, "PM resumes after current-run state and roles were rehydrated."),
-                    "controller_reminder": {
-                        "controller_only": True,
-                        "controller_may_read_sealed_bodies": False,
-                        "controller_may_infer_from_chat_history": False,
-                        "controller_may_advance_or_close_route": False,
-                    },
-                },
-            ),
-        )
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertFalse(state["flags"]["role_recovery_pm_escalation_required"])
+        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+        self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
 
     def test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work(self) -> None:
         root = self.make_project()
@@ -10554,6 +10401,70 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         self.assertFalse(state["flags"]["role_recovery_requested"])
         self.assertTrue(state["flags"]["role_no_output_pm_escalation_required"])
         self.assertEqual(state["active_control_blocker"]["originating_event"], "controller_reports_role_no_output")
+
+    def test_resume_rehydration_settles_existing_output_without_pm(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        original = self.write_worker_recovery_wait_action(root, label="resume_waits_for_worker_existing_output")
+        state = read_json(router.run_state_path(run_root))
+        state.setdefault("events", []).append(
+            {
+                "event": "worker_scan_results_returned",
+                "summary": "Worker output already reached Router before heartbeat resume replay.",
+                "payload": {"result_envelope_path": self.rel(root, run_root / "test_role_outputs" / "resume-existing.json")},
+                "recorded_at": router.utc_now(),
+            }
+        )
+        router.save_run_state(run_root, state)
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
+
+        report = read_json(run_root / "continuation" / "role_recovery_report.json")
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["settled_existing_count"], 1)
+        self.assertEqual(replay["replacement_count"], 0)
+        self.assertEqual(replay["outcomes"][0]["outcome"], "settled_existing_output")
+        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
+        self.assertEqual(original_after["status"], "done")
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
+
+    def test_resume_rehydration_reissues_missing_obligations_before_pm(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        original = self.write_worker_recovery_wait_action(root, label="resume_waits_for_worker_missing_output")
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
+
+        report = read_json(run_root / "continuation" / "role_recovery_report.json")
+        replay = read_json(root / report["role_recovery_obligation_replay_path"])
+        self.assertEqual(replay["replacement_count"], 1)
+        self.assertEqual(replay["settled_existing_count"], 0)
+        self.assertFalse(report["pm_decision_required_before_normal_work"])
+        original_after = read_json(run_root / "runtime" / "controller_actions" / f"{original['action_id']}.json")
+        self.assertEqual(original_after["status"], "superseded")
+        replacement_id = replay["replacement_order"][0]["replacement_controller_action_id"]
+        replacement = read_json(run_root / "runtime" / "controller_actions" / f"{replacement_id}.json")
+        self.assertEqual(replacement["status"], "waiting")
+        self.assertEqual(replacement["replaces_controller_action_id"], original["action_id"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertEqual(state["pending_action"]["controller_action_id"], replacement_id)
+        self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
 
     def test_role_recovery_settles_existing_output_without_replay_or_pm(self) -> None:
         root = self.make_project()

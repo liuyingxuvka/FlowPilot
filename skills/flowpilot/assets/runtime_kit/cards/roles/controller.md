@@ -164,9 +164,11 @@ Allowed actions:
   ending the run.
 - Router-ready evidence preempts foreground role waits: after a router-authored
   relay or notice, scan daemon status and the Controller action ledger before
-  waiting on role chat or subagent completion. Use `next` or `run-until-wait`
-  only when an explicit diagnostic or repair instruction names that fallback,
-  never as the ordinary standby or row-to-row progress path.
+  waiting on role chat or subagent completion. Use `flowpilot_router.py controller-standby`
+  / the patrol wrapper to consume Router-ready Controller rows first. Use
+  `next` or `run-until-wait` only when an explicit diagnostic or repair
+  instruction names that fallback, never as the ordinary standby or row-to-row
+  progress path.
 - if any background role is missing, cancelled, unknown, timed out, no longer
   addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then

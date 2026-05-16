@@ -19074,6 +19074,7 @@ def _write_resume_role_rehydration_report(
     transaction = _latest_role_recovery_transaction(run_root)
     if transaction.get("schema_version") == ROLE_RECOVERY_TRANSACTION_SCHEMA:
         role_recovery_report_path = _role_recovery_report_path(run_root)
+        replay_ready = memory_complete and bool(report["all_six_roles_ready"])
         role_recovery_report = {
             "schema_version": ROLE_RECOVERY_REPORT_SCHEMA,
             "run_id": run_state["run_id"],
@@ -19095,7 +19096,7 @@ def _write_resume_role_rehydration_report(
                     "recovery_result": ROLE_AGENT_OLD_RESTORE_RESULT
                     if record.get("rehydration_result") == ROLE_AGENT_CONTINUITY_RESULT
                     else ROLE_AGENT_TARGETED_REPLACEMENT_RESULT,
-                    "memory_context_injected": True,
+                    "memory_context_injected": record.get("role_memory_status") == "available",
                     "packet_ownership_reconciled": True,
                     "role_binding_epoch": record.get("role_binding_epoch"),
                     "crew_generation": record.get("crew_generation"),
@@ -19104,9 +19105,11 @@ def _write_resume_role_rehydration_report(
                 for record in records
             ],
             "packet_ownership_reconciled": True,
-            "memory_context_injected": True,
+            "memory_context_injected": memory_complete,
             "stale_generation_output_quarantined": True,
-            "pm_decision_required_before_normal_work": True,
+            "pm_decision_required_before_normal_work": not replay_ready,
+            "mechanical_obligation_replay_before_pm": replay_ready,
+            "mechanical_obligation_replay_completed": False,
             "compatibility_crew_rehydration_report": project_relative(project_root, report_path),
             "controller_visibility": "state_and_envelopes_only",
             "sealed_body_reads_allowed": False,
@@ -19118,6 +19121,39 @@ def _write_resume_role_rehydration_report(
         run_state["flags"]["role_recovery_report_written"] = True
         run_state["flags"]["role_recovery_environment_blocked"] = False
         run_state["flags"]["role_recovery_requested"] = False
+        if replay_ready:
+            replay = _plan_role_recovery_obligation_replay(
+                project_root,
+                run_root,
+                run_state,
+                transaction=transaction,
+                records=role_recovery_report["role_records"],
+                report_path=role_recovery_report_path,
+            )
+            role_recovery_report["role_recovery_obligation_replay_path"] = run_state["role_recovery_obligation_replay"]["path"]
+            role_recovery_report["pm_decision_required_before_normal_work"] = bool(replay.get("pm_escalation_required"))
+            role_recovery_report["mechanical_obligation_replay_completed"] = not bool(replay.get("pm_escalation_required"))
+            write_json(role_recovery_report_path, role_recovery_report)
+            # Legacy resume waits still key off this PM-named flag; mechanical replay satisfies that gate.
+            run_state["flags"]["pm_resume_recovery_decision_returned"] = not bool(replay.get("pm_escalation_required"))
+        else:
+            skipped_reason = "missing_current_run_memory" if not memory_complete else "roles_not_ready"
+            role_recovery_report["resume_rehydration_replay_skipped_reason"] = skipped_reason
+            write_json(role_recovery_report_path, role_recovery_report)
+            run_state["flags"]["role_recovery_obligations_scanned"] = False
+            run_state["flags"]["role_recovery_obligation_replay_completed"] = False
+            run_state["flags"]["role_recovery_pm_escalation_required"] = True
+            run_state["flags"]["pm_resume_recovery_decision_returned"] = False
+            append_history(
+                run_state,
+                "router_skipped_resume_obligation_replay",
+                {
+                    "transaction_id": transaction.get("transaction_id"),
+                    "reason": skipped_reason,
+                    "memory_complete": memory_complete,
+                    "all_six_roles_ready": report["all_six_roles_ready"],
+                },
+            )
     _append_role_io_protocol_injections(
         project_root,
         run_root,
@@ -27534,6 +27570,19 @@ def _resume_waits_for_pm_decision(run_state: dict[str, Any]) -> bool:
     )
 
 
+def _resume_mechanical_replay_completed_without_pm(run_state: dict[str, Any]) -> bool:
+    flags = run_state["flags"]
+    return (
+        bool(flags.get("resume_reentry_requested"))
+        and bool(flags.get("resume_state_loaded"))
+        and bool(flags.get("resume_roles_restored"))
+        and bool(flags.get("role_recovery_obligations_scanned"))
+        and bool(flags.get("role_recovery_obligation_replay_completed"))
+        and not bool(flags.get("role_recovery_pm_escalation_required"))
+        and bool(flags.get("pm_resume_recovery_decision_returned"))
+    )
+
+
 def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
     if payload.get("decision_owner") != "project_manager":
@@ -30170,6 +30219,10 @@ def _next_resume_action(project_root: Path, run_state: dict[str, Any], run_root:
             ],
             allowed_writes=[
                 project_relative(project_root, run_root / "continuation" / "crew_rehydration_report.json"),
+                project_relative(project_root, _role_recovery_report_path(run_root)),
+                project_relative(project_root, _role_recovery_dir(run_root)),
+                project_relative(project_root, _controller_action_ledger_path(run_root)),
+                project_relative(project_root, _router_scheduler_ledger_path(run_root)),
                 project_relative(project_root, run_root / "crew_ledger.json"),
                 project_relative(project_root, run_state_path(run_root)),
             ],
@@ -30681,6 +30734,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         and bool(flags.get("resume_roles_restored"))
         and not bool(flags.get("pm_resume_recovery_decision_returned"))
     )
+    resume_replayed_without_pm = _resume_mechanical_replay_completed_without_pm(run_state)
     resume_card_ids = {"controller.resume_reentry", "pm.crew_rehydration_freshness", "pm.resume_decision"}
     for entry in SYSTEM_CARD_SEQUENCE:
         if entry["card_id"] == REVIEWER_STARTUP_FACT_CARD_ID:
@@ -30695,6 +30749,8 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                     blockers=blockers,
                     review_trigger=entry["card_id"],
                 )
+        if resume_replayed_without_pm and entry["card_id"] in {"pm.crew_rehydration_freshness", "pm.resume_decision"}:
+            continue
         if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
             continue
         if flags.get(entry["flag"]):
