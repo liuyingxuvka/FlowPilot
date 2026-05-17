@@ -533,11 +533,18 @@ FlowGuard caught and fixed these design issues:
 - The follow-up router-facade prompt/store pass keeps selected prompt text under
   `skills/flowpilot/assets/runtime_kit/prompts/` and loads it through
   `flowpilot_prompt_store.py`. Router prompt delivery, card delivery,
-  Controller action-ledger helper, and role-output protocol helper code now
-  lives in `flowpilot_router_prompt_delivery.py`,
+  ACK return settlement, Controller action-ledger helper, role-output protocol
+  helper, event identity/idempotency, and daemon lock/status/tick runtime code
+  now lives in `flowpilot_router_prompt_delivery.py`,
   `flowpilot_router_card_delivery.py`,
-  `flowpilot_router_controller_ledger.py`, and
-  `flowpilot_router_role_io_protocol.py`.
+  `flowpilot_router_card_returns.py`,
+  `flowpilot_router_controller_ledger.py`,
+  `flowpilot_router_role_io_protocol.py`,
+  `flowpilot_router_event_identity.py`, and
+  `flowpilot_router_daemon_runtime.py`. Bootloader/startup, external event
+  dispatch settlement, control-blocker repair transactions, PM role-work,
+  packet dispatch, route frontier, and terminal ledger helpers remain deferred
+  until their state-owner contracts are independently modeled.
 - `packet_runtime.py` remains the public facade and delegates schema, path,
   contract, ledger, relay, active-holder, session, and reviewer responsibilities
   to `packet_runtime_*` helper modules.

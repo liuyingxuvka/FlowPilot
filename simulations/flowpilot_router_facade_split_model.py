@@ -38,7 +38,7 @@ class PromptAssetEvidence:
 
 @dataclass(frozen=True)
 class RouterFacadeSplitEvidence:
-    child_module_count: int = 18
+    child_module_count: int = 21
     max_child_module_count: int = 24
     micro_module_count: int = 0
     max_micro_module_count: int = 2
@@ -152,11 +152,32 @@ ROUTER_FACADE_PARTITIONS = (
         new_path="flowpilot_router_card_delivery",
     ),
     StructurePartitionItem(
+        "card_return_settlement",
+        item_type="function_cluster",
+        owner_module_id="card_returns",
+        old_path="flowpilot_router ACK return settlement helpers",
+        new_path="flowpilot_router_card_returns",
+    ),
+    StructurePartitionItem(
         "role_io_protocol",
         item_type="function_cluster",
         owner_module_id="role_io_protocol",
         old_path="flowpilot_router role I/O protocol helpers",
         new_path="flowpilot_router_role_io_protocol",
+    ),
+    StructurePartitionItem(
+        "event_identity",
+        item_type="function_cluster",
+        owner_module_id="event_identity",
+        old_path="flowpilot_router event payload/idempotency helpers",
+        new_path="flowpilot_router_event_identity",
+    ),
+    StructurePartitionItem(
+        "daemon_runtime",
+        item_type="function_cluster",
+        owner_module_id="daemon_runtime",
+        old_path="flowpilot_router daemon lock/status/tick helpers",
+        new_path="flowpilot_router_daemon_runtime",
     ),
 )
 
@@ -216,11 +237,71 @@ ROUTER_FACADE_MODULES = (
         release_required=True,
     ),
     ModuleStructureEvidence(
+        "card_returns",
+        path="skills/flowpilot/assets/flowpilot_router_card_returns.py",
+        owns_functions=(
+            "_pending_return_records",
+            "_next_pending_card_return_action",
+            "_apply_card_return_event_check",
+            "_run_router_return_settlement_finalizers",
+        ),
+        owns_state=("card_return_settlement",),
+        dependencies=("card_delivery", "router_facade"),
+        behavior_contracts=(
+            "ACK wait settlement",
+            "ACK does not complete output-bearing work",
+            "startup user-intake release remains mail-delivery gated",
+        ),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
         "role_io_protocol",
         path="skills/flowpilot/assets/flowpilot_router_role_io_protocol.py",
         owns_functions=("role_io_protocol_payload", "append_role_io_protocol_injections", "role_io_protocol_receipt_for_agent"),
         owns_state=("role_io_protocol",),
         behavior_contracts=("role lifecycle protocol hash", "injection receipts", "role output envelope authority"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "event_identity",
+        path="skills/flowpilot/assets/flowpilot_router_event_identity.py",
+        owns_functions=(
+            "_normalize_record_event_payload",
+            "_scoped_event_identity",
+            "_check_scoped_event_retry_budget",
+            "_already_recorded_external_event_result",
+        ),
+        owns_state=("event_identity",),
+        dependencies=("router_facade",),
+        behavior_contracts=(
+            "event envelope validation",
+            "external event idempotency",
+            "retry budget enforcement",
+            "already-recorded event replay",
+        ),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "daemon_runtime",
+        path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        owns_functions=(
+            "_acquire_router_daemon_lock",
+            "_write_router_daemon_status",
+            "_router_daemon_tick",
+            "run_router_daemon",
+            "stop_router_daemon",
+        ),
+        owns_state=("daemon_runtime",),
+        dependencies=("controller_ledger", "router_facade"),
+        behavior_contracts=(
+            "daemon lock ownership",
+            "daemon status lifecycle",
+            "bounded queue fill",
+            "foreground console hidden by tier runner",
+        ),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
@@ -246,6 +327,9 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
         partition_items=(
             TestPartitionItem("prompt_store", owner_suite_id="prompt_store_unit"),
             TestPartitionItem("router_facade_prompt_delivery", owner_suite_id="router_boundaries"),
+            TestPartitionItem("card_return_settlement", owner_suite_id="router_ack_return"),
+            TestPartitionItem("event_identity", owner_suite_id="event_contract"),
+            TestPartitionItem("daemon_runtime", owner_suite_id="startup_daemon"),
             TestPartitionItem("install_prompt_assets", owner_suite_id="install_checks"),
         ),
         child_suites=(
@@ -265,6 +349,33 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
                 result_path="simulations/flowpilot_router_facade_split_results.json",
                 owns_state=("router_facade_prompt_delivery",),
+                release_required=True,
+            ),
+            TestSuiteEvidence(
+                "router_ack_return",
+                command="python -m pytest tests/router_runtime/ack_return.py -q",
+                result_status=TEST_STATUS_PASSED,
+                evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+                result_path="simulations/flowpilot_router_facade_split_results.json",
+                owns_state=("card_return_settlement",),
+                release_required=True,
+            ),
+            TestSuiteEvidence(
+                "event_contract",
+                command="python simulations/run_flowpilot_event_contract_checks.py --json-out simulations/flowpilot_event_contract_results.json",
+                result_status=TEST_STATUS_PASSED,
+                evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+                result_path="simulations/flowpilot_router_facade_split_results.json",
+                owns_state=("event_identity",),
+                release_required=True,
+            ),
+            TestSuiteEvidence(
+                "startup_daemon",
+                command="python -m pytest tests/router_runtime/startup_daemon.py -q",
+                result_status=TEST_STATUS_PASSED,
+                evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+                result_path="simulations/flowpilot_router_facade_split_results.json",
+                owns_state=("daemon_runtime",),
                 release_required=True,
             ),
             TestSuiteEvidence(

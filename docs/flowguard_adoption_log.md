@@ -14437,3 +14437,114 @@ Deferred split notes:
 Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-17 - Router Facade ACK/Event/Daemon Split Continuation
+
+Task: continue the router facade reduction after the PromptStore wave by moving
+only the next cohesive behavior owners whose contracts were clear enough to
+split without creating one-function files.
+
+Trigger reason: the user asked to continue the second and third split waves on
+`main`, with FlowGuard/OpenSpec validation and local install synchronization,
+while keeping future splits grounded in explicit state ownership.
+
+FlowGuard/OpenSpec route:
+
+- OpenSpec change:
+  `openspec/changes/split-flowpilot-router-facade-prompt-store/`.
+- FlowGuard schema check returned `1.0`.
+- StructureMesh/TestMesh artifact:
+  `simulations/flowpilot_router_facade_split_model.py`.
+- The router split model now records `21` child modules and keeps the
+  micro-module explosion hazard active.
+
+Implementation summary:
+
+- Added `flowpilot_router_card_returns.py` for card ACK return settlement,
+  pending-return selection, ACK validation/application, wait-row reconciliation,
+  startup intake release, and return-settlement finalizers.
+- Added `flowpilot_router_event_identity.py` for file-backed event payload
+  loading, event-envelope validation, payload normalization, scoped event
+  identity, replay checks, and retry-budget records.
+- Added `flowpilot_router_daemon_runtime.py` for daemon run-root resolution,
+  lock/status/event records, process spawning, queue filling, daemon ticks, and
+  daemon start/stop wrappers.
+- Kept `flowpilot_router.py` as the public facade with compatibility wrappers.
+- Updated install checks, the router facade split model, OpenSpec tasks, and
+  handoff notes for the new module owners.
+- Synchronized the installed local FlowPilot skill from the repository source.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  `1.0`.
+- `python -m py_compile skills\flowpilot\assets\flowpilot_router.py
+  skills\flowpilot\assets\flowpilot_router_card_returns.py
+  skills\flowpilot\assets\flowpilot_router_event_identity.py
+  skills\flowpilot\assets\flowpilot_router_daemon_runtime.py` passed.
+- `python simulations\run_flowpilot_router_facade_split_checks.py --json-out
+  simulations\flowpilot_router_facade_split_results.json` passed with
+  StructureMesh and TestMesh green.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations\flowpilot_structure_maintenance_results.json` passed.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations\flowpilot_model_test_alignment_results.json` passed.
+- `python simulations\run_flowpilot_event_contract_checks.py --json-out
+  simulations\flowpilot_event_contract_results.json` passed.
+- `python simulations\run_flowpilot_event_capability_registry_checks.py
+  --json-out simulations\flowpilot_event_capability_registry_results.json`
+  passed.
+- `python -m pytest tests\router_runtime\ack_return.py -q` passed:
+  `15 passed, 2 subtests passed`.
+- `python -m pytest tests\router_runtime\startup_daemon.py -q` passed:
+  `16 passed, 3 subtests passed`.
+- `python -m pytest tests\router_runtime\startup_bootstrap.py
+  tests\router_runtime\bootstrap_cli.py -q` passed:
+  `59 passed, 7 subtests passed`.
+- Hidden background packet regression completed through
+  `tmp\flowguard_background\router_packets.*`, exit `0`, with
+  `22 passed in 663.80s`.
+- `openspec validate split-flowpilot-router-facade-prompt-store --strict`
+  passed.
+- `python scripts\check_install.py --json`,
+  `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed.
+
+Counterexamples and hazards preserved:
+
+- The router-facade split model still rejects micro-module explosion,
+  one-function-file splits, missing prompt assets, stale prompt hashes, unsafe
+  inline prompt fallback, missing installed prompt assets, and undeclared prompt
+  template variables.
+- The broader structure-maintenance and model-test-alignment checks still
+  reject missing owners, duplicate state owners, missing facades, removed
+  entrypoints, stale evidence, hidden skips, timeout suites, and progress-only
+  background evidence.
+- Event-contract and event-capability models still reject direct ACK/check-in
+  events as external waits, unknown events, invalid PM rerun targets,
+  false-prerequisite waits, collapsed repair outcomes, wrong producer roles,
+  and explicit event-envelope bypasses outside the current wait.
+
+Friction points:
+
+- Mechanical extraction is not sufficient evidence. This pass exposed the
+  expected high-risk cases around exception aliases, facade-module imports, and
+  default arguments that refer to facade globals; focused owner tests and
+  compile checks caught and cleared those before the final validation set.
+- `python -m pytest tests\router_runtime\packets.py -q` did not complete within
+  the foreground timeout, so it was moved to hidden background logging under
+  `tmp\flowguard_background\router_packets.*`; the final exit artifact was then
+  inspected before recording the pass.
+
+Deferred split notes:
+
+- Bootloader/startup, external event dispatch settlement, control-blocker
+  repair transactions, PM role-work, packet dispatch, route frontier, and
+  terminal ledger helpers remain in the facade until their state-owner
+  contracts are modeled. They should not be split by one-function-per-file
+  extraction.
+
+Skipped steps:
+
+- No push, tag, release, deploy, or public publication was performed.
