@@ -1,0 +1,136 @@
+{
+  "contract_family": "route_mutation",
+  "expected_hazard_failures": {
+    "duplicate_state_owner": [
+      "duplicate_state_owner"
+    ],
+    "hidden_child_skip": [
+      "hidden_child_skip"
+    ],
+    "missing_child_contract": [
+      "child_contract_missing"
+    ],
+    "missing_child_owner": [
+      "child_owner_missing"
+    ],
+    "missing_legal_route_action_state": [
+      "legal_route_action_state_missing"
+    ],
+    "parent_owns_no_mutation_outputs": [
+      "parent_mutation_output_owner_missing"
+    ],
+    "parent_reads_child_internal_state": [
+      "parent_reads_child_internal_state"
+    ],
+    "parent_replays_child_boot": [
+      "parent_replays_child_boot"
+    ],
+    "parent_replays_packet_worker_flow": [
+      "parent_replays_packet_worker_flow"
+    ],
+    "release_oracle_hidden": [
+      "release_child_oracle_hidden",
+      "release_child_oracle_not_current"
+    ],
+    "release_oracle_stale": [
+      "release_child_oracle_not_current"
+    ],
+    "stale_child_evidence": [
+      "child_evidence_stale"
+    ],
+    "unbound_input_contract": [
+      "input_contract_unbound"
+    ],
+    "unbound_output_contract": [
+      "output_contract_unbound"
+    ]
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=48",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 2,
+    "edge_count": 32,
+    "labels_seen": [
+      "accept_valid_release_with_child_oracle",
+      "accept_valid_route_mutation_parent_contract",
+      "reject_duplicate_state_owner",
+      "reject_hidden_child_skip",
+      "reject_missing_child_contract",
+      "reject_missing_child_owner",
+      "reject_missing_legal_route_action_state",
+      "reject_parent_owns_no_mutation_outputs",
+      "reject_parent_reads_child_internal_state",
+      "reject_parent_replays_child_boot",
+      "reject_parent_replays_packet_worker_flow",
+      "reject_release_oracle_hidden",
+      "reject_release_oracle_stale",
+      "reject_stale_child_evidence",
+      "reject_unbound_input_contract",
+      "reject_unbound_output_contract",
+      "select_duplicate_state_owner",
+      "select_hidden_child_skip",
+      "select_missing_child_contract",
+      "select_missing_child_owner",
+      "select_missing_legal_route_action_state",
+      "select_parent_owns_no_mutation_outputs",
+      "select_parent_reads_child_internal_state",
+      "select_parent_replays_child_boot",
+      "select_parent_replays_packet_worker_flow",
+      "select_release_oracle_hidden",
+      "select_release_oracle_stale",
+      "select_stale_child_evidence",
+      "select_unbound_input_contract",
+      "select_unbound_output_contract",
+      "select_valid_release_with_child_oracle",
+      "select_valid_route_mutation_parent_contract"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 14,
+    "state_count": 33,
+    "terminal_state_count": 16,
+    "violations": []
+  },
+  "model": "flowpilot_slow_test_contract",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "result_type": "test_mesh_contract",
+  "scenario_review": {
+    "bad_accepts": [],
+    "bad_rejects": [],
+    "hazard_scenarios_rejected": [
+      "duplicate_state_owner",
+      "hidden_child_skip",
+      "missing_child_contract",
+      "missing_child_owner",
+      "missing_legal_route_action_state",
+      "parent_owns_no_mutation_outputs",
+      "parent_reads_child_internal_state",
+      "parent_replays_child_boot",
+      "parent_replays_packet_worker_flow",
+      "release_oracle_hidden",
+      "release_oracle_stale",
+      "stale_child_evidence",
+      "unbound_input_contract",
+      "unbound_output_contract"
+    ],
+    "ok": true,
+    "valid_scenarios_accepted": [
+      "valid_release_with_child_oracle",
+      "valid_route_mutation_parent_contract"
+    ]
+  }
+}

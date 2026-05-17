@@ -13922,3 +13922,238 @@ sync evidence.
   processes observed during final cleanup were stopped and not used as
   completion evidence.
 - Local git commit is ready after final working-tree review and staging.
+
+## 2026-05-17 Meta/Capability Equivalence Review
+
+Status: contract_level_equivalence_current_legacy_monolith_current_proof_not_available
+
+Trigger: the user asked whether the new layered Meta/Capability models are
+functionally equivalent to the old heavyweight models.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema version `1.0`.
+- `python simulations\run_meta_checks.py --full --fast` reused the current
+  layered full-parent proof.
+- `python simulations\run_capability_checks.py --full --fast` reused the
+  current layered full-parent proof.
+- `python simulations\run_meta_checks.py --fast` reused the current thin-parent
+  proof.
+- `python simulations\run_capability_checks.py --fast` reused the current
+  thin-parent proof.
+- `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out
+  simulations\flowpilot_model_hierarchy_results.json` passed the hierarchy,
+  partition, hazard, and contract-refinement checks.
+- `python -m unittest tests.test_flowpilot_thin_parent_checks` passed.
+- A read-only lockstep probe loaded the Git `HEAD` versions of
+  `simulations/meta_model.py` and `simulations/capability_model.py` and
+  compared them with the current split models for the first 50,000 reachable
+  states per model. Meta matched for 50,000 states / 153,155 observed edges.
+  Capability matched for 50,000 states / 167,759 observed edges. State fields,
+  invariant names, and max sequence lengths matched for both.
+
+Findings:
+
+- The current evidence supports contract-level equivalence: the parent-visible
+  input/output state contract, partition ownership, release/routine confidence,
+  and hierarchy hazards are current and green.
+- The old monolithic result files remain green as historical artifacts, but
+  their current proof fingerprints do not validate against the current source
+  and runner inputs.
+- A strict current `--legacy-full` oracle was attempted under
+  `tmp/flowguard_background/equivalence_legacy/` and then sequentially under
+  `tmp/flowguard_background/equivalence_legacy_sequential/`. The parallel run
+  lost completion evidence. The sequential Meta run expanded to
+  `meta-shard-13/132459` and was stopped after recording `exit_code=130`,
+  because this is no longer a practical current proof path.
+
+Conclusion: treat the layered Meta/Capability models as equivalent at the
+intended parent contract and release-evidence boundary. Do not claim strict
+state-graph identity with the old monolithic models until a separate bounded
+legacy-refinement oracle is designed; the current legacy monolith runner is not
+usable as that proof.
+
+## 2026-05-17 Tiered Test Validation
+
+Status: completed_tiered_test_validation_synced
+
+Trigger: the user clarified that the slow surface to optimize was the test
+scripts, not the Meta/Capability model internals, and asked to combine
+OpenSpec and FlowGuard while preserving local install and git visibility.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema version `1.0`.
+- `openspec validate tier-flowpilot-test-regressions --strict --json` passed.
+- `python simulations\run_flowpilot_test_tiering_checks.py --json-out
+  simulations\flowpilot_test_tiering_results.json` passed: 37 states, 36
+  edges, zero invariant violations, 4 valid scenarios accepted, and 14 known
+  hazards rejected.
+- `python -m pytest tests\test_flowpilot_test_tiers.py -q` passed.
+- `python scripts\run_test_tier.py --tier fast --json` passed in the foreground
+  with only the small TestMesh model and focused unit tests.
+- `python -m pytest --collect-only -q` collected 567 tests from `tests/` in
+  about 1.2 seconds; backup and temp trees were not collected.
+- `python scripts\check_install.py --json` passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed; installed
+  FlowPilot is source-fresh.
+- `python scripts\run_test_tier.py --tier release --background --json`
+  launched release-level validation under `tmp\test_background\`; all four
+  commands completed with exit code `0` and full artifact sets:
+  `release_tooling`, `public_release_check`, `meta_full`, and
+  `capability_full`.
+
+Findings:
+
+- `pytest.ini` now scopes default pytest discovery to `tests/` and excludes
+  backup, temp, cache, git, FlowPilot, FlowGuard, and KB/control directories.
+- `scripts/run_test_tier.py` defines parent/child validation tiers:
+  `collect`, `fast`, router child slices, `router`, `integration`, `release`,
+  `legacy-full`, and `all`.
+- The fast tier excludes `check_public_release.py`,
+  `run_flowguard_coverage_sweep.py`, `--full`, and `--legacy-full`.
+- The router parent tier composes domain child suites instead of requiring the
+  legacy aggregate runtime test file.
+- Background release checks write `<name>.out.txt`, `<name>.err.txt`,
+  `<name>.combined.txt`, `<name>.exit.txt`, and `<name>.meta.json`; pass/fail
+  comes from the exit artifact, not progress output.
+- `public_release_check` passed with `error_count=0` and one expected warning:
+  `git_worktree_clean` is false because multiple agents are editing the dirty
+  worktree.
+
+Skipped Or Deferred Steps:
+
+- No commit, push, tag, GitHub Release, deploy, or remote publication was
+  performed because the worktree includes unrelated parallel-agent changes.
+- The explicit `legacy-full` tier was not run; it remains available as a
+  background-only compatibility oracle and is not part of routine validation.
+
+## 2026-05-17 Slow Test Contract Split
+
+Status: completed_route_mutation_parent_child_contract_split
+
+Trigger: the user clarified that the slow tests themselves, not only the test
+runner, need FlowGuard/TestMesh parent-child decomposition. The target was the
+route-mutation runtime slice, where representative tests took 80-95 seconds
+because each parent assertion replayed controller boot, pre-route gates,
+current-node packet/result/review setup, reviewer block, and model-miss triage.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema version `1.0`.
+- `openspec validate split-slow-route-mutation-test-contracts` passed.
+- `python simulations\run_flowpilot_slow_test_contract_checks.py --json-out
+  simulations\flowpilot_slow_test_contract_results.json` passed: 33 states,
+  32 edges, zero invariant violations, 2 valid scenarios accepted, and 14
+  parent-child contract hazards rejected.
+- `python -m pytest tests\test_flowpilot_router_runtime_route_mutation.py -q
+  --durations=20` passed: 6 tests in 2.28 seconds, with the slowest parent
+  contract test at 0.59 seconds.
+- `python -m pytest tests\test_flowpilot_test_tiers.py -q` passed.
+- `python scripts\run_test_tier.py --tier router-route --json` passed: 43
+  tests in 1.856 seconds.
+- `python scripts\run_test_tier.py --tier fast --json` passed.
+- `python scripts\check_install.py --json` passed.
+- `python scripts\audit_local_install_sync.py --json` passed; installed
+  FlowPilot remains source-fresh.
+
+Findings:
+
+- The canonical `tests/test_flowpilot_router_runtime_route_mutation.py` slice
+  now runs contract-layered tests instead of forwarding 24 slow aggregate
+  runtime methods.
+- `tests/flowpilot_route_mutation_contracts.py` binds child-owned input state:
+  active route, frontier, review-block flag, model-miss triage flag, route
+  action policy registry, and optional packet ledger.
+- Parent tests call the real `pm_mutates_route_after_review_block` event and
+  assert only parent-owned outputs: mutations ledger, draft route, pending
+  frontier mutation, stale evidence ledger, and packet disposition.
+- Parent contract tests fail immediately if they call child-flow helpers such
+  as `boot_to_controller`, `complete_pre_route_gates`,
+  `deliver_current_node_cards`, or
+  `prepare_current_node_result_for_review`.
+- The old aggregate runtime methods remain available as explicit full
+  child/oracle coverage; they are no longer the routine route-mutation slice.
+
+Skipped Or Deferred Steps:
+
+- No commit, push, tag, release, deploy, or remote publication was performed
+  because this workspace has unrelated parallel-agent changes.
+- Other slow test families were not converted in this pass. The next best
+  candidates are the other runtime slices with repeated `boot_to_controller`
+  and `prepare_current_node_result_for_review` usage.
+
+## 2026-05-17 Final FlowPilot Structure Convergence
+
+Status: completed_local_structure_convergence
+
+Trigger: the user approved the final maintenance plan, asked to work directly
+on local `main`, keep a rollback backup, use OpenSpec and FlowGuard, split
+remaining heavy Python/test surfaces where this could be done safely, run the
+new layered Meta and Capability regressions, synchronize the local installed
+skill, and commit locally without creating extra branches.
+
+Scope:
+
+- OpenSpec change: `final-flowpilot-structure-convergence`.
+- Backup path: `tmp/maintenance_backup_main_20260517-122423/`.
+- FlowGuard decision: `use_flowguard`; real package import returned schema
+  version `1.0`.
+- Public protocol, event names, JSON state shape, role authority, wait
+  semantics, and packet authority were treated as frozen behavior.
+
+Structure changes:
+
+- `tests/test_flowpilot_router_runtime.py` is now a compatibility loader for
+  all 304 aggregate runtime tests; concrete test bodies live under
+  `tests/router_runtime/`.
+- `role_output_runtime.py` is now a facade backed by schema, contract,
+  progress, envelope, and CLI helper modules.
+- `flowpilot_router.py` moved additional Controller action handlers and the
+  common external-event finalization tail into focused helper modules.
+- Control-plane friction, router-loop, and daemon reconciliation child models
+  were split into focused helper modules.
+- `packet_runtime.py` and `flowpilot_persistent_router_daemon_model.py` were
+  left unchanged beyond existing helper/facade boundaries because no additional
+  low-risk split boundary was found.
+
+Checks:
+
+- `openspec validate final-flowpilot-structure-convergence --strict --json`
+  passed, along with strict validation for
+  `tier-flowpilot-test-regressions` and
+  `split-slow-route-mutation-test-contracts`.
+- `python -m py_compile` passed for touched router, role-output, model,
+  test-tier, route-mutation-contract, and router-runtime domain files.
+- Role-output unit/model checks passed:
+  `python -m unittest tests.test_flowpilot_role_output_runtime` and
+  `python simulations\run_flowpilot_role_output_runtime_checks.py`.
+- Router background suites passed under `tmp\flowguard_background\` with full
+  artifact sets: `router_startup_runtime` 80 tests,
+  `router_foreground_controller` 66 tests, `router_packets_cards_ack` 68 tests,
+  `router_route_mutation` 65 tests, and `router_terminal_closure` 96 tests.
+- Current-code focused router checks passed for external-event finalization,
+  route mutation, gate-decision replay, startup activation, and terminal replay.
+- Touched child model checks passed: control-plane friction 242 states / 241
+  edges, router loop 175 states / 174 edges, daemon reconciliation 1141 states
+  / 1201 edges.
+- `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out
+  simulations\flowpilot_model_hierarchy_results.json` passed with 32
+  registered child models and current release confidence.
+- Layered parent checks ran with the required background base names:
+  `run_meta_checks` and `run_capability_checks`; both completed with exit code
+  0 and `proof_reused=false`.
+
+Notes:
+
+- A foreground `router-route` tier attempt exceeded a short two-minute timeout
+  after the tier was changed to direct domain-owned runtime modules. It was
+  stopped and replaced by background route evidence plus smaller current-code
+  focus checks; this timeout is not completion evidence and not a test failure.
+- Do not use a stale `.exit.txt` alone as completion evidence for background
+  commands. Inspect the corresponding `.meta.json` status and timestamps.

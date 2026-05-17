@@ -1,0 +1,553 @@
+"""Run layered FlowPilot test tiers.
+
+The runner keeps routine validation small, lets router domains run as child
+suites, and launches long integration/release regressions with stable
+background artifacts when requested.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+import re
+import subprocess
+import sys
+import threading
+from typing import Any, Iterable, Sequence
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_BACKGROUND_DIR = ROOT / "tmp" / "test_background"
+ARTIFACT_SUFFIXES = ("out", "err", "combined", "exit", "meta")
+
+
+@dataclass(frozen=True, slots=True)
+class TierCommand:
+    name: str
+    command: tuple[str, ...]
+    description: str
+    long_running: bool = False
+    release_only: bool = False
+    background_recommended: bool = False
+
+
+def _py(*args: str) -> tuple[str, ...]:
+    return (sys.executable, *args)
+
+
+def _pytest(name: str, *paths: str, description: str) -> TierCommand:
+    return TierCommand(name=name, command=_py("-m", "pytest", *paths, "-q"), description=description)
+
+
+def _unittest(name: str, *modules: str, description: str) -> TierCommand:
+    return TierCommand(name=name, command=_py("-m", "unittest", *modules), description=description)
+
+
+FAST_COMMANDS = (
+    TierCommand(
+        name="flowguard_test_tiering",
+        command=_py(
+            "simulations/run_flowpilot_test_tiering_checks.py",
+            "--json-out",
+            "simulations/flowpilot_test_tiering_results.json",
+        ),
+        description="FlowGuard TestMesh-style checks for test tier ownership and evidence.",
+    ),
+    TierCommand(
+        name="flowguard_slow_test_contracts",
+        command=_py(
+            "simulations/run_flowpilot_slow_test_contract_checks.py",
+            "--json-out",
+            "simulations/flowpilot_slow_test_contract_results.json",
+        ),
+        description="FlowGuard TestMesh contract checks for semantic parent/child slow-test splits.",
+    ),
+    _pytest(
+        "test_tier_runner",
+        "tests/test_flowpilot_test_tiers.py",
+        description="Focused tests for tier command planning and background artifact contracts.",
+    ),
+    _pytest(
+        "flowguard_proof_tests",
+        "tests/test_flowguard_result_proof.py",
+        description="Proof reuse checks for slow Meta/Capability parents.",
+    ),
+    _pytest(
+        "thin_parent_tests",
+        "tests/test_flowpilot_thin_parent_checks.py",
+        description="Thin-parent proof and hierarchy helper tests.",
+    ),
+    _pytest(
+        "maintenance_tool_tests",
+        "tests/test_flowpilot_maintenance_tools.py",
+        description="Small maintenance-tool regression tests.",
+    ),
+)
+
+ROUTER_STARTUP_COMMANDS = (
+    _unittest(
+        "router_startup_runtime",
+        "tests.test_flowpilot_router_startup_runtime",
+        "tests.router_runtime.bootstrap_cli",
+        "tests.router_runtime.startup_bootstrap",
+        "tests.router_runtime.startup_daemon",
+        description="Startup bootstrap, CLI, and daemon router slices.",
+    ),
+)
+
+ROUTER_FOREGROUND_COMMANDS = (
+    _unittest(
+        "router_foreground_controller",
+        "tests.router_runtime.foreground",
+        "tests.router_runtime.controller",
+        "tests.router_runtime.foreground_controller",
+        "tests.router_runtime.dispatch_gate",
+        description="Foreground controller and dispatch-gate router slices.",
+    ),
+)
+
+ROUTER_PACKET_COMMANDS = (
+    _unittest(
+        "router_packets_cards_ack",
+        "tests.test_flowpilot_packet_runtime",
+        "tests.router_runtime.packets",
+        "tests.router_runtime.cards",
+        "tests.router_runtime.ack_return",
+        description="Packet, card, dispatch, and ACK router slices.",
+    ),
+)
+
+ROUTER_ROUTE_COMMANDS = (
+    _unittest(
+        "router_route_mutation",
+        "tests.test_flowpilot_router_boundaries",
+        "tests.router_runtime.route_mutation",
+        "tests.test_flowpilot_router_runtime_route_mutation",
+        "tests.test_flowpilot_user_flow_diagram",
+        description="Route-boundary, runtime route-mutation, contract-layered route-mutation, and user-flow router slices.",
+    ),
+)
+
+ROUTER_TERMINAL_COMMANDS = (
+    _unittest(
+        "router_terminal_closure",
+        "tests.router_runtime.terminal",
+        "tests.router_runtime.closure",
+        "tests.router_runtime.resume",
+        "tests.router_runtime.control_blockers",
+        "tests.router_runtime.pm_role_work",
+        "tests.router_runtime.quality_gates",
+        "tests.router_runtime.material_modeling",
+        description="Terminal, closure, resume, blocker, PM-role, quality, and material slices.",
+    ),
+)
+
+INTEGRATION_COMMANDS = (
+    TierCommand(
+        name="check_install",
+        command=_py("scripts/check_install.py", "--json"),
+        description="Repository install contract check.",
+    ),
+    TierCommand(
+        name="audit_local_install_sync",
+        command=_py("scripts/audit_local_install_sync.py", "--json"),
+        description="Local installed-skill freshness and source sync audit.",
+    ),
+    TierCommand(
+        name="smoke_autopilot_fast",
+        command=_py("scripts/smoke_autopilot.py", "--fast"),
+        description="Smoke checks with reusable thin-parent slow-model proofs.",
+        long_running=True,
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="flowguard_coverage_sweep",
+        command=_py("scripts/run_flowguard_coverage_sweep.py", "--timeout-seconds", "30"),
+        description="Read-only FlowGuard coverage sweep.",
+        long_running=True,
+        background_recommended=True,
+    ),
+)
+
+RELEASE_COMMANDS = (
+    TierCommand(
+        name="release_tooling",
+        command=_py("simulations/run_release_tooling_checks.py"),
+        description="Release-tooling FlowGuard checks.",
+    ),
+    TierCommand(
+        name="public_release_check",
+        command=_py("scripts/check_public_release.py", "--json", "--skip-url-check"),
+        description="Public release boundary validation without URL probing.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="meta_full",
+        command=_py("simulations/run_meta_checks.py", "--full"),
+        description="Layered full Meta parent regression.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="capability_full",
+        command=_py("simulations/run_capability_checks.py", "--full"),
+        description="Layered full Capability parent regression.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+    ),
+)
+
+LEGACY_FULL_COMMANDS = (
+    TierCommand(
+        name="meta_legacy_full",
+        command=_py("simulations/run_meta_checks.py", "--legacy-full"),
+        description="Legacy full Meta graph regression.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+    ),
+    TierCommand(
+        name="capability_legacy_full",
+        command=_py("simulations/run_capability_checks.py", "--legacy-full"),
+        description="Legacy full Capability graph regression.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+    ),
+)
+
+
+def commands_for_tier(tier: str) -> tuple[TierCommand, ...]:
+    mapping: dict[str, tuple[TierCommand, ...]] = {
+        "collect": (
+            TierCommand(
+                name="pytest_collect_tests",
+                command=_py("-m", "pytest", "tests", "--collect-only", "-q"),
+                description="Collect only from the real tests/ tree.",
+            ),
+        ),
+        "fast": FAST_COMMANDS,
+        "router-startup": ROUTER_STARTUP_COMMANDS,
+        "router-foreground": ROUTER_FOREGROUND_COMMANDS,
+        "router-packets": ROUTER_PACKET_COMMANDS,
+        "router-route": ROUTER_ROUTE_COMMANDS,
+        "router-terminal": ROUTER_TERMINAL_COMMANDS,
+        "integration": INTEGRATION_COMMANDS,
+        "release": RELEASE_COMMANDS,
+        "legacy-full": LEGACY_FULL_COMMANDS,
+    }
+    if tier == "router":
+        return (
+            *ROUTER_STARTUP_COMMANDS,
+            *ROUTER_FOREGROUND_COMMANDS,
+            *ROUTER_PACKET_COMMANDS,
+            *ROUTER_ROUTE_COMMANDS,
+            *ROUTER_TERMINAL_COMMANDS,
+        )
+    if tier == "all":
+        return (
+            *mapping["collect"],
+            *FAST_COMMANDS,
+            *commands_for_tier("router"),
+            *INTEGRATION_COMMANDS,
+        )
+    return mapping[tier]
+
+
+def tier_names() -> tuple[str, ...]:
+    return (
+        "collect",
+        "fast",
+        "router-startup",
+        "router-foreground",
+        "router-packets",
+        "router-route",
+        "router-terminal",
+        "router",
+        "integration",
+        "release",
+        "legacy-full",
+        "all",
+    )
+
+
+def _safe_base(name: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("._")
+    return safe or "test_tier_command"
+
+
+def artifact_paths(log_root: Path, name: str) -> dict[str, Path]:
+    base = _safe_base(name)
+    return {suffix: log_root / f"{base}.{suffix}.txt" for suffix in ARTIFACT_SUFFIXES if suffix != "meta"} | {
+        "meta": log_root / f"{base}.meta.json"
+    }
+
+
+def _artifact_paths_for_json(log_root: Path, name: str) -> dict[str, str]:
+    return {
+        key: str(path.relative_to(ROOT) if path.is_relative_to(ROOT) else path)
+        for key, path in artifact_paths(log_root, name).items()
+    }
+
+
+def command_to_json(command: TierCommand, *, background_dir: Path) -> dict[str, Any]:
+    return {
+        "name": command.name,
+        "command": list(command.command),
+        "description": command.description,
+        "long_running": command.long_running,
+        "release_only": command.release_only,
+        "background_recommended": command.background_recommended,
+        "background_artifacts": _artifact_paths_for_json(background_dir, command.name),
+    }
+
+
+def plan_for_tier(tier: str, *, background_dir: Path) -> dict[str, Any]:
+    commands = commands_for_tier(tier)
+    return {
+        "tier": tier,
+        "command_count": len(commands),
+        "commands": [command_to_json(command, background_dir=background_dir) for command in commands],
+        "background_dir": str(
+            background_dir.relative_to(ROOT) if background_dir.is_relative_to(ROOT) else background_dir
+        ),
+        "background_contract": [f"<name>.{suffix}.txt" for suffix in ARTIFACT_SUFFIXES if suffix != "meta"]
+        + ["<name>.meta.json"],
+        "release_obligation_visible": tier not in {"release", "legacy-full"},
+    }
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _write_json(path: Path, payload: MappingLike) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+MappingLike = dict[str, Any]
+
+
+def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any]:
+    log_root.mkdir(parents=True, exist_ok=True)
+    paths = artifact_paths(log_root, command.name)
+    meta = {
+        "name": command.name,
+        "command": list(command.command),
+        "cwd": str(ROOT),
+        "status": "launching",
+        "start_time": _utc_now(),
+        "end_time": None,
+        "exit_code": None,
+        "proof_reused": None,
+        "artifacts": {key: str(value) for key, value in paths.items()},
+    }
+    _write_json(paths["meta"], meta)
+    child_args = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--background-child",
+        "--name",
+        command.name,
+        "--command-json",
+        json.dumps(list(command.command)),
+        "--background-dir",
+        str(log_root),
+    ]
+    creationflags = 0
+    if os.name == "nt":
+        creationflags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0) | getattr(
+            subprocess, "DETACHED_PROCESS", 0
+        )
+    proc = subprocess.Popen(
+        child_args,
+        cwd=ROOT,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        close_fds=True,
+        creationflags=creationflags,
+    )
+    meta["status"] = "running"
+    meta["launcher_pid"] = os.getpid()
+    meta["child_pid"] = proc.pid
+    _write_json(paths["meta"], meta)
+    return {
+        "name": command.name,
+        "status": "running",
+        "child_pid": proc.pid,
+        "artifacts": {key: str(value) for key, value in paths.items()},
+    }
+
+
+def launch_background(commands: Iterable[TierCommand], *, log_root: Path) -> list[dict[str, Any]]:
+    return [_launch_background(command, log_root=log_root) for command in commands]
+
+
+def _stream_pipe(
+    pipe: Any,
+    stream_name: str,
+    target: Any,
+    combined: Any,
+    lock: threading.Lock,
+    flags: dict[str, bool],
+) -> None:
+    for line in iter(pipe.readline, ""):
+        target.write(line)
+        target.flush()
+        if "proof_reused" in line or "proof reused" in line.lower():
+            flags["proof_reused"] = True
+        with lock:
+            combined.write(f"[{stream_name}] {line}")
+            combined.flush()
+    pipe.close()
+
+
+def run_background_child(name: str, command: Sequence[str], *, log_root: Path) -> int:
+    paths = artifact_paths(log_root, name)
+    log_root.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "name": name,
+        "command": list(command),
+        "cwd": str(ROOT),
+        "status": "running",
+        "start_time": _utc_now(),
+        "end_time": None,
+        "exit_code": None,
+        "proof_reused": False,
+        "artifacts": {key: str(value) for key, value in paths.items()},
+    }
+    _write_json(paths["meta"], meta)
+    flags = {"proof_reused": False}
+    try:
+        with paths["out"].open("w", encoding="utf-8", errors="replace") as out_file, paths[
+            "err"
+        ].open("w", encoding="utf-8", errors="replace") as err_file, paths["combined"].open(
+            "w", encoding="utf-8", errors="replace"
+        ) as combined_file:
+            process = subprocess.Popen(
+                list(command),
+                cwd=ROOT,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                bufsize=1,
+            )
+            assert process.stdout is not None
+            assert process.stderr is not None
+            lock = threading.Lock()
+            out_thread = threading.Thread(
+                target=_stream_pipe,
+                args=(process.stdout, "stdout", out_file, combined_file, lock, flags),
+                daemon=True,
+            )
+            err_thread = threading.Thread(
+                target=_stream_pipe,
+                args=(process.stderr, "stderr", err_file, combined_file, lock, flags),
+                daemon=True,
+            )
+            out_thread.start()
+            err_thread.start()
+            returncode = process.wait()
+            out_thread.join()
+            err_thread.join()
+    except Exception as exc:  # pragma: no cover - defensive background reporting
+        paths["err"].write_text(f"background child failed before command exit: {exc}\n", encoding="utf-8")
+        paths["combined"].write_text(
+            f"[runner] background child failed before command exit: {exc}\n",
+            encoding="utf-8",
+        )
+        returncode = 1
+
+    paths["exit"].write_text(f"{returncode}\n", encoding="utf-8")
+    meta["status"] = "passed" if returncode == 0 else "failed"
+    meta["end_time"] = _utc_now()
+    meta["exit_code"] = returncode
+    meta["proof_reused"] = flags["proof_reused"]
+    _write_json(paths["meta"], meta)
+    return returncode
+
+
+def run_foreground(commands: Iterable[TierCommand]) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
+    for command in commands:
+        completed = subprocess.run(list(command.command), cwd=ROOT, text=True)
+        results.append(
+            {
+                "name": command.name,
+                "command": list(command.command),
+                "returncode": completed.returncode,
+                "ok": completed.returncode == 0,
+            }
+        )
+    return results
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--tier", choices=tier_names(), default="fast")
+    parser.add_argument("--dry-run", action="store_true", help="Plan commands without executing.")
+    parser.add_argument("--json", action="store_true", help="Print machine-readable JSON.")
+    parser.add_argument("--background", action="store_true", help="Launch commands as detached jobs.")
+    parser.add_argument("--background-dir", type=Path, default=DEFAULT_BACKGROUND_DIR)
+    parser.add_argument("--list-tiers", action="store_true")
+    parser.add_argument("--background-child", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--name", default="", help=argparse.SUPPRESS)
+    parser.add_argument("--command-json", default="", help=argparse.SUPPRESS)
+    args = parser.parse_args(argv)
+
+    if args.background_child:
+        command = json.loads(args.command_json)
+        if not isinstance(command, list) or not args.name:
+            raise SystemExit("background child requires --name and command list")
+        return run_background_child(args.name, [str(part) for part in command], log_root=args.background_dir)
+
+    if args.list_tiers:
+        payload = {"tiers": list(tier_names())}
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            for tier in tier_names():
+                print(tier)
+        return 0
+
+    commands = commands_for_tier(args.tier)
+    plan = plan_for_tier(args.tier, background_dir=args.background_dir)
+    if args.dry_run:
+        if args.json:
+            print(json.dumps(plan, indent=2, sort_keys=True))
+        else:
+            for command in plan["commands"]:
+                print(" ".join(command["command"]))
+        return 0
+
+    if args.background:
+        launched = launch_background(commands, log_root=args.background_dir)
+        payload = {"ok": True, "tier": args.tier, "launched": launched, "plan": plan}
+        if args.json:
+            print(json.dumps(payload, indent=2, sort_keys=True))
+        else:
+            print(f"Launched {len(launched)} background test command(s) under {args.background_dir}")
+            for item in launched:
+                print(f"- {item['name']}: pid={item['child_pid']}")
+        return 0
+
+    results = run_foreground(commands)
+    ok = all(item["ok"] for item in results)
+    payload = {"ok": ok, "tier": args.tier, "results": results, "plan": plan}
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

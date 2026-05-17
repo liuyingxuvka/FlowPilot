@@ -18,6 +18,12 @@ All notable changes to FlowPilot will be documented in this file.
   PM role work, material/modeling, control blockers, and quality gates.
 - Added event-contract FlowGuard coverage for explicit event envelopes
   submitted outside the current Router wait state.
+- Added the `final-flowpilot-structure-convergence` OpenSpec change and
+  verification matrix for the final local structure-maintenance pass.
+- Added focused helper modules for role-output runtime schema, contracts,
+  progress records, envelopes, and CLI handling.
+- Added split helper modules for control-plane friction, router-loop, and
+  daemon reconciliation FlowGuard child models.
 
 ### Changed
 
@@ -29,6 +35,10 @@ All notable changes to FlowPilot will be documented in this file.
 - Moved selected router external-event intake and controller action helper
   logic behind smaller module boundaries without changing public event names,
   command arguments, imports, or persisted JSON shapes.
+- Converted the aggregate router runtime test file into a compatibility loader
+  backed by direct domain-owned test modules.
+- Moved low-risk external-event finalization and additional Controller action
+  bodies behind focused router helper modules.
 
 ### Fixed
 

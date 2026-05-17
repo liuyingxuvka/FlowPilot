@@ -19,6 +19,18 @@ python scripts/audit_local_install_sync.py
 python scripts/smoke_autopilot.py
 ```
 
+For maintenance that touches the split router/runtime/model structure, also use
+`docs/flowpilot_final_structure_verification_matrix.md`. That matrix maps
+touched facades and domain files to focused commands and to the background log
+contract under `tmp/flowguard_background/`.
+
+The tier runner can execute the router domain suites without loading the legacy
+aggregate implementation file as the routine source of truth:
+
+```powershell
+python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json
+```
+
 Expected:
 
 - zero invariant failures;

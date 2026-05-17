@@ -2,39 +2,18 @@ from __future__ import annotations
 
 import unittest
 
-from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
-
-
-TEST_NAMES = (
-    "test_controller_route_memory_is_refreshed_and_required_for_pm_route_draft",
-    "test_pm_route_draft_preserves_role_authored_repair_policy_fields",
-    "test_controller_next_action_reuses_fresh_route_memory",
-    "test_reviewer_block_delivers_model_miss_triage_before_review_repair",
-    "test_review_block_route_mutation_requires_closed_model_miss_triage",
-    "test_stale_review_block_route_mutation_wait_is_recomputed_before_pm_triage",
-    "test_node_acceptance_plan_block_enters_model_miss_repair_path",
-    "test_node_acceptance_plan_block_can_be_revised_on_same_node",
-    "test_model_backed_model_miss_triage_requires_officer_report_refs",
-    "test_non_authorizing_model_miss_decision_does_not_unlock_review_repair",
-    "test_pm_model_miss_followup_uses_generic_role_work_request_channel",
-    "test_model_backed_model_miss_triage_unlocks_review_repair",
-    "test_out_of_scope_model_miss_triage_unlocks_review_repair_with_reason",
-    "test_route_root_node_entry_gap_requires_replanning_not_repair_node",
-    "test_reviewed_route_activation_uses_pm_draft_without_dummy_fallback",
-    "test_route_activation_rejects_active_node_missing_from_reviewed_route",
-    "test_route_mutation_requires_topology_and_resets_route_hard_gates",
-    "test_route_mutation_and_final_ledger_have_required_preconditions",
-    "test_route_mutation_new_repair_transaction_is_not_swallowed_by_old_flag",
-    "test_route_mutation_supersede_strategy_does_not_require_return_to_original",
-    "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
-    "test_parent_backward_targets_require_current_child_completion_ledgers",
-    "test_parent_node_requires_backward_replay_before_completion",
-    "test_parent_backward_non_continue_decision_mutates_route_and_requires_rerun",
+from tests.flowpilot_route_mutation_contracts import (
+    TestRouteMutationChildContractFixture,
+    TestRouteMutationParentContracts,
 )
 
 
 def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: str | None) -> unittest.TestSuite:
-    return load_named_runtime_tests(loader, tests, pattern, TEST_NAMES)
+    del tests, pattern
+    suite = unittest.TestSuite()
+    suite.addTests(loader.loadTestsFromTestCase(TestRouteMutationChildContractFixture))
+    suite.addTests(loader.loadTestsFromTestCase(TestRouteMutationParentContracts))
+    return suite
 
 
 if __name__ == "__main__":

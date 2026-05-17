@@ -460,11 +460,12 @@ FlowGuard caught and fixed these design issues:
   recheck. The focused model and checker are
   `simulations/flowpilot_route_mutation_activation_model.py` and
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
-- The v0.9.7 Python structure simplification pass keeps public entrypoints and
+- The v0.9.7 Python structure simplification passes keep public entrypoints and
   protocol semantics stable while reducing several heavy active files.
   `flowpilot_router.py` remains the compatibility facade, while event dispatch,
-  event intake, Controller action providers, Controller action handlers, route
-  activation/mutation, and heartbeat/resume helpers now live in focused modules:
+  event finalization, event intake, Controller action providers, Controller
+  action handlers, route activation/mutation, and heartbeat/resume helpers now
+  live in focused modules:
   `flowpilot_router_events.py`,
   `flowpilot_router_event_intake.py`,
   `flowpilot_router_action_providers.py`,
@@ -474,6 +475,9 @@ FlowGuard caught and fixed these design issues:
 - `packet_runtime.py` remains the public facade and delegates schema, path,
   contract, ledger, relay, active-holder, session, and reviewer responsibilities
   to `packet_runtime_*` helper modules.
+- `role_output_runtime.py` remains the public facade and delegates schema,
+  contract, progress, envelope, and CLI responsibilities to
+  `role_output_runtime_*` helper modules.
 - `scripts/check_install.py` remains the compatibility entrypoint and delegates
   check groups to `scripts/install_checks/`.
 - The Meta and Capability FlowGuard parent models now keep short `apply`
@@ -494,6 +498,11 @@ FlowGuard caught and fixed these design issues:
   and quality gates. The legacy aggregate
   `tests/test_flowpilot_router_runtime.py` remains available as the source of
   the shared test case class.
+- Child FlowGuard models that still produced high maintenance friction now keep
+  facade entrypoints while delegating state, transitions, invariants, hazards,
+  and audit helpers to focused modules. This pass covered control-plane
+  friction, router-loop, and daemon reconciliation. The persistent router daemon
+  model remains intentionally unsplit until a stable lower-risk seam is found.
 - A v0.9.7 behavior repair discovered during simplification validates explicit
   event-envelope references against the current Router wait before startup or
   current-scope reconciliation can return a recoverable wait. The event-contract

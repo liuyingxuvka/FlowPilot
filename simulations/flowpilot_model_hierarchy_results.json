@@ -240,7 +240,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-17T07:37:46.763948+00:00",
+            "created_at": "2026-05-17T12:04:07.219875+00:00",
             "edge_count": 18,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -268,7 +268,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-17T07:37:46.763948+00:00",
+          "created_at": "2026-05-17T12:04:07.219875+00:00",
           "edge_count": 18,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -290,7 +290,7 @@
         "state_count": 9,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-17T07:37:48.117662+00:00",
+            "created_at": "2026-05-17T12:04:08.268524+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -326,7 +326,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-17T07:37:46.755949+00:00",
+            "created_at": "2026-05-17T12:04:07.159879+00:00",
             "edge_count": 14,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -354,7 +354,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-17T07:37:46.755949+00:00",
+          "created_at": "2026-05-17T12:04:07.159879+00:00",
           "edge_count": 14,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -376,7 +376,7 @@
         "state_count": 7,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-17T07:37:48.083662+00:00",
+            "created_at": "2026-05-17T12:04:08.237005+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
