@@ -1,0 +1,45 @@
+{
+  "schema_version": "flowpilot.controller_break_glass_patch.v1",
+  "run_id": "<run-id>",
+  "incident_id": "<incident-id>",
+  "patch_id": "<patch-id>",
+  "recorded_at": "<iso-8601-timestamp>",
+  "recorded_by_role": "controller",
+  "patch_kind": "<temporary_source_patch|runtime_state_compensation|prompt_or_manifest_compensation|diagnostic_only>",
+  "temporary": true,
+  "reason": "<why this temporary compensation was needed>",
+  "expected_effect": "<what legal control-plane next action this restores>",
+  "touched_paths": [
+    {
+      "path": "<path>",
+      "change_kind": "<modified|created|runtime_state_updated|none>",
+      "before_hash": "<sha256-or-null>",
+      "after_hash": "<sha256-or-null>"
+    }
+  ],
+  "forbidden_actions_preserved": {
+    "sealed_body_access": true,
+    "target_project_work": true,
+    "gate_approval": true,
+    "route_mutation": true,
+    "acceptance_change": true
+  },
+  "validation_evidence": [
+    {
+      "kind": "<command|model_result|state_probe|manual_inspection>",
+      "path": "<path-or-null>",
+      "command": "<command-or-null>",
+      "result": "<passed|failed|not_run>",
+      "summary": "<short summary>"
+    }
+  ],
+  "rollback": {
+    "required": true,
+    "notes": "<how to revert or supersede this patch>",
+    "revert_command": "<command-or-null>",
+    "reverse_patch_path": "<path-or-null>"
+  },
+  "final_disposition": "<current_run_only|promote_to_root_fix_candidate|reverted|superseded|null>",
+  "permanent_fix_needed": true,
+  "flowpilot_skill_improvement_observation_id": "<observation-id-or-null>"
+}

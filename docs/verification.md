@@ -11,6 +11,7 @@ python simulations/run_command_refinement_checks.py
 python simulations/run_flowpilot_event_contract_checks.py
 python simulations/run_flowpilot_event_capability_registry_checks.py
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
+python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py

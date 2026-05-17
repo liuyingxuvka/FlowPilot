@@ -66,10 +66,24 @@ FAST_COMMANDS = (
         ),
         description="FlowGuard TestMesh contract checks for semantic parent/child slow-test splits.",
     ),
+    TierCommand(
+        name="flowguard_controller_break_glass",
+        command=_py(
+            "simulations/run_flowpilot_controller_break_glass_checks.py",
+            "--json-out",
+            "simulations/flowpilot_controller_break_glass_results.json",
+        ),
+        description="FlowGuard checks for Controller emergency break-glass eligibility and forbidden powers.",
+    ),
     _pytest(
         "test_tier_runner",
         "tests/test_flowpilot_test_tiers.py",
         description="Focused tests for tier command planning and background artifact contracts.",
+    ),
+    _pytest(
+        "controller_break_glass_tests",
+        "tests/test_flowpilot_controller_break_glass.py",
+        description="Focused tests for Controller break-glass prompt, records, and runtime reminders.",
     ),
     _pytest(
         "flowguard_proof_tests",

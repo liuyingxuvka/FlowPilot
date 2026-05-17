@@ -5153,6 +5153,7 @@ def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str
 
 def _controller_table_prompt() -> dict[str, Any]:
     patrol_command = _controller_patrol_timer_command()
+    break_glass = _controller_break_glass_reminder()
     return {
         "language": "en",
         "prompt_kind": "controller_action_ledger_table_prompt",
@@ -5194,15 +5195,45 @@ def _controller_table_prompt() -> dict[str, Any]:
             "command's next output. Starting or restarting the command is not completion. "
             "Keep watching router_daemon_status and controller_action_ledger, keep the visible "
             "Codex plan synchronized from ledger rows and receipts, and when Router exposes "
-            "new Controller work, update this table and return to top-to-bottom row processing."
+            "new Controller work, update this table and return to top-to-bottom row processing.\n\n"
+            f"{break_glass['text']}"
         ),
         "applies_to": ["runtime/controller_action_ledger.json"],
+        "break_glass_reminder": break_glass,
         "row_processing_order": "top_to_bottom",
         "foreground_controller_must_remain_attached_while_flowpilot_running": True,
         "continuous_standby_row": CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
         "patrol_timer_command": patrol_command,
         "patrol_timer_seconds": CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
         "sealed_body_reads_allowed": False,
+    }
+
+
+def _controller_break_glass_reminder() -> dict[str, Any]:
+    playbook_path = "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md"
+    return {
+        "schema_version": "flowpilot.controller_break_glass_reminder.v1",
+        "playbook_path": playbook_path,
+        "text": (
+            "Emergency break-glass reminder: use this only if normal FlowPilot "
+            "control flow itself appears broken, stuck, looping, or unable to "
+            "produce a legal next action. For that case only, read "
+            f"`{playbook_path}`. Do not use it for ordinary project bugs, "
+            "worker defects, review failures, or normal PM repair."
+        ),
+        "allowed_only_when": [
+            "normal_flow_itself_broken",
+            "stuck_or_looping_control_flow",
+            "no_legal_next_controller_action",
+            "normal_pm_control_blocker_packet_repair_unavailable_or_contradictory",
+        ],
+        "not_for": [
+            "ordinary_project_bugs",
+            "worker_defects",
+            "review_failures",
+            "normal_pm_repair",
+            "route_or_acceptance_changes",
+        ],
     }
 
 
@@ -9031,6 +9062,7 @@ def _continuous_standby_task_payload(
 ) -> dict[str, Any]:
     wait_class = str(current_wait.get("wait_class") or "none")
     patrol_command = _controller_patrol_timer_command()
+    break_glass = _controller_break_glass_reminder()
     wait_policy: dict[str, Any] = {
         "wait_class": wait_class,
         "next_due": current_wait.get("next_due") or {},
@@ -9078,13 +9110,15 @@ def _continuous_standby_task_payload(
                 "continue_patrol, rerun the same command and wait for the next output. Keep the foreground Controller "
                 "attached, sync the visible Codex plan from the Controller action ledger and "
                 "receipts, and when Router exposes new Controller work, update the table and "
-                "return to top-to-bottom row processing."
+                "return to top-to-bottom row processing. "
+                f"{break_glass['text']}"
             ),
             "plan_status": "in_progress",
             "sync_after_each_controller_row": True,
             "check_for_missed_rows_and_receipts_before_sleep": True,
             "new_controller_work_returns_to_top_down_processing": True,
         },
+        "break_glass_reminder": break_glass,
         "wait_policy": wait_policy,
         "do_not_mark_complete_on": [
             "command_started",
@@ -9269,6 +9303,7 @@ def _write_router_daemon_status(
         else None,
         "controller_action_ledger": controller_ledger_summary,
         "router_scheduler_ledger": router_scheduler_summary,
+        "break_glass_reminder": _controller_break_glass_reminder(),
         "router_internal_ownership_ledger_visible_to_controller": False,
         "recovery_hints": recovery_hints or [],
         "error": error,
@@ -9536,6 +9571,7 @@ def _build_foreground_controller_standby_snapshot(
             "diagnostic/test/explicit-repair only; not normal progress while daemon status "
             "and the Controller action ledger own the active run"
         ),
+        "break_glass_reminder": _controller_break_glass_reminder(),
         "standby_does_not_drive_router_progress": True,
         "metadata_only": True,
         "sealed_body_reads_allowed": False,
@@ -9812,6 +9848,7 @@ def controller_patrol_timer(
         "foreground_required_mode": foreground_mode,
         "controller_stop_allowed": controller_stop_allowed,
         "anti_exit_reminder": anti_exit_reminder,
+        "break_glass_reminder": _controller_break_glass_reminder(),
         "controller_instruction": controller_instruction,
         "next_command": next_command if patrol_result == "continue_patrol" else None,
         "standby_status_after_rerun": (

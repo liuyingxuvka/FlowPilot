@@ -313,6 +313,13 @@ for review.
 - `blocker_repair_policy.template.json`: run-visible policy table that maps
   blocker families to the first handler, direct retry budget, PM escalation,
   allowed recovery options, return-gate policy, and hard-stop conditions.
+- `controller_break_glass_incident.template.json`: Controller-only
+  development-mode incident record for FlowPilot control-plane failures where
+  the normal PM/control-blocker/packet repair lane cannot produce a legal next
+  action.
+- `controller_break_glass_patch.template.json`: temporary compensation record
+  for break-glass patches, validation, rollback notes, and permanent-fix
+  disposition.
 - `self_interrogation_record.template.json`: durable record for grill-me or
   self-interrogation findings, PM disposition, downstream artifact bindings,
   and unresolved hard/current finding count.

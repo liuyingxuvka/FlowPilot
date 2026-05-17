@@ -61,6 +61,14 @@ Allowed actions:
   running normally through that monitor: remind when Router says to remind,
   re-check liveness when Router says to check, and raise a Router-visible
   blocker when the monitor shows an unhealthy wait;
+- if normal FlowPilot control flow itself appears broken, stuck, looping, or
+  unable to produce a legal next action, and ordinary PM/control-blocker/packet
+  repair is unavailable or contradictory, read
+  `skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md`
+  before taking any emergency action. This break-glass path is not for ordinary
+  project bugs, worker defects, review failures, or normal PM repair, and it
+  never grants sealed-body access, gate approval, route mutation, target-product
+  work, acceptance changes, publication, deployment, or secret handling;
 - when `current_wait.wait_class` is `ack`, use the Router-authored reminder
   text after the three-minute reminder point. If the ACK remains absent after
   the ten-minute blocker point, record a Router-visible blocker for PM-routed

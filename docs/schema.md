@@ -42,6 +42,9 @@ user-level:
 - `role_approvals/*.json`
 - `checkpoints/*.json`
 - `experiments/*/experiment.json`
+- `controller_break_glass/index.json`
+- `controller_break_glass/incidents/*.json`
+- `controller_break_glass/patches/*.json`
 - `pm_suggestion_ledger.jsonl`
 - `flowpilot_skill_improvement_observations.jsonl`
 - `flowpilot_skill_improvement_report.json`
@@ -834,6 +837,29 @@ It records:
 
 Terminal completion is invalid when this suite is missing, stale, or records an
 unresolved blocker.
+
+## Controller Break-Glass Records
+
+`controller_break_glass/` is a run-scoped development-mode emergency area for
+FlowPilot control-plane failures. It is not normal project evidence and cannot
+approve gates, close nodes, mutate routes, read sealed bodies, or repair
+target-project work.
+
+`controller_break_glass/incidents/*.json` uses
+`flowpilot.controller_break_glass_incident.v1`. Each incident records why the
+normal control flow appeared broken, which normal repair lanes were checked,
+which Controller-visible sources were inspected, the suspected FlowPilot
+control-plane defect, allowed reads/writes, forbidden actions, validation plan,
+exit criteria, related patch ids, and final disposition.
+
+`controller_break_glass/patches/*.json` uses
+`flowpilot.controller_break_glass_patch.v1`. Each patch records the incident id,
+temporary compensation kind, touched paths, validation evidence, rollback notes,
+final disposition, and whether a permanent FlowPilot root fix remains needed.
+
+`controller_break_glass/index.json` lists incidents and patches for terminal
+review. Terminal closure or the FlowPilot skill improvement report must disclose
+any current-run break-glass use and its temporary compensation status.
 
 ## FlowPilot Skill Improvement Report
 

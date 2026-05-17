@@ -285,6 +285,15 @@ model-backed autopilot:
   during node or review work, PM writes a final
   `flowpilot_skill_improvement_report.json`, and those observations never block
   current project completion or require root-repo fixes inside the active run.
+- Controller has a development-mode break-glass repair lane only for FlowPilot
+  control-plane failures where normal Router/PM/control-blocker/packet repair
+  cannot produce a legal next action. The full playbook is
+  `skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md`.
+  Repeated Controller table/monitor/patrol surfaces show a short reminder, and
+  run-scoped incidents/patches live under
+  `.flowpilot/runs/<run-id>/controller_break_glass/`. This lane never grants
+  target-project work, sealed-body access, gate approval, route mutation,
+  acceptance changes, publication, deployment, or secret handling.
 
 ## Model-Backed Rules Found During Preflight
 

@@ -1,0 +1,52 @@
+{
+  "schema_version": "flowpilot.controller_break_glass_incident.v1",
+  "run_id": "<run-id>",
+  "incident_id": "<incident-id>",
+  "opened_at": "<iso-8601-timestamp>",
+  "opened_by_role": "controller",
+  "status": "<open|compensated|closed|superseded>",
+  "trigger_summary": "<why break-glass was considered>",
+  "control_plane_failure_kind": "<no_legal_next_action|stuck_loop|contradictory_status_and_ledger|pm_repair_channel_broken|packet_channel_broken|event_authority_contradiction|manifest_contract_schema_mismatch|repeated_control_blocker|other>",
+  "normal_lanes_checked": [
+    {
+      "lane": "<controller_action_ledger|router_daemon_status|control_blocker|pm_repair|packet_runtime|role_output_runtime|allowed_external_events|manifest_contract_registry>",
+      "source_path": "<path>",
+      "result": "<available|unavailable|contradictory|looping|not_applicable>",
+      "reason": "<short reason>"
+    }
+  ],
+  "sources_inspected": [
+    {
+      "path": "<path>",
+      "hash": "<sha256-or-null>",
+      "controller_visible": true,
+      "sealed_body_content_read": false,
+      "summary": "<control-plane fact only>"
+    }
+  ],
+  "suspected_flowpilot_defect": {
+    "summary": "<suspected control-plane bug>",
+    "candidate_root_files": [],
+    "not_target_project_defect": true
+  },
+  "allowed_reads": [],
+  "allowed_writes": [],
+  "forbidden_actions_acknowledged": {
+    "sealed_body_access": true,
+    "target_project_work": true,
+    "gate_approval": true,
+    "route_mutation": true,
+    "acceptance_change": true,
+    "publication_or_deployment": true,
+    "secret_handling": true
+  },
+  "validation_plan": [],
+  "exit_criteria": [
+    "normal FlowPilot control flow can produce a legal next action",
+    "break-glass incident and any temporary patch records are written",
+    "Controller returns to Router daemon status and action ledger processing"
+  ],
+  "related_patch_ids": [],
+  "closed_at": "<iso-8601-timestamp-or-null>",
+  "final_disposition": "<return_to_normal_flow|stop_for_user|superseded_by_root_fix|superseded_by_normal_repair|null>"
+}

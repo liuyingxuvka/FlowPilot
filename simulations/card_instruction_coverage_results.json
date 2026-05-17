@@ -1,11 +1,12 @@
 {
   "actual_card_graph": {
     "active_card_count": 58,
-    "card_count": 67,
-    "checked_count": 67,
+    "card_count": 68,
+    "checked_count": 68,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
+      "card_instruction_checked:controller.break_glass_repair",
       "card_instruction_checked:controller.core",
       "card_instruction_checked:controller.resume_reentry",
       "card_instruction_checked:pm.child_skill_gate_manifest",
@@ -93,7 +94,7 @@
       "stale_controller_ack_guidance": false
     },
     "router_sequence_manifest_errors": [],
-    "state_count": 69,
+    "state_count": 70,
     "status": "complete"
   },
   "hazard_checks": {

@@ -25,6 +25,14 @@
       "source": "system"
     },
     {
+      "audience": "controller",
+      "id": "controller.break_glass_repair",
+      "issued_by": "router",
+      "kind": "emergency_playbook",
+      "path": "cards/system/controller_break_glass_repair.md",
+      "source": "system"
+    },
+    {
       "audience": "project_manager",
       "id": "pm.core",
       "issued_by": "router",
