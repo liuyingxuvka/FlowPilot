@@ -15,5 +15,5 @@
 ## 3. Synchronization And Background Regression
 
 - [x] 3.1 Sync the repository-owned FlowPilot source to the local installed skill and verify install freshness.
-- [ ] 3.2 Launch heavyweight Meta and Capability FlowGuard regressions in the background using the repository artifact contract.
-- [ ] 3.3 Inspect background regression artifacts and record completion evidence or a concrete remaining blocker.
+- [x] 3.2 Launch heavyweight Meta and Capability FlowGuard regressions in the background using the repository artifact contract.
+- [x] 3.3 Inspect background regression artifacts and record completion evidence or a concrete remaining blocker.
