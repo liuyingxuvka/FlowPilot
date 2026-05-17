@@ -808,14 +808,14 @@
             "test_name": "TestRouteMutationChildContractFixture"
           },
           {
-            "command": "python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
+            "command": "python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
             "covered_obligations": [
               "route_mutation.topology_and_recheck"
             ],
             "evidence_current": true,
             "evidence_id": "route_mutation.negative.required_preconditions",
             "overclaims_model_confidence": false,
-            "path": "tests/router_runtime/route_mutation.py",
+            "path": "tests/router_runtime/route_mutation_preconditions.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "negative_path",
@@ -836,14 +836,14 @@
             "test_name": "test_sibling_branch_replacement_draws_replacement_and_replay_scope"
           },
           {
-            "command": "python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+            "command": "python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
             "covered_obligations": [
               "route_mutation.sibling_replacement_stales_old_evidence"
             ],
             "evidence_current": true,
             "evidence_id": "route_mutation.negative.old_sibling_proof",
             "overclaims_model_confidence": false,
-            "path": "tests/router_runtime/route_mutation.py",
+            "path": "tests/router_runtime/route_mutation_sibling_replacement.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "negative_path",

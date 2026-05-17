@@ -118,7 +118,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         ):
             with self.subTest(evidence_id=evidence_id):
                 item = evidence[evidence_id]
-                self.assertEqual(item.path, "tests/router_runtime/route_mutation.py")
+                self.assertTrue(item.path.startswith("tests/router_runtime/route_mutation_"))
                 self.assertIn("tests.router_runtime.route_mutation", item.command)
 
     def test_main_writes_json_only_when_requested(self) -> None:

@@ -505,6 +505,13 @@ python simulations\run_flowpilot_router_loop_checks.py --json-out simulations\fl
 python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json
 ```
 
+For the route-mutation runtime oracle, use the split router route tier rather
+than the legacy aggregate module:
+
+```powershell
+python scripts\run_test_tier.py --tier router-route --background --background-dir tmp\flowguard_background --background-max-parallel 4 --json
+```
+
 Meta and Capability checks use layered parent evidence. The default commands
 run bounded thin-parent validation for routine confidence. Use `--full` for the
 fast layered full-parent proof that refreshes
@@ -527,7 +534,10 @@ tag, push, package, upload, or publish companion skill repositories.
 | --- | --- |
 | `skills/flowpilot/` | The FlowPilot Codex skill and prompt-isolated runtime assets. |
 | `skills/flowpilot/assets/flowpilot_router.py` | Router bootloader and action envelope driver. |
+| `skills/flowpilot/assets/flowpilot_prompt_store.py` | PromptStore manifest, hash, load, and render checks for externalized Router prompts. |
+| `skills/flowpilot/assets/flowpilot_router_*` | Focused Router helpers for prompt delivery, card delivery, Controller ledgers, route handling, events, terminal handling, and role-output protocol records. |
 | `skills/flowpilot/assets/runtime_kit/` | Manifest and role/phase/reviewer/officer cards. |
+| `skills/flowpilot/assets/runtime_kit/prompts/` | Externalized prompt assets and prompt manifest used by PromptStore. |
 | `skills/flowpilot/assets/packet_runtime.py` | Physical packet envelope/body runtime. |
 | `skills/flowpilot/assets/role_output_runtime.py` | Formal role-output skeleton, validation, receipt, and envelope runtime. |
 | `templates/flowpilot/` | Reusable `.flowpilot/` state, route, packet, evidence, lifecycle, and ledger templates. |
@@ -574,7 +584,7 @@ changes.
 
 | Version | Date | README-level summary |
 | --- | --- | --- |
-| **v0.9.7** | 2026-05-17 | Simplified large Python structures with facade-first packet runtime, install-check, model-phase, router helper, and domain-test splits while preserving protocol behavior. |
+| **v0.9.7** | 2026-05-17 | Simplified large Python structures with facade-first packet runtime, install-check, model-phase, router helper, domain-test splits, and focused route-mutation child suites while preserving protocol behavior. |
 | **v0.9.6** | 2026-05-16 | Hardened route mutation repair/replacement policy with sibling branch replacement, stale packet disposition, replay-scope projection, and final-ledger blocking before replay. |
 | **v0.9.5** | 2026-05-16 | Hardened recursive parent/module route entry and terminal closure reconciliation for defect ledgers, role memory, and imported-artifact quarantine. |
 | **v0.9.4** | 2026-05-16 | Added runtime closure guards for officer lifecycle, continuation quarantine, final user reports, and route-display refresh evidence. |
@@ -1069,7 +1079,7 @@ README 里保留每个公开版本的用户可读摘要；完整工程细节见 
 
 | 版本 | 日期 | README 摘要 |
 | --- | --- | --- |
-| **v0.9.7** | 2026-05-17 | 以 facade-first 方式简化大型 Python 结构，拆分 packet runtime、安装检查、模型阶段、router helper 和测试域入口，同时保持协议行为不变。 |
+| **v0.9.7** | 2026-05-17 | 以 facade-first 方式简化大型 Python 结构，拆分 packet runtime、安装检查、模型阶段、router helper、测试域入口和 route-mutation 子套件，同时保持协议行为不变。 |
 | **v0.9.6** | 2026-05-16 | 强化 route mutation 的维修/替换策略，支持 sibling branch replacement、旧 packet 失效处理、replay scope 显示，以及 replay 前 final ledger 阻断。 |
 | **v0.9.5** | 2026-05-16 | 强化 recursive parent/module route entry，并把 defect ledger、role memory 和 imported-artifact quarantine 纳入 terminal closure reconciliation。 |
 | **v0.9.4** | 2026-05-16 | 新增 runtime closure 护栏，覆盖 officer lifecycle、continuation quarantine、final user report 和 route-display refresh evidence。 |

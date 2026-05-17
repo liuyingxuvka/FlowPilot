@@ -260,8 +260,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _evidence(
                 "route_mutation.negative.required_preconditions",
                 test_name="test_route_mutation_and_final_ledger_have_required_preconditions",
-                path="tests/router_runtime/route_mutation.py",
-                command="python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
+                path="tests/router_runtime/route_mutation_preconditions.py",
+                command="python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
                 test_kind=NEGATIVE,
                 covers=("route_mutation.topology_and_recheck",),
             ),
@@ -276,8 +276,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _evidence(
                 "route_mutation.negative.old_sibling_proof",
                 test_name="test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
-                path="tests/router_runtime/route_mutation.py",
-                command="python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+                path="tests/router_runtime/route_mutation_sibling_replacement.py",
+                command="python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
                 test_kind=NEGATIVE,
                 covers=("route_mutation.sibling_replacement_stales_old_evidence",),
             ),

@@ -13,6 +13,7 @@ python simulations/run_flowpilot_event_capability_registry_checks.py
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json
 python simulations/run_flowpilot_structure_maintenance_checks.py --json-out simulations/flowpilot_structure_maintenance_results.json
+python simulations/run_flowpilot_router_facade_split_checks.py --json-out simulations/flowpilot_router_facade_split_results.json
 python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
@@ -29,6 +30,9 @@ contract under `tmp/flowguard_background/`.
 The StructureMesh/TestMesh maintenance check is the current executable gate for
 router split ownership, child-model facade ownership, and slow-suite evidence
 visibility.
+The router-facade split check is the current executable gate for PromptStore,
+prompt asset integrity, prompt-delivery/card-delivery ownership, Controller
+ledger helper ownership, and role-output protocol helper ownership.
 The Model-Test Alignment check is the current executable map between major
 FlowGuard model obligations and ordinary test evidence. A green alignment report
 means each declared obligation has current passing evidence for the required
@@ -38,13 +42,22 @@ The tier runner can execute the router domain suites without loading the legacy
 aggregate implementation file as the routine source of truth:
 
 ```powershell
+python scripts/run_test_tier.py --tier router-route --background --background-dir tmp/flowguard_background --background-max-parallel 4 --json
 python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json
 ```
+
+`router-route` composes focused route-mutation runtime child suites for draft
+activation, model-miss triage, acceptance repair, preconditions, transactions,
+topology, sibling replacement, and parent backward replay. The legacy
+`tests.router_runtime.route_mutation` module remains an explicit compatibility
+aggregate, not routine parent evidence.
 
 On Windows, the tier runner starts background children and foreground child
 commands with hidden subprocess windows. Completion evidence still comes from
 the artifact set in `tmp/flowguard_background/`, not from visible console
-windows or progress output.
+windows or progress output. Re-running the same background suite clears the old
+artifact set before launch, so a stale `.exit.txt` cannot be reused as current
+completion evidence.
 
 Expected:
 

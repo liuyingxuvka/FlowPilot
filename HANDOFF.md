@@ -49,6 +49,11 @@ the runner starts one hidden bounded supervisor (`router_background_supervisor`)
 and writes per-suite artifacts for startup, foreground/controller, packet,
 route, terminal, closure, resume, blocker, PM role-work, quality-gate, and
 material/modeling domains.
+The route domain is also split internally: `router-route` runs focused
+route-mutation child suites for draft activation, model-miss triage, acceptance
+repair, preconditions, repair transactions, topology, sibling replacement, and
+parent backward replay. `tests.router_runtime.route_mutation` remains only as
+an explicit compatibility aggregate.
 
 Known-bad variants for missing owners, duplicate state ownership, missing
 facades, removed entrypoints, stale parity, insufficient release evidence,

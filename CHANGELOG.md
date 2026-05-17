@@ -32,6 +32,11 @@ All notable changes to FlowPilot will be documented in this file.
 - Added a FlowGuard Model-Test Alignment runner and documentation that map
   major model obligations to ordinary test evidence and reject missing, stale,
   progress-only, orphan, duplicate, and overclaimed evidence.
+- Added a PromptStore-backed prompt asset manifest for selected Router prompts,
+  with strict hash checks and no inline fallback when a prompt asset is missing
+  or stale.
+- Added a router-facade split FlowGuard check for PromptStore, prompt-delivery,
+  card-delivery, Controller-ledger, and role-output protocol ownership.
 
 ### Changed
 
@@ -53,9 +58,18 @@ All notable changes to FlowPilot will be documented in this file.
 - Split the router validation tier into smaller packet/card/ACK, route,
   terminal/closure/resume, and supporting child suites while keeping release
   regressions background-oriented.
+- Split the slow route-mutation runtime oracle into focused child suites for
+  draft activation, model-miss triage, acceptance repair, preconditions,
+  repair transactions, topology, sibling replacement, and parent backward
+  replay.
 - Hid Windows subprocess windows for the test-tier runner so background and
   foreground child checks no longer interrupt desktop work while still writing
   the stable background artifact set.
+- Cleared stale background artifacts before relaunching a child suite so a
+  previous failed `.exit.txt` cannot be counted as the current run result.
+- Moved selected Controller prompt, card delivery, Controller action-ledger, and
+  role-output protocol helpers out of `flowpilot_router.py` while preserving the
+  router facade and public CLI/import contract.
 
 ### Fixed
 

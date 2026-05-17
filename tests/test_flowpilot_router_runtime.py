@@ -17,7 +17,14 @@ from tests.router_runtime.packets import PacketsRuntimeTests
 from tests.router_runtime.pm_role_work import PmRoleWorkRuntimeTests
 from tests.router_runtime.quality_gates import QualityGatesRuntimeTests
 from tests.router_runtime.resume import ResumeRuntimeTests
-from tests.router_runtime.route_mutation import RouteMutationRuntimeTests
+from tests.router_runtime.route_mutation_acceptance_repair import RouteMutationAcceptanceRepairRuntimeTests
+from tests.router_runtime.route_mutation_draft_activation import RouteMutationDraftActivationRuntimeTests
+from tests.router_runtime.route_mutation_model_miss_triage import RouteMutationModelMissTriageRuntimeTests
+from tests.router_runtime.route_mutation_parent_backward import RouteMutationParentBackwardRuntimeTests
+from tests.router_runtime.route_mutation_preconditions import RouteMutationPreconditionRuntimeTests
+from tests.router_runtime.route_mutation_sibling_replacement import RouteMutationSiblingReplacementRuntimeTests
+from tests.router_runtime.route_mutation_topology import RouteMutationTopologyRuntimeTests
+from tests.router_runtime.route_mutation_transactions import RouteMutationTransactionRuntimeTests
 from tests.router_runtime.startup_bootstrap import StartupBootstrapRuntimeTests
 from tests.router_runtime.startup_daemon import StartupDaemonRuntimeTests
 from tests.router_runtime.terminal import TerminalRuntimeTests
@@ -46,7 +53,14 @@ _DOMAIN_TEST_CASES = (
     PmRoleWorkRuntimeTests,
     QualityGatesRuntimeTests,
     ResumeRuntimeTests,
-    RouteMutationRuntimeTests,
+    RouteMutationDraftActivationRuntimeTests,
+    RouteMutationModelMissTriageRuntimeTests,
+    RouteMutationAcceptanceRepairRuntimeTests,
+    RouteMutationPreconditionRuntimeTests,
+    RouteMutationTransactionRuntimeTests,
+    RouteMutationTopologyRuntimeTests,
+    RouteMutationSiblingReplacementRuntimeTests,
+    RouteMutationParentBackwardRuntimeTests,
     StartupBootstrapRuntimeTests,
     StartupDaemonRuntimeTests,
     TerminalRuntimeTests,

@@ -14270,3 +14270,84 @@ Friction points:
   `router_foreground_controller`, `router_packets`, `router_resume`,
   `router_quality_gates`, and `router_material_modeling` all passed under
   their own artifact names.
+
+## 2026-05-17 - Route Mutation Core Child Suites
+
+Task: split the remaining slow `router_route_mutation_core` runtime oracle into
+focused child suites while preserving the legacy aggregate selector.
+
+Trigger reason: the route-mutation runtime oracle still bundled unrelated slow
+scenarios into one long command, which made routine router validation hard to
+parallelize and made model/test ownership harder to inspect.
+
+FlowGuard/OpenSpec route:
+
+- OpenSpec change:
+  `openspec/changes/split-route-mutation-core-child-suites/`.
+- FlowGuard schema check returned `1.0`.
+- StructureMesh/TestMesh artifact:
+  `simulations/flowpilot_structure_maintenance_model.py`.
+- Model-Test Alignment artifact:
+  `simulations/run_flowpilot_model_test_alignment_checks.py`.
+
+Implementation summary:
+
+- `tests/router_runtime/route_mutation.py` is now a compatibility aggregate.
+- The routine `router-route` tier now runs eight focused child suites:
+  draft activation, model-miss triage, acceptance repair, preconditions,
+  transactions, topology, sibling replacement, and parent backward replay.
+- `scripts/run_test_tier.py` now clears stale background artifacts before
+  relaunch and records supervisor failures with exit/meta/error artifacts
+  instead of leaving silent `running` metadata.
+- Documentation, README, changelog, handoff, install checks, TestMesh, and
+  Model-Test Alignment evidence were updated.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
+  `1.0`.
+- `openspec validate split-route-mutation-core-child-suites --strict --json`
+  passed.
+- `openspec validate --changes --strict --json` passed for 16 active changes.
+- `python -m compileall tests\router_runtime scripts simulations -q` passed.
+- `python -m pytest tests\test_flowpilot_test_tiers.py
+  tests\test_flowpilot_model_test_alignment.py -q` passed with 20 tests and
+  21 subtests.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py
+  --json-out simulations\flowpilot_structure_maintenance_results.json`
+  passed.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations\flowpilot_model_test_alignment_results.json` passed.
+- `python scripts\run_test_tier.py --tier router-route --background
+  --background-dir tmp\flowguard_background --background-max-parallel 4 --json`
+  completed through `tmp\flowguard_background\router-route_background_supervisor.*`;
+  status `passed`, exit `0`, `proof_reused=false`. All 11 child suites wrote
+  final meta and exit artifacts with exit `0`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\audit_local_install_sync.py --json`,
+  `python scripts\check_install.py --json`, and
+  `python scripts\run_test_tier.py --tier fast --json` passed.
+
+Counterexamples and hazards preserved:
+
+- The model rejects missing child owners, duplicate state owners, hidden skips,
+  stale child evidence, progress-only background evidence, missing artifacts,
+  unbounded background fanout, and stale release evidence.
+- Model-Test Alignment still rejects missing, stale, progress-only, overclaimed,
+  orphan, and duplicate evidence in known-bad plans.
+
+Friction points:
+
+- A first background route run was blocked by concurrent prompt-store work while
+  prompt hashes were still pending. After the parallel work refreshed the
+  manifest hashes, the route suites passed.
+- A later rerun exposed stale `.exit.txt` reuse and locked artifact files from
+  still-running same-name children. The runner now clears stale artifacts before
+  launch and records locked-artifact supervisor failures explicitly.
+- Installed FlowPilot was synchronized against the current working tree, which
+  includes parallel prompt-store work. The local Git commit for this task should
+  stage only the route-mutation split scope.
+
+Skipped steps:
+
+- No push, tag, release, deploy, or public publication was performed.

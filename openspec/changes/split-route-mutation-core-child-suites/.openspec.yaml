@@ -1,0 +1,8 @@
+id: split-route-mutation-core-child-suites
+status: active
+created: 2026-05-17
+owner: codex
+areas:
+  - tests
+  - flowguard
+  - verification

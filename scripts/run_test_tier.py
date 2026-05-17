@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import time
+import traceback
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -171,9 +172,44 @@ ROUTER_ROUTE_COMMANDS = (
         description="Router public boundary and import-contract slice.",
     ),
     _unittest(
-        "router_route_mutation_core",
-        "tests.router_runtime.route_mutation",
-        description="Runtime route-mutation router slice.",
+        "router_route_mutation_draft_activation",
+        "tests.router_runtime.route_mutation_draft_activation",
+        description="Route-mutation draft preservation and activation guard slice.",
+    ),
+    _unittest(
+        "router_route_mutation_model_miss_triage",
+        "tests.router_runtime.route_mutation_model_miss_triage",
+        description="Route-mutation reviewer-block and model-miss triage slice.",
+    ),
+    _unittest(
+        "router_route_mutation_acceptance_repair",
+        "tests.router_runtime.route_mutation_acceptance_repair",
+        description="Node acceptance-plan route-repair slice.",
+    ),
+    _unittest(
+        "router_route_mutation_preconditions",
+        "tests.router_runtime.route_mutation_preconditions",
+        description="Route-mutation precondition and final-ledger guard slice.",
+    ),
+    _unittest(
+        "router_route_mutation_transactions",
+        "tests.router_runtime.route_mutation_transactions",
+        description="Route-mutation repeated repair transaction slice.",
+    ),
+    _unittest(
+        "router_route_mutation_topology",
+        "tests.router_runtime.route_mutation_topology",
+        description="Route-mutation topology strategy slice.",
+    ),
+    _unittest(
+        "router_route_mutation_sibling_replacement",
+        "tests.router_runtime.route_mutation_sibling_replacement",
+        description="Route-mutation sibling replacement and stale-proof slice.",
+    ),
+    _unittest(
+        "router_route_mutation_parent_backward",
+        "tests.router_runtime.route_mutation_parent_backward",
+        description="Route-mutation parent backward replay and repair slice.",
     ),
     _unittest(
         "router_route_mutation_contracts",
@@ -370,6 +406,18 @@ def artifact_paths(log_root: Path, name: str) -> dict[str, Path]:
     }
 
 
+def clear_artifacts(paths: dict[str, Path]) -> None:
+    for path in paths.values():
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
+        except PermissionError as exc:
+            raise RuntimeError(
+                f"background artifact is still locked by an active process: {path}"
+            ) from exc
+
+
 def background_supervisor_name(tier: str) -> str:
     return f"{tier}_background_supervisor"
 
@@ -454,6 +502,7 @@ def _hidden_process_kwargs() -> dict[str, Any]:
 def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     paths = artifact_paths(log_root, command.name)
+    clear_artifacts(paths)
     meta = {
         "name": command.name,
         "command": list(command.command),
@@ -518,6 +567,7 @@ def _launch_background_supervisor(tier: str, *, log_root: Path, max_parallel: in
     log_root.mkdir(parents=True, exist_ok=True)
     name = background_supervisor_name(tier)
     paths = artifact_paths(log_root, name)
+    clear_artifacts(paths)
     command = [
         sys.executable,
         str(Path(__file__).resolve()),
@@ -595,44 +645,58 @@ def run_background_supervisor(
     running: list[TierCommand] = []
     completed: list[dict[str, Any]] = []
 
-    with paths["out"].open("w", encoding="utf-8", errors="replace") as out_file, paths["err"].open(
-        "w", encoding="utf-8", errors="replace"
-    ) as err_file, paths["combined"].open("w", encoding="utf-8", errors="replace") as combined_file:
-        while pending or running:
-            while pending and len(running) < max_parallel:
-                command = pending.pop(0)
-                launched = _launch_background(command, log_root=log_root)
-                running.append(command)
-                line = f"launched {command.name} pid={launched['child_pid']}\n"
-                out_file.write(line)
-                out_file.flush()
-                combined_file.write(f"[supervisor] {line}")
-                combined_file.flush()
+    try:
+        with paths["out"].open("w", encoding="utf-8", errors="replace") as out_file, paths["err"].open(
+            "w", encoding="utf-8", errors="replace"
+        ) as err_file, paths["combined"].open("w", encoding="utf-8", errors="replace") as combined_file:
+            while pending or running:
+                while pending and len(running) < max_parallel:
+                    command = pending.pop(0)
+                    launched = _launch_background(command, log_root=log_root)
+                    running.append(command)
+                    line = f"launched {command.name} pid={launched['child_pid']}\n"
+                    out_file.write(line)
+                    out_file.flush()
+                    combined_file.write(f"[supervisor] {line}")
+                    combined_file.flush()
 
-            still_running: list[TierCommand] = []
-            for command in running:
-                exit_path = artifact_paths(log_root, command.name)["exit"]
-                exit_code = _read_exit_code(exit_path)
-                if exit_code is None:
-                    still_running.append(command)
-                    continue
-                result = {"name": command.name, "exit_code": exit_code, "ok": exit_code == 0}
-                completed.append(result)
-                line = f"completed {command.name} exit={exit_code}\n"
-                out_file.write(line)
-                out_file.flush()
-                combined_file.write(f"[supervisor] {line}")
-                combined_file.flush()
-                if exit_code != 0:
-                    err_file.write(line)
-                    err_file.flush()
-            running = still_running
+                still_running: list[TierCommand] = []
+                for command in running:
+                    exit_path = artifact_paths(log_root, command.name)["exit"]
+                    exit_code = _read_exit_code(exit_path)
+                    if exit_code is None:
+                        still_running.append(command)
+                        continue
+                    result = {"name": command.name, "exit_code": exit_code, "ok": exit_code == 0}
+                    completed.append(result)
+                    line = f"completed {command.name} exit={exit_code}\n"
+                    out_file.write(line)
+                    out_file.flush()
+                    combined_file.write(f"[supervisor] {line}")
+                    combined_file.flush()
+                    if exit_code != 0:
+                        err_file.write(line)
+                        err_file.flush()
+                running = still_running
 
-            meta["running"] = [command.name for command in running]
-            meta["completed"] = completed
-            _write_json(paths["meta"], meta)
-            if pending or running:
-                time.sleep(BACKGROUND_SUPERVISOR_POLL_SECONDS)
+                meta["running"] = [command.name for command in running]
+                meta["completed"] = completed
+                _write_json(paths["meta"], meta)
+                if pending or running:
+                    time.sleep(BACKGROUND_SUPERVISOR_POLL_SECONDS)
+    except Exception as exc:
+        details = traceback.format_exc()
+        paths["err"].write_text(details, encoding="utf-8", errors="replace")
+        paths["combined"].write_text(f"[supervisor-error] {details}", encoding="utf-8", errors="replace")
+        paths["exit"].write_text("1\n", encoding="utf-8")
+        meta["status"] = "failed"
+        meta["end_time"] = _utc_now()
+        meta["exit_code"] = 1
+        meta["error"] = str(exc)
+        meta["running"] = [command.name for command in running]
+        meta["completed"] = completed
+        _write_json(paths["meta"], meta)
+        return 1
 
     ok = all(item["ok"] for item in completed) and len(completed) == len(commands)
     exit_code = 0 if ok else 1

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -82,7 +84,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_cards", command_names)
         self.assertIn("router_ack_return", command_names)
         self.assertIn("router_boundaries", command_names)
-        self.assertIn("router_route_mutation_core", command_names)
+        self.assertIn("router_route_mutation_draft_activation", command_names)
+        self.assertIn("router_route_mutation_model_miss_triage", command_names)
+        self.assertIn("router_route_mutation_acceptance_repair", command_names)
+        self.assertIn("router_route_mutation_preconditions", command_names)
+        self.assertIn("router_route_mutation_transactions", command_names)
+        self.assertIn("router_route_mutation_topology", command_names)
+        self.assertIn("router_route_mutation_sibling_replacement", command_names)
+        self.assertIn("router_route_mutation_parent_backward", command_names)
         self.assertIn("router_route_mutation_contracts", command_names)
         self.assertIn("router_user_flow_diagram", command_names)
         self.assertIn("router_terminal", command_names)
@@ -94,6 +103,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_material_modeling", command_names)
         self.assertNotIn("router_packets_cards_ack", command_names)
         self.assertNotIn("router_route_mutation", command_names)
+        self.assertNotIn("router_route_mutation_core", command_names)
         self.assertNotIn("router_terminal_closure", command_names)
         self.assertNotIn("test_flowpilot_router_runtime.py", self.command_text("router"))
 
@@ -120,14 +130,29 @@ class FlowPilotTestTierTests(unittest.TestCase):
             [command.name for command in commands],
             [
                 "router_boundaries",
-                "router_route_mutation_core",
+                "router_route_mutation_draft_activation",
+                "router_route_mutation_model_miss_triage",
+                "router_route_mutation_acceptance_repair",
+                "router_route_mutation_preconditions",
+                "router_route_mutation_transactions",
+                "router_route_mutation_topology",
+                "router_route_mutation_sibling_replacement",
+                "router_route_mutation_parent_backward",
                 "router_route_mutation_contracts",
                 "router_user_flow_diagram",
             ],
         )
         command_text = self.command_text("router-route")
         self.assertIn("tests.test_flowpilot_router_boundaries", command_text)
-        self.assertIn("tests.router_runtime.route_mutation", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_draft_activation", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_model_miss_triage", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_acceptance_repair", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_preconditions", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_transactions", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_topology", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_sibling_replacement", command_text)
+        self.assertIn("tests.router_runtime.route_mutation_parent_backward", command_text)
+        self.assertNotIn("tests.router_runtime.route_mutation ", command_text)
         self.assertIn("tests.test_flowpilot_router_runtime_route_mutation", command_text)
         self.assertIn("tests.test_flowpilot_user_flow_diagram", command_text)
 
@@ -148,6 +173,53 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(paths["combined"].name, "meta_legacy_full.combined.txt")
         self.assertEqual(paths["exit"].name, "meta_legacy_full.exit.txt")
         self.assertEqual(paths["meta"].name, "meta_legacy_full.meta.json")
+
+    def test_background_launch_clears_stale_artifacts_before_rerun(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-artifacts-") as tmp_name:
+            paths = run_test_tier.artifact_paths(Path(tmp_name), "router stale child")
+            for path in paths.values():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("stale\n", encoding="utf-8")
+
+            run_test_tier.clear_artifacts(paths)
+
+            for path in paths.values():
+                self.assertFalse(path.exists(), path)
+
+    def test_background_supervisor_records_launch_failures(self) -> None:
+        original_launch = run_test_tier._launch_background
+        try:
+            with tempfile.TemporaryDirectory(prefix="flowpilot-tier-supervisor-") as tmp_name:
+                def fail_launch(command, *, log_root):  # type: ignore[no-untyped-def]
+                    raise RuntimeError(f"artifact locked for {command.name}")
+
+                run_test_tier._launch_background = fail_launch
+                exit_code = run_test_tier.run_background_supervisor(
+                    "router-route",
+                    [
+                        run_test_tier.TierCommand(
+                            name="locked_child",
+                            command=(sys.executable, "-c", "pass"),
+                            description="locked child fixture",
+                        )
+                    ],
+                    log_root=Path(tmp_name),
+                    max_parallel=1,
+                )
+
+                paths = run_test_tier.artifact_paths(
+                    Path(tmp_name),
+                    run_test_tier.background_supervisor_name("router-route"),
+                )
+                meta = json.loads(paths["meta"].read_text(encoding="utf-8"))
+
+                self.assertEqual(exit_code, 1)
+                self.assertEqual(paths["exit"].read_text(encoding="utf-8").strip(), "1")
+                self.assertEqual(meta["status"], "failed")
+                self.assertIn("artifact locked for locked_child", meta["error"])
+                self.assertIn("artifact locked for locked_child", paths["err"].read_text(encoding="utf-8"))
+        finally:
+            run_test_tier._launch_background = original_launch
 
     def test_large_background_tiers_use_bounded_supervisor(self) -> None:
         router_count = len(run_test_tier.commands_for_tier("router"))
