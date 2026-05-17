@@ -37,6 +37,7 @@ class TierCommand:
     long_running: bool = False
     release_only: bool = False
     background_recommended: bool = False
+    background_stage: int = 0
 
 
 def _py(*args: str) -> tuple[str, ...]:
@@ -295,14 +296,6 @@ RELEASE_COMMANDS = (
         description="Release-tooling FlowGuard checks.",
     ),
     TierCommand(
-        name="public_release_check",
-        command=_py("scripts/check_public_release.py", "--json", "--skip-url-check"),
-        description="Public release boundary validation without URL probing.",
-        release_only=True,
-        long_running=True,
-        background_recommended=True,
-    ),
-    TierCommand(
         name="meta_full",
         command=_py("simulations/run_meta_checks.py", "--full"),
         description="Layered full Meta parent regression.",
@@ -317,6 +310,15 @@ RELEASE_COMMANDS = (
         release_only=True,
         long_running=True,
         background_recommended=True,
+    ),
+    TierCommand(
+        name="public_release_check",
+        command=_py("scripts/check_public_release.py", "--json", "--skip-url-check"),
+        description="Public release boundary validation without URL probing.",
+        release_only=True,
+        long_running=True,
+        background_recommended=True,
+        background_stage=1,
     ),
 )
 
@@ -441,6 +443,7 @@ def command_to_json(command: TierCommand, *, background_dir: Path) -> dict[str, 
         "long_running": command.long_running,
         "release_only": command.release_only,
         "background_recommended": command.background_recommended,
+        "background_stage": command.background_stage,
         "background_artifacts": _artifact_paths_for_json(background_dir, command.name),
     }
 
@@ -563,6 +566,22 @@ def _read_exit_code(path: Path) -> int | None:
         return 1
 
 
+def next_background_launch_index(
+    pending: Sequence[TierCommand],
+    running: Sequence[TierCommand],
+) -> int | None:
+    if not pending:
+        return None
+    if running:
+        active_stage = min(command.background_stage for command in running)
+    else:
+        active_stage = min(command.background_stage for command in pending)
+    for index, command in enumerate(pending):
+        if command.background_stage == active_stage:
+            return index
+    return None
+
+
 def _launch_background_supervisor(tier: str, *, log_root: Path, max_parallel: int) -> dict[str, Any]:
     log_root.mkdir(parents=True, exist_ok=True)
     name = background_supervisor_name(tier)
@@ -651,7 +670,10 @@ def run_background_supervisor(
         ) as err_file, paths["combined"].open("w", encoding="utf-8", errors="replace") as combined_file:
             while pending or running:
                 while pending and len(running) < max_parallel:
-                    command = pending.pop(0)
+                    launch_index = next_background_launch_index(pending, running)
+                    if launch_index is None:
+                        break
+                    command = pending.pop(launch_index)
                     launched = _launch_background(command, log_root=log_root)
                     running.append(command)
                     line = f"launched {command.name} pid={launched['child_pid']}\n"

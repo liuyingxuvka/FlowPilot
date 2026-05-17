@@ -51,6 +51,7 @@ class State:
     release_obligation_visible: bool = True
     release_required: bool = False
     release_suite_run_or_backgrounded: bool = False
+    release_public_check_after_model_proofs: bool = True
     install_sync_required: bool = False
     install_sync_planned: bool = False
 
@@ -178,6 +179,10 @@ SCENARIOS: dict[str, State] = {
         release_required=True,
         release_suite_run_or_backgrounded=False,
     ),
+    "release_public_check_races_model_proofs": replace(
+        _valid_background("release_public_check_races_model_proofs", release=True),
+        release_public_check_after_model_proofs=False,
+    ),
     "install_sync_skipped_after_tool_change": replace(
         _valid_fast("install_sync_skipped_after_tool_change"),
         install_sync_required=True,
@@ -232,6 +237,12 @@ def test_tier_failures(state: State) -> list[str]:
         and not state.release_obligation_visible
     ):
         failures.append("release_obligation_hidden")
+    if (
+        state.tier_scope == "release"
+        and state.background_requested
+        and not state.release_public_check_after_model_proofs
+    ):
+        failures.append("release_public_check_races_model_proofs")
     if state.install_sync_required and not state.install_sync_planned:
         failures.append("install_sync_not_planned")
     return sorted(set(failures))

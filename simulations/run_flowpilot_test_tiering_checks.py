@@ -37,6 +37,7 @@ REQUIRED_LABELS = {
     "reject_background_missing_artifact_set",
     "reject_release_obligation_hidden",
     "reject_release_claim_without_release_suite",
+    "reject_release_public_check_races_model_proofs",
     "reject_install_sync_skipped_after_tool_change",
 }
 
@@ -58,6 +59,7 @@ EXPECTED_HAZARD_FAILURES = {
     "background_missing_artifact_set": {"background_artifact_set_missing"},
     "release_obligation_hidden": {"release_obligation_hidden"},
     "release_claim_without_release_suite": {"release_scope_missing_release_suite"},
+    "release_public_check_races_model_proofs": {"release_public_check_races_model_proofs"},
     "install_sync_skipped_after_tool_change": {"install_sync_not_planned"},
 }
 
@@ -75,7 +77,8 @@ def _state_id(state: model.State) -> str:
         f"{state.background_exit_artifact_present},{state.background_exit_inspected},"
         f"{state.background_progress_claimed_as_pass}|"
         f"release={state.release_required},{state.release_obligation_visible},"
-        f"{state.release_suite_run_or_backgrounded}|"
+        f"{state.release_suite_run_or_backgrounded},"
+        f"{state.release_public_check_after_model_proofs}|"
         f"sync={state.install_sync_required},{state.install_sync_planned}"
     )
 

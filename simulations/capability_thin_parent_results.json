@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-17T17:41:50.235315+00:00",
+  "created_at": "2026-05-17T19:33:06.572578+00:00",
   "graph": {
     "edge_count": 12,
     "invariant_failure_count": 0,
@@ -8,28 +8,19 @@
     "state_count": 7
   },
   "legacy_full_regression": {
-    "current": false,
-    "required_for_release": true,
+    "current": true,
+    "required_for_release": false,
     "status": {
-      "created_at": "2026-05-16T11:49:11.742612+00:00",
-      "edge_count": 2036030,
-      "kind": "legacy_full_parent",
-      "layered_status": {
-        "created_at": "2026-05-17T15:54:58.966595+00:00",
-        "edge_count": 14,
-        "proof_file": "simulations/capability_layered_full_results.proof.json",
-        "reason": "result fingerprint changed",
-        "release_confidence": "current_with_layered_full_parent",
-        "result_file": "simulations/capability_layered_full_results.json",
-        "state_count": 9,
-        "valid": false
-      },
-      "legacy_monolith_required": true,
-      "proof_file": "simulations/capability_results.proof.json",
-      "reason": "full proof fingerprint mismatch",
-      "result_file": "simulations/capability_results.json",
-      "state_count": 1959064,
-      "valid": false
+      "created_at": "2026-05-17T19:33:05.091502+00:00",
+      "edge_count": 14,
+      "kind": "layered_full_parent",
+      "legacy_monolith_required": false,
+      "proof_file": "simulations/capability_layered_full_results.proof.json",
+      "reason": "valid proof",
+      "release_confidence": "current_with_layered_full_parent",
+      "result_file": "simulations/capability_layered_full_results.json",
+      "state_count": 9,
+      "valid": true
     }
   },
   "loop": {
@@ -45,7 +36,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",

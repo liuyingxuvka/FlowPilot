@@ -14352,6 +14352,109 @@ Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
 
+## 2026-05-17 - StructureMesh target split and protocol catalog extraction
+
+Trigger:
+
+- The user upgraded FlowGuard StructureMesh and asked for the next router
+  slimming pass to use real target-structure evidence instead of ad hoc
+  helper extraction.
+- The user later clarified that the completed work must stay local and must
+  not be pushed or published to GitHub.
+
+Actions:
+
+- Added target module recommendations and TestMesh target derivations to the
+  router facade and structure-maintenance models.
+- Split the protocol/catalog ownership band out of `flowpilot_router.py` into
+  `flowpilot_router_protocol_catalog.py` while keeping the router facade import
+  contract intact.
+- Updated version, README, changelog, handoff notes, and OpenSpec artifacts for
+  local v0.9.8 readiness without remote publication.
+- Fixed a release-tier background race by staging `public_release_check` after
+  Meta and Capability proof writers.
+- Fixed card instruction coverage source scanning so StructureMesh owner moves
+  can be validated across the facade, protocol catalog, and route frontier
+  modules.
+- Synchronized the installed local FlowPilot skill from the repository source.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  `1.0`.
+- `python simulations\run_flowpilot_router_facade_split_checks.py --json-out
+  simulations\flowpilot_router_facade_split_results.json` passed.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations\flowpilot_structure_maintenance_results.json` passed.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations\flowpilot_model_test_alignment_results.json` passed.
+- `python simulations\run_flowpilot_test_tiering_checks.py --json-out
+  simulations\flowpilot_test_tiering_results.json` passed.
+- `python simulations\run_card_instruction_coverage_checks.py` passed.
+- `python -m unittest tests.test_flowpilot_test_tiers -q` passed.
+- `python -m unittest tests.test_flowpilot_card_instruction_coverage -q`
+  passed.
+- `python -m unittest tests.test_flowpilot_router_boundaries -q` passed.
+- `python -m unittest tests.router_runtime.cards -v` passed.
+- `tmp\flowguard_background\run_meta_checks.meta.json` completed with status
+  `passed`, exit `0`, proof reuse `false`, and latest update
+  `2026-05-17T21:14:03`.
+- `tmp\flowguard_background\run_capability_checks.meta.json` completed with
+  status `passed`, exit `0`, proof reuse `false`, and latest update
+  `2026-05-17T21:14:03`.
+- `tmp\flowguard_background\release_background_supervisor.meta.json`
+  completed 4 of 4 commands with status `passed`, exit `0`, proof reuse
+  `false`, and latest update `2026-05-17T21:34:03`.
+- `tmp\flowguard_background\public_release_check.meta.json` completed with
+  status `passed`, exit `0`, proof reuse `true`, and latest update
+  `2026-05-17T21:34:02`.
+- `tmp\flowguard_background\router_background_supervisor.meta.json` completed
+  24 of 24 router commands with status `passed`, exit `0`, proof reuse
+  `false`, and latest update `2026-05-17T21:51:14`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\check_install.py --json` passed.
+
+Findings:
+
+- StructureMesh target evidence now records the intended router destination
+  modules, including the new protocol catalog owner, instead of only checking
+  what happened to exist after extraction.
+- TestMesh target derivations now bind model evidence to router test slices so
+  large-script slimming has executable regression coverage.
+- The protocol/catalog split reduced `flowpilot_router.py` to 12,471 lines and
+  created a 2,796-line focused protocol/catalog child module.
+- Release-tier background orchestration needs an explicit stage barrier when a
+  public release check reads proof artifacts written by Meta and Capability
+  regressions.
+- Card coverage and other model evidence scanners must follow declared module
+  ownership after StructureMesh splits; facade-only scans can report false
+  failures after a correct extraction.
+
+Counterexamples and hazards preserved:
+
+- StructureMesh still rejects one-function-file splits, micro-module
+  explosion, missing owners, duplicate owners, missing facades, removed
+  entrypoints, stale evidence, hidden skips, and progress-only background
+  evidence.
+- Test-tier FlowGuard now rejects `release_public_check_races_model_proofs`.
+- Card coverage still rejects missing system-card and live-context delivery
+  evidence after the source scan is widened to the correct owner modules.
+
+Friction points:
+
+- A rerun of `router-terminal` failed immediately because the original full
+  router background supervisor still held child artifact files. The original
+  supervisor was still valid and later completed; the failed rerun was not used
+  as pass evidence.
+- Windows process discovery must include `python3.12`, not only `python`, when
+  checking hidden background test liveness.
+
+Skipped steps:
+
+- No GitHub push, tag, release, deploy, or remote publication was performed.
+
 ## 2026-05-17 - Router Coarse Phase Owner Split
 
 Task: finish the next router maintenance wave by moving the large remaining

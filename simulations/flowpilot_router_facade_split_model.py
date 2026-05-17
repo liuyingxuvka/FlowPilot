@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from flowguard import (
+    CodeStructureRecommendation,
     EVIDENCE_CONFORMANCE_GREEN,
     ModuleStructureEvidence,
     PublicEntrypointEvidence,
@@ -18,7 +19,9 @@ from flowguard import (
     StructurePartitionItem,
     TestMeshPlan,
     TestPartitionItem,
+    TestTargetSplitDerivation,
     TestSuiteEvidence,
+    TargetModuleRecommendation,
 )
 
 
@@ -38,7 +41,7 @@ class PromptAssetEvidence:
 
 @dataclass(frozen=True)
 class RouterFacadeSplitEvidence:
-    child_module_count: int = 31
+    child_module_count: int = 32
     max_child_module_count: int = 36
     micro_module_count: int = 0
     max_micro_module_count: int = 2
@@ -205,6 +208,13 @@ ROUTER_FACADE_PARTITIONS = (
         owner_module_id="runtime_state",
         old_path="flowpilot_router run/bootstrap state helpers",
         new_path="flowpilot_router_runtime_state",
+    ),
+    StructurePartitionItem(
+        "router_protocol_catalog",
+        item_type="config",
+        owner_module_id="protocol_catalog",
+        old_path="flowpilot_router top-level schema/action/event/gate catalogs",
+        new_path="flowpilot_router_protocol_catalog",
     ),
     StructurePartitionItem(
         "startup_flow",
@@ -392,6 +402,27 @@ ROUTER_FACADE_MODULES = (
         release_required=True,
     ),
     ModuleStructureEvidence(
+        "protocol_catalog",
+        path="skills/flowpilot/assets/flowpilot_router_protocol_catalog.py",
+        owns_functions=(
+            "_public_gate_contract",
+            "_gate_contract_for_id",
+            "_gate_contract_for_card",
+            "_gate_contract_for_event",
+            "_gate_completion_wait_group",
+        ),
+        owns_config=("router_protocol_catalog",),
+        behavior_contracts=(
+            "schema constants",
+            "boot and system-card catalogs",
+            "external event metadata",
+            "gate contract tables",
+            "model gate alias tables",
+        ),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
         "startup_flow",
         path="skills/flowpilot/assets/flowpilot_router_startup_flow.py",
         owns_functions=("compute_bootloader_action", "apply_bootloader_action", "_next_resume_action", "_next_startup_display_action"),
@@ -464,6 +495,138 @@ ROUTER_FACADE_MODULES = (
 )
 
 
+ROUTER_FACADE_TARGET_RATIONALES = {
+    "router_facade": "Retains public import, CLI, and root state coordination while delegating owned regions.",
+    "prompt_store": "Owns prompt manifest loading, template rendering, and prompt hash authority.",
+    "prompt_delivery": "Owns prompt-backed delivery text used by cards, controller tables, and startup heartbeats.",
+    "prompt_assets": "Owns external prompt asset files and install-time prompt freshness evidence.",
+    "controller_ledger": "Owns controller ledger paths and scheduler projection helper contracts.",
+    "card_delivery": "Owns card ledger read/write contract and delivery attempt identity helpers.",
+    "card_returns": "Owns ACK return settlement and output-bearing work clearance rules.",
+    "role_io_protocol": "Owns role I/O envelope protocol, injection receipts, and lifecycle hash authority.",
+    "event_identity": "Owns event idempotency and scoped retry-budget behavior.",
+    "daemon_runtime": "Owns daemon lock, status, and tick lifecycle helpers.",
+    "runtime_state": "Owns bootstrap and run-state factories plus persistence wrappers.",
+    "protocol_catalog": "Owns router schemas, action catalogs, event metadata, gate contracts, and alias tables.",
+    "startup_flow": "Owns startup, bootloader, resume, and role-recovery action bodies.",
+    "controller_scheduler": "Owns controller scheduling, receipt reconciliation, standby, and patrol behavior.",
+    "work_packets": "Owns material, research, current-node, and PM role-work packet flow.",
+    "events_repair": "Owns control blockers, repair transactions, and gate-decision validation.",
+    "event_dispatcher": "Owns external event dispatch routing and event-finalizer delegation.",
+    "route_frontier": "Owns route/frontier projection and node-completion lifecycle.",
+    "terminal_ledger": "Owns terminal ledger, replay, closure, and reconciliation outputs.",
+}
+
+
+ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
+    ("prompt_manifest_loading", "prompt_store"),
+    ("card_post_ack_policy", "prompt_delivery"),
+    ("controller_table_prompt", "prompt_delivery"),
+    ("startup_heartbeat_prompt", "prompt_delivery"),
+    ("controller_ledger_paths", "controller_ledger"),
+    ("router_scheduler_projection", "controller_ledger"),
+    ("card_delivery_ledgers", "card_delivery"),
+    ("card_return_settlement", "card_returns"),
+    ("role_io_protocol", "role_io_protocol"),
+    ("event_identity", "event_identity"),
+    ("daemon_runtime", "daemon_runtime"),
+    ("runtime_state", "runtime_state"),
+    ("_public_gate_contract", "protocol_catalog"),
+    ("_gate_contract_for_id", "protocol_catalog"),
+    ("_gate_contract_for_card", "protocol_catalog"),
+    ("_gate_contract_for_event", "protocol_catalog"),
+    ("_gate_completion_wait_group", "protocol_catalog"),
+    ("startup_flow", "startup_flow"),
+    ("controller_scheduler", "controller_scheduler"),
+    ("work_packets", "work_packets"),
+    ("events_repair", "events_repair"),
+    ("event_dispatcher", "event_dispatcher"),
+    ("route_frontier", "route_frontier"),
+    ("terminal_ledger", "terminal_ledger"),
+)
+
+
+def _state_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (state_id, module.module_id)
+        for module in modules
+        for state_id in module.owns_state
+    )
+
+
+def _side_effect_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (side_effect_id, module.module_id)
+        for module in modules
+        for side_effect_id in module.owns_side_effects
+    )
+
+
+def _config_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (config_id, module.module_id)
+        for module in modules
+        for config_id in module.owns_config
+    )
+
+
+def router_facade_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_router_facade_target_structure_v2",
+        source_model_id="flowpilot_router_facade_prompt_store_split",
+        source_model_path="simulations/flowpilot_router_facade_split_model.py",
+        parent_module_id="flowpilot_router_facade_prompt_store_split",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=tuple(
+            TargetModuleRecommendation(
+                module_id=module.module_id,
+                path=module.path,
+                layer=module.layer,
+                owns_function_blocks=module.owns_functions,
+                owns_state=module.owns_state,
+                owns_side_effects=module.owns_side_effects,
+                owns_config=module.owns_config,
+                public_entrypoints=(
+                    ("flowpilot_router_import", "flowpilot_router_cli")
+                    if module.module_id == "router_facade"
+                    else ()
+                ),
+                validation_boundaries=module.behavior_contracts,
+                rationale=ROUTER_FACADE_TARGET_RATIONALES[module.module_id],
+            )
+            for module in ROUTER_FACADE_MODULES
+        ),
+        function_block_map=ROUTER_FACADE_FUNCTION_BLOCK_MAP,
+        state_owner_map=_state_owner_map(ROUTER_FACADE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(ROUTER_FACADE_MODULES),
+        config_owner_map=_config_owner_map(ROUTER_FACADE_MODULES),
+        public_entrypoint_map=(
+            ("public_router_facade", "router_facade"),
+            ("flowpilot_router_import", "router_facade"),
+            ("flowpilot_router_cli", "router_facade"),
+        ),
+        facade_module_id="router_facade",
+        validation_boundaries=(
+            "prompt store unit tests",
+            "router boundary tests",
+            "router runtime child suites",
+            "install prompt asset audit",
+        ),
+        rationale=(
+            "FlowGuard target structure keeps the router facade as the public "
+            "boundary and assigns prompt, runtime, startup, packet, repair, "
+            "route, and terminal ownership to coarse child modules."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
 def router_facade_structure_plan() -> StructureMeshPlan:
     return StructureMeshPlan(
         parent_module_id="flowpilot_router_facade_prompt_store_split",
@@ -472,6 +635,7 @@ def router_facade_structure_plan() -> StructureMeshPlan:
         partition_items=ROUTER_FACADE_PARTITIONS,
         child_modules=ROUTER_FACADE_MODULES,
         public_entrypoints=ROUTER_FACADE_ENTRYPOINTS,
+        target_structure=router_facade_target_structure(),
     )
 
 
@@ -487,6 +651,7 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
             TestPartitionItem("event_identity", owner_suite_id="event_contract"),
             TestPartitionItem("daemon_runtime", owner_suite_id="startup_daemon"),
             TestPartitionItem("runtime_state", owner_suite_id="startup_runtime"),
+            TestPartitionItem("router_protocol_catalog", owner_suite_id="router_quality_gates"),
             TestPartitionItem("startup_flow", owner_suite_id="startup_runtime"),
             TestPartitionItem("controller_scheduler", owner_suite_id="controller_runtime"),
             TestPartitionItem("work_packets", owner_suite_id="packet_runtime"),
@@ -552,6 +717,15 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 release_required=True,
             ),
             TestSuiteEvidence(
+                "router_quality_gates",
+                command="python -m unittest tests.router_runtime.quality_gates",
+                result_status=TEST_STATUS_PASSED,
+                evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+                result_path="simulations/flowpilot_router_facade_split_results.json",
+                owns_state=("router_protocol_catalog",),
+                release_required=True,
+            ),
+            TestSuiteEvidence(
                 "controller_runtime",
                 command="python -m unittest tests.router_runtime.controller tests.router_runtime.foreground_controller",
                 result_status=TEST_STATUS_PASSED,
@@ -613,6 +787,66 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 result_path="simulations/flowpilot_router_facade_split_results.json",
                 owns_state=("install_prompt_assets",),
                 release_required=True,
+            ),
+        ),
+        target_split_derivation=TestTargetSplitDerivation(
+            source_model_id="flowpilot_router_facade_prompt_store_split",
+            source_model_path="simulations/flowpilot_router_facade_split_model.py",
+            target_suite_ids=(
+                "prompt_store_unit",
+                "router_boundaries",
+                "router_ack_return",
+                "event_contract",
+                "startup_daemon",
+                "startup_runtime",
+                "router_quality_gates",
+                "controller_runtime",
+                "packet_runtime",
+                "repair_runtime",
+                "event_dispatch_runtime",
+                "route_runtime",
+                "terminal_runtime",
+                "install_checks",
+            ),
+            covered_partition_item_ids=(
+                "prompt_store",
+                "router_facade_prompt_delivery",
+                "card_return_settlement",
+                "event_identity",
+                "daemon_runtime",
+                "runtime_state",
+                "router_protocol_catalog",
+                "startup_flow",
+                "controller_scheduler",
+                "work_packets",
+                "events_repair",
+                "event_dispatcher",
+                "route_frontier",
+                "terminal_ledger",
+                "install_prompt_assets",
+            ),
+            state_owner_fields=(
+                "prompt_store",
+                "router_facade_prompt_delivery",
+                "card_return_settlement",
+                "event_identity",
+                "daemon_runtime",
+                "runtime_state",
+                "router_protocol_catalog",
+                "startup_flow",
+                "controller_scheduler",
+                "work_packets",
+                "events_repair",
+                "event_dispatcher",
+                "route_frontier",
+                "terminal_ledger",
+                "install_prompt_assets",
+            ),
+            rationale=(
+                "Router facade release confidence is derived from focused child "
+                "suites that cover prompt storage, prompt delivery, ACK returns, "
+                "event identity, runtime/startup, controller, packets, repair, "
+                "route, terminal, and install asset boundaries."
             ),
         ),
     )

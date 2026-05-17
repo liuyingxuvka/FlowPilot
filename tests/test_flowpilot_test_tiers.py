@@ -245,9 +245,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(run_test_tier._hidden_process_kwargs(), {})
 
     def test_release_and_legacy_tiers_mark_long_background_recommended_commands(self) -> None:
+        release_commands = run_test_tier.commands_for_tier("release")
         release_long = [
             command.name
-            for command in run_test_tier.commands_for_tier("release")
+            for command in release_commands
             if command.long_running and command.background_recommended
         ]
         legacy_long = [
@@ -259,6 +260,29 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("meta_full", release_long)
         self.assertIn("capability_full", release_long)
         self.assertEqual(legacy_long, ["meta_legacy_full", "capability_legacy_full"])
+        release_stages = {command.name: command.background_stage for command in release_commands}
+        self.assertEqual(release_stages["release_tooling"], 0)
+        self.assertEqual(release_stages["meta_full"], 0)
+        self.assertEqual(release_stages["capability_full"], 0)
+        self.assertGreater(release_stages["public_release_check"], release_stages["meta_full"])
+
+    def test_background_supervisor_respects_stage_barriers(self) -> None:
+        pending = [
+            run_test_tier.TierCommand(
+                name="stage_1",
+                command=(sys.executable, "-c", "pass"),
+                description="later stage",
+                background_stage=1,
+            ),
+            run_test_tier.TierCommand(
+                name="stage_0",
+                command=(sys.executable, "-c", "pass"),
+                description="earlier stage",
+                background_stage=0,
+            ),
+        ]
+        self.assertEqual(run_test_tier.next_background_launch_index(pending, []), 1)
+        self.assertEqual(run_test_tier.next_background_launch_index([pending[0]], [pending[1]]), None)
 
     def test_tiering_flowguard_model_rejects_known_bad_hazards(self) -> None:
         report = run_tiering_checks.build_report()
@@ -267,6 +291,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("background_progress_only_claimed_pass", rejected)
         self.assertIn("root_pytest_scans_backup_tests", rejected)
         self.assertIn("router_slice_import_broken_counted_green", rejected)
+        self.assertIn("release_public_check_races_model_proofs", rejected)
         self.assertEqual(report["background_artifact_contract"], ["out", "err", "combined", "exit", "meta"])
 
     def test_slow_test_contract_flowguard_model_rejects_parent_child_hazards(self) -> None:

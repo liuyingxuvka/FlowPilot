@@ -4,19 +4,21 @@
     "hazards": [
       {
         "blocked": true,
-        "blocker_count": 1,
+        "blocker_count": 2,
         "decision": "coverage_gap_blocked",
         "finding_codes": [
-          "coverage_gap"
+          "coverage_gap",
+          "target_function_owner_mismatch"
         ],
         "name": "missing_model_partition_owner"
       },
       {
         "blocked": true,
-        "blocker_count": 1,
+        "blocker_count": 2,
         "decision": "ownership_conflict",
         "finding_codes": [
-          "duplicate_state_owner"
+          "duplicate_state_owner",
+          "target_state_owner_mismatch"
         ],
         "name": "duplicate_model_state_owner"
       },
@@ -74,19 +76,21 @@
     "hazards": [
       {
         "blocked": true,
-        "blocker_count": 1,
+        "blocker_count": 2,
         "decision": "coverage_gap_blocked",
         "finding_codes": [
-          "coverage_gap"
+          "coverage_gap",
+          "target_function_owner_mismatch"
         ],
         "name": "missing_partition_owner"
       },
       {
         "blocked": true,
-        "blocker_count": 1,
+        "blocker_count": 2,
         "decision": "ownership_conflict",
         "finding_codes": [
-          "duplicate_state_owner"
+          "duplicate_state_owner",
+          "target_state_owner_mismatch"
         ],
         "name": "duplicate_root_state_owner"
       },
@@ -152,10 +156,11 @@
       },
       {
         "blocked": true,
-        "blocker_count": 1,
-        "decision": "ownership_conflict",
+        "blocker_count": 2,
+        "decision": "target_split_derivation_required",
         "finding_codes": [
-          "duplicate_state_owner"
+          "duplicate_state_owner",
+          "incomplete_target_suites"
         ],
         "name": "duplicate_state_owner"
       },
@@ -215,9 +220,10 @@
       },
       {
         "blocked": true,
-        "blocker_count": 1,
-        "decision": "stale_test_evidence",
+        "blocker_count": 2,
+        "decision": "target_split_derivation_required",
         "finding_codes": [
+          "incomplete_target_suites",
           "stale_test_evidence"
         ],
         "name": "release_required_stale"

@@ -49,11 +49,14 @@ The current router-facade split also has a narrower FlowGuard gate at
 PromptStore manifest/hash behavior, prompt-delivery ownership, card-delivery
 ownership, Controller action-ledger helper ownership, role-output protocol
 helper ownership, coarse runtime/startup/controller/work-packet/event/repair/
-route/terminal ownership, and compatibility-facade preservation. The coarse
-owner modules currently added for this gate are:
+route/terminal ownership, upgraded StructureMesh target-structure evidence,
+and compatibility-facade preservation. The coarse owner modules currently added
+for this gate are:
 
 - `flowpilot_router_runtime_state.py` for bootstrap/run state and low-level
   runtime factories;
+- `flowpilot_router_protocol_catalog.py` for schema constants, action/event
+  catalogs, system-card tables, gate contracts, and protocol lookup helpers;
 - `flowpilot_router_startup_flow.py` for startup, bootloader, resume, and
   role-recovery phase bodies;
 - `flowpilot_router_controller_scheduler.py` for Controller scheduler rows,

@@ -540,9 +540,16 @@ def _manifest_entries(project_root: Path) -> list[dict[str, Any]]:
 
 def collect_router_facts(project_root: Path) -> RouterFacts:
     router = _load_router(project_root)
-    router_source = (
-        project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
-    ).read_text(encoding="utf-8")
+    assets_root = project_root / "skills" / "flowpilot" / "assets"
+    router_source = (assets_root / "flowpilot_router.py").read_text(encoding="utf-8")
+    live_context_source = router_source
+    for owner_name in (
+        "flowpilot_router_protocol_catalog.py",
+        "flowpilot_router_route_frontier.py",
+    ):
+        owner_path = assets_root / owner_name
+        if owner_path.exists():
+            live_context_source += "\n" + owner_path.read_text(encoding="utf-8")
     prompt_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts"
     router_prompt_source = router_source
     for prompt_path in (
@@ -587,12 +594,12 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
             external_card_flag_errors.append(f"{event_name} requires unknown delivered-card flag: {requires}")
 
     live_context_errors: list[str] = []
-    if LIVE_CONTEXT_HELPER not in router_source or LIVE_CONTEXT_SCHEMA not in router_source:
+    if LIVE_CONTEXT_HELPER not in live_context_source or LIVE_CONTEXT_SCHEMA not in live_context_source:
         live_context_errors.append("router does not build live card delivery context")
-    if '"delivery_context"' not in router_source:
+    if '"delivery_context"' not in live_context_source:
         live_context_errors.append("system card delivery action/ledger omits delivery_context")
     for field in LIVE_CONTEXT_REQUIRED_FIELDS:
-        if field not in router_source:
+        if field not in live_context_source:
             live_context_errors.append(f"live card delivery context omits {field}")
 
     runtime_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit"

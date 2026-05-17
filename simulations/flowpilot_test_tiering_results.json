@@ -40,6 +40,9 @@
     "release_obligation_hidden": [
       "release_obligation_hidden"
     ],
+    "release_public_check_races_model_proofs": [
+      "release_public_check_races_model_proofs"
+    ],
     "root_pytest_scans_backup_tests": [
       "pytest_collection_not_scoped"
     ],
@@ -56,12 +59,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=54",
+    "summary": "sequences=2 initial_states=1 traces=57",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 36,
+    "edge_count": 38,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
@@ -78,6 +81,7 @@
       "reject_public_release_in_fast_tier",
       "reject_release_claim_without_release_suite",
       "reject_release_obligation_hidden",
+      "reject_release_public_check_races_model_proofs",
       "reject_root_pytest_scans_backup_tests",
       "reject_router_slice_import_broken_counted_green",
       "reject_stale_child_evidence_used",
@@ -92,6 +96,7 @@
       "select_public_release_in_fast_tier",
       "select_release_claim_without_release_suite",
       "select_release_obligation_hidden",
+      "select_release_public_check_races_model_proofs",
       "select_root_pytest_scans_backup_tests",
       "select_router_slice_import_broken_counted_green",
       "select_stale_child_evidence_used",
@@ -102,9 +107,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 14,
-    "state_count": 37,
-    "terminal_state_count": 18,
+    "rejected_state_count": 15,
+    "state_count": 39,
+    "terminal_state_count": 19,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -132,6 +137,7 @@
       "public_release_in_fast_tier",
       "release_claim_without_release_suite",
       "release_obligation_hidden",
+      "release_public_check_races_model_proofs",
       "root_pytest_scans_backup_tests",
       "router_slice_import_broken_counted_green",
       "stale_child_evidence_used"

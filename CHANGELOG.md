@@ -2,6 +2,29 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.8 - 2026-05-17
+
+### Added
+
+- Added the `adopt-structuremesh-target-split-and-slim-router` OpenSpec change
+  for the upgraded StructureMesh target-structure workflow.
+- Added model-derived `CodeStructureRecommendation` target structures to the
+  router facade and structure-maintenance FlowGuard gates.
+- Added model-derived TestMesh target split derivations so parent validation
+  gates explicitly cover child suites and partitions before release confidence
+  is claimed.
+- Added `flowpilot_router_protocol_catalog.py` as the owner for router schema,
+  action, event, system-card, gate-contract, and protocol catalog tables.
+
+### Changed
+
+- Reduced `flowpilot_router.py` further by moving the large declarative
+  protocol/catalog band behind the compatibility facade.
+- Updated StructureMesh ownership evidence for the new protocol catalog owner
+  while preserving the public router import and CLI paths.
+- Prepared local release materials for v0.9.8; GitHub push and remote release
+  are intentionally deferred.
+
 ## 0.9.7 - 2026-05-17
 
 ### Added

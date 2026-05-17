@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 from flowguard import (
+    CodeStructureRecommendation,
     EVIDENCE_ABSTRACT_GREEN,
     EVIDENCE_CONFORMANCE_GREEN,
     ModuleStructureEvidence,
@@ -20,7 +21,9 @@ from flowguard import (
     StructurePartitionItem,
     TestMeshPlan,
     TestPartitionItem,
+    TestTargetSplitDerivation,
     TestSuiteEvidence,
+    TargetModuleRecommendation,
 )
 
 
@@ -73,6 +76,13 @@ ROUTER_STRUCTURE_PARTITIONS = (
         owner_module_id="bootloader",
         old_path="flowpilot_router.apply_bootloader_action",
         new_path="flowpilot_router_bootloader",
+    ),
+    StructurePartitionItem(
+        "router_protocol_catalog",
+        item_type="config",
+        owner_module_id="protocol_catalog",
+        old_path="flowpilot_router schema/action/event/gate catalogs",
+        new_path="flowpilot_router_protocol_catalog",
     ),
     StructurePartitionItem(
         "pm_role_work_next_actions",
@@ -136,6 +146,23 @@ ROUTER_STRUCTURE_MODULES = (
         owns_side_effects=("bootloader_row_write",),
         behavior_contracts=("startup ordering", "question stop boundary"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+    ),
+    ModuleStructureEvidence(
+        "protocol_catalog",
+        path="skills/flowpilot/assets/flowpilot_router_protocol_catalog.py",
+        owns_functions=(
+            "_gate_contract_for_id",
+            "_gate_contract_for_card",
+            "_gate_contract_for_event",
+        ),
+        owns_config=("router_protocol_catalog",),
+        behavior_contracts=(
+            "schema/action/event catalogs",
+            "gate contract lookup",
+            "model gate alias tables",
+        ),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
     ),
     ModuleStructureEvidence(
         "pm_role_work",
@@ -808,6 +835,194 @@ ROUTER_TEST_SUITES = (
 )
 
 
+def _target_modules_from_structure_evidence(
+    modules: tuple[ModuleStructureEvidence, ...],
+    *,
+    public_entrypoints_by_module: dict[str, tuple[str, ...]] | None = None,
+) -> tuple[TargetModuleRecommendation, ...]:
+    entrypoints = public_entrypoints_by_module or {}
+    return tuple(
+        TargetModuleRecommendation(
+            module_id=module.module_id,
+            path=module.path,
+            layer=module.layer,
+            owns_function_blocks=module.owns_functions,
+            owns_state=module.owns_state,
+            owns_side_effects=module.owns_side_effects,
+            owns_config=module.owns_config,
+            public_entrypoints=entrypoints.get(module.module_id, ()),
+            validation_boundaries=module.behavior_contracts,
+            rationale=(
+                "Owns "
+                + (", ".join(module.behavior_contracts) if module.behavior_contracts else module.module_id)
+                + " within the parent split."
+            ),
+        )
+        for module in modules
+    )
+
+
+def _function_block_map_from_partitions(
+    partitions: tuple[StructurePartitionItem, ...],
+) -> tuple[tuple[str, str], ...]:
+    non_function_types = {
+        "state",
+        "state_field",
+        "side_effect",
+        "config",
+        "entrypoint",
+        "public_entrypoint",
+    }
+    return tuple(
+        (item.item_id, item.owner_module_id)
+        for item in partitions
+        if item.ownership == "child"
+        and item.owner_module_id
+        and item.item_type not in non_function_types
+    )
+
+
+def _state_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (state_id, module.module_id)
+        for module in modules
+        for state_id in module.owns_state
+    )
+
+
+def _side_effect_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (side_effect_id, module.module_id)
+        for module in modules
+        for side_effect_id in module.owns_side_effects
+    )
+
+
+def _config_owner_map(
+    modules: tuple[ModuleStructureEvidence, ...],
+) -> tuple[tuple[str, str], ...]:
+    return tuple(
+        (config_id, module.module_id)
+        for module in modules
+        for config_id in module.owns_config
+    )
+
+
+def router_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_router_structure_target_v2",
+        source_model_id="flowpilot_structure_maintenance",
+        source_model_path="simulations/flowpilot_structure_maintenance_model.py",
+        parent_module_id="flowpilot_router_structure_split",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=_target_modules_from_structure_evidence(
+            ROUTER_STRUCTURE_MODULES,
+            public_entrypoints_by_module={
+                "router_facade": (
+                    "flowpilot_router_imports",
+                    "flowpilot_router_cli",
+                ),
+            },
+        ),
+        function_block_map=_function_block_map_from_partitions(ROUTER_STRUCTURE_PARTITIONS),
+        state_owner_map=_state_owner_map(ROUTER_STRUCTURE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(ROUTER_STRUCTURE_MODULES),
+        config_owner_map=_config_owner_map(ROUTER_STRUCTURE_MODULES),
+        public_entrypoint_map=(
+            ("flowpilot_router_imports", "router_facade"),
+            ("flowpilot_router_cli", "router_facade"),
+        ),
+        facade_module_id="router_facade",
+        validation_boundaries=(
+            "router StructureMesh release review",
+            "router TestMesh child suites",
+            "router public import and CLI facade parity",
+        ),
+        rationale=(
+            "The router target structure preserves the facade/root-state parent "
+            "and assigns event, daemon, startup, packet, terminal, and control "
+            "blocker regions to coarse child owners."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
+def model_target_structure() -> CodeStructureRecommendation:
+    return CodeStructureRecommendation(
+        recommendation_id="flowpilot_model_scripts_structure_target_v2",
+        source_model_id="flowpilot_structure_maintenance",
+        source_model_path="simulations/flowpilot_structure_maintenance_model.py",
+        parent_module_id="flowpilot_model_script_structure_split",
+        source_model_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
+        target_modules=_target_modules_from_structure_evidence(
+            MODEL_STRUCTURE_MODULES,
+            public_entrypoints_by_module={
+                "prompt_isolation_facade": ("prompt_isolation_model_import",),
+                "cross_plane_facade": ("cross_plane_friction_model_import",),
+                "persistent_daemon_facade": ("persistent_router_daemon_model_import",),
+            },
+        ),
+        function_block_map=_function_block_map_from_partitions(MODEL_STRUCTURE_PARTITIONS),
+        state_owner_map=_state_owner_map(MODEL_STRUCTURE_MODULES),
+        side_effect_owner_map=_side_effect_owner_map(MODEL_STRUCTURE_MODULES),
+        config_owner_map=_config_owner_map(MODEL_STRUCTURE_MODULES),
+        public_entrypoint_map=(
+            ("prompt_isolation_model_import", "prompt_isolation_facade"),
+            ("cross_plane_friction_model_import", "cross_plane_facade"),
+            ("persistent_router_daemon_model_import", "persistent_daemon_facade"),
+        ),
+        facade_module_id="prompt_isolation_facade",
+        validation_boundaries=(
+            "model script import facades",
+            "state and transition child model ownership",
+            "invariant and hazard child model ownership",
+        ),
+        rationale=(
+            "The model-script target structure keeps legacy simulation import "
+            "facades and assigns state, transition, invariant, hazard, audit, "
+            "and strategy regions to focused child modules."
+        ),
+        hierarchical_model_used=True,
+    )
+
+
+def router_target_test_split() -> TestTargetSplitDerivation:
+    return TestTargetSplitDerivation(
+        source_model_id="flowpilot_structure_maintenance",
+        source_model_path="simulations/flowpilot_structure_maintenance_model.py",
+        target_suite_ids=tuple(suite.suite_id for suite in ROUTER_TEST_SUITES),
+        covered_partition_item_ids=tuple(item.item_id for item in ROUTER_TEST_PARTITIONS),
+        state_owner_fields=tuple(
+            sorted(
+                {
+                    state_id
+                    for suite in ROUTER_TEST_SUITES
+                    for state_id in suite.owns_state
+                }
+            )
+        ),
+        side_effect_owner_fields=tuple(
+            sorted(
+                {
+                    side_effect_id
+                    for suite in ROUTER_TEST_SUITES
+                    for side_effect_id in suite.owns_side_effects
+                }
+            )
+        ),
+        rationale=(
+            "The router runtime parent gate is split into explicit child suites "
+            "for startup, foreground/controller, packet, route mutation, "
+            "terminal, closure, resume, blocker, PM role-work, quality-gate, "
+            "and material/modeling boundaries."
+        ),
+    )
+
+
 def router_structure_plan(
     *,
     decision_scope: str = STRUCTURE_SCOPE_RELEASE,
@@ -820,6 +1035,7 @@ def router_structure_plan(
         partition_items=ROUTER_STRUCTURE_PARTITIONS,
         child_modules=ROUTER_STRUCTURE_MODULES,
         public_entrypoints=ROUTER_PUBLIC_ENTRYPOINTS,
+        target_structure=router_target_structure(),
     )
 
 
@@ -884,6 +1100,7 @@ def model_structure_plan(
         partition_items=MODEL_STRUCTURE_PARTITIONS,
         child_modules=MODEL_STRUCTURE_MODULES,
         public_entrypoints=MODEL_PUBLIC_ENTRYPOINTS,
+        target_structure=model_target_structure(),
     )
 
 
@@ -951,6 +1168,7 @@ def router_testmesh_plan(
         required_evidence_tier=required_evidence_tier,
         partition_items=ROUTER_TEST_PARTITIONS,
         child_suites=ROUTER_TEST_SUITES,
+        target_split_derivation=router_target_test_split(),
     )
 
 
