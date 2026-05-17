@@ -14352,6 +14352,121 @@ Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
 
+## 2026-05-17 - Router Coarse Phase Owner Split
+
+Task: finish the next router maintenance wave by moving the large remaining
+phase-controller bodies out of `flowpilot_router.py` into coarse owner modules,
+while keeping the router file as the public compatibility facade.
+
+Trigger reason: the user rejected further small helper-only extraction and
+asked for a functionally organized split of the large router script, using
+OpenSpec and real FlowGuard, with hidden background regressions and local
+install synchronization.
+
+FlowGuard/OpenSpec route:
+
+- OpenSpec change:
+  `openspec/changes/split-flowpilot-router-facade-prompt-store/`.
+- FlowGuard schema check returned `1.0`.
+- StructureMesh/TestMesh artifact:
+  `simulations/flowpilot_router_facade_split_model.py`.
+- The router facade split model now records `31` child modules and requires
+  eight coarse owner modules for runtime/startup/controller/work-packet/event/
+  repair/route/terminal ownership.
+
+Implementation summary:
+
+- Preserved a pre-split working backup under
+  `tmp/router_split_backup/flowpilot_router_pre_coarse_split.py`.
+- Moved 588 behavior bodies into these coarse owners:
+  `flowpilot_router_runtime_state.py`,
+  `flowpilot_router_startup_flow.py`,
+  `flowpilot_router_controller_scheduler.py`,
+  `flowpilot_router_work_packets.py`,
+  `flowpilot_router_event_dispatcher.py`,
+  `flowpilot_router_events_repair.py`,
+  `flowpilot_router_route_frontier.py`, and
+  `flowpilot_router_terminal_ledger.py`.
+- Reduced `flowpilot_router.py` to a public facade of about 15,054 lines while
+  preserving compatibility wrappers for existing public and test-facing names.
+- Updated owner-module binding so repeated `_bind_router(router)` calls refresh
+  facade globals while preserving owner-local functions.
+- Fixed migrated external-event dispatch to pass the real router facade into
+  event helpers instead of the event-dispatcher module itself.
+- Added a boundary regression for event-dispatch facade forwarding and a
+  boundary regression for refreshable owner-module bindings.
+- Updated PromptStore controller table guidance and manifest hash for runtime
+  wait/action terms discovered by install checks.
+- Updated install required-file checks, OpenSpec design/spec/tasks, HANDOFF,
+  and FlowGuard split evidence for the coarse owners.
+- Synchronized the installed local FlowPilot skill from the repository source.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  `1.0`.
+- `python -m compileall skills/flowpilot/assets simulations scripts -q`
+  passed.
+- `python -m unittest tests.test_flowpilot_router_boundaries` passed:
+  `20 tests`.
+- `python -m unittest tests.test_flowpilot_test_tiers
+  tests.test_flowpilot_prompt_store` passed: `19 tests`.
+- `openspec validate split-flowpilot-router-facade-prompt-store --strict`
+  passed.
+- `python simulations/run_flowpilot_router_facade_split_checks.py --json-out
+  simulations/flowpilot_router_facade_split_results.json` passed.
+- `python simulations/run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations/flowpilot_structure_maintenance_results.json` passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations/flowpilot_model_test_alignment_results.json` passed.
+- `python simulations/run_flowpilot_event_contract_checks.py --json-out
+  simulations/flowpilot_event_contract_results.json` passed.
+- `python simulations/run_flowpilot_repair_transaction_checks.py --json-out
+  simulations/flowpilot_repair_transaction_results.json` passed and refreshed
+  the plan-kind executable repair transaction evidence.
+- Hidden Meta and Capability checks completed under `tmp/flowguard_background/`
+  with exit `0`: `run_meta_checks.*` and `run_capability_checks.*`.
+- Clean hidden router partitions completed under `tmp/flowguard_background/`
+  with exit `0`: `router_startup_runtime.*`,
+  `router_foreground_controller.*`, `router-packets_background_supervisor.*`,
+  `router-route_background_supervisor.*`, and
+  `router-terminal_background_supervisor.*`.
+- `python scripts/check_install.py --json`,
+  `python scripts/install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts/install_flowpilot.py --check --json`, and
+  `python scripts/audit_local_install_sync.py --json` passed.
+
+Counterexamples and hazards preserved:
+
+- The facade split model still rejects micro-module explosion,
+  one-function-file splitting, missing coarse owners, missing prompt assets,
+  stale prompt hashes, unsafe inline prompt fallback, missing installed prompt
+  assets, and undeclared prompt template variables.
+- Structure-maintenance and model-test-alignment gates still reject missing
+  owners, duplicate state owners, missing facades, removed entrypoints, stale
+  parity/evidence, hidden skips, timeout suites, and progress-only background
+  evidence.
+- Event and repair models still reject direct ACK/check-in waits, invalid PM
+  rerun targets, explicit envelope bypasses, collapsed repair outcomes, and
+  repair transaction plan kinds without executable backing.
+
+Friction points:
+
+- The first full router background run began before the prompt hash and facade
+  binding fixes, so its failed artifacts were treated as contaminated evidence
+  and the stale supervisor was stopped. Clean partition runs were launched and
+  only their final meta/exit artifacts were used.
+- Mechanical body extraction initially exposed the exact risk the user called
+  out: modules can be split without actually preserving the right facade
+  context. The event-dispatch facade-forwarding bug and stale `_bind_router`
+  behavior were fixed before the final validation set.
+- The installed skill was stale until the final sequential sync/check/audit
+  pass; concurrent or premature install evidence was not counted.
+
+Skipped steps:
+
+- No push, tag, release, deploy, or public publication was performed.
+
 ## 2026-05-17 - Router Facade PromptStore Split
 
 Task: continue reducing `skills/flowpilot/assets/flowpilot_router.py` by

@@ -49,6 +49,29 @@ gates without destabilizing runtime behavior.
 4. Startup/bootloader, external events, control blockers, repair transactions,
    PM role-work, route frontier, and terminal ledgers in focused waves.
 
+## Coarse Facade Convergence Target
+
+The remaining waves SHALL prioritize coarse phase ownership over small helper
+extraction. The router facade is not considered converged while the main
+phase controllers still live in `flowpilot_router.py`.
+
+The next implementation target is:
+
+| Coarse owner | Owns |
+| --- | --- |
+| `flowpilot_router_runtime_state.py` | Run/bootstrap state shape, state IO, runtime packet/frontier/role-memory factories, and continuation/quarantine state records. |
+| `flowpilot_router_startup_flow.py` | Bootloader action selection/application, startup intake, startup answer validation, startup display/audit/fact/activation/repair flows, and resume/role-recovery startup actions. |
+| `flowpilot_router_controller_scheduler.py` | Controller action ledger orchestration, receipts, scheduler reconciliation, wait reminders, foreground standby, patrol timer, and controller action application. |
+| `flowpilot_router_work_packets.py` | Material/research/current-node packet dispatch, PM role-work request/result/decision lifecycle, packet batch refresh, and packet-group reviewer validation. |
+| `flowpilot_router_events_repair.py` | Control-blocker classification/materialization/resolution, repair transaction planning/finalization, gate-decision validation, and repair outcome settlement. |
+| `flowpilot_router_event_dispatcher.py` | External event dispatch orchestration and event wait-action settlement while delegating domain-specific side effects to their owners. |
+| `flowpilot_router_route_frontier.py` | Route/frontier helpers, legal route action checks, route state snapshots, and node completion. |
+| `flowpilot_router_terminal_ledger.py` | Final route-wide ledger, terminal backward replay, terminal closure suite, and terminal reconciliation. |
+
+The facade may keep compatibility wrappers for existing test-facing names, but
+wrapper bodies should delegate to a coarse owner. Repeated small extractions
+that leave the phase controller body in the facade do not satisfy this target.
+
 ## FlowGuard Evidence
 
 The split model treats each function block as:
@@ -58,6 +81,9 @@ The split model treats each function block as:
 For this maintenance pass, the executable model must reject:
 
 - a facade that no longer exposes public imports or CLI;
+- a facade that still owns the major startup, controller, work-packet,
+  external-event/repair, or route/terminal phase controller bodies after the
+  coarse split claims completion;
 - two modules claiming the same state owner;
 - a partition without an owner module;
 - hundreds of one-function micro-modules;

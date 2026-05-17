@@ -17,12 +17,14 @@ import flowpilot_router_card_settlement as card_settlement  # noqa: E402
 import flowpilot_router_controller_boundary as controller_boundary  # noqa: E402
 import flowpilot_router_controller_reconciliation as controller_reconciliation  # noqa: E402
 import flowpilot_router_dispatch_gate as dispatch_gate  # noqa: E402
+import flowpilot_router_event_dispatcher as event_dispatcher  # noqa: E402
 import flowpilot_router_events as router_events  # noqa: E402
 import flowpilot_router_errors as router_errors  # noqa: E402
 import flowpilot_router_io as router_io  # noqa: E402
 import flowpilot_router_protocol_tables as protocol_tables  # noqa: E402
 import flowpilot_router_resume as router_resume  # noqa: E402
 import flowpilot_router_route as router_route  # noqa: E402
+import flowpilot_router_runtime_state as runtime_state  # noqa: E402
 import flowpilot_router_startup_daemon as startup_daemon  # noqa: E402
 import flowpilot_router_terminal as terminal_helpers  # noqa: E402
 
@@ -203,6 +205,55 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         )
         for event_name in set(router_events.PRECHECK_EVENT_HANDLERS) | set(router_events.SIDE_EFFECT_EVENT_HANDLERS):
             self.assertIn(event_name, router.EXTERNAL_EVENTS)
+
+    def test_event_dispatcher_passes_router_facade_to_event_helpers(self) -> None:
+        calls: list[object] = []
+
+        def fake_precheck(received_router: object, *args: object, **kwargs: object) -> dict[str, object]:
+            calls.append(received_router)
+            return {"ok": True, "event": "heartbeat_or_manual_resume_requested"}
+
+        original = router_events.handle_precheck_event
+        router_events.handle_precheck_event = fake_precheck
+        try:
+            result = event_dispatcher._record_external_event_unchecked(
+                router,
+                Path("."),
+                "heartbeat_or_manual_resume_requested",
+                {},
+            )
+        finally:
+            router_events.handle_precheck_event = original
+
+        self.assertEqual(result["event"], "heartbeat_or_manual_resume_requested")
+        self.assertEqual(calls, [router])
+
+    def test_coarse_owner_bind_router_refreshes_facade_globals_without_overwriting_owner_locals(self) -> None:
+        sentinel = object()
+        marker_name = "_boundary_test_dynamic_marker"
+        original_router_marker = getattr(router, marker_name, sentinel)
+        original_owner_marker = getattr(runtime_state, marker_name, sentinel)
+        original_owner_function = runtime_state.new_bootstrap_state
+
+        try:
+            setattr(router, marker_name, "first")
+            runtime_state._bind_router(router)
+            self.assertEqual(getattr(runtime_state, marker_name), "first")
+
+            setattr(router, marker_name, "second")
+            runtime_state._bind_router(router)
+            self.assertEqual(getattr(runtime_state, marker_name), "second")
+            self.assertIs(runtime_state.new_bootstrap_state, original_owner_function)
+        finally:
+            if original_router_marker is sentinel:
+                delattr(router, marker_name)
+            else:
+                setattr(router, marker_name, original_router_marker)
+            if original_owner_marker is sentinel:
+                if hasattr(runtime_state, marker_name):
+                    delattr(runtime_state, marker_name)
+            else:
+                setattr(runtime_state, marker_name, original_owner_marker)
 
     def test_controller_action_provider_order_is_stable(self) -> None:
         self.assertEqual(

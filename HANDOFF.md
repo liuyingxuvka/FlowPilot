@@ -48,7 +48,26 @@ The current router-facade split also has a narrower FlowGuard gate at
 `simulations/run_flowpilot_router_facade_split_checks.py`. It covers
 PromptStore manifest/hash behavior, prompt-delivery ownership, card-delivery
 ownership, Controller action-ledger helper ownership, role-output protocol
-helper ownership, and compatibility-facade preservation.
+helper ownership, coarse runtime/startup/controller/work-packet/event/repair/
+route/terminal ownership, and compatibility-facade preservation. The coarse
+owner modules currently added for this gate are:
+
+- `flowpilot_router_runtime_state.py` for bootstrap/run state and low-level
+  runtime factories;
+- `flowpilot_router_startup_flow.py` for startup, bootloader, resume, and
+  role-recovery phase bodies;
+- `flowpilot_router_controller_scheduler.py` for Controller scheduler rows,
+  receipts, foreground standby, and patrol timer behavior;
+- `flowpilot_router_work_packets.py` for material, research, current-node
+  packet flow, and PM role-work lifecycle;
+- `flowpilot_router_events_repair.py` for control blockers, repair
+  transactions, and gate-decision validation;
+- `flowpilot_router_event_dispatcher.py` for the external event dispatcher
+  body;
+- `flowpilot_router_route_frontier.py` for route/frontier projection and node
+  completion;
+- `flowpilot_router_terminal_ledger.py` for final ledger, terminal replay,
+  closure suite, and terminal reconciliation.
 
 Router runtime regression now uses split background child suites. Run
 `python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json`;

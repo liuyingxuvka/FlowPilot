@@ -17,11 +17,33 @@
 - [x] 3.2 Move card ACK return settlement into a card-returns module.
 - [x] 3.3 Move controller action ledger helpers into a controller-ledger module.
 - [x] 3.4 Move daemon runtime helpers into a daemon-runtime module.
-- [ ] 3.5 Move bootloader/startup helpers into bootloader/startup modules.
+- [x] 3.5 Move bootloader/startup helpers into bootloader/startup modules
+  through the 5.x coarse owner split.
 - [x] 3.6 Move event identity helpers into event modules.
-- [ ] 3.7 Move control-blocker and repair-transaction helpers into their modules.
-- [ ] 3.8 Move PM role-work, packet dispatch, route frontier, and terminal ledger
-  helpers into their modules as independent state owners become clear.
+- [x] 3.7 Move control-blocker and repair-transaction helpers into their modules
+  through the 5.x coarse owner split.
+- [x] 3.8 Move PM role-work, packet dispatch, route frontier, and terminal ledger
+  helpers into their modules through the 5.x coarse owner split.
+
+## 5. Coarse Phase Facade Convergence
+
+- [x] 5.1 Update the FlowGuard facade split model to require coarse phase
+  owners, not only helper extraction.
+- [x] 5.2 Move runtime state and startup/bootloader/resume phase-controller bodies into
+  `flowpilot_router_runtime_state.py` and
+  `flowpilot_router_startup_flow.py`.
+- [x] 5.3 Move Controller scheduler/receipt/standby phase-controller bodies into
+  `flowpilot_router_controller_scheduler.py`.
+- [x] 5.4 Move material/research/current-node packet and PM role-work bodies
+  into `flowpilot_router_work_packets.py`.
+- [x] 5.5 Move external-event/control-blocker/repair transaction bodies into
+  `flowpilot_router_event_dispatcher.py` and
+  `flowpilot_router_events_repair.py`.
+- [x] 5.6 Move route/frontier/final-ledger/terminal bodies into
+  `flowpilot_router_route_frontier.py` and
+  `flowpilot_router_terminal_ledger.py`.
+- [x] 5.7 Keep `flowpilot_router.py` as the public facade and verify it now
+  delegates the coarse phase bodies through compatibility wrappers.
 
 ## 4. Documentation, Install Sync, And Validation
 
@@ -34,10 +56,8 @@
 
 ## Deferred Split Notes
 
-The remaining 3.x split items are intentionally still active. The current pass
-landed the low-risk PromptStore/facade wave plus the follow-up ACK return,
-event identity, and daemon runtime modules. Bootloader/startup helpers, external
-event dispatch settlement, control-blocker repair transactions, PM role-work,
-packet dispatch, frontier, and terminal ledgers still share state ownership in
-`flowpilot_router.py`; they should move only after their owner contracts are
-modeled, rather than by one-function-per-file extraction.
+The original 3.x split items are now covered by the 5.x coarse owner modules.
+The facade still keeps compatibility wrappers for public/test-facing names, but
+the major startup, controller, packet, event/repair, route/frontier, and
+terminal phase bodies delegate to owner modules rather than remaining in
+`flowpilot_router.py`.

@@ -25,6 +25,22 @@ generated as one top-level function per file.
 - **AND** the plan SHALL reject micro-module explosion as a maintainability
   hazard.
 
+### Requirement: Router facade is thin after coarse phase split
+
+`flowpilot_router.py` SHALL delegate major phase-controller bodies to cohesive
+owner modules for startup, controller scheduling, work packets, event/repair,
+and route/terminal behavior.
+
+#### Scenario: Coarse split claims completion
+
+- **GIVEN** the router split is reported complete
+- **WHEN** FlowGuard reviews the router facade ownership map
+- **THEN** startup/runtime state, controller scheduling, work-packet dispatch,
+  event dispatch, repair, route/frontier, and terminal ledger phase controllers
+  SHALL each have a child module owner
+- **AND** `flowpilot_router.py` SHALL keep only compatibility wrappers,
+  CLI parsing, and root coordination glue for those phase controllers.
+
 ### Requirement: Prompt content is externalized through PromptStore
 
 Prompt-like control text moved out of Python SHALL live in

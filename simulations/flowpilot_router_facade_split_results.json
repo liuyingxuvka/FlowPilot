@@ -19,6 +19,14 @@
     {
       "blocked": true,
       "finding_codes": [
+        "missing_coarse_phase_owner"
+      ],
+      "finding_count": 1,
+      "name": "missing_coarse_phase_owner"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
         "missing_prompt_asset"
       ],
       "finding_count": 1,
@@ -61,7 +69,8 @@
   "ok": true,
   "prompt_split": {
     "asset_count": 4,
-    "child_module_count": 21,
+    "child_module_count": 31,
+    "coarse_owner_count": 8,
     "findings": [],
     "micro_module_count": 0,
     "ok": true
