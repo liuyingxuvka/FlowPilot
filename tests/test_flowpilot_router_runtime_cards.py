@@ -9,7 +9,6 @@ TEST_NAMES = (
     "test_phase_card_delivery_context_includes_required_upstream_sources",
     "test_system_card_delivery_uses_router_internal_manifest_check",
     "test_committed_system_card_relay_can_resolve_without_apply_roundtrip",
-    "test_record_external_event_preconsumes_valid_card_ack_before_blocking",
     "test_record_external_event_quarantines_invalid_same_role_card_ack_report",
     "test_initial_pm_system_cards_are_delivered_as_same_role_bundle",
     "test_incomplete_system_card_bundle_ack_waits_for_missing_receipts_then_recovers",

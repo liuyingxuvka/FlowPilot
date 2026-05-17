@@ -2,6 +2,42 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.7 - 2026-05-17
+
+### Added
+
+- Added the `simplify-python-structure` OpenSpec change and a structural
+  FlowGuard guard for the second Python maintainability pass.
+- Added focused helper modules for packet runtime schema, paths, contracts,
+  ledgers, relay, active-holder, session, and reviewer responsibilities.
+- Added install-check helper modules for file, manifest, runtime, docs, result,
+  and runner responsibilities.
+- Added Meta and Capability model phase helper modules while preserving the
+  parent model entrypoints.
+- Added router runtime domain entrypoints for bootstrap/CLI, foreground,
+  PM role work, material/modeling, control blockers, and quality gates.
+- Added event-contract FlowGuard coverage for explicit event envelopes
+  submitted outside the current Router wait state.
+
+### Changed
+
+- Converted `scripts/flowpilot_user_flow_diagram.py` and
+  `scripts/check_install.py` into compatibility entrypoints backed by smaller
+  source-of-truth modules.
+- Reduced `packet_runtime.py`, `meta_model.py`, and `capability_model.py` into
+  facade-style modules that delegate cohesive work to focused helpers.
+- Moved selected router external-event intake and controller action helper
+  logic behind smaller module boundaries without changing public event names,
+  command arguments, imports, or persisted JSON shapes.
+
+### Fixed
+
+- Rejected explicit runtime event-envelope submissions before startup/current
+  scope reconciliation can turn an event outside the current wait into a
+  recoverable wait.
+- Restored complete one-to-one router runtime domain-test coverage: every
+  aggregate `test_*` method is owned by exactly one split domain entrypoint.
+
 ## 0.9.6 - 2026-05-16
 
 ### Added

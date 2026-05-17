@@ -5,8 +5,8 @@ Risk purpose:
   maintenance process for structure-only FlowPilot refactors.
 - Guards against mixing behavior changes into code movement, deleting legacy
   entrypoints, changing protocol/JSON shapes, validating only after multiple
-  slices, skipping Meta/Capability checks after model-file edits, or pushing
-  before install/public-boundary validation.
+  slices, skipping Meta/Capability checks after model-file edits, or committing
+  local main before install/public-boundary validation.
 - Run with `python simulations/run_flowpilot_structural_refactor_checks.py`
   whenever a maintenance pass splits router, model, test, or install tooling
   structure without intending behavior changes.
@@ -21,13 +21,14 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 BOUNDARIES = (
-    "events",
-    "action_providers",
-    "action_handlers",
-    "tests",
-    "runtime_domain",
-    "meta_capability_models",
-    "install_tooling",
+    "duplicate_wrappers",
+    "packet_runtime",
+    "install_check_tooling",
+    "meta_model_phases",
+    "capability_model_phases",
+    "router_event_intake",
+    "router_action_apply",
+    "router_runtime_tests",
     "docs_install_sync",
 )
 
@@ -59,7 +60,8 @@ class State:
     meta_capability_checks_completed: bool = False
     install_sync_checked: bool = False
     public_boundary_checked: bool = False
-    remote_sync_done: bool = False
+    local_git_sync_done: bool = False
+    extra_work_branch_present: bool = False
     tag_or_release_done: bool = False
 
 
@@ -83,7 +85,7 @@ def _start_next_boundary(state: State) -> Transition | None:
                     current_boundary=boundary,
                     boundary_changed=True,
                     focused_validation_done=False,
-                    model_files_touched=boundary == "meta_capability_models",
+                    model_files_touched=boundary in {"meta_model_phases", "capability_model_phases"},
                 ),
             )
     return None
@@ -96,7 +98,7 @@ class StructuralRefactorStep:
     reads: baseline record, OpenSpec plan, FlowGuard guard model, active slice,
       validation evidence, install/public-boundary sync evidence
     writes: slice completion evidence, validation status, final sync status
-    idempotency: each boundary is completed at most once before remote sync.
+    idempotency: each boundary is completed at most once before local git sync.
     """
 
     name = "StructuralRefactorStep"
@@ -136,13 +138,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if not state.public_boundary_checked:
             yield Transition("run_public_boundary_privacy_check", replace(state, public_boundary_checked=True))
             return
-        if not state.remote_sync_done:
-            yield Transition("push_maintenance_branch_without_release", replace(state, remote_sync_done=True))
+        if not state.local_git_sync_done:
+            yield Transition("commit_local_main_without_release", replace(state, local_git_sync_done=True))
             return
         yield Transition("structural_refactor_complete", replace(state, status="complete"))
         return
 
-    if state.current_boundary == "meta_capability_models" and not state.meta_capability_checks_completed:
+    if state.model_files_touched and not state.meta_capability_checks_completed:
         yield Transition(
             "run_meta_and_capability_checks_for_model_split",
             replace(state, meta_capability_checks_completed=True),
@@ -184,16 +186,18 @@ def invariant_failures(state: State) -> list[str]:
     if state.current_boundary != "none" and state.focused_validation_done and not state.behavior_tests_passed:
         failures.append("slice validation recorded without behavior-facing tests")
     if (
-        "meta_capability_models" in state.boundaries_completed
+        ("meta_model_phases" in state.boundaries_completed or "capability_model_phases" in state.boundaries_completed)
         and not state.meta_capability_checks_completed
     ):
         failures.append("Meta/Capability model split completed before both heavyweight checks completed")
-    if state.remote_sync_done and not state.install_sync_checked:
-        failures.append("remote sync happened before installed skill sync check")
-    if state.remote_sync_done and not state.public_boundary_checked:
-        failures.append("remote sync happened before public-boundary privacy check")
-    if state.remote_sync_done and state.current_boundary != "none":
-        failures.append("remote sync happened while a slice was still open")
+    if state.local_git_sync_done and not state.install_sync_checked:
+        failures.append("local git sync happened before installed skill sync check")
+    if state.local_git_sync_done and not state.public_boundary_checked:
+        failures.append("local git sync happened before public-boundary privacy check")
+    if state.local_git_sync_done and state.current_boundary != "none":
+        failures.append("local git sync happened while a slice was still open")
+    if state.local_git_sync_done and state.extra_work_branch_present:
+        failures.append("local git sync finished while an extra local work branch still existed")
     if state.tag_or_release_done:
         failures.append("structure maintenance performed tag or release without explicit release scope")
     return failures
@@ -214,7 +218,7 @@ INVARIANTS = (
             "Structure-only FlowPilot refactors keep a rollback baseline, "
             "OpenSpec contract, FlowGuard guard, one changed boundary per "
             "validated slice, model checks after model-file edits, and install/"
-            "privacy checks before remote sync."
+            "privacy checks before local git sync."
         ),
         predicate=structural_refactor_invariant,
     ),
@@ -252,24 +256,34 @@ def hazard_states() -> dict[str, State]:
             baseline_recorded=True,
             openspec_ready=True,
             flowguard_ready=True,
-            boundaries_completed=("meta_capability_models",),
+            boundaries_completed=("meta_model_phases",),
             meta_capability_checks_completed=False,
         ),
-        "remote_sync_before_install_sync": State(
+        "local_git_sync_before_install_sync": State(
             status="running",
             baseline_recorded=True,
             openspec_ready=True,
             flowguard_ready=True,
             public_boundary_checked=True,
-            remote_sync_done=True,
+            local_git_sync_done=True,
         ),
-        "remote_sync_before_privacy_check": State(
+        "local_git_sync_before_privacy_check": State(
             status="running",
             baseline_recorded=True,
             openspec_ready=True,
             flowguard_ready=True,
             install_sync_checked=True,
-            remote_sync_done=True,
+            local_git_sync_done=True,
+        ),
+        "local_git_sync_with_extra_work_branch": State(
+            status="running",
+            baseline_recorded=True,
+            openspec_ready=True,
+            flowguard_ready=True,
+            install_sync_checked=True,
+            public_boundary_checked=True,
+            local_git_sync_done=True,
+            extra_work_branch_present=True,
         ),
         "tag_release_in_structure_pass": State(
             status="running",
@@ -294,7 +308,7 @@ def is_terminal(state: State) -> bool:
 
 
 def is_success(state: State) -> bool:
-    return state.status == "complete" and state.remote_sync_done
+    return state.status == "complete" and state.local_git_sync_done
 
 
 EXTERNAL_INPUTS = (Tick(),)

@@ -16,6 +16,8 @@
       "missing_child_inventory",
       "parent_partition_gap",
       "release_green_without_heavy_parent_proof",
+      "release_obligation_hidden",
+      "routine_thin_parent_blocked_by_full_regression",
       "sibling_ownership_overlap",
       "stale_child_evidence_used"
     ]
@@ -25,13 +27,13 @@
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
-    "summary": "sequences=2 initial_states=1 traces=36",
+    "summary": "sequences=2 initial_states=1 traces=42",
     "violation_count": 0,
     "violations": []
   },
   "graph": {
     "accepted_state_count": 2,
-    "edge_count": 24,
+    "edge_count": 28,
     "labels_seen": [
       "accept_valid_hierarchy_with_background_obligation",
       "accept_valid_release_hierarchy_with_current_heavy_proof",
@@ -43,6 +45,8 @@
       "reject_missing_child_inventory",
       "reject_parent_partition_gap",
       "reject_release_green_without_heavy_parent_proof",
+      "reject_release_obligation_hidden",
+      "reject_routine_thin_parent_blocked_by_full_regression",
       "reject_sibling_ownership_overlap",
       "reject_stale_child_evidence_used",
       "select_authority_mesh_confused_with_partition",
@@ -53,6 +57,8 @@
       "select_missing_child_inventory",
       "select_parent_partition_gap",
       "select_release_green_without_heavy_parent_proof",
+      "select_release_obligation_hidden",
+      "select_routine_thin_parent_blocked_by_full_regression",
       "select_sibling_ownership_overlap",
       "select_stale_child_evidence_used",
       "select_valid_hierarchy_with_background_obligation",
@@ -60,9 +66,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 10,
-    "state_count": 25,
-    "terminal_state_count": 12,
+    "rejected_state_count": 12,
+    "state_count": 29,
+    "terminal_state_count": 14,
     "violations": []
   },
   "hazard_review": {
@@ -157,6 +163,28 @@
       },
       {
         "expected_failures": [
+          "release_full_regression_obligation_hidden"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "release_full_regression_obligation_hidden"
+        ],
+        "ok": true,
+        "scenario": "release_obligation_hidden"
+      },
+      {
+        "expected_failures": [
+          "full_regression_must_not_block_routine_thin_parent"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "full_regression_must_not_block_routine_thin_parent"
+        ],
+        "ok": true,
+        "scenario": "routine_thin_parent_blocked_by_full_regression"
+      },
+      {
+        "expected_failures": [
           "sibling_overlap_requires_explicit_shared_kernel_or_refactor"
         ],
         "missing_expected_failures": [],
@@ -181,12 +209,19 @@
     "ok": true
   },
   "inventory": {
-    "heavy_parent_full_regression_obligations": [
-      "meta",
-      "capability"
-    ],
+    "child_evidence_tier_counts": {
+      "medium": 3,
+      "small": 27,
+      "unknown": 2
+    },
+    "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
+    "heavy_parent_full_regression_obligations": [],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
+    "legacy_monolith_commands": {
+      "capability": "python simulations/run_capability_checks.py --legacy-full",
+      "meta": "python simulations/run_meta_checks.py --legacy-full"
+    },
     "missing_child_results": [],
     "ok": true,
     "parents": [
@@ -194,8 +229,8 @@
         "edge_count": 16,
         "full_state_count": 1949768,
         "legacy_full_regression": {
-          "current": false,
-          "proof": {
+          "current": true,
+          "legacy_monolith_status": {
             "created_at": "2026-05-16T11:44:29.842028+00:00",
             "edge_count": 2010665,
             "proof_file": "simulations/results.proof.json",
@@ -204,7 +239,19 @@
             "state_count": 1949768,
             "valid": false
           },
-          "required_for_release": true,
+          "proof": {
+            "created_at": "2026-05-17T07:37:46.763948+00:00",
+            "edge_count": 18,
+            "kind": "layered_full_parent",
+            "legacy_monolith_required": false,
+            "proof_file": "simulations/meta_layered_full_results.proof.json",
+            "reason": "valid proof",
+            "release_confidence": "current_with_layered_full_parent",
+            "result_file": "simulations/meta_layered_full_results.json",
+            "state_count": 11,
+            "valid": true
+          },
+          "required_for_release": false,
           "result": {
             "edge_count": 2010665,
             "model_id": "meta",
@@ -217,27 +264,33 @@
             "tier": "huge"
           }
         },
+        "legacy_monolith_command": "python simulations/run_meta_checks.py --legacy-full",
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-16T11:44:29.842028+00:00",
-          "edge_count": 2010665,
-          "proof_file": "simulations/results.proof.json",
-          "reason": "full proof fingerprint mismatch",
-          "result_file": "simulations/results.json",
-          "state_count": 1949768,
-          "valid": false
+          "created_at": "2026-05-17T07:37:46.763948+00:00",
+          "edge_count": 18,
+          "kind": "layered_full_parent",
+          "legacy_monolith_required": false,
+          "proof_file": "simulations/meta_layered_full_results.proof.json",
+          "reason": "valid proof",
+          "release_confidence": "current_with_layered_full_parent",
+          "result_file": "simulations/meta_layered_full_results.json",
+          "state_count": 11,
+          "valid": true
         },
-        "release_confidence": "requires_full_regression",
+        "release_confidence": "current_with_layered_full_parent",
+        "release_validation_command": "python simulations/run_meta_checks.py --full",
         "result_file": "simulations/meta_thin_parent_results.json",
         "result_type": "thin_parent",
         "role": "thin_parent",
         "routine_confidence": "current",
+        "routine_validation_command": "python simulations/run_meta_checks.py --fast",
         "split_review_required": true,
         "state_count": 9,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-17T00:19:41.785057+00:00",
+            "created_at": "2026-05-17T07:37:48.117662+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -248,7 +301,7 @@
             "edge_count": 16,
             "model_id": "meta",
             "ok": true,
-            "release_confidence": "requires_full_regression",
+            "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -262,8 +315,8 @@
         "edge_count": 12,
         "full_state_count": 1959064,
         "legacy_full_regression": {
-          "current": false,
-          "proof": {
+          "current": true,
+          "legacy_monolith_status": {
             "created_at": "2026-05-16T11:49:11.742612+00:00",
             "edge_count": 2036030,
             "proof_file": "simulations/capability_results.proof.json",
@@ -272,7 +325,19 @@
             "state_count": 1959064,
             "valid": false
           },
-          "required_for_release": true,
+          "proof": {
+            "created_at": "2026-05-17T07:37:46.755949+00:00",
+            "edge_count": 14,
+            "kind": "layered_full_parent",
+            "legacy_monolith_required": false,
+            "proof_file": "simulations/capability_layered_full_results.proof.json",
+            "reason": "valid proof",
+            "release_confidence": "current_with_layered_full_parent",
+            "result_file": "simulations/capability_layered_full_results.json",
+            "state_count": 9,
+            "valid": true
+          },
+          "required_for_release": false,
           "result": {
             "edge_count": 2036030,
             "model_id": "capability",
@@ -285,27 +350,33 @@
             "tier": "huge"
           }
         },
+        "legacy_monolith_command": "python simulations/run_capability_checks.py --legacy-full",
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-16T11:49:11.742612+00:00",
-          "edge_count": 2036030,
-          "proof_file": "simulations/capability_results.proof.json",
-          "reason": "full proof fingerprint mismatch",
-          "result_file": "simulations/capability_results.json",
-          "state_count": 1959064,
-          "valid": false
+          "created_at": "2026-05-17T07:37:46.755949+00:00",
+          "edge_count": 14,
+          "kind": "layered_full_parent",
+          "legacy_monolith_required": false,
+          "proof_file": "simulations/capability_layered_full_results.proof.json",
+          "reason": "valid proof",
+          "release_confidence": "current_with_layered_full_parent",
+          "result_file": "simulations/capability_layered_full_results.json",
+          "state_count": 9,
+          "valid": true
         },
-        "release_confidence": "requires_full_regression",
+        "release_confidence": "current_with_layered_full_parent",
+        "release_validation_command": "python simulations/run_capability_checks.py --full",
         "result_file": "simulations/capability_thin_parent_results.json",
         "result_type": "thin_parent",
         "role": "thin_parent",
         "routine_confidence": "current",
+        "routine_validation_command": "python simulations/run_capability_checks.py --fast",
         "split_review_required": true,
         "state_count": 7,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-17T00:19:41.760056+00:00",
+            "created_at": "2026-05-17T07:37:48.083662+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -316,7 +387,7 @@
             "edge_count": 12,
             "model_id": "capability",
             "ok": true,
-            "release_confidence": "requires_full_regression",
+            "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -327,6 +398,506 @@
         "tier": "small"
       }
     ],
+    "partition_contracts": {
+      "by_partition": {
+        "child_skill_capability": {
+          "children": [
+            "card_instruction_coverage",
+            "flowpilot_output_contract",
+            "flowpilot_requirement_traceability",
+            "flowpilot_reviewer_active_challenge"
+          ],
+          "invariant_families": [
+            "child_skill_selection",
+            "child_skill_standard_contract",
+            "reviewer_active_challenge",
+            "worker_result_matrix"
+          ],
+          "owners": [
+            "capability"
+          ],
+          "parents": [
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "crew_and_heartbeat": {
+          "children": [
+            "flowpilot_daemon_liveness",
+            "flowpilot_resume",
+            "flowpilot_role_recovery"
+          ],
+          "invariant_families": [
+            "crew_rehydration",
+            "daemon_liveness_boundary",
+            "manual_resume"
+          ],
+          "owners": [
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "evidence_mesh_and_install_sync": {
+          "children": [
+            "flowpilot_control_transaction_registry",
+            "flowpilot_legal_next_action",
+            "flowpilot_model_mesh",
+            "proof_carrying",
+            "release_tooling"
+          ],
+          "invariant_families": [
+            "capability_evidence_sync",
+            "control_transaction_registry",
+            "install_sync_boundary",
+            "model_mesh_authority"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "full_regression_required_for_release"
+          ]
+        },
+        "material_intake": {
+          "children": [
+            "flowpilot_handoff_artifact_protocol",
+            "flowpilot_pm_package_absorption"
+          ],
+          "invariant_families": [
+            "handoff_artifact_integrity",
+            "material_scan_before_architecture",
+            "pm_package_absorption"
+          ],
+          "owners": [
+            "meta"
+          ],
+          "parents": [
+            "meta"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "packet_and_role_authority": {
+          "children": [
+            "flowpilot_card_envelope",
+            "flowpilot_packet_lifecycle",
+            "flowpilot_packet_open_authority",
+            "flowpilot_role_output_runtime"
+          ],
+          "invariant_families": [
+            "active_child_skill_bindings",
+            "controller_body_boundary",
+            "packet_envelope_authority",
+            "packet_open_authority",
+            "role_output_runtime"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "product_architecture": {
+          "children": [
+            "flowpilot_model_driven_recursive_route",
+            "flowpilot_planning_quality"
+          ],
+          "invariant_families": [
+            "child_route_projection",
+            "planning_profile",
+            "product_architecture_before_capability_selection",
+            "recursive_route_decomposition"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "router_daemon_resume": {
+          "children": [
+            "flowpilot_daemon_reconciliation",
+            "flowpilot_persistent_router_daemon",
+            "flowpilot_route_replanning_policy",
+            "flowpilot_router_loop"
+          ],
+          "invariant_families": [
+            "daemon_reconciliation",
+            "route_replanning_boundary",
+            "router_packet_loop"
+          ],
+          "owners": [
+            "meta"
+          ],
+          "parents": [
+            "meta"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "startup": {
+          "children": [
+            "flowpilot_deterministic_startup_bootstrap",
+            "flowpilot_startup_control",
+            "flowpilot_startup_intake_ui",
+            "startup_pm_review"
+          ],
+          "invariant_families": [
+            "fresh_run_pointer",
+            "startup_activation_gate",
+            "startup_questions_before_capability_work",
+            "startup_questions_before_work"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "terminal_ledger": {
+          "children": [
+            "defect_governance",
+            "flowpilot_repair_transaction",
+            "flowpilot_terminal_state_monotonicity",
+            "flowpilot_terminal_summary"
+          ],
+          "invariant_families": [
+            "capability_backward_replay",
+            "defect_zero_blocking",
+            "final_summary_boundary",
+            "repair_transaction_evidence",
+            "terminal_capability_ledger",
+            "terminal_state_monotonicity"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        }
+      },
+      "failures": [],
+      "ledger_file": "simulations/flowpilot_parent_responsibility_ledger.json",
+      "missing_partition_items": [],
+      "ok": true,
+      "parents": {
+        "capability": {
+          "child_skill_capability": {
+            "children": [
+              "card_instruction_coverage",
+              "flowpilot_reviewer_active_challenge",
+              "flowpilot_requirement_traceability",
+              "flowpilot_output_contract"
+            ],
+            "invariant_families": [
+              "child_skill_selection",
+              "child_skill_standard_contract",
+              "worker_result_matrix",
+              "reviewer_active_challenge"
+            ],
+            "owner": "capability",
+            "owner_type": "child",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          },
+          "evidence_mesh_and_install_sync": {
+            "children": [
+              "flowpilot_model_mesh",
+              "flowpilot_control_transaction_registry",
+              "flowpilot_legal_next_action",
+              "proof_carrying",
+              "release_tooling"
+            ],
+            "invariant_families": [
+              "capability_evidence_sync",
+              "model_mesh_authority",
+              "install_sync_boundary"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "full_regression_required_for_release"
+          },
+          "packet_and_role_authority": {
+            "children": [
+              "flowpilot_packet_lifecycle",
+              "flowpilot_packet_open_authority",
+              "flowpilot_card_envelope",
+              "flowpilot_role_output_runtime"
+            ],
+            "invariant_families": [
+              "active_child_skill_bindings",
+              "role_output_runtime",
+              "packet_open_authority"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          },
+          "product_architecture": {
+            "children": [
+              "flowpilot_planning_quality",
+              "flowpilot_model_driven_recursive_route"
+            ],
+            "invariant_families": [
+              "planning_profile",
+              "product_architecture_before_capability_selection",
+              "recursive_route_decomposition"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          },
+          "startup": {
+            "children": [
+              "flowpilot_startup_control",
+              "startup_pm_review",
+              "flowpilot_startup_intake_ui",
+              "flowpilot_deterministic_startup_bootstrap"
+            ],
+            "invariant_families": [
+              "startup_questions_before_capability_work",
+              "fresh_run_pointer",
+              "startup_activation_gate"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          },
+          "terminal_ledger": {
+            "children": [
+              "flowpilot_terminal_state_monotonicity",
+              "flowpilot_terminal_summary",
+              "defect_governance",
+              "flowpilot_repair_transaction"
+            ],
+            "invariant_families": [
+              "capability_backward_replay",
+              "terminal_capability_ledger",
+              "defect_zero_blocking"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          }
+        },
+        "meta": {
+          "crew_and_heartbeat": {
+            "children": [
+              "flowpilot_resume",
+              "flowpilot_role_recovery",
+              "flowpilot_daemon_liveness"
+            ],
+            "invariant_families": [
+              "manual_resume",
+              "crew_rehydration",
+              "daemon_liveness_boundary"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "evidence_mesh_and_install_sync": {
+            "children": [
+              "flowpilot_model_mesh",
+              "flowpilot_control_transaction_registry",
+              "flowpilot_legal_next_action",
+              "proof_carrying",
+              "release_tooling"
+            ],
+            "invariant_families": [
+              "model_mesh_authority",
+              "control_transaction_registry",
+              "install_sync_boundary"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "full_regression_required_for_release"
+          },
+          "material_intake": {
+            "children": [
+              "flowpilot_pm_package_absorption",
+              "flowpilot_handoff_artifact_protocol"
+            ],
+            "invariant_families": [
+              "material_scan_before_architecture",
+              "pm_package_absorption",
+              "handoff_artifact_integrity"
+            ],
+            "owner": "meta",
+            "owner_type": "child",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "packet_and_role_authority": {
+            "children": [
+              "flowpilot_packet_lifecycle",
+              "flowpilot_packet_open_authority",
+              "flowpilot_card_envelope",
+              "flowpilot_role_output_runtime"
+            ],
+            "invariant_families": [
+              "packet_envelope_authority",
+              "role_output_runtime",
+              "controller_body_boundary"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "product_architecture": {
+            "children": [
+              "flowpilot_planning_quality",
+              "flowpilot_model_driven_recursive_route"
+            ],
+            "invariant_families": [
+              "planning_profile",
+              "recursive_route_decomposition",
+              "child_route_projection"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "router_daemon_resume": {
+            "children": [
+              "flowpilot_router_loop",
+              "flowpilot_persistent_router_daemon",
+              "flowpilot_daemon_reconciliation",
+              "flowpilot_route_replanning_policy"
+            ],
+            "invariant_families": [
+              "router_packet_loop",
+              "daemon_reconciliation",
+              "route_replanning_boundary"
+            ],
+            "owner": "meta",
+            "owner_type": "child",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "startup": {
+            "children": [
+              "flowpilot_startup_control",
+              "startup_pm_review",
+              "flowpilot_startup_intake_ui",
+              "flowpilot_deterministic_startup_bootstrap"
+            ],
+            "invariant_families": [
+              "startup_questions_before_work",
+              "startup_activation_gate",
+              "fresh_run_pointer"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
+          "terminal_ledger": {
+            "children": [
+              "flowpilot_terminal_state_monotonicity",
+              "flowpilot_terminal_summary",
+              "defect_governance",
+              "flowpilot_repair_transaction"
+            ],
+            "invariant_families": [
+              "terminal_state_monotonicity",
+              "final_summary_boundary",
+              "repair_transaction_evidence"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          }
+        }
+      },
+      "state_write_ownership": [
+        {
+          "field": "current_run_pointer",
+          "owner": "startup"
+        },
+        {
+          "field": "material_understanding",
+          "owner": "material_intake"
+        },
+        {
+          "field": "route_plan",
+          "owner": "product_architecture"
+        },
+        {
+          "field": "crew_memory",
+          "owner": "crew_and_heartbeat"
+        },
+        {
+          "field": "router_state",
+          "owner": "router_daemon_resume"
+        },
+        {
+          "field": "packet_envelope",
+          "owner": "packet_and_role_authority"
+        },
+        {
+          "field": "child_skill_bindings",
+          "owner": "child_skill_capability"
+        },
+        {
+          "field": "terminal_gate_ledger",
+          "owner": "terminal_ledger"
+        },
+        {
+          "field": "model_evidence",
+          "owner": "evidence_mesh_and_install_sync"
+        }
+      ],
+      "unknown_partition_items": []
+    },
     "partition_items": [
       "startup",
       "material_intake",
@@ -342,79 +913,215 @@
       "child_skill_capability": {
         "children": [
           "card_instruction_coverage",
-          "flowpilot_reviewer_active_challenge",
+          "flowpilot_output_contract",
           "flowpilot_requirement_traceability",
-          "flowpilot_output_contract"
+          "flowpilot_reviewer_active_challenge"
         ],
-        "owner": "capability"
+        "invariant_families": [
+          "child_skill_selection",
+          "child_skill_standard_contract",
+          "reviewer_active_challenge",
+          "worker_result_matrix"
+        ],
+        "owners": [
+          "capability"
+        ],
+        "parents": [
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "crew_and_heartbeat": {
         "children": [
+          "flowpilot_daemon_liveness",
           "flowpilot_resume",
-          "flowpilot_role_recovery",
-          "flowpilot_daemon_liveness"
+          "flowpilot_role_recovery"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "crew_rehydration",
+          "daemon_liveness_boundary",
+          "manual_resume"
+        ],
+        "owners": [
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "evidence_mesh_and_install_sync": {
         "children": [
-          "flowpilot_model_mesh",
           "flowpilot_control_transaction_registry",
           "flowpilot_legal_next_action",
+          "flowpilot_model_mesh",
           "proof_carrying",
           "release_tooling"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "capability_evidence_sync",
+          "control_transaction_registry",
+          "install_sync_boundary",
+          "model_mesh_authority"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "full_regression_required_for_release"
+        ]
       },
       "material_intake": {
         "children": [
-          "flowpilot_pm_package_absorption",
-          "flowpilot_handoff_artifact_protocol"
+          "flowpilot_handoff_artifact_protocol",
+          "flowpilot_pm_package_absorption"
         ],
-        "owner": "meta"
+        "invariant_families": [
+          "handoff_artifact_integrity",
+          "material_scan_before_architecture",
+          "pm_package_absorption"
+        ],
+        "owners": [
+          "meta"
+        ],
+        "parents": [
+          "meta"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "packet_and_role_authority": {
         "children": [
+          "flowpilot_card_envelope",
           "flowpilot_packet_lifecycle",
           "flowpilot_packet_open_authority",
-          "flowpilot_card_envelope",
           "flowpilot_role_output_runtime"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "active_child_skill_bindings",
+          "controller_body_boundary",
+          "packet_envelope_authority",
+          "packet_open_authority",
+          "role_output_runtime"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "product_architecture": {
         "children": [
-          "flowpilot_planning_quality",
-          "flowpilot_model_driven_recursive_route"
+          "flowpilot_model_driven_recursive_route",
+          "flowpilot_planning_quality"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "child_route_projection",
+          "planning_profile",
+          "product_architecture_before_capability_selection",
+          "recursive_route_decomposition"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "router_daemon_resume": {
         "children": [
-          "flowpilot_router_loop",
-          "flowpilot_persistent_router_daemon",
           "flowpilot_daemon_reconciliation",
-          "flowpilot_route_replanning_policy"
+          "flowpilot_persistent_router_daemon",
+          "flowpilot_route_replanning_policy",
+          "flowpilot_router_loop"
         ],
-        "owner": "meta"
+        "invariant_families": [
+          "daemon_reconciliation",
+          "route_replanning_boundary",
+          "router_packet_loop"
+        ],
+        "owners": [
+          "meta"
+        ],
+        "parents": [
+          "meta"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "startup": {
         "children": [
+          "flowpilot_deterministic_startup_bootstrap",
           "flowpilot_startup_control",
-          "startup_pm_review",
           "flowpilot_startup_intake_ui",
-          "flowpilot_deterministic_startup_bootstrap"
+          "startup_pm_review"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "fresh_run_pointer",
+          "startup_activation_gate",
+          "startup_questions_before_capability_work",
+          "startup_questions_before_work"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       },
       "terminal_ledger": {
         "children": [
-          "flowpilot_terminal_state_monotonicity",
-          "flowpilot_terminal_summary",
           "defect_governance",
-          "flowpilot_repair_transaction"
+          "flowpilot_repair_transaction",
+          "flowpilot_terminal_state_monotonicity",
+          "flowpilot_terminal_summary"
         ],
-        "owner": "shared_kernel"
+        "invariant_families": [
+          "capability_backward_replay",
+          "defect_zero_blocking",
+          "final_summary_boundary",
+          "repair_transaction_evidence",
+          "terminal_capability_ledger",
+          "terminal_state_monotonicity"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       }
     },
     "registered_child_count": 32,
@@ -570,13 +1277,13 @@
         "tier": "medium"
       },
       {
-        "edge_count": 68,
+        "edge_count": 80,
         "model_id": "flowpilot_planning_quality",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_planning_quality_checks_results.json",
+        "result_file": "simulations/flowpilot_planning_quality_results.json",
         "role": "child_evidence",
-        "state_count": 69,
+        "state_count": 81,
         "tier": "small"
       },
       {
@@ -740,7 +1447,17 @@
         "tier": "medium"
       }
     ],
-    "release_confidence": "requires_background_or_valid_proof",
+    "release_confidence": "current",
+    "release_validation_commands": {
+      "capability": "python simulations/run_capability_checks.py --full",
+      "meta": "python simulations/run_meta_checks.py --full"
+    },
+    "routine_confidence": "current",
+    "routine_validation_commands": {
+      "capability": "python simulations/run_capability_checks.py --fast",
+      "hierarchy": "python simulations/run_flowpilot_model_hierarchy_checks.py --json-out simulations/flowpilot_model_hierarchy_results.json",
+      "meta": "python simulations/run_meta_checks.py --fast"
+    },
     "thin_parent_obligations": []
   },
   "model": "flowpilot_model_hierarchy",

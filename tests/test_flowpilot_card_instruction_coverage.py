@@ -105,6 +105,77 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("fundamental", text)
                 self.assertIn("separable new work", text)
 
+    def test_role_scoped_quality_repair_prompt_boundaries(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        packet_template = normalized(ROOT / "templates/flowpilot/packets/packet_body.template.md")
+        self.assertIn("role-scoped quality repair boundary", packet_template)
+        self.assertIn("allowed reads, allowed writes, acceptance slice, role authority, and verification requirements", packet_template)
+        self.assertIn("do not silently repair it", packet_template)
+        self.assertIn("correct defects in your own report, model, check command", packet_template)
+        self.assertIn("do not repair the artifact under review", packet_template)
+
+        executable_worker_prompts = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md",
+        ]
+        for path in executable_worker_prompts:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("role-scoped quality repair boundary", text)
+                self.assertIn("allowed reads", text)
+                self.assertIn("allowed writes", text)
+                self.assertIn("acceptance slice", text)
+                self.assertIn("role authority", text)
+                self.assertIn("rerun", text)
+                self.assertIn("blocked", text)
+                self.assertIn("needs_pm", text)
+                self.assertIn("pm suggestion item", text)
+
+        evidence_prompts = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
+        ]
+        for path in evidence_prompts:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("role-scoped quality repair boundary", text)
+                self.assertIn("correct defects", text)
+                self.assertIn("own report", text)
+                self.assertIn("must not repair target implementation", text)
+                self.assertIn("pm suggestion items", text)
+
+        officer_prompts = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
+        ]
+        for path in officer_prompts:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("role-scoped quality repair boundary", text)
+                self.assertIn("correct defects", text)
+                self.assertIn("own model", text)
+                self.assertIn("formal findings", text)
+                self.assertIn("pm suggestion items", text)
+
+        reviewer_prompts = [
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+            ROOT / "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
+        ]
+        for path in reviewer_prompts:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("role-scoped quality repair boundary", text)
+                self.assertIn("anti-repair", text)
+                self.assertIn("do not repair", text)
+                self.assertNotIn("fix in-scope defects", text)
+
     def test_pm_suggestion_disposition_guidance_is_unified_but_role_scoped(self) -> None:
         pm_card = (
             ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md"
@@ -180,7 +251,12 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())
 
-        packet_runtime_text = normalized(ROOT / "skills/flowpilot/assets/packet_runtime.py")
+        packet_runtime_text = " ".join(
+            (
+                normalized(ROOT / "skills/flowpilot/assets/packet_runtime.py"),
+                normalized(ROOT / "skills/flowpilot/assets/packet_runtime_contracts.py"),
+            )
+        )
         packet_template = normalized(ROOT / "templates/flowpilot/packets/packet_body.template.md")
         pm_card = normalized(ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md")
         pm_startup_intake_card = ROOT / "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md"

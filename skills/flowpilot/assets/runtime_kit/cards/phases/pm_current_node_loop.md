@@ -79,6 +79,14 @@ sealed result body with exactly these labels: `In-scope quality choice` and
 the worker should use the simplest high-quality approach inside the packet
 boundary, and report out-of-scope better ideas or route risks to PM without
 expanding the packet.
+The packet body must also include the `Role-Scoped Quality Repair Boundary`:
+for executable worker work, the worker must inspect changed artifacts against
+the packet's allowed reads, allowed writes, acceptance slice, role authority,
+and verification requirements, fix in-scope defects, rerun required checks or
+evidence probes, and only then return completion. Defects that need broader
+scope, changed acceptance, route mutation, forbidden writes, or another role's
+authority must return `blocked`, `needs_pm`, or a PM Suggestion Item instead of
+silent repair.
 The packet body must carry the node acceptance plan's low-quality-success warning.
 Name the node-local hard part, thin-success shortcut to avoid,
 existence-only evidence that is not enough, and proof of depth the result body

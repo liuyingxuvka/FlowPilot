@@ -460,27 +460,45 @@ FlowGuard caught and fixed these design issues:
   recheck. The focused model and checker are
   `simulations/flowpilot_route_mutation_activation_model.py` and
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
-- The v0.9.6 router has been structurally reduced without changing protocol
-  semantics. `flowpilot_router.py` remains the compatibility facade, while
-  event dispatch, Controller action providers, Controller action handlers,
-  route activation/mutation, and heartbeat/resume helpers now live in focused
-  modules:
+- The v0.9.7 Python structure simplification pass keeps public entrypoints and
+  protocol semantics stable while reducing several heavy active files.
+  `flowpilot_router.py` remains the compatibility facade, while event dispatch,
+  event intake, Controller action providers, Controller action handlers, route
+  activation/mutation, and heartbeat/resume helpers now live in focused modules:
   `flowpilot_router_events.py`,
+  `flowpilot_router_event_intake.py`,
   `flowpilot_router_action_providers.py`,
   `flowpilot_router_action_handlers.py`,
   `flowpilot_router_route.py`, and
   `flowpilot_router_resume.py`.
+- `packet_runtime.py` remains the public facade and delegates schema, path,
+  contract, ledger, relay, active-holder, session, and reviewer responsibilities
+  to `packet_runtime_*` helper modules.
+- `scripts/check_install.py` remains the compatibility entrypoint and delegates
+  check groups to `scripts/install_checks/`.
 - The Meta and Capability FlowGuard parent models now keep short `apply`
   orchestration methods and move their previous monolithic bodies into phase
-  helpers. The model semantics and hazard labels are intended to stay stable;
-  the background checks are recorded under
+  helpers. Their regression runners are layered: the default command validates
+  bounded thin-parent evidence for routine confidence, `--full` validates a
+  fast layered full-parent proof recorded in
+  `simulations/meta_layered_full_results.json` or
+  `simulations/capability_layered_full_results.json`, and `--legacy-full`
+  remains the explicit old monolithic compatibility oracle. Long legacy runs
+  should use the background artifacts under
   `tmp/flowguard_background/run_meta_checks.*` and
   `tmp/flowguard_background/run_capability_checks.*`.
-- Router runtime tests now have domain entry files for resume, cards, packets,
-  route mutation, startup daemon, dispatch gate, Controller, ACK/return,
-  terminal, and closure suites. The legacy aggregate
-  `tests/test_flowpilot_router_runtime.py` remains available while migration
-  continues.
+- Router runtime tests now have domain entry files covering all `304` aggregate
+  runtime tests exactly once, including resume, cards, packets, route mutation,
+  startup daemon, dispatch gate, Controller, ACK/return, terminal, closure,
+  bootstrap/CLI, foreground, PM role work, material/modeling, control blockers,
+  and quality gates. The legacy aggregate
+  `tests/test_flowpilot_router_runtime.py` remains available as the source of
+  the shared test case class.
+- A v0.9.7 behavior repair discovered during simplification validates explicit
+  event-envelope references against the current Router wait before startup or
+  current-scope reconciliation can return a recoverable wait. The event-contract
+  model includes the corresponding
+  `explicit_envelope_outside_wait_returns_reconciliation_wait` hazard.
 
 ## Remaining Work
 
@@ -503,6 +521,8 @@ Run:
 ```powershell
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
+python simulations/run_meta_checks.py --full --fast
+python simulations/run_capability_checks.py --full --fast
 python simulations/run_prompt_isolation_checks.py
 python simulations/run_flowpilot_resume_checks.py
 python simulations/run_flowpilot_router_loop_checks.py --json-out simulations/flowpilot_router_loop_results.json

@@ -33,6 +33,13 @@ sealed report body with exactly these labels: `In-scope quality choice` and
 the officer should use the simplest high-quality modeling boundary that answers
 PM's request, and report out-of-scope better ideas, route risks, or model
 improvements to PM without expanding the packet.
+The packet body must include the officer version of the
+`Role-Scoped Quality Repair Boundary`: the officer must correct defects in the
+officer's own model, report, check command, counterexample interpretation,
+skipped-check reasoning, and evidence before returning. Product, process, route,
+implementation, or authority defects are formal findings, model blockers, or
+PM Suggestion Items unless PM explicitly granted bounded target repair in
+allowed writes.
 The packet body must also require a `PM Suggestion Items` section. Officer
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition. They become `current_gate_blocker` items only for formal

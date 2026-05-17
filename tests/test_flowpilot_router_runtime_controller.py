@@ -13,11 +13,23 @@ TEST_NAMES = (
     "test_current_work_uses_passive_reconciliation_owner_when_pending_wait_is_empty",
     "test_router_daemon_tick_writes_controller_action_ledger_and_receipt_reconciles",
     "test_reconciled_scheduler_row_is_not_downgraded_by_later_receipt_sync",
+    "test_reconciled_controller_action_backfills_receipt_done_scheduler_row",
     "test_completed_pending_controller_action_receipt_is_not_returned_again",
+    "test_foreground_next_waits_on_fresh_controller_action_write_lock",
+    "test_sync_display_plan_done_receipt_updates_router_fact_before_next_action",
+    "test_controller_action_ledger_handles_multiple_receipts_and_duplicates",
+    "test_foreground_controller_standby_wakes_on_controller_action_ledger",
+    "test_controller_patrol_timer_wakes_on_controller_action_ledger",
+    "test_controller_action_reconciliation_ignores_transient_temp_files",
     "test_controller_boundary_done_receipt_reclaims_router_postcondition",
     "test_controller_boundary_projection_reclaims_stale_flags_without_pending_action",
+    "test_controller_boundary_confirmation_records_envelope_only_event",
     "test_controller_boundary_done_receipt_missing_deliverable_schedules_repair",
     "test_controller_boundary_valid_artifact_reclaims_before_repair",
+    "test_controller_boundary_handwritten_artifact_without_runtime_evidence_schedules_repair",
+    "test_controller_boundary_repair_action_resolves_original",
+    "test_controller_boundary_repair_budget_escalates_after_two_failures",
+    "test_controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending",
 )
 
 

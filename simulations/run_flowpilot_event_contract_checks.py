@@ -33,6 +33,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER: "duplicate PM repair decision created new blocker or transaction",
     model.POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT: "invalid wait was persisted and only repaired by post-write cleanup",
     model.INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT: "incoming role event was accepted outside current allowed_external_events",
+    model.EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT: (
+        "explicit event envelope bypassed current wait validation"
+    ),
 }
 
 
@@ -43,7 +46,8 @@ def _state_id(state: model.State) -> str:
         f"registered={state.allowed_events_registered}|receivable={state.allowed_events_currently_receivable}|"
         f"ack={state.direct_ack_consumed},{state.semantic_wait_written_after_ack},{state.semantic_wait_valid_after_ack}|"
         f"incoming={state.incoming_event},{state.incoming_event_allowed_by_current_wait},"
-        f"{state.incoming_event_accepted}|"
+        f"{state.incoming_event_accepted},{state.incoming_event_has_explicit_envelope},"
+        f"{state.incoming_event_returned_reconciliation_wait}|"
         f"repair={state.repair_success_event},{state.repair_blocker_event},{state.repair_protocol_event}|"
         f"dup={state.duplicate_pm_repair_decision_seen},{state.duplicate_repair_created_new_blocker},"
         f"{state.duplicate_repair_created_new_transaction}|reason={state.terminal_reason}"

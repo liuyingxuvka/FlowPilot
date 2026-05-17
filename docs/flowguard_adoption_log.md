@@ -13779,3 +13779,146 @@ sync evidence.
 - No push, tag, release, deploy, or public publication was performed.
 - Full repair sibling route replacement policy and native Cockpit snapshot
   consumption remain future work.
+
+## 2026-05-17 Python Structure Simplification
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: second maintenance pass to reduce large Python modules,
+  remove duplicate wrapper code, split model phases, split router runtime test
+  domains, synchronize the local installed skill, and keep local `main` as the
+  only work branch.
+- Status: completed_layered_parent_validation_synced_ready_for_local_commit
+- OpenSpec change: `simplify-python-structure`
+
+### Model And Runtime Evidence
+
+- Structural guard:
+  `simulations/flowpilot_structural_refactor_model.py`,
+  `simulations/run_flowpilot_structural_refactor_checks.py`,
+  `simulations/flowpilot_structural_refactor_results.json`
+- Event-contract model update:
+  `simulations/flowpilot_event_contract_model.py`,
+  `simulations/run_flowpilot_event_contract_checks.py`,
+  `simulations/flowpilot_event_contract_results.json`
+- Background Meta/Capability artifacts:
+  `tmp/flowguard_background/run_meta_checks.*`,
+  `tmp/flowguard_background/run_capability_checks.*`
+- Layered parent release evidence:
+  `simulations/meta_layered_full_results.json`,
+  `simulations/meta_layered_full_results.proof.json`,
+  `simulations/capability_layered_full_results.json`,
+  `simulations/capability_layered_full_results.proof.json`
+- Background layered full proof-reuse artifacts:
+  `tmp/flowguard_background/run_meta_layered_full_checks.*`,
+  `tmp/flowguard_background/run_capability_layered_full_checks.*`
+
+### Commands
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  schema `1.0`.
+- `openspec validate simplify-python-structure --strict --json` passed.
+- `python -m py_compile simulations\flowpilot_thin_parent_checks.py
+  simulations\run_meta_checks.py simulations\run_capability_checks.py
+  simulations\run_flowpilot_model_hierarchy_checks.py
+  scripts\install_checks\common.py scripts\smoke_autopilot.py
+  tests\test_flowpilot_thin_parent_checks.py` passed.
+- `python -m unittest tests.test_flowpilot_thin_parent_checks` passed: 5 tests.
+- `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out
+  simulations\flowpilot_model_hierarchy_results.json` passed: 29 states, 28
+  edges, 42 FlowGuard traces, zero violations; routine confidence `current`
+  and release confidence `current`.
+- `python simulations\run_meta_checks.py --fast` reused
+  `simulations\meta_thin_parent_results.proof.json`.
+- `python simulations\run_capability_checks.py --fast` reused
+  `simulations\capability_thin_parent_results.proof.json`.
+- `python simulations\run_meta_checks.py --full --force` refreshed the layered
+  full Meta parent: 11 states / 18 edges, release confidence
+  `current_with_layered_full_parent`.
+- `python simulations\run_capability_checks.py --full --force` refreshed the
+  layered full Capability parent: 9 states / 14 edges, release confidence
+  `current_with_layered_full_parent`.
+- `python simulations\run_meta_checks.py --full --fast` reused
+  `simulations\meta_layered_full_results.proof.json`.
+- `python simulations\run_capability_checks.py --full --fast` reused
+  `simulations\capability_layered_full_results.proof.json`.
+- Background `run_meta_layered_full_checks` completed under
+  `tmp\flowguard_background\run_meta_layered_full_checks.*` with exit `0`;
+  stdout, stderr, combined, exit, and meta artifacts exist, and stdout reports
+  layered full proof reuse.
+- Background `run_capability_layered_full_checks` completed under
+  `tmp\flowguard_background\run_capability_layered_full_checks.*` with exit
+  `0`; stdout, stderr, combined, exit, and meta artifacts exist, and stdout
+  reports layered full proof reuse.
+- Background `run_meta_checks` was restarted from the current layered code with
+  `python simulations\run_meta_checks.py --full`; it completed under
+  `tmp\flowguard_background\run_meta_checks.*` with exit `0`, empty stderr,
+  result type `layered_full_parent`, 11 states / 18 edges, and release
+  confidence `current_with_layered_full_parent`.
+- Background `run_capability_checks` was restarted from the current layered
+  code with `python simulations\run_capability_checks.py --full`; it completed
+  under `tmp\flowguard_background\run_capability_checks.*` with exit `0`, empty
+  stderr, result type `layered_full_parent`, 9 states / 14 edges, and release
+  confidence `current_with_layered_full_parent`.
+- `python scripts\check_install.py --json`, `python scripts\check_public_release.py
+  --json`, and `python scripts\smoke_autopilot.py --fast` passed. The public
+  release check reported only the expected warning that the worktree is dirty.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed; installed
+  FlowPilot is source-fresh.
+- Router runtime domain verification completed, including the slow
+  `tests.test_flowpilot_router_runtime_route_mutation` domain under
+  `tmp\flowguard_background\route_mutation_unittest.*` with exit `0`;
+  it ran 24 tests in 1452.343 seconds.
+- `role-scoped-quality-repair-prompts` was validated with
+  `openspec validate role-scoped-quality-repair-prompts --strict --json`,
+  `python simulations\run_flowpilot_planning_quality_checks.py --json-out
+  simulations\flowpilot_planning_quality_results.json`,
+  `python -m unittest tests.test_flowpilot_planning_quality`, and focused
+  `py_compile` checks. After the planning-quality result changed, background
+  `run_meta_checks` and `run_capability_checks` were rerun with layered
+  `--full`; both completed with exit `0`.
+
+### Findings
+
+- Facade-first splitting kept public module names, command entrypoints, event
+  names, and persisted JSON shapes stable while moving cohesive bodies into
+  helper modules.
+- Runtime testing exposed a concrete model-miss class: explicit event-envelope
+  submissions must be validated against the current Router wait before any
+  reconciliation wait is returned. The production fix performs that validation
+  early; the event-contract model now includes the same-class hazard.
+- Dispatch-gate and current-node runtime testing exposed additional
+  same-obligation/stale-ledger hazards: formal work-packet relays must publish
+  their expected output events to the recipient gate, invalid durable material
+  results must not be auto-reconciled before reissue handling, and completed
+  current-node packet records must be closed when the frontier advances.
+- Router runtime domain entrypoints now cover all aggregate runtime tests
+  exactly once, preventing silent domain-migration coverage loss.
+- Meta and Capability parent checks are no longer forced through the old
+  monolithic graph for routine or layered release confidence. The default
+  command remains thin-parent routine validation, `--full` now means fast
+  layered full-parent proof, and `--legacy-full` is the explicit old monolithic
+  compatibility oracle.
+- The hierarchy checker now reads partition contracts from
+  `flowpilot_parent_responsibility_ledger.json`, avoiding a second hard-coded
+  parent partition map.
+- The hierarchy model now rejects two new model-miss classes: hiding release
+  full-regression obligations and allowing old full-regression lag to block
+  current routine thin-parent confidence.
+- Role-scoped quality repair prompts now pressure executable workers to fix and
+  recheck in-scope defects before completion, while research/material-scan,
+  officer, and reviewer prompts preserve authority boundaries by limiting
+  correction to their own report/model/review output and routing target defects
+  through PM findings, blockers, or suggestion items.
+
+### Skipped Or Deferred Steps
+
+- No push, tag, GitHub Release, deploy, binary package, or remote publication
+  is part of this maintenance pass.
+- The old monolithic Meta/Capability graph regressions were not rerun. They now
+  remain available only through explicit `--legacy-full` compatibility commands
+  and are not required for this maintenance pass. Stray legacy-full background
+  processes observed during final cleanup were stopped and not used as
+  completion evidence.
+- Local git commit is ready after final working-tree review and staging.

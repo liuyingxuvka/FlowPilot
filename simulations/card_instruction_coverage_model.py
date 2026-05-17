@@ -737,8 +737,15 @@ def collect_packet_prompt_facts(project_root: Path) -> PacketPromptFacts:
     result_body = (project_root / "templates" / "flowpilot" / "packets" / "result_body.template.md").read_text(
         encoding="utf-8"
     )
-    packet_runtime = (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime.py").read_text(
-        encoding="utf-8"
+    packet_runtime = "\n".join(
+        (
+            (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime.py").read_text(
+                encoding="utf-8"
+            ),
+            (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime_contracts.py").read_text(
+                encoding="utf-8"
+            ),
+        )
     )
     combined = "\n".join((packet_body, result_body, packet_runtime))
     normalized_packet_body = re.sub(r"\s+", " ", packet_body.lower())

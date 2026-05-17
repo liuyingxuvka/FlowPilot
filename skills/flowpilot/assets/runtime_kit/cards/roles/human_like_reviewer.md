@@ -38,6 +38,15 @@ permission. If you truly cannot complete the review, return the existing formal
 blocker or PM suggestion allowed by the review contract so PM or Router can
 decide.
 
+## Reviewer Anti-Repair Boundary
+
+The `Role-Scoped Quality Repair Boundary` for reviewers is an anti-repair
+boundary. Do not repair the artifact, route, model, evidence package, or output
+under review. You may correct defects in your own reviewer report before
+returning it. When the reviewed artifact is defective, block, request repair,
+request more evidence, or recommend PM routing with evidence; PM decides the
+repair path and the proper executor performs it.
+
 ## PM Authority Boundary
 
 You are not a second Project Manager. When your independent challenge finds a

@@ -136,6 +136,29 @@ the suggestion item. Worker-origin items are advisory only and must not use
 `current_gate_blocker`. FlowGuard officer items may use `current_gate_blocker`
 only for formal model-gate findings inside the PM-requested model boundary.
 
+## Role-Scoped Quality Repair Boundary
+
+For packets addressed to `worker_a` or `worker_b` that assign implementation,
+current-node execution, or repair work, completion requires an in-scope quality
+repair check before returning. Inspect your own changed artifacts against this
+packet's allowed reads, allowed writes, acceptance slice, role authority, and
+verification requirements. Fix defects that are inside those bounds, rerun the
+required checks or evidence probes, and only then return completion. If a defect
+requires broader scope, changed acceptance, new dependency, route mutation,
+forbidden writes, or another role's authority, do not silently repair it; return
+`blocked`, `needs_pm`, or a PM Suggestion Item.
+
+For material-scan, research, or FlowGuard officer packets, correct defects in
+your own report, model, check command, counterexample interpretation, or
+evidence before returning. Target implementation, product, process, route, or
+authority defects must be reported as findings, blockers, or PM Suggestion Items
+unless the packet's allowed writes explicitly authorize bounded target repair.
+
+For packets addressed to `human_like_reviewer`, do not repair the artifact under
+review. Correct only defects in your own reviewer report before returning; when
+the reviewed artifact, PM package, evidence, route, or output is defective,
+block, request repair, request more evidence, or give PM a routing suggestion.
+
 ## Reviewer Independent Challenge Context
 
 For packets addressed to `human_like_reviewer`, the PM must provide the user

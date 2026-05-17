@@ -117,57 +117,17 @@
     "state_count": 25
   },
   "source_audit": {
-    "external_event_count": 109,
+    "external_event_count": 110,
     "finding_count": 0,
     "findings": [],
     "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
     "ok": true,
-    "repeatable_exception_count": 9,
+    "repeatable_exception_count": 1,
     "repeatable_exceptions": {
       "heartbeat_or_manual_resume_requested": {
         "condition": "append_only_tick",
         "exception_name": "pre_dedupe_special_case",
         "source_excerpt": "handled before generic duplicate check"
-      },
-      "pm_records_control_blocker_repair_decision": {
-        "condition": "conditional",
-        "exception_name": "repeatable_pm_repair_decision",
-        "source_excerpt": "repeatable_pm_repair_decision = ( event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT and isinstance(active_blocker, dict) and active_blocker.get(\"delivery_status\") == \"delivered\" and active_blocker.get(\"handling_lane\") in PM_DECISION_REQUIRE"
-      },
-      "pm_records_role_work_result_decision": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_pm_role_work_result_decision",
-        "source_excerpt": "repeatable_pm_role_work_result_decision = event == PM_ROLE_WORK_RESULT_DECISION_EVENT"
-      },
-      "pm_registers_role_work_request": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_pm_role_work_request",
-        "source_excerpt": "repeatable_pm_role_work_request = event == PM_ROLE_WORK_REQUEST_EVENT"
-      },
-      "pm_requests_startup_repair": {
-        "condition": "conditional",
-        "exception_name": "repeatable_startup_repair_request",
-        "source_excerpt": "repeatable_startup_repair_request = ( event == \"pm_requests_startup_repair\" and run_state[\"flags\"].get(flag) and run_state[\"flags\"].get(\"startup_fact_reported\") and run_state[\"flags\"].get(\"pm_startup_activation_card_delivered\")"
-      },
-      "pm_writes_route_draft": {
-        "condition": "conditional",
-        "exception_name": "repeatable_route_draft_repair",
-        "source_excerpt": "repeatable_route_draft_repair = ( event == \"pm_writes_route_draft\" and run_state[\"flags\"].get(flag) and not run_state[\"flags\"].get(\"route_activated_by_pm\")"
-      },
-      "role_records_gate_decision": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_gate_decision",
-        "source_excerpt": "repeatable_gate_decision = event == GATE_DECISION_EVENT"
-      },
-      "role_work_result_returned": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_role_work_result",
-        "source_excerpt": "repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT"
-      },
-      "worker_current_node_result_returned": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_current_node_result",
-        "source_excerpt": "repeatable_current_node_result = event == \"worker_current_node_result_returned\""
       }
     },
     "required_scoped_event_count": 6,

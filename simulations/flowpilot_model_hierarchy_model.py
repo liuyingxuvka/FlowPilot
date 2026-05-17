@@ -50,6 +50,8 @@ class State:
     child_skipped_required_checks_hidden: bool = False
     child_expands_parent_graph: bool = False
     authority_mesh_used_as_partition_model: bool = False
+    release_obligation_visible: bool = True
+    full_regression_used_as_routine_gate: bool = False
     heavy_full_regression_current: bool = False
     hierarchy_claims_release_green: bool = False
     background_run_has_exit_artifact: bool = True
@@ -128,6 +130,15 @@ SCENARIOS: dict[str, State] = {
         heavy_full_regression_current=False,
         decision="hierarchy_green_release_candidate",
     ),
+    "release_obligation_hidden": replace(
+        _valid_hierarchy("release_obligation_hidden"),
+        release_obligation_visible=False,
+    ),
+    "routine_thin_parent_blocked_by_full_regression": replace(
+        _valid_hierarchy("routine_thin_parent_blocked_by_full_regression"),
+        full_regression_used_as_routine_gate=True,
+        decision="routine_blocked_by_missing_full_regression",
+    ),
     "background_progress_only_claimed_pass": replace(
         _valid_hierarchy("background_progress_only_claimed_pass"),
         background_run_has_exit_artifact=False,
@@ -180,6 +191,10 @@ def hierarchy_failures(state: State) -> list[str]:
         failures.append("child_model_must_not_inline_parent_state_graph")
     if state.authority_mesh_used_as_partition_model:
         failures.append("authority_mesh_cannot_substitute_for_partition_map")
+    if not state.release_obligation_visible and not state.heavy_full_regression_current:
+        failures.append("release_full_regression_obligation_hidden")
+    if state.full_regression_used_as_routine_gate and not state.hierarchy_claims_release_green:
+        failures.append("full_regression_must_not_block_routine_thin_parent")
     if state.hierarchy_claims_release_green and not state.heavy_full_regression_current:
         failures.append("release_claim_requires_current_heavy_parent_regression")
     if state.background_progress_claimed_as_pass and (
@@ -274,6 +289,30 @@ def release_claim_requires_full_regression(state: State, _trace: Sequence[object
     return InvariantResult.pass_()
 
 
+def routine_confidence_may_defer_full_regression(
+    state: State, _trace: Sequence[object]
+) -> InvariantResult:
+    if (
+        state.status == "accepted"
+        and state.full_regression_used_as_routine_gate
+        and not state.hierarchy_claims_release_green
+    ):
+        return InvariantResult.fail("routine confidence was blocked by release-grade full regression")
+    return InvariantResult.pass_()
+
+
+def release_obligation_must_stay_visible(
+    state: State, _trace: Sequence[object]
+) -> InvariantResult:
+    if (
+        state.status == "accepted"
+        and not state.release_obligation_visible
+        and not state.heavy_full_regression_current
+    ):
+        return InvariantResult.fail("accepted hierarchy hid a pending full-regression obligation")
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         "accepted_states_are_safe",
@@ -294,6 +333,16 @@ INVARIANTS = (
         "release_claim_requires_full_regression",
         "Release-level hierarchy claims require current heavyweight parent regression evidence.",
         release_claim_requires_full_regression,
+    ),
+    Invariant(
+        "routine_confidence_may_defer_full_regression",
+        "Routine thin-parent confidence cannot be blocked only because release-grade full regression is pending.",
+        routine_confidence_may_defer_full_regression,
+    ),
+    Invariant(
+        "release_obligation_must_stay_visible",
+        "Pending full-regression obligations must remain visible when routine confidence is accepted.",
+        release_obligation_must_stay_visible,
     ),
 )
 

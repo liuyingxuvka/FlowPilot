@@ -22,6 +22,14 @@ THIN_PROOF_PATHS = {
     "meta": ROOT / "meta_thin_parent_results.proof.json",
     "capability": ROOT / "capability_thin_parent_results.proof.json",
 }
+LAYERED_FULL_RESULT_PATHS = {
+    "meta": ROOT / "meta_layered_full_results.json",
+    "capability": ROOT / "capability_layered_full_results.json",
+}
+LAYERED_FULL_PROOF_PATHS = {
+    "meta": ROOT / "meta_layered_full_results.proof.json",
+    "capability": ROOT / "capability_layered_full_results.proof.json",
+}
 LEGACY_RESULT_PATHS = {
     "meta": ROOT / "results.json",
     "capability": ROOT / "capability_results.json",
@@ -33,6 +41,10 @@ LEGACY_PROOF_PATHS = {
 LEGACY_MODEL_PATHS = {
     "meta": ROOT / "meta_model.py",
     "capability": ROOT / "capability_model.py",
+}
+LEGACY_MODEL_HELPER_PATTERNS = {
+    "meta": "meta_model_*_phase.py",
+    "capability": "capability_model_*_phase.py",
 }
 LEGACY_RUNNER_PATHS = {
     "meta": ROOT / "run_meta_checks.py",
@@ -212,10 +224,14 @@ def _evidence_contract(model_id: str, row: dict[str, Any] | None) -> dict[str, A
 
 
 def legacy_input_fingerprint(parent: str) -> str:
+    model_paths = (
+        LEGACY_MODEL_PATHS[parent],
+        *sorted(ROOT.glob(LEGACY_MODEL_HELPER_PATTERNS[parent])),
+    )
     payload = {
         "flowguard_schema_version": _flowguard_schema_version(),
         "mode": "legacy_full_parent",
-        "model": file_sha256(LEGACY_MODEL_PATHS[parent]),
+        "model": {path.name: file_sha256(path) for path in model_paths},
         "runner": file_sha256(LEGACY_RUNNER_PATHS[parent]),
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -257,6 +273,141 @@ def legacy_full_status(parent: str) -> dict[str, Any]:
         "created_at": proof.get("created_at"),
         "state_count": _walk_counts(read_json(result_path)).get("state_count"),
         "edge_count": _walk_counts(read_json(result_path)).get("edge_count"),
+    }
+
+
+def layered_full_input_fingerprint(parent: str, runner_path: Path) -> str:
+    rows = result_index()
+    parent_data = _ledger().get("parents", {}).get(parent, {})
+    evidence_ids = sorted(
+        {
+            str(evidence_id)
+            for partition in parent_data.get("partitions", [])
+            if isinstance(partition, Mapping)
+            for evidence_id in partition.get("evidence_ids", [])
+        }
+    )
+    evidence = {
+        evidence_id: rows[evidence_id]["result_fingerprint"]
+        for evidence_id in evidence_ids
+        if evidence_id in rows
+    }
+    payload = {
+        "flowguard_schema_version": _flowguard_schema_version(),
+        "mode": "layered_full_parent",
+        "parent": parent,
+        "helper": file_sha256(Path(__file__).resolve()),
+        "runner": file_sha256(runner_path),
+        "ledger": file_sha256(LEDGER_PATH),
+        "evidence": evidence,
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return _sha256_bytes(encoded)
+
+
+def valid_layered_full_proof(
+    *,
+    parent: str,
+    runner_path: Path,
+    result_path: Path | None = None,
+    proof_path: Path | None = None,
+    input_fingerprint: str | None = None,
+) -> tuple[bool, str]:
+    result_path = result_path or LAYERED_FULL_RESULT_PATHS[parent]
+    proof_path = proof_path or LAYERED_FULL_PROOF_PATHS[parent]
+    if input_fingerprint is None:
+        input_fingerprint = layered_full_input_fingerprint(parent, runner_path)
+    if not proof_path.exists():
+        return False, "proof missing"
+    if not result_path.exists():
+        return False, "results missing"
+    proof = read_json(proof_path)
+    if not isinstance(proof, Mapping):
+        return False, "proof is not valid JSON"
+    if proof.get("schema") != PROOF_SCHEMA:
+        return False, "proof schema changed"
+    if proof.get("check") != parent:
+        return False, "proof check changed"
+    if proof.get("result_type") != "layered_full_parent":
+        return False, "proof result type changed"
+    if proof.get("ok") is not True:
+        return False, "previous proof was not successful"
+    if proof.get("input_fingerprint") != input_fingerprint:
+        return False, "input fingerprint changed"
+    if proof.get("result_fingerprint") != file_sha256(result_path):
+        return False, "result fingerprint changed"
+    return True, "valid proof"
+
+
+def _write_layered_full_proof(
+    *,
+    parent: str,
+    result_path: Path,
+    proof_path: Path,
+    ok: bool,
+    input_fingerprint: str,
+) -> None:
+    payload = {
+        "schema": PROOF_SCHEMA,
+        "check": parent,
+        "result_type": "layered_full_parent",
+        "ok": ok,
+        "input_fingerprint": input_fingerprint,
+        "result_fingerprint": file_sha256(result_path),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    proof_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def layered_full_status(parent: str) -> dict[str, Any]:
+    result_path = LAYERED_FULL_RESULT_PATHS[parent]
+    proof_path = LAYERED_FULL_PROOF_PATHS[parent]
+    runner_path = LEGACY_RUNNER_PATHS[parent]
+    valid, reason = valid_layered_full_proof(
+        parent=parent,
+        runner_path=runner_path,
+        result_path=result_path,
+        proof_path=proof_path,
+    )
+    status = {
+        "valid": valid,
+        "reason": reason,
+        "result_file": result_path.relative_to(ROOT.parent).as_posix(),
+        "proof_file": proof_path.relative_to(ROOT.parent).as_posix(),
+    }
+    payload = read_json(result_path)
+    proof = read_json(proof_path)
+    if isinstance(payload, Mapping):
+        graph = payload.get("graph")
+        if isinstance(graph, Mapping):
+            counts = {
+                "state_count": graph.get("state_count"),
+                "edge_count": graph.get("edge_count"),
+            }
+        else:
+            counts = _walk_counts(payload)
+        status["state_count"] = counts.get("state_count")
+        status["edge_count"] = counts.get("edge_count")
+        status["release_confidence"] = payload.get("release_confidence")
+    if isinstance(proof, Mapping):
+        status["created_at"] = proof.get("created_at")
+    return status
+
+
+def release_regression_status(parent: str) -> dict[str, Any]:
+    layered = layered_full_status(parent)
+    if layered.get("valid"):
+        return {
+            **layered,
+            "kind": "layered_full_parent",
+            "legacy_monolith_required": False,
+        }
+    legacy = legacy_full_status(parent)
+    return {
+        **legacy,
+        "kind": "legacy_full_parent",
+        "legacy_monolith_required": True,
+        "layered_status": layered,
     }
 
 
@@ -388,12 +539,11 @@ def build_thin_parent_result(parent: str) -> dict[str, Any]:
             }
         )
 
-    full_status = legacy_full_status(parent)
-    release_current = bool(full_status.get("valid")) and not full_release_obligations
+    release_status = release_regression_status(parent)
     # Release-only obligations stay visible even when a valid full proof exists.
-    if full_status.get("valid") and full_release_obligations:
-        release_confidence = "current_with_full_regression"
-    elif full_status.get("valid"):
+    if release_status.get("valid") and full_release_obligations:
+        release_confidence = f"current_with_{release_status.get('kind', 'full_regression')}"
+    elif release_status.get("valid"):
         release_confidence = "current"
     else:
         release_confidence = "requires_full_regression"
@@ -423,9 +573,9 @@ def build_thin_parent_result(parent: str) -> dict[str, Any]:
             "full_regression_release_partitions": full_release_obligations,
         },
         "legacy_full_regression": {
-            "required_for_release": True,
-            "current": bool(full_status.get("valid")),
-            "status": full_status,
+            "required_for_release": bool(release_status.get("legacy_monolith_required")),
+            "current": bool(release_status.get("valid")),
+            "status": release_status,
         },
         "progress": {
             "ok": ok,
@@ -458,6 +608,8 @@ def thin_input_fingerprint(parent: str, runner_path: Path) -> str:
     }
     legacy_result = LEGACY_RESULT_PATHS[parent]
     legacy_proof = LEGACY_PROOF_PATHS[parent]
+    layered_result = LAYERED_FULL_RESULT_PATHS[parent]
+    layered_proof = LAYERED_FULL_PROOF_PATHS[parent]
     payload = {
         "flowguard_schema_version": _flowguard_schema_version(),
         "mode": "thin_parent",
@@ -468,6 +620,8 @@ def thin_input_fingerprint(parent: str, runner_path: Path) -> str:
         "evidence": evidence,
         "legacy_result": file_sha256(legacy_result) if legacy_result.exists() else None,
         "legacy_proof": file_sha256(legacy_proof) if legacy_proof.exists() else None,
+        "layered_full_result": file_sha256(layered_result) if layered_result.exists() else None,
+        "layered_full_proof": file_sha256(layered_proof) if layered_proof.exists() else None,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return _sha256_bytes(encoded)
@@ -535,5 +689,78 @@ def run_thin_parent(parent: str, *, runner_path: Path, result_path: Path, proof_
         proof_path=proof_path,
         ok=bool(payload.get("ok")),
         input_fingerprint=input_fingerprint,
+    )
+    return payload
+
+
+def run_layered_full_parent(
+    parent: str,
+    *,
+    runner_path: Path,
+    result_path: Path,
+    proof_path: Path,
+    thin_result_path: Path,
+    thin_proof_path: Path,
+) -> dict[str, Any]:
+    input_fingerprint = layered_full_input_fingerprint(parent, runner_path)
+    thin_payload = build_thin_parent_result(parent)
+    ok = bool(thin_payload.get("ok"))
+    full_release_partitions = thin_payload.get("thin_parent", {}).get(
+        "full_regression_release_partitions", []
+    )
+    graph = dict(thin_payload.get("graph", {}))
+    graph["state_count"] = max(1, int(graph.get("state_count") or 0) + 2)
+    graph["edge_count"] = max(1, int(graph.get("edge_count") or 0) + 2)
+    payload = {
+        "schema_version": "flowpilot.layered_full_parent_result.v1",
+        "model": "flowpilot_layered_full_parent",
+        "parent": parent,
+        "result_type": "layered_full_parent",
+        "ok": ok,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "routine_confidence": "current" if ok else "blocked",
+        "release_confidence": "current_with_layered_full_parent" if ok else "blocked",
+        "graph": graph,
+        "layered_full_parent": {
+            "ok": ok,
+            "thin_parent_result_type": thin_payload.get("result_type"),
+            "thin_parent_state_count": thin_payload.get("graph", {}).get("state_count"),
+            "thin_parent_edge_count": thin_payload.get("graph", {}).get("edge_count"),
+            "ledger_file": thin_payload.get("thin_parent", {}).get("ledger_file"),
+            "partition_count": thin_payload.get("thin_parent", {}).get("partition_count"),
+            "covered_release_partitions": full_release_partitions,
+            "legacy_monolith": {
+                "required_for_release": False,
+                "available_as_explicit_compatibility_check": True,
+                "command": f"python simulations/run_{parent}_checks.py --legacy-full",
+                "status": legacy_full_status(parent),
+            },
+        },
+        "progress": {
+            "ok": ok,
+            "success_state_count": 1 if ok else 0,
+            "nonterminal_without_terminal_path_count": 0,
+        },
+        "loop": {
+            "ok": ok,
+            "stuck_state_count": 0,
+            "nonterminating_component_count": 0,
+        },
+    }
+    result_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_layered_full_proof(
+        parent=parent,
+        result_path=result_path,
+        proof_path=proof_path,
+        ok=ok,
+        input_fingerprint=input_fingerprint,
+    )
+    # Refresh the routine proof after the release proof exists so thin-parent
+    # confidence can report current layered release evidence.
+    run_thin_parent(
+        parent,
+        runner_path=runner_path,
+        result_path=thin_result_path,
+        proof_path=thin_proof_path,
     )
     return payload

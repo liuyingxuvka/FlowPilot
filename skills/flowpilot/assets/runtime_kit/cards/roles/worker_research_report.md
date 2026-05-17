@@ -40,6 +40,14 @@ path that answers PM's decision question. If a better idea would require
 broader research, extra experiments, route changes, or different acceptance,
 do not execute it; report it to PM only.
 
+Before returning the research result, perform the evidence-work version of the
+`Role-Scoped Quality Repair Boundary` check. Correct defects, contradictions,
+missing source checks, missing negative findings, or missing evidence in your
+own report before returning. You must not repair target implementation, product,
+process, route, or authority defects unless the packet allowed writes explicitly
+grant bounded repair; report those target defects as findings, blockers, or PM
+Suggestion Items.
+
 Before returning the result envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 result or report body. If required source checks, sections, or evidence are

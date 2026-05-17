@@ -126,7 +126,12 @@ Choose the executable plan kind deliberately:
 - Use `controller_repair_work_packet` when Controller must perform bounded AI
   repair work inside current authority. Include `work_packet.allowed_reads`,
   `work_packet.allowed_writes`, `work_packet.forbidden_actions`, and
-  `work_packet.success_evidence`.
+  `work_packet.success_evidence`. The repair packet must include the
+  `Role-Scoped Quality Repair Boundary`: the repair executor fixes and
+  rechecks only defects inside those allowed reads, allowed writes, forbidden
+  actions, success evidence, packet acceptance slice, and role authority. Any
+  broader defect returns to PM as `blocked`, `needs_pm`, or a PM Suggestion Item
+  instead of silent repair.
 - Use `packet_reissue` when replacement packets must be generated. Include
   `repair_transaction.replacement_packets` or
   `repair_transaction.replacement_packet_specs_path` with its hash. Router will

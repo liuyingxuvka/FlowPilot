@@ -39,6 +39,10 @@ flowpilot_paths_wrapper = load_module(
     "flowpilot_test_script_flowpilot_paths",
     ROOT / "scripts" / "flowpilot_paths.py",
 )
+flowpilot_user_flow_diagram_wrapper = load_module(
+    "flowpilot_test_script_flowpilot_user_flow_diagram",
+    ROOT / "scripts" / "flowpilot_user_flow_diagram.py",
+)
 run_flowguard_coverage_sweep = load_module(
     "flowpilot_test_run_flowguard_coverage_sweep",
     ROOT / "scripts" / "run_flowguard_coverage_sweep.py",
@@ -113,6 +117,15 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
         resolved = flowpilot_paths_wrapper.resolve_flowpilot_paths(ROOT)
         self.assertIn("flowpilot_root", resolved)
         self.assertEqual(resolved["project_root"], ROOT.resolve())
+
+    def test_script_user_flow_diagram_delegates_to_skill_asset_source(self) -> None:
+        self.assertTrue(flowpilot_user_flow_diagram_wrapper.ASSET_PATH.is_file())
+        self.assertTrue(callable(flowpilot_user_flow_diagram_wrapper.generate))
+        self.assertTrue(callable(flowpilot_user_flow_diagram_wrapper.main))
+        self.assertNotEqual(
+            flowpilot_user_flow_diagram_wrapper.__file__,
+            str(flowpilot_user_flow_diagram_wrapper.ASSET_PATH),
+        )
 
     def test_coverage_sweep_requests_json_stdout_when_runner_also_has_json_out(self) -> None:
         script_path = ROOT / "simulations" / "run_flowpilot_dispatch_recipient_gate_checks.py"

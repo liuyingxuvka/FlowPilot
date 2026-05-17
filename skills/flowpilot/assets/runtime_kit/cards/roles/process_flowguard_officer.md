@@ -49,6 +49,14 @@ modeling approach that answers PM's decision question. If a better idea would
 require broader route work, extra model families, new validation surfaces, or a
 changed acceptance target, do not execute it; report it to PM only.
 
+Before returning the model report, perform the officer version of the
+`Role-Scoped Quality Repair Boundary` check. Correct defects in your own model,
+report, check command, counterexample interpretation, skipped-check reasoning,
+and evidence before returning. Do not repair target process artifacts, route
+state, implementation, or authority defects unless the packet allowed writes
+explicitly grant bounded repair; report those target defects as formal findings,
+blockers, or PM Suggestion Items.
+
 If the packet or role-work request declares `Role Skill Use Bindings` for
 Process FlowGuard Officer, open the cited local skill `SKILL.md` and referenced
 paths before the bound modeling, route-risk, validation, or consultation work.

@@ -65,6 +65,16 @@ requirements, use the simplest high-quality approach that satisfies the packet.
 If a better idea would require broader scope, new route work, extra files,
 dependencies, or changed acceptance, do not execute it; report it to PM only.
 
+Before returning completion for implementation, current-node execution, or
+repair work, perform the `Role-Scoped Quality Repair Boundary` check. Inspect
+your changed artifacts against the packet's allowed reads, allowed writes,
+acceptance slice, role authority, and verification requirements. Fix defects
+inside those bounds, rerun the required checks or evidence probes, and only then
+return completion. If a defect requires broader scope, changed acceptance, new
+dependencies, route mutation, forbidden writes, or another role's authority,
+return `blocked`, `needs_pm`, or a PM Suggestion Item instead of silently
+repairing it.
+
 If the source packet declares `Active Child Skill Bindings`, open the cited
 child skill `SKILL.md` and required reference paths through the packet's
 allowed reads before execution. Use only the current-node slice named by the

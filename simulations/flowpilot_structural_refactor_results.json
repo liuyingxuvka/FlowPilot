@@ -25,15 +25,16 @@
           "boundary_changed": true,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": false,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": false,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -51,15 +52,16 @@
           "boundary_changed": true,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": false,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": true,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -78,15 +80,16 @@
           "boundary_changed": true,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": false,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": false,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -104,15 +107,97 @@
           "boundary_changed": true,
           "compatibility_entrypoints_preserved": false,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": true,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": true,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "local_git_sync_before_install_sync": {
+        "detected": true,
+        "expected_failure": "local git sync happened before installed skill sync check",
+        "failures": [
+          "local git sync happened before installed skill sync check"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "extra_work_branch_present": false,
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "local_git_sync_done": true,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": true,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "local_git_sync_before_privacy_check": {
+        "detected": true,
+        "expected_failure": "local git sync happened before public-boundary privacy check",
+        "failures": [
+          "local git sync happened before public-boundary privacy check"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "extra_work_branch_present": false,
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": true,
+          "local_git_sync_done": true,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "local_git_sync_with_extra_work_branch": {
+        "detected": true,
+        "expected_failure": "local git sync finished while an extra local work branch still existed",
+        "failures": [
+          "local git sync finished while an extra local work branch still existed"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "extra_work_branch_present": true,
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": true,
+          "local_git_sync_done": true,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": true,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -127,20 +212,21 @@
           "baseline_recorded": true,
           "behavior_tests_passed": false,
           "boundaries_completed": [
-            "meta_capability_models"
+            "meta_model_phases"
           ],
           "boundary_changed": false,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": true,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": true,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -158,67 +244,16 @@
           "boundary_changed": true,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": true,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": true,
           "protocol_json_shape_preserved": false,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
-          "status": "running",
-          "tag_or_release_done": false
-        }
-      },
-      "remote_sync_before_install_sync": {
-        "detected": true,
-        "expected_failure": "remote sync happened before installed skill sync check",
-        "failures": [
-          "remote sync happened before installed skill sync check"
-        ],
-        "state": {
-          "baseline_recorded": true,
-          "behavior_tests_passed": false,
-          "boundaries_completed": [],
-          "boundary_changed": false,
-          "compatibility_entrypoints_preserved": true,
-          "current_boundary": "none",
-          "flowguard_ready": true,
-          "focused_validation_done": false,
-          "install_sync_checked": false,
-          "meta_capability_checks_completed": false,
-          "model_files_touched": false,
-          "openspec_ready": true,
-          "protocol_json_shape_preserved": true,
-          "public_boundary_checked": true,
-          "remote_sync_done": true,
-          "status": "running",
-          "tag_or_release_done": false
-        }
-      },
-      "remote_sync_before_privacy_check": {
-        "detected": true,
-        "expected_failure": "remote sync happened before public-boundary privacy check",
-        "failures": [
-          "remote sync happened before public-boundary privacy check"
-        ],
-        "state": {
-          "baseline_recorded": true,
-          "behavior_tests_passed": false,
-          "boundaries_completed": [],
-          "boundary_changed": false,
-          "compatibility_entrypoints_preserved": true,
-          "current_boundary": "none",
-          "flowguard_ready": true,
-          "focused_validation_done": false,
-          "install_sync_checked": true,
-          "meta_capability_checks_completed": false,
-          "model_files_touched": false,
-          "openspec_ready": true,
-          "protocol_json_shape_preserved": true,
-          "public_boundary_checked": false,
-          "remote_sync_done": true,
           "status": "running",
           "tag_or_release_done": false
         }
@@ -236,15 +271,16 @@
           "boundary_changed": false,
           "compatibility_entrypoints_preserved": true,
           "current_boundary": "none",
+          "extra_work_branch_present": false,
           "flowguard_ready": true,
           "focused_validation_done": false,
           "install_sync_checked": false,
+          "local_git_sync_done": false,
           "meta_capability_checks_completed": false,
           "model_files_touched": false,
           "openspec_ready": true,
           "protocol_json_shape_preserved": true,
           "public_boundary_checked": false,
-          "remote_sync_done": false,
           "status": "running",
           "tag_or_release_done": true
         }
@@ -262,10 +298,10 @@
     "terminal_state_count": 1
   },
   "safe_graph": {
-    "edge_count": 32,
+    "edge_count": 35,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 33
+    "state_count": 36
   }
 }

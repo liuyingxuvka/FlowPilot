@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=204",
+    "summary": "sequences=3 initial_states=1 traces=240",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -16,6 +16,20 @@
         "expected_failure": "major route node lacks a concrete acceptance artifact",
         "failures": [
           "major route node lacks a concrete acceptance artifact"
+        ]
+      },
+      "evidence_packet_repairs_target_artifact": {
+        "detected": true,
+        "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
+        "failures": [
+          "research or material-scan packet grants target artifact repair instead of report self-correction"
+        ]
+      },
+      "generic_template_uses_blanket_repair": {
+        "detected": true,
+        "expected_failure": "generic packet template uses blanket repair wording instead of role-scoped authority",
+        "failures": [
+          "generic packet template uses blanket repair wording instead of role-scoped authority"
         ]
       },
       "hard_low_quality_risk_no_route_owner": {
@@ -58,6 +72,13 @@
         "expected_failure": "node acceptance plan is not mapped to a product model segment",
         "failures": [
           "node acceptance plan is not mapped to a product model segment"
+        ]
+      },
+      "officer_packet_repairs_target_artifact": {
+        "detected": true,
+        "expected_failure": "officer packet grants target artifact repair instead of model/report self-correction",
+        "failures": [
+          "officer packet grants target artifact repair instead of model/report self-correction"
         ]
       },
       "overmerged_complex_implementation_node": {
@@ -174,6 +195,13 @@
           "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate"
         ]
       },
+      "reviewer_prompt_grants_direct_repair": {
+        "detected": true,
+        "expected_failure": "reviewer prompt grants direct repair authority over the reviewed artifact",
+        "failures": [
+          "reviewer prompt grants direct repair authority over the reviewed artifact"
+        ]
+      },
       "role_skill_binding_missing": {
         "detected": true,
         "expected_failure": "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
@@ -251,6 +279,20 @@
         "failures": [
           "work packet or result matrix lacks skill-standard projection"
         ]
+      },
+      "worker_packet_missing_in_scope_repair": {
+        "detected": true,
+        "expected_failure": "executable worker packet lacks in-scope quality repair obligation",
+        "failures": [
+          "executable worker packet lacks in-scope quality repair obligation"
+        ]
+      },
+      "worker_packet_repairs_out_of_scope": {
+        "detected": true,
+        "expected_failure": "worker packet does not escalate out-of-scope defects to PM",
+        "failures": [
+          "worker packet does not escalate out-of-scope defects to PM"
+        ]
       }
     },
     "ok": true
@@ -266,11 +308,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 68,
+    "edge_count": 80,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 33,
-    "state_count": 69
+    "rejected_state_count": 39,
+    "state_count": 81
   }
 }

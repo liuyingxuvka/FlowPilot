@@ -63,6 +63,14 @@ sealed result body with exactly these labels: `In-scope quality choice` and
 the worker should use the simplest high-quality approach inside the packet
 boundary, and report out-of-scope better ideas or route risks to PM without
 expanding the packet.
+The packet body must include the evidence-work version of the
+`Role-Scoped Quality Repair Boundary`: the worker must correct defects,
+contradictions, missing citations, or missing evidence in the material-scan
+report before returning, because that report is the worker's own report for
+this packet. The worker must not repair target implementation, product, process,
+route, or authority defects unless the packet allowed writes explicitly grant
+that bounded repair. Those target defects must be reported as findings,
+blockers, or PM Suggestion Items.
 The packet body must also require a `PM Suggestion Items` section. Worker
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition and never authorize current-gate blocking by themselves.

@@ -1,0 +1,127 @@
+"""File presence and top-level skill contract checks."""
+
+from __future__ import annotations
+
+import importlib
+import json
+
+from .common import ROOT, REQUIRED_FILES, STARTUP_INTAKE_PS1_SOURCE_FILES, UTF8_BOM
+
+
+def run_checks(result: dict[str, object]) -> None:
+    try:
+        flowguard = importlib.import_module("flowguard")
+        result["checks"].append(
+            {
+                "name": "flowguard_import",
+                "ok": True,
+                "schema_version": getattr(flowguard, "SCHEMA_VERSION", "unknown"),
+            }
+        )
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {"name": "flowguard_import", "ok": False, "error": repr(exc)}
+        )
+
+    for relpath in REQUIRED_FILES:
+        exists = (ROOT / relpath).exists()
+        result["checks"].append({"name": f"file:{relpath}", "ok": exists})
+        if not exists:
+            result["ok"] = False
+
+    for relpath in STARTUP_INTAKE_PS1_SOURCE_FILES:
+        path = ROOT / relpath
+        exists = path.exists()
+        data = path.read_bytes() if exists else b""
+        contains_non_ascii = any(byte >= 0x80 for byte in data)
+        has_utf8_bom = data.startswith(UTF8_BOM)
+        ok = exists and (not contains_non_ascii or has_utf8_bom)
+        result["checks"].append(
+            {
+                "name": f"powershell_source_encoding:{relpath}",
+                "ok": ok,
+                "exists": exists,
+                "contains_non_ascii": contains_non_ascii,
+                "utf8_bom": has_utf8_bom,
+            }
+        )
+        if not ok:
+            result["ok"] = False
+
+    skill_path = ROOT / "skills/flowpilot/SKILL.md"
+    if skill_path.exists():
+        text = skill_path.read_text(encoding="utf-8")
+        has_name = "\nname: flowpilot\n" in f"\n{text}"
+        result["checks"].append({"name": "skill_name:flowpilot", "ok": has_name})
+        if not has_name:
+            result["ok"] = False
+        small_router_launcher = (
+            len(text.splitlines()) < 120
+            and "flowpilot_router.py" in text
+            and "Do not read FlowPilot reference files" in text
+            and "Final Route-Wide Gate Ledger" not in text
+        )
+        result["checks"].append(
+            {"name": "flowpilot_skill_is_small_router_launcher", "ok": small_router_launcher}
+        )
+        if not small_router_launcher:
+            result["ok"] = False
+        daemon_first_startup = all(
+            term in text
+            for term in (
+                "minimal run shell, current pointer, and run index",
+                "starts or attaches the built-in one-second Router daemon",
+                "daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows",
+                "same two-table rule as later runtime work",
+                "current startup-scope rows, receipts, required postconditions",
+            )
+        )
+        result["checks"].append(
+            {"name": "flowpilot_skill_daemon_first_startup_guidance", "ok": daemon_first_startup}
+        )
+        if not daemon_first_startup:
+            result["ok"] = False
+
+    try:
+        dependencies = json.loads((ROOT / "flowpilot.dependencies.json").read_text(encoding="utf-8"))
+        by_name = {item.get("name"): item for item in dependencies.get("dependencies", [])}
+        bootstrap_ok = (
+            by_name.get("flowguard", {}).get("required") is True
+            and by_name.get("flowguard", {}).get("source", {}).get("kind") == "github_python_package"
+            and by_name.get("flowguard", {}).get("install", {}).get("requires_explicit_flag")
+            == "--install-flowguard"
+            and by_name.get("model-first-function-flow", {}).get("required") is True
+            and by_name.get("grill-me", {}).get("required") is True
+            and "Dependency Bootstrap" in (ROOT / "skills/flowpilot/SKILL.md").read_text(encoding="utf-8")
+            and (ROOT / "skills/flowpilot/DEPENDENCIES.md").exists()
+        )
+        result["checks"].append(
+            {"name": "flowpilot_dependency_bootstrap_contract", "ok": bootstrap_ok}
+        )
+        if not bootstrap_ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {"name": "flowpilot_dependency_bootstrap_contract", "ok": False, "error": repr(exc)}
+        )
+
+    router_path = ROOT / "skills/flowpilot/assets/flowpilot_router.py"
+    runtime_mode_template = ROOT / "templates/flowpilot/mode.template.json"
+    router_text = router_path.read_text(encoding="utf-8") if router_path.exists() else ""
+    run_modes_retired = (
+        not runtime_mode_template.exists()
+        and "DEFAULT_RUN_MODE" not in router_text
+        and '"run_mode"' not in router_text
+        and "'run_mode'" not in router_text
+    )
+    result["checks"].append(
+        {
+            "name": "flowpilot_run_modes_retired_from_runtime",
+            "ok": run_modes_retired,
+            "mode_template_exists": runtime_mode_template.exists(),
+        }
+    )
+    if not run_modes_retired:
+        result["ok"] = False

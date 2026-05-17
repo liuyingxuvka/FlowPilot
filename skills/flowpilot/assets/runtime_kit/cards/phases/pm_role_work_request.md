@@ -47,6 +47,17 @@ The request must include:
 - `output_contract_id`: contract selected from `runtime_kit/contracts/contract_index.json`
 - `packet_body_path` and `packet_body_hash`: sealed PM-authored request body
 
+Every role-work request body must include a `Role-Scoped Quality Repair
+Boundary` matched to `to_role` and `request_kind`. If `to_role` is `worker_a` or
+`worker_b` and the request is bounded implementation or repair, require the
+worker to fix in-scope defects inside the allowed reads, allowed writes,
+acceptance slice, role authority, and verification requirements, rerun required
+checks, and return `blocked`, `needs_pm`, or a PM Suggestion Item for
+out-of-scope defects. If the request is research, material scan, review, or
+officer modeling, require self-correction of the role's own report/model/review
+output and route target defects through findings, blockers, repair requests, or
+PM Suggestion Items instead of silent target repair.
+
 Controller may relay the packet and result envelopes only. Controller may not
 read the request body, result body, or decide from their content.
 

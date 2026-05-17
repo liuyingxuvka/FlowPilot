@@ -29,6 +29,10 @@ Risk intent brief:
 - Blindspot: this model checks the process contract shape. Runtime cards,
   templates, and tests must still be updated and validated after the model
   passes.
+- 2026-05-17 extension: role-scoped quality-repair prompts must pressure
+  executable workers to fix in-scope defects before completion while preventing
+  reviewer, officer, PM, or generic packet prompts from granting silent target
+  repair authority.
 """
 
 from __future__ import annotations
@@ -74,6 +78,12 @@ PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_d
 PROCESS_SUPPORT_SKILL_IGNORED = "process_support_skill_ignored"
 ROLE_SKILL_BINDING_MISSING = "role_skill_binding_missing"
 ROLE_SKILL_USE_SELF_ATTESTED = "role_skill_use_self_attested"
+WORKER_PACKET_MISSING_IN_SCOPE_REPAIR = "worker_packet_missing_in_scope_repair"
+WORKER_PACKET_REPAIRS_OUT_OF_SCOPE = "worker_packet_repairs_out_of_scope"
+EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT = "evidence_packet_repairs_target_artifact"
+OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT = "officer_packet_repairs_target_artifact"
+REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR = "reviewer_prompt_grants_direct_repair"
+GENERIC_TEMPLATE_USES_BLANKET_REPAIR = "generic_template_uses_blanket_repair"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -110,6 +120,12 @@ NEGATIVE_SCENARIOS = (
     PROCESS_SUPPORT_SKILL_IGNORED,
     ROLE_SKILL_BINDING_MISSING,
     ROLE_SKILL_USE_SELF_ATTESTED,
+    WORKER_PACKET_MISSING_IN_SCOPE_REPAIR,
+    WORKER_PACKET_REPAIRS_OUT_OF_SCOPE,
+    EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT,
+    OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT,
+    REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR,
+    GENERIC_TEMPLATE_USES_BLANKET_REPAIR,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -170,6 +186,12 @@ class State:
     node_acceptance_low_quality_mapping_written: bool = False
     node_acceptance_proof_of_depth_defined: bool = False
     work_packet_carries_low_quality_warning: bool = False
+    worker_packet_carries_in_scope_quality_repair: bool = False
+    worker_packet_escalates_out_of_scope_defects: bool = False
+    evidence_packet_self_corrects_only_own_output: bool = False
+    officer_packet_self_corrects_model_only: bool = False
+    reviewer_prompt_forbids_direct_artifact_repair: bool = False
+    generic_packet_template_role_scoped: bool = False
     final_low_quality_risks_disposition_done: bool = False
     closure_or_final_ledger_decision: bool = False
     closure_replays_final_user_outcome: bool = False
@@ -277,6 +299,12 @@ def _valid_ui_state() -> State:
         node_acceptance_low_quality_mapping_written=True,
         node_acceptance_proof_of_depth_defined=True,
         work_packet_carries_low_quality_warning=True,
+        worker_packet_carries_in_scope_quality_repair=True,
+        worker_packet_escalates_out_of_scope_defects=True,
+        evidence_packet_self_corrects_only_own_output=True,
+        officer_packet_self_corrects_model_only=True,
+        reviewer_prompt_forbids_direct_artifact_repair=True,
+        generic_packet_template_role_scoped=True,
         final_low_quality_risks_disposition_done=True,
         child_skill_selected=True,
         skill_standard_contract_compiled=True,
@@ -450,6 +478,18 @@ def _scenario_state(scenario: str) -> State:
             role_skill_use_evidence_required=False,
             role_skill_use_evidence_reviewer_check_bound=False,
         )
+    if scenario == WORKER_PACKET_MISSING_IN_SCOPE_REPAIR:
+        return replace(state, worker_packet_carries_in_scope_quality_repair=False)
+    if scenario == WORKER_PACKET_REPAIRS_OUT_OF_SCOPE:
+        return replace(state, worker_packet_escalates_out_of_scope_defects=False)
+    if scenario == EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT:
+        return replace(state, evidence_packet_self_corrects_only_own_output=False)
+    if scenario == OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT:
+        return replace(state, officer_packet_self_corrects_model_only=False)
+    if scenario == REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR:
+        return replace(state, reviewer_prompt_forbids_direct_artifact_repair=False)
+    if scenario == GENERIC_TEMPLATE_USES_BLANKET_REPAIR:
+        return replace(state, generic_packet_template_role_scoped=False)
     return state
 
 
@@ -511,6 +551,18 @@ def planning_failures(state: State) -> list[str]:
         failures.append("node acceptance plan lacks local low-quality-success mapping and proof of depth")
     if complex_task and not state.work_packet_carries_low_quality_warning:
         failures.append("work packet lacks node low-quality-success warning")
+    if complex_task and not state.worker_packet_carries_in_scope_quality_repair:
+        failures.append("executable worker packet lacks in-scope quality repair obligation")
+    if complex_task and not state.worker_packet_escalates_out_of_scope_defects:
+        failures.append("worker packet does not escalate out-of-scope defects to PM")
+    if complex_task and not state.evidence_packet_self_corrects_only_own_output:
+        failures.append("research or material-scan packet grants target artifact repair instead of report self-correction")
+    if complex_task and not state.officer_packet_self_corrects_model_only:
+        failures.append("officer packet grants target artifact repair instead of model/report self-correction")
+    if complex_task and not state.reviewer_prompt_forbids_direct_artifact_repair:
+        failures.append("reviewer prompt grants direct repair authority over the reviewed artifact")
+    if complex_task and not state.generic_packet_template_role_scoped:
+        failures.append("generic packet template uses blanket repair wording instead of role-scoped authority")
     if (
         complex_task
         and state.closure_or_final_ledger_decision
@@ -699,6 +751,22 @@ def low_quality_success_risks_are_owned(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def quality_repair_prompts_preserve_role_authority(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if (
+            "in-scope quality repair" in failure
+            or "out-of-scope defects" in failure
+            or "target artifact repair" in failure
+            or "direct repair authority" in failure
+            or "blanket repair wording" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 def role_skill_use_is_evidence_bound(state: State, trace) -> InvariantResult:
     del trace
     if state.status != "accepted":
@@ -758,6 +826,11 @@ INVARIANTS = (
         name="low_quality_success_risks_are_owned",
         description="PM must identify hard parts, bind low-quality-success risks to existing route/node owners, project them into node plans and worker packets, and disposition them before closure.",
         predicate=low_quality_success_risks_are_owned,
+    ),
+    Invariant(
+        name="quality_repair_prompts_preserve_role_authority",
+        description="Executable worker packets require in-scope repair while evidence, officer, reviewer, and generic prompts preserve role authority boundaries.",
+        predicate=quality_repair_prompts_preserve_role_authority,
     ),
     Invariant(
         name="role_skill_use_is_evidence_bound",

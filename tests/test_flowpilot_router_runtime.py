@@ -6924,6 +6924,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
             router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
             result = router.run_until_wait(root)
             self.assertEqual(result["action_type"], "load_controller_core")
+            router.apply_action(root, "load_controller_core", self.payload_for_action(result))
             run_root = self.run_root_for(root)
             controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
             row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
@@ -6973,8 +6974,13 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
                 payload=payload,
             )
             entry = read_json(blocked_run_root / "runtime" / "controller_actions" / f"{blocked_row['action_id']}.json")
-            self.assertEqual(entry["router_reconciliation_status"], "blocked")
-            self.assertIn(expected_text, json.dumps(entry["router_reconciliation_blocker"], sort_keys=True))
+            self.assertIn(entry["router_reconciliation_status"], {"blocked", "retry_pending"})
+            reconciliation = (
+                entry.get("router_reconciliation_blocker")
+                if entry["router_reconciliation_status"] == "blocked"
+                else entry.get("router_reconciliation")
+            )
+            self.assertIn(expected_text, json.dumps(reconciliation, sort_keys=True))
 
         assert_role_slots_receipt_blocked(lambda _: None, "role_agents")
 

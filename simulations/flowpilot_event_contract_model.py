@@ -11,10 +11,12 @@ Risk intent brief:
   decisions creating extra blocker state.
 - Hard invariants: every persisted `allowed_external_events` item is registered
   and currently receivable; invalid PM rerun targets are rejected before wait
-  state is persisted; PM repair cannot rerun itself; ACK/check-in events stay
-  outside role-event waits; direct ACK consumption preserves the next semantic
-  wait; material repair exposes success, blocker, and protocol-blocker events;
-  duplicate PM repair decisions are idempotent.
+  state is persisted; PM repair cannot rerun itself; explicit event envelopes
+  are validated against the current wait before reconciliation waits can be
+  returned; ACK/check-in events stay outside role-event waits; direct ACK
+  consumption preserves the next semantic wait; material repair exposes success,
+  blocker, and protocol-blocker events; duplicate PM repair decisions are
+  idempotent.
 - Blindspot: this is a control-plane protocol model. Runtime tests must still
   verify concrete JSON files, helper functions, and installed skill sync.
 """
@@ -41,6 +43,7 @@ MATERIAL_BLOCKER_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
 MATERIAL_PROTOCOL_EVENT = "router_protocol_blocker_material_scan_dispatch_recheck"
 MATERIAL_PARTIAL_RESULT_EVENT = "worker_scan_results_returned"
 ROLE_WORK_RESULT_EVENT = "role_work_result_returned"
+REVIEWER_STARTUP_FACT_EVENT = "reviewer_reports_startup_facts"
 
 REGISTERED_EXTERNAL_EVENTS = frozenset(
     {
@@ -54,6 +57,7 @@ REGISTERED_EXTERNAL_EVENTS = frozenset(
         MATERIAL_PROTOCOL_EVENT,
         MATERIAL_PARTIAL_RESULT_EVENT,
         ROLE_WORK_RESULT_EVENT,
+        REVIEWER_STARTUP_FACT_EVENT,
     }
 )
 CURRENTLY_RECEIVABLE_EVENTS = frozenset(
@@ -92,6 +96,9 @@ MATERIAL_REPAIR_SUCCESS_ONLY = "material_repair_success_only"
 DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER = "duplicate_pm_repair_created_new_blocker"
 POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT = "postwrite_cleanup_only_for_invalid_wait"
 INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT = "incoming_event_outside_allowed_wait"
+EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT = (
+    "explicit_envelope_outside_wait_returns_reconciliation_wait"
+)
 
 VALID_SCENARIOS = (
     VALID_ROUTE_DRAFT_RERUN,
@@ -113,6 +120,7 @@ NEGATIVE_SCENARIOS = (
     DUPLICATE_PM_REPAIR_CREATED_NEW_BLOCKER,
     POSTWRITE_CLEANUP_ONLY_FOR_INVALID_WAIT,
     INCOMING_EVENT_OUTSIDE_ALLOWED_WAIT,
+    EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -166,6 +174,8 @@ class State:
     incoming_event: str = "none"
     incoming_event_allowed_by_current_wait: bool = True
     incoming_event_accepted: bool = False
+    incoming_event_has_explicit_envelope: bool = False
+    incoming_event_returned_reconciliation_wait: bool = False
 
     terminal_reason: str = "none"
 
@@ -418,6 +428,18 @@ def _scenario_state(scenario: str) -> State:
             incoming_event_allowed_by_current_wait=False,
             incoming_event_accepted=True,
         )
+    if scenario == EXPLICIT_ENVELOPE_OUTSIDE_WAIT_RETURNS_RECONCILIATION_WAIT:
+        return State(
+            status="running",
+            scenario=scenario,
+            pending_wait_written=False,
+            allowed_external_events=(),
+            incoming_event=REVIEWER_STARTUP_FACT_EVENT,
+            incoming_event_allowed_by_current_wait=False,
+            incoming_event_accepted=False,
+            incoming_event_has_explicit_envelope=True,
+            incoming_event_returned_reconciliation_wait=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -497,6 +519,14 @@ def event_contract_failures(state: State) -> list[str]:
         if not state.incoming_event_allowed_by_current_wait:
             failures.append("incoming role event was accepted outside current allowed_external_events")
 
+    if (
+        state.incoming_event_has_explicit_envelope
+        and state.incoming_event != "none"
+        and not state.incoming_event_allowed_by_current_wait
+        and state.incoming_event_returned_reconciliation_wait
+    ):
+        failures.append("explicit event envelope bypassed current wait validation")
+
     if state.invalid_wait_ever_persisted and state.cleanup_after_bad_persist:
         failures.append("invalid wait was persisted and only repaired by post-write cleanup")
 
@@ -507,8 +537,9 @@ class EventContractStep:
     """Model one FlowPilot event-contract transition.
 
     Input x State -> Set(Output x State)
-    reads: PM repair decision, event registry, pending wait, ACK/check-in state,
-    repair transaction outcome table, duplicate event ledger
+    reads: PM repair decision, event registry, pending wait, explicit event
+    envelope metadata, ACK/check-in state, repair transaction outcome table,
+    duplicate event ledger
     writes: accepted/rejected event contract state and persisted wait boundary
     idempotency: duplicate PM repair decisions cannot create extra blocker or
     repair-transaction state.

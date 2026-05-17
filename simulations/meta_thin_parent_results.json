@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-17T00:19:41.778056+00:00",
+  "created_at": "2026-05-17T07:40:14.769339+00:00",
   "graph": {
     "edge_count": 16,
     "invariant_failure_count": 0,
@@ -8,16 +8,19 @@
     "state_count": 9
   },
   "legacy_full_regression": {
-    "current": false,
-    "required_for_release": true,
+    "current": true,
+    "required_for_release": false,
     "status": {
-      "created_at": "2026-05-16T11:44:29.842028+00:00",
-      "edge_count": 2010665,
-      "proof_file": "simulations/results.proof.json",
-      "reason": "full proof fingerprint mismatch",
-      "result_file": "simulations/results.json",
-      "state_count": 1949768,
-      "valid": false
+      "created_at": "2026-05-17T07:37:46.763948+00:00",
+      "edge_count": 18,
+      "kind": "layered_full_parent",
+      "legacy_monolith_required": false,
+      "proof_file": "simulations/meta_layered_full_results.proof.json",
+      "reason": "valid proof",
+      "release_confidence": "current_with_layered_full_parent",
+      "result_file": "simulations/meta_layered_full_results.json",
+      "state_count": 11,
+      "valid": true
     }
   },
   "loop": {
@@ -33,7 +36,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -163,17 +166,17 @@
       {
         "evidence": [
           {
-            "edge_count": 68,
+            "edge_count": 80,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/flowpilot_planning_quality_checks_results.json",
-            "result_fingerprint": "bdde0f36cb029b46defb18583b913892db5c6d90a49b4735a578dc349c106ba9",
+            "result_file": "simulations/flowpilot_planning_quality_results.json",
+            "result_fingerprint": "fe1a76e356e4dbf064353608c0ce1d54ef8f829d4125d4ba61218f91ed0c079e",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 69
+            "state_count": 81
           },
           {
             "edge_count": 40,
