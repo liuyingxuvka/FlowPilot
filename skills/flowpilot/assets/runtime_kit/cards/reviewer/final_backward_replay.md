@@ -68,6 +68,15 @@ Check backward from the delivered product or final output:
   depth, superseded with reason, waived by authority, or returned for repair.
   Completion blocks when a hard part was closed only by existence-only evidence
   or when the thin-success shortcut remains plausible.
+- every FlowGuard-backed ledger row preserves model-test alignment:
+  `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
+  `conformance_boundary`, and `residual_blindspots`. Missing required test
+  kinds, stale ordinary tests, or conformance gaps must remain blockers or
+  explicit PM dispositions.
+- every cited long/background test has `background_artifact_completion` with
+  log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
+  update time, completion status, and valid proof reuse. Progress logs alone
+  are not completion evidence.
 
 Router-built ledgers can prove mechanical coverage only when backed by current
 hashes and run-bound artifacts. They do not prove that the delivered product or

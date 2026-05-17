@@ -55,6 +55,9 @@ For each modeling need, write a request that states:
   and post-repair model checks the PM needs before reviewer recheck;
 - model boundary, hard invariants, observed/source behavior, expected target
   behavior, and decisions the PM needs;
+- model-test alignment expectations: `model_obligations`,
+  `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`,
+  `residual_blindspots`, and `background_artifact_completion`;
 - for product-model-first route design, whether the officer report should
   define product behavior for PM route drafting, validate PM route viability
   against that behavior, or check a repair branch's return to the mainline;
@@ -74,7 +77,13 @@ The officer report body must include these fields exactly:
   "counterexamples_or_absence": "<counterexample summary or explicit absence>",
   "hard_invariants": [],
   "skipped_checks": [],
+  "model_obligations": [],
+  "ordinary_test_evidence": [],
+  "missing_test_kinds": [],
+  "conformance_boundary": "<abstract model only, ordinary tests, conformance replay, or bounded combination>",
   "confidence_boundary": "<what this model does and does not prove>",
+  "residual_blindspots": [],
+  "background_artifact_completion": [],
   "pm_suggestion_items": [],
   "contract_self_check": {
     "all_required_fields_present": true,
@@ -83,6 +92,16 @@ The officer report body must include these fields exactly:
   }
 }
 ```
+
+Use `model_obligations` for FlowGuard scenarios, invariants, hazards,
+transitions, and contracts that matter to the PM decision. Use
+`ordinary_test_evidence` for non-FlowGuard test, replay, or manual command
+evidence bound to those obligations. Use `missing_test_kinds` for required
+happy, failure, edge, negative, or replay evidence that is absent or stale. If
+the report cites any long or background test, `background_artifact_completion`
+must list the log root, stdout, stderr, combined, exit, and meta paths, exit
+code, latest update time, completion status, and whether a valid proof was
+reused. Progress lines alone are not completion evidence.
 
 The officer report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.

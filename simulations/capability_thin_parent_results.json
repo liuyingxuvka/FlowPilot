@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-17T12:09:44.270429+00:00",
+  "created_at": "2026-05-17T14:46:33.921153+00:00",
   "graph": {
     "edge_count": 12,
     "invariant_failure_count": 0,
@@ -8,19 +8,28 @@
     "state_count": 7
   },
   "legacy_full_regression": {
-    "current": true,
-    "required_for_release": false,
+    "current": false,
+    "required_for_release": true,
     "status": {
-      "created_at": "2026-05-17T12:04:07.159879+00:00",
-      "edge_count": 14,
-      "kind": "layered_full_parent",
-      "legacy_monolith_required": false,
-      "proof_file": "simulations/capability_layered_full_results.proof.json",
-      "reason": "valid proof",
-      "release_confidence": "current_with_layered_full_parent",
-      "result_file": "simulations/capability_layered_full_results.json",
-      "state_count": 9,
-      "valid": true
+      "created_at": "2026-05-16T11:49:11.742612+00:00",
+      "edge_count": 2036030,
+      "kind": "legacy_full_parent",
+      "layered_status": {
+        "created_at": "2026-05-17T14:19:31.837096+00:00",
+        "edge_count": 14,
+        "proof_file": "simulations/capability_layered_full_results.proof.json",
+        "reason": "input fingerprint changed",
+        "release_confidence": "current_with_layered_full_parent",
+        "result_file": "simulations/capability_layered_full_results.json",
+        "state_count": 9,
+        "valid": false
+      },
+      "legacy_monolith_required": true,
+      "proof_file": "simulations/capability_results.proof.json",
+      "reason": "full proof fingerprint mismatch",
+      "result_file": "simulations/capability_results.json",
+      "state_count": 1959064,
+      "valid": false
     }
   },
   "loop": {
@@ -36,7 +45,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "current_with_layered_full_parent",
+  "release_confidence": "requires_full_regression",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -172,11 +181,11 @@
             "model_id": "card_instruction_coverage",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/card_instruction_coverage_checks_results.json",
-            "result_fingerprint": "b8245513ac1477cf7cbe2d79cfd58bb77379d0d5a6b8cdca07ed49bdb6d258c2",
+            "result_file": "simulations/card_instruction_coverage_results.json",
+            "result_fingerprint": "74bbf9a174e2456a2809fea93d0f3956daea0282356a1da37adde896d45f22b4",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 69
+            "state_count": 70
           },
           {
             "edge_count": 58,
@@ -212,7 +221,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_output_contract_results.json",
-            "result_fingerprint": "47ac476793c8a1ba19d3e55954a33c03fb55f3641550c691ef2442f0a0d38de9",
+            "result_fingerprint": "e58aa5292dbb093a197cd3e15e404bd7c0b570751dd3e2dc9fe58ed2c899f620",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null

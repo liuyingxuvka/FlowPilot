@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
+import os
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -64,6 +66,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
     def test_fast_tier_excludes_release_coverage_and_legacy_full(self) -> None:
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
+        self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
+        self.assertIn("tests/test_flowpilot_model_test_alignment.py", text)
         self.assertNotIn("check_public_release.py", text)
         self.assertNotIn("run_flowguard_coverage_sweep.py", text)
         self.assertNotIn("--legacy-full", text)
@@ -73,10 +77,66 @@ class FlowPilotTestTierTests(unittest.TestCase):
         command_names = [command.name for command in run_test_tier.commands_for_tier("router")]
         self.assertIn("router_startup_runtime", command_names)
         self.assertIn("router_foreground_controller", command_names)
-        self.assertIn("router_packets_cards_ack", command_names)
-        self.assertIn("router_route_mutation", command_names)
-        self.assertIn("router_terminal_closure", command_names)
+        self.assertIn("router_packet_runtime", command_names)
+        self.assertIn("router_packets", command_names)
+        self.assertIn("router_cards", command_names)
+        self.assertIn("router_ack_return", command_names)
+        self.assertIn("router_boundaries", command_names)
+        self.assertIn("router_route_mutation_core", command_names)
+        self.assertIn("router_route_mutation_contracts", command_names)
+        self.assertIn("router_user_flow_diagram", command_names)
+        self.assertIn("router_terminal", command_names)
+        self.assertIn("router_closure", command_names)
+        self.assertIn("router_resume", command_names)
+        self.assertIn("router_control_blockers", command_names)
+        self.assertIn("router_pm_role_work", command_names)
+        self.assertIn("router_quality_gates", command_names)
+        self.assertIn("router_material_modeling", command_names)
+        self.assertNotIn("router_packets_cards_ack", command_names)
+        self.assertNotIn("router_route_mutation", command_names)
+        self.assertNotIn("router_terminal_closure", command_names)
         self.assertNotIn("test_flowpilot_router_runtime.py", self.command_text("router"))
+
+    def test_router_packet_tier_uses_small_stable_child_suites(self) -> None:
+        commands = run_test_tier.commands_for_tier("router-packets")
+        self.assertEqual(
+            [command.name for command in commands],
+            [
+                "router_packet_runtime",
+                "router_packets",
+                "router_cards",
+                "router_ack_return",
+            ],
+        )
+        command_text = self.command_text("router-packets")
+        self.assertIn("tests.test_flowpilot_packet_runtime", command_text)
+        self.assertIn("tests.router_runtime.packets", command_text)
+        self.assertIn("tests.router_runtime.cards", command_text)
+        self.assertIn("tests.router_runtime.ack_return", command_text)
+
+    def test_router_route_tier_uses_small_stable_child_suites(self) -> None:
+        commands = run_test_tier.commands_for_tier("router-route")
+        self.assertEqual(
+            [command.name for command in commands],
+            [
+                "router_boundaries",
+                "router_route_mutation_core",
+                "router_route_mutation_contracts",
+                "router_user_flow_diagram",
+            ],
+        )
+        command_text = self.command_text("router-route")
+        self.assertIn("tests.test_flowpilot_router_boundaries", command_text)
+        self.assertIn("tests.router_runtime.route_mutation", command_text)
+        self.assertIn("tests.test_flowpilot_router_runtime_route_mutation", command_text)
+        self.assertIn("tests.test_flowpilot_user_flow_diagram", command_text)
+
+    def test_fast_and_router_tiers_do_not_contain_release_only_commands(self) -> None:
+        for tier in ("fast", "router", "router-packets", "router-route", "router-terminal"):
+            with self.subTest(tier=tier):
+                self.assertFalse(
+                    [command.name for command in run_test_tier.commands_for_tier(tier) if command.release_only]
+                )
 
     def test_background_artifact_contract_uses_stable_paths(self) -> None:
         paths = run_test_tier.artifact_paths(
@@ -88,6 +148,29 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertEqual(paths["combined"].name, "meta_legacy_full.combined.txt")
         self.assertEqual(paths["exit"].name, "meta_legacy_full.exit.txt")
         self.assertEqual(paths["meta"].name, "meta_legacy_full.meta.json")
+
+    def test_large_background_tiers_use_bounded_supervisor(self) -> None:
+        router_count = len(run_test_tier.commands_for_tier("router"))
+        self.assertGreater(router_count, run_test_tier.DEFAULT_BACKGROUND_MAX_PARALLEL)
+        self.assertTrue(
+            run_test_tier.should_use_background_supervisor(
+                router_count,
+                run_test_tier.DEFAULT_BACKGROUND_MAX_PARALLEL,
+            )
+        )
+        self.assertEqual(
+            run_test_tier.background_supervisor_name("router"),
+            "router_background_supervisor",
+        )
+
+    def test_windows_background_processes_are_hidden(self) -> None:
+        flags = run_test_tier._windows_hidden_process_flags()
+        if os.name == "nt":
+            self.assertTrue(flags & subprocess.CREATE_NO_WINDOW)
+            self.assertNotEqual(run_test_tier._windows_hidden_startupinfo(), None)
+        else:
+            self.assertEqual(flags, 0)
+            self.assertEqual(run_test_tier._hidden_process_kwargs(), {})
 
     def test_release_and_legacy_tiers_mark_long_background_recommended_commands(self) -> None:
         release_long = [

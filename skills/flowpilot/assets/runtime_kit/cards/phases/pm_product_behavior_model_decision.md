@@ -31,6 +31,16 @@ Accept only when the report gives PM a concrete product model:
 - forbidden downgrades;
 - completion evidence;
 - explicit ambiguous or unmodeled behavior;
+- `model_obligations` for FlowGuard scenarios, invariants, hazards,
+  transitions, and contracts;
+- `ordinary_test_evidence` bound to those obligations, with
+  `missing_test_kinds` called out for absent or stale happy, failure, edge,
+  negative, or replay evidence;
+- `conformance_boundary` and `residual_blindspots` stating what the product
+  model and ordinary tests do not prove;
+- `background_artifact_completion` for any cited long/background test, including
+  log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
+  update time, completion status, and valid proof reuse;
 - a PM-readable coverage map from the user's real goal to the model.
 
 If the model is acceptable, write
@@ -51,5 +61,9 @@ The decision body must include:
 - `source_paths` naming the product architecture and Product FlowGuard model;
 - `pm_model_fit_review` explaining what PM accepted or rejected;
 - `product_goal_coverage`;
+- `model_test_alignment_review`;
+- `conformance_boundary`;
 - `unmodeled_or_ambiguous_behavior`;
+- `residual_blindspots`;
+- `background_artifact_completion_review`;
 - `next_action`.

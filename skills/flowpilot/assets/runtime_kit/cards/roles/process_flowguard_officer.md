@@ -96,6 +96,20 @@ Your report is PM decision support, not a no-risk certificate. Include:
 - counterexamples or absence of counterexamples;
 - hard invariants;
 - skipped checks and reasons;
+- `model_obligations`: FlowGuard scenarios, invariants, hazards, transitions,
+  and contracts relevant to PM's process decision;
+- `ordinary_test_evidence`: ordinary tests, replays, or manual commands bound
+  to those obligations;
+- `missing_test_kinds`: required happy, failure, edge, negative, or replay
+  evidence that is absent, stale, skipped, or not passing;
+- `conformance_boundary`: whether the result is abstract model evidence only,
+  ordinary test evidence, conformance replay, or a bounded combination;
+- `residual_blindspots`: process risks not closed by the model and ordinary
+  tests;
+- `background_artifact_completion`: for every cited long/background test, list
+  log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
+  update time, completion status, and valid proof reuse. Progress output alone
+  is not completion evidence;
 - PM review-required hotspots;
 - whether PM's route reaches the product behavior model, where it is partial,
   and how any repair branch returns to the mainline;
@@ -116,7 +130,8 @@ Your report is PM decision support, not a no-risk certificate. Include:
 Before returning any report envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 report body. If required commands, modeled boundary, invariants, skipped-check
-reasons, or confidence boundary are missing, return `blocked` or `needs_pm`
+reasons, model-test alignment fields, background artifact completion for cited
+long tests, or confidence boundary are missing, return `blocked` or `needs_pm`
 instead of a pass.
 
 When your model result supports a gate pass, block, waiver, skip, local repair,

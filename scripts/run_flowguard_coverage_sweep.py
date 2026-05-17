@@ -32,8 +32,12 @@ STRONG_COVERAGE = {
     "flowpilot_event_capability_registry",
     "flowpilot_route_replanning_policy",
     "flowpilot_cross_plane_friction",
+    "flowpilot_persistent_router_daemon",
     "flowpilot_model_mesh",
     "flowpilot_model_hierarchy",
+    "flowpilot_structure_maintenance",
+    "flowpilot_model_test_alignment",
+    "prompt_isolation",
 }
 ABSTRACT_STRONG = {
     "meta",

@@ -14157,3 +14157,116 @@ Notes:
   focus checks; this timeout is not completion evidence and not a test failure.
 - Do not use a stale `.exit.txt` alone as completion evidence for background
   commands. Inspect the corresponding `.meta.json` status and timestamps.
+
+## 2026-05-17 StructureMesh Router And Model Cleanup
+
+Status: completed_local_validation_and_install_sync
+
+Trigger: the user approved a follow-up maintenance pass on local `main`, asked
+to use OpenSpec and FlowGuard, keep a backup, split remaining heavy Python
+model scripts where parity evidence is stable, run the new Meta and Capability
+parent checks instead of legacy full checks, synchronize the local installed
+skill, and commit locally.
+
+Scope:
+
+- OpenSpec change: `structuremesh-router-model-cleanup`.
+- Backup path: `tmp/maintenance_backup_main_20260517-143417/`.
+- FlowGuard decision: `use_flowguard`; real package import returned schema
+  version `1.0`.
+- Public runtime behavior, event names, persisted JSON shapes, packet
+  authority, wait semantics, and role authority remain unchanged.
+
+StructureMesh/TestMesh changes:
+
+- Added `simulations/flowpilot_structure_maintenance_model.py` and
+  `simulations/run_flowpilot_structure_maintenance_checks.py`.
+- The gate covers planned router split ownership, split model-script facade
+  ownership, and router runtime child-suite/background artifact evidence.
+- Known-bad variants cover missing owners, duplicate state owners, missing
+  facades, removed entrypoints, stale parity, insufficient release evidence,
+  hidden skipped tests, timeout suites, progress-only background evidence, and
+  unbounded background fanout.
+
+Model split changes:
+
+- `prompt_isolation_model.py` is now a compatibility facade backed by state,
+  transitions, invariants, and hazards.
+- `flowpilot_cross_plane_friction_model.py` is now a compatibility facade
+  backed by state, transitions, invariants, hazards, live audit, and repair
+  strategy helpers.
+- `flowpilot_persistent_router_daemon_model.py` is now a compatibility facade
+  backed by state, transitions, invariants, and hazards.
+
+Checks:
+
+- `openspec validate structuremesh-router-model-cleanup --strict --json`
+  passed before production-code edits.
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned
+  `1.0`.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations\flowpilot_structure_maintenance_results.json` passed.
+- `python simulations\run_prompt_isolation_checks.py` passed with 346 states,
+  345 edges, zero missing labels, and all hazards detected.
+- `python simulations\run_flowpilot_cross_plane_friction_checks.py
+  --skip-live-audit --json-out
+  simulations\flowpilot_cross_plane_friction_results.json` passed with 14
+  states, 13 edges, 210 FlowGuard traces, and all hazards detected.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py`
+  passed after the facade split.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations\flowpilot_model_test_alignment_results.json` passed with all
+  eight model/test families green and known-bad evidence hazards rejected.
+- `python scripts\run_test_tier.py --tier fast --json` passed: 8 commands,
+  including StructureMesh/TestMesh, Model-Test Alignment, proof, thin-parent,
+  and maintenance-tool tests.
+- `python scripts\run_test_tier.py --tier router --background --background-dir
+  tmp\flowguard_background --background-max-parallel 4 --json` completed
+  through `tmp\flowguard_background\router_background_supervisor.*`; status
+  `passed`, exit `0`, `proof_reused=false`. All 17 child suites wrote final
+  meta and exit artifacts with exit `0`.
+- `python scripts\run_test_tier.py --tier release --background --background-dir
+  tmp\flowguard_background --background-max-parallel 4 --json` completed:
+  `release_tooling`, `public_release_check`, `meta_full`, and
+  `capability_full` all exited `0`; `public_release_check` reused valid thin
+  proofs and reported only the expected dirty-worktree warning.
+- Required heavyweight base names were refreshed under
+  `tmp\flowguard_background\run_meta_checks.*` and
+  `tmp\flowguard_background\run_capability_checks.*`; both exited `0` with
+  `proof_reused=false`.
+- `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out
+  simulations\flowpilot_model_hierarchy_results.json` passed with current
+  routine and release confidence.
+- `openspec validate --changes --strict --json` passed for 13 active validated
+  changes. The separate `controller-break-glass-repair` proposal also validates
+  strictly but was not implemented in this pass.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\check_install.py --json`,
+  `python scripts\audit_local_install_sync.py --json`,
+  `python scripts\smoke_autopilot.py --fast`, and
+  `python scripts\check_public_release.py --json --skip-url-check` passed.
+
+Runtime/test-runner change:
+
+- `scripts/run_test_tier.py` now hides Windows subprocess windows for both
+  background children and foreground child commands while preserving out, err,
+  combined, exit, and meta artifact evidence.
+- Large background tiers now launch one hidden bounded supervisor first, then
+  child suites in batches, so the artifact contract remains complete without
+  opening many desktop command windows.
+
+Friction points:
+
+- Mechanical AST extraction does not include decorator lines automatically;
+  split scripts must preserve `@dataclass` decorators explicitly.
+- Facades must preserve constants such as `MAX_SEQUENCE_LENGTH`; a temporary
+  mismatch in the cross-plane facade was corrected before final validation.
+- Router route-mutation core remains the slowest child suite: it passed 22
+  tests in 1901.496 seconds. The current split prevents it from blocking other
+  router evidence, but the next cleanup should split
+  `tests.router_runtime.route_mutation` by route activation/model-miss/parent
+  backward replay groups.
+- Other slow child suites now have isolated evidence as well:
+  `router_foreground_controller`, `router_packets`, `router_resume`,
+  `router_quality_gates`, and `router_material_modeling` all passed under
+  their own artifact names.

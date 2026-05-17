@@ -1,0 +1,1483 @@
+{
+  "alignment_ok": true,
+  "families": [
+    "startup",
+    "packet/card/ack",
+    "route mutation",
+    "terminal/closure/resume",
+    "role/output contracts",
+    "router loop/daemon",
+    "test tiering/slow-test contracts",
+    "meta/capability parents"
+  ],
+  "finding_counts": {},
+  "findings": [],
+  "known_bad_ok": true,
+  "known_bad_sanity_checks": [
+    {
+      "expected_codes": [
+        "missing_test_evidence"
+      ],
+      "finding_codes": [
+        "missing_test_evidence"
+      ],
+      "name": "missing_evidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_missing_evidence",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": []
+      },
+      "report": {
+        "decision": "missing_test_evidence",
+        "findings": [
+          {
+            "code": "missing_test_evidence",
+            "evidence_id": "",
+            "message": "model obligation known_bad.required_obligation has no current passing test evidence",
+            "metadata": {
+              "allow_shared_evidence": false,
+              "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "obligation_id": "known_bad.required_obligation",
+              "obligation_type": "hazard",
+              "required": true,
+              "required_test_kinds": [
+                "happy_path"
+              ],
+              "risk_level": "high"
+            },
+            "obligation_id": "known_bad.required_obligation",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_missing_evidence",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_missing_evidence decision=missing_test_evidence findings=1"
+      }
+    },
+    {
+      "expected_codes": [
+        "stale_test_evidence"
+      ],
+      "finding_codes": [
+        "missing_test_evidence",
+        "stale_test_evidence"
+      ],
+      "name": "stale_evidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_stale_evidence",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [
+              "known_bad.required_obligation"
+            ],
+            "evidence_current": false,
+            "evidence_id": "known_bad.stale",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "passed",
+            "stale_reasons": [
+              "model obligation changed after evidence was recorded"
+            ],
+            "test_kind": "happy_path",
+            "test_name": "synthetic stale evidence"
+          }
+        ]
+      },
+      "report": {
+        "decision": "missing_test_evidence",
+        "findings": [
+          {
+            "code": "stale_test_evidence",
+            "evidence_id": "known_bad.stale",
+            "message": "test evidence known_bad.stale is stale",
+            "metadata": {
+              "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_obligations": [
+                "known_bad.required_obligation"
+              ],
+              "evidence_current": false,
+              "evidence_id": "known_bad.stale",
+              "overclaims_model_confidence": false,
+              "path": "tests/test_flowpilot_model_test_alignment.py",
+              "result_status": "passed",
+              "stale_reasons": [
+                "model obligation changed after evidence was recorded"
+              ],
+              "test_kind": "happy_path",
+              "test_name": "synthetic stale evidence"
+            },
+            "obligation_id": "",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_test_evidence",
+            "evidence_id": "",
+            "message": "model obligation known_bad.required_obligation has no current passing test evidence",
+            "metadata": {
+              "allow_shared_evidence": false,
+              "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "obligation_id": "known_bad.required_obligation",
+              "obligation_type": "hazard",
+              "required": true,
+              "required_test_kinds": [
+                "happy_path"
+              ],
+              "risk_level": "high"
+            },
+            "obligation_id": "known_bad.required_obligation",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_stale_evidence",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_stale_evidence decision=missing_test_evidence findings=2"
+      }
+    },
+    {
+      "expected_codes": [
+        "test_evidence_not_passing"
+      ],
+      "finding_codes": [
+        "missing_test_evidence",
+        "test_evidence_not_passing"
+      ],
+      "name": "progress_only_background_evidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_progress_only",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [
+              "known_bad.required_obligation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "known_bad.progress_only",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "running",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "synthetic background check with progress output only"
+          }
+        ]
+      },
+      "report": {
+        "decision": "missing_test_evidence",
+        "findings": [
+          {
+            "code": "test_evidence_not_passing",
+            "evidence_id": "known_bad.progress_only",
+            "message": "test evidence known_bad.progress_only status is running",
+            "metadata": {
+              "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_obligations": [
+                "known_bad.required_obligation"
+              ],
+              "evidence_current": true,
+              "evidence_id": "known_bad.progress_only",
+              "overclaims_model_confidence": false,
+              "path": "tests/test_flowpilot_model_test_alignment.py",
+              "result_status": "running",
+              "stale_reasons": [],
+              "test_kind": "happy_path",
+              "test_name": "synthetic background check with progress output only"
+            },
+            "obligation_id": "",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_test_evidence",
+            "evidence_id": "",
+            "message": "model obligation known_bad.required_obligation has no current passing test evidence",
+            "metadata": {
+              "allow_shared_evidence": false,
+              "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "obligation_id": "known_bad.required_obligation",
+              "obligation_type": "hazard",
+              "required": true,
+              "required_test_kinds": [
+                "happy_path"
+              ],
+              "risk_level": "high"
+            },
+            "obligation_id": "known_bad.required_obligation",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_progress_only",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_progress_only decision=missing_test_evidence findings=2"
+      }
+    },
+    {
+      "expected_codes": [
+        "test_overclaims_model_confidence"
+      ],
+      "finding_codes": [
+        "test_overclaims_model_confidence"
+      ],
+      "name": "overclaim_model_confidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_overclaim",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [
+              "known_bad.required_obligation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "known_bad.overclaim",
+            "overclaims_model_confidence": true,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "synthetic evidence that overclaims full model confidence"
+          }
+        ]
+      },
+      "report": {
+        "decision": "test_overclaims_model_confidence",
+        "findings": [
+          {
+            "code": "test_overclaims_model_confidence",
+            "evidence_id": "known_bad.overclaim",
+            "message": "test evidence known_bad.overclaim claims more model confidence than its obligation bindings prove",
+            "metadata": {
+              "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_obligations": [
+                "known_bad.required_obligation"
+              ],
+              "evidence_current": true,
+              "evidence_id": "known_bad.overclaim",
+              "overclaims_model_confidence": true,
+              "path": "tests/test_flowpilot_model_test_alignment.py",
+              "result_status": "passed",
+              "stale_reasons": [],
+              "test_kind": "happy_path",
+              "test_name": "synthetic evidence that overclaims full model confidence"
+            },
+            "obligation_id": "",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_overclaim",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_overclaim decision=test_overclaims_model_confidence findings=1"
+      }
+    },
+    {
+      "expected_codes": [
+        "orphan_test_evidence"
+      ],
+      "finding_codes": [
+        "missing_test_evidence",
+        "orphan_test_evidence"
+      ],
+      "name": "orphan_evidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_orphan",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [],
+            "evidence_current": true,
+            "evidence_id": "known_bad.orphan",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "synthetic evidence without obligation binding"
+          }
+        ]
+      },
+      "report": {
+        "decision": "missing_test_evidence",
+        "findings": [
+          {
+            "code": "orphan_test_evidence",
+            "evidence_id": "known_bad.orphan",
+            "message": "test evidence known_bad.orphan is not bound to any model obligation",
+            "metadata": {
+              "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_obligations": [],
+              "evidence_current": true,
+              "evidence_id": "known_bad.orphan",
+              "overclaims_model_confidence": false,
+              "path": "tests/test_flowpilot_model_test_alignment.py",
+              "result_status": "passed",
+              "stale_reasons": [],
+              "test_kind": "happy_path",
+              "test_name": "synthetic evidence without obligation binding"
+            },
+            "obligation_id": "",
+            "severity": "blocker"
+          },
+          {
+            "code": "missing_test_evidence",
+            "evidence_id": "",
+            "message": "model obligation known_bad.required_obligation has no current passing test evidence",
+            "metadata": {
+              "allow_shared_evidence": false,
+              "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "obligation_id": "known_bad.required_obligation",
+              "obligation_type": "hazard",
+              "required": true,
+              "required_test_kinds": [
+                "happy_path"
+              ],
+              "risk_level": "high"
+            },
+            "obligation_id": "known_bad.required_obligation",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_orphan",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_orphan decision=missing_test_evidence findings=2"
+      }
+    },
+    {
+      "expected_codes": [
+        "duplicate_test_evidence_owner"
+      ],
+      "finding_codes": [
+        "duplicate_test_evidence_owner"
+      ],
+      "name": "duplicate_same_kind_evidence",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "known_bad_duplicate",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "obligation_id": "known_bad.required_obligation",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [
+              "known_bad.required_obligation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "known_bad.duplicate.first",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "synthetic duplicate evidence first owner"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_obligations": [
+              "known_bad.required_obligation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "known_bad.duplicate.second",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_model_test_alignment.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "synthetic duplicate evidence second owner"
+          }
+        ]
+      },
+      "report": {
+        "decision": "duplicate_test_evidence_owner",
+        "findings": [
+          {
+            "code": "duplicate_test_evidence_owner",
+            "evidence_id": "",
+            "message": "model obligation known_bad.required_obligation has multiple current passing happy_path evidence owners",
+            "metadata": {
+              "evidence_ids": [
+                "known_bad.duplicate.first",
+                "known_bad.duplicate.second"
+              ],
+              "test_kind": "happy_path"
+            },
+            "obligation_id": "known_bad.required_obligation",
+            "severity": "blocker"
+          }
+        ],
+        "model_id": "known_bad_duplicate",
+        "ok": false,
+        "summary": "BLOCKED: model=known_bad_duplicate decision=duplicate_test_evidence_owner findings=1"
+      }
+    }
+  ],
+  "ok": true,
+  "per_plan": [
+    {
+      "coverage_boundary": "Startup alignment covers ordinary runtime and unit tests for the startup gate. It does not rerun UI smoke or long parent graphs.",
+      "decision": "model_test_alignment_green",
+      "family": "startup",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_startup_control_checks.py",
+        "python simulations/run_flowpilot_deterministic_startup_bootstrap_checks.py"
+      ],
+      "model_id": "startup",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "startup",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Startup asks the three questions, waits for answers, and blocks banner/controller work until the answer boundary is satisfied.",
+            "obligation_id": "startup.questions.pause_before_work",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Startup creates prompt-isolated current-run state and requires reviewer facts plus PM approval before work beyond startup.",
+            "obligation_id": "startup.run_isolation_and_activation",
+            "obligation_type": "scenario",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "failure_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "startup.run_isolation_and_activation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "startup.happy.prompt_isolated_run",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_startup_sequence_creates_prompt_isolated_run"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "startup.questions.pause_before_work"
+            ],
+            "evidence_current": true,
+            "evidence_id": "startup.negative.waits_for_answers",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_startup_waits_for_answers_before_banner_or_controller"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "startup.questions.pause_before_work"
+            ],
+            "evidence_current": true,
+            "evidence_id": "startup.happy.answer_boundary",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "startup.run_isolation_and_activation"
+            ],
+            "evidence_current": true,
+            "evidence_id": "startup.failure.activation_requires_reviewer",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "startup",
+        "ok": true,
+        "summary": "OK: model=startup decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Packet/card/ACK alignment covers mechanical handoff, identity, hash, receipt, and ACK/return hazards. It does not treat ACK as semantic role approval.",
+      "decision": "model_test_alignment_green",
+      "family": "packet/card/ack",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_packet_lifecycle_checks.py",
+        "python simulations/run_flowpilot_card_envelope_checks.py",
+        "python simulations/run_flowpilot_event_contract_checks.py"
+      ],
+      "model_id": "packet_card_ack",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "packet_card_ack",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Packet envelopes, bodies, result files, hashes, and recipient reads stay physically separated from Controller relay text.",
+            "obligation_id": "packet.physical_body_boundary",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Card and bundle ACKs require correct role, token, receipt, hash, and per-card completion before advancing.",
+            "obligation_id": "card.ack_identity_and_bundle",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Router preconsumes valid ACK/return events and blocks incomplete or invalid pre-ACK reports without advancing stale waits.",
+            "obligation_id": "ack.return_wait_preconsumption",
+            "obligation_type": "transition",
+            "required": true,
+            "required_test_kinds": [
+              "edge_path",
+              "failure_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_packet_runtime",
+            "covered_obligations": [
+              "packet.physical_body_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet.happy.physical_files",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_packet_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_pm_issue_writes_physical_envelope_body_and_ledger"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_packet_runtime",
+            "covered_obligations": [
+              "packet.physical_body_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet.negative.controller_body_exclusion",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_packet_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_controller_handoff_contains_envelope_only_not_body_content"
+          },
+          {
+            "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
+            "covered_obligations": [
+              "card.ack_identity_and_bundle"
+            ],
+            "evidence_current": true,
+            "evidence_id": "card.happy.card_ack",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_card_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_card_runtime_opens_card_and_submits_ack"
+          },
+          {
+            "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
+            "covered_obligations": [
+              "card.ack_identity_and_bundle"
+            ],
+            "evidence_current": true,
+            "evidence_id": "card.negative.wrong_role_ack",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_card_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_card_runtime_rejects_wrong_role_and_ack_without_receipt"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
+            "covered_obligations": [
+              "ack.return_wait_preconsumption"
+            ],
+            "evidence_current": true,
+            "evidence_id": "ack.edge.preconsume_valid_ack",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_ack_return.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
+            "covered_obligations": [
+              "ack.return_wait_preconsumption"
+            ],
+            "evidence_current": true,
+            "evidence_id": "ack.failure.incomplete_bundle",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_ack_return.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_record_external_event_does_not_preconsume_incomplete_bundle_ack"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "packet_card_ack",
+        "ok": true,
+        "summary": "OK: model=packet_card_ack decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Route-mutation alignment covers activation preconditions, sibling replacement, stale evidence, and route-sign projection for ordinary tests.",
+      "decision": "model_test_alignment_green",
+      "family": "route mutation",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_route_mutation_activation_checks.py"
+      ],
+      "model_id": "route_mutation",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "route_mutation",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Route mutation declares topology, affected nodes, process/product rechecks, and old packet supersession before activation.",
+            "obligation_id": "route_mutation.topology_and_recheck",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Sibling branch replacement marks old sibling evidence stale and projects replacement/replay scope in the route display.",
+            "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "negative_path",
+              "edge_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
+            "covered_obligations": [
+              "route_mutation.topology_and_recheck"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.happy.contract_fixture",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_route_mutation.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "TestRouteMutationChildContractFixture"
+          },
+          {
+            "command": "python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
+            "covered_obligations": [
+              "route_mutation.topology_and_recheck"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.negative.required_preconditions",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/route_mutation.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_route_mutation_and_final_ledger_have_required_preconditions"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope",
+            "covered_obligations": [
+              "route_mutation.sibling_replacement_stales_old_evidence"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.edge.sibling_replacement_display",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_user_flow_diagram.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_sibling_branch_replacement_draws_replacement_and_replay_scope"
+          },
+          {
+            "command": "python -m unittest tests.router_runtime.route_mutation.RouteMutationRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+            "covered_obligations": [
+              "route_mutation.sibling_replacement_stales_old_evidence"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.negative.old_sibling_proof",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/route_mutation.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "route_mutation",
+        "ok": true,
+        "summary": "OK: model=route_mutation decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Terminal, closure, and resume alignment covers runtime tests for ledger closure and re-entry. It is not a production replay adapter.",
+      "decision": "model_test_alignment_green",
+      "family": "terminal/closure/resume",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_runtime_closure_checks.py",
+        "python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py",
+        "python simulations/run_flowpilot_resume_checks.py"
+      ],
+      "model_id": "terminal_closure_resume",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "terminal_closure_resume",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Terminal completion requires a clean PM-built final ledger, delivered-product backward replay, and PM completion approval.",
+            "obligation_id": "terminal.final_ledger_and_backward_replay",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Closure blocks dirty defect, PM-suggestion, role-memory, quarantine, or source-of-truth state after terminal replay.",
+            "obligation_id": "closure.dirty_ledgers_block_completion",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "failure_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Resume re-entry loads current-run state, frontier, packet ledger, daemon/owner state, role memory, and recovery evidence before PM work.",
+            "obligation_id": "resume.current_run_reentry",
+            "obligation_type": "transition",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "failure_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+            "covered_obligations": [
+              "terminal.final_ledger_and_backward_replay"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.happy.replay_segments",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_terminal.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+            "covered_obligations": [
+              "terminal.final_ledger_and_backward_replay"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.final_ledger_sources",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_terminal.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_ledger_rejects_missing_source_of_truth_entries_and_contract_replay"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_closure",
+            "covered_obligations": [
+              "closure.dirty_ledgers_block_completion"
+            ],
+            "evidence_current": true,
+            "evidence_id": "closure.failure.dirty_defect_ledger",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_closure.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_terminal_closure_blocks_dirty_defect_ledger_after_terminal_replay"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+            "covered_obligations": [
+              "resume.current_run_reentry"
+            ],
+            "evidence_current": true,
+            "evidence_id": "resume.happy.loads_state",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_resume.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_resume_reentry_loads_state_before_resume_cards"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+            "covered_obligations": [
+              "resume.current_run_reentry"
+            ],
+            "evidence_current": true,
+            "evidence_id": "resume.failure.ambiguous_state",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_resume.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "terminal_closure_resume",
+        "ok": true,
+        "summary": "OK: model=terminal_closure_resume decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Role/output alignment covers mechanical role-output and packet-output contracts. It does not judge task semantic quality.",
+      "decision": "model_test_alignment_green",
+      "family": "role/output contracts",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_output_contract_checks.py",
+        "python simulations/run_flowpilot_role_output_runtime_checks.py"
+      ],
+      "model_id": "role_output_contracts",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "role_output_contracts",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Role outputs are registry-bound, role-authored, authority-checked, and submitted only through current Router waits.",
+            "obligation_id": "role_output.registry_authority",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Output contracts are repeated in packet envelope/body/ledger/result and rejected for wrong recipients.",
+            "obligation_id": "output_contract.packet_binding",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+            "covered_obligations": [
+              "role_output.registry_authority"
+            ],
+            "evidence_current": true,
+            "evidence_id": "role_output.happy.registry_preparable",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_role_output_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_registry_backed_output_types_are_preparable"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+            "covered_obligations": [
+              "role_output.registry_authority"
+            ],
+            "evidence_current": true,
+            "evidence_id": "role_output.negative.wrong_role",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_role_output_runtime.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_runtime_rejects_wrong_role_and_role_key_agent_id"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_output_contracts",
+            "covered_obligations": [
+              "output_contract.packet_binding"
+            ],
+            "evidence_current": true,
+            "evidence_id": "output_contract.happy.packet_binding",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_output_contracts.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_output_contracts",
+            "covered_obligations": [
+              "output_contract.packet_binding"
+            ],
+            "evidence_current": true,
+            "evidence_id": "output_contract.negative.wrong_recipient",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_output_contracts.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_packet_rejects_contract_for_wrong_recipient"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "role_output_contracts",
+        "ok": true,
+        "summary": "OK: model=role_output_contracts decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Router-loop/daemon alignment covers foreground unit/runtime tests for queue, lock, and packet-loop behavior. It does not run long daemon soak tests.",
+      "decision": "model_test_alignment_green",
+      "family": "router loop/daemon",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_router_loop_checks.py",
+        "python simulations/run_flowpilot_persistent_router_daemon_checks.py"
+      ],
+      "model_id": "router_loop_daemon",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "router_loop_daemon",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "The current-node loop dispatches packets only after direct-dispatch preflight and routes results through PM/reviewer gates.",
+            "obligation_id": "router_loop.packet_result_review_loop",
+            "obligation_type": "transition",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "failure_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
+            "obligation_id": "daemon.lock_status_and_queue_progress",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "edge_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+            "covered_obligations": [
+              "router_loop.packet_result_review_loop"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.happy.direct_dispatch",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_packets.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_current_node_packet_relay_uses_router_direct_dispatch"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+            "covered_obligations": [
+              "router_loop.packet_result_review_loop"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.failure.reviewer_audit",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_packets.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_current_node_completion_requires_reviewer_passed_packet_audit"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "daemon.lock_status_and_queue_progress"
+            ],
+            "evidence_current": true,
+            "evidence_id": "daemon.happy.formal_startup",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_formal_startup_starts_router_daemon_before_controller_core"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_obligations": [
+              "daemon.lock_status_and_queue_progress"
+            ],
+            "evidence_current": true,
+            "evidence_id": "daemon.edge.fresh_lock_wait",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_router_daemon_waits_on_fresh_scheduler_write_lock_before_error"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "router_loop_daemon",
+        "ok": true,
+        "summary": "OK: model=router_loop_daemon decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Test-tiering alignment covers test-plan mechanics and slow-test parent/child contracts, including progress-only background hazards.",
+      "decision": "model_test_alignment_green",
+      "family": "test tiering/slow-test contracts",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_test_tiering_checks.py",
+        "python simulations/run_flowpilot_slow_test_contract_checks.py"
+      ],
+      "model_id": "test_tiering_slow_contracts",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "test_tiering_slow_contracts",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Fast/router tiers are scoped, foreground-safe, and exclude release-only, coverage sweep, and legacy full regressions.",
+            "obligation_id": "test_tiering.foreground_fast_scope",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Background validation needs final out/err/combined/exit/meta artifacts; progress lines alone are not pass evidence.",
+            "obligation_id": "test_tiering.background_artifact_contract",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Slow-test parents declare child owners and I/O contracts and do not replay child internals as parent proof.",
+            "obligation_id": "slow_test.parent_child_contracts",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_test_tiers",
+            "covered_obligations": [
+              "test_tiering.foreground_fast_scope"
+            ],
+            "evidence_current": true,
+            "evidence_id": "tiering.happy.fast_scope",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_test_tiers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_fast_tier_excludes_release_coverage_and_legacy_full"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_test_tiers",
+            "covered_obligations": [
+              "test_tiering.foreground_fast_scope"
+            ],
+            "evidence_current": true,
+            "evidence_id": "tiering.negative.release_exclusion",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_test_tiers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_fast_and_router_tiers_do_not_contain_release_only_commands"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
+            "covered_obligations": [
+              "test_tiering.background_artifact_contract"
+            ],
+            "evidence_current": true,
+            "evidence_id": "tiering.negative.progress_only",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_test_tiers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_tiering_flowguard_model_rejects_known_bad_hazards"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
+            "covered_obligations": [
+              "slow_test.parent_child_contracts"
+            ],
+            "evidence_current": true,
+            "evidence_id": "slow_contract.happy.valid_contracts",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_test_tiers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_slow_test_contract_flowguard_model_rejects_parent_child_hazards"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
+            "covered_obligations": [
+              "slow_test.parent_child_contracts"
+            ],
+            "evidence_current": true,
+            "evidence_id": "slow_contract.negative.parent_child_hazards",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_test_tiers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_slow_test_contract_flowguard_model_rejects_parent_child_hazards"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "test_tiering_slow_contracts",
+        "ok": true,
+        "summary": "OK: model=test_tiering_slow_contracts decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Meta/Capability alignment covers parent-runner proof boundaries and control-gate unit evidence only. Parent results remain abstract model confidence, not ordinary production conformance.",
+      "decision": "model_test_alignment_green",
+      "family": "meta/capability parents",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_meta_checks.py",
+        "python simulations/run_capability_checks.py",
+        "python simulations/run_meta_checks.py --full --fast",
+        "python simulations/run_capability_checks.py --full --fast"
+      ],
+      "model_id": "meta_capability_parents",
+      "ok": true,
+      "plan": {
+        "allow_orphan_tests": false,
+        "model_id": "meta_capability_parents",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "description": "Meta parent routine evidence uses thin-parent proof by default and layered full proof only when explicitly requested.",
+            "obligation_id": "meta_parent.thin_default_and_layered_full_boundary",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Capability parent evidence rejects stale proof reuse and keeps fast smoke on the non-legacy path.",
+            "obligation_id": "capability_parent.proof_reuse_and_fast_boundary",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high"
+          },
+          {
+            "allow_shared_evidence": false,
+            "description": "Meta/Capability parent model evidence stays bounded as abstract model-hierarchy confidence, not ordinary production conformance.",
+            "obligation_id": "parents.abstract_not_ordinary_conformance",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_test_kinds": [
+              "edge_path"
+            ],
+            "risk_level": "high"
+          }
+        ],
+        "test_evidence": [
+          {
+            "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
+            "covered_obligations": [
+              "meta_parent.thin_default_and_layered_full_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "meta_parent.happy.thin_default",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_thin_parent_checks.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_default_meta_runner_uses_thin_parent_without_full_graph"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
+            "covered_obligations": [
+              "meta_parent.thin_default_and_layered_full_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "meta_parent.negative.legacy_explicit_only",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_thin_parent_checks.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_legacy_full_meta_runner_preserves_monolithic_path"
+          },
+          {
+            "command": "python -m unittest tests.test_flowguard_result_proof",
+            "covered_obligations": [
+              "capability_parent.proof_reuse_and_fast_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "capability_parent.happy.proof_reuse_guard",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowguard_result_proof.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_capability_result_proof_rejects_stale_reuse"
+          },
+          {
+            "command": "python -m unittest tests.test_flowguard_result_proof",
+            "covered_obligations": [
+              "capability_parent.proof_reuse_and_fast_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "capability_parent.negative.fast_smoke_no_legacy",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowguard_result_proof.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_smoke_fast_only_marks_slow_model_checks_fast"
+          },
+          {
+            "command": "python -m unittest tests.test_flowpilot_control_gates",
+            "covered_obligations": [
+              "parents.abstract_not_ordinary_conformance"
+            ],
+            "evidence_current": true,
+            "evidence_id": "parents.edge.control_gate_unit_checks",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_control_gates.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "FlowPilotControlGateTests meta/capability invariant checks"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "meta_capability_parents",
+        "ok": true,
+        "summary": "OK: model=meta_capability_parents decision=model_test_alignment_green findings=0"
+      }
+    }
+  ],
+  "plan_count": 8,
+  "result_type": "flowpilot_model_test_alignment"
+}

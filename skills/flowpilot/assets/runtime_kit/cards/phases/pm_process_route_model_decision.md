@@ -34,6 +34,14 @@ serial line:
 - parent completion and final completion include backward coverage review;
 - model-miss handling updates the model, searches same-class omissions, adds
   supplemental nodes when needed, and reruns stale gates;
+- `model_obligations` are explicit and matched to `ordinary_test_evidence`;
+- `missing_test_kinds` names absent or stale happy, failure, edge, negative, or
+  replay evidence instead of hiding it in prose;
+- `conformance_boundary` and `residual_blindspots` state what the process model
+  and ordinary tests do not prove;
+- any cited long/background test has `background_artifact_completion` with log
+  root, stdout, stderr, combined, exit, and meta paths, exit code, latest
+  update time, completion status, and valid proof reuse;
 - no hidden parallel subwork remains inside a supposedly dispatchable leaf.
 
 If the model is acceptable, write
@@ -55,4 +63,8 @@ The decision body must include:
 - `leaf_worker_readiness_review`;
 - `parent_and_final_backward_review_policy`;
 - `model_miss_repair_policy`;
+- `model_test_alignment_review`;
+- `conformance_boundary`;
+- `residual_blindspots`;
+- `background_artifact_completion_review`;
 - `next_action`.

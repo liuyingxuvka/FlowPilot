@@ -37,6 +37,13 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_cross_plane_friction_results.json",
     ]
+    prompt_isolation_check = [sys.executable, "simulations/run_prompt_isolation_checks.py"]
+    persistent_router_daemon_check = [
+        sys.executable,
+        "simulations/run_flowpilot_persistent_router_daemon_checks.py",
+        "--json-out",
+        "simulations/flowpilot_persistent_router_daemon_results.json",
+    ]
     model_mesh_check = [
         sys.executable,
         "simulations/run_flowpilot_model_mesh_checks.py",
@@ -48,6 +55,18 @@ def main(argv: list[str] | None = None) -> int:
         "simulations/run_flowpilot_model_hierarchy_checks.py",
         "--json-out",
         "simulations/flowpilot_model_hierarchy_results.json",
+    ]
+    structure_maintenance_check = [
+        sys.executable,
+        "simulations/run_flowpilot_structure_maintenance_checks.py",
+        "--json-out",
+        "simulations/flowpilot_structure_maintenance_results.json",
+    ]
+    model_test_alignment_check = [
+        sys.executable,
+        "simulations/run_flowpilot_model_test_alignment_checks.py",
+        "--json-out",
+        "simulations/flowpilot_model_test_alignment_results.json",
     ]
     control_transaction_registry_check = [
         sys.executable,
@@ -66,11 +85,15 @@ def main(argv: list[str] | None = None) -> int:
         [sys.executable, "simulations/run_barrier_equivalence_checks.py"],
         [sys.executable, "simulations/run_command_refinement_checks.py"],
         [sys.executable, "simulations/run_flowpilot_reviewer_active_challenge_checks.py"],
+        prompt_isolation_check,
         control_plane_friction_check,
         cross_plane_friction_check,
+        persistent_router_daemon_check,
         control_transaction_registry_check,
         model_mesh_check,
         model_hierarchy_check,
+        structure_maintenance_check,
+        model_test_alignment_check,
         meta_check,
         capability_check,
     ]

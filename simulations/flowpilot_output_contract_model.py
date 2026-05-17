@@ -11,8 +11,9 @@ Risk intent brief:
   router accept/reject.
 - Adversarial branches include a missing packet contract, a mismatched packet
   contract, a hidden router requirement absent from the contract, a missing
-  required body field, a missing report-writing contract at the final
-  reporter, and a forbidden body field copied into the envelope.
+  required body field, a missing model-test alignment field in an officer
+  report, a missing report-writing contract at the final reporter, and a
+  forbidden body field copied into the envelope.
 - Hard invariants: accepted outputs must carry one system-predefined contract
   end to end, satisfy all required body fields, avoid envelope body fields, pass
   role self-check, expose all router requirements through the contract, deliver
@@ -34,12 +35,14 @@ VALID_IMPLEMENTATION = "valid_implementation"
 VALID_REVIEW = "valid_review"
 VALID_FINAL_REPORT = "valid_final_report"
 VALID_GATE_DECISION = "valid_gate_decision"
+VALID_OFFICER_MODEL_REPORT = "valid_officer_model_report"
 VALID_MODEL_MISS_TRIAGE = "valid_model_miss_triage"
 VALID_MODEL_MISS_OFFICER_REPORT = "valid_model_miss_officer_report"
 MISSING_CONTRACT = "missing_contract"
 MISMATCHED_CONTRACT = "mismatched_contract"
 HIDDEN_ROUTER_REQUIREMENT = "hidden_router_requirement_absent_from_contract"
 MISSING_REQUIRED_BODY_FIELD = "missing_required_body_field"
+MISSING_MODEL_TEST_ALIGNMENT_FIELD = "missing_model_test_alignment_field"
 MISSING_REPORT_CONTRACT_DELIVERY = "missing_report_contract_delivery"
 FORBIDDEN_ENVELOPE_BODY_FIELD = "forbidden_envelope_body_field"
 
@@ -48,6 +51,7 @@ NEGATIVE_SCENARIOS = (
     MISMATCHED_CONTRACT,
     HIDDEN_ROUTER_REQUIREMENT,
     MISSING_REQUIRED_BODY_FIELD,
+    MISSING_MODEL_TEST_ALIGNMENT_FIELD,
     MISSING_REPORT_CONTRACT_DELIVERY,
     FORBIDDEN_ENVELOPE_BODY_FIELD,
 )
@@ -57,6 +61,7 @@ VALID_SCENARIOS = (
     VALID_REVIEW,
     VALID_FINAL_REPORT,
     VALID_GATE_DECISION,
+    VALID_OFFICER_MODEL_REPORT,
     VALID_MODEL_MISS_TRIAGE,
     VALID_MODEL_MISS_OFFICER_REPORT,
 )
@@ -159,6 +164,31 @@ GATE_DECISION_CONTRACT = ContractSpec(
     ),
 )
 
+OFFICER_MODEL_REPORT_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.officer_model_report.v1",
+    task_family="officer.model_report",
+    required_body_fields=frozenset(
+        {
+            "background_artifact_completion",
+            "commands_run",
+            "conformance_boundary",
+            "confidence_boundary",
+            "contract_self_check",
+            "counterexamples_or_absence",
+            "hard_invariants",
+            "missing_test_kinds",
+            "model_obligations",
+            "modeled_boundary",
+            "ordinary_test_evidence",
+            "passed",
+            "pm_suggestion_items",
+            "residual_blindspots",
+            "reviewed_by_role",
+            "skipped_checks",
+        }
+    ),
+)
+
 MODEL_MISS_TRIAGE_CONTRACT = ContractSpec(
     contract_id="flowpilot.output_contract.pm_model_miss_triage_decision.v1",
     task_family="pm.model_miss_triage",
@@ -205,6 +235,7 @@ CONTRACTS_BY_FAMILY = {
     REVIEW_CONTRACT.task_family: REVIEW_CONTRACT,
     FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
     GATE_DECISION_CONTRACT.task_family: GATE_DECISION_CONTRACT,
+    OFFICER_MODEL_REPORT_CONTRACT.task_family: OFFICER_MODEL_REPORT_CONTRACT,
     MODEL_MISS_TRIAGE_CONTRACT.task_family: MODEL_MISS_TRIAGE_CONTRACT,
     MODEL_MISS_OFFICER_REPORT_CONTRACT.task_family: MODEL_MISS_OFFICER_REPORT_CONTRACT,
 }
@@ -218,6 +249,7 @@ NEGATIVE_EXPECTED_REJECTIONS = {
     MISMATCHED_CONTRACT: "mismatched_contract",
     HIDDEN_ROUTER_REQUIREMENT: "hidden_router_requirement_absent_from_contract",
     MISSING_REQUIRED_BODY_FIELD: "missing_required_body_field",
+    MISSING_MODEL_TEST_ALIGNMENT_FIELD: "missing_required_body_field",
     MISSING_REPORT_CONTRACT_DELIVERY: "missing_report_contract_delivery",
     FORBIDDEN_ENVELOPE_BODY_FIELD: "forbidden_envelope_body_field",
 }
@@ -319,6 +351,8 @@ def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
         return FINAL_REPORT_CONTRACT.task_family, FINAL_REPORT_CONTRACT
     if scenario == VALID_GATE_DECISION:
         return GATE_DECISION_CONTRACT.task_family, GATE_DECISION_CONTRACT
+    if scenario in {VALID_OFFICER_MODEL_REPORT, MISSING_MODEL_TEST_ALIGNMENT_FIELD}:
+        return OFFICER_MODEL_REPORT_CONTRACT.task_family, OFFICER_MODEL_REPORT_CONTRACT
     if scenario == VALID_MODEL_MISS_TRIAGE:
         return MODEL_MISS_TRIAGE_CONTRACT.task_family, MODEL_MISS_TRIAGE_CONTRACT
     if scenario == VALID_MODEL_MISS_OFFICER_REPORT:
@@ -334,6 +368,8 @@ def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
 def _body_fields_for(spec: ContractSpec, scenario: str) -> frozenset[str]:
     if scenario == MISSING_REQUIRED_BODY_FIELD:
         return spec.required_body_fields - frozenset({"work_scope"})
+    if scenario == MISSING_MODEL_TEST_ALIGNMENT_FIELD:
+        return spec.required_body_fields - frozenset({"missing_test_kinds"})
     return spec.required_body_fields
 
 
@@ -425,12 +461,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             VALID_REVIEW: "packet_embeds_selected_contract",
             VALID_FINAL_REPORT: "packet_embeds_selected_contract",
             VALID_GATE_DECISION: "packet_embeds_selected_contract",
+            VALID_OFFICER_MODEL_REPORT: "packet_embeds_selected_contract",
             VALID_MODEL_MISS_TRIAGE: "packet_embeds_selected_contract",
             VALID_MODEL_MISS_OFFICER_REPORT: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",
             MISMATCHED_CONTRACT: "packet_embeds_mismatched_contract",
             HIDDEN_ROUTER_REQUIREMENT: "packet_embeds_contract_with_hidden_router_requirement",
             MISSING_REQUIRED_BODY_FIELD: "packet_embeds_contract_with_missing_required_body_field",
+            MISSING_MODEL_TEST_ALIGNMENT_FIELD: "packet_embeds_contract_with_missing_required_body_field",
             MISSING_REPORT_CONTRACT_DELIVERY: "packet_omits_report_contract_delivery",
             FORBIDDEN_ENVELOPE_BODY_FIELD: "packet_embeds_body_field_in_envelope",
         }[state.scenario]
@@ -782,9 +820,11 @@ __all__ = [
     "EXTERNAL_INPUTS",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
+    "MISSING_MODEL_TEST_ALIGNMENT_FIELD",
     "NEGATIVE_EXPECTED_REJECTIONS",
     "NEGATIVE_SCENARIOS",
     "SCENARIOS",
+    "VALID_OFFICER_MODEL_REPORT",
     "VALID_SCENARIOS",
     "Action",
     "State",

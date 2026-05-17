@@ -1,0 +1,237 @@
+{
+  "model": "flowpilot_structure_maintenance",
+  "model_structure_mesh": {
+    "hazards": [
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "coverage_gap_blocked",
+        "finding_codes": [
+          "coverage_gap"
+        ],
+        "name": "missing_model_partition_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "ownership_conflict",
+        "finding_codes": [
+          "duplicate_state_owner"
+        ],
+        "name": "duplicate_model_state_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 3,
+        "decision": "facade_compatibility_blocked",
+        "finding_codes": [
+          "facade_missing"
+        ],
+        "name": "missing_model_facade"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 6,
+        "decision": "entrypoint_compatibility_blocked",
+        "finding_codes": [
+          "entrypoint_removed",
+          "facade_missing"
+        ],
+        "name": "removed_model_entrypoint"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "stale_behavior_parity",
+        "finding_codes": [
+          "stale_behavior_parity"
+        ],
+        "name": "stale_model_parity"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "insufficient_evidence",
+        "finding_codes": [
+          "insufficient_evidence_tier"
+        ],
+        "name": "insufficient_model_release_evidence"
+      }
+    ],
+    "ok": true,
+    "report": {
+      "decision": "structure_mesh_green_can_continue",
+      "decision_scope": "release",
+      "findings": [],
+      "ok": true,
+      "parent_module_id": "flowpilot_model_script_structure_split",
+      "release_obligations": [],
+      "summary": "OK: parent=flowpilot_model_script_structure_split scope=release decision=structure_mesh_green_can_continue findings=0"
+    }
+  },
+  "ok": true,
+  "structure_mesh": {
+    "hazards": [
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "coverage_gap_blocked",
+        "finding_codes": [
+          "coverage_gap"
+        ],
+        "name": "missing_partition_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "ownership_conflict",
+        "finding_codes": [
+          "duplicate_state_owner"
+        ],
+        "name": "duplicate_root_state_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "facade_compatibility_blocked",
+        "finding_codes": [
+          "facade_missing"
+        ],
+        "name": "missing_facade"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 4,
+        "decision": "entrypoint_compatibility_blocked",
+        "finding_codes": [
+          "entrypoint_removed",
+          "facade_missing"
+        ],
+        "name": "removed_entrypoint"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "missing_release_evidence",
+        "finding_codes": [
+          "release_parity_not_current"
+        ],
+        "name": "stale_parity"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "insufficient_evidence",
+        "finding_codes": [
+          "insufficient_evidence_tier"
+        ],
+        "name": "insufficient_release_evidence"
+      }
+    ],
+    "ok": true,
+    "report": {
+      "decision": "structure_mesh_green_can_continue",
+      "decision_scope": "release",
+      "findings": [],
+      "ok": true,
+      "parent_module_id": "flowpilot_router_structure_split",
+      "release_obligations": [],
+      "summary": "OK: parent=flowpilot_router_structure_split scope=release decision=structure_mesh_green_can_continue findings=0"
+    }
+  },
+  "test_mesh": {
+    "hazards": [
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "coverage_gap_blocked",
+        "finding_codes": [
+          "coverage_gap"
+        ],
+        "name": "missing_child_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "ownership_conflict",
+        "finding_codes": [
+          "duplicate_state_owner"
+        ],
+        "name": "duplicate_state_owner"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "hidden_skipped_tests",
+        "finding_codes": [
+          "hidden_skipped_tests"
+        ],
+        "name": "hidden_skipped_tests"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "stale_test_evidence",
+        "finding_codes": [
+          "stale_test_evidence"
+        ],
+        "name": "stale_evidence"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "test_failure_blocked",
+        "finding_codes": [
+          "suite_failed"
+        ],
+        "name": "timeout_suite"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "background_incomplete",
+        "finding_codes": [
+          "background_incomplete"
+        ],
+        "name": "progress_only_background"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "background_incomplete",
+        "finding_codes": [
+          "background_incomplete"
+        ],
+        "name": "missing_background_artifact"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "test_failure_blocked",
+        "finding_codes": [
+          "suite_failed"
+        ],
+        "name": "unbounded_background_fanout"
+      },
+      {
+        "blocked": true,
+        "blocker_count": 1,
+        "decision": "stale_test_evidence",
+        "finding_codes": [
+          "stale_test_evidence"
+        ],
+        "name": "release_required_stale"
+      }
+    ],
+    "ok": true,
+    "report": {
+      "decision": "test_mesh_green_can_continue",
+      "decision_scope": "release",
+      "findings": [],
+      "ok": true,
+      "parent_suite_id": "flowpilot_router_runtime_testmesh",
+      "release_obligations": [],
+      "summary": "OK: parent=flowpilot_router_runtime_testmesh scope=release decision=test_mesh_green_can_continue findings=0"
+    }
+  }
+}

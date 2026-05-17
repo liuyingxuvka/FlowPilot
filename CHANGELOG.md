@@ -20,10 +20,18 @@ All notable changes to FlowPilot will be documented in this file.
   submitted outside the current Router wait state.
 - Added the `final-flowpilot-structure-convergence` OpenSpec change and
   verification matrix for the final local structure-maintenance pass.
+- Added the `structuremesh-router-model-cleanup` OpenSpec change and an
+  executable StructureMesh/TestMesh maintenance gate for router structure,
+  split child-model facades, and background validation evidence.
 - Added focused helper modules for role-output runtime schema, contracts,
   progress records, envelopes, and CLI handling.
 - Added split helper modules for control-plane friction, router-loop, and
   daemon reconciliation FlowGuard child models.
+- Added split helper modules for prompt-isolation, cross-plane friction, and
+  persistent router daemon FlowGuard child models.
+- Added a FlowGuard Model-Test Alignment runner and documentation that map
+  major model obligations to ordinary test evidence and reject missing, stale,
+  progress-only, orphan, duplicate, and overclaimed evidence.
 
 ### Changed
 
@@ -39,6 +47,15 @@ All notable changes to FlowPilot will be documented in this file.
   backed by direct domain-owned test modules.
 - Moved low-risk external-event finalization and additional Controller action
   bodies behind focused router helper modules.
+- Converted prompt-isolation, cross-plane friction, and persistent router
+  daemon models into compatibility facades backed by state, transition,
+  invariant, hazard, audit, and strategy helpers where applicable.
+- Split the router validation tier into smaller packet/card/ACK, route,
+  terminal/closure/resume, and supporting child suites while keeping release
+  regressions background-oriented.
+- Hid Windows subprocess windows for the test-tier runner so background and
+  foreground child checks no longer interrupt desktop work while still writing
+  the stable background artifact set.
 
 ### Fixed
 

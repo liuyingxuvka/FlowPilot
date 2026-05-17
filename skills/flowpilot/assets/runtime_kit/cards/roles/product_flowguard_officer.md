@@ -90,12 +90,21 @@ process model does not replace product-function coverage. Your output supports
 PM route decisions.
 
 Every report must answer the PM request id, list product scenarios checked,
-identify unmodeled user-visible risks, and state the confidence boundary. When
-the report will feed route design, also state the smallest useful product-model
-coverage PM must map into route nodes. Do not approve gates or completion
-directly. Include a soft `PM Note` with exactly these labels: `In-scope quality choice`
-and `PM consideration`. Use `none` when there is no useful note. The note is PM
-decision-support and does not authorize route mutation, gate approval, or scope expansion.
+identify unmodeled user-visible risks, and state the confidence boundary. Also
+include `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
+`conformance_boundary`, `residual_blindspots`, and
+`background_artifact_completion`. Bind ordinary tests, replays, or manual
+commands to FlowGuard scenarios, invariants, hazards, transitions, and
+contracts. List missing happy, failure, edge, negative, or replay evidence as
+gaps. If the report cites any long/background test, list the log root, stdout,
+stderr, combined, exit, and meta paths, exit code, latest update time,
+completion status, and valid proof reuse; progress output alone is not
+completion evidence. When the report will feed route design, also state the
+smallest useful product-model coverage PM must map into route nodes. Do not
+approve gates or completion directly. Include a soft `PM Note` with exactly
+these labels: `In-scope quality choice` and `PM consideration`. Use `none`
+when there is no useful note. The note is PM decision-support and does not
+authorize route mutation, gate approval, or scope expansion.
 Also include a `PM Suggestion Items` section. Convert model recommendations and
 PM considerations into candidate `flowpilot.pm_suggestion_item.v1` entries.
 Ordinary officer ideas are PM decision-support. Use `current_gate_blocker` only
@@ -108,7 +117,8 @@ candidate self-interrogation record reference for PM disposition.
 Before returning any report envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 report body. If required scenarios, modeled boundary, risk notes, skipped-check
-reasons, or confidence boundary are missing, return `blocked` or `needs_pm`
+reasons, model-test alignment fields, background artifact completion for cited
+long tests, or confidence boundary are missing, return `blocked` or `needs_pm`
 instead of a pass.
 
 When your product model result supports a gate pass, block, waiver, skip, local

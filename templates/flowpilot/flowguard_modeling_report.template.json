@@ -61,6 +61,50 @@
       "<path that can fail or stall>"
     ]
   },
+  "model_obligations": [
+    {
+      "id": "<model obligation id>",
+      "type": "<scenario|invariant|hazard|transition|contract>",
+      "required_test_kinds": [
+        "<happy_path|failure_path|edge_path|negative_path|replay>"
+      ],
+      "description": "<what the FlowGuard model requires>"
+    }
+  ],
+  "ordinary_test_evidence": [
+    {
+      "test_name": "<test name>",
+      "path": "<test path>",
+      "command": "<command>",
+      "status": "<passed|failed|timeout|skipped|not-run|running|error>",
+      "test_kind": "<happy_path|failure_path|edge_path|negative_path|replay>",
+      "covered_model_obligations": [
+        "<model obligation id>"
+      ]
+    }
+  ],
+  "missing_test_kinds": [
+    "<required model-obligation test kind still missing, or empty array>"
+  ],
+  "conformance_boundary": "<whether this is abstract model evidence only, ordinary test evidence, conformance replay, or a bounded combination>",
+  "residual_blindspots": [
+    "<known model, test, replay, data, tooling, or human-review blindspot>"
+  ],
+  "background_artifact_completion": [
+    {
+      "command": "<long test command cited by this report>",
+      "log_root": "tmp/flowguard_background",
+      "stdout_path": "<name>.out.txt",
+      "stderr_path": "<name>.err.txt",
+      "combined_path": "<name>.combined.txt",
+      "exit_path": "<name>.exit.txt",
+      "meta_path": "<name>.meta.json",
+      "exit_code": "<integer-or-null>",
+      "completion_status": "<complete|running|missing_artifacts|reused_valid_proof>",
+      "latest_update_time": "<iso-8601-timestamp>",
+      "valid_proof_reused": false
+    }
+  ],
   "pm_decision_packet": {
     "risk_tiers": {
       "hard_blockers": [

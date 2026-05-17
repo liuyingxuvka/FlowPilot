@@ -85,23 +85,59 @@ At minimum, final completion must include:
 - The control-plane friction, router-loop, and daemon reconciliation child
   FlowGuard models now delegate state, transitions, invariants, hazards, and
   audit helpers to focused modules.
-- `packet_runtime.py` and `flowpilot_persistent_router_daemon_model.py` were
-  intentionally not split further in this pass. The former had already reached
-  a stable facade/helper shape; the latter needs a separate lower-risk model
-  boundary before movement.
+- `packet_runtime.py` was intentionally not split further in this pass because
+  it had already reached a stable facade/helper shape.
+
+## StructureMesh Follow-Up Outcome
+
+The `structuremesh-router-model-cleanup` follow-up keeps the same public
+runtime behavior and adds an executable StructureMesh/TestMesh gate for future
+maintenance. It also completes the lower-risk child-model splits that were
+left visible by the final convergence baseline:
+
+- `prompt_isolation_model.py` is now a 53-line compatibility facade backed by
+  state, transition, invariant, and hazard modules.
+- `flowpilot_cross_plane_friction_model.py` is now an 89-line compatibility
+  facade backed by state, transition, invariant, hazard, live-audit, and repair
+  strategy modules.
+- `flowpilot_persistent_router_daemon_model.py` is now a 110-line compatibility
+  facade backed by state, transition, invariant, and hazard modules.
+- `flowpilot_structure_maintenance_model.py` now checks both planned router
+  structure ownership and the actual child model facade/owner split. Known-bad
+  variants for missing owners, duplicate state ownership, missing facades,
+  removed entrypoints, stale parity, and insufficient release evidence must
+  fail before the maintenance gate is considered green.
+- `scripts/run_test_tier.py --tier router --background` now starts a hidden
+  bounded supervisor and fans out router child suites in small batches instead
+  of opening many foreground command windows or launching all child suites at
+  once.
+- `run_flowpilot_model_test_alignment_checks.py` now maps major FlowGuard
+  model obligations to ordinary test evidence across startup, packet/card/ACK,
+  route mutation, terminal/closure/resume, role/output contracts, router
+  loop/daemon, test tiering, and Meta/Capability parent boundaries.
 
 ## Final Evidence Snapshot
 
-- Router background suites under `tmp/flowguard_background/` passed:
-  `router_startup_runtime` 80 tests, `router_foreground_controller` 66 tests,
-  `router_packets_cards_ack` 68 tests, `router_route_mutation` 65 tests, and
-  `router_terminal_closure` 96 tests.
+- Router background suites under `tmp/flowguard_background/` are split into
+  17 child suites owned by the bounded `router_background_supervisor`:
+  startup, foreground/controller, packet runtime, packets, cards, ACK/return,
+  boundaries, route-mutation core, route-mutation contracts, user-flow diagram,
+  terminal, closure, resume, control blockers, PM role work, quality gates,
+  and material/modeling.
 - Current-code event-finalization focus checks passed for wait closure,
   already-recorded replay, startup activation, gate-decision replay, terminal
   replay, and route-mutation/final-ledger preconditions.
 - Touched child model checks passed: control-plane friction 242 states / 241
   edges, router loop 175 states / 174 edges, daemon reconciliation 1141 states
   / 1201 edges.
+- Follow-up child model checks passed: prompt isolation 346 states / 345
+  edges, cross-plane friction 14 states / 13 edges with 210 FlowGuard traces,
+  and persistent router daemon focused checks with hazards/progress green.
+- The StructureMesh/TestMesh maintenance gate passed in release scope for the
+  router structure plan, the model-script facade split, and router runtime test
+  hierarchy.
+- The Model-Test Alignment gate passed and rejected missing, stale,
+  progress-only, orphan, duplicate, and model-confidence-overclaim evidence.
 - Model hierarchy passed with 32 registered child models and current release
   confidence.
 - Layered parent regressions passed through the required background artifacts:

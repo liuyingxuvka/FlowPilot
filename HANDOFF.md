@@ -21,6 +21,43 @@ model-backed autopilot:
   agents limited to bounded sidecar tasks;
 11. finish only after evidence proves the frozen contract is met.
 
+## Current Maintenance Gate
+
+The current structure-maintenance baseline uses a FlowGuard StructureMesh /
+TestMesh gate before broad router or model-script refactors. The gate lives in
+`simulations/flowpilot_structure_maintenance_model.py` and is checked by
+`simulations/run_flowpilot_structure_maintenance_checks.py`.
+
+The same maintenance baseline now includes a FlowGuard Model-Test Alignment
+gate. It lives in `simulations/run_flowpilot_model_test_alignment_checks.py`
+and maps major model obligations to ordinary tests before a coverage claim is
+trusted.
+
+It covers two ownership surfaces:
+
+- planned router split ownership, where `flowpilot_router.py` remains the
+  compatibility facade and root state coordinator;
+- split FlowGuard model scripts, where `prompt_isolation_model.py`,
+  `flowpilot_cross_plane_friction_model.py`, and
+  `flowpilot_persistent_router_daemon_model.py` remain import-compatible
+  facades backed by focused state, transition, invariant, hazard, audit, and
+  strategy helpers as applicable.
+
+Router runtime regression now uses split background child suites. Run
+`python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json`;
+the runner starts one hidden bounded supervisor (`router_background_supervisor`)
+and writes per-suite artifacts for startup, foreground/controller, packet,
+route, terminal, closure, resume, blocker, PM role-work, quality-gate, and
+material/modeling domains.
+
+Known-bad variants for missing owners, duplicate state ownership, missing
+facades, removed entrypoints, stale parity, insufficient release evidence,
+hidden skipped tests, timeout suites, and background progress without final
+artifacts must fail before a maintenance pass can be called complete.
+Alignment known-bad variants for missing evidence, stale evidence,
+progress-only background evidence, orphan tests, duplicate same-kind evidence,
+and model-confidence overclaims must also fail.
+
 ## What Has Already Been Decided
 
 - The public project and skill name is `flowpilot`.
@@ -507,6 +544,10 @@ FlowGuard caught and fixed these design issues:
   and quality gates. The legacy aggregate
   `tests/test_flowpilot_router_runtime.py` remains available as the source of
   the shared test case class.
+- `scripts/run_test_tier.py` hides Windows subprocess windows for both
+  background children and foreground child commands. Use the background
+  artifact files for completion evidence instead of relying on visible console
+  windows.
 - Child FlowGuard models that still produced high maintenance friction now keep
   facade entrypoints while delegating state, transitions, invariants, hazards,
   and audit helpers to focused modules. This pass covered control-plane
@@ -554,6 +595,7 @@ python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out si
 python simulations/run_flowpilot_runtime_closure_checks.py --json-out simulations/flowpilot_runtime_closure_results.json
 python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py --json-out simulations/flowpilot_recursive_closure_reconciliation_results.json
 python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json
+python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

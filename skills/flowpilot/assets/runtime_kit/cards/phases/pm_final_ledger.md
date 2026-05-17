@@ -61,6 +61,13 @@ Resolve:
   existence-only evidence, report prose, or a clean ledger row;
 - child-skill and review gates;
 - product/process FlowGuard gates;
+- model-test alignment for every active FlowGuard-backed gate:
+  `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
+  `conformance_boundary`, `residual_blindspots`, and any
+  `background_artifact_completion` required for cited long/background tests.
+  Completion cannot count ordinary tests as model coverage when required test
+  kinds are missing, stale, skipped, failed, still running, or supported only by
+  progress logs without exit/meta artifacts;
 - minimum sufficient complexity dispositions for route nodes, skills, and
   artifacts that were considered, superseded, deferred, or discarded;
 - generated-resource lineage;

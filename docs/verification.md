@@ -12,6 +12,8 @@ python simulations/run_flowpilot_event_contract_checks.py
 python simulations/run_flowpilot_event_capability_registry_checks.py
 python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out simulations/flowpilot_route_replanning_policy_results.json
 python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json
+python simulations/run_flowpilot_structure_maintenance_checks.py --json-out simulations/flowpilot_structure_maintenance_results.json
+python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
 python simulations/run_release_tooling_checks.py
 python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
@@ -24,6 +26,13 @@ For maintenance that touches the split router/runtime/model structure, also use
 `docs/flowpilot_final_structure_verification_matrix.md`. That matrix maps
 touched facades and domain files to focused commands and to the background log
 contract under `tmp/flowguard_background/`.
+The StructureMesh/TestMesh maintenance check is the current executable gate for
+router split ownership, child-model facade ownership, and slow-suite evidence
+visibility.
+The Model-Test Alignment check is the current executable map between major
+FlowGuard model obligations and ordinary test evidence. A green alignment report
+means each declared obligation has current passing evidence for the required
+test kinds; it is not a substitute for the model runner or production replay.
 
 The tier runner can execute the router domain suites without loading the legacy
 aggregate implementation file as the routine source of truth:
@@ -31,6 +40,11 @@ aggregate implementation file as the routine source of truth:
 ```powershell
 python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json
 ```
+
+On Windows, the tier runner starts background children and foreground child
+commands with hidden subprocess windows. Completion evidence still comes from
+the artifact set in `tmp/flowguard_background/`, not from visible console
+windows or progress output.
 
 Expected:
 

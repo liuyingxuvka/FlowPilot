@@ -45,7 +45,8 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
         self.assertEqual(result["result_type"], "thin_parent")
         self.assertEqual(result["routine_confidence"], "current")
         self.assertLess(result["graph"]["state_count"], thin_parent_checks.HEAVYWEIGHT_STATE_THRESHOLD)
-        self.assertTrue(result["legacy_full_regression"]["current"])
+        self.assertTrue(result["thin_parent"]["full_regression_release_partitions"])
+        self.assertIn("status", result["legacy_full_regression"])
         self.assertIn(
             result["release_confidence"],
             {

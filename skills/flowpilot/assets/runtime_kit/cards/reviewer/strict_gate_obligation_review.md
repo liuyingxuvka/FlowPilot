@@ -45,6 +45,14 @@ Pass requires:
   packet-runtime hash checked, or host-receipt bound to the current run, and
   only for `mechanical_only` scope;
 - residual blockers, risks, and stale evidence are explicitly listed.
+- FlowGuard-backed gates expose `model_obligations`,
+  `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`, and
+  `residual_blindspots`; ordinary tests must be bound to the named model
+  obligations before they can support a pass.
+- if the gate cites long/background tests, `background_artifact_completion`
+  must include log root, stdout, stderr, combined, exit, and meta paths, exit
+  code, latest update time, completion status, and valid proof reuse. Running
+  progress is not pass/fail evidence.
 
 Reject report-only closure, wrong-role approval, or broad claims that bypass the
 gate's concrete obligation. Also reject any attempt to treat payload booleans,

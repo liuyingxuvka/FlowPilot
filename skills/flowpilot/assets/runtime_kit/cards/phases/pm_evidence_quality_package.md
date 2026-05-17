@@ -37,6 +37,15 @@ concept images, and visual assets must have terminal disposition. Old visuals
 or assets may be cited as historical context only; they cannot close a current
 UI or quality gate.
 
+For every FlowGuard-backed gate in scope, include a model-test alignment row:
+`model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
+`conformance_boundary`, and `residual_blindspots`. Ordinary test evidence must
+be current, passing, and bound to explicit FlowGuard obligations before it can
+close model coverage. If a report cites long/background tests, record
+`background_artifact_completion` with log root, stdout, stderr, combined, exit,
+and meta paths, exit code, latest update time, completion status, and valid
+proof reuse. Progress lines are liveness evidence only.
+
 Apply Minimum Sufficient Complexity here as evidence hygiene. Identify
 artifacts, resources, route diagrams, reports, or evidence branches that no
 longer change product trust, verification strength, or final delivery. They

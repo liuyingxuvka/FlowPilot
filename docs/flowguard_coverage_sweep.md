@@ -50,3 +50,9 @@ packet generation commits atomically, success and non-success reviewer outcomes
 are routable, and terminal success or follow-up block states refresh visible
 authorities together. Runtime conformance for that architecture is covered by
 the FlowPilot router tests.
+
+Use `simulations/run_flowpilot_model_test_alignment_checks.py` when the question
+is not whether a model runner is green, but whether its obligations are backed
+by ordinary tests. It is a read-only FlowGuard alignment gate and should reject
+stale, missing, orphan, duplicate, progress-only, or overclaimed evidence before
+a model/test coverage claim is accepted.

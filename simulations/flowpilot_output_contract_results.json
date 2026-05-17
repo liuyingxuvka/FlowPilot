@@ -7,10 +7,10 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 6,
-    "edges": 84,
-    "rejected": 6,
-    "states": 85
+    "accepted": 7,
+    "edges": 98,
+    "rejected": 7,
+    "states": 99
   },
   "missing_labels": [],
   "negative_scenarios": {
@@ -18,6 +18,7 @@
     "hidden_router_requirement_absent_from_contract": "rejected:hidden_router_requirement_absent_from_contract",
     "mismatched_contract": "rejected:mismatched_contract",
     "missing_contract": "rejected:missing_contract",
+    "missing_model_test_alignment_field": "rejected:missing_required_body_field",
     "missing_report_contract_delivery": "rejected:missing_report_contract_delivery",
     "missing_required_body_field": "rejected:missing_required_body_field",
     "valid_final_report": "accepted",
@@ -25,6 +26,7 @@
     "valid_implementation": "accepted",
     "valid_model_miss_officer_report": "accepted",
     "valid_model_miss_triage": "accepted",
+    "valid_officer_model_report": "accepted",
     "valid_review": "accepted"
   },
   "ok": true,

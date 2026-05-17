@@ -102,7 +102,21 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             for item in registry["contracts"]
             if item["contract_id"] == "flowpilot.output_contract.officer_model_report.v1"
         )
-        self.assertIn("pm_suggestion_items", officer_model_contract["required_body_fields"])
+        for field in (
+            "model_obligations",
+            "ordinary_test_evidence",
+            "missing_test_kinds",
+            "conformance_boundary",
+            "residual_blindspots",
+            "background_artifact_completion",
+            "pm_suggestion_items",
+        ):
+            self.assertIn(field, officer_model_contract["required_body_fields"])
+        self.assertTrue(
+            officer_model_contract[
+                "background_artifact_completion_required_when_long_tests_cited"
+            ]
+        )
         gate_contract = next(
             item
             for item in registry["contracts"]
@@ -293,6 +307,25 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.pm_model_miss_triage_decision.v1", model_miss_card)
         self.assertIn("same_class_findings", model_miss_card)
         self.assertIn("minimal_sufficient_repair_recommendation", model_miss_card)
+        officer_loop_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_officer_request_report_loop.md"
+        ).read_text(encoding="utf-8")
+        for term in (
+            "model_obligations",
+            "ordinary_test_evidence",
+            "missing_test_kinds",
+            "conformance_boundary",
+            "residual_blindspots",
+            "background_artifact_completion",
+        ):
+            self.assertIn(term, officer_loop_card)
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()

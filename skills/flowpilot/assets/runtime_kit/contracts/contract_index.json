@@ -494,10 +494,17 @@
         "counterexamples_or_absence",
         "hard_invariants",
         "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "conformance_boundary",
         "confidence_boundary",
+        "residual_blindspots",
+        "background_artifact_completion",
         "pm_suggestion_items",
         "contract_self_check"
       ],
+      "background_artifact_completion_required_when_long_tests_cited": true,
       "conditional_required_body_fields": {
         "source_packet_or_request_declares_role_skill_use_bindings": [
           "role_skill_use_evidence"
@@ -517,6 +524,11 @@
         "counterexamples_or_absence",
         "hard_invariants",
         "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "residual_blindspots",
+        "background_artifact_completion",
         "pm_suggestion_items"
       ]
     },
