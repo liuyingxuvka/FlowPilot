@@ -13777,6 +13777,107 @@ sync evidence.
 ### Skipped Or Deferred Steps
 
 - No push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-17 - Router Facade StructureMesh Owner Wave
+
+Task: continue the router facade slimming pass with the upgraded FlowGuard
+StructureMesh target split and keep the public router facade compatible.
+
+Trigger reason: the user approved the next maintenance wave on `main`, asked
+for FlowGuard/OpenSpec validation, hidden background regressions, local install
+sync, and local Git synchronization without pushing to GitHub.
+
+FlowGuard/OpenSpec route:
+
+- OpenSpec change:
+  `openspec/changes/continue-router-facade-slimming/`.
+- FlowGuard schema check returned `1.0`.
+- StructureMesh/TestMesh artifact:
+  `simulations/flowpilot_router_facade_split_model.py`.
+- The router split model now records `40` child modules and keeps the
+  micro-module explosion and one-function-file hazards active.
+
+Implementation summary:
+
+- Added `flowpilot_router_self_interrogation.py` for early understanding
+  checks, fallback summaries, and router-owned proof helpers.
+- Added `flowpilot_router_controller_repair.py` for Controller deliverable
+  repair, mail-delivery postcondition folding, and router-owned postcondition
+  reclaim.
+- Added `flowpilot_router_action_factory.py` for action construction,
+  dispatch recipient gates, user-send decisions, and action envelopes.
+- Added `flowpilot_router_payload_contracts.py` for payload normalization,
+  interpretation contracts, startup answer payloads, and role identity helpers.
+- Added `flowpilot_router_lifecycle_requests.py` for external lifecycle
+  request intake and event queuing.
+- Added `flowpilot_router_route_artifacts.py` for route diagrams, reports,
+  packet path snapshots, and route artifact writers.
+- Added `flowpilot_router_system_cards.py` for system-card bodies, delivery
+  contexts, and role card return actions.
+- Added `flowpilot_router_expected_waits.py` for expected-wait records,
+  acknowledgement guards, and wait-state rendering.
+- Reduced `flowpilot_router.py` to about 6,517 lines while preserving public
+  facade names, imports, CLI behavior, and persisted JSON shapes.
+- Updated version, README, changelog, handoff notes, OpenSpec tasks,
+  StructureMesh/TestMesh evidence, and card-instruction coverage scanning.
+- Synchronized the installed local FlowPilot skill from the repository source.
+
+Checks:
+
+- `python -m py_compile` passed for the router facade, the eight new owner
+  modules, and the touched FlowGuard/card-coverage scripts.
+- `python simulations\run_flowpilot_router_facade_split_checks.py --json-out
+  simulations\flowpilot_router_facade_split_results.json` passed with
+  StructureMesh and TestMesh green.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations\flowpilot_structure_maintenance_results.json` passed.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out
+  simulations\flowpilot_model_test_alignment_results.json` passed.
+- `python simulations\run_card_instruction_coverage_checks.py` passed.
+- Hidden background router tier completed through
+  `tmp\flowguard_background\router_background_supervisor.*`, exit `0`, with
+  all 24 child router suites passed and `proof_reused=false`.
+- Hidden background Meta/Capability regressions completed through
+  `tmp\flowguard_background\run_meta_checks.*` and
+  `tmp\flowguard_background\run_capability_checks.*`, both exit `0` and
+  `proof_reused=false`.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`,
+  `python scripts\audit_local_install_sync.py --json`, and
+  `python scripts\check_install.py --json` passed.
+- Hidden background integration tier completed through
+  `tmp\flowguard_background\integration_background_supervisor.*`, exit `0`,
+  after install checks, local sync audit, fast smoke, and coverage sweep passed.
+
+Counterexamples and hazards preserved:
+
+- The router-facade split model still rejects micro-module explosion,
+  one-function-file splits, missing coarse phase owners, missing prompt assets,
+  stale prompt hashes, unsafe inline prompt fallback, missing installed prompt
+  assets, and undeclared prompt template variables.
+- StructureMesh/TestMesh still reject missing owners, duplicate state owners,
+  missing facades, removed entrypoints, stale parity, insufficient release
+  evidence, hidden skipped tests, timeout suites, and progress-only background
+  evidence.
+- Model-test alignment still rejects missing, stale, progress-only, orphan,
+  duplicate, and overclaimed evidence.
+
+Friction points:
+
+- The upgraded StructureMesh check initially found a real modeling ownership
+  conflict: `controller_action_rows` was assigned to both
+  `controller_scheduler` and `controller_repair`. The state owner was kept on
+  `controller_scheduler`; `controller_repair` now owns only repair-side state.
+- The read-only FlowGuard coverage sweep exposed a stale static audit in
+  `run_flowpilot_decision_liveness_checks.py`; it was still looking for
+  router constants only in the facade. The audit now scans the split
+  `flowpilot_router*.py` owner modules.
+- Foreground grouped route/runtime tests can take many minutes; hidden
+  background artifacts are the reliable evidence boundary for this repository.
+
+Skipped steps:
+
+- No GitHub push, tag, release, deploy, or public publication was performed.
 - Full repair sibling route replacement policy and native Cockpit snapshot
   consumption remain future work.
 

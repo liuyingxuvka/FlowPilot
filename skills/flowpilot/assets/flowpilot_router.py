@@ -46,6 +46,14 @@ import flowpilot_router_events_repair
 import flowpilot_router_event_dispatcher
 import flowpilot_router_route_frontier
 import flowpilot_router_terminal_ledger
+import flowpilot_router_self_interrogation
+import flowpilot_router_controller_repair
+import flowpilot_router_action_factory
+import flowpilot_router_payload_contracts
+import flowpilot_router_lifecycle_requests
+import flowpilot_router_route_artifacts
+import flowpilot_router_system_cards
+import flowpilot_router_expected_waits
 from flowpilot_prompt_store import (
     PromptStoreError,
     card_manifest_entry,
@@ -299,504 +307,89 @@ def _require_single_active_model_miss_review_block(run_state: dict[str, Any], pu
     return active_flags[0]
 
 
-def _direct_router_ack_token_for_card(
-    run_state: dict[str, Any],
-    run_root: Path,
-    *,
-    card_id: str,
-    to_role: str,
-    target_agent_id: str | None,
-    card_return_event: str,
-    expected_return_path: str,
-    expected_receipt_path: str,
-    delivery_id: str | None,
-    delivery_attempt_id: str | None,
-    body_hash: str | None,
-) -> dict[str, Any]:
-    frontier = read_json_if_exists(run_root / "execution_frontier.json")
-    return {
-        "schema_version": card_runtime.CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA,
-        "return_kind": "system_card",
-        "submission_mode": "direct_to_router",
-        "controller_ack_handoff_allowed": False,
-        "run_id": run_state.get("run_id"),
-        "route_version": frontier.get("route_version"),
-        "frontier_node_id": frontier.get("active_node_id"),
-        "card_id": card_id,
-        "card_return_event": card_return_event,
-        "target_role": to_role,
-        "target_agent_id": target_agent_id,
-        "delivery_id": delivery_id,
-        "delivery_attempt_id": delivery_attempt_id,
-        "expected_return_path": expected_return_path,
-        "expected_receipt_path": expected_receipt_path,
-        "body_hash": body_hash,
-    }
+def _direct_router_ack_token_for_card(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._direct_router_ack_token_for_card(*args, **kwargs)
 
 
-def _direct_router_ack_token_for_bundle(
-    run_state: dict[str, Any],
-    run_root: Path,
-    *,
-    bundle_id: str,
-    role: str,
-    target_agent_id: str | None,
-    card_return_event: str,
-    card_ids: list[str],
-    delivery_attempt_ids: list[str],
-    expected_return_path: str,
-    expected_receipt_paths: list[str],
-) -> dict[str, Any]:
-    frontier = read_json_if_exists(run_root / "execution_frontier.json")
-    return {
-        "schema_version": card_runtime.CARD_DIRECT_ROUTER_ACK_TOKEN_SCHEMA,
-        "return_kind": "system_card_bundle",
-        "submission_mode": "direct_to_router",
-        "controller_ack_handoff_allowed": False,
-        "run_id": run_state.get("run_id"),
-        "route_version": frontier.get("route_version"),
-        "frontier_node_id": frontier.get("active_node_id"),
-        "card_bundle_id": bundle_id,
-        "card_ids": card_ids,
-        "delivery_attempt_ids": delivery_attempt_ids,
-        "card_return_event": card_return_event,
-        "target_role": role,
-        "target_agent_id": target_agent_id,
-        "expected_return_path": expected_return_path,
-        "expected_receipt_paths": expected_receipt_paths,
-    }
+def _direct_router_ack_token_for_bundle(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._direct_router_ack_token_for_bundle(*args, **kwargs)
 
 
-def _pm_suggestion_ledger_path(run_root: Path) -> Path:
-    return run_root / "pm_suggestion_ledger.jsonl"
+def _pm_suggestion_ledger_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._pm_suggestion_ledger_path(*args, **kwargs)
 
 
-def _read_pm_suggestion_ledger(path: Path) -> list[dict[str, Any]]:
-    entries: list[dict[str, Any]] = []
-    if not path.exists():
-        return entries
-    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-        if not line.strip():
-            continue
-        try:
-            entry = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise RouterError(f"PM suggestion ledger line {line_number} is not valid JSON") from exc
-        if not isinstance(entry, dict):
-            raise RouterError(f"PM suggestion ledger line {line_number} must be a JSON object")
-        entry.setdefault("_line_number", line_number)
-        entries.append(entry)
-    return entries
+def _read_pm_suggestion_ledger(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._read_pm_suggestion_ledger(*args, **kwargs)
 
 
-def _pm_suggestion_ledger_status(run_root: Path) -> dict[str, Any]:
-    ledger_path = _pm_suggestion_ledger_path(run_root)
-    entries = _read_pm_suggestion_ledger(ledger_path)
-    issues: list[dict[str, str]] = []
-
-    def add_issue(entry: dict[str, Any], message: str) -> None:
-        suggestion_id = str(entry.get("suggestion_id") or f"line-{entry.get('_line_number', '?')}")
-        issues.append({"suggestion_id": suggestion_id, "message": message})
-
-    for entry in entries:
-        if entry.get("schema_version") != PM_SUGGESTION_LEDGER_ENTRY_SCHEMA:
-            add_issue(entry, "schema_version must be flowpilot.pm_suggestion_item.v1")
-        source_role = str(entry.get("source_role") or "")
-        classification = str(entry.get("classification") or "")
-        source_output_ref = entry.get("source_output_ref") if isinstance(entry.get("source_output_ref"), dict) else {}
-        authority = entry.get("authority_basis") if isinstance(entry.get("authority_basis"), dict) else {}
-        disposition = entry.get("pm_disposition") if isinstance(entry.get("pm_disposition"), dict) else {}
-        closure = entry.get("closure") if isinstance(entry.get("closure"), dict) else {}
-        status = str(disposition.get("status") or "pending")
-        closure_status = str(closure.get("status") or "open")
-
-        if source_output_ref.get("sealed_body_content_copied") is True:
-            add_issue(entry, "source_output_ref must not copy sealed body content")
-        if status not in PM_SUGGESTION_FINAL_DISPOSITIONS:
-            add_issue(entry, "pm_disposition.status must be a final PM disposition")
-        elif closure_status not in PM_SUGGESTION_CLOSURE_STATUSES_BY_DISPOSITION[status]:
-            add_issue(entry, "closure.status must match the PM disposition")
-        if status == "defer_to_named_node" and not disposition.get("target_node_or_gate_id"):
-            add_issue(entry, "defer_to_named_node requires target_node_or_gate_id")
-        if status == "reject_with_reason" and not disposition.get("reason"):
-            add_issue(entry, "reject_with_reason requires a PM reason")
-        if status == "waive_with_authority" and (
-            not disposition.get("reason") or not disposition.get("waiver_authority_role")
-        ):
-            add_issue(entry, "waive_with_authority requires reason and waiver_authority_role")
-        if status == "mutate_route" and (
-            not disposition.get("route_version_impact") or not disposition.get("stale_evidence_handling")
-        ):
-            add_issue(entry, "mutate_route requires route_version_impact and stale_evidence_handling")
-        if status == "repair_or_reissue" and (
-            not disposition.get("repair_or_reissue_target")
-            or disposition.get("same_review_class_recheck_required") is not True
-        ):
-            add_issue(entry, "repair_or_reissue requires target and same-review-class recheck")
-        if classification == "current_gate_blocker":
-            if source_role in PM_SUGGESTION_WORKER_ROLES:
-                add_issue(entry, "worker-origin suggestions cannot be current_gate_blocker")
-            if source_role == "human_like_reviewer" and authority.get("reviewer_minimum_standard_failure") is not True:
-                add_issue(entry, "reviewer current_gate_blocker requires reviewer_minimum_standard_failure")
-            if source_role in PM_SUGGESTION_OFFICER_ROLES and authority.get("formal_flowguard_model_gate") is not True:
-                add_issue(entry, "officer current_gate_blocker requires formal_flowguard_model_gate")
-            if closure_status not in {"closed", "stopped_for_user"}:
-                add_issue(entry, "current_gate_blocker must be closed or stopped before final closure")
-        if closure.get("blocks_current_gate_until_closed") is True and closure_status not in {"closed", "stopped_for_user"}:
-            add_issue(entry, "blocking suggestion still blocks the current gate")
-
-    return {
-        "path": str(ledger_path),
-        "exists": ledger_path.exists(),
-        "entry_count": len(entries),
-        "issue_count": len(issues),
-        "clean": not issues,
-        "issues": issues,
-    }
+def _pm_suggestion_ledger_status(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._pm_suggestion_ledger_status(*args, **kwargs)
 
 
-def _self_interrogation_index_path(run_root: Path) -> Path:
-    return run_root / "self_interrogation_index.json"
+def _self_interrogation_index_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_index_path(*args, **kwargs)
 
 
-def _self_interrogation_issue(
-    message: str,
-    *,
-    record_id: str = "",
-    record_path: str = "",
-    scope: str = "",
-) -> dict[str, str]:
-    issue = {"message": message}
-    if record_id:
-        issue["record_id"] = record_id
-    if record_path:
-        issue["record_path"] = record_path
-    if scope:
-        issue["scope"] = scope
-    return issue
+def _self_interrogation_issue(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_issue(*args, **kwargs)
 
 
-def _self_interrogation_entry_path(entry: dict[str, Any]) -> str:
-    return str(entry.get("record_path") or entry.get("path") or "")
+def _self_interrogation_entry_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_entry_path(*args, **kwargs)
 
 
-def _self_interrogation_final_status(status: str) -> bool:
-    return status in SELF_INTERROGATION_FINAL_DISPOSITIONS
+def _self_interrogation_final_status(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_final_status(*args, **kwargs)
 
 
-def _self_interrogation_record_issues(
-    project_root: Path,
-    run_root: Path,
-    record_path: Path,
-    record: dict[str, Any],
-    *,
-    expected_scope: str | None = None,
-    expected_node_id: str | None = None,
-    expected_route_version: int | None = None,
-) -> tuple[list[dict[str, str]], int]:
-    record_rel = project_relative(project_root, record_path)
-    record_id = str(record.get("record_id") or record_path.stem)
-    scope = str(record.get("scope") or "")
-    issues: list[dict[str, str]] = []
-    unresolved_hard_count = 0
-
-    def add(message: str) -> None:
-        issues.append(_self_interrogation_issue(message, record_id=record_id, record_path=record_rel, scope=scope))
-
-    if record.get("schema_version") != SELF_INTERROGATION_RECORD_SCHEMA:
-        add(f"schema_version must be {SELF_INTERROGATION_RECORD_SCHEMA}")
-    if not record.get("record_id"):
-        add("record_id is required")
-    if scope not in SELF_INTERROGATION_SCOPES:
-        add("scope must be a supported self-interrogation scope")
-    if expected_scope and scope != expected_scope:
-        add(f"scope must be {expected_scope}")
-    if not record.get("owner_role"):
-        add("owner_role is required")
-    if not record.get("source_event"):
-        add("source_event is required")
-    raw_source_path = str(record.get("source_artifact_path") or "")
-    if not raw_source_path:
-        add("source_artifact_path is required")
-    else:
-        source_path = resolve_project_path(project_root, raw_source_path)
-        if not source_path.exists():
-            add(f"source_artifact_path does not exist: {raw_source_path}")
-    if expected_node_id and scope in {"node_entry", "repair", "role_result"}:
-        if str(record.get("node_id") or "") != expected_node_id:
-            add(f"node_id must match active node {expected_node_id}")
-    if expected_route_version is not None and record.get("route_version") is not None:
-        try:
-            record_route_version = int(record.get("route_version"))
-        except (TypeError, ValueError):
-            add("route_version must be an integer when present")
-        else:
-            if record_route_version != expected_route_version:
-                add(f"route_version must match active route version {expected_route_version}")
-
-    findings = record.get("findings")
-    if not isinstance(findings, list):
-        add("findings must be a list")
-        findings = []
-    for index, finding in enumerate(findings, start=1):
-        if not isinstance(finding, dict):
-            add(f"findings[{index}] must be an object")
-            continue
-        finding_id = str(finding.get("finding_id") or f"finding-{index}")
-        severity = str(finding.get("severity") or "")
-        disposition = finding.get("disposition") if isinstance(finding.get("disposition"), dict) else {}
-        disposition_status = str(disposition.get("status") or "")
-        for field in ("finding_id", "severity", "category", "summary"):
-            if not finding.get(field):
-                add(f"finding {finding_id} missing {field}")
-        if not disposition_status:
-            add(f"finding {finding_id} missing disposition.status")
-        hard_or_current = severity in SELF_INTERROGATION_HARD_SEVERITIES or finding.get("blocks_current_gate_until_disposition") is True
-        if hard_or_current and not _self_interrogation_final_status(disposition_status):
-            unresolved_hard_count += 1
-            add(f"finding {finding_id} is unresolved for a hard/current self-interrogation finding")
-        if disposition_status == "reject_with_reason" and not disposition.get("reason"):
-            add(f"finding {finding_id} reject_with_reason requires reason")
-        if disposition_status == "waive_with_authority" and (
-            not disposition.get("reason") or not disposition.get("waiver_authority_role")
-        ):
-            add(f"finding {finding_id} waive_with_authority requires reason and waiver_authority_role")
-        if disposition_status == "defer_to_named_node" and not disposition.get("target_node_or_gate_id"):
-            add(f"finding {finding_id} defer_to_named_node requires target_node_or_gate_id")
-        if disposition_status == "entered_pm_suggestion_ledger" and not (
-            disposition.get("suggestion_id") or record.get("pm_suggestion_ledger_ids")
-        ):
-            add(f"finding {finding_id} entered_pm_suggestion_ledger requires a suggestion id")
-        if disposition_status == "incorporated_into_artifact" and not (
-            disposition.get("artifact_path") or record.get("downstream_artifact_paths")
-        ):
-            add(f"finding {finding_id} incorporated_into_artifact requires downstream artifact evidence")
-
-    try:
-        declared_unresolved = int(record.get("unresolved_hard_finding_count", 0) or 0)
-    except (TypeError, ValueError):
-        declared_unresolved = -1
-        add("unresolved_hard_finding_count must be an integer")
-    if declared_unresolved > 0:
-        unresolved_hard_count = max(unresolved_hard_count, declared_unresolved)
-        add("record declares unresolved hard/current self-interrogation findings")
-    disposition_summary = record.get("pm_disposition_summary")
-    if not isinstance(disposition_summary, dict):
-        add("pm_disposition_summary must be an object")
-    for field in ("downstream_artifact_paths", "pm_suggestion_ledger_ids"):
-        if not isinstance(record.get(field), list):
-            add(f"{field} must be a list")
-    if run_root.name and record.get("run_id") and str(record.get("run_id")) != run_root.name:
-        add("run_id must match current run")
-
-    return issues, unresolved_hard_count
+def _self_interrogation_record_issues(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_record_issues(*args, **kwargs)
 
 
-def _self_interrogation_status(
-    project_root: Path,
-    run_root: Path,
-    *,
-    scopes: Iterable[str] | None = None,
-    node_id: str | None = None,
-    route_version: int | None = None,
-    require_index: bool = True,
-    require_records: bool = True,
-) -> dict[str, Any]:
-    index_path = _self_interrogation_index_path(run_root)
-    index_rel = project_relative(project_root, index_path)
-    issues: list[dict[str, str]] = []
-    scope_filter = {str(scope) for scope in scopes} if scopes is not None else None
-    records: list[dict[str, Any]] = []
-    matched_scopes: set[str] = set()
-    unresolved_hard_count = 0
-
-    if not index_path.exists():
-        if require_index:
-            issues.append(_self_interrogation_issue("self-interrogation index is missing", record_path=index_rel))
-        return {
-            "path": str(index_path),
-            "exists": False,
-            "record_count": 0,
-            "unresolved_hard_finding_count": unresolved_hard_count,
-            "issue_count": len(issues),
-            "clean": not issues,
-            "issues": issues,
-        }
-
-    index = read_json(index_path)
-    if index.get("schema_version") != SELF_INTERROGATION_INDEX_SCHEMA:
-        issues.append(_self_interrogation_issue(f"index schema_version must be {SELF_INTERROGATION_INDEX_SCHEMA}", record_path=index_rel))
-    raw_entries = index.get("records")
-    if raw_entries is None:
-        raw_entries = index.get("entries")
-    if not isinstance(raw_entries, list):
-        issues.append(_self_interrogation_issue("self-interrogation index records must be a list", record_path=index_rel))
-        raw_entries = []
-
-    for entry in raw_entries:
-        if not isinstance(entry, dict):
-            issues.append(_self_interrogation_issue("self-interrogation index entry must be an object", record_path=index_rel))
-            continue
-        entry_scope = str(entry.get("scope") or "")
-        if scope_filter is not None and entry_scope and entry_scope not in scope_filter:
-            continue
-        raw_record_path = _self_interrogation_entry_path(entry)
-        if not raw_record_path:
-            issues.append(_self_interrogation_issue("self-interrogation index entry requires record_path", record_path=index_rel, scope=entry_scope))
-            continue
-        record_path = resolve_project_path(project_root, raw_record_path)
-        record_rel = project_relative(project_root, record_path)
-        if not record_path.exists():
-            issues.append(_self_interrogation_issue("self-interrogation record path is missing", record_path=record_rel, scope=entry_scope))
-            continue
-        record = read_json(record_path)
-        record_scope = str(record.get("scope") or entry_scope)
-        if scope_filter is not None and record_scope not in scope_filter:
-            continue
-        if node_id and record_scope in {"node_entry", "repair", "role_result"}:
-            entry_node_id = str(entry.get("node_id") or "")
-            record_node_id = str(record.get("node_id") or entry_node_id)
-            if record_node_id != node_id:
-                continue
-        if route_version is not None:
-            raw_route_version = record.get("route_version", entry.get("route_version"))
-            if raw_route_version is not None:
-                try:
-                    if int(raw_route_version) != route_version:
-                        continue
-                except (TypeError, ValueError):
-                    issues.append(_self_interrogation_issue("route_version must be an integer", record_path=record_rel, scope=record_scope))
-                    continue
-        matched_scopes.add(record_scope)
-        record_issues, record_unresolved = _self_interrogation_record_issues(
-            project_root,
-            run_root,
-            record_path,
-            record,
-            expected_scope=record_scope,
-            expected_node_id=node_id,
-            expected_route_version=route_version,
-        )
-        issues.extend(record_issues)
-        unresolved_hard_count += record_unresolved
-        records.append(
-            {
-                "record_id": str(record.get("record_id") or record_path.stem),
-                "scope": record_scope,
-                "path": record_rel,
-                "unresolved_hard_finding_count": record_unresolved,
-            }
-        )
-
-    if require_records and not records:
-        if scope_filter:
-            issues.append(
-                _self_interrogation_issue(
-                    "missing required self-interrogation record scope(s): " + ", ".join(sorted(scope_filter)),
-                    record_path=index_rel,
-                )
-            )
-        else:
-            issues.append(_self_interrogation_issue("self-interrogation index has no records", record_path=index_rel))
-    if scope_filter:
-        missing_scopes = sorted(scope_filter - matched_scopes)
-        if missing_scopes:
-            issues.append(
-                _self_interrogation_issue(
-                    "missing required self-interrogation record scope(s): " + ", ".join(missing_scopes),
-                    record_path=index_rel,
-                )
-            )
-
-    return {
-        "path": str(index_path),
-        "exists": True,
-        "record_count": len(records),
-        "unresolved_hard_finding_count": unresolved_hard_count,
-        "issue_count": len(issues),
-        "clean": not issues and unresolved_hard_count == 0,
-        "issues": issues,
-        "records": records,
-    }
+def _self_interrogation_status(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._self_interrogation_status(*args, **kwargs)
 
 
-def _format_self_interrogation_status_issue(status: dict[str, Any]) -> str:
-    issues = status.get("issues") if isinstance(status.get("issues"), list) else []
-    if not issues:
-        return "unknown issue"
-    first = issues[0] if isinstance(issues[0], dict) else {"message": str(issues[0])}
-    location = first.get("record_path") or status.get("path") or ""
-    return f"{first.get('message', 'unknown issue')} ({location})" if location else str(first.get("message") or "unknown issue")
+def _format_self_interrogation_status_issue(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._format_self_interrogation_status_issue(*args, **kwargs)
 
 
-def _require_clean_self_interrogation(
-    project_root: Path,
-    run_root: Path,
-    *,
-    gate_name: str,
-    scopes: Iterable[str] | None = None,
-    node_id: str | None = None,
-    route_version: int | None = None,
-) -> dict[str, Any]:
-    status = _self_interrogation_status(
-        project_root,
-        run_root,
-        scopes=scopes,
-        node_id=node_id,
-        route_version=route_version,
-    )
-    if not status["clean"]:
-        raise RouterError(f"{gate_name} requires clean self-interrogation records: {_format_self_interrogation_status_issue(status)}")
-    return status
+def _require_clean_self_interrogation(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._require_clean_self_interrogation(*args, **kwargs)
 
 
-def resolve_project_path(project_root: Path, raw_path: str) -> Path:
-    path = Path(raw_path)
-    return path if path.is_absolute() else project_root / path
+def resolve_project_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation.resolve_project_path(*args, **kwargs)
 
 
-def _evidence_path_record(project_root: Path, path: Path) -> dict[str, Any]:
-    record: dict[str, Any] = {"path": project_relative(project_root, path), "exists": path.exists()}
-    if path.exists() and path.is_file():
-        record["sha256"] = packet_runtime.sha256_file(path)
-    return record
+def _evidence_path_record(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._evidence_path_record(*args, **kwargs)
 
 
-def _router_owned_check_proof_path(audit_path: Path) -> Path:
-    return audit_path.with_name(f"{audit_path.name}.proof.json")
+def _router_owned_check_proof_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._router_owned_check_proof_path(*args, **kwargs)
 
 
-def _write_router_owned_check_proof(
-    project_root: Path,
-    run_root: Path,
-    *,
-    check_name: str,
-    audit_path: Path,
-    source_kind: str,
-    evidence_paths: list[Path],
-    reviewer_replacement_scope: str = "mechanical_only",
-) -> dict[str, Any]:
-    if source_kind not in ROUTER_TRUSTED_PROOF_SOURCES:
-        raise RouterError(f"unsupported router-owned proof source: {source_kind}")
-    if not audit_path.exists():
-        raise RouterError(f"router-owned proof requires audit file: {audit_path}")
-    proof_path = _router_owned_check_proof_path(audit_path)
-    proof = {
-        "schema_version": ROUTER_OWNED_CHECK_PROOF_SCHEMA,
-        "run_id": run_root.name,
-        "check_name": check_name,
-        "check_owner": "flowpilot_router",
-        "source_kind": source_kind,
-        "trust_basis": "non_self_attested_recomputed_or_host_bound",
-        "self_attested_ai_claims_accepted_as_proof": False,
-        "reviewer_replacement_scope": reviewer_replacement_scope,
-        "audit_path": project_relative(project_root, audit_path),
-        "audit_sha256": packet_runtime.sha256_file(audit_path),
-        "evidence_paths": [_evidence_path_record(project_root, path) for path in evidence_paths],
-        "created_at": utc_now(),
-    }
-    write_json(proof_path, proof)
-    return {"proof_path": project_relative(project_root, proof_path), "proof": proof}
+def _write_router_owned_check_proof(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_self_interrogation._bind_router(sys.modules[__name__])
+    return flowpilot_router_self_interrogation._write_router_owned_check_proof(*args, **kwargs)
 
 
 def _validate_router_owned_check_proof(
@@ -1327,1429 +920,166 @@ def _external_event_payload_digest(payload: dict[str, Any] | None) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _close_waiting_controller_actions_for_external_event(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    event: str,
-    payload: dict[str, Any] | None,
-    source: str,
-) -> dict[str, Any]:
-    action_dir = _controller_actions_dir(run_root)
-    if not action_dir.exists():
-        return {"changed": False, "closed_count": 0, "closed_action_ids": []}
-    now = utc_now()
-    payload_digest = _external_event_payload_digest(payload)
-    closed: list[dict[str, Any]] = []
-    for action_path in sorted(action_dir.glob("*.json")):
-        entry = _read_json_for_runtime_scan(action_path)
-        if entry is None:
-            continue
-        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
-            continue
-        if entry.get("status") != "waiting":
-            continue
-        action_type = str(entry.get("action_type") or "")
-        if action_type != "await_role_decision":
-            continue
-        allowed_events = _controller_wait_allowed_external_events(entry)
-        if event not in allowed_events:
-            continue
-        action_id = str(entry.get("action_id") or "")
-        reconciliation = {
-            "source": source,
-            "event": event,
-            "event_payload_sha256": payload_digest,
-            "allowed_external_events": allowed_events,
-            "reconciled_at": now,
-            "controller_receipt_required": False,
-        }
-        entry["status"] = "done"
-        entry["completed_at"] = now
-        entry["completion_source"] = "router_external_event_reconciliation"
-        entry["satisfied_by_external_event"] = event
-        entry["satisfied_by_event_payload_sha256"] = payload_digest
-        entry["router_reconciliation_status"] = "reconciled"
-        entry["router_reconciled_at"] = now
-        entry["router_reconciliation"] = reconciliation
-        entry["controller_receipt_required"] = False
-        entry["router_must_not_mark_done_without_controller_receipt"] = False
-        write_json(action_path, entry)
-        row_id = str(entry.get("router_scheduler_row_id") or "")
-        if row_id:
-            _update_router_scheduler_row(
-                project_root,
-                run_root,
-                run_state,
-                row_id=row_id,
-                router_state="reconciled",
-                reconciliation=reconciliation,
-            )
-        closed.append(
-            {
-                "action_id": action_id,
-                "action_type": action_type,
-                "label": entry.get("label"),
-                "router_scheduler_row_id": row_id or None,
-            }
-        )
-    pending = run_state.get("pending_action")
-    pending_cleared = False
-    if isinstance(pending, dict) and pending.get("action_type") == "await_role_decision":
-        pending_allowed = [
-            str(item)
-            for item in (pending.get("allowed_external_events") or [])
-            if isinstance(item, str) and item.strip()
-        ]
-        if event in pending_allowed:
-            run_state["pending_action"] = None
-            pending_cleared = True
-    if not closed and not pending_cleared:
-        return {"changed": False, "closed_count": 0, "closed_action_ids": []}
-    ledger = _rebuild_controller_action_ledger(project_root, run_root, run_state)
-    append_history(
-        run_state,
-        "router_closed_controller_waits_satisfied_by_external_event",
-        {
-            "event": event,
-            "source": source,
-            "closed_count": len(closed),
-            "closed_action_ids": [item["action_id"] for item in closed if item.get("action_id")],
-            "pending_action_cleared": pending_cleared,
-            "ledger_counts": ledger.get("counts"),
-        },
-    )
-    return {
-        "changed": True,
-        "closed_count": len(closed),
-        "closed_action_ids": [item["action_id"] for item in closed if item.get("action_id")],
-        "pending_action_cleared": pending_cleared,
-        "closed_actions": closed,
-    }
-
+def _close_waiting_controller_actions_for_external_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._close_waiting_controller_actions_for_external_event(*args, **kwargs)
 
-def _pending_controller_action_id(pending_action: dict[str, Any]) -> str:
-    action_id = str(pending_action.get("controller_action_id") or "").strip()
-    if action_id:
-        return action_id
-    return _controller_action_id_for_action(pending_action)
-
-
-def _pending_action_postcondition(pending_action: dict[str, Any]) -> str:
-    postcondition = pending_action.get("postcondition")
-    if isinstance(postcondition, str) and postcondition.strip():
-        return postcondition.strip()
-    contract = pending_action.get("next_step_contract")
-    if isinstance(contract, dict):
-        postcondition = contract.get("postcondition")
-        if isinstance(postcondition, str) and postcondition.strip():
-            return postcondition.strip()
-    return ""
-
-
-def _receipt_for_pending_controller_action(run_root: Path, pending_action: dict[str, Any]) -> dict[str, Any]:
-    action_id = _pending_controller_action_id(pending_action)
-    if not action_id:
-        return {}
-    receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
-    if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA:
-        return {}
-    if str(receipt.get("action_id") or "") != action_id:
-        return {}
-    return receipt
-
-
-def _pending_action_postcondition_satisfied(run_state: dict[str, Any], postcondition: str) -> bool:
-    if not postcondition:
-        return True
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    return bool(flags.get(postcondition))
-
-
-def _mail_sequence_entry(mail_id: str) -> dict[str, str] | None:
-    return next((entry for entry in MAIL_SEQUENCE if entry["mail_id"] == mail_id), None)
-
-
-def _mail_role_obligation_contract(entry: dict[str, str]) -> dict[str, Any] | None:
-    if entry.get("mail_id") != "user_intake":
-        return None
-    return {
-        "schema_version": "flowpilot.mail_role_obligation.v1",
-        "mail_id": "user_intake",
-        "target_role": "project_manager",
-        "mail_is_formal_work_material": True,
-        "not_prompt_or_instruction_card": True,
-        "first_output_instruction_card_id": "pm.material_scan",
-        "first_expected_output_event": "pm_issues_material_and_capability_scan_packets",
-        "first_expected_output_summary": (
-            "PM opens user_intake, reads the full user request through the runtime, "
-            "then produces material/capability scan packet specs for Router."
-        ),
-        "blocks_independent_pm_dispatch_until_first_output": True,
-        "controller_visibility": "metadata_only",
-    }
-
-
-def _mail_delivery_matches(item: object, *, mail_id: str, to_role: str) -> bool:
-    return (
-        isinstance(item, dict)
-        and str(item.get("mail_id") or "") == mail_id
-        and str(item.get("to_role") or "") == to_role
-    )
-
-
-def _find_mail_delivery(deliveries: object, *, mail_id: str, to_role: str) -> dict[str, Any] | None:
-    if not isinstance(deliveries, list):
-        return None
-    for item in deliveries:
-        if _mail_delivery_matches(item, mail_id=mail_id, to_role=to_role):
-            return item
-    return None
-
-
-def _count_unique_mail_deliveries(deliveries: object) -> int:
-    if not isinstance(deliveries, list):
-        return 0
-    keys = {
-        (str(item.get("mail_id") or ""), str(item.get("to_role") or ""))
-        for item in deliveries
-        if isinstance(item, dict) and item.get("mail_id") and item.get("to_role")
-    }
-    return len(keys)
-
-
-def _packet_record_for_mail_delivery(ledger: dict[str, Any], *, packet_id: str) -> dict[str, Any] | None:
-    packets = ledger.get("packets")
-    if not isinstance(packets, list):
-        return None
-    for item in packets:
-        if isinstance(item, dict) and str(item.get("packet_id") or "") == packet_id:
-            return item
-    return None
-
-
-def _mail_delivery_action_envelope_path(
-    project_root: Path,
-    pending_action: dict[str, Any],
-    receipt_payload: dict[str, Any],
-) -> Path | None:
-    candidates: list[object] = []
-    candidates.append(receipt_payload.get("packet_envelope_path"))
-    allowed_reads = pending_action.get("allowed_reads")
-    if isinstance(allowed_reads, list):
-        candidates.extend(allowed_reads)
-    for candidate in candidates:
-        raw_path = str(candidate or "").strip()
-        if not raw_path:
-            continue
-        path = resolve_project_path(project_root, raw_path)
-        if path.exists():
-            return path
-    return None
-
-
-def _mail_delivery_packet_released(record: dict[str, Any] | None, *, to_role: str) -> bool:
-    if not isinstance(record, dict):
-        return False
-    relay = record.get("packet_controller_relay")
-    if not isinstance(relay, dict):
-        relay = record.get("controller_relay")
-    return (
-        str(record.get("active_packet_holder") or "") == to_role
-        and str(record.get("active_packet_status") or "") == "envelope-relayed"
-        and isinstance(relay, dict)
-        and relay.get("delivered_via_controller") is True
-        and str(relay.get("relayed_to_role") or "") == to_role
-        and relay.get("body_was_read_by_controller") is False
-        and relay.get("body_was_executed_by_controller") is False
-    )
-
-
-def _ensure_mail_delivery_packet_released(
-    project_root: Path,
-    run_root: Path,
-    ledger: dict[str, Any],
-    pending_action: dict[str, Any],
-    receipt_payload: dict[str, Any],
-    *,
-    mail_id: str,
-    to_role: str,
-    source: str,
-) -> dict[str, Any]:
-    record = _packet_record_for_mail_delivery(ledger, packet_id=mail_id)
-    if record is None:
-        raise RouterError(f"mail delivery packet record is missing: {mail_id}")
-    if _mail_delivery_packet_released(record, to_role=to_role):
-        return {
-            "packet_released": True,
-            "already_released": True,
-            "packet_id": mail_id,
-            "packet_envelope_path": record.get("packet_envelope_path"),
-        }
-
-    raw_packet_path = str(record.get("packet_envelope_path") or "").strip()
-    if not raw_packet_path:
-        raise RouterError(f"mail delivery packet envelope path is missing: {mail_id}")
-    packet_envelope_path = resolve_project_path(project_root, raw_packet_path)
-    if not packet_envelope_path.exists():
-        raise RouterError(f"mail delivery packet envelope is missing: {raw_packet_path}")
-
-    envelope = packet_runtime.load_envelope(project_root, packet_envelope_path)
-    if str(envelope.get("packet_id") or "") != mail_id:
-        raise RouterError(
-            f"mail delivery packet envelope mismatch: expected {mail_id}, got {envelope.get('packet_id')!r}"
-        )
-    if str(envelope.get("to_role") or envelope.get("next_holder") or "") != to_role:
-        raise RouterError(
-            f"mail delivery packet target mismatch: expected {to_role}, got {envelope.get('to_role')!r}"
-        )
-
-    relayed = packet_runtime.controller_relay_envelope(
-        project_root,
-        envelope=envelope,
-        envelope_path=packet_envelope_path,
-        controller_agent_id=str(receipt_payload.get("controller_agent_id") or pending_action.get("controller_agent_id") or "controller"),
-        received_from_role=str(envelope.get("from_role") or record.get("created_by_role") or "unknown"),
-        relayed_to_role=to_role,
-        body_was_read_by_controller=receipt_payload.get("controller_read_body") is True
-        or receipt_payload.get("body_was_read_by_controller") is True,
-        body_was_executed_by_controller=receipt_payload.get("controller_executed_body") is True
-        or receipt_payload.get("body_was_executed_by_controller") is True,
-        private_role_to_role_delivery_detected=receipt_payload.get("private_role_to_role_delivery_detected") is True,
-    )
-    action_envelope_path = _mail_delivery_action_envelope_path(project_root, pending_action, receipt_payload)
-    if action_envelope_path is not None and action_envelope_path.resolve() != packet_envelope_path.resolve():
-        write_json(action_envelope_path, relayed)
-
-    updated_ledger_path = run_root / "packet_ledger.json"
-    _raise_if_runtime_write_active(updated_ledger_path)
-    updated_ledger = read_daemon_critical_json_if_exists(updated_ledger_path)
-    updated_record = _packet_record_for_mail_delivery(updated_ledger, packet_id=mail_id)
-    if not _mail_delivery_packet_released(updated_record, to_role=to_role):
-        raise RouterError(f"mail delivery packet was not released to {to_role}")
-    return {
-        "packet_released": True,
-        "already_released": False,
-        "packet_id": mail_id,
-        "packet_envelope_path": project_relative(project_root, packet_envelope_path),
-        "source": source,
-    }
-
-
-def _fold_mail_delivery_postcondition(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: dict[str, Any],
-    receipt_payload: dict[str, Any] | None = None,
-    *,
-    source: str,
-) -> dict[str, Any]:
-    receipt_payload = receipt_payload or {}
-    mail_id = str(pending_action.get("mail_id") or receipt_payload.get("mail_id") or receipt_payload.get("packet_id") or "")
-    if not mail_id:
-        raise RouterError("mail delivery requires a mail_id")
-    mail_entry = _mail_sequence_entry(mail_id)
-    if mail_entry is None:
-        raise RouterError(f"unknown mail in pending action: {mail_id}")
-    to_role = str(
-        pending_action.get("to_role")
-        or receipt_payload.get("delivered_to_role")
-        or receipt_payload.get("to_role")
-        or mail_entry["to_role"]
-    )
-    if to_role != mail_entry["to_role"]:
-        raise RouterError(f"mail delivery target mismatch for {mail_id}: expected {mail_entry['to_role']}, got {to_role}")
-    payload_mail_id = str(receipt_payload.get("mail_id") or receipt_payload.get("packet_id") or "")
-    if payload_mail_id and payload_mail_id != mail_id:
-        raise RouterError(f"mail delivery receipt mail mismatch: expected {mail_id}, got {payload_mail_id}")
-    payload_to_role = str(receipt_payload.get("delivered_to_role") or receipt_payload.get("to_role") or "")
-    if payload_to_role and payload_to_role != to_role:
-        raise RouterError(f"mail delivery receipt target mismatch: expected {to_role}, got {payload_to_role}")
-    if receipt_payload.get("delivery_confirmed") is False:
-        raise RouterError(f"mail delivery receipt for {mail_id} did not confirm delivery")
-
-    ledger_path = run_root / "packet_ledger.json"
-    _raise_if_runtime_write_active(ledger_path)
-    ledger = read_daemon_critical_json_if_exists(ledger_path)
-    ledger_mail = ledger.setdefault("mail", [])
-    if not isinstance(ledger_mail, list):
-        raise RouterError("packet ledger mail field must be a list")
-    state_mail = run_state.setdefault("delivered_mail", [])
-    if not isinstance(state_mail, list):
-        raise RouterError("run state delivered_mail field must be a list")
-
-    existing_ledger_delivery = _find_mail_delivery(ledger_mail, mail_id=mail_id, to_role=to_role)
-    existing_state_delivery = _find_mail_delivery(state_mail, mail_id=mail_id, to_role=to_role)
-    already_recorded = existing_ledger_delivery is not None and existing_state_delivery is not None
-    if not run_state.get("ledger_check_requested") and existing_ledger_delivery is None:
-        raise RouterError("mail delivery requires a current packet-ledger check")
-
-    packet_release = _ensure_mail_delivery_packet_released(
-        project_root,
-        run_root,
-        ledger,
-        pending_action,
-        receipt_payload,
-        mail_id=mail_id,
-        to_role=to_role,
-        source=source,
-    )
-    _raise_if_runtime_write_active(ledger_path)
-    ledger = read_daemon_critical_json_if_exists(ledger_path)
-    ledger_mail = ledger.setdefault("mail", [])
-    if not isinstance(ledger_mail, list):
-        raise RouterError("packet ledger mail field must be a list")
-    existing_ledger_delivery = _find_mail_delivery(ledger_mail, mail_id=mail_id, to_role=to_role)
-    existing_state_delivery = _find_mail_delivery(state_mail, mail_id=mail_id, to_role=to_role)
-    already_recorded = existing_ledger_delivery is not None and existing_state_delivery is not None
-
-    delivery = existing_ledger_delivery or existing_state_delivery or {
-        "mail_id": mail_id,
-        "delivered_by": str(pending_action.get("delivered_by") or "controller"),
-        "to_role": to_role,
-        "delivered_at": utc_now(),
-    }
-    delivery.setdefault("packet_id", mail_id)
-    if packet_release.get("packet_envelope_path"):
-        delivery.setdefault("packet_envelope_path", packet_release.get("packet_envelope_path"))
-    if receipt_payload.get("target_agent_id"):
-        delivery.setdefault("target_agent_id", receipt_payload.get("target_agent_id"))
-    if receipt_payload.get("delivery_channel"):
-        delivery.setdefault("delivery_channel", receipt_payload.get("delivery_channel"))
-
-    ledger_changed = False
-    state_changed = False
-    if existing_ledger_delivery is None:
-        ledger_mail.append(delivery)
-        ledger_changed = True
-    if existing_state_delivery is None:
-        state_mail.append(delivery)
-        state_changed = True
-    if ledger_changed or state_changed:
-        run_state["mail_deliveries"] = max(
-            int(run_state.get("mail_deliveries", 0)),
-            _count_unique_mail_deliveries(state_mail),
-            _count_unique_mail_deliveries(ledger_mail),
-        )
-
-    run_state.setdefault("flags", {})[mail_entry["flag"]] = True
-    run_state["ledger_check_requested"] = False
-    ledger["updated_at"] = utc_now()
-    write_json(ledger_path, ledger)
-    append_history(
-        run_state,
-        "router_folded_mail_delivery_postcondition",
-        {
-            "mail_id": mail_id,
-            "to_role": to_role,
-            "postcondition": mail_entry["flag"],
-            "source": source,
-            "already_recorded": already_recorded,
-            "ledger_changed": ledger_changed,
-            "state_changed": state_changed,
-            "packet_release": packet_release,
-        },
-    )
-    return {
-        "applied": True,
-        "source": source,
-        "postcondition": mail_entry["flag"],
-        "mail_id": mail_id,
-        "to_role": to_role,
-        "already_recorded": already_recorded,
-        "ledger_changed": ledger_changed,
-        "state_changed": state_changed,
-        "packet_release": packet_release,
-    }
-
-
-def _controller_boundary_required_deliverable(project_root: Path, run_root: Path) -> dict[str, Any]:
-    contract = CONTROLLER_STATEFUL_VALIDATOR_TABLE["confirm_controller_core_boundary"]
-    return {
-        "deliverable_id": contract["deliverable_id"],
-        "artifact_kind": contract["artifact_kind"],
-        "path": project_relative(project_root, _controller_boundary_confirmation_path(run_root)),
-        "schema_version": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
-        "postcondition": contract["postcondition"],
-        "validator": contract["validator"],
-        "runtime_channel": contract["runtime_channel"],
-        "output_type": contract["output_type"],
-        "output_contract_id": contract["output_contract_id"],
-        "required_role": "controller",
-        "path_key": "confirmation_path",
-        "hash_key": "confirmation_hash",
-        "controller_may_read_sealed_bodies": False,
-        "controller_may_approve_gates": False,
-        "controller_may_mutate_route": False,
-        "required_before_router_reconciles_done_receipt": True,
-    }
-
-
-def _controller_action_required_deliverables(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-) -> list[dict[str, Any]]:
-    del run_state
-    raw_required = action.get("required_deliverables")
-    if isinstance(raw_required, list) and raw_required:
-        return [item for item in raw_required if isinstance(item, dict)]
-    raw_missing = action.get("missing_deliverables")
-    if isinstance(raw_missing, list) and raw_missing:
-        return [item for item in raw_missing if isinstance(item, dict)]
-    action_type = str(action.get("action_type") or "")
-    if action_type == "confirm_controller_core_boundary":
-        return [_controller_boundary_required_deliverable(project_root, run_root)]
-    repair_target = str(action.get("repair_target_action_type") or "")
-    if action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE and repair_target == "confirm_controller_core_boundary":
-        return [_controller_boundary_required_deliverable(project_root, run_root)]
-    return []
-
-
-def _controller_deliverable_contract(deliverables: list[dict[str, Any]]) -> dict[str, Any]:
-    if not deliverables:
-        return {}
-    runtime_contracts = [
-        {
-            "deliverable_id": str(item.get("deliverable_id") or ""),
-            "runtime_channel": str(item.get("runtime_channel") or ""),
-            "output_type": str(item.get("output_type") or ""),
-            "output_contract_id": str(item.get("output_contract_id") or ""),
-            "required_role": str(item.get("required_role") or "controller"),
-            "path_key": str(item.get("path_key") or ""),
-            "hash_key": str(item.get("hash_key") or ""),
-        }
-        for item in deliverables
-        if isinstance(item, dict) and item.get("runtime_channel")
-    ]
-    return {
-        "schema_version": "flowpilot.controller_deliverable_contract.v1",
-        "required_deliverables": deliverables,
-        "runtime_contracts": runtime_contracts,
-        "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
-        "missing_deliverable_policy": "reclaim_existing_then_controller_repair_then_blocker",
-        "router_must_not_synthesize_missing_controller_deliverable_during_receipt_reconciliation": True,
-    }
-
-
-def _missing_deliverables_for_apply_result(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-    apply_result: dict[str, Any] | None,
-) -> list[dict[str, Any]]:
-    if isinstance(apply_result, dict):
-        raw_missing = apply_result.get("missing_deliverables")
-        if isinstance(raw_missing, list) and raw_missing:
-            return [item for item in raw_missing if isinstance(item, dict)]
-    return _controller_action_required_deliverables(project_root, run_root, run_state, action)
-
-
-def _update_controller_action_entry_fields(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    action_id: str,
-    status: str | None = None,
-    fields: dict[str, Any] | None = None,
-    router_state: str | None = None,
-    reconciliation: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    if not action_id:
-        return {}
-    path = _controller_action_path(run_root, action_id)
-    entry = read_json_if_exists(path)
-    if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
-        return {}
-    if status is not None:
-        entry["status"] = status
-    if fields:
-        entry.update(fields)
-    entry["updated_at"] = utc_now()
-    write_json(path, entry)
-    row_id = str(entry.get("router_scheduler_row_id") or "")
-    if row_id and router_state:
-        _update_router_scheduler_row(
-            project_root,
-            run_root,
-            run_state,
-            row_id=row_id,
-            router_state=router_state,
-            reconciliation=reconciliation or fields or {},
-        )
-    _rebuild_controller_action_ledger(project_root, run_root, run_state)
-    return entry
-
-
-def _defer_controller_postcondition_reconciliation_retry(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    entry: dict[str, Any],
-    action: dict[str, Any],
-    apply_result: dict[str, Any],
-) -> dict[str, Any]:
-    postcondition = str(
-        apply_result.get("postcondition")
-        or _pending_action_postcondition(action)
-        or ""
-    ).strip()
-    if not postcondition:
-        return {"retry_applicable": False, "reason": "no_postcondition"}
-
-    action_id = str(entry.get("action_id") or action.get("controller_action_id") or "")
-    attempts_used = int(entry.get("postcondition_reconciliation_attempts") or 0)
-    max_attempts = CONTROLLER_POSTCONDITION_RECONCILIATION_MAX_ATTEMPTS
-    if attempts_used >= max_attempts:
-        return {
-            "retry_applicable": True,
-            "retry_pending": False,
-            "retry_budget_exhausted": True,
-            "direct_retry_attempts_used": attempts_used,
-            "direct_retry_budget": max_attempts,
-            "postcondition": postcondition,
-        }
-
-    next_attempt = attempts_used + 1
-    now = utc_now()
-    reconciliation = {
-        "source": "controller_action_receipt_postcondition_retry_pending",
-        "reason": str(apply_result.get("reason") or "postcondition_not_satisfied"),
-        "postcondition": postcondition,
-        "retry_attempt": next_attempt,
-        "max_retry_attempts": max_attempts,
-        "next_step": "retry_controller_receipt_reconciliation_before_pm_blocker",
-        "apply_result": _json_safe(apply_result),
-        "updated_at": now,
-    }
-    _update_controller_action_entry_fields(
-        project_root,
-        run_root,
-        run_state,
-        action_id=action_id,
-        fields={
-            "router_reconciliation_status": "retry_pending",
-            "router_reconciliation_retry_pending_at": now,
-            "router_reconciliation_retry_reason": reconciliation["reason"],
-            "postcondition_reconciliation_attempts": next_attempt,
-            "max_postcondition_reconciliation_attempts": max_attempts,
-            "postcondition_reconciliation_exhausted": False,
-            "router_reconciliation": reconciliation,
-        },
-        router_state="waiting",
-        reconciliation=reconciliation,
-    )
-    append_history(
-        run_state,
-        "router_deferred_controller_receipt_postcondition_retry",
-        {
-            "action_type": action.get("action_type"),
-            "controller_action_id": action_id,
-            "router_scheduler_row_id": entry.get("router_scheduler_row_id") or action.get("router_scheduler_row_id"),
-            "postcondition": postcondition,
-            "retry_attempt": next_attempt,
-            "max_retry_attempts": max_attempts,
-        },
-    )
-    save_run_state(run_root, run_state)
-    return {
-        "retry_applicable": True,
-        "retry_pending": True,
-        "retry_budget_exhausted": False,
-        "direct_retry_attempts_used": next_attempt,
-        "direct_retry_budget": max_attempts,
-        "postcondition": postcondition,
-    }
-
-
-def _sync_controller_boundary_confirmation_from_artifact(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: dict[str, Any],
-    receipt_payload: dict[str, Any],
-    *,
-    source: str,
-) -> dict[str, Any]:
-    context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
-    if context is None:
-        missing = [_controller_boundary_required_deliverable(project_root, run_root)]
-        _record_router_ownership_entry(
-            project_root,
-            run_root,
-            run_state,
-            action_id=str(pending_action.get("controller_action_id") or ""),
-            action_type=str(pending_action.get("action_type") or ""),
-            router_state="router_reclaim_pending",
-            workflow_owner="router",
-            postcondition="controller_role_confirmed",
-            source=source,
-            receipt_path=str(pending_action.get("controller_receipt_path") or ""),
-            details={
-                "reason": "controller_boundary_confirmation_missing_or_invalid",
-                "missing_deliverables": missing,
-                "controller_receipt_payload": receipt_payload,
-            },
-        )
-        return {
-            "applied": False,
-            "reason": "controller_boundary_confirmation_missing_or_invalid",
-            "action_type": pending_action.get("action_type"),
-            "repairable": True,
-            "missing_deliverables": missing,
-        }
-    confirmation = run_state.get("controller_boundary_confirmation")
-    if not isinstance(confirmation, dict) or not confirmation.get("path"):
-        confirmation = {
-            "path": project_relative(project_root, context["path"]),
-            "sha256": context["sha256"],
-            "controller_core_path": context["confirmation"].get("controller_core_path"),
-            "controller_core_sha256": context["confirmation"].get("controller_core_sha256"),
-            "controller_policy_sha256": context["confirmation"].get("controller_policy_sha256"),
-        }
-    confirmation.update(
-        {
-            "runtime_channel": "role_output_runtime",
-            "output_type": CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE,
-            "output_contract_id": CONTROLLER_BOUNDARY_CONFIRMATION_CONTRACT_ID,
-            "role_output_envelope": context.get("role_output_envelope"),
-            "role_output_runtime_receipt_path": (
-                context.get("role_output_envelope", {}).get("runtime_receipt_ref", {}).get("path")
-                if isinstance(context.get("role_output_envelope"), dict)
-                else None
-            ),
-            "role_output_runtime_receipt_hash": (
-                context.get("role_output_envelope", {}).get("runtime_receipt_ref", {}).get("hash")
-                if isinstance(context.get("role_output_envelope"), dict)
-                else None
-            ),
-        }
-    )
-    run_state.setdefault("flags", {})["controller_role_confirmed"] = True
-    run_state.setdefault("flags", {})["controller_role_confirmed_from_router_core"] = True
-    run_state.setdefault("flags", {})["controller_boundary_confirmation_written"] = True
-    run_state["controller_boundary_confirmation"] = confirmation
-    if not any(
-        isinstance(item, dict) and item.get("event") == "controller_role_confirmed_from_router_core"
-        for item in run_state.get("events", [])
-    ):
-        run_state.setdefault("events", []).append(
-            {
-                "event": "controller_role_confirmed_from_router_core",
-                "summary": "Controller confirmed the Router-delivered controller.core boundary.",
-                "payload": confirmation,
-                "recorded_at": utc_now(),
-            }
-        )
-    entry = _record_router_ownership_entry(
-        project_root,
-        run_root,
-        run_state,
-        action_id=str(pending_action.get("controller_action_id") or ""),
-        action_type=str(pending_action.get("action_type") or ""),
-        router_state="router_reclaimed",
-        workflow_owner="router",
-        postcondition="controller_role_confirmed",
-        source=source,
-        receipt_path=str(pending_action.get("controller_receipt_path") or ""),
-        artifact_refs={
-            "controller_boundary_confirmation_path": project_relative(project_root, context["path"]),
-            "controller_boundary_confirmation_hash": context["sha256"],
-        },
-        details={"controller_receipt_payload": receipt_payload},
-    )
-    return {
-        "applied": True,
-        "postcondition": "controller_role_confirmed",
-        "source": "router_owned_controller_boundary_confirmation_reclaim",
-        "router_ownership_entry_id": entry.get("entry_id"),
-    }
-
-
-def _controller_boundary_flags_synced(run_state: dict[str, Any]) -> bool:
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    return bool(
-        flags.get("controller_role_confirmed")
-        and flags.get("controller_role_confirmed_from_router_core")
-        and flags.get("controller_boundary_confirmation_written")
-    )
-
-
-def _router_scheduler_row_for_controller_entry(run_root: Path, entry: dict[str, Any]) -> dict[str, Any]:
-    return flowpilot_router_controller_scheduler._router_scheduler_row_for_controller_entry(sys.modules[__name__], run_root, entry)
-
-
-
-def _done_controller_receipt_for_entry(run_root: Path, entry: dict[str, Any]) -> dict[str, Any]:
-    return flowpilot_router_controller_scheduler._done_controller_receipt_for_entry(sys.modules[__name__], run_root, entry)
-
-
-
-def _reconcile_controller_boundary_confirmation_projection(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    source: str,
-) -> dict[str, Any]:
-    context = _controller_boundary_confirmation_context(project_root, run_root, run_state)
-    if context is None:
-        return {"changed": False, "reason": "controller_boundary_confirmation_missing_or_invalid"}
-    action_dir = _controller_actions_dir(run_root)
-    if not action_dir.exists():
-        return {"changed": False, "reason": "controller_action_dir_missing"}
-
-    flags_were_synced = _controller_boundary_flags_synced(run_state)
-    reconciled_actions: list[str] = []
-    pending_cleared = False
-    last_projection: dict[str, Any] | None = None
-
-    for action_path in sorted(action_dir.glob("*.json")):
-        entry = _read_json_for_runtime_scan(action_path)
-        if entry is None:
-            continue
-        if entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
-            continue
-        if entry.get("action_type") != "confirm_controller_core_boundary":
-            continue
-        if entry.get("status") != "done":
-            continue
-        receipt = _done_controller_receipt_for_entry(run_root, entry)
-        if not receipt:
-            continue
-        action = dict(entry.get("action") if isinstance(entry.get("action"), dict) else {})
-        action_id = str(entry.get("action_id") or action.get("controller_action_id") or "").strip()
-        if not action_id:
-            continue
-        action.setdefault("action_type", "confirm_controller_core_boundary")
-        action.setdefault("controller_action_id", action_id)
-        action.setdefault("postcondition", "controller_role_confirmed")
-        if entry.get("router_scheduler_row_id"):
-            action.setdefault("router_scheduler_row_id", entry.get("router_scheduler_row_id"))
-        action.setdefault(
-            "controller_receipt_path",
-            project_relative(project_root, _controller_receipt_path(run_root, action_id)),
-        )
-        row = _router_scheduler_row_for_controller_entry(run_root, entry)
-        row_reconciled = bool(row.get("router_state") == "reconciled")
-        entry_reconciled = bool(entry.get("router_reconciliation_status") == "reconciled")
-        projection_missing = (
-            not _controller_boundary_flags_synced(run_state)
-            or not isinstance(run_state.get("controller_boundary_confirmation"), dict)
-            or not run_state.get("controller_boundary_confirmation", {}).get("path")
-        )
-        if entry_reconciled and row_reconciled and not projection_missing:
-            continue
-        applied = _sync_controller_boundary_confirmation_from_artifact(
-            project_root,
-            run_root,
-            run_state,
-            action,
-            receipt,
-            source=source,
-        )
-        if not applied.get("applied"):
-            continue
-        reconciliation = dict(applied)
-        reconciliation["projection_reconciliation_source"] = source
-        now = utc_now()
-        entry["status"] = "done"
-        entry["router_reconciliation_status"] = "reconciled"
-        entry["router_reconciled_at"] = now
-        entry["router_reconciliation"] = reconciliation
-        entry["updated_at"] = now
-        write_json(action_path, entry)
-        if entry.get("router_scheduler_row_id"):
-            _update_router_scheduler_row(
-                project_root,
-                run_root,
-                run_state,
-                row_id=str(entry["router_scheduler_row_id"]),
-                router_state="reconciled",
-                reconciliation=reconciliation,
-            )
-        pending = run_state.get("pending_action")
-        if isinstance(pending, dict) and (
-            pending.get("controller_action_id") == action_id
-            or pending.get("action_type") == "confirm_controller_core_boundary"
-        ):
-            run_state["pending_action"] = None
-            pending_cleared = True
-        reconciled_actions.append(action_id)
-        last_projection = reconciliation
-
-    changed = bool(reconciled_actions) or flags_were_synced != _controller_boundary_flags_synced(run_state)
-    if not changed:
-        return {"changed": False, "reason": "controller_boundary_projection_already_synced"}
-    ledger = _rebuild_controller_action_ledger(project_root, run_root, run_state)
-    append_history(
-        run_state,
-        "router_reconciled_controller_boundary_projection",
-        {
-            "source": source,
-            "reconciled_action_ids": reconciled_actions,
-            "pending_action_cleared": pending_cleared,
-            "controller_boundary_flags_synced": _controller_boundary_flags_synced(run_state),
-            "ledger_counts": ledger.get("counts"),
-            "projection": last_projection,
-        },
-    )
-    return {
-        "changed": True,
-        "reconciled_action_ids": reconciled_actions,
-        "pending_action_cleared": pending_cleared,
-        "controller_boundary_flags_synced": _controller_boundary_flags_synced(run_state),
-        "ledger_counts": ledger.get("counts"),
-    }
-
-
-def _mark_controller_deliverable_repair_resolved(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    repair_action: dict[str, Any],
-    receipt: dict[str, Any] | None = None,
-    applied_postcondition: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    if str(repair_action.get("action_type") or "") != CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
-        return {}
-    original_id = str(repair_action.get("repair_of_controller_action_id") or "")
-    repair_id = str(
-        (receipt or {}).get("action_id")
-        or repair_action.get("controller_action_id")
-        or ""
-    )
-    if not original_id:
-        return {}
-    now = utc_now()
-    resolution = {
-        "deliverable_status": "resolved",
-        "resolution_status": "resolved_by_controller_repair",
-        "resolved_at": now,
-        "resolved_by_controller_action_id": repair_id,
-        "pending_deliverable_repair_action_id": None,
-        "pending_deliverable_repair_attempt": 0,
-        "last_repair_result": applied_postcondition or {},
-    }
-    original = _update_controller_action_entry_fields(
-        project_root,
-        run_root,
-        run_state,
-        action_id=original_id,
-        status="resolved",
-        fields=resolution,
-        router_state="reconciled",
-        reconciliation=resolution,
-    )
-    if repair_id:
-        _update_controller_action_entry_fields(
-            project_root,
-            run_root,
-            run_state,
-            action_id=repair_id,
-            fields={
-                "router_reconciliation_status": "reconciled",
-                "router_reconciled_at": now,
-                "router_reconciliation": applied_postcondition or {},
-            },
-            router_state="reconciled",
-            reconciliation=applied_postcondition or resolution,
-        )
-    append_history(
-        run_state,
-        "router_resolved_controller_action_by_deliverable_repair",
-        {
-            "original_controller_action_id": original_id,
-            "repair_controller_action_id": repair_id,
-            "original_action_type": original.get("action_type"),
-        },
-    )
-    return original
-
-
-def _controller_deliverable_failed_repair_ids(original_entry: dict[str, Any]) -> list[str]:
-    raw = original_entry.get("deliverable_repair_failed_action_ids")
-    if not isinstance(raw, list):
-        return []
-    return [str(item) for item in raw if isinstance(item, str) and item]
-
-
-def _controller_repair_action_is_pending(run_root: Path, action_id: str) -> bool:
-    if not action_id:
-        return False
-    action = read_json_if_exists(_controller_action_path(run_root, action_id))
-    if action.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
-        return False
-    if action.get("status") in CONTROLLER_ACTION_CLOSED_STATUSES:
-        return False
-    receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id))
-    if receipt.get("schema_version") == CONTROLLER_RECEIPT_SCHEMA and receipt.get("status") in {"done", "blocked", "skipped"}:
-        return False
-    return True
-
-
-def _write_controller_deliverable_budget_blocker(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    original_entry: dict[str, Any],
-    current_action: dict[str, Any],
-    receipt: dict[str, Any],
-    missing_deliverables: list[dict[str, Any]],
-    apply_result: dict[str, Any] | None,
-) -> dict[str, Any]:
-    original_id = str(original_entry.get("action_id") or "")
-    current_id = str(receipt.get("action_id") or current_action.get("controller_action_id") or "")
-    payload = {
-        "controller_action_id": original_id,
-        "current_controller_action_id": current_id,
-        "action_type": original_entry.get("action_type"),
-        "postcondition": _pending_action_postcondition(
-            original_entry.get("action") if isinstance(original_entry.get("action"), dict) else current_action
-        ),
-        "missing_deliverables": missing_deliverables,
-        "deliverable_repair_attempts": int(original_entry.get("deliverable_repair_attempts") or 0),
-        "deliverable_repair_failed_receipts": int(original_entry.get("deliverable_repair_failed_receipts") or 0),
-        "deliverable_repair_failed_action_ids": _controller_deliverable_failed_repair_ids(original_entry),
-        "max_deliverable_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
-        "controller_receipt_payload": receipt.get("payload") if isinstance(receipt.get("payload"), dict) else {},
-        "apply_result": apply_result or {},
-    }
-    now = utc_now()
-    blocker = _write_control_blocker(
-        project_root,
-        run_root,
-        run_state,
-        source="controller_deliverable_repair_budget_exhausted",
-        error_message=(
-            f"Controller action {original_entry.get('action_type')} still lacks required deliverables "
-            f"after {CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS} repair attempts."
-        ),
-        action_type=str(original_entry.get("action_type") or ""),
-        payload=payload,
-    )
-    fields = {
-        "deliverable_status": "blocked",
-        "deliverable_repair_failed_receipts": int(original_entry.get("deliverable_repair_failed_receipts") or 0),
-        "deliverable_repair_failed_action_ids": _controller_deliverable_failed_repair_ids(original_entry),
-        "pending_deliverable_repair_action_id": None,
-        "pending_deliverable_repair_attempt": 0,
-        "router_reconciliation_status": "blocked",
-        "router_reconciliation_blocked_at": now,
-        "router_reconciliation_blocker": payload,
-        "control_blocker_id": blocker.get("blocker_id"),
-    }
-    _update_controller_action_entry_fields(
-        project_root,
-        run_root,
-        run_state,
-        action_id=original_id,
-        status="blocked",
-        fields=fields,
-        router_state="blocked",
-        reconciliation=fields,
-    )
-    if current_id and current_id != original_id:
-        _update_controller_action_entry_fields(
-            project_root,
-            run_root,
-            run_state,
-            action_id=current_id,
-            status="blocked",
-            fields=fields,
-            router_state="blocked",
-            reconciliation=fields,
-        )
-    _record_router_ownership_entry(
-        project_root,
-        run_root,
-        run_state,
-        action_id=original_id,
-        action_type=str(original_entry.get("action_type") or ""),
-        router_state="blocked",
-        workflow_owner="router",
-        postcondition=str(payload.get("postcondition") or ""),
-        source="controller_deliverable_repair_budget_exhausted",
-        receipt_path=project_relative(project_root, _controller_receipt_path(run_root, current_id)) if current_id else "",
-        details=payload,
-    )
-    return blocker
-
-
-def _schedule_controller_deliverable_repair(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    pending_action: dict[str, Any],
-    receipt: dict[str, Any],
-    apply_result: dict[str, Any] | None = None,
-    source: str,
-) -> dict[str, Any]:
-    missing_deliverables = _missing_deliverables_for_apply_result(
-        project_root,
-        run_root,
-        run_state,
-        pending_action,
-        apply_result,
-    )
-    if not missing_deliverables:
-        return {"scheduled": False, "repairable": False, "reason": "no_declared_missing_deliverables"}
-    pending_action_id = str(receipt.get("action_id") or pending_action.get("controller_action_id") or "")
-    if str(pending_action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
-        original_id = str(pending_action.get("repair_of_controller_action_id") or "")
-        repair_target_action_type = str(pending_action.get("repair_target_action_type") or "")
-    else:
-        original_id = pending_action_id
-        repair_target_action_type = str(pending_action.get("action_type") or receipt.get("action_type") or "")
-    if not original_id:
-        return {"scheduled": False, "repairable": False, "reason": "missing_original_controller_action_id"}
-    original_entry = read_json_if_exists(_controller_action_path(run_root, original_id))
-    if original_entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
-        return {"scheduled": False, "repairable": False, "reason": "missing_original_controller_action_entry"}
-    issued_attempts = int(original_entry.get("deliverable_repair_attempts") or 0)
-    failed_ids = _controller_deliverable_failed_repair_ids(original_entry)
-    failed_receipts = int(original_entry.get("deliverable_repair_failed_receipts") or len(failed_ids) or 0)
-    is_repair_receipt = str(pending_action.get("action_type") or "") == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE
-    pending_repair_action_id = str(original_entry.get("pending_deliverable_repair_action_id") or "")
-    pending_repair_attempt = int(original_entry.get("pending_deliverable_repair_attempt") or 0)
-    if is_repair_receipt and pending_action_id:
-        if pending_action_id not in failed_ids:
-            failed_ids.append(pending_action_id)
-            failed_receipts += 1
-        if pending_repair_action_id == pending_action_id:
-            pending_repair_action_id = ""
-            pending_repair_attempt = 0
-    if failed_receipts >= CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS:
-        original_entry = {
-            **original_entry,
-            "deliverable_repair_failed_receipts": failed_receipts,
-            "deliverable_repair_failed_action_ids": failed_ids,
-            "pending_deliverable_repair_action_id": None,
-            "pending_deliverable_repair_attempt": 0,
-        }
-        blocker = _write_controller_deliverable_budget_blocker(
-            project_root,
-            run_root,
-            run_state,
-            original_entry=original_entry,
-            current_action=pending_action,
-            receipt=receipt,
-            missing_deliverables=missing_deliverables,
-            apply_result=apply_result,
-        )
-        return {
-            "scheduled": False,
-            "blocked": True,
-            "budget_exhausted": True,
-            "blocker": blocker,
-            "missing_deliverables": missing_deliverables,
-        }
-    if pending_repair_action_id and _controller_repair_action_is_pending(run_root, pending_repair_action_id):
-        pending_fields = {
-            "deliverable_status": "repair_pending",
-            "deliverable_repair_attempts": issued_attempts,
-            "deliverable_repair_failed_receipts": failed_receipts,
-            "deliverable_repair_failed_action_ids": failed_ids,
-            "pending_deliverable_repair_action_id": pending_repair_action_id,
-            "pending_deliverable_repair_attempt": pending_repair_attempt,
-            "missing_deliverables": missing_deliverables,
-            "last_incomplete_receipt_action_id": pending_action_id,
-            "last_incomplete_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-            "last_apply_result": apply_result or {},
-            "router_reconciliation_status": "repair_pending",
-            "router_reconciliation_updated_at": utc_now(),
-        }
-        _update_controller_action_entry_fields(
-            project_root,
-            run_root,
-            run_state,
-            action_id=original_id,
-            status="repair_pending",
-            fields=pending_fields,
-            router_state="waiting",
-            reconciliation=pending_fields,
-        )
-        return {
-            "scheduled": False,
-            "pending_repair": True,
-            "repairable": True,
-            "missing_deliverables": missing_deliverables,
-            "pending_repair_action_id": pending_repair_action_id,
-            "pending_repair_attempt": pending_repair_attempt,
-            "deliverable_repair_attempts": issued_attempts,
-            "deliverable_repair_failed_receipts": failed_receipts,
-        }
-    if issued_attempts >= CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS:
-        pending_fields = {
-            "deliverable_status": "repair_pending",
-            "deliverable_repair_attempts": issued_attempts,
-            "deliverable_repair_failed_receipts": failed_receipts,
-            "deliverable_repair_failed_action_ids": failed_ids,
-            "pending_deliverable_repair_action_id": pending_repair_action_id or None,
-            "pending_deliverable_repair_attempt": pending_repair_attempt,
-            "missing_deliverables": missing_deliverables,
-            "last_incomplete_receipt_action_id": pending_action_id,
-            "last_incomplete_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-            "last_apply_result": apply_result or {},
-            "router_reconciliation_status": "repair_pending",
-            "router_reconciliation_updated_at": utc_now(),
-        }
-        _update_controller_action_entry_fields(
-            project_root,
-            run_root,
-            run_state,
-            action_id=original_id,
-            status="repair_pending",
-            fields=pending_fields,
-            router_state="waiting",
-            reconciliation=pending_fields,
-        )
-        return {
-            "scheduled": False,
-            "pending_repair": True,
-            "repairable": True,
-            "reason": "repair_attempt_issued_waiting_for_returned_evidence",
-            "missing_deliverables": missing_deliverables,
-            "deliverable_repair_attempts": issued_attempts,
-            "deliverable_repair_failed_receipts": failed_receipts,
-        }
-    next_attempt = issued_attempts + 1
-    deliverable_paths = [
-        str(item.get("path") or "")
-        for item in missing_deliverables
-        if isinstance(item, dict) and str(item.get("path") or "").strip()
-    ]
-    original_action = original_entry.get("action") if isinstance(original_entry.get("action"), dict) else pending_action
-    allowed_reads = [
-        str(original_entry.get("action_path") or ""),
-        project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-    ]
-    allowed_reads.extend(str(path) for path in (original_action.get("allowed_reads") or []) if isinstance(path, str))
-    repair_action = make_action(
-        action_type=CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE,
-        actor="controller",
-        label=f"controller_completes_missing_deliverable_attempt_{next_attempt}_{original_id}",
-        summary=(
-            f"Complete missing Controller deliverable(s) for {repair_target_action_type}; "
-            "Router will reconcile the original action only after the declared artifact validates."
-        ),
-        allowed_reads=[item for item in dict.fromkeys(allowed_reads) if item],
-        allowed_writes=[item for item in dict.fromkeys(deliverable_paths + [project_relative(project_root, run_state_path(run_root))]) if item],
-        extra={
-            "postcondition": _pending_action_postcondition(original_action),
-            "repair_of_controller_action_id": original_id,
-            "repair_target_action_type": repair_target_action_type,
-            "repair_attempt": next_attempt,
-            "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
-            "missing_deliverables": missing_deliverables,
-            "required_deliverables": missing_deliverables,
-            "runtime_output_contracts": _controller_deliverable_contract(missing_deliverables).get("runtime_contracts", []),
-            "source_receipt_action_id": pending_action_id,
-            "source_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-            "idempotency_key": f"controller-deliverable-repair:{original_id}:{next_attempt}",
-            "scope_kind": str(original_entry.get("scope_kind") or pending_action.get("scope_kind") or "startup"),
-            "scope_id": str(original_entry.get("scope_id") or pending_action.get("scope_id") or "startup"),
-            "sealed_body_reads_allowed": False,
-            "controller_may_create_project_evidence": False,
-            "deliverable_repair_is_router_scheduled": True,
-        },
-    )
-    repair_entry = _write_controller_action_entry(project_root, run_root, run_state, repair_action)
-    repair_ids = [item for item in (original_entry.get("repair_action_ids") or []) if isinstance(item, str)]
-    repair_ids.append(str(repair_entry.get("action_id") or ""))
-    now = utc_now()
-    original_fields = {
-        "deliverable_status": "repair_pending",
-        "deliverable_repair_attempts": next_attempt,
-        "deliverable_repair_failed_receipts": failed_receipts,
-        "deliverable_repair_failed_action_ids": failed_ids,
-        "max_deliverable_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
-        "missing_deliverables": missing_deliverables,
-        "repair_action_ids": repair_ids,
-        "pending_deliverable_repair_action_id": repair_entry.get("action_id"),
-        "pending_deliverable_repair_attempt": next_attempt,
-        "last_incomplete_receipt_action_id": pending_action_id,
-        "last_incomplete_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-        "last_apply_result": apply_result or {},
-        "router_reconciliation_status": "repair_pending",
-        "router_reconciliation_updated_at": now,
-    }
-    _update_controller_action_entry_fields(
-        project_root,
-        run_root,
-        run_state,
-        action_id=original_id,
-        status="repair_pending",
-        fields=original_fields,
-        router_state="waiting",
-        reconciliation=original_fields,
-    )
-    if pending_action_id and pending_action_id != original_id:
-        _update_controller_action_entry_fields(
-            project_root,
-            run_root,
-            run_state,
-            action_id=pending_action_id,
-            status="superseded",
-            fields={
-                "deliverable_status": "superseded_by_next_repair",
-                "superseded_by_controller_action_id": repair_entry.get("action_id"),
-                "router_reconciliation_status": "superseded_by_next_repair",
-                "router_reconciliation_updated_at": now,
-            },
-            router_state="superseded",
-            reconciliation={"superseded_by_controller_action_id": repair_entry.get("action_id")},
-        )
-    run_state["pending_action"] = repair_action
-    _record_router_ownership_entry(
-        project_root,
-        run_root,
-        run_state,
-        action_id=original_id,
-        action_type=repair_target_action_type,
-        router_state="router_reclaim_pending",
-        workflow_owner="router",
-        postcondition=str(original_fields.get("postcondition") or _pending_action_postcondition(original_action)),
-        source=source,
-        receipt_path=project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
-        details={
-            "missing_deliverables": missing_deliverables,
-            "repair_controller_action_id": repair_entry.get("action_id"),
-            "repair_attempt": next_attempt,
-            "max_repair_attempts": CONTROLLER_DELIVERABLE_REPAIR_MAX_ATTEMPTS,
-            "apply_result": apply_result or {},
-        },
-    )
-    append_history(
-        run_state,
-        "router_scheduled_controller_deliverable_repair",
-        {
-            "original_controller_action_id": original_id,
-            "repair_controller_action_id": repair_entry.get("action_id"),
-            "repair_attempt": next_attempt,
-            "missing_deliverables": missing_deliverables,
-        },
-    )
-    return {
-        "scheduled": True,
-        "changed": True,
-        "repair_action": repair_action,
-        "repair_entry": repair_entry,
-        "original_controller_action_id": original_id,
-        "repair_attempt": next_attempt,
-        "missing_deliverables": missing_deliverables,
-    }
-
-
-def _reclaim_router_owned_postcondition_from_artifact(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: dict[str, Any],
-    receipt_payload: dict[str, Any],
-) -> dict[str, Any]:
-    action_class = _controller_action_completion_class(pending_action)
-    if action_class.get("kind") != "router_owned_durable_artifact":
-        return {
-            "applied": False,
-            "reason": "not_router_owned_durable_artifact",
-            "action_class": action_class,
-        }
-
-    action_type = str(pending_action.get("action_type") or "")
-    action_id = str(pending_action.get("controller_action_id") or "")
-    postcondition = str(action_class.get("postcondition") or _pending_action_postcondition(pending_action) or "")
-    receipt_path = str(pending_action.get("controller_receipt_path") or "")
-
-    if action_class.get("artifact_kind") == "startup_mechanical_audit":
-        context = _startup_mechanical_audit_context(project_root, run_root, run_state)
-        if context is None:
-            _record_router_ownership_entry(
-                project_root,
-                run_root,
-                run_state,
-                action_id=action_id,
-                action_type=action_type,
-                router_state="router_reclaim_pending",
-                workflow_owner="router",
-                postcondition=postcondition,
-                source="controller_receipt_reconciliation",
-                receipt_path=receipt_path,
-                details={
-                    "reason": "startup_mechanical_audit_missing_or_invalid",
-                    "controller_receipt_payload": receipt_payload,
-                },
-            )
-            return {
-                "applied": False,
-                "reason": "startup_mechanical_audit_missing_or_invalid",
-                "action_class": action_class,
-            }
-
-        run_state.setdefault("flags", {})[postcondition] = True
-        run_state["startup_mechanical_audit"] = {
-            "path": project_relative(project_root, context["audit_path"]),
-            "sha256": context["audit_hash"],
-            "proof_path": project_relative(project_root, context["proof_path"]),
-            "proof_sha256": context["proof_hash"],
-            "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
-            "reclaimed_from_durable_artifact": True,
-        }
-        entry = _record_router_ownership_entry(
-            project_root,
-            run_root,
-            run_state,
-            action_id=action_id,
-            action_type=action_type,
-            router_state="router_reclaimed",
-            workflow_owner="router",
-            postcondition=postcondition,
-            source="controller_receipt_reconciliation",
-            receipt_path=receipt_path,
-            artifact_refs={
-                "artifact_kind": action_class.get("artifact_kind"),
-                "startup_mechanical_audit_path": project_relative(project_root, context["audit_path"]),
-                "startup_mechanical_audit_hash": context["audit_hash"],
-                "router_owned_check_proof_path": project_relative(project_root, context["proof_path"]),
-                "router_owned_check_proof_hash": context["proof_hash"],
-            },
-            details={
-                "controller_receipt_payload": receipt_payload,
-                "controller_receipt_did_not_mark_workflow_complete": True,
-            },
-        )
-        append_history(
-            run_state,
-            "router_reclaimed_controller_receipt_artifact_postcondition",
-            {
-                "action_type": action_type,
-                "controller_action_id": action_id,
-                "postcondition": postcondition,
-                "router_ownership_entry_id": entry.get("entry_id"),
-            },
-        )
-        return {
-            "applied": True,
-            "postcondition": postcondition,
-            "source": "router_owned_artifact_reclaim",
-            "action_class": action_class,
-            "router_ownership_entry_id": entry.get("entry_id"),
-        }
-
-    return {
-        "applied": False,
-        "reason": "unsupported_router_owned_artifact",
-        "action_class": action_class,
-    }
+
+def _pending_controller_action_id(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._pending_controller_action_id(*args, **kwargs)
+
+
+def _pending_action_postcondition(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._pending_action_postcondition(*args, **kwargs)
+
+
+def _receipt_for_pending_controller_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._receipt_for_pending_controller_action(*args, **kwargs)
+
+
+def _pending_action_postcondition_satisfied(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._pending_action_postcondition_satisfied(*args, **kwargs)
+
+
+def _mail_sequence_entry(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mail_sequence_entry(*args, **kwargs)
+
+
+def _mail_role_obligation_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mail_role_obligation_contract(*args, **kwargs)
+
+
+def _mail_delivery_matches(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mail_delivery_matches(*args, **kwargs)
+
+
+def _find_mail_delivery(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._find_mail_delivery(*args, **kwargs)
+
+
+def _count_unique_mail_deliveries(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._count_unique_mail_deliveries(*args, **kwargs)
+
+
+def _packet_record_for_mail_delivery(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._packet_record_for_mail_delivery(*args, **kwargs)
+
+
+def _mail_delivery_action_envelope_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mail_delivery_action_envelope_path(*args, **kwargs)
+
+
+def _mail_delivery_packet_released(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mail_delivery_packet_released(*args, **kwargs)
+
+
+def _ensure_mail_delivery_packet_released(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._ensure_mail_delivery_packet_released(*args, **kwargs)
+
+
+def _fold_mail_delivery_postcondition(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._fold_mail_delivery_postcondition(*args, **kwargs)
+
+
+def _controller_boundary_required_deliverable(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_boundary_required_deliverable(*args, **kwargs)
+
+
+def _controller_action_required_deliverables(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_action_required_deliverables(*args, **kwargs)
+
+
+def _controller_deliverable_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_deliverable_contract(*args, **kwargs)
+
+
+def _missing_deliverables_for_apply_result(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._missing_deliverables_for_apply_result(*args, **kwargs)
+
+
+def _update_controller_action_entry_fields(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._update_controller_action_entry_fields(*args, **kwargs)
+
+
+def _defer_controller_postcondition_reconciliation_retry(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._defer_controller_postcondition_reconciliation_retry(*args, **kwargs)
+
+
+def _sync_controller_boundary_confirmation_from_artifact(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._sync_controller_boundary_confirmation_from_artifact(*args, **kwargs)
+
+
+def _controller_boundary_flags_synced(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_boundary_flags_synced(*args, **kwargs)
+
+
+def _router_scheduler_row_for_controller_entry(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._router_scheduler_row_for_controller_entry(*args, **kwargs)
+
+
+
+def _done_controller_receipt_for_entry(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._done_controller_receipt_for_entry(*args, **kwargs)
+
+
+
+def _reconcile_controller_boundary_confirmation_projection(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._reconcile_controller_boundary_confirmation_projection(*args, **kwargs)
+
+
+def _mark_controller_deliverable_repair_resolved(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._mark_controller_deliverable_repair_resolved(*args, **kwargs)
+
+
+def _controller_deliverable_failed_repair_ids(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_deliverable_failed_repair_ids(*args, **kwargs)
+
+
+def _controller_repair_action_is_pending(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._controller_repair_action_is_pending(*args, **kwargs)
+
+
+def _write_controller_deliverable_budget_blocker(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._write_controller_deliverable_budget_blocker(*args, **kwargs)
+
+
+def _schedule_controller_deliverable_repair(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._schedule_controller_deliverable_repair(*args, **kwargs)
+
+
+def _reclaim_router_owned_postcondition_from_artifact(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_controller_repair._bind_router(sys.modules[__name__])
+    return flowpilot_router_controller_repair._reclaim_router_owned_postcondition_from_artifact(*args, **kwargs)
 
 
 def _apply_stateful_receipt_postcondition(project_root: Path, run_root: Path, run_state: dict[str, Any], pending_action: dict[str, Any], receipt_payload: dict[str, Any]) -> dict[str, Any]:
@@ -3202,131 +1532,54 @@ def _pre_review_reconciliation_blockers_for_trigger(
     return flowpilot_router_card_returns._pre_review_reconciliation_blockers_for_trigger(sys.modules[__name__], project_root, run_root, run_state, review_trigger)
 
 
-def _current_scope_pre_review_reconciliation_action(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    blockers: list[dict[str, Any]],
-    review_trigger: str,
-) -> dict[str, Any]:
-    scope_kind = "startup" if any(blocker.get("scope_kind") == "startup" for blocker in blockers) else "current_node"
-    frontier = read_json_if_exists(run_root / "execution_frontier.json")
-    if scope_kind == "current_node":
-        frontier = _active_frontier(run_root)
-    active_node_id = str(frontier.get("active_node_id") or "")
-    scope_id = "startup" if scope_kind == "startup" else active_node_id
-    label = (
-        "controller_waits_for_startup_scope_pre_review_reconciliation"
-        if scope_kind == "startup"
-        else "controller_waits_for_current_scope_pre_review_reconciliation"
-    )
-    summary = (
-        "Startup reviewer work is blocked until startup-local obligations are reconciled."
-        if scope_kind == "startup"
-        else "Current-node reviewer work is blocked until local node obligations are reconciled."
-    )
-    allowed_reads = [
-        project_relative(project_root, run_state_path(run_root)),
-        project_relative(project_root, run_root / "execution_frontier.json"),
-        project_relative(project_root, run_root / "return_event_ledger.json"),
-        project_relative(project_root, _controller_action_ledger_path(run_root)),
-        project_relative(project_root, _router_scheduler_ledger_path(run_root)),
-    ]
-    if scope_kind == "current_node":
-        allowed_reads.append(project_relative(project_root, _parallel_packet_batch_ref_path(run_root, "current_node")))
-    return make_action(
-        action_type="await_current_scope_reconciliation",
-        actor="controller",
-        label=label,
-        summary=summary,
-        allowed_reads=allowed_reads,
-        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-        to_role="controller",
-        extra={
-            "apply_required": False,
-            "scope_kind": scope_kind,
-            "scope_id": scope_id,
-            "route_id": frontier.get("active_route_id"),
-            "route_version": frontier.get("route_version"),
-            "review_trigger": review_trigger,
-            "blockers": blockers,
-            "local_scope_only": True,
-            "future_or_sibling_scopes_touched": False,
-            "reconciliation_rule": "resolve_or_explicitly_classify_current_scope_obligations_before_reviewer_work",
-        },
-    )
+def _current_scope_pre_review_reconciliation_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._current_scope_pre_review_reconciliation_action(*args, **kwargs)
 
 
-def _current_scope_reconciliation_wait_still_blocked(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: dict[str, Any],
-) -> bool:
-    return flowpilot_router_card_returns._current_scope_reconciliation_wait_still_blocked(sys.modules[__name__], project_root, run_root, run_state, pending_action)
+def _current_scope_reconciliation_wait_still_blocked(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._current_scope_reconciliation_wait_still_blocked(*args, **kwargs)
 
 
-def _next_local_obligation_before_passive_wait(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: dict[str, Any],
-) -> dict[str, Any] | None:
-    return flowpilot_router_card_returns._next_local_obligation_before_passive_wait(sys.modules[__name__], project_root, run_root, run_state, pending_action)
+def _next_local_obligation_before_passive_wait(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._next_local_obligation_before_passive_wait(*args, **kwargs)
 
 
-def _current_node_scope_exit_reconciliation_blockers(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    frontier: dict[str, Any],
-) -> list[dict[str, Any]]:
-    return flowpilot_router_card_returns._current_node_scope_exit_reconciliation_blockers(sys.modules[__name__], project_root, run_root, run_state, frontier)
+def _current_node_scope_exit_reconciliation_blockers(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._current_node_scope_exit_reconciliation_blockers(*args, **kwargs)
 
 
-def _action_is_startup_async_delivery(action: dict[str, Any] | None) -> bool:
-    return flowpilot_router_card_returns._action_is_startup_async_delivery(sys.modules[__name__], action)
+def _action_is_startup_async_delivery(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._action_is_startup_async_delivery(*args, **kwargs)
 
 
-def _action_is_startup_async_card_wait(action: dict[str, Any] | None) -> bool:
-    return flowpilot_router_card_returns._action_is_startup_async_card_wait(sys.modules[__name__], action)
+def _action_is_startup_async_card_wait(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._action_is_startup_async_card_wait(*args, **kwargs)
 
 
-def _startup_async_pending_returns(
-    run_root: Path,
-    pending_returns: list[dict[str, Any]],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    return flowpilot_router_card_returns._startup_async_pending_returns(sys.modules[__name__], run_root, pending_returns)
+def _startup_async_pending_returns(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._startup_async_pending_returns(*args, **kwargs)
 
 
-def _pending_card_return_blocker_for_event(
-    run_root: Path,
-    run_id: str,
-    event: str,
-    run_state: dict[str, Any],
-) -> dict[str, Any] | None:
-    return flowpilot_router_card_returns._pending_card_return_blocker_for_event(sys.modules[__name__], run_root, run_id, event, run_state)
+def _pending_card_return_blocker_for_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._pending_card_return_blocker_for_event(*args, **kwargs)
 
 
-def _committed_card_artifact_extra(
-    project_root: Path,
-    record: dict[str, Any],
-    *,
-    relay_allowed_if_ready: bool,
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._committed_card_artifact_extra(sys.modules[__name__], project_root, record, relay_allowed_if_ready=relay_allowed_if_ready)
+def _committed_card_artifact_extra(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._committed_card_artifact_extra(*args, **kwargs)
 
 
-def _next_pending_card_return_action(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    pending_records: list[dict[str, Any]] | None = None,
-    *,
-    clearance_reason: str = "router_progress",
-) -> dict[str, Any] | None:
-    return flowpilot_router_card_returns._next_pending_card_return_action(sys.modules[__name__], project_root, run_state, run_root, pending_records, clearance_reason=clearance_reason)
+def _next_pending_card_return_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._next_pending_card_return_action(*args, **kwargs)
 
 
 FORMAL_WORK_PACKET_RELAY_ACTION_TYPES = {
@@ -3337,73 +1590,14 @@ FORMAL_WORK_PACKET_RELAY_ACTION_TYPES = {
 }
 
 
-def _roles_from_action_to_role(action: dict[str, Any]) -> set[str]:
-    raw = str(action.get("to_role") or "")
-    roles = {role.strip() for role in raw.split(",") if role.strip()}
-    return roles
+def _roles_from_action_to_role(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._roles_from_action_to_role(*args, **kwargs)
 
 
-def _apply_formal_work_packet_ack_preflight(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    action: dict[str, Any],
-) -> dict[str, Any]:
-    if action.get("action_type") not in FORMAL_WORK_PACKET_RELAY_ACTION_TYPES:
-        return action
-    target_roles = _roles_from_action_to_role(action)
-    if not target_roles:
-        return action
-    pending = [
-        record
-        for record in _pending_return_records(run_root, str(run_state["run_id"]))
-        if str(record.get("target_role") or "") in target_roles
-    ]
-    preflight = {
-        "schema_version": "flowpilot.formal_work_packet_ack_preflight.v1",
-        "target_roles": sorted(target_roles),
-        "source_ledger_path": project_relative(project_root, _return_event_ledger_path(run_root)),
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-    if pending:
-        wait_action = _next_pending_card_return_action(
-            project_root,
-            run_state,
-            run_root,
-            pending,
-            clearance_reason="formal_work_packet_preflight",
-        )
-        if wait_action is None:
-            return action
-        blocked_packet = {
-            "action_type": action.get("action_type"),
-            "label": action.get("label"),
-            "to_role": action.get("to_role"),
-            "target_roles": sorted(target_roles),
-        }
-        wait_action["blocked_formal_work_packet"] = blocked_packet
-        wait_action["formal_work_packet_ack_preflight"] = {
-            **preflight,
-            "passed": False,
-            "pending_return_count": len(pending),
-            "blocked_packet": blocked_packet,
-        }
-        wait_action["next_step_contract"]["formal_work_packet_ack_preflight"] = wait_action[
-            "formal_work_packet_ack_preflight"
-        ]
-        return wait_action
-    action["formal_work_packet_ack_preflight"] = {
-        **preflight,
-        "passed": True,
-        "pending_return_count": 0,
-    }
-    action["ack_is_read_receipt_only"] = True
-    action["target_work_completion_evidence_required_separately"] = True
-    action["next_step_contract"]["formal_work_packet_ack_preflight"] = action["formal_work_packet_ack_preflight"]
-    action["next_step_contract"]["ack_is_read_receipt_only"] = True
-    action["next_step_contract"]["target_work_completion_evidence_required_separately"] = True
-    return action
+def _apply_formal_work_packet_ack_preflight(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._apply_formal_work_packet_ack_preflight(*args, **kwargs)
 
 
 DISPATCH_RECIPIENT_GATE_ACTION_TYPES = {
@@ -3438,1101 +1632,149 @@ DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS = {
 }
 
 
-def _dispatch_gate_card_entry(card_id: str) -> dict[str, Any] | None:
-    return next((entry for entry in SYSTEM_CARD_SEQUENCE if entry.get("card_id") == card_id), None)
+def _dispatch_gate_card_entry(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_card_entry(*args, **kwargs)
 
 
-def _dispatch_gate_output_events_for_card_id(card_id: str) -> list[str]:
-    entry = _dispatch_gate_card_entry(card_id)
-    if not isinstance(entry, dict):
-        return []
-    card_flag = str(entry.get("flag") or "")
-    output_events: list[str] = []
-    for event, meta in EXTERNAL_EVENTS.items():
-        if meta.get("requires_flag") == card_flag:
-            output_events.append(event)
-    output_events.extend(DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS.get(card_id, ()))
-    return list(dict.fromkeys(output_events))
+def _dispatch_gate_output_events_for_card_id(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_output_events_for_card_id(*args, **kwargs)
 
 
-def _dispatch_gate_output_events_for_action(action: dict[str, Any]) -> list[str]:
-    output_events: list[str] = []
-    for card_id in _dispatch_gate_system_card_ids(action):
-        output_events.extend(_dispatch_gate_output_events_for_card_id(card_id))
-    output_events.extend(DISPATCH_RECIPIENT_GATE_ACTION_OUTPUT_EVENTS.get(str(action.get("action_type") or ""), ()))
-    return list(dict.fromkeys(output_events))
+def _dispatch_gate_output_events_for_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_output_events_for_action(*args, **kwargs)
 
 
-def _dispatch_gate_action_is_ack_only_prompt(action: dict[str, Any]) -> bool:
-    if action.get("action_type") not in {"deliver_system_card", "deliver_system_card_bundle"}:
-        return False
-    card_ids = _dispatch_gate_system_card_ids(action)
-    return bool(card_ids) and not _dispatch_gate_output_events_for_action(action)
+def _dispatch_gate_action_is_ack_only_prompt(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_action_is_ack_only_prompt(*args, **kwargs)
 
 
-def _dispatch_gate_action_work_class(action: dict[str, Any]) -> str:
-    if _dispatch_gate_action_is_ack_only_prompt(action):
-        return "ack_only_prompt"
-    if action.get("action_type") in {"deliver_system_card", "deliver_system_card_bundle"}:
-        return "output_bearing_work_package"
-    return "work_dispatch"
+def _dispatch_gate_action_work_class(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_action_work_class(*args, **kwargs)
 
 
-def _dispatch_gate_same_obligation_instruction_context(
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-    target_roles: set[str],
-) -> dict[str, Any] | None:
-    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json")
-    packets = packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []
-    if not isinstance(packets, list):
-        return None
-    for record in packets:
-        if not isinstance(record, dict):
-            continue
-        holder = str(record.get("active_packet_holder") or "").strip()
-        status = str(record.get("active_packet_status") or record.get("status") or "").strip()
-        if holder not in target_roles or not _packet_status_allows_current_work(status):
-            continue
-        if _dispatch_gate_same_obligation_instruction(action, record, run_state):
-            return {
-                "packet_id": record.get("packet_id"),
-                "active_packet_holder": holder,
-                "instruction_card_id": action.get("card_id"),
-                "expected_first_output_event": "pm_issues_material_and_capability_scan_packets",
-            }
-    return None
+def _dispatch_gate_same_obligation_instruction_context(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_same_obligation_instruction_context(*args, **kwargs)
 
 
-def _dispatch_gate_wait_action(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    *,
-    blocked_action: dict[str, Any],
-    blocker: dict[str, Any],
-) -> dict[str, Any]:
-    target_role = str(blocker.get("target_role") or "").strip()
-    if not target_role:
-        target_role = ",".join(sorted(_dispatch_gate_target_roles(blocked_action))) or "project_manager"
-    allowed_events = [str(item) for item in blocker.get("allowed_external_events") or [] if str(item)]
-    if not allowed_events:
-        if target_role == "project_manager":
-            allowed_events = [PM_ROLE_WORK_RESULT_DECISION_EVENT]
-        else:
-            allowed_events = [ROLE_WORK_RESULT_RETURNED_EVENT]
-    source_path = str(blocker.get("source_path") or "").strip()
-    allowed_reads = [project_relative(project_root, run_state_path(run_root))]
-    if source_path and source_path not in allowed_reads:
-        allowed_reads.append(source_path)
-    payload_contract = {
-        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
-        "name": "dispatch_recipient_gate_wait",
-        "required_fields": [],
-        "blocked_action_type": blocked_action.get("action_type"),
-        "blocked_label": blocked_action.get("label"),
-        "target_role": target_role,
-        "busy_source": blocker.get("source"),
-        "busy_reason": blocker.get("reason"),
-        "packet_id": blocker.get("packet_id"),
-        "request_id": blocker.get("request_id"),
-        "blocked_work_package_class": blocker.get("blocked_work_package_class"),
-        "blocked_output_events": blocker.get("blocked_output_events") or [],
-        "controller_visibility": "metadata_only",
-        "sealed_body_reads_allowed": False,
-    }
-    wait_action = make_action(
-        action_type="await_role_decision",
-        actor="controller",
-        label=f"controller_waits_for_dispatch_recipient_idle_{_safe_delivery_component(target_role)}",
-        summary=(
-            "Controller must wait because Router blocked a new dispatch until "
-            f"{target_role} finishes the prior unfinished obligation."
-        ),
-        allowed_reads=allowed_reads,
-        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-        to_role=target_role,
-        extra={
-            "allowed_external_events": allowed_events,
-            "controller_only_mode_active": True,
-            "controller_may_create_project_evidence": False,
-            "expected_wait_is_not_control_blocker": True,
-            "payload_contract": payload_contract,
-            "dispatch_recipient_gate": {
-                "schema_version": "flowpilot.dispatch_recipient_gate.v1",
-                "passed": False,
-                "blocked_action_type": blocked_action.get("action_type"),
-                "blocked_label": blocked_action.get("label"),
-                "target_role": target_role,
-                "busy_source": blocker.get("source"),
-                "busy_reason": blocker.get("reason"),
-                "packet_id": blocker.get("packet_id"),
-                "request_id": blocker.get("request_id"),
-                "blocked_work_package_class": blocker.get("blocked_work_package_class"),
-                "blocked_output_events": blocker.get("blocked_output_events") or [],
-                "source_path": source_path or None,
-                "sealed_body_reads_allowed": False,
-            },
-        },
-    )
-    wait_action["nonblocking_wait"] = False
-    return wait_action
+def _dispatch_gate_wait_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_wait_action(*args, **kwargs)
 
 
-def _dispatch_gate_pending_ack_wait(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    action: dict[str, Any],
-    target_roles: set[str],
-) -> dict[str, Any] | None:
-    pending = [
-        record
-        for record in _pending_return_records(run_root, str(run_state["run_id"]))
-        if str(record.get("target_role") or "") in target_roles
-    ]
-    if not pending:
-        return None
-    wait_action = _next_pending_card_return_action(
-        project_root,
-        run_state,
-        run_root,
-        pending,
-        clearance_reason="dispatch_recipient_gate",
-    )
-    if wait_action is None:
-        return None
-    wait_action["dispatch_recipient_gate"] = {
-        "schema_version": "flowpilot.dispatch_recipient_gate.v1",
-        "passed": False,
-        "blocked_action_type": action.get("action_type"),
-        "blocked_label": action.get("label"),
-        "target_roles": sorted(target_roles),
-        "busy_source": "pending_return_ledger",
-        "busy_reason": "target_role_ack_or_bundle_return_unresolved",
-        "pending_return_count": len(pending),
-        "blocked_work_package_class": _dispatch_gate_action_work_class(action),
-        "blocked_output_events": _dispatch_gate_output_events_for_action(action),
-        "source_path": project_relative(project_root, _return_event_ledger_path(run_root)),
-        "sealed_body_reads_allowed": False,
-    }
-    wait_action.setdefault("next_step_contract", {})["dispatch_recipient_gate"] = wait_action["dispatch_recipient_gate"]
-    return wait_action
+def _dispatch_gate_pending_ack_wait(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_pending_ack_wait(*args, **kwargs)
 
 
-def _dispatch_gate_packet_blocker(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-    target_roles: set[str],
-    candidate_packet_ids: set[str],
-) -> dict[str, Any] | None:
-    if _dispatch_gate_action_is_ack_only_prompt(action):
-        return None
-    packet_ledger_path = run_root / "packet_ledger.json"
-    packet_ledger = read_json_if_exists(packet_ledger_path)
-    packets = packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []
-    if not isinstance(packets, list):
-        return None
-    for record in packets:
-        if not isinstance(record, dict):
-            continue
-        packet_id = str(record.get("packet_id") or "").strip()
-        if packet_id and packet_id in candidate_packet_ids:
-            continue
-        if _dispatch_gate_packet_completed_by_flow_state(record, run_state):
-            continue
-        holder = str(record.get("active_packet_holder") or "").strip()
-        status = str(record.get("active_packet_status") or record.get("status") or "").strip()
-        if holder not in target_roles or not _packet_status_allows_current_work(status):
-            continue
-        if _dispatch_gate_same_obligation_instruction(action, record, run_state):
-            continue
-        return {
-            "source": "packet_ledger",
-            "source_path": project_relative(project_root, packet_ledger_path),
-            "reason": "target_role_holds_unfinished_packet",
-            "target_role": holder,
-            "packet_id": packet_id or None,
-            "active_packet_status": status,
-            "blocked_work_package_class": _dispatch_gate_action_work_class(action),
-            "blocked_output_events": _dispatch_gate_output_events_for_action(action),
-            "allowed_external_events": _dispatch_gate_wait_events_for_packet_record(record),
-        }
-    return None
+def _dispatch_gate_packet_blocker(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_packet_blocker(*args, **kwargs)
 
 
-def _dispatch_gate_pending_expected_output_blocker(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-    target_roles: set[str],
-) -> dict[str, Any] | None:
-    if _dispatch_gate_action_is_ack_only_prompt(action):
-        return None
-    candidate_output_events = set(_dispatch_gate_output_events_for_action(action))
-    for group in _pending_expected_external_event_groups(run_state, run_root):
-        wait_group = _gate_completion_wait_group(group)
-        group_events = [event for event, _meta in wait_group]
-        allowed_events = _filter_events_by_legal_route_actions(project_root, run_root, run_state, group_events)
-        if not allowed_events:
-            continue
-        allowed_event_set = set(allowed_events)
-        filtered_group = [(event, meta) for event, meta in wait_group if event in allowed_event_set]
-        roles = {_event_wait_role(event, meta) for event, meta in filtered_group}
-        overlapping_roles = roles.intersection(target_roles)
-        if not overlapping_roles:
-            continue
-        if candidate_output_events and candidate_output_events.intersection(allowed_event_set):
-            continue
-        target_role = sorted(overlapping_roles)[0]
-        return {
-            "source": "pending_expected_output",
-            "source_path": project_relative(project_root, run_state_path(run_root)),
-            "reason": "target_role_output_obligation_already_pending",
-            "target_role": target_role,
-            "blocked_work_package_class": _dispatch_gate_action_work_class(action),
-            "blocked_output_events": sorted(candidate_output_events),
-            "allowed_external_events": allowed_events,
-        }
-    return None
+def _dispatch_gate_pending_expected_output_blocker(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_pending_expected_output_blocker(*args, **kwargs)
 
 
-def _dispatch_gate_pm_role_work_blocker(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    action: dict[str, Any],
-    target_roles: set[str],
-    candidate_packet_ids: set[str],
-    candidate_request_ids: set[str],
-) -> dict[str, Any] | None:
-    index_path = _pm_role_work_request_index_path(run_root)
-    index = _load_pm_role_work_request_index(run_root, run_state)
-    for record in index.get("requests", []):
-        if not isinstance(record, dict):
-            continue
-        request_id = str(record.get("request_id") or "").strip()
-        packet_id = str(record.get("packet_id") or "").strip()
-        if (request_id and request_id in candidate_request_ids) or (packet_id and packet_id in candidate_packet_ids):
-            continue
-        status = str(record.get("status") or "").strip()
-        to_role = str(record.get("to_role") or "").strip()
-        if to_role in target_roles and status in PM_ROLE_WORK_TARGET_BUSY_STATUSES:
-            return {
-                "source": "pm_role_work_index",
-                "source_path": project_relative(project_root, index_path),
-                "reason": "target_role_pm_role_work_unfinished",
-                "target_role": to_role,
-                "packet_id": packet_id or None,
-                "request_id": request_id or None,
-                "pm_role_work_status": status,
-                "blocked_work_package_class": _dispatch_gate_action_work_class(action),
-                "blocked_output_events": _dispatch_gate_output_events_for_action(action),
-                "allowed_external_events": [ROLE_WORK_RESULT_RETURNED_EVENT],
-            }
-        if "project_manager" in target_roles and status in PM_ROLE_WORK_PM_BUSY_STATUSES:
-            return {
-                "source": "pm_role_work_index",
-                "source_path": project_relative(project_root, index_path),
-                "reason": "pm_role_work_result_disposition_pending",
-                "target_role": "project_manager",
-                "packet_id": packet_id or None,
-                "request_id": request_id or None,
-                "pm_role_work_status": status,
-                "blocked_work_package_class": _dispatch_gate_action_work_class(action),
-                "blocked_output_events": _dispatch_gate_output_events_for_action(action),
-                "allowed_external_events": [PM_ROLE_WORK_RESULT_DECISION_EVENT],
-            }
-    return None
+def _dispatch_gate_pm_role_work_blocker(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_pm_role_work_blocker(*args, **kwargs)
 
 
-def _dispatch_gate_passive_wait_blocker(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    target_roles: set[str],
-) -> dict[str, Any] | None:
-    _run_router_return_settlement_finalizers(
-        project_root,
-        run_root,
-        run_state,
-        source="dispatch_recipient_gate_passive_wait_recheck",
-    )
-    controller_ledger = _controller_action_ledger_summary(run_root)
-    passive_waits = controller_ledger.get("passive_waits") if isinstance(controller_ledger, dict) else []
-    if not isinstance(passive_waits, list):
-        return None
-    for item in passive_waits:
-        if not isinstance(item, dict):
-            continue
-        status = str(item.get("status") or "").strip()
-        reconciled = str(item.get("router_reconciliation_status") or "").strip()
-        if status in {"done", "resolved", "skipped", "superseded"} or reconciled == "reconciled":
-            continue
-        target = str(item.get("waiting_for_role") or item.get("to_role") or item.get("target_role") or "").strip()
-        if target not in target_roles:
-            continue
-        return {
-            "source": "controller_action_ledger.passive_waits",
-            "source_path": controller_ledger.get("path"),
-            "reason": "target_role_wait_already_active",
-            "target_role": target,
-            "action_id": item.get("action_id"),
-            "allowed_external_events": item.get("allowed_external_events") if isinstance(item.get("allowed_external_events"), list) else [],
-        }
-    return None
+def _dispatch_gate_passive_wait_blocker(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._dispatch_gate_passive_wait_blocker(*args, **kwargs)
 
 
-def _apply_dispatch_recipient_gate(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    action: dict[str, Any],
-) -> dict[str, Any]:
-    if action.get("action_type") not in DISPATCH_RECIPIENT_GATE_ACTION_TYPES:
-        return action
-    target_roles = _dispatch_gate_target_roles(action)
-    if not target_roles:
-        return action
-    _run_router_return_settlement_finalizers(
-        project_root,
-        run_root,
-        run_state,
-        source="dispatch_recipient_gate_return_settlement",
-    )
-    candidate_packet_ids = _dispatch_gate_candidate_packet_ids(action)
-    candidate_request_ids = _dispatch_gate_candidate_request_ids(action)
-    wait_action = _dispatch_gate_pending_ack_wait(project_root, run_state, run_root, action, target_roles)
-    if wait_action is not None:
-        return wait_action
-    blocker = _dispatch_gate_passive_wait_blocker(project_root, run_root, run_state, target_roles)
-    same_obligation_instruction = _dispatch_gate_same_obligation_instruction_context(
-        run_root,
-        run_state,
-        action,
-        target_roles,
-    )
-    if blocker is None:
-        blocker = _dispatch_gate_pending_expected_output_blocker(project_root, run_root, run_state, action, target_roles)
-    if blocker is None:
-        blocker = _dispatch_gate_packet_blocker(project_root, run_root, run_state, action, target_roles, candidate_packet_ids)
-    if blocker is None and not _dispatch_gate_action_is_ack_only_prompt(action):
-        blocker = _dispatch_gate_pm_role_work_blocker(
-            project_root,
-            run_root,
-            run_state,
-            action,
-            target_roles,
-            candidate_packet_ids,
-            candidate_request_ids,
-        )
-    if blocker is None:
-        action["dispatch_recipient_gate"] = {
-            "schema_version": "flowpilot.dispatch_recipient_gate.v1",
-            "passed": True,
-            "target_roles": sorted(target_roles),
-            "candidate_packet_ids": sorted(candidate_packet_ids),
-            "candidate_request_ids": sorted(candidate_request_ids),
-            "grouped_delivery": action.get("action_type") == "deliver_system_card_bundle",
-            "same_obligation_instruction": same_obligation_instruction,
-            "work_package_class": _dispatch_gate_action_work_class(action),
-            "output_events": _dispatch_gate_output_events_for_action(action),
-            "sealed_body_reads_allowed": False,
-        }
-        action.setdefault("next_step_contract", {})["dispatch_recipient_gate"] = action["dispatch_recipient_gate"]
-        return action
-    return _dispatch_gate_wait_action(
-        project_root,
-        run_state,
-        run_root,
-        blocked_action=action,
-        blocker=blocker,
-    )
+def _apply_dispatch_recipient_gate(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._apply_dispatch_recipient_gate(*args, **kwargs)
 
 
-def append_history(state: dict[str, Any], label: str, details: dict[str, Any] | None = None) -> None:
-    history = state.setdefault("history", [])
-    history.append({"at": utc_now(), "label": label, "details": details or {}})
+def append_history(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory.append_history(*args, **kwargs)
 
 
-def _controller_user_reporting_policy() -> dict[str, Any]:
-    return {
-        "schema_version": CONTROLLER_USER_REPORTING_POLICY_SCHEMA,
-        "plain_language_required": True,
-        "reminder": (
-            "If this action is mentioned to the user, explain it in plain "
-            "language instead of copying internal action names or metadata."
-        ),
-        "allowed_user_report_points": [
-            "what_is_happening_now",
-            "what_flowpilot_is_waiting_for",
-            "whether_user_needs_to_act",
-        ],
-        "hide_internal_metadata_by_default": [
-            "event_names",
-            "packet_ids",
-            "ledger_names",
-            "hashes",
-            "action_ids",
-            "contract_names",
-            "diagnostic_file_paths",
-        ],
-        "technical_details_allowed_when_user_asks": True,
-        "sealed_body_boundary_unchanged": True,
-    }
+def _controller_user_reporting_policy(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory._controller_user_reporting_policy(*args, **kwargs)
 
 
-def make_action(
-    *,
-    action_type: str,
-    actor: str,
-    label: str,
-    summary: str,
-    source: str = "router",
-    allowed_reads: list[str] | None = None,
-    allowed_writes: list[str] | None = None,
-    card_id: str | None = None,
-    mail_id: str | None = None,
-    to_role: str | None = None,
-    extra: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    user_reporting_policy = _controller_user_reporting_policy()
-    action: dict[str, Any] = {
-        "schema_version": SCHEMA_VERSION,
-        "action_id": f"{label}:{utc_now()}",
-        "action_type": action_type,
-        "actor": actor,
-        "source": source,
-        "issued_by": "router",
-        "label": label,
-        "summary": summary,
-        "allowed_reads": allowed_reads or [],
-        "allowed_writes": allowed_writes or [],
-        "created_at": utc_now(),
-    }
-    if card_id:
-        action["card_id"] = card_id
-        action["from"] = "system"
-        action["issued_by"] = "router"
-        action["delivered_by"] = "controller"
-    if mail_id:
-        action["mail_id"] = mail_id
-        action["delivered_by"] = "controller"
-    if to_role:
-        action["to_role"] = to_role
-    if extra:
-        action.update(extra)
-    if action_type == "await_role_decision":
-        action["allowed_external_events"] = _validated_external_event_names(
-            action.get("allowed_external_events"),
-            context=f"await_role_decision action {label}",
-        )
-    action.setdefault("resource_lifecycle", "pending_action")
-    action.setdefault("artifact_committed", False)
-    action.setdefault("relay_allowed", False)
-    action.setdefault("apply_required", True)
-    if action.get("requires_user_dialog_display_confirmation") and "payload_template" not in action:
-        display_kind = action.get("display_kind")
-        display_text_sha256 = action.get("display_text_sha256")
-        if isinstance(display_kind, str) and isinstance(display_text_sha256, str):
-            action["payload_template"] = {
-                "display_confirmation": {
-                    "action_type": action_type,
-                    "display_kind": display_kind,
-                    "display_text_sha256": display_text_sha256,
-                    "provenance": DISPLAY_CONFIRMATION_PROVENANCE,
-                    "rendered_to": DISPLAY_CONFIRMATION_TARGET,
-                }
-            }
-            action["payload_template_rule"] = (
-                "First paste display_text exactly into the user dialog, then apply "
-                "the action with this payload_template. Generated files, host UI "
-                "updates, and display paths do not satisfy user-dialog display evidence."
-            )
-    resolved_recipient = str(action.get("to_role") or actor)
-    action.setdefault("why_this_role", summary)
-    action["controller_user_reporting_policy"] = user_reporting_policy
-    action["next_step_contract"] = {
-        "schema_version": "flowpilot.next_step_contract.v1",
-        "controller_has_explicit_next": True,
-        "action_type": action_type,
-        "recipient_role": resolved_recipient,
-        "controller_may_infer_next_from_chat": False,
-        "controller_may_contact_unlisted_role": False,
-        "controller_may_create_project_evidence": False,
-        "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
-        "resource_lifecycle": action.get("resource_lifecycle"),
-        "artifact_committed": bool(action.get("artifact_committed", False)),
-        "relay_allowed": bool(action.get("relay_allowed", False)),
-        "apply_required": bool(action.get("apply_required", True)),
-        "allowed_external_events": action.get("allowed_external_events", []),
-        "postcondition": action.get("postcondition"),
-        "controller_user_reporting_policy": user_reporting_policy,
-    }
-    if action.get("gate_contract") is not None:
-        action["next_step_contract"]["gate_contract"] = action["gate_contract"]
-    if action.get("ack_clearance_scope") is not None:
-        action["next_step_contract"]["ack_clearance_scope"] = action["ack_clearance_scope"]
-    if "ack_is_read_receipt_only" in action:
-        action["next_step_contract"]["ack_is_read_receipt_only"] = bool(action.get("ack_is_read_receipt_only"))
-    if "target_work_completion_evidence_required_separately" in action:
-        action["next_step_contract"]["target_work_completion_evidence_required_separately"] = bool(
-            action.get("target_work_completion_evidence_required_separately")
-        )
-    relay_or_wait_boundary = (
-        action_type in ROUTER_READY_PREEMPTION_ACTION_TYPES
-        or action_type.startswith("relay_")
-        or action_type == "await_role_decision"
-        or bool(action.get("relay_allowed"))
-    )
-    if actor == "controller" and relay_or_wait_boundary:
-        policy = {
-            "schema_version": "flowpilot.router_ready_preemption.v1",
-            "router_ready_preempts_foreground_wait": True,
-            "controller_must_scan_daemon_before_foreground_role_wait": True,
-            "normal_router_progress_source": "router_daemon_status_and_controller_action_ledger",
-            "allowed_router_reentry_commands": [],
-            "diagnostic_router_reentry_commands": ["next", "run-until-wait"],
-            "diagnostic_router_reentry_policy": (
-                "diagnostic/test/explicit-repair only; not normal progress while daemon status "
-                "and the Controller action ledger own the active run"
-            ),
-            "foreground_wait_agent_allowed": False,
-            "foreground_role_chat_wait_allowed": False,
-            "controlled_wait_records_allowed": [
-                "await_card_return_event",
-                "await_card_bundle_return_event",
-                "await_role_decision",
-            ],
-            "liveness_wait_allowed_only_when_router_requests_recovery": True,
-            "timeout_unknown_is_not_active": True,
-            "sealed_body_reads_allowed": bool(action.get("sealed_body_reads_allowed", False)),
-        }
-        action["controller_after_relay_policy"] = policy
-        action["next_step_contract"]["router_ready_preempts_foreground_wait"] = True
-        action["next_step_contract"]["controller_must_scan_daemon_before_foreground_role_wait"] = True
-        action["next_step_contract"]["normal_router_progress_source"] = "router_daemon_status_and_controller_action_ledger"
-        action["next_step_contract"]["foreground_wait_agent_allowed"] = False
-        action["next_step_contract"]["foreground_role_chat_wait_allowed"] = False
-    return action
+def make_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_action_factory._bind_router(sys.modules[__name__])
+    return flowpilot_router_action_factory.make_action(*args, **kwargs)
 
 
-def _payload_contract(
-    *,
-    name: str,
-    required_object: str,
-    required_fields: list[str],
-    optional_fields: list[str] | None = None,
-    allowed_values: dict[str, list[Any]] | None = None,
-    conditional_required_fields: dict[str, list[str]] | None = None,
-    structural_requirements: list[str] | None = None,
-    description: str,
-    reviewer_check: str | None = None,
-) -> dict[str, Any]:
-    contract = {
-        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
-        "name": name,
-        "required_object": required_object,
-        "required_fields": required_fields,
-        "optional_fields": optional_fields or [],
-        "conditional_required_fields": conditional_required_fields or {},
-        "structural_requirements": structural_requirements or [],
-        "allowed_values": allowed_values or {},
-        "description": description,
-        "controller_may_fill_missing_fields": False,
-        "on_missing_or_ambiguous_payload": "ask_user_or_return_to_named_role; do_not_guess",
-    }
-    if reviewer_check:
-        contract["reviewer_check"] = reviewer_check
-    return contract
+def _payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._payload_contract(*args, **kwargs)
 
 
-def _startup_answers_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="startup_answers_with_optional_ai_interpretation_receipt",
-        required_object="payload.startup_answers",
-        required_fields=["background_agents", "scheduled_continuation", "display_surface", "provenance"],
-        optional_fields=["payload.startup_answer_interpretation"],
-        allowed_values={
-            "startup_answers.background_agents": sorted(STARTUP_ANSWER_ENUMS["background_agents"]),
-            "startup_answers.scheduled_continuation": sorted(STARTUP_ANSWER_ENUMS["scheduled_continuation"]),
-            "startup_answers.display_surface": sorted(STARTUP_ANSWER_ENUMS["display_surface"]),
-            "startup_answers.provenance": [
-                STARTUP_ANSWER_PROVENANCE,
-                STARTUP_ANSWER_INTERPRETATION_PROVENANCE,
-            ],
-            "startup_answer_interpretation.schema_version": [STARTUP_ANSWER_INTERPRETATION_SCHEMA],
-            "startup_answer_interpretation.interpreted_by": ["controller", "bootloader"],
-            "startup_answer_interpretation.interpretation_provenance": [STARTUP_ANSWER_INTERPRETATION_PROVENANCE],
-            "startup_answer_interpretation.ambiguity_status": ["none"],
-            "startup_answer_interpretation.interpreted_answers.background_agents": sorted(
-                STARTUP_ANSWER_ENUMS["background_agents"]
-            ),
-            "startup_answer_interpretation.interpreted_answers.scheduled_continuation": sorted(
-                STARTUP_ANSWER_ENUMS["scheduled_continuation"]
-            ),
-            "startup_answer_interpretation.interpreted_answers.display_surface": sorted(
-                STARTUP_ANSWER_ENUMS["display_surface"]
-            ),
-        },
-        conditional_required_fields={
-            "when startup_answers.provenance=ai_interpreted_from_explicit_user_reply": [
-                "startup_answer_interpretation.schema_version",
-                "startup_answer_interpretation.raw_user_reply_text",
-                "startup_answer_interpretation.interpreted_by",
-                "startup_answer_interpretation.interpretation_provenance",
-                "startup_answer_interpretation.ambiguity_status",
-                "startup_answer_interpretation.interpreted_answers.background_agents",
-                "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
-                "startup_answer_interpretation.interpreted_answers.display_surface",
-            ],
-        },
-        description=(
-            "Pass canonical enum answers. If the user's reply was natural language, the AI may interpret it into "
-            "these fields only with a startup_answer_interpretation receipt that preserves the raw user reply and "
-            "states ambiguity_status=none."
-        ),
-    )
+def _startup_answers_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._startup_answers_payload_contract(*args, **kwargs)
 
 
-def _terminal_summary_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="terminal_summary_markdown_and_user_display_receipt",
-        required_object="payload",
-        required_fields=[
-            "summary_markdown",
-            "displayed_to_user",
-            "displayed_summary_sha256",
-            "read_scope_used",
-        ],
-        optional_fields=["source_paths_reviewed"],
-        allowed_values={
-            "displayed_to_user": [True],
-            "read_scope_used": [TERMINAL_SUMMARY_READ_SCOPE],
-        },
-        structural_requirements=[
-            f"summary_markdown must start with this exact attribution line: {TERMINAL_SUMMARY_ATTRIBUTION}",
-            "displayed_summary_sha256 must equal sha256(summary_markdown)",
-            "source_paths_reviewed, when supplied, may cite only files inside the current run root",
-            "Controller must show this same summary text to the user before writing the Controller receipt or applying the direct terminal action",
-            "The final user report is output-only and does not create completion authority",
-        ],
-        description=(
-            "Write the final FlowPilot run summary after terminal mode is reached. "
-            "This is a terminal-only read exception for all files inside the current run root."
-        ),
-    )
+def _terminal_summary_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._terminal_summary_payload_contract(*args, **kwargs)
 
 
-def _display_surface_receipt_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="display_surface_receipt",
-        required_object="payload.display_confirmation",
-        required_fields=[
-            "display_confirmation.action_type",
-            "display_confirmation.display_kind",
-            "display_confirmation.display_text_sha256",
-            "display_confirmation.provenance",
-            "display_confirmation.rendered_to",
-        ],
-        optional_fields=["payload.display_surface_receipt"],
-        allowed_values={
-            "display_confirmation.provenance": [DISPLAY_CONFIRMATION_PROVENANCE],
-            "display_confirmation.rendered_to": [DISPLAY_CONFIRMATION_TARGET],
-            "display_surface_receipt.schema_version": [DISPLAY_SURFACE_RECEIPT_SCHEMA],
-            "display_surface_receipt.actual_surface": ["chat_route_sign", "chat_route_sign_fallback", "cockpit"],
-            "display_surface_receipt.host_display_surface_verified": [True],
-        },
-        conditional_required_fields={
-            "when payload.display_surface_receipt is supplied": [
-                "display_surface_receipt.schema_version",
-                "display_surface_receipt.actual_surface",
-            ],
-            "when display_surface_receipt.actual_surface=cockpit": [
-                "display_surface_receipt.host_display_surface_verified",
-            ],
-        },
-        description=(
-            "Confirm the router-provided route sign was displayed in the user dialog. If a native Cockpit or "
-            "fallback display was attempted, include display_surface_receipt with the actual surface and host result."
-        ),
-        reviewer_check="Reviewer checks requested cockpit versus actual cockpit/fallback reality when Cockpit was requested.",
-    )
+def _display_surface_receipt_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._display_surface_receipt_payload_contract(*args, **kwargs)
 
 
-def _role_slots_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="role_slots_startup_receipt",
-        required_object="payload",
-        required_fields=[
-            "background_agents_capability_status",
-            "role_agents[].role_key",
-            "role_agents[].agent_id",
-            "role_agents[].model_policy",
-            "role_agents[].reasoning_effort_policy",
-            "role_agents[].spawn_result",
-            "role_agents[].spawned_for_run_id",
-            "role_agents[].spawned_after_startup_answers",
-        ],
-        optional_fields=["role_agents[].host_spawn_receipt"],
-        allowed_values={
-            "background_agents_capability_status": ["available"],
-            "role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
-            "role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
-            "role_agents[].spawn_result": [ROLE_AGENT_SPAWN_RESULT],
-            "role_agents[].host_spawn_receipt.source_kind": ["host_receipt"],
-        },
-        conditional_required_fields={
-            "when role_agents[].host_spawn_receipt is supplied": [
-                "role_agents[].host_spawn_receipt.source_kind",
-                "role_agents[].host_spawn_receipt.spawned_for_run_id",
-                "role_agents[].host_spawn_receipt.role_key",
-                "role_agents[].host_spawn_receipt.agent_id",
-            ],
-        },
-        structural_requirements=[
-            "Provide exactly one non-duplicate role agent record for each FlowPilot role key.",
-            "Each live role agent must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
-        ],
-        description="Record one fresh live host role agent per FlowPilot role when background agents were allowed, using the strongest available background role intelligence policy.",
-        reviewer_check="Reviewer checks live agent spawn freshness unless each slot carries a host receipt.",
-    )
+def _role_slots_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._role_slots_payload_contract(*args, **kwargs)
 
 
-def _heartbeat_payload_contract(run_id: str, automation_id_hint: str) -> dict[str, Any]:
-    return _payload_contract(
-        name="heartbeat_host_automation_receipt",
-        required_object="payload",
-        required_fields=[
-            "route_heartbeat_interval_minutes",
-            "host_automation_id",
-            "host_automation_verified",
-            "host_automation_proof.source_kind",
-            "host_automation_proof.run_id",
-            "host_automation_proof.host_automation_id",
-            "host_automation_proof.route_heartbeat_interval_minutes",
-            "host_automation_proof.heartbeat_bound_to_current_run",
-        ],
-        allowed_values={
-            "route_heartbeat_interval_minutes": [1],
-            "host_automation_verified": [True],
-            "host_automation_proof.source_kind": ["host_receipt"],
-            "host_automation_proof.run_id": [run_id],
-            "host_automation_proof.route_heartbeat_interval_minutes": [1],
-            "host_automation_proof.heartbeat_bound_to_current_run": [True],
-        },
-        description="Bind the one-minute host heartbeat automation to this exact current run before startup fact review.",
-        reviewer_check="Reviewer checks heartbeat host binding when scheduled continuation was requested.",
-    )
+def _heartbeat_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._heartbeat_payload_contract(*args, **kwargs)
 
 
-def _resume_role_rehydration_payload_contract(
-    run_state: dict[str, Any],
-    contexts: list[dict[str, Any]],
-) -> dict[str, Any]:
-    del contexts
-    return _payload_contract(
-        name="resume_role_rehydration_receipt",
-        required_object="payload",
-        required_fields=[
-            "background_agents_capability_status",
-            "liveness_probe_batch_id",
-            "liveness_probe_mode",
-            "all_liveness_probes_started_before_wait",
-            "rehydrated_role_agents[].role_key",
-            "rehydrated_role_agents[].agent_id",
-            "rehydrated_role_agents[].model_policy",
-            "rehydrated_role_agents[].reasoning_effort_policy",
-            "rehydrated_role_agents[].rehydration_result",
-            "rehydrated_role_agents[].rehydrated_for_run_id",
-            "rehydrated_role_agents[].rehydrated_after_resume_tick_id",
-            "rehydrated_role_agents[].rehydrated_after_resume_state_loaded",
-            "rehydrated_role_agents[].core_prompt_path",
-            "rehydrated_role_agents[].core_prompt_hash",
-            "rehydrated_role_agents[].host_liveness_status",
-            "rehydrated_role_agents[].liveness_decision",
-            "rehydrated_role_agents[].resume_agent_attempted",
-            "rehydrated_role_agents[].bounded_wait_result",
-            "rehydrated_role_agents[].bounded_wait_ms",
-            "rehydrated_role_agents[].liveness_probe_batch_id",
-            "rehydrated_role_agents[].liveness_probe_mode",
-            "rehydrated_role_agents[].liveness_probe_started_at",
-            "rehydrated_role_agents[].liveness_probe_completed_at",
-            "rehydrated_role_agents[].wait_agent_timeout_treated_as_active",
-        ],
-        allowed_values={
-            "background_agents_capability_status": ["available"],
-            "liveness_probe_mode": [ROLE_AGENT_LIVENESS_PROBE_MODE],
-            "all_liveness_probes_started_before_wait": [True],
-            "rehydrated_role_agents[].role_key": list(CREW_ROLE_KEYS),
-            "rehydrated_role_agents[].model_policy": [BACKGROUND_ROLE_MODEL_POLICY],
-            "rehydrated_role_agents[].reasoning_effort_policy": [BACKGROUND_ROLE_REASONING_EFFORT_POLICY],
-            "rehydrated_role_agents[].rehydration_result": sorted(RESUME_ROLE_AGENT_RESULTS),
-            "rehydrated_role_agents[].rehydrated_for_run_id": [run_state["run_id"]],
-            "rehydrated_role_agents[].rehydrated_after_resume_state_loaded": [True],
-            "rehydrated_role_agents[].host_liveness_status": sorted(ROLE_AGENT_HOST_LIVENESS_STATUSES),
-            "rehydrated_role_agents[].liveness_decision": sorted(ROLE_AGENT_LIVENESS_DECISIONS),
-            "rehydrated_role_agents[].resume_agent_attempted": [True],
-            "rehydrated_role_agents[].bounded_wait_result": sorted(ROLE_AGENT_BOUNDED_WAIT_RESULTS),
-            "rehydrated_role_agents[].liveness_probe_mode": [ROLE_AGENT_LIVENESS_PROBE_MODE],
-            "rehydrated_role_agents[].wait_agent_timeout_treated_as_active": [False],
-        },
-        conditional_required_fields={
-            "when role_rehydration_request[].role_memory_status=available": [
-                "rehydrated_role_agents[].memory_packet_path",
-                "rehydrated_role_agents[].memory_packet_hash",
-                "rehydrated_role_agents[].memory_seeded_from_current_run",
-            ],
-            "when role_rehydration_request[].role_memory_status!=available": [
-                "rehydrated_role_agents[].memory_missing_acknowledged",
-                "rehydrated_role_agents[].replacement_seeded_from_common_run_context",
-            ],
-            "when rehydrated_role_agents[].role_key=project_manager": [
-                "rehydrated_role_agents[].pm_resume_context_delivered",
-            ],
-        },
-        structural_requirements=[
-            "Provide exactly one non-duplicate rehydrated role agent record for each FlowPilot role key.",
-            "Start all six liveness probes in one concurrent batch before waiting for individual results.",
-            "Use one liveness_probe_batch_id for the top-level receipt and every role record.",
-            "Each record must match the corresponding role_rehydration_request path/hash fields.",
-            "Reuse active current-run role agents after memory/context refresh; spawn only replacement roles whose liveness is missing, cancelled, unknown, completed, or timeout_unknown.",
-            "Each restored or replacement live role agent must be bound to the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
-            "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
-            "missing, cancelled, completed, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
-        ],
-        optional_fields=[
-            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
-        ],
-        description="Refresh or replace all six FlowPilot role bindings from current-run memory before PM resume decision, reusing active agents and spawning only failed replacements.",
-        reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
-    )
+def _resume_role_rehydration_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._resume_role_rehydration_payload_contract(*args, **kwargs)
 
 
-def _pm_resume_decision_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
-    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
-    route_history = project_relative(project_root, _route_history_index_path(run_root))
-    return _payload_contract(
-        name="pm_resume_decision_role_output",
-        required_object="role_output_body",
-        required_fields=list(PM_RESUME_DECISION_REQUIRED_BODY_FIELDS),
-        optional_fields=[
-            "recovery_evidence",
-            "role_freshness_verification",
-            "packet_loop_continuation",
-            "decision_rationale",
-            "controller_reminder.controller_may_create_project_evidence",
-            "controller_reminder.controller_may_approve_gates",
-            "controller_reminder.controller_may_implement",
-        ],
-        allowed_values={
-            "decision_owner": ["project_manager"],
-            "decision": sorted(PM_RESUME_DECISION_ALLOWED_VALUES),
-            "prior_path_context_review.reviewed": [True],
-            "prior_path_context_review.source_paths": [[pm_context, route_history]],
-            "prior_path_context_review.controller_summary_used_as_evidence": [False],
-            "controller_reminder.controller_only": [True],
-            "controller_reminder.controller_may_read_sealed_bodies": [False],
-            "controller_reminder.controller_may_infer_from_chat_history": [False],
-            "controller_reminder.controller_may_advance_or_close_route": [False],
-            "controller_reminder.controller_may_create_project_evidence": [False],
-        },
-        conditional_required_fields={
-            "when continuation/resume_reentry.json records ambiguous_state_blocks_controller_execution=true and decision=continue_current_packet_loop": [
-                "explicit_recovery_evidence_recorded=true",
-                "recovery_evidence",
-            ],
-            "when decision=close_after_final_ledger_and_terminal_replay": [
-                "final_ledger_built_clean evidence",
-                "final_backward_replay_passed evidence",
-            ],
-        },
-        structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
-            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
-            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-        ],
-        description=(
-            "PM heartbeat/manual-resume recovery decision. This is a role-output body contract, "
-            "not Controller-authored project evidence; Controller waits for Router status after the runtime submits it."
-        ),
-    )
+def _pm_resume_decision_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._pm_resume_decision_payload_contract(*args, **kwargs)
 
 
-def _pm_parent_segment_decision_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
-    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
-    route_history = project_relative(project_root, _route_history_index_path(run_root))
-    return _payload_contract(
-        name="pm_parent_segment_decision_role_output",
-        required_object="role_output_body",
-        required_fields=list(PM_PARENT_SEGMENT_DECISION_REQUIRED_BODY_FIELDS),
-        optional_fields=[
-            "repair_node_id",
-            "superseded_nodes",
-            "stale_evidence_to_mark",
-            "decision_rationale",
-            "same_parent_replay_rerun_plan",
-            "contract_self_check",
-        ],
-        allowed_values={
-            "decision_owner": ["project_manager"],
-            "decision": sorted(PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES),
-            "prior_path_context_review.reviewed": [True],
-            "prior_path_context_review.source_paths": [[pm_context, route_history]],
-            "prior_path_context_review.controller_summary_used_as_evidence": [False],
-        },
-        conditional_required_fields={
-            "when decision!=continue": [
-                "decision_rationale",
-                "stale_evidence_to_mark or superseded_nodes when affected evidence/nodes exist",
-                "same_parent_replay_rerun_plan",
-            ],
-        },
-        structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
-            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
-            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-            "Only decision=continue may close the active parent node; all other decisions require route mutation and same-parent replay rerun.",
-        ],
-        description=(
-            "PM parent-segment decision after reviewer backward replay. This is a role-output body "
-            "contract; Controller waits for Router status after the runtime submits it."
-        ),
-    )
+def _pm_parent_segment_decision_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._pm_parent_segment_decision_payload_contract(*args, **kwargs)
 
 
-def _pm_terminal_closure_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
-    pm_context = project_relative(project_root, _pm_prior_path_context_path(run_root))
-    route_history = project_relative(project_root, _route_history_index_path(run_root))
-    return _payload_contract(
-        name="pm_terminal_closure_decision_role_output",
-        required_object="role_output_body",
-        required_fields=list(PM_TERMINAL_CLOSURE_DECISION_REQUIRED_BODY_FIELDS),
-        optional_fields=[
-            "final_report",
-            "closure_rationale",
-            "lifecycle_reconciliation",
-            "lifecycle_reconciliation.final_route_wide_gate_ledger_clean",
-            "lifecycle_reconciliation.terminal_backward_replay_passed",
-            "lifecycle_reconciliation.task_completion_projection_ready_for_pm_terminal_closure",
-            "lifecycle_reconciliation.execution_frontier_current",
-            "lifecycle_reconciliation.crew_ledger_current",
-            "lifecycle_reconciliation.continuation_binding_current",
-            "lifecycle_reconciliation.current_ledgers_clean",
-            "lifecycle_reconciliation.pm_suggestion_ledger_clean",
-            "lifecycle_reconciliation.self_interrogation_index_clean",
-            "contract_self_check",
-        ],
-        allowed_values={
-            "approved_by_role": ["project_manager"],
-            "decision": sorted(PM_TERMINAL_CLOSURE_DECISION_ALLOWED_VALUES),
-            "prior_path_context_review.reviewed": [True],
-            "prior_path_context_review.source_paths": [[pm_context, route_history]],
-            "prior_path_context_review.controller_summary_used_as_evidence": [False],
-            "lifecycle_reconciliation.final_route_wide_gate_ledger_clean": [True],
-            "lifecycle_reconciliation.terminal_backward_replay_passed": [True],
-            "lifecycle_reconciliation.task_completion_projection_ready_for_pm_terminal_closure": [True],
-            "lifecycle_reconciliation.execution_frontier_current": [True],
-            "lifecycle_reconciliation.crew_ledger_current": [True],
-            "lifecycle_reconciliation.continuation_binding_current": [True],
-            "lifecycle_reconciliation.current_ledgers_clean": [True],
-            "lifecycle_reconciliation.pm_suggestion_ledger_clean": [True],
-            "lifecycle_reconciliation.self_interrogation_index_clean": [True],
-        },
-        structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
-            "Cite exactly the current-run pm_prior_path_context.json and route_history_index.json in prior_path_context_review.source_paths.",
-            "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
-            "Approve closure only after clean final ledger, passed terminal backward replay, current completion projection, clean PM suggestion ledger, clean self-interrogation index, clean lifecycle ledgers, and continuation binding are present.",
-        ],
-        description=(
-            "PM terminal closure approval. This is a role-output body contract; Controller may only "
-            "wait for Router status and must not infer closure from chat history."
-        ),
-    )
+def _pm_terminal_closure_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._pm_terminal_closure_payload_contract(*args, **kwargs)
 
 
-def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -> dict[str, Any]:
-    return _payload_contract(
-        name="pm_model_miss_triage_decision_role_output",
-        required_object="role_output_body",
-        required_fields=list(PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS),
-        optional_fields=[
-            "officer_request_refs",
-            "officer_report_refs",
-            "same_class_findings_summary",
-            "candidate_repairs_considered",
-            "minimal_sufficient_repair_recommendation",
-            "rejected_larger_repairs",
-            "rejected_smaller_repairs",
-            "post_repair_model_checks_required",
-            "decision_rationale",
-        ],
-        allowed_values={
-            "decided_by_role": ["project_manager"],
-            "decision": sorted(PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES),
-            "same_class_findings_reviewed": [True, False],
-            "repair_recommendation_reviewed": [True, False],
-        },
-        conditional_required_fields={
-            "when decision=proceed_with_model_backed_repair": [
-                "flowguard_capability.can_model_bug_class=true",
-                "officer_report_refs[].report_path",
-                "officer_report_refs[].report_hash",
-                "same_class_findings_reviewed=true",
-                "repair_recommendation_reviewed=true",
-                "candidate_repairs_considered",
-                "minimal_sufficient_repair_recommendation",
-                "post_repair_model_checks_required",
-            ],
-            "when decision=out_of_scope_not_modelable": [
-                "flowguard_capability.can_model_bug_class=false",
-                "flowguard_capability.incapability_reason",
-                "selected_next_action",
-                "why_repair_may_start",
-            ],
-        },
-        structural_requirements=[
-            "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
-            "Do not start pm.review_repair until this decision either authorizes a model-backed repair or records why FlowGuard cannot model the bug class.",
-            "For model-backed repair, officer reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
-            "PM selects the repair path; officer reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",
-        ],
-        description=(
-            "PM model-miss triage decision for reviewer blockers. This closes the obligation to ask why "
-            "FlowGuard missed the bug class before normal repair planning can start."
-        ),
-    )
+def _pm_model_miss_triage_payload_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._pm_model_miss_triage_payload_contract(*args, **kwargs)
 
 
-def _pm_decision_payload_contract_for_card(project_root: Path, run_root: Path, card_id: str) -> dict[str, Any] | None:
-    if card_id == "pm.resume_decision":
-        return _pm_resume_decision_payload_contract(project_root, run_root)
-    if card_id == "pm.model_miss_triage":
-        return _pm_model_miss_triage_payload_contract(project_root, run_root)
-    if card_id == "pm.parent_segment_decision":
-        return _pm_parent_segment_decision_payload_contract(project_root, run_root)
-    if card_id == "pm.closure":
-        return _pm_terminal_closure_payload_contract(project_root, run_root)
-    return None
+def _pm_decision_payload_contract_for_card(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._pm_decision_payload_contract_for_card(*args, **kwargs)
 
 
-def _role_decision_payload_contract_for_events(
-    project_root: Path, run_root: Path, allowed_events: list[str]
-) -> dict[str, Any] | None:
-    if allowed_events == ["pm_resume_recovery_decision_returned"]:
-        return _pm_resume_decision_payload_contract(project_root, run_root)
-    if allowed_events == [PM_MODEL_MISS_TRIAGE_DECISION_EVENT]:
-        return _pm_model_miss_triage_payload_contract(project_root, run_root)
-    if allowed_events == ["pm_records_parent_segment_decision"]:
-        return _pm_parent_segment_decision_payload_contract(project_root, run_root)
-    if allowed_events == ["pm_approves_terminal_closure"]:
-        return _pm_terminal_closure_payload_contract(project_root, run_root)
-    return None
+def _role_decision_payload_contract_for_events(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_payload_contracts._bind_router(sys.modules[__name__])
+    return flowpilot_router_payload_contracts._role_decision_payload_contract_for_events(*args, **kwargs)
 
 
 def _json_safe(value: Any) -> Any:
@@ -4916,398 +2158,34 @@ def _terminal_closure_suite_is_closed(run_root: Path) -> bool:
 
 
 
-def _clear_active_control_blocker_for_terminal_lifecycle(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    mode: str,
-    event: str,
-    cleared_at: str,
-) -> dict[str, Any] | None:
-    active = run_state.get("active_control_blocker")
-    if not isinstance(active, dict):
-        return None
-    blocker_id = str(active.get("blocker_id") or "")
-    if not blocker_id:
-        run_state["active_control_blocker"] = None
-        run_state["latest_control_blocker_path"] = None
-        return {"authority": "control_blocker", "status": "cleared_missing_blocker_id"}
-    resolved = dict(active)
-    resolved["resolution_status"] = "superseded_by_terminal_lifecycle"
-    resolved["resolved_by_event"] = event
-    resolved["resolved_at"] = cleared_at
-    resolved["terminal_lifecycle_status"] = mode
-    existing = run_state.get("resolved_control_blockers")
-    if not isinstance(existing, list):
-        existing = []
-        run_state["resolved_control_blockers"] = existing
-    if not any(isinstance(item, dict) and item.get("blocker_id") == blocker_id for item in existing):
-        existing.append(resolved)
-    artifact_path = resolve_project_path(project_root, str(active.get("blocker_artifact_path") or ""))
-    if artifact_path.exists():
-        record = read_json(artifact_path)
-        record["resolution_status"] = "superseded_by_terminal_lifecycle"
-        record["resolved_by_event"] = event
-        record["resolved_at"] = cleared_at
-        record["terminal_lifecycle_status"] = mode
-        write_json(artifact_path, record)
-    run_state["active_control_blocker"] = None
-    run_state["latest_control_blocker_path"] = None
-    _sync_control_plane_indexes(project_root, run_root, run_state)
-    return {
-        "authority": "control_blocker",
-        "blocker_id": blocker_id,
-        "resolution_status": "superseded_by_terminal_lifecycle",
-    }
+def _clear_active_control_blocker_for_terminal_lifecycle(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle(*args, **kwargs)
 
 
-def _write_run_lifecycle_request(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    event: str,
-    payload: dict[str, Any],
-) -> None:
-    mode = "cancelled_by_user" if event == "user_requests_run_cancel" else "stopped_by_user"
-    previous_pending = run_state.get("pending_action")
-    active_blocker = run_state.get("active_control_blocker")
-    cleanup_receipts = payload.get("cleanup_receipts") if isinstance(payload.get("cleanup_receipts"), list) else []
-    record = {
-        "schema_version": "flowpilot.run_lifecycle.v1",
-        "run_id": run_state.get("run_id"),
-        "status": mode,
-        "requested_by": str(payload.get("requested_by") or "user"),
-        "request_event": event,
-        "reason": payload.get("reason"),
-        "previous_pending_action": previous_pending,
-        "active_control_blocker_at_request": active_blocker,
-        "cleanup_receipts": cleanup_receipts,
-        "controller_may_continue_route_work": False,
-        "controller_may_spawn_new_role_work": False,
-        "requested_at": utc_now(),
-    }
-    run_state["status"] = mode
-    run_state["phase"] = "terminal"
-    run_state["holder"] = "controller"
-    run_state["pending_action"] = None
-    flags = run_state.setdefault("flags", {})
-    if mode == "stopped_by_user":
-        flags["run_stopped_by_user"] = True
-    elif mode == "cancelled_by_user":
-        flags["run_cancelled_by_user"] = True
-    reconciliation = _reconcile_terminal_lifecycle_authorities(project_root, run_root, run_state, mode=mode, event=event)
-    record["cleanup_receipts"] = cleanup_receipts + reconciliation["cleanup_receipts"]
-    record["reconciliation"] = reconciliation
-    write_json(_lifecycle_record_path(run_root), record)
-    append_history(run_state, f"run_{mode}", {"event": event, "lifecycle_path": project_relative(project_root, _lifecycle_record_path(run_root))})
-
-    current_path = project_root / ".flowpilot" / "current.json"
-    current = read_json_if_exists(current_path) or {}
-    if current.get("current_run_id") == run_state.get("run_id"):
-        current["status"] = mode
-        current["updated_at"] = utc_now()
-        write_json(current_path, current)
-
-    index_path = project_root / ".flowpilot" / "index.json"
-    index = read_json_if_exists(index_path) or {}
-    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
-    for item in runs:
-        if isinstance(item, dict) and item.get("run_id") == run_state.get("run_id"):
-            item["status"] = mode
-            item["updated_at"] = utc_now()
-    index["updated_at"] = utc_now()
-    if runs:
-        index["runs"] = runs
-    write_json(index_path, index)
-    _write_route_state_snapshot(project_root, run_root, run_state, source_event=event)
+def _write_run_lifecycle_request(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._write_run_lifecycle_request(*args, **kwargs)
 
 
-def _reconcile_terminal_lifecycle_authorities(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    mode: str,
-    event: str,
-) -> dict[str, Any]:
-    reconciled_at = utc_now()
-    receipts: list[dict[str, Any]] = []
-    source_paths: dict[str, str] = {}
-
-    continuation_path = _continuation_binding_path(run_root)
-    if continuation_path.exists():
-        continuation = read_json(continuation_path)
-        source_paths["continuation_binding"] = project_relative(project_root, continuation_path)
-        previous_heartbeat_active = bool(continuation.get("heartbeat_active"))
-        automation_id = str(continuation.get("host_automation_id") or "")
-        automation_path = Path.home() / ".codex" / "automations" / automation_id / "automation.toml" if automation_id else None
-        automation_exists = bool(automation_path and automation_path.exists())
-        if automation_id and not automation_exists:
-            cleanup_status = "missing_verified"
-        elif automation_id and previous_heartbeat_active:
-            cleanup_status = "external_cleanup_may_be_required"
-        else:
-            cleanup_status = "inactive_verified"
-        continuation["heartbeat_active"] = False
-        continuation["lifecycle_status"] = mode
-        continuation["terminal_event"] = event
-        continuation["terminal_reconciled_at"] = reconciled_at
-        continuation["host_automation_cleanup_status"] = cleanup_status
-        continuation["host_automation_toml_exists"] = automation_exists if automation_id else None
-        continuation["host_automation_checked_path"] = str(automation_path) if automation_path else None
-        write_json(continuation_path, continuation)
-        receipts.append(
-            {
-                "authority": "continuation_binding",
-                "path": project_relative(project_root, continuation_path),
-                "previous_heartbeat_active": previous_heartbeat_active,
-                "heartbeat_active": False,
-                "host_automation_cleanup_status": continuation["host_automation_cleanup_status"],
-                "host_automation_toml_exists": continuation["host_automation_toml_exists"],
-            }
-        )
-
-    crew_path = run_root / "crew_ledger.json"
-    if crew_path.exists():
-        crew = read_json(crew_path)
-        source_paths["crew_ledger"] = project_relative(project_root, crew_path)
-        role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
-        live_before = sum(1 for slot in role_slots if isinstance(slot, dict) and str(slot.get("status") or "").startswith("live_"))
-        for slot in role_slots:
-            if isinstance(slot, dict):
-                slot["status"] = "stopped_with_run"
-                slot["live_agent_active"] = False
-                slot["stopped_at"] = reconciled_at
-        crew["lifecycle_status"] = mode
-        crew["terminal_reconciled_at"] = reconciled_at
-        write_json(crew_path, crew)
-        receipts.append(
-            {
-                "authority": "crew_ledger",
-                "path": project_relative(project_root, crew_path),
-                "live_role_slots_before": live_before,
-                "live_role_slots_after": 0,
-            }
-        )
-
-    packet_ledger_path = run_root / "packet_ledger.json"
-    if packet_ledger_path.exists():
-        packet_ledger = read_json(packet_ledger_path)
-        source_paths["packet_ledger"] = project_relative(project_root, packet_ledger_path)
-        previous_status = packet_ledger.get("active_packet_status")
-        previous_holder = packet_ledger.get("active_packet_holder")
-        packet_ledger["active_packet_status"] = mode
-        packet_ledger["active_packet_holder"] = "controller"
-        packet_ledger["terminal_lifecycle"] = {
-            "status": mode,
-            "event": event,
-            "previous_active_packet_status": previous_status,
-            "previous_active_packet_holder": previous_holder,
-            "controller_may_continue_packet_loop": False,
-            "reconciled_at": reconciled_at,
-        }
-        packet_ledger["updated_at"] = reconciled_at
-        write_json(packet_ledger_path, packet_ledger)
-        receipts.append(
-            {
-                "authority": "packet_ledger",
-                "path": project_relative(project_root, packet_ledger_path),
-                "previous_active_packet_status": previous_status,
-                "active_packet_status": mode,
-            }
-        )
-
-    frontier_path = run_root / "execution_frontier.json"
-    if frontier_path.exists():
-        frontier = read_json(frontier_path)
-        source_paths["execution_frontier"] = project_relative(project_root, frontier_path)
-        previous_status = frontier.get("status")
-        frontier["status"] = mode
-        frontier["phase"] = "terminal"
-        frontier["terminal"] = True
-        frontier["terminal_event"] = event
-        frontier["updated_at"] = reconciled_at
-        frontier["source"] = event
-        write_json(frontier_path, frontier)
-        receipts.append(
-            {
-                "authority": "execution_frontier",
-                "path": project_relative(project_root, frontier_path),
-                "previous_status": previous_status,
-                "status": mode,
-            }
-        )
-
-    blocker_receipt = _clear_active_control_blocker_for_terminal_lifecycle(
-        project_root,
-        run_root,
-        run_state,
-        mode=mode,
-        event=event,
-        cleared_at=reconciled_at,
-    )
-    if blocker_receipt:
-        receipts.append(blocker_receipt)
-
-    report = {
-        "schema_version": "flowpilot.terminal_lifecycle_reconciliation.v1",
-        "run_id": run_state.get("run_id"),
-        "status": mode,
-        "event": event,
-        "controller_may_continue_route_work": False,
-        "controller_may_spawn_new_role_work": False,
-        "cleanup_receipts": receipts,
-        "source_paths": source_paths,
-        "reconciled_at": reconciled_at,
-    }
-    write_json(run_root / "lifecycle" / "terminal_reconciliation.json", report)
-    report["reconciliation_path"] = project_relative(project_root, run_root / "lifecycle" / "terminal_reconciliation.json")
-    return report
+def _reconcile_terminal_lifecycle_authorities(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._reconcile_terminal_lifecycle_authorities(*args, **kwargs)
 
 
-def _write_protocol_dead_end_lifecycle(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    dead_end_path: Path,
-    reason: str | None,
-) -> None:
-    mode = "protocol_dead_end"
-    previous_pending = run_state.get("pending_action")
-    active_blocker = run_state.get("active_control_blocker")
-    write_json(
-        _lifecycle_record_path(run_root),
-        {
-            "schema_version": "flowpilot.run_lifecycle.v1",
-            "run_id": run_state.get("run_id"),
-            "status": mode,
-            "requested_by": "project_manager",
-            "request_event": "pm_declares_startup_protocol_dead_end",
-            "reason": reason,
-            "protocol_dead_end_path": project_relative(project_root, dead_end_path),
-            "previous_pending_action": previous_pending,
-            "active_control_blocker_at_request": active_blocker,
-            "controller_may_continue_route_work": False,
-            "controller_may_spawn_new_role_work": False,
-            "requested_at": utc_now(),
-        },
-    )
-    run_state["status"] = mode
-    run_state["phase"] = "terminal"
-    run_state["holder"] = "controller"
-    run_state["pending_action"] = None
-    append_history(
-        run_state,
-        "run_protocol_dead_end",
-        {"protocol_dead_end_path": project_relative(project_root, dead_end_path)},
-    )
-
-    current_path = project_root / ".flowpilot" / "current.json"
-    current = read_json_if_exists(current_path) or {}
-    if current.get("current_run_id") == run_state.get("run_id"):
-        current["status"] = mode
-        current["updated_at"] = utc_now()
-        write_json(current_path, current)
-
-    index_path = project_root / ".flowpilot" / "index.json"
-    index = read_json_if_exists(index_path) or {}
-    runs = index.get("runs") if isinstance(index.get("runs"), list) else []
-    for item in runs:
-        if isinstance(item, dict) and item.get("run_id") == run_state.get("run_id"):
-            item["status"] = mode
-            item["updated_at"] = utc_now()
-    index["updated_at"] = utc_now()
-    if runs:
-        index["runs"] = runs
-    write_json(index_path, index)
+def _write_protocol_dead_end_lifecycle(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._write_protocol_dead_end_lifecycle(*args, **kwargs)
 
 
-def _run_lifecycle_terminal_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    mode = _terminal_lifecycle_mode(run_state)
-    if not mode:
-        return None
-    if not _terminal_summary_written(project_root, run_state, run_root):
-        run_state.setdefault("flags", {})["terminal_summary_card_delivered"] = True
-        return _terminal_summary_action(project_root, run_state, run_root, mode=mode)
-    lifecycle_rel = project_relative(project_root, _lifecycle_record_path(run_root))
-    return make_action(
-        action_type="run_lifecycle_terminal",
-        actor="controller",
-        label=f"controller_observes_{mode}",
-        summary="This FlowPilot run is terminal; no further route work is authorized.",
-        allowed_reads=[lifecycle_rel, project_relative(project_root, run_state_path(run_root))],
-        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-        extra={
-            "run_lifecycle_status": mode,
-            "terminal_for_route": True,
-            "controller_may_continue_route_work": False,
-            "controller_may_spawn_new_role_work": False,
-            "allowed_external_events": ["user_requests_run_stop", "user_requests_run_cancel"],
-        },
-    )
+def _run_lifecycle_terminal_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._run_lifecycle_terminal_action(*args, **kwargs)
 
 
-def _try_write_control_blocker_for_exception(
-    project_root: Path,
-    *,
-    source: str,
-    error_message: str,
-    event: str | None = None,
-    action_type: str | None = None,
-    payload: dict[str, Any] | None = None,
-) -> dict[str, Any] | None:
-    if not _should_materialize_control_blocker(
-        error_message,
-        event=event,
-        action_type=action_type,
-        payload=payload,
-    ):
-        return None
-    try:
-        bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
-        run_state, run_root = load_run_state(project_root, bootstrap)
-        if run_state is None or run_root is None:
-            return None
-        return _write_control_blocker(
-            project_root,
-            run_root,
-            run_state,
-            source=source,
-            error_message=error_message,
-            event=event,
-            action_type=action_type,
-            payload=payload,
-        )
-    except Exception:
-        try:
-            fallback = {
-                "schema_version": "flowpilot.control_blocker_materialization_failure.v1",
-                "materialization_failed": True,
-                "source": source,
-                "error_message": error_message,
-                "event": event,
-                "action_type": action_type,
-                "recorded_at": utc_now(),
-            }
-            flowpilot_root = project_root / ".flowpilot"
-            failure_path = flowpilot_root / "control_blocker_materialization_failures.jsonl"
-            failure_path.parent.mkdir(parents=True, exist_ok=True)
-            with failure_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(fallback, sort_keys=True) + "\n")
-            fallback["fallback_diagnostic_path"] = project_relative(project_root, failure_path)
-            return fallback
-        except Exception:
-            return {
-                "schema_version": "flowpilot.control_blocker_materialization_failure.v1",
-                "materialization_failed": True,
-                "source": source,
-                "error_message": error_message,
-                "event": event,
-                "action_type": action_type,
-            }
+def _try_write_control_blocker_for_exception(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_lifecycle_requests._bind_router(sys.modules[__name__])
+    return flowpilot_router_lifecycle_requests._try_write_control_blocker_for_exception(*args, **kwargs)
 
 
 def _startup_bootloader_open_entries_by_action_type(project_root: Path, state: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
@@ -6254,872 +3132,109 @@ def _write_material_understanding(project_root: Path, run_root: Path, run_state:
 
 
 
-def _write_product_function_architecture(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("product-function architecture must be PM-owned")
-    material_understanding_path = run_root / "pm_material_understanding.json"
-    if not material_understanding_path.exists():
-        raise RouterError("product-function architecture requires pm_material_understanding.json")
-    required_lists = ("user_task_map", "product_capability_map", "feature_decisions", "functional_acceptance_matrix")
-    missing_lists = [name for name in required_lists if not isinstance(payload.get(name), list) or not payload.get(name)]
-    if missing_lists:
-        raise RouterError(f"product-function architecture requires non-empty lists: {', '.join(missing_lists)}")
-    if not isinstance(payload.get("highest_achievable_product_target"), dict) or not payload.get("highest_achievable_product_target"):
-        raise RouterError("product-function architecture requires highest_achievable_product_target")
-    semantic_policy = payload.get("semantic_fidelity_policy")
-    if not isinstance(semantic_policy, dict) or semantic_policy.get("silent_downgrade_forbidden") is not True:
-        raise RouterError("product-function architecture requires semantic_fidelity_policy.silent_downgrade_forbidden=true")
-    root_requirements = payload.get("functional_acceptance_matrix")
-    if not isinstance(root_requirements, list):
-        raise RouterError("functional_acceptance_matrix must be a list when provided")
-    requirement_trace = payload.get("requirement_trace") if isinstance(payload.get("requirement_trace"), dict) else {}
-    if not requirement_trace:
-        source_registry = [
-            {
-                "source_requirement_id": str(item.get("source_requirement_id") or item.get("requirement_id") or item.get("acceptance_id") or f"req-{index:03d}"),
-                "source_type": str(item.get("source") or "product_function_architecture"),
-                "source_path": project_relative(project_root, material_understanding_path),
-                "statement": str(item.get("goal") or item.get("behavior") or item.get("acceptance_statement") or item.get("acceptance_id") or f"Requirement {index}"),
-                "status": "active",
-                "superseded_by": [],
-            }
-            for index, item in enumerate(root_requirements, start=1)
-            if isinstance(item, dict)
-        ]
-        requirement_trace = {
-            "schema_version": "flowpilot.requirement_trace.v1",
-            "pm_owned": True,
-            "flowpilot_standalone": True,
-            "external_tools_required": False,
-            "full_protocol_required_when_flowpilot_invoked": True,
-            "source_registry": source_registry,
-            "legacy_inferred_from_functional_acceptance_matrix": True,
-        }
-    architecture = {
-        "schema_version": "flowpilot.product_function_architecture.v1",
-        "run_id": run_state["run_id"],
-        "status": str(payload.get("status") or "draft"),
-        "pm_owned": True,
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "source_paths": {
-            "startup_answers": project_relative(project_root, run_root / "startup_answers.json"),
-            "startup_activation": project_relative(project_root, run_root / "startup" / "startup_activation.json"),
-            "display_surface": project_relative(project_root, run_root / "display" / "display_surface.json"),
-            "pm_material_understanding": project_relative(project_root, material_understanding_path),
-        },
-        "source_material_review": run_state.get("material_review"),
-        "requirement_trace": requirement_trace,
-        "high_standard_posture": payload.get("high_standard_posture") or {"highest_reasonably_achievable_is_floor": True},
-        "unacceptable_result_review": payload.get("unacceptable_result_review") or [],
-        "user_task_map": payload.get("user_task_map"),
-        "product_capability_map": payload.get("product_capability_map"),
-        "feature_decisions": payload.get("feature_decisions"),
-        "display_rationale": payload.get("display_rationale") or [],
-        "missing_feature_review": payload.get("missing_feature_review") or [],
-        "negative_scope": payload.get("negative_scope") or [],
-        "semantic_fidelity_policy": semantic_policy,
-        "highest_achievable_product_target": payload.get("highest_achievable_product_target"),
-        "functional_acceptance_matrix": root_requirements,
-        "written_by_role": "project_manager",
-        **_role_output_envelope_record(payload),
-    }
-    write_json(run_root / "product_function_architecture.json", architecture)
+def _write_product_function_architecture(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_product_function_architecture(*args, **kwargs)
 
 
-def _write_role_gate_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    expected_role: str,
-    path: Path,
-    schema_version: str,
-    checked_paths: list[Path],
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != expected_role:
-        raise RouterError(f"gate report must be reviewed_by_role={expected_role}")
-    if payload.get("passed") is not True:
-        raise RouterError("gate report must explicitly pass")
-    missing = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing:
-        raise RouterError(f"gate report is missing source paths: {', '.join(missing)}")
-    write_json(
-        path,
-        {
-            "schema_version": schema_version,
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": expected_role,
-            "passed": True,
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
+def _write_role_gate_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_role_gate_report(*args, **kwargs)
 
 
-def _write_compatibility_alias_artifact(
-    project_root: Path,
-    source_path: Path,
-    alias_path: Path,
-    *,
-    schema_version: str,
-    alias_kind: str,
-) -> None:
-    artifact = read_json(source_path)
-    artifact["schema_version"] = schema_version
-    artifact["compatibility_alias_kind"] = alias_kind
-    artifact["compatibility_alias_for"] = project_relative(project_root, source_path)
-    artifact["compatibility_alias_recorded_at"] = utc_now()
-    write_json(alias_path, artifact)
+def _write_compatibility_alias_artifact(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_compatibility_alias_artifact(*args, **kwargs)
 
 
-def _write_product_behavior_model_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    canonical_path = _product_behavior_model_report_path(run_root)
-    _write_role_gate_report(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        expected_role="product_flowguard_officer",
-        path=canonical_path,
-        schema_version="flowpilot.product_behavior_model.v1",
-        checked_paths=[run_root / "product_function_architecture.json"],
-    )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _product_behavior_model_compatibility_report_path(run_root),
-        schema_version="flowpilot.product_architecture_modelability.v1",
-        alias_kind="product_architecture_modelability",
-    )
+def _write_product_behavior_model_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_product_behavior_model_report(*args, **kwargs)
 
 
-def _write_pm_model_decision(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    path: Path,
-    schema_version: str,
-    expected_decision: str,
-    source_paths: list[Path],
-) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    if payload.get("decided_by_role") != "project_manager":
-        raise RouterError("PM model decision must include decided_by_role=project_manager")
-    if payload.get("decision") != expected_decision:
-        raise RouterError(f"PM model decision requires decision={expected_decision}")
-    missing = [project_relative(project_root, item) for item in source_paths if not item.exists()]
-    if missing:
-        raise RouterError(f"PM model decision is missing source paths: {', '.join(missing)}")
-    write_json(
-        path,
-        {
-            "schema_version": schema_version,
-            "run_id": run_state["run_id"],
-            "decided_by_role": "project_manager",
-            "decision": expected_decision,
-            "source_paths": [project_relative(project_root, item) for item in source_paths],
-            "pm_model_fit_review": payload.get("pm_model_fit_review"),
-            "product_goal_coverage": payload.get("product_goal_coverage"),
-            "unmodeled_or_ambiguous_behavior": payload.get("unmodeled_or_ambiguous_behavior") or [],
-            "serial_execution_line_review": payload.get("serial_execution_line_review"),
-            "recursive_node_entry_review": payload.get("recursive_node_entry_review"),
-            "leaf_worker_readiness_review": payload.get("leaf_worker_readiness_review"),
-            "parent_and_final_backward_review_policy": payload.get("parent_and_final_backward_review_policy"),
-            "model_miss_repair_policy": payload.get("model_miss_repair_policy"),
-            "next_action": payload.get("next_action"),
-            "decided_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
+def _write_pm_model_decision(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_model_decision(*args, **kwargs)
 
 
-def _write_pm_product_behavior_model_decision(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    accepted: bool,
-) -> None:
-    _write_pm_model_decision(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        path=run_root / "flowguard" / "product_behavior_model_pm_decision.json",
-        schema_version="flowpilot.product_behavior_model_pm_decision.v1",
-        expected_decision="accept_product_behavior_model"
-        if accepted
-        else "request_product_behavior_model_rebuild",
-        source_paths=[
-            run_root / "product_function_architecture.json",
-            _require_product_behavior_model_report(project_root, run_root),
-        ],
-    )
-    if not accepted:
-        for flag in PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS:
-            run_state.setdefault("flags", {})[flag] = False
+def _write_pm_product_behavior_model_decision(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_product_behavior_model_decision(*args, **kwargs)
 
 
-def _write_pm_process_route_model_decision(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    accepted: bool,
-) -> None:
-    _write_pm_model_decision(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        path=run_root / "flowguard" / "process_route_model_pm_decision.json",
-        schema_version="flowpilot.process_route_model_pm_decision.v1",
-        expected_decision="accept_process_route_model" if accepted else "request_process_route_model_rebuild",
-        source_paths=[
-            _current_route_draft_path(run_root),
-            _require_process_route_model_report(project_root, run_root),
-        ],
-    )
-    if not accepted:
-        _reset_route_review_after_route_draft_repair(run_state)
+def _write_pm_process_route_model_decision(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_process_route_model_decision(*args, **kwargs)
 
 
-def _write_role_block_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    expected_role: str,
-    path: Path,
-    schema_version: str,
-    checked_paths: list[Path],
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != expected_role:
-        raise RouterError(f"block report must be reviewed_by_role={expected_role}")
-    if payload.get("passed") is True:
-        raise RouterError("block report cannot pass")
-    missing = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing:
-        raise RouterError(f"block report is missing source paths: {', '.join(missing)}")
-    write_json(
-        path,
-        {
-            "schema_version": schema_version,
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": expected_role,
-            "passed": False,
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
-            "repair_recommendation": payload.get("repair_recommendation"),
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
+def _write_role_block_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_role_block_report(*args, **kwargs)
 
 
-def _gate_outcome_path_from_token(run_root: Path, token: str) -> Path:
-    if token == "__current_route_draft__":
-        return _current_route_draft_path(run_root)
-    if token == "__parent_backward_targets__":
-        frontier = _active_frontier(run_root)
-        return run_root / "routes" / str(frontier["active_route_id"]) / "parent_backward_targets.json"
-    if token == "__active_node_acceptance_plan__":
-        frontier = _active_frontier(run_root)
-        return _active_node_acceptance_plan_path(run_root, frontier)
-    if token.startswith("__active_node_root__/"):
-        frontier = _active_frontier(run_root)
-        return _active_node_root(run_root, frontier) / token.removeprefix("__active_node_root__/")
-    return run_root / token
+def _gate_outcome_path_from_token(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._gate_outcome_path_from_token(*args, **kwargs)
 
 
-def _write_gate_outcome_block_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    event: str,
-) -> None:
-    spec = GATE_OUTCOME_BLOCK_EVENT_SPECS[event]
-    checked_paths = [
-        _gate_outcome_path_from_token(run_root, str(token))
-        for token in spec.get("checked_paths", ())
-    ]
-    report_path = _gate_outcome_path_from_token(run_root, str(spec["path"]))
-    _write_role_block_report(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        expected_role=str(spec["expected_role"]),
-        path=report_path,
-        schema_version=str(spec["schema_version"]),
-        checked_paths=checked_paths,
-    )
-    flags = run_state.setdefault("flags", {})
-    for reset_flag in spec.get("reset_flags", ()):
-        flags[str(reset_flag)] = False
-    gate_blocks = run_state.setdefault("gate_outcome_blocks", [])
-    if not isinstance(gate_blocks, list):
-        gate_blocks = []
-    record = {
-        "event": event,
-        "report_path": project_relative(project_root, report_path),
-        "repair_resets": [str(flag) for flag in spec.get("reset_flags", ())],
-        "recorded_at": utc_now(),
-    }
-    gate_blocks.append(record)
-    run_state["gate_outcome_blocks"] = gate_blocks[-20:]
-    run_state["active_gate_outcome_block"] = record
+def _write_gate_outcome_block_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_gate_outcome_block_report(*args, **kwargs)
 
 
-def _clear_active_gate_outcome_block_for_pass(run_state: dict[str, Any], *, event: str) -> None:
-    cleared_events = set(GATE_OUTCOME_PASS_CLEARS_EVENTS.get(event, ()))
-    if not cleared_events:
-        return
-    active = run_state.get("active_gate_outcome_block")
-    if not isinstance(active, dict) or active.get("event") not in cleared_events:
-        return
-    cleared_at = utc_now()
-    active["status"] = "cleared_by_pass"
-    active["cleared_by_event"] = event
-    active["cleared_at"] = cleared_at
-    blocks = run_state.get("gate_outcome_blocks")
-    if isinstance(blocks, list):
-        for record in reversed(blocks):
-            if not isinstance(record, dict):
-                continue
-            if record.get("event") == active.get("event") and record.get("report_path") == active.get("report_path"):
-                record["status"] = "cleared_by_pass"
-                record["cleared_by_event"] = event
-                record["cleared_at"] = cleared_at
-                break
-    run_state["active_gate_outcome_block"] = None
+def _clear_active_gate_outcome_block_for_pass(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._clear_active_gate_outcome_block_for_pass(*args, **kwargs)
 
 
-def _write_route_process_pass_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "process_flowguard_officer":
-        raise RouterError("route process check must be reviewed_by_role=process_flowguard_officer")
-    if payload.get("passed") is not True or payload.get("process_viability_verdict") != "pass":
-        raise RouterError("route process check requires process_viability_verdict=pass")
-    required_true = (
-        "product_behavior_model_checked",
-        "route_can_reach_product_model",
-        "repair_return_policy_checked",
-        "serial_execution_model_checked",
-        "all_effective_nodes_reachable_in_order",
-        "recursive_child_routes_serialized",
-    )
-    missing = [field for field in required_true if payload.get(field) is not True]
-    if missing:
-        raise RouterError("route process check requires " + ", ".join(f"{field}=true" for field in missing))
-    checked_paths = [
-        _current_route_draft_path(run_root),
-        _require_product_behavior_model_report(project_root, run_root),
-        run_root / "root_acceptance_contract.json",
-        run_root / "child_skill_gate_manifest.json",
-    ]
-    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing_paths:
-        raise RouterError(f"route process check is missing source paths: {', '.join(missing_paths)}")
-    canonical_path = _process_route_model_report_path(run_root)
-    write_json(
-        canonical_path,
-        {
-            "schema_version": "flowpilot.process_route_model.v1",
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": "process_flowguard_officer",
-            "passed": True,
-            "process_viability_verdict": "pass",
-            "product_behavior_model_checked": True,
-            "route_can_reach_product_model": True,
-            "repair_return_policy_checked": True,
-            "serial_execution_model_checked": True,
-            "all_effective_nodes_reachable_in_order": True,
-            "recursive_child_routes_serialized": True,
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _route_process_check_path(run_root),
-        schema_version="flowpilot.route_process_check.v1",
-        alias_kind="route_process_check",
-    )
+def _write_route_process_pass_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_route_process_pass_report(*args, **kwargs)
 
 
-def _write_route_process_issue_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    expected_verdict: str,
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "process_flowguard_officer":
-        raise RouterError("route process issue report must be reviewed_by_role=process_flowguard_officer")
-    if payload.get("passed") is True:
-        raise RouterError("route process issue report cannot pass")
-    if payload.get("process_viability_verdict") != expected_verdict:
-        raise RouterError(f"route process issue report requires process_viability_verdict={expected_verdict}")
-    checked_paths = [
-        _current_route_draft_path(run_root),
-        _require_product_behavior_model_report(project_root, run_root),
-        run_root / "root_acceptance_contract.json",
-        run_root / "child_skill_gate_manifest.json",
-    ]
-    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing_paths:
-        raise RouterError(f"route process issue report is missing source paths: {', '.join(missing_paths)}")
-    canonical_path = _process_route_model_report_path(run_root)
-    write_json(
-        canonical_path,
-        {
-            "schema_version": "flowpilot.process_route_model.v1",
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": "process_flowguard_officer",
-            "passed": False,
-            "process_viability_verdict": expected_verdict,
-            "product_behavior_model_checked": bool(payload.get("product_behavior_model_checked")),
-            "route_can_reach_product_model": bool(payload.get("route_can_reach_product_model")),
-            "repair_return_policy_checked": bool(payload.get("repair_return_policy_checked")),
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
-            "recommended_resolution": payload.get("recommended_resolution"),
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _route_process_check_path(run_root),
-        schema_version="flowpilot.route_process_check.v1",
-        alias_kind="route_process_check",
-    )
-    for flag in (
-        "route_draft_written_by_pm",
-        "process_officer_route_check_card_delivered",
-        "process_route_model_submitted",
-        "process_route_model_repair_required",
-        "process_route_model_blocked",
-        "process_officer_route_check_passed",
-        "pm_process_route_model_decision_card_delivered",
-        "pm_process_route_model_accepted",
-        "pm_process_route_model_rebuild_requested",
-        "product_officer_route_check_card_delivered",
-        "product_officer_route_check_passed",
-        "reviewer_route_check_card_delivered",
-        "reviewer_route_check_passed",
-        "route_activated_by_pm",
-    ):
-        run_state.setdefault("flags", {})[flag] = False
-    run_state["route_process_viability"] = {
-        "verdict": expected_verdict,
-        "report_path": project_relative(project_root, canonical_path),
-        "reported_at": utc_now(),
-    }
+def _write_route_process_issue_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_route_process_issue_report(*args, **kwargs)
 
 
-def _write_route_product_pass_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "product_flowguard_officer":
-        raise RouterError("route product check must be reviewed_by_role=product_flowguard_officer")
-    if payload.get("passed") is not True or payload.get("route_model_review_verdict") != "pass":
-        raise RouterError("route product check requires route_model_review_verdict=pass")
-    required_true = (
-        "product_behavior_model_checked",
-        "route_maps_to_product_behavior_model",
-    )
-    missing = [field for field in required_true if payload.get(field) is not True]
-    if missing:
-        raise RouterError("route product check requires " + ", ".join(f"{field}=true" for field in missing))
-    checked_paths = [
-        _current_route_draft_path(run_root),
-        _require_product_behavior_model_report(project_root, run_root),
-        run_root / "root_acceptance_contract.json",
-        _require_process_route_model_report(project_root, run_root),
-        run_root / "flowguard" / "process_route_model_pm_decision.json",
-    ]
-    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing_paths:
-        raise RouterError(f"route product check is missing source paths: {', '.join(missing_paths)}")
-    write_json(
-        _route_product_check_path(run_root),
-        {
-            "schema_version": "flowpilot.route_product_check.v1",
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": "product_flowguard_officer",
-            "passed": True,
-            "route_model_review_verdict": "pass",
-            "product_behavior_model_checked": True,
-            "route_maps_to_product_behavior_model": True,
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
+def _write_route_product_pass_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_route_product_pass_report(*args, **kwargs)
 
 
-def _write_root_acceptance_contract(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("root acceptance contract must be PM-owned")
-    architecture_path = run_root / "product_function_architecture.json"
-    if not architecture_path.exists():
-        raise RouterError("root contract requires product-function architecture")
-    root_requirements = payload.get("root_requirements")
-    if not isinstance(root_requirements, list) or not root_requirements:
-        raise RouterError("root contract requires a non-empty root_requirements list")
-    proof_matrix = payload.get("proof_matrix")
-    if not isinstance(proof_matrix, list) or not proof_matrix:
-        raise RouterError("root contract requires a non-empty proof_matrix list")
-    scenario_ids = payload.get("selected_scenario_ids")
-    if not isinstance(scenario_ids, list) or not scenario_ids:
-        raise RouterError("root contract requires a non-empty selected_scenario_ids list")
-    traced_requirements: list[dict[str, Any]] = []
-    source_ids_by_requirement: dict[str, list[str]] = {}
-    for item in root_requirements:
-        if not isinstance(item, dict):
-            continue
-        traced = dict(item)
-        requirement_id = str(traced.get("requirement_id") or f"root-{len(traced_requirements) + 1:03d}")
-        traced["requirement_id"] = requirement_id
-        source_ids = _string_list(traced.get("source_requirement_ids")) or [requirement_id]
-        traced["source_requirement_ids"] = source_ids
-        traced.setdefault("change_status", "ADDED")
-        traced.setdefault("supersedes_requirement_ids", [])
-        traced.setdefault("changed_reason", "Initial PM root-contract import from product-function architecture.")
-        traced.setdefault("approval_owner_role", "project_manager")
-        source_ids_by_requirement[requirement_id] = source_ids
-        traced_requirements.append(traced)
-    traced_proof_matrix: list[dict[str, Any]] = []
-    for item in proof_matrix:
-        if not isinstance(item, dict):
-            continue
-        traced = dict(item)
-        requirement_id = str(traced.get("requirement_id") or "")
-        traced.setdefault("source_requirement_ids", source_ids_by_requirement.get(requirement_id, [requirement_id] if requirement_id else []))
-        traced_proof_matrix.append(traced)
-    root_requirements = traced_requirements
-    proof_matrix = traced_proof_matrix
-    contract = {
-        "schema_version": "flowpilot.root_acceptance_contract.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": "approved",
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "source_paths": {
-            "product_function_architecture": project_relative(project_root, architecture_path),
-        },
-        "requirement_traceability_policy": {
-            "schema_version": "flowpilot.root_requirement_traceability.v1",
-            "source": "product_function_architecture.requirement_trace",
-            "stable_source_requirement_ids_required": True,
-            "change_status_required": True,
-            "external_spec_material_advisory_until_pm_imported": True,
-            "completion_requires_final_trace_closure": True,
-        },
-        "root_requirements": root_requirements,
-        "proof_matrix": proof_matrix,
-        "standard_scenario_pack": {
-            "required": True,
-            "path": project_relative(project_root, run_root / "standard_scenario_pack.json"),
-            "selected_scenario_ids": scenario_ids,
-            "covers_requirement_ids": _root_requirement_ids({"root_requirements": root_requirements}),
-        },
-        "completion_policy": {
-            "unresolved_residual_risks_allowed": False,
-            "risk_triage_required_before_completion": True,
-        },
-        "written_by_role": "project_manager",
-        **_role_output_envelope_record(payload),
-    }
-    scenario_pack = {
-        "schema_version": "flowpilot.standard_scenario_pack.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": "approved",
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "selected_scenario_ids": scenario_ids,
-        "covers_requirement_ids": _root_requirement_ids({"root_requirements": root_requirements}),
-        "selection_reason": payload.get("scenario_selection_reason") or "Selected from root acceptance contract risk coverage.",
-    }
-    write_json(run_root / "root_acceptance_contract.json", contract)
-    write_json(run_root / "standard_scenario_pack.json", scenario_pack)
-    (run_root / "contract.md").write_text(
-        "\n".join(
-            [
-                "# FlowPilot Root Acceptance Contract",
-                "",
-                f"Run: {run_state['run_id']}",
-                "",
-                "The PM has frozen the root acceptance contract. See:",
-                "",
-                "- `root_acceptance_contract.json`",
-                "- `standard_scenario_pack.json`",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+def _write_root_acceptance_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_root_acceptance_contract(*args, **kwargs)
 
 
-def _freeze_root_acceptance_contract(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
-    required_paths = [
-        run_root / "root_acceptance_contract.json",
-        run_root / "standard_scenario_pack.json",
-        run_root / "contract.md",
-        run_root / "reviews" / "root_contract_challenge.json",
-    ]
-    missing = [project_relative(project_root, path) for path in required_paths if not path.exists()]
-    if missing:
-        raise RouterError(f"cannot freeze root contract; missing paths: {', '.join(missing)}")
-    contract = read_json(run_root / "root_acceptance_contract.json")
-    if contract.get("completion_policy", {}).get("unresolved_residual_risks_allowed") is not False:
-        raise RouterError("root contract cannot allow unresolved residual risks")
-    _require_clean_self_interrogation(
-        project_root,
-        run_root,
-        gate_name="root contract freeze",
-        scopes=("startup", "product_architecture"),
-    )
-    contract["status"] = "frozen"
-    contract["frozen_by_role"] = "project_manager"
-    contract["frozen_at"] = utc_now()
-    write_json(run_root / "root_acceptance_contract.json", contract)
+def _freeze_root_acceptance_contract(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._freeze_root_acceptance_contract(*args, **kwargs)
 
 
-def _write_dependency_policy(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    contract_path = run_root / "root_acceptance_contract.json"
-    if not contract_path.exists() or read_json(contract_path).get("status") != "frozen":
-        raise RouterError("dependency policy requires frozen root contract")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("dependency policy must be PM-owned")
-    if payload.get("raw_inventory_is_authority") is True:
-        raise RouterError("raw skill or host inventory cannot be authority for dependency policy")
-    if payload.get("controller_self_install_allowed") is True:
-        raise RouterError("Controller cannot self-approve host-level installs")
-    host_install_requested = bool(payload.get("host_level_install_requested"))
-    user_approval_recorded = bool(payload.get("explicit_user_approval_recorded"))
-    if host_install_requested and not user_approval_recorded:
-        raise RouterError("host-level installs require explicit recorded user approval")
-    policy = {
-        "schema_version": "flowpilot.dependency_policy.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": str(payload.get("status") or "approved"),
-        "source_paths": {
-            "root_acceptance_contract": project_relative(project_root, contract_path),
-            "product_function_architecture": project_relative(project_root, run_root / "product_function_architecture.json"),
-        },
-        "raw_inventory_is_authority": False,
-        "raw_inventory_can_seed_candidates_only": True,
-        "host_level_install_requested": host_install_requested,
-        "explicit_user_approval_recorded": user_approval_recorded,
-        "controller_self_install_allowed": False,
-        "allowed_dependency_actions": payload.get("allowed_dependency_actions") or [],
-        "blocked_dependency_actions": payload.get("blocked_dependency_actions") or ["host_install_without_user_approval"],
-        "written_by_role": "project_manager",
-        "written_at": utc_now(),
-        **_role_output_envelope_record(payload),
-    }
-    write_json(run_root / "dependency_policy.json", policy)
+def _write_dependency_policy(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_dependency_policy(*args, **kwargs)
 
 
-def _write_capabilities_manifest(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    dependency_path = run_root / "dependency_policy.json"
-    architecture_path = run_root / "product_function_architecture.json"
-    contract_path = run_root / "root_acceptance_contract.json"
-    if not dependency_path.exists():
-        raise RouterError("capabilities manifest requires dependency_policy.json")
-    if not architecture_path.exists():
-        raise RouterError("capabilities manifest requires product_function_architecture.json")
-    if not contract_path.exists() or read_json(contract_path).get("status") != "frozen":
-        raise RouterError("capabilities manifest requires frozen root contract")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("capabilities manifest must be PM-owned")
-    if payload.get("raw_inventory_is_authority") is True:
-        raise RouterError("raw skill or host inventory cannot authorize capabilities")
-    architecture = read_json(architecture_path)
-    capabilities = payload.get("capabilities")
-    if not isinstance(capabilities, list) or not capabilities:
-        capabilities = architecture.get("product_capability_map") or []
-    if not isinstance(capabilities, list) or not capabilities:
-        raise RouterError("capabilities manifest requires a non-empty capabilities list or product_capability_map")
-    manifest = {
-        "schema_version": "flowpilot.capabilities_manifest.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": str(payload.get("status") or "approved"),
-        "source_paths": {
-            "dependency_policy": project_relative(project_root, dependency_path),
-            "product_function_architecture": project_relative(project_root, architecture_path),
-            "root_acceptance_contract": project_relative(project_root, contract_path),
-        },
-        "raw_inventory_is_authority": False,
-        "raw_inventory_can_seed_candidates_only": True,
-        "capabilities": capabilities,
-        "capability_to_skill_needs": payload.get("capability_to_skill_needs") or [],
-        "written_by_role": "project_manager",
-        "written_at": utc_now(),
-        **_role_output_envelope_record(payload),
-    }
-    write_json(run_root / "capabilities.json", manifest)
+def _write_capabilities_manifest(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_capabilities_manifest(*args, **kwargs)
 
 
-def _validate_selected_child_skills(selected_skills: Any) -> list[dict[str, Any]]:
-    if not isinstance(selected_skills, list):
-        raise RouterError("selected child skills must be a list")
-    allowed_approvers = {
-        "project_manager",
-        "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-    }
-    for skill in selected_skills:
-        if not isinstance(skill, dict):
-            raise RouterError("each selected child skill entry must be an object")
-        for gate in skill.get("gates") or []:
-            if not isinstance(gate, dict):
-                raise RouterError("each child-skill gate must be an object")
-            approver = gate.get("required_approver")
-            if approver == "controller" or gate.get("controller_can_approve") is True:
-                raise RouterError("Controller cannot approve child-skill gates")
-            if approver and approver not in allowed_approvers:
-                raise RouterError(f"unsupported child-skill gate approver: {approver}")
-    return selected_skills
+def _validate_selected_child_skills(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._validate_selected_child_skills(*args, **kwargs)
 
 
-def _write_child_skill_selection(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    capabilities_path = run_root / "capabilities.json"
-    if not capabilities_path.exists():
-        raise RouterError("child-skill selection requires capabilities.json")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("child-skill selection must be PM-owned")
-    if payload.get("raw_inventory_used_as_authority") is True or payload.get("raw_inventory_is_authority") is True:
-        raise RouterError("raw local skill inventory cannot authorize child-skill selection")
-    selected_skills = payload.get("selected_skills")
-    if selected_skills is None:
-        selected_skills = payload.get("skill_decisions") or []
-    selected_skills = _validate_selected_child_skills(selected_skills)
-    selection = {
-        "schema_version": "flowpilot.pm_child_skill_selection.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": str(payload.get("status") or "approved"),
-        "source_paths": {
-            "capabilities_manifest": project_relative(project_root, capabilities_path),
-            "dependency_policy": project_relative(project_root, run_root / "dependency_policy.json"),
-        },
-        "raw_inventory_used_as_authority": False,
-        "raw_inventory_can_seed_candidates_only": True,
-        "selected_from_product_needs": True,
-        "selected_skills": selected_skills,
-        "deferred_skills": payload.get("deferred_skills") or [],
-        "rejected_skills": payload.get("rejected_skills") or [],
-        "written_by_role": "project_manager",
-        "written_at": utc_now(),
-        **_role_output_envelope_record(payload),
-    }
-    write_json(run_root / "pm_child_skill_selection.json", selection)
+def _write_child_skill_selection(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_child_skill_selection(*args, **kwargs)
 
 
-def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    selection_path = run_root / "pm_child_skill_selection.json"
-    capabilities_path = run_root / "capabilities.json"
-    contract_path = run_root / "root_acceptance_contract.json"
-    for required_path, label in (
-        (selection_path, "pm_child_skill_selection.json"),
-        (capabilities_path, "capabilities.json"),
-        (contract_path, "root_acceptance_contract.json"),
-    ):
-        if not required_path.exists():
-            raise RouterError(f"child-skill gate manifest requires {label}")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("child-skill gate manifest must be PM-owned")
-    if payload.get("raw_inventory_is_authority") is True:
-        raise RouterError("raw inventory cannot be authority for child-skill gate manifest")
-    if payload.get("controller_self_approval_allowed") is True:
-        raise RouterError("child-skill gate manifest cannot allow Controller self-approval")
-    selection = read_json(selection_path)
-    selected_skills = payload.get("selected_skills")
-    if selected_skills is None:
-        selected_skills = selection.get("selected_skills") or []
-    selected_skills = _validate_selected_child_skills(selected_skills)
-    manifest_path = run_root / "child_skill_gate_manifest.json"
-    manifest = {
-        "schema_version": "flowpilot.child_skill_gate_manifest.v1",
-        "run_id": run_state["run_id"],
-        "pm_owned": True,
-        "status": str(payload.get("status") or "draft"),
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "source_paths": {
-            "pm_child_skill_selection": project_relative(project_root, selection_path),
-            "capabilities_manifest": project_relative(project_root, capabilities_path),
-            "root_acceptance_contract": project_relative(project_root, contract_path),
-        },
-        "raw_inventory_is_authority": False,
-        "controller_self_approval_allowed": False,
-        "selected_skills": selected_skills,
-        "approval": {
-            "reviewer_passed": False,
-            "process_officer_passed": False,
-            "product_officer_passed": False,
-            "pm_approved_for_route": False,
-        },
-        **_role_output_envelope_record_for_mutable_artifact(
-            project_root,
-            run_root,
-            manifest_path,
-            payload,
-            reason="child_skill_gate_manifest_can_be_updated_by_review_gates",
-        ),
-    }
-    write_json(manifest_path, manifest)
+def _write_child_skill_gate_manifest(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_child_skill_gate_manifest(*args, **kwargs)
 
 
 def _sync_child_skill_manifest_review_approval(project_root: Path, run_root: Path) -> None:
@@ -8660,702 +4775,93 @@ def _resume_mechanical_replay_completed_without_pm(run_state: dict[str, Any]) ->
     )
 
 
-def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("decision_owner") != "project_manager":
-        raise RouterError("PM resume decision requires decision_owner=project_manager")
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="PM resume decision")
-    resume_path = run_root / "continuation" / "resume_reentry.json"
-    if not resume_path.exists():
-        raise RouterError("PM resume decision requires continuation/resume_reentry.json")
-    resume_evidence = read_json(resume_path)
-    rehydration_path = run_root / "continuation" / "crew_rehydration_report.json"
-    if not run_state["flags"].get("resume_roles_restored") or not rehydration_path.exists():
-        raise RouterError("PM resume decision requires crew_rehydration_report before PM runway")
-    rehydration_report = read_json(rehydration_path)
-    if rehydration_report.get("all_six_roles_ready") is not True:
-        raise RouterError("PM resume decision requires all six roles ready")
-    if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("background_agents_mode") != "single-agent":
-        raise RouterError("PM resume decision requires project_manager memory rehydration")
-    decision = str(payload.get("decision") or "continue_current_packet_loop")
-    if decision not in PM_RESUME_DECISION_ALLOWED_VALUES:
-        raise RouterError(f"unsupported PM resume decision: {decision}")
-    reminder = payload.get("controller_reminder")
-    if not isinstance(reminder, dict):
-        raise RouterError("PM resume decision requires controller_reminder")
-    if reminder.get("controller_only") is not True:
-        raise RouterError("PM resume decision must remind Controller it is controller_only")
-    if reminder.get("controller_may_read_sealed_bodies") is not False:
-        raise RouterError("PM resume decision must forbid sealed body reads")
-    if reminder.get("controller_may_infer_from_chat_history") is not False:
-        raise RouterError("PM resume decision must forbid chat-history route inference")
-    if reminder.get("controller_may_advance_or_close_route") is not False:
-        raise RouterError("PM resume decision must forbid Controller route advance or closure")
-    ambiguous = bool(resume_evidence.get("ambiguous_state_blocks_controller_execution"))
-    recovery_recorded = bool(payload.get("explicit_recovery_evidence_recorded"))
-    if ambiguous and decision == "continue_current_packet_loop" and not recovery_recorded:
-        raise RouterError("ambiguous resume state cannot continue without explicit recovery evidence")
-    if decision == "close_after_final_ledger_and_terminal_replay" and not (
-        run_state["flags"].get("final_ledger_built_clean") and run_state["flags"].get("final_backward_replay_passed")
-    ):
-        raise RouterError("resume closure requires final ledger and terminal replay to have passed")
-    write_json(
-        _resume_decision_path(run_root),
-        {
-            "schema_version": "flowpilot.pm_resume_decision.v1",
-            "run_id": run_state["run_id"],
-            "decision_owner": "project_manager",
-            "decision": decision,
-            "resume_ambiguous": ambiguous,
-            "explicit_recovery_evidence_recorded": recovery_recorded,
-            "source_paths": {
-                "resume_reentry": project_relative(project_root, resume_path),
-                "router_state": project_relative(project_root, run_state_path(run_root)),
-                "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
-                "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
-                "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
-                "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
-                "crew_memory": project_relative(project_root, run_root / "crew_memory"),
-                "crew_rehydration_report": project_relative(project_root, rehydration_path),
-                "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
-                "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
-            },
-            "crew_rehydration_report": {
-                "path": project_relative(project_root, rehydration_path),
-                "all_six_roles_ready": bool(rehydration_report.get("all_six_roles_ready")),
-                "current_run_memory_complete": bool(rehydration_report.get("current_run_memory_complete")),
-                "pm_memory_rehydrated": bool(rehydration_report.get("pm_memory_rehydrated")),
-                "missing_memory_role_keys": rehydration_report.get("missing_memory_role_keys") or [],
-            },
-            "prior_path_context_review": prior_review,
-            "controller_reminder": {
-                "controller_only": True,
-                "controller_may_read_sealed_bodies": False,
-                "controller_may_infer_from_chat_history": False,
-                "controller_may_advance_or_close_route": False,
-                "controller_may_create_project_evidence": False,
-            },
-            "recorded_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
-    _write_display_plan_from_pm_payload(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        source_event="pm_resume_recovery_decision_returned",
-    )
+def _write_pm_resume_decision(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_resume_decision(*args, **kwargs)
 
 
-def _write_node_acceptance_plan(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-    *,
-    source_event: str = "pm_writes_node_acceptance_plan",
-) -> None:
-    payload = _load_file_backed_role_payload_if_present(project_root, payload)
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="node acceptance plan")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("node acceptance plan must be PM-owned")
-    frontier = _active_frontier(run_root)
-    active_node_id = str(frontier["active_node_id"])
-    active_route_id = str(frontier["active_route_id"])
-    if payload.get("node_id") and str(payload["node_id"]) != active_node_id:
-        raise RouterError("node acceptance plan node_id must match active frontier")
-    route_version = int(frontier.get("route_version") or 0)
-    if payload.get("route_version") is not None and int(payload["route_version"]) != route_version:
-        raise RouterError("node acceptance plan route_version must match active frontier")
-    node_requirements = payload.get("node_requirements")
-    if not isinstance(node_requirements, list) or not node_requirements:
-        raise RouterError("node acceptance plan requires a non-empty node_requirements list")
-    experiment_plan = payload.get("experiment_plan")
-    if not isinstance(experiment_plan, list):
-        raise RouterError("node acceptance plan requires experiment_plan list")
-    high_standard = payload.get("high_standard_recheck")
-    if not isinstance(high_standard, dict):
-        raise RouterError("node acceptance plan requires high_standard_recheck")
-    required_high_standard_fields = {
-        "ideal_outcome",
-        "unacceptable_outcomes",
-        "higher_standard_opportunities",
-        "semantic_downgrade_risks",
-        "decision",
-        "why_current_plan_meets_highest_reasonable_standard",
-    }
-    def _blank(value: Any) -> bool:
-        return value is None or value == "" or value == []
-
-    missing_high_standard = [
-        name
-        for name in sorted(required_high_standard_fields)
-        if name not in high_standard or _blank(high_standard.get(name))
-    ]
-    if missing_high_standard:
-        raise RouterError(f"node high-standard recheck missing fields: {', '.join(missing_high_standard)}")
-    if str(high_standard.get("decision")) != "proceed":
-        raise RouterError("node acceptance can proceed only after high_standard_recheck.decision=proceed")
-    if high_standard.get("controller_can_downgrade_standard") is True:
-        raise RouterError("Controller cannot downgrade node standards")
-    node = _active_node_definition(run_root, frontier)
-    contract = read_json_if_exists(run_root / "root_acceptance_contract.json")
-    root_requirement_ids = _root_requirement_ids(contract) if isinstance(contract, dict) else []
-    route_node_requirement_ids = _string_list(node.get("covers_requirement_ids")) or root_requirement_ids
-    route_node_scenario_ids = _string_list(node.get("covers_scenario_ids"))
-    route_node_capability_ids = _string_list(node.get("source_product_capability_ids"))
-    node_requirement_ids = [
-        str(item.get("requirement_id"))
-        for item in node_requirements
-        if isinstance(item, dict) and item.get("requirement_id")
-    ]
-    traced_node_requirements: list[dict[str, Any]] = []
-    for item in node_requirements:
-        if not isinstance(item, dict):
-            continue
-        traced = dict(item)
-        traced.setdefault("source_requirement_ids", route_node_requirement_ids)
-        traced.setdefault("covers_root_requirement_ids", route_node_requirement_ids)
-        traced.setdefault("covers_scenario_ids", route_node_scenario_ids)
-        traced.setdefault("source_product_capability_ids", route_node_capability_ids)
-        traced.setdefault("change_status", "UNCHANGED")
-        traced.setdefault("supersedes_requirement_ids", [])
-        traced_node_requirements.append(traced)
-    traced_experiment_plan: list[dict[str, Any]] = []
-    for item in experiment_plan:
-        if not isinstance(item, dict):
-            continue
-        traced = dict(item)
-        traced.setdefault("covers_requirements", node_requirement_ids or route_node_requirement_ids)
-        traced.setdefault("covers_root_requirement_ids", route_node_requirement_ids)
-        traced.setdefault("covers_product_requirement_ids", _string_list(traced.get("covers_product_requirement_ids")))
-        traced_experiment_plan.append(traced)
-    node_requirements = traced_node_requirements
-    experiment_plan = traced_experiment_plan
-    child_ids = _node_child_ids(node)
-    payload_leaf_gate = payload.get("leaf_readiness_gate") if isinstance(payload.get("leaf_readiness_gate"), dict) else None
-    if payload_leaf_gate is not None:
-        leaf_readiness_gate = dict(payload_leaf_gate)
-    elif child_ids:
-        leaf_readiness_gate = {
-            "status": "not_applicable_parent",
-            "reason": "Parent/module nodes are composition boundaries and cannot receive worker packets directly.",
-        }
-    else:
-        leaf_readiness_gate = {
-            "status": "pass",
-            "legacy_inferred_from_reviewed_node_plan": True,
-            "single_outcome": True,
-            "worker_executable_without_replanning": True,
-            "proof_defined": bool(experiment_plan),
-            "dependency_boundary_defined": True,
-            "failure_isolation_defined": True,
-        }
-    plan = {
-        "schema_version": "flowpilot.node_acceptance_plan.v1",
-        "run_id": run_state["run_id"],
-        "route_id": active_route_id,
-        "route_version": route_version,
-        "node_id": active_node_id,
-        "pm_owned": True,
-        "status": str(payload.get("status") or "approved"),
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "source_paths": {
-            "root_acceptance_contract": project_relative(project_root, run_root / "root_acceptance_contract.json"),
-            "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
-            "route_flow": project_relative(project_root, _active_route_path(run_root, frontier)),
-            "product_function_architecture": project_relative(project_root, run_root / "product_function_architecture.json"),
-            "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
-            "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
-        },
-        "requirement_traceability": {
-            "schema_version": "flowpilot.node_requirement_traceability.v1",
-            "source_route_node_id": active_node_id,
-            "source_route_node_covers_requirement_ids": route_node_requirement_ids,
-            "source_route_node_covers_scenario_ids": route_node_scenario_ids,
-            "source_product_capability_ids": route_node_capability_ids,
-            "full_protocol_required_when_flowpilot_invoked": True,
-            "all_covered_requirements_must_close_or_be_triaged": True,
-            "closure_by_report_only_forbidden": True,
-            "external_spec_material_advisory_until_pm_imported": True,
-            "legacy_trace_defaults_inferred_by_router": "requirement_traceability" not in payload,
-        },
-        "prior_path_context_review": prior_review,
-        "node_structure": {
-            "node_kind": _node_kind(node),
-            "has_children": bool(child_ids),
-            "child_node_ids": child_ids,
-            "parent_backward_replay_required": bool(child_ids),
-            "semantic_importance_used_to_trigger_review": False,
-        },
-        "leaf_readiness_gate": leaf_readiness_gate,
-        "node_requirements": node_requirements,
-        "experiment_plan": experiment_plan,
-        "high_standard_recheck": {
-            "ideal_outcome": high_standard.get("ideal_outcome"),
-            "unacceptable_outcomes": high_standard.get("unacceptable_outcomes"),
-            "higher_standard_opportunities": high_standard.get("higher_standard_opportunities"),
-            "semantic_downgrade_risks": high_standard.get("semantic_downgrade_risks"),
-            "decision": "proceed",
-            "why_current_plan_meets_highest_reasonable_standard": high_standard.get("why_current_plan_meets_highest_reasonable_standard"),
-            "controller_can_downgrade_standard": False,
-        },
-        "advance_gate": {
-            "required_before_chunk_execution": True,
-            "required_before_node_checkpoint": True,
-            "reviewer_or_officer_direct_check_required": True,
-            "all_covered_requirements_closed_or_triaged": False,
-            "unresolved_requirement_ids": route_node_requirement_ids,
-        },
-        "written_by_role": "project_manager",
-        "source_event": source_event,
-    }
-    for optional_field in [
-        "controller_summary_used_as_evidence",
-        "identity",
-        "node_title",
-        "node_objective",
-        "product_behavior_model_segment",
-        "proof_obligations",
-        "recheck_criteria",
-        "repair_context",
-        "fixtures_and_evidence_paths",
-        "forbidden_low_standard_outcomes",
-        "minimum_sufficient_complexity_review",
-        "inherited_gate_obligations",
-        "skill_standard_projection",
-        "active_child_skill_bindings",
-        "work_packet_projection",
-        "result_matrix_requirements",
-        "inherited_root_requirements",
-    ]:
-        if optional_field in payload:
-            plan[optional_field] = payload.get(optional_field)
-    issues = _node_acceptance_traceability_issues(plan)
-    if issues:
-        raise RouterError("node acceptance plan traceability invalid: " + "; ".join(str(issue["message"]) for issue in issues[:5]))
-    write_json(_active_node_acceptance_plan_path(run_root, frontier), plan)
-    _update_display_plan_current_node(
-        project_root,
-        run_root,
-        run_state,
-        node_id=str(frontier["active_node_id"]),
-        node_title=str(node.get("title") or node.get("label") or frontier["active_node_id"]),
-        checklist=[
-            {
-                "id": str(item.get("requirement_id") or f"requirement-{index:03d}"),
-                "label": str(item.get("acceptance_statement") or item.get("label") or item.get("requirement_id") or f"Requirement {index}"),
-                "status": "pending",
-            }
-            for index, item in enumerate(node_requirements, start=1)
-            if isinstance(item, dict)
-        ],
-        source_event=source_event,
-    )
+def _write_node_acceptance_plan(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_node_acceptance_plan(*args, **kwargs)
 
 
-def _write_pm_revised_node_acceptance_plan(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    if not run_state["flags"].get("node_acceptance_plan_review_blocked"):
-        raise RouterError("same-node node acceptance-plan repair requires active node_acceptance_plan_review_blocked flag")
-    frontier = _active_frontier(run_root)
-    node_root = _active_node_root(run_root, frontier)
-    block_path = node_root / "reviews" / "node_acceptance_plan_block.json"
-    if not block_path.exists():
-        raise RouterError("same-node node acceptance-plan repair requires reviewer block report")
-    _write_node_acceptance_plan(
-        project_root,
-        run_root,
-        run_state,
-        payload,
-        source_event="pm_revises_node_acceptance_plan",
-    )
-    revised_plan_path = _active_node_acceptance_plan_path(run_root, frontier)
-    repair_record_path = node_root / "repairs" / "node_acceptance_plan_revision.json"
-    write_json(
-        repair_record_path,
-        {
-            "schema_version": "flowpilot.node_acceptance_plan_revision.v1",
-            "run_id": run_state["run_id"],
-            "route_id": str(frontier["active_route_id"]),
-            "route_version": int(frontier.get("route_version") or 0),
-            "node_id": str(frontier["active_node_id"]),
-            "repair_scope": "same_node_plan_revision",
-            "source_block_path": project_relative(project_root, block_path),
-            "revised_plan_path": project_relative(project_root, revised_plan_path),
-            "stale_blocked_plan_is_context_only": True,
-            "reviewer_recheck_required": True,
-            "recorded_at": utc_now(),
-            "recorded_by": "project_manager",
-        },
-    )
-    run_state["flags"]["node_acceptance_plan_review_blocked"] = False
-    run_state["flags"]["node_acceptance_plan_reviewer_passed"] = False
-    run_state["flags"]["reviewer_node_acceptance_plan_card_delivered"] = False
+def _write_pm_revised_node_acceptance_plan(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_revised_node_acceptance_plan(*args, **kwargs)
 
 
-def _write_parent_backward_targets(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    frontier = _active_frontier(run_root)
-    node = _active_node_definition(run_root, frontier)
-    child_ids = _node_child_ids(node)
-    route_id = str(frontier["active_route_id"])
-    route_version = int(frontier.get("route_version") or 0)
-    active_node_id = str(frontier["active_node_id"])
-    node_root = _active_node_root(run_root, frontier)
-    targets = [
-        {
-            "parent_node_id": active_node_id,
-            "child_node_ids": child_ids,
-            "parent_backward_replay_path": project_relative(project_root, node_root / "parent_backward_replay.json"),
-            "status": "not_started" if child_ids else "not_required",
-            "pm_segment_decision": "not_reviewed" if child_ids else "not_required",
-            "latest_repair_requires_rerun": False,
-            "latest_replay_route_version": route_version,
-        }
-    ] if child_ids else []
-    record = {
-        "schema_version": "flowpilot.parent_backward_targets.v1",
-        "run_id": run_state["run_id"],
-        "route_id": route_id,
-        "route_version": route_version,
-        "pm_owned": True,
-        "status": "current",
-        "built_from_flow_path": project_relative(project_root, _active_route_path(run_root, frontier)),
-        "built_at": utc_now(),
-        "trigger_rule": {
-            "structural_trigger": "any_effective_route_node_with_children",
-            "semantic_importance_classification_required": False,
-            "leaf_nodes_exempt_from_parent_backward_replay": True,
-        },
-        "targets": targets,
-        "coverage": {
-            "parent_targets_total": len(targets),
-            "parent_targets_with_replay_passed": 0,
-            "parent_targets_with_pm_decision": 0,
-            "all_required_parent_replays_passed": not child_ids,
-        },
-        "written_by_role": "project_manager",
-    }
-    write_json(run_root / "routes" / route_id / "parent_backward_targets.json", record)
+def _write_parent_backward_targets(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_parent_backward_targets(*args, **kwargs)
 
 
-def _write_parent_backward_replay(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    frontier = _active_frontier(run_root)
-    if not _active_node_has_children(run_root, frontier):
-        raise RouterError("parent backward replay is required only for active nodes with children")
-    targets_path = run_root / "routes" / str(frontier["active_route_id"]) / "parent_backward_targets.json"
-    if not targets_path.exists():
-        raise RouterError("parent backward replay requires parent_backward_targets.json")
-    if payload.get("reviewed_by_role") != "human_like_reviewer":
-        raise RouterError("parent backward replay must be reviewed_by_role=human_like_reviewer")
-    if payload.get("passed") is not True:
-        raise RouterError("parent backward replay must explicitly pass")
-    active_node_id = str(frontier["active_node_id"])
-    replay = {
-        "schema_version": "flowpilot.parent_backward_replay.v1",
-        "run_id": run_state["run_id"],
-        "route_id": str(frontier["active_route_id"]),
-        "route_version": int(frontier.get("route_version") or 0),
-        "parent_node_id": active_node_id,
-        "pm_owned": True,
-        "status": "passed",
-        "created_at": utc_now(),
-        "updated_at": utc_now(),
-        "source_paths": {
-            "parent_backward_targets": project_relative(project_root, targets_path),
-            "node_acceptance_plan": project_relative(project_root, _active_node_acceptance_plan_path(run_root, frontier)),
-        },
-        "reviewer_report": {
-            "reviewer_role": "human_like_reviewer",
-            "neutral_observation_written": bool(payload.get("neutral_observation_written", True)),
-            "independent_probe_done": bool(payload.get("independent_probe_done", True)),
-            "child_evidence_replayed": bool(payload.get("child_evidence_replayed", True)),
-            "children_compose_into_parent_goal": True,
-            "blocking_findings": [],
-            "approval_valid": True,
-        },
-        "closure_gate": {
-            "required_before_parent_checkpoint": True,
-            "reviewer_passed": True,
-            "unresolved_blocking_findings": 0,
-            "parent_closure_allowed": False,
-        },
-        **_role_output_envelope_record(payload),
-    }
-    write_json(_active_node_root(run_root, frontier) / "parent_backward_replay.json", replay)
+def _write_parent_backward_replay(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_parent_backward_replay(*args, **kwargs)
 
 
-def _write_parent_segment_decision(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> str:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("decision_owner") != "project_manager":
-        raise RouterError("parent segment decision requires decision_owner=project_manager")
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="parent segment decision")
-    frontier = _active_frontier(run_root)
-    replay_path = _active_node_root(run_root, frontier) / "parent_backward_replay.json"
-    if not replay_path.exists():
-        raise RouterError("parent segment decision requires parent_backward_replay.json")
-    decision = str(payload.get("decision") or "continue")
-    if decision not in PM_PARENT_SEGMENT_DECISION_ALLOWED_VALUES:
-        raise RouterError(f"unsupported parent segment decision: {decision}")
-    record = {
-        "schema_version": "flowpilot.parent_segment_decision.v1",
-        "run_id": run_state["run_id"],
-        "route_id": str(frontier["active_route_id"]),
-        "route_version": int(frontier.get("route_version") or 0),
-        "parent_node_id": str(frontier["active_node_id"]),
-        "decision_owner": "project_manager",
-        "decision": decision,
-        "route_mutation_required": decision != "continue",
-        "same_parent_replay_rerun_required": decision != "continue",
-        "prior_path_context_review": prior_review,
-        "source_paths": {
-            "parent_backward_replay": project_relative(project_root, replay_path),
-            "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
-            "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
-        },
-        "recorded_at": utc_now(),
-        **_role_output_envelope_record(payload),
-    }
-    write_json(_active_node_root(run_root, frontier) / "pm_parent_segment_decision.json", record)
-    if decision != "continue":
-        repair_node_id = str(payload.get("repair_node_id") or f"{frontier['active_node_id']}-repair-{int(frontier.get('route_version') or 1) + 1}")
-        _write_route_mutation(
-            project_root,
-            run_root,
-            run_state,
-            {
-                "route_id": frontier["active_route_id"],
-                "repair_node_id": repair_node_id,
-                "reason": f"parent_segment_decision:{decision}",
-                "stale_evidence": [project_relative(project_root, replay_path)],
-                "superseded_nodes": payload.get("superseded_nodes") or [],
-                "repair_return_to_node_id": payload.get("repair_return_to_node_id") or payload.get("return_to_node_id"),
-                "prior_path_context_review": payload.get("prior_path_context_review"),
-            },
-        )
-    return decision
+def _write_parent_segment_decision(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_parent_segment_decision(*args, **kwargs)
 
 
-def _write_pm_research_absorption(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
-    return flowpilot_router_work_packets._write_pm_research_absorption(sys.modules[__name__], project_root, run_root, run_state)
+def _write_pm_research_absorption(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_research_absorption(*args, **kwargs)
 
 
 
-def _validate_current_node_packet_envelope(project_root: Path, run_root: Path, run_state: dict[str, Any], envelope: dict[str, Any], envelope_path: Path, frontier: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
-    return flowpilot_router_work_packets._validate_current_node_packet_envelope(sys.modules[__name__], project_root, run_root, run_state, envelope, envelope_path, frontier, plan)
+def _validate_current_node_packet_envelope(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._validate_current_node_packet_envelope(*args, **kwargs)
 
 
 
-def _validate_current_node_packet_event(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    return flowpilot_router_work_packets._validate_current_node_packet_event(sys.modules[__name__], project_root, run_root, run_state, payload)
+def _validate_current_node_packet_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._validate_current_node_packet_event(*args, **kwargs)
 
 
 
-def _validate_current_node_result_event(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    return flowpilot_router_work_packets._validate_current_node_result_event(sys.modules[__name__], project_root, run_state, payload)
+def _validate_current_node_result_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._validate_current_node_result_event(*args, **kwargs)
 
 
 
-def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    return flowpilot_router_work_packets._validate_current_node_reviewer_pass(sys.modules[__name__], project_root, run_state, payload)
+def _validate_current_node_reviewer_pass(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._validate_current_node_reviewer_pass(*args, **kwargs)
 
 
 
-def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], Path]:
-    return flowpilot_router_route.route_payload_from_reviewed_draft(
-        sys.modules[__name__],
-        project_root,
-        run_root,
-        payload,
-    )
+def _route_payload_from_reviewed_draft(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._route_payload_from_reviewed_draft(*args, **kwargs)
 
 
-def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    flowpilot_router_route.write_route_activation(
-        sys.modules[__name__],
-        project_root,
-        run_root,
-        run_state,
-        payload,
-    )
+def _write_route_activation(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_route_activation(*args, **kwargs)
 
 
-def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    flowpilot_router_route.write_route_mutation(
-        sys.modules[__name__],
-        project_root,
-        run_root,
-        run_state,
-        payload,
-    )
+def _write_route_mutation(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_route_mutation(*args, **kwargs)
 
-def _write_material_dispatch_repair(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    decision = _load_file_backed_role_payload(project_root, payload)
-    if decision.get("decided_by_role") != "project_manager":
-        raise RouterError("material dispatch repair requires decided_by_role=project_manager")
-    prior_review = _require_pm_prior_path_context(project_root, run_root, decision, purpose="material dispatch repair")
-    repair_action = str(decision.get("repair_action") or decision.get("selected_next_action") or "").strip()
-    if not repair_action:
-        raise RouterError("material dispatch repair requires repair_action or selected_next_action")
-    block = run_state.get("material_dispatch_block")
-    block_path = block.get("path") if isinstance(block, dict) else None
-    repair_path = run_root / "material" / "material_dispatch_repair.json"
-    write_json(
-        repair_path,
-        {
-            "schema_version": "flowpilot.material_dispatch_repair.v1",
-            "run_id": run_state["run_id"],
-            "decided_by_role": "project_manager",
-            "repair_action": repair_action,
-            "source_block_path": block_path,
-            "prior_path_context_review": prior_review,
-            "recorded_at": utc_now(),
-            **_role_output_envelope_record(decision),
-        },
-    )
-    run_state["material_dispatch_block"] = {
-        "path": block_path,
-        "repair_path": project_relative(project_root, repair_path),
-        "repair_recorded_at": utc_now(),
-        "status": "repair_ready_for_reviewer_recheck",
-    }
-    run_state["flags"]["material_scan_dispatch_blocked"] = False
-    run_state["flags"]["reviewer_dispatch_allowed"] = False
-    run_state["flags"]["reviewer_dispatch_card_delivered"] = False
-    for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
-        run_state["flags"][flag] = False
+def _write_material_dispatch_repair(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_material_dispatch_repair(*args, **kwargs)
 
 
-def _write_pm_review_block_repair(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    active_block_flag = _require_single_active_model_miss_review_block(run_state, "review-block repair")
-    if active_block_flag in MODEL_MISS_MATERIAL_DISPATCH_REPAIR_FLAGS:
-        _write_material_dispatch_repair(project_root, run_root, run_state, payload)
-        return
-    if active_block_flag in MODEL_MISS_ROUTE_MUTATION_BLOCK_FLAGS:
-        _write_route_mutation(project_root, run_root, run_state, payload)
-        return
-    raise RouterError(f"review-block repair has no writer for active block flag {active_block_flag}")
+def _write_pm_review_block_repair(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_pm_review_block_repair(*args, **kwargs)
 
 
-def _write_evidence_quality_package(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="evidence quality package")
-    if payload.get("pm_owned", True) is not True:
-        raise RouterError("evidence quality package must be PM-owned")
-    if not run_state["flags"].get("node_completed_by_pm"):
-        raise RouterError("evidence quality package requires PM-completed current node")
-    frontier = _active_frontier(run_root)
-    node_completion_ledger_path = _active_node_completion_ledger_path(run_root, frontier)
-    if not run_state["flags"].get("node_completion_ledger_updated") or not node_completion_ledger_path.exists():
-        raise RouterError("evidence quality package requires node completion ledger")
-    evidence_items = payload.get("evidence_items")
-    if evidence_items is None:
-        evidence_items = []
-    if not isinstance(evidence_items, list):
-        raise RouterError("evidence_items must be a list")
-    generated_resources = payload.get("generated_resources")
-    if generated_resources is None:
-        generated_resources = []
-    if not isinstance(generated_resources, list):
-        raise RouterError("generated_resources must be a list")
-    ui_visual_required = bool(payload.get("ui_visual_evidence_required"))
-    ui_visual_evidence = payload.get("ui_visual_evidence") if isinstance(payload.get("ui_visual_evidence"), dict) else {}
-    if ui_visual_required:
-        screenshot_paths = ui_visual_evidence.get("screenshot_paths")
-        if not isinstance(screenshot_paths, list) or not screenshot_paths:
-            raise RouterError("required UI/visual evidence needs screenshot_paths")
-        if ui_visual_evidence.get("old_assets_reused") is True:
-            raise RouterError("UI/visual evidence cannot reuse old assets as current evidence")
-    unresolved_evidence = [item for item in evidence_items if isinstance(item, dict) and item.get("status") in {"unresolved", "blocked"}]
-    stale_evidence = [item for item in evidence_items if isinstance(item, dict) and item.get("status") == "stale"]
-    pending_resources = [
-        item
-        for item in generated_resources
-        if isinstance(item, dict) and item.get("disposition") in {None, "", "pending", "unresolved"}
-    ]
-    if unresolved_evidence or stale_evidence:
-        raise RouterError("evidence quality package cannot contain unresolved or stale current evidence")
-    if pending_resources:
-        raise RouterError("generated resources must have terminal dispositions")
-    evidence_ledger_path = run_root / "evidence" / "evidence_ledger.json"
-    generated_resource_ledger_path = run_root / "generated_resource_ledger.json"
-    quality_package_path = run_root / "quality" / "quality_package.json"
-    write_json(
-        evidence_ledger_path,
-        {
-            "schema_version": "flowpilot.evidence_ledger.v1",
-            "run_id": run_state["run_id"],
-            "pm_owned": True,
-            "items": evidence_items,
-            "current_evidence_count": len(evidence_items),
-            "stale_count": 0,
-            "unresolved_count": 0,
-            "controller_origin_evidence_allowed": False,
-            "completion_report_only_allowed": False,
-            "updated_at": utc_now(),
-        },
-    )
-    write_json(
-        generated_resource_ledger_path,
-        {
-            "schema_version": "flowpilot.generated_resource_ledger.v1",
-            "run_id": run_state["run_id"],
-            "pm_owned": True,
-            "resources": generated_resources,
-            "resource_count": len(generated_resources),
-            "pending_resource_count": 0,
-            "unresolved_resource_count": 0,
-            "old_visual_assets_may_close_current_gate": False,
-            "all_resources_have_terminal_disposition": True,
-            "updated_at": utc_now(),
-        },
-    )
-    write_json(
-        quality_package_path,
-        {
-            "schema_version": "flowpilot.quality_package.v1",
-            "run_id": run_state["run_id"],
-            "pm_owned": True,
-            "source_paths": {
-                "evidence_ledger": project_relative(project_root, evidence_ledger_path),
-                "generated_resource_ledger": project_relative(project_root, generated_resource_ledger_path),
-                "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
-                "node_completion_ledger": project_relative(project_root, node_completion_ledger_path),
-                "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
-                "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
-                "packet_chain_audit": project_relative(project_root, run_root / "packet_chain_audit.json")
-                if (run_root / "packet_chain_audit.json").exists()
-                else None,
-            },
-            "prior_path_context_review": prior_review,
-            "quality_checks": {
-                "human_like_review_required": True,
-                "completion_report_only_allowed": False,
-                "rough_or_placeholder_completion_forbidden": True,
-                "unresolved_evidence_count_zero": True,
-                "unresolved_resource_count_zero": True,
-            },
-            "ui_visual_evidence": {
-                "required": ui_visual_required,
-                "status": "provided" if ui_visual_required else "not_applicable",
-                "old_assets_reused": bool(ui_visual_evidence.get("old_assets_reused")),
-                "screenshot_paths": ui_visual_evidence.get("screenshot_paths") or [],
-                "visual_review_notes_path": ui_visual_evidence.get("visual_review_notes_path"),
-            },
-            "written_at": utc_now(),
-        },
-    )
+def _write_evidence_quality_package(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_route_artifacts._bind_router(sys.modules[__name__])
+    return flowpilot_router_route_artifacts._write_evidence_quality_package(*args, **kwargs)
 
 
 def _root_requirement_ids(contract: dict[str, Any]) -> list[str]:
@@ -9488,447 +4994,24 @@ def _next_startup_display_action(project_root: Path, run_state: dict[str, Any], 
 
 
 
-def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    flags = run_state["flags"]
-    manifest = load_manifest_from_run(run_root)
-    resume_waiting_for_pm = (
-        bool(flags.get("resume_reentry_requested"))
-        and bool(flags.get("resume_state_loaded"))
-        and bool(flags.get("resume_roles_restored"))
-        and not bool(flags.get("pm_resume_recovery_decision_returned"))
-    )
-    resume_replayed_without_pm = _resume_mechanical_replay_completed_without_pm(run_state)
-    resume_card_ids = {"controller.resume_reentry", "pm.crew_rehydration_freshness", "pm.resume_decision"}
-    for entry in SYSTEM_CARD_SEQUENCE:
-        if entry["card_id"] == REVIEWER_STARTUP_FACT_CARD_ID:
-            blockers = _startup_pre_review_reconciliation_blockers(project_root, run_root, run_state)
-            if blockers:
-                if any(blocker.get("kind") == "startup_prep_cards_not_all_sent" for blocker in blockers):
-                    continue
-                return _current_scope_pre_review_reconciliation_action(
-                    project_root,
-                    run_root,
-                    run_state,
-                    blockers=blockers,
-                    review_trigger=entry["card_id"],
-                )
-        if resume_replayed_without_pm and entry["card_id"] in {"pm.crew_rehydration_freshness", "pm.resume_decision"}:
-            continue
-        if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
-            continue
-        if flags.get(entry["flag"]):
-            continue
-        required_flag = entry.get("requires_flag")
-        if required_flag and not flags.get(required_flag):
-            continue
-        required_all = entry.get("requires_all_flags")
-        if required_all and not all(flags.get(flag) for flag in required_all):
-            continue
-        required_any = entry.get("requires_any_flag")
-        if required_any and not any(flags.get(flag) for flag in required_any):
-            continue
-        if entry.get("requires_active_node_children") and not _active_node_has_children(run_root, _active_frontier(run_root)):
-            continue
-        if entry["card_id"] in CURRENT_SCOPE_REVIEWER_CARD_IDS:
-            blockers = _pre_review_reconciliation_blockers_for_trigger(project_root, run_root, run_state, entry["card_id"])
-            if blockers:
-                return _current_scope_pre_review_reconciliation_action(
-                    project_root,
-                    run_root,
-                    run_state,
-                    blockers=blockers,
-                    review_trigger=entry["card_id"],
-                )
-        policy_action = _route_action_for_card(entry["card_id"])
-        legal_context: dict[str, Any] | None = None
-        if policy_action:
-            legal_context = _legal_next_action_context(project_root, run_root, run_state)
-            if policy_action not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
-                continue
-        to_role = _system_card_to_role(run_root, entry)
-        if entry["card_id"] in STARTUP_ASYNC_CARD_IDS and to_role in CREW_ROLE_KEYS and not _active_agent_id_for_role(run_root, to_role):
-            return _current_scope_pre_review_reconciliation_action(
-                project_root,
-                run_root,
-                run_state,
-                blockers=[
-                    {
-                        "kind": "startup_role_slots_not_ready",
-                        "target_role": to_role,
-                        "card_id": entry["card_id"],
-                        "reason": "startup role slots must be reconciled before role-dependent startup work",
-                        "scope_kind": "startup",
-                        "scope_id": "startup",
-                    }
-                ],
-                review_trigger=entry["card_id"],
-            )
-        if not run_state.get("manifest_check_requested"):
-            manifest_extra = {"next_card_id": entry["card_id"], "next_recipient_role": to_role}
-            if legal_context is not None:
-                manifest_extra["legal_next_actions"] = legal_context
-            return make_action(
-                action_type="check_prompt_manifest",
-                actor="router",
-                label="router_checks_prompt_manifest",
-                summary="Router checks the prompt manifest internally before exposing the next system-card relay.",
-                allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
-                allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-                extra=manifest_extra,
-            )
-        card = manifest_card(manifest, entry["card_id"])
-        delivery_extra = {"postcondition": entry["flag"]}
-        gate_contract = _public_gate_contract(_gate_contract_for_card(entry["card_id"]))
-        if gate_contract is not None:
-            delivery_extra["gate_contract"] = gate_contract
-        if legal_context is not None:
-            delivery_extra["legal_next_actions"] = legal_context
-        delivery_extra.update(_pm_context_action_extra(project_root, run_root, entry))
-        pm_decision_contract = _pm_decision_payload_contract_for_card(project_root, run_root, entry["card_id"])
-        if pm_decision_contract is not None:
-            delivery_extra["payload_contract"] = pm_decision_contract
-        if entry["card_id"] == "reviewer.startup_fact_check":
-            delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
-        resolved_entry = {**entry, "to_role": to_role}
-        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, resolved_entry, card)
-        delivery_extra["delivery_context"] = delivery_context
-        run_id = str(run_state["run_id"])
-        delivery_id, delivery_attempt_id = _next_card_delivery_attempt(run_root, run_id, entry["card_id"])
-        safe_delivery_id = _safe_delivery_component(delivery_attempt_id)
-        card_body_path = run_root / "runtime_kit" / str(card["path"])
-        manifest_path = run_root / "runtime_kit" / "manifest.json"
-        if not manifest_path.exists():
-            manifest_path = runtime_kit_source() / "manifest.json"
-        card_hash = hashlib.sha256(card_body_path.read_bytes()).hexdigest()
-        manifest_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
-        envelope_path = run_root / "mailbox" / "system_cards" / f"{safe_delivery_id}.json"
-        expected_receipt_path = run_root / "runtime_receipts" / "card_reads" / f"{safe_delivery_id}.receipt.json"
-        expected_return_path = run_root / "mailbox" / "outbox" / "card_acks" / f"{safe_delivery_id}.ack.json"
-        card_return_event = _card_return_event_for_card(entry["card_id"])
-        target_agent_id = _active_agent_id_for_role(run_root, to_role)
-        card_checkin_instruction = _card_checkin_instruction(
-            project_root,
-            envelope_path=project_relative(project_root, envelope_path),
-            role=to_role,
-            agent_id=target_agent_id,
-            card_return_event=card_return_event,
-            bundle=False,
-        )
-        expected_return_rel = project_relative(project_root, expected_return_path)
-        expected_receipt_rel = project_relative(project_root, expected_receipt_path)
-        direct_ack_token = _direct_router_ack_token_for_card(
-            run_state,
-            run_root,
-            card_id=entry["card_id"],
-            to_role=to_role,
-            target_agent_id=target_agent_id,
-            card_return_event=card_return_event,
-            expected_return_path=expected_return_rel,
-            expected_receipt_path=expected_receipt_rel,
-            delivery_id=delivery_id,
-            delivery_attempt_id=delivery_attempt_id,
-            body_hash=card_hash,
-        )
-        direct_ack_token_hash = card_runtime.stable_json_hash(direct_ack_token)
-        resume_tick_id = _latest_resume_tick_id(run_state)
-        role_io_receipt = _role_io_protocol_receipt_for_agent(
-            run_root,
-            run_id,
-            role=to_role,
-            agent_id=target_agent_id,
-            resume_tick_id=resume_tick_id,
-        )
-        if target_agent_id and role_io_receipt is None:
-            return make_action(
-                action_type="inject_role_io_protocol",
-                actor="host",
-                label=f"host_injects_role_io_protocol_for_{_safe_delivery_component(to_role)}",
-                summary=(
-                    f"Inject FlowPilot role I/O protocol to {to_role} before delivering "
-                    f"system card {entry['card_id']}."
-                ),
-                allowed_reads=[
-                    project_relative(project_root, run_root / "crew_ledger.json"),
-                    project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
-                ],
-                allowed_writes=[
-                    project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
-                    project_relative(project_root, _role_io_protocol_receipt_dir(run_root)),
-                    project_relative(project_root, run_state_path(run_root)),
-                ],
-                to_role=to_role,
-                extra={
-                    "target_agent_id": target_agent_id,
-                    "resume_tick_id": resume_tick_id,
-                    "protocol_schema_version": ROLE_IO_PROTOCOL_SCHEMA,
-                    "protocol_hash": _role_io_protocol_hash(),
-                    "required_before_card_id": entry["card_id"],
-                    "controller_visibility": "role_io_protocol_envelope_only",
-                    "ordinary_system_card_delivery": False,
-                },
-            )
-        delivery_extra.update(
-            {
-                "delivery_mode": "envelope_only_v2",
-                "resource_lifecycle": "planned_internal_action",
-                "artifact_committed": False,
-                "relay_allowed": False,
-                "apply_required": True,
-                "controller_visibility": "system_card_envelope_only",
-                "sealed_body_reads_allowed": False,
-                "requires_read_receipt": True,
-                "open_method": "open-card",
-                "card_return_event": card_return_event,
-                "card_checkin_instruction": card_checkin_instruction,
-                "direct_router_ack_token": direct_ack_token,
-                "direct_router_ack_token_hash": direct_ack_token_hash,
-                "expected_return_path": expected_return_rel,
-                "expected_receipt_path": expected_receipt_rel,
-                "card_envelope_path": project_relative(project_root, envelope_path),
-                "delivery_id": delivery_id,
-                "delivery_attempt_id": delivery_attempt_id,
-                "body_path": project_relative(project_root, card_body_path),
-                "body_hash": card_hash,
-                "manifest_path": project_relative(project_root, manifest_path),
-                "manifest_hash": manifest_hash,
-                "target_agent_id": target_agent_id,
-                "resume_tick_id": resume_tick_id,
-                "role_io_protocol_hash": _role_io_protocol_hash(),
-                "role_io_protocol_receipt_path": role_io_receipt.get("receipt_path") if isinstance(role_io_receipt, dict) else None,
-                "role_io_protocol_receipt_hash": role_io_receipt.get("receipt_hash") if isinstance(role_io_receipt, dict) else None,
-                "ack_report_required": True,
-                "ack_submission_mode": "direct_to_router",
-                "controller_ack_handoff_allowed": False,
-                "read_receipt_is_mechanical_only": True,
-                "planned_artifacts": {
-                    "card_envelope_path": project_relative(project_root, envelope_path),
-                    "expected_receipt_path": expected_receipt_rel,
-                    "expected_return_path": expected_return_rel,
-                },
-            }
-        )
-        allowed_reads = [
-            project_relative(project_root, run_root / "runtime_kit" / "manifest.json"),
-        ]
-        allowed_reads.extend(
-            str(path)
-            for path in delivery_context.get("source_paths", {}).values()
-            if isinstance(path, str) and path
-        )
-        if entry["card_id"] == "reviewer.startup_fact_check":
-            allowed_reads.extend(
-                [
-                    delivery_extra["startup_mechanical_audit_path"],
-                    delivery_extra["router_owned_check_proof_path"],
-                ]
-            )
-        return make_action(
-            action_type="deliver_system_card",
-            actor="controller",
-            label=entry["label"],
-            summary=f"Deliver system card envelope {entry['card_id']} to {to_role}; role must open through runtime and submit {card_return_event} directly to Router.",
-            allowed_reads=allowed_reads,
-            allowed_writes=[
-                project_relative(project_root, envelope_path),
-                project_relative(project_root, expected_return_path),
-                project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
-                project_relative(project_root, _card_ledger_path(run_root)),
-                project_relative(project_root, _return_event_ledger_path(run_root)),
-            ],
-            card_id=entry["card_id"],
-            to_role=to_role,
-            extra=delivery_extra,
-        )
-    return None
+def _next_system_card_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._next_system_card_action(*args, **kwargs)
 
 
-def _system_card_bundle_candidate_actions(project_root: Path, run_state: dict[str, Any], run_root: Path) -> list[dict[str, Any]]:
-    probe_state = dict(run_state)
-    probe_state["flags"] = dict(run_state.get("flags") or {})
-    probe_state["manifest_check_requested"] = True
-    actions: list[dict[str, Any]] = []
-    target_role: str | None = None
-    target_agent_id: str | None = None
-    resume_tick_id: str | None = None
-    for _entry in SYSTEM_CARD_SEQUENCE:
-        action = _next_system_card_action(project_root, probe_state, run_root)
-        if not isinstance(action, dict) or action.get("action_type") != "deliver_system_card":
-            break
-        if action.get("payload_contract"):
-            break
-        role = str(action.get("to_role") or "")
-        agent_id = str(action.get("target_agent_id") or "")
-        tick_id = str(action.get("resume_tick_id") or "")
-        if target_role is None:
-            target_role = role
-            target_agent_id = agent_id
-            resume_tick_id = tick_id
-        elif role != target_role or agent_id != target_agent_id or tick_id != resume_tick_id:
-            break
-        actions.append(action)
-        postcondition = action.get("postcondition")
-        if not isinstance(postcondition, str) or not postcondition:
-            break
-        probe_state["flags"][postcondition] = True
-        probe_state["manifest_check_requested"] = True
-    return actions if len(actions) >= 2 else []
+def _system_card_bundle_candidate_actions(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._system_card_bundle_candidate_actions(*args, **kwargs)
 
 
-def _next_system_card_bundle_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    actions = _system_card_bundle_candidate_actions(project_root, run_state, run_root)
-    if len(actions) < 2:
-        return None
-    first = actions[0]
-    role = str(first.get("to_role") or "")
-    card_ids = [str(action.get("card_id") or "") for action in actions]
-    if not run_state.get("manifest_check_requested"):
-        return make_action(
-            action_type="check_prompt_manifest",
-            actor="router",
-            label="router_checks_prompt_manifest",
-            summary="Router checks the prompt manifest internally before exposing the next same-role system-card bundle relay.",
-            allowed_reads=[project_relative(project_root, run_root / "runtime_kit" / "manifest.json")],
-            allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-            extra={
-                "next_card_id": card_ids[0],
-                "bundle_candidate": True,
-                "bundle_card_ids": card_ids,
-                "next_recipient_role": role,
-            },
-        )
-    first_attempt = str(first.get("delivery_attempt_id") or card_ids[0])
-    last_attempt = str(actions[-1].get("delivery_attempt_id") or card_ids[-1])
-    bundle_id = f"{_safe_delivery_component(first_attempt)}--to--{_safe_delivery_component(last_attempt)}"
-    bundle_envelope_path = run_root / "mailbox" / "system_card_bundles" / f"{bundle_id}.json"
-    expected_return_path = run_root / "mailbox" / "outbox" / "card_bundle_acks" / f"{bundle_id}.ack.json"
-    expected_receipt_paths = [str(action.get("expected_receipt_path") or "") for action in actions]
-    allowed_reads: list[str] = []
-    for action in actions:
-        for raw_path in action.get("allowed_reads") or []:
-            if isinstance(raw_path, str) and raw_path and raw_path not in allowed_reads:
-                allowed_reads.append(raw_path)
-    cards: list[dict[str, Any]] = []
-    for action in actions:
-        member = {
-            "card_id": action.get("card_id"),
-            "label": action.get("label"),
-            "postcondition": action.get("postcondition"),
-            "delivery_id": action.get("delivery_id"),
-            "delivery_attempt_id": action.get("delivery_attempt_id"),
-            "body_path": action.get("body_path"),
-            "body_hash": action.get("body_hash"),
-            "manifest_path": action.get("manifest_path"),
-            "manifest_hash": action.get("manifest_hash"),
-            "expected_receipt_path": action.get("expected_receipt_path"),
-            "card_return_event": action.get("card_return_event"),
-            "delivery_context": action.get("delivery_context"),
-        }
-        for key in (
-            "pm_context_paths",
-            "pm_prior_path_context_required_for_decision",
-            "controller_history_is_evidence",
-        ):
-            if key in action:
-                member[key] = action[key]
-        cards.append(member)
-    card_return_event = _card_bundle_return_event_for_role(role)
-    direct_ack_token = _direct_router_ack_token_for_bundle(
-        run_state,
-        run_root,
-        bundle_id=bundle_id,
-        role=role,
-        target_agent_id=str(first.get("target_agent_id") or "") or None,
-        card_return_event=card_return_event,
-        card_ids=card_ids,
-        delivery_attempt_ids=[str(action.get("delivery_attempt_id") or "") for action in actions],
-        expected_return_path=project_relative(project_root, expected_return_path),
-        expected_receipt_paths=expected_receipt_paths,
-    )
-    direct_ack_token_hash = card_runtime.stable_json_hash(direct_ack_token)
-    card_checkin_instruction = _card_checkin_instruction(
-        project_root,
-        envelope_path=project_relative(project_root, bundle_envelope_path),
-        role=role,
-        agent_id=str(first.get("target_agent_id") or "") or None,
-        card_return_event=card_return_event,
-        bundle=True,
-    )
-    return make_action(
-        action_type="deliver_system_card_bundle",
-        actor="controller",
-        label=f"same_role_system_card_bundle_delivered_{_safe_delivery_component(card_ids[0])}_to_{_safe_delivery_component(card_ids[-1])}",
-        summary=(
-            f"Deliver one committed system-card bundle with {len(card_ids)} cards to {role}; "
-            f"the role must open it through runtime and submit {card_return_event} directly to Router."
-        ),
-        allowed_reads=allowed_reads,
-        allowed_writes=[
-            project_relative(project_root, bundle_envelope_path),
-            project_relative(project_root, expected_return_path),
-            project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
-            project_relative(project_root, _card_ledger_path(run_root)),
-            project_relative(project_root, _return_event_ledger_path(run_root)),
-        ],
-        card_id=card_ids[0],
-        to_role=role,
-        extra={
-            "card_ids": card_ids,
-            "postconditions": [str(action.get("postcondition") or "") for action in actions],
-            "delivery_mode": "same_role_system_card_bundle_v1",
-            "resource_lifecycle": "planned_internal_action",
-            "artifact_committed": False,
-            "relay_allowed": False,
-            "apply_required": True,
-            "controller_visibility": "system_card_bundle_envelope_only",
-            "sealed_body_reads_allowed": False,
-            "requires_read_receipt": True,
-            "open_method": "open-card-bundle",
-            "card_return_event": card_return_event,
-            "card_checkin_instruction": card_checkin_instruction,
-            "direct_router_ack_token": direct_ack_token,
-            "direct_router_ack_token_hash": direct_ack_token_hash,
-            "expected_return_path": project_relative(project_root, expected_return_path),
-            "expected_receipt_paths": expected_receipt_paths,
-            "card_bundle_id": bundle_id,
-            "card_bundle_envelope_path": project_relative(project_root, bundle_envelope_path),
-            "target_agent_id": first.get("target_agent_id"),
-            "resume_tick_id": first.get("resume_tick_id"),
-            "role_io_protocol_hash": first.get("role_io_protocol_hash"),
-            "role_io_protocol_receipt_path": first.get("role_io_protocol_receipt_path"),
-            "role_io_protocol_receipt_hash": first.get("role_io_protocol_receipt_hash"),
-            "ack_report_required": True,
-            "ack_submission_mode": "direct_to_router",
-            "controller_ack_handoff_allowed": False,
-            "read_receipt_is_mechanical_only": True,
-            "same_role_bundle": True,
-            "manifest_batch_checked": True,
-            "bundle_does_not_cross_role_or_agent": True,
-            "bundle_stops_before_role_output": True,
-            "cards": cards,
-            "planned_artifacts": {
-                "card_bundle_envelope_path": project_relative(project_root, bundle_envelope_path),
-                "expected_receipt_paths": expected_receipt_paths,
-                "expected_return_path": project_relative(project_root, expected_return_path),
-            },
-        },
-    )
+def _next_system_card_bundle_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._next_system_card_bundle_action(*args, **kwargs)
 
 
-def _system_card_to_role(run_root: Path, entry: dict[str, Any]) -> str:
-    default_role = str(entry.get("to_role") or "")
-    if entry.get("card_id") == "worker.research_report":
-        index_path = _research_packet_index_path(run_root)
-        if index_path.exists():
-            try:
-                index = _load_packet_index(index_path, label="research")
-            except RouterError:
-                return default_role
-            packets = index.get("packets")
-            if isinstance(packets, list) and packets:
-                to_role = str(packets[0].get("to_role") or "").strip()
-                if to_role:
-                    return to_role
-    return default_role
+def _system_card_to_role(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._system_card_to_role(*args, **kwargs)
 
 
 def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
@@ -10020,532 +5103,88 @@ def _next_pm_role_work_request_action(project_root: Path, run_state: dict[str, A
 
 
 
-def _next_model_miss_followup_request_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    followup = _model_miss_followup_expectation(run_state)
-    if followup is None:
-        return None
-    index = _load_pm_role_work_request_index(run_root, run_state)
-    if _active_pm_role_work_request(index) is not None:
-        return None
-    kind = str(followup.get("required_request_kind") or "model_miss")
-    return _expected_role_decision_wait_action(
-        project_root,
-        run_state,
-        run_root,
-        label=f"pm_{kind}_triage_waits_for_generic_role_work_request",
-        summary=(
-            "PM chose to gather more information before repair. Controller must wait for PM to register "
-            "a generic role-work request; Controller may not reopen the same model-miss decision loop."
-        ),
-        allowed_external_events=[PM_ROLE_WORK_REQUEST_EVENT],
-        to_role="project_manager",
-        payload_contract={
-            "schema_version": PAYLOAD_CONTRACT_SCHEMA,
-            "name": "pm_role_work_request",
-            "required_fields": [
-                "requested_by_role",
-                "request_id",
-                "to_role",
-                "request_mode",
-                "request_kind",
-                "output_contract_id",
-                "packet_body_path",
-                "packet_body_hash",
-            ],
-            "allowed_values": {
-                "requested_by_role": ["project_manager"],
-                "to_role": sorted(PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES),
-                "request_mode": sorted(PM_ROLE_WORK_REQUEST_MODES),
-                "request_kind": sorted(PM_ROLE_WORK_REQUEST_KINDS),
-            },
-            "pending_followup": followup,
-        },
-    )
+def _next_model_miss_followup_request_wait_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._next_model_miss_followup_request_wait_action(*args, **kwargs)
 
 
-def _next_model_miss_controlled_stop_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    stop = run_state.get("model_miss_triage_controlled_stop")
-    if not isinstance(stop, dict) or stop.get("status") != "waiting_for_user":
-        return None
-    return make_action(
-        action_type="await_user_after_model_miss_stop",
-        actor="controller",
-        label="model_miss_triage_controlled_stop",
-        summary="PM stopped the model-miss triage path for user input; Controller must wait and must not loop the same PM event.",
-        allowed_reads=[project_relative(project_root, run_state_path(run_root))],
-        allowed_writes=[],
-        to_role="user",
-        extra={
-            "requires_user": True,
-            "apply_required": False,
-            "model_miss_triage_controlled_stop": stop,
-        },
-    )
+def _next_model_miss_controlled_stop_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._next_model_miss_controlled_stop_action(*args, **kwargs)
 
 
-def _expected_role_decision_wait_action(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    *,
-    label: str,
-    summary: str,
-    allowed_external_events: list[str],
-    to_role: str,
-    payload_contract: dict[str, Any] | None = None,
-    allowed_reads_extra: list[str] | None = None,
-    pm_work_request_channel: bool = True,
-    producer_roles_override: list[str] | None = None,
-    gate_contract: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    role_output_events = list(allowed_external_events)
-    route_action_event_present = any(_route_action_for_event(event) for event in role_output_events)
-    if route_action_event_present:
-        pm_work_request_channel = False
-    role_output_status_packet_path = _role_output_status_packet_path_for_wait(
-        project_root,
-        run_root,
-        to_role=to_role,
-        allowed_events=role_output_events,
-        payload_contract=payload_contract,
-    )
-    if role_output_status_packet_path and payload_contract is not None:
-        payload_contract = dict(payload_contract)
-        structural = list(payload_contract.get("structural_requirements") or [])
-        structural.append(
-            "Maintain role-output progress through flowpilot_runtime.py progress-output; progress is metadata-only and is not pass/fail evidence."
-        )
-        payload_contract["structural_requirements"] = structural
-        payload_contract["progress_status"] = {
-            "default_progress_required": True,
-            "controller_status_packet_path": role_output_status_packet_path,
-            "runtime_command": "flowpilot_runtime.py progress-output",
-            "controller_visibility": "metadata_only",
-            "progress_is_decision_evidence": False,
-        }
-    allowed_events = list(allowed_external_events)
-    if pm_work_request_channel and to_role == "project_manager" and PM_ROLE_WORK_REQUEST_EVENT not in allowed_events:
-        allowed_events.append(PM_ROLE_WORK_REQUEST_EVENT)
-    allowed_events = _validated_event_capability_names(
-        allowed_events,
-        context=f"await_role_decision action {label}",
-        run_root=run_root,
-        run_state=run_state,
-        usage="wait",
-    )
-    if producer_roles_override is None:
-        _validate_wait_event_producer_binding(
-            allowed_events,
-            to_role=to_role,
-            context=f"await_role_decision action {label}",
-        )
-    else:
-        producer_roles = {str(role) for role in producer_roles_override if str(role)}
-        target_roles = _role_set(to_role)
-        if producer_roles and not producer_roles.issubset(target_roles):
-            raise RouterError(
-                f"await_role_decision action {label} waits for event producer role(s) {sorted(producer_roles)} "
-                f"but targets {sorted(target_roles)}"
-            )
-    extra: dict[str, Any] = {
-        "allowed_external_events": allowed_events,
-        "controller_only_mode_active": True,
-        "controller_may_create_project_evidence": False,
-        "expected_wait_is_not_control_blocker": True,
-    }
-    if route_action_event_present:
-        extra["legal_next_actions"] = _legal_next_action_context(project_root, run_root, run_state)
-        extra["pm_may_choose_only_from_legal_next_actions"] = True
-        extra["pm_role_work_request_channel_available"] = False
-    if producer_roles_override is not None:
-        extra["expected_event_producer_roles"] = sorted({str(role) for role in producer_roles_override if str(role)})
-    if pm_work_request_channel and to_role == "project_manager":
-        extra["pm_work_request_channel_available"] = True
-        extra["pm_role_work_request_event"] = PM_ROLE_WORK_REQUEST_EVENT
-    if payload_contract is not None:
-        extra["payload_contract"] = payload_contract
-    public_gate_contract = _public_gate_contract(gate_contract)
-    if public_gate_contract is not None:
-        extra["gate_contract"] = public_gate_contract
-    if role_output_status_packet_path:
-        extra["role_output_progress_status"] = {
-            "controller_status_packet_path": role_output_status_packet_path,
-            "default_progress_required": True,
-            "runtime_command": "flowpilot_runtime.py progress-output",
-            "controller_visibility": "metadata_only",
-            "progress_is_decision_evidence": False,
-        }
-    allowed_reads = [project_relative(project_root, run_state_path(run_root))]
-    if role_output_status_packet_path and role_output_status_packet_path not in allowed_reads:
-        allowed_reads.append(role_output_status_packet_path)
-    for item in allowed_reads_extra or []:
-        if item and item not in allowed_reads:
-            allowed_reads.append(item)
-    return make_action(
-        action_type="await_role_decision",
-        actor="controller",
-        label=label,
-        summary=summary,
-        allowed_reads=allowed_reads,
-        allowed_writes=[project_relative(project_root, run_state_path(run_root))],
-        to_role=to_role,
-        extra=extra,
-    )
+def _expected_role_decision_wait_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._expected_role_decision_wait_action(*args, **kwargs)
 
 
-def _event_wait_role(event: str, meta: dict[str, str]) -> str:
-    del meta
-    if event.startswith("pm_"):
-        return "project_manager"
-    if event.startswith("reviewer_") or event.startswith("current_node_reviewer_"):
-        return "human_like_reviewer"
-    if event.startswith("product_officer_"):
-        return "product_flowguard_officer"
-    if event.startswith("process_officer_"):
-        return "process_flowguard_officer"
-    if event.startswith("worker_"):
-        return "worker_a"
-    if event.startswith("host_"):
-        return "host"
-    if event.startswith("controller_") or event in {"capability_evidence_synced"}:
-        return "controller"
-    if event == "research_capability_decision_recorded":
-        return "project_manager"
-    return "project_manager"
+def _event_wait_role(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._event_wait_role(*args, **kwargs)
 
 
-def _active_node_children_status(run_root: Path | None) -> bool | None:
-    if run_root is None:
-        return None
-    try:
-        frontier = _active_frontier(run_root)
-        return _active_node_has_children(run_root, frontier)
-    except (OSError, KeyError, RouterError, json.JSONDecodeError, ValueError, TypeError):
-        return None
+def _active_node_children_status(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._active_node_children_status(*args, **kwargs)
 
 
-def _event_applicable_for_active_node(meta: dict[str, Any], active_node_has_children: bool | None) -> bool:
-    if active_node_has_children is None:
-        return True
-    if meta.get("requires_active_node_children") and not active_node_has_children:
-        return False
-    if meta.get("forbids_active_node_children") and active_node_has_children:
-        return False
-    return True
+def _event_applicable_for_active_node(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._event_applicable_for_active_node(*args, **kwargs)
 
 
-def _pending_expected_external_event_groups(
-    run_state: dict[str, Any],
-    run_root: Path | None = None,
-) -> list[list[tuple[str, dict[str, Any]]]]:
-    flags = run_state["flags"]
-    grouped: dict[str, list[tuple[str, dict[str, Any]]]] = {}
-    ordered_requires: list[str] = []
-    active_node_has_children = _active_node_children_status(run_root)
-    for event, meta in EXTERNAL_EVENTS.items():
-        required_flag = meta.get("requires_flag")
-        if not required_flag:
-            continue
-        if not _event_applicable_for_active_node(meta, active_node_has_children):
-            continue
-        if required_flag not in grouped:
-            grouped[required_flag] = []
-            ordered_requires.append(required_flag)
-        grouped[required_flag].append((event, meta))
-
-    def group_already_has_terminal_outcome(group: list[tuple[str, dict[str, Any]]]) -> bool:
-        recorded_events = [
-            event
-            for event, meta in group
-            if flags.get(meta["flag"]) and _event_is_terminal_gate_outcome(event, meta)
-        ]
-        if not recorded_events:
-            return False
-        recorded_blocks = [event for event in recorded_events if event in GATE_OUTCOME_BLOCK_EVENTS]
-        if recorded_blocks:
-            pass_events = [
-                event
-                for event, meta in group
-                if event in GATE_OUTCOME_PASS_CLEAR_FLAGS and not flags.get(meta["flag"])
-            ]
-            if pass_events:
-                return False
-        return True
-
-    pending: list[list[tuple[str, dict[str, Any]]]] = []
-    for required_flag in ordered_requires:
-        if not flags.get(required_flag):
-            continue
-        if required_flag == "pm_control_blocker_repair_decision_recorded" and not isinstance(
-            run_state.get("active_control_blocker"), dict
-        ):
-            continue
-        group = grouped[required_flag]
-        if group_already_has_terminal_outcome(group):
-            continue
-        pending.append(group)
-    return pending
+def _pending_expected_external_event_groups(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._pending_expected_external_event_groups(*args, **kwargs)
 
 
-def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
-    pending_groups = _pending_expected_external_event_groups(run_state, run_root)
-    if not pending_groups:
-        return None
-    for group in pending_groups:
-        group = _gate_completion_wait_group(group)
-        group_events = [event for event, _meta in group]
-        allowed_events = _filter_events_by_legal_route_actions(project_root, run_root, run_state, group_events)
-        if not allowed_events:
-            continue
-        allowed_event_set = set(allowed_events)
-        filtered_group = [(event, meta) for event, meta in group if event in allowed_event_set]
-        roles = sorted({_event_wait_role(event, meta) for event, meta in filtered_group})
-        required_flag = str(filtered_group[0][1].get("requires_flag") or "")
-        role_label = roles[0] if len(roles) == 1 else ",".join(roles)
-        safe_event_label = "_or_".join(allowed_events).replace("-", "_")
-        route_action_wait = any(_route_action_for_event(event) for event in allowed_events)
-        return _expected_role_decision_wait_action(
-            project_root,
-            run_state,
-            run_root,
-            label=f"controller_waits_for_expected_event_{safe_event_label}",
-            summary=(
-                f"Prerequisite {required_flag} is satisfied and no controller action is due. "
-                f"Controller must wait for expected external event(s): {', '.join(allowed_events)}."
-            ),
-            allowed_external_events=allowed_events,
-            to_role=role_label,
-            payload_contract=_role_decision_payload_contract_for_events(project_root, run_root, allowed_events),
-            pm_work_request_channel=not route_action_wait,
-            gate_contract=_gate_contract_for_events(allowed_events),
-        )
-    return None
+def _next_expected_role_decision_wait_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._next_expected_role_decision_wait_action(*args, **kwargs)
 
 
-def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: object) -> dict[str, Any] | None:
-    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_role_decision":
-        return None
-    allowed_events = pending_action.get("allowed_external_events")
-    if not isinstance(allowed_events, list) or not allowed_events:
-        return {
-            "reason": "await_role_decision_missing_allowed_external_events",
-            "action_type": pending_action.get("action_type"),
-            "label": pending_action.get("label"),
-        }
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    invalid_events: list[dict[str, Any]] = []
-    normalized_events: list[str] = []
-    for item in allowed_events:
-        if not isinstance(item, str):
-            invalid_events.append({"issue": "non_string_allowed_external_event", "event": repr(item)})
-            continue
-        normalized_events.append(item)
-        meta = EXTERNAL_EVENTS.get(item)
-        if not isinstance(meta, dict):
-            invalid_events.append({"issue": "unknown_external_event", "event": item})
-            continue
-        required_flag = meta.get("requires_flag")
-        if required_flag and not flags.get(required_flag):
-            invalid_events.append(
-                {
-                    "issue": "requires_flag_false",
-                    "event": item,
-                    "requires_flag": required_flag,
-                    "current_value": flags.get(required_flag),
-                }
-            )
-    if not invalid_events:
-        return None
-    return {
-        "reason": "await_role_decision_allowed_event_not_currently_receivable",
-        "action_type": pending_action.get("action_type"),
-        "label": pending_action.get("label"),
-        "allowed_external_events": normalized_events,
-        "invalid_allowed_external_events": invalid_events,
-    }
+def _pending_role_decision_staleness(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._pending_role_decision_staleness(*args, **kwargs)
 
 
-def _reconcile_pending_role_wait_from_packet_status(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending_action: object,
-) -> dict[str, Any] | None:
-    if not isinstance(pending_action, dict) or pending_action.get("action_type") != "await_role_decision":
-        return None
-    allowed_events = pending_action.get("allowed_external_events")
-    if not isinstance(allowed_events, list) or "worker_current_node_result_returned" not in allowed_events:
-        return None
-    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    meta = EXTERNAL_EVENTS["worker_current_node_result_returned"]
-    required_flag = str(meta.get("requires_flag") or "")
-    if required_flag and not flags.get(required_flag):
-        return None
-    if flags.get(meta["flag"]):
-        return None
-    packet_ledger = read_json_if_exists(run_root / "packet_ledger.json")
-    status = str(packet_ledger.get("active_packet_status") or "")
-    if status not in {"worker-result-needs-review", "result-envelope-returned", "router-next-action-ready-for-controller"}:
-        return None
-    record = _active_packet_ledger_record(packet_ledger)
-    if not isinstance(record, dict):
-        return None
-    packet_id = str(record.get("packet_id") or packet_ledger.get("active_packet_id") or "")
-    if not packet_id:
-        return None
-    result_path = _result_envelope_path_from_packet_record(project_root, run_state, record)
-    if not result_path.exists():
-        return None
-    paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state["run_id"]))
-    status_packet = read_json_if_exists(paths["controller_status_packet"])
-    if status_packet.get("schema_version") != "flowpilot.controller_status_packet.v1":
-        return None
-    if status_packet.get("status") not in {"result-envelope-returned", "router-next-action-ready-for-controller"}:
-        return None
-    result = packet_runtime.load_envelope(project_root, result_path)
-    if result.get("next_recipient") != "project_manager":
-        return None
-    result_hash = packet_runtime.sha256_file(result_path)
-    payload = {
-        "packet_id": packet_id,
-        "result_envelope_path": project_relative(project_root, result_path),
-        "result_envelope_hash": result_hash,
-        "reconciled_from_packet_ledger": True,
-        "reconciled_from_controller_status_packet": True,
-    }
-    _validate_current_node_result_event(project_root, run_state, payload)
-    event = "worker_current_node_result_returned"
-    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
-    if _scoped_event_is_recorded(run_state, scoped_identity):
-        wait_closure = _close_waiting_controller_actions_for_external_event(
-            project_root,
-            run_root,
-            run_state,
-            event=event,
-            payload=payload,
-            source="already_reconciled_packet_status_event",
-        )
-        if not wait_closure.get("changed"):
-            return None
-        return {
-            "event": event,
-            "packet_id": packet_id,
-            "result_envelope_path": payload["result_envelope_path"],
-            "packet_status": status,
-            "already_recorded": True,
-            "wait_closure": wait_closure,
-        }
-    run_state["flags"][meta["flag"]] = True
-    run_state["events"].append(
-        {
-            "event": event,
-            "summary": meta["summary"],
-            "payload": payload,
-            "recorded_at": utc_now(),
-            "reconciled_by_router": True,
-        }
-    )
-    _mark_scoped_event_recorded(run_state, scoped_identity)
-    wait_closure = _close_waiting_controller_actions_for_external_event(
-        project_root,
-        run_root,
-        run_state,
-        event=event,
-        payload=payload,
-        source="router_reconciled_pending_role_wait_from_packet_status",
-    )
-    append_history(
-        run_state,
-        "router_reconciled_pending_role_wait_from_packet_status",
-        {
-            "event": event,
-            "packet_id": packet_id,
-            "packet_status": status,
-            "result_envelope_path": payload["result_envelope_path"],
-            "status_packet_checked": True,
-            "wait_closure": wait_closure,
-        },
-    )
-    return {
-        "event": event,
-        "packet_id": packet_id,
-        "result_envelope_path": payload["result_envelope_path"],
-        "packet_status": status,
-    }
+def _reconcile_pending_role_wait_from_packet_status(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._reconcile_pending_role_wait_from_packet_status(*args, **kwargs)
 
 
-def _record_router_reconciled_external_event(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    event: str,
-    payload: dict[str, Any],
-) -> bool:
-    meta = EXTERNAL_EVENTS[event]
-    flag = str(meta["flag"])
-    repeatable = event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}
-    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
-    if _scoped_event_is_recorded(run_state, scoped_identity):
-        return False
-    if run_state.setdefault("flags", {}).get(flag) and not repeatable:
-        return False
-    run_state["flags"][flag] = True
-    run_state.setdefault("events", []).append(
-        {
-            "event": event,
-            "summary": meta["summary"],
-            "payload": payload,
-            "recorded_at": utc_now(),
-            "reconciled_by_router": True,
-        }
-    )
-    _mark_scoped_event_recorded(run_state, scoped_identity)
-    wait_closure = _close_waiting_controller_actions_for_external_event(
-        project_root,
-        run_root,
-        run_state,
-        event=event,
-        payload=payload,
-        source="router_reconciled_external_event",
-    )
-    append_history(
-        run_state,
-        f"router_reconciled_{event}",
-        {
-            "event": event,
-            "payload": payload,
-            "controller_visibility": "metadata_only",
-            "wait_closure": wait_closure,
-        },
-    )
-    return True
+def _record_router_reconciled_external_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._record_router_reconciled_external_event(*args, **kwargs)
 
 
-def _try_reconcile_material_scan_body_delivery(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    return flowpilot_router_work_packets._try_reconcile_material_scan_body_delivery(sys.modules[__name__], project_root, run_root, run_state)
+def _try_reconcile_material_scan_body_delivery(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._try_reconcile_material_scan_body_delivery(*args, **kwargs)
 
 
 
-def _try_reconcile_material_scan_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    return flowpilot_router_work_packets._try_reconcile_material_scan_results(sys.modules[__name__], project_root, run_root, run_state)
+def _try_reconcile_material_scan_results(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._try_reconcile_material_scan_results(*args, **kwargs)
 
 
 
-def _try_reconcile_current_node_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    return flowpilot_router_work_packets._try_reconcile_current_node_results(sys.modules[__name__], project_root, run_root, run_state)
+def _try_reconcile_current_node_results(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._try_reconcile_current_node_results(*args, **kwargs)
 
 
 
-def _try_reconcile_pm_role_work_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
-    return flowpilot_router_work_packets._try_reconcile_pm_role_work_results(sys.modules[__name__], project_root, run_root, run_state)
+def _try_reconcile_pm_role_work_results(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._try_reconcile_pm_role_work_results(*args, **kwargs)
 
 
 
-def _run_state_has_event(run_state: dict[str, Any], event: str) -> bool:
-    return any(
-        isinstance(item, dict) and item.get("event") == event
-        for item in (run_state.get("events") or [])
-    )
+def _run_state_has_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_expected_waits._bind_router(sys.modules[__name__])
+    return flowpilot_router_expected_waits._run_state_has_event(*args, **kwargs)
 
 
 def _startup_fact_canonical_report_is_valid(run_root: Path, run_state: dict[str, Any]) -> bool:
@@ -10632,722 +5271,129 @@ def _try_reconcile_startup_fact_role_output_ledger(
     }
 
 
-def _reconcile_durable_wait_evidence(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-) -> dict[str, Any]:
-    batch_reconciliation = _refresh_all_parallel_packet_batches_from_durable_results(project_root, run_root, run_state)
-    changed = bool(batch_reconciliation.get("changed"))
-    role_output_reconciliation = _try_reconcile_startup_fact_role_output_ledger(project_root, run_root, run_state)
-    changed = bool(role_output_reconciliation.get("changed")) or changed
-    changed = _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state) or changed
-    changed = _try_reconcile_material_scan_results(project_root, run_root, run_state) or changed
-    changed = _try_reconcile_current_node_results(project_root, run_root, run_state) or changed
-    changed = _try_reconcile_pm_role_work_results(project_root, run_root, run_state) or changed
-    if changed:
-        run_state["parallel_batch_reconciliation"] = batch_reconciliation
-        append_history(
-            run_state,
-            "router_reconciled_durable_wait_evidence",
-            {
-                "changed": changed,
-                "controller_visibility": "metadata_only",
-                "batches": batch_reconciliation.get("batches"),
-                "role_output_reconciliation": role_output_reconciliation,
-            },
-        )
-    return {**batch_reconciliation, "changed": changed, "role_output_reconciliation": role_output_reconciliation}
+def _reconcile_durable_wait_evidence(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._reconcile_durable_wait_evidence(*args, **kwargs)
 
 
-def _commit_system_card_delivery_artifact(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    pending: dict[str, Any],
-) -> dict[str, Any]:
-    card_id = str(pending["card_id"])
-    card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
-    if card_entry is None:
-        raise RouterError(f"unknown system card in pending action: {card_id}")
-    if not run_state.get("manifest_check_requested"):
-        raise RouterError("system card delivery requires a current manifest check")
-    manifest = load_manifest_from_run(run_root)
-    card = manifest_card(manifest, card_id)
-    delivery_context = pending.get("delivery_context")
-    if not isinstance(delivery_context, dict):
-        delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
-    delivery = {
-        "card_id": card_id,
-        "from": "system",
-        "issued_by": "router",
-        "delivered_by": "controller",
-        "to_role": pending["to_role"],
-        "path": card["path"],
-        "delivery_mode": pending.get("delivery_mode") or "envelope_only_v2",
-        "controller_visibility": "system_card_envelope_only",
-        "sealed_body_reads_allowed": False,
-        "requires_read_receipt": True,
-        "open_method": pending.get("open_method") or "open-card",
-        "card_return_event": pending.get("card_return_event") or _card_return_event_for_card(card_id),
-        "card_checkin_instruction": pending.get("card_checkin_instruction"),
-        "direct_router_ack_token": pending.get("direct_router_ack_token"),
-        "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
-        "expected_return_path": pending.get("expected_return_path"),
-        "expected_receipt_path": pending.get("expected_receipt_path"),
-        "card_envelope_path": pending.get("card_envelope_path"),
-        "delivery_id": pending.get("delivery_id"),
-        "delivery_attempt_id": pending.get("delivery_attempt_id"),
-        "body_path": pending.get("body_path"),
-        "body_hash": pending.get("body_hash"),
-        "manifest_path": pending.get("manifest_path"),
-        "manifest_hash": pending.get("manifest_hash"),
-        "target_agent_id": pending.get("target_agent_id"),
-        "resume_tick_id": pending.get("resume_tick_id"),
-        "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
-        "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
-        "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
-        "gate_contract": pending.get("gate_contract"),
-        "delivery_context": delivery_context,
-        "delivered_at": utc_now(),
-    }
-    if card_id == "reviewer.startup_fact_check":
-        delivery.update(
-            {
-                "startup_mechanical_audit_path": pending.get("startup_mechanical_audit_path"),
-                "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
-                "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
-                "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
-                "router_computable_checks_already_enforced": True,
-                "reviewer_should_not_reprove_router_computable_checks": True,
-                "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
-            }
-        )
-    envelope_path_raw = delivery.get("card_envelope_path")
-    expected_return_path_raw = delivery.get("expected_return_path")
-    expected_receipt_path_raw = delivery.get("expected_receipt_path")
-    if not all(isinstance(item, str) and item for item in (envelope_path_raw, expected_return_path_raw, expected_receipt_path_raw)):
-        raise RouterError("system card envelope delivery requires envelope, receipt, and return paths")
-    envelope_path = resolve_project_path(project_root, str(envelope_path_raw))
-    expected_return_path = resolve_project_path(project_root, str(expected_return_path_raw))
-    expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_path_raw))
-    envelope = {
-        "schema_version": card_runtime.CARD_ENVELOPE_SCHEMA,
-        "run_id": run_state["run_id"],
-        "run_root": project_relative(project_root, run_root),
-        "resume_tick_id": delivery.get("resume_tick_id"),
-        "envelope_id": delivery.get("delivery_attempt_id"),
-        "delivery_id": delivery.get("delivery_id"),
-        "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-        "card_id": card_id,
-        "from": "system",
-        "issued_by": "router",
-        "delivered_by": "controller",
-        "target_role": pending["to_role"],
-        "target_agent_id": delivery.get("target_agent_id"),
-        "body_path": delivery.get("body_path"),
-        "body_hash": delivery.get("body_hash"),
-        "manifest_path": delivery.get("manifest_path"),
-        "manifest_hash": delivery.get("manifest_hash"),
-        "body_visibility": "target_role_runtime_only",
-        "resource_lifecycle": "committed_artifact",
-        "artifact_committed": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "controller_visibility": "system_card_envelope_only",
-        "sealed_body_reads_allowed": False,
-        "requires_read_receipt": True,
-        "open_method": delivery.get("open_method") or "open-card",
-        "card_return_event": delivery.get("card_return_event"),
-        "card_checkin_instruction": delivery.get("card_checkin_instruction"),
-        "direct_router_ack_token": delivery.get("direct_router_ack_token"),
-        "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
-        "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-        "expected_return_path": project_relative(project_root, expected_return_path),
-        "delivery_context": delivery_context,
-        "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
-        "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
-        "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
-        "gate_contract": delivery.get("gate_contract"),
-        "delivered_at": delivery["delivered_at"],
-        "runtime_validates_mechanics_only": True,
-        "semantic_understanding_validated_by_receipt": False,
-    }
-    envelope["envelope_hash"] = card_runtime.stable_json_hash(envelope)
-    write_json(envelope_path, envelope)
-    ack_clearance_scope = _card_ack_clearance_scope(
-        delivery_context,
-        card_id=card_id,
-        target_role=str(pending["to_role"]),
-    )
-    delivery["card_envelope_hash"] = envelope["envelope_hash"]
-    delivery["resource_lifecycle"] = "committed_artifact"
-    delivery["artifact_committed"] = True
-    delivery["relay_allowed"] = True
-    delivery["apply_required"] = False
-    delivery["ack_clearance_scope"] = ack_clearance_scope
-    run_state["delivered_cards"].append(delivery)
-    run_state["flags"][card_entry["flag"]] = True
-    run_state["manifest_check_requested"] = False
-    run_state["prompt_deliveries"] = int(run_state.get("prompt_deliveries", 0)) + 1
-    ledger = read_json_if_exists(run_root / "prompt_delivery_ledger.json") or {"schema_version": "flowpilot.prompt_delivery_ledger.v1", "deliveries": []}
-    ledger.setdefault("deliveries", []).append(delivery)
-    ledger["updated_at"] = utc_now()
-    write_json(run_root / "prompt_delivery_ledger.json", ledger)
-    card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
-    card_ledger.setdefault("deliveries", []).append(
-        {
-            "card_id": card_id,
-            "delivery_id": delivery.get("delivery_id"),
-            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-            "to_role": pending["to_role"],
-            "target_agent_id": delivery.get("target_agent_id"),
-            "card_envelope_path": project_relative(project_root, envelope_path),
-            "card_envelope_hash": envelope["envelope_hash"],
-            "resource_lifecycle": "committed_artifact",
-            "artifact_committed": True,
-            "relay_allowed": True,
-            "apply_required": False,
-            "body_hash": delivery.get("body_hash"),
-            "manifest_hash": delivery.get("manifest_hash"),
-            "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
-            "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
-            "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
-            "gate_contract": delivery.get("gate_contract"),
-            "ack_clearance_scope": ack_clearance_scope,
-            "requires_read_receipt": True,
-            "card_return_event": delivery.get("card_return_event"),
-            "card_checkin_instruction": delivery.get("card_checkin_instruction"),
-            "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
-            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-            "expected_return_path": project_relative(project_root, expected_return_path),
-            "delivered_at": delivery["delivered_at"],
-        }
-    )
-    card_ledger["updated_at"] = utc_now()
-    write_json(_card_ledger_path(run_root), card_ledger)
-    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-    return_ledger.setdefault("pending_returns", []).append(
-        {
-            "card_return_event": delivery.get("card_return_event"),
-            "status": "pending",
-            "card_id": card_id,
-            "delivery_id": delivery.get("delivery_id"),
-            "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-            "target_role": pending["to_role"],
-            "target_agent_id": delivery.get("target_agent_id"),
-            "card_envelope_path": project_relative(project_root, envelope_path),
-            "card_envelope_hash": envelope["envelope_hash"],
-            "resource_lifecycle": "committed_artifact",
-            "artifact_committed": True,
-            "relay_allowed": True,
-            "apply_required": False,
-            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-            "expected_return_path": project_relative(project_root, expected_return_path),
-            "card_checkin_instruction": delivery.get("card_checkin_instruction"),
-            "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
-            "ack_clearance_scope": ack_clearance_scope,
-            "sent_at": delivery["delivered_at"],
-        }
-    )
-    return_ledger["updated_at"] = utc_now()
-    write_json(_return_event_ledger_path(run_root), return_ledger)
-    return {
-        "ok": True,
-        "applied": "commit_system_card_delivery_artifact",
-        "resource_lifecycle": "committed_artifact",
-        "artifact_committed": True,
-        "artifact_exists": True,
-        "artifact_hash_verified": True,
-        "ledger_recorded": True,
-        "return_wait_recorded": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "card_envelope_path": project_relative(project_root, envelope_path),
-        "card_checkin_instruction": delivery.get("card_checkin_instruction"),
-        "expected_return_path": project_relative(project_root, expected_return_path),
-        "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-    }
+def _commit_system_card_delivery_artifact(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._commit_system_card_delivery_artifact(*args, **kwargs)
 
 
-def _commit_system_card_bundle_delivery_artifact(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    pending: dict[str, Any],
-) -> dict[str, Any]:
-    if not run_state.get("manifest_check_requested"):
-        raise RouterError("system card bundle delivery requires a current manifest check")
-    cards = pending.get("cards")
-    if not isinstance(cards, list) or len(cards) < 2:
-        raise RouterError("system card bundle delivery requires at least two member cards")
-    role = str(pending.get("to_role") or "")
-    bundle_id = str(pending.get("card_bundle_id") or "")
-    bundle_path_raw = str(pending.get("card_bundle_envelope_path") or "")
-    expected_return_path_raw = str(pending.get("expected_return_path") or "")
-    expected_receipt_paths = pending.get("expected_receipt_paths")
-    if not bundle_id or not bundle_path_raw or not expected_return_path_raw:
-        raise RouterError("system card bundle delivery requires bundle id, envelope path, and return path")
-    if not isinstance(expected_receipt_paths, list) or len(expected_receipt_paths) != len(cards):
-        raise RouterError("system card bundle delivery requires one expected receipt path per member")
-    bundle_path = resolve_project_path(project_root, bundle_path_raw)
-    expected_return_path = resolve_project_path(project_root, expected_return_path_raw)
-    manifest = load_manifest_from_run(run_root)
-    delivered_at = utc_now()
-    envelope_cards: list[dict[str, Any]] = []
-    deliveries: list[dict[str, Any]] = []
-    ack_clearance_scopes: list[dict[str, Any]] = []
-    for index, member in enumerate(cards):
-        if not isinstance(member, dict):
-            raise RouterError("system card bundle member must be an object")
-        card_id = str(member.get("card_id") or "")
-        card_entry = next((entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == card_id), None)
-        if card_entry is None:
-            raise RouterError(f"unknown system card in bundle: {card_id}")
-        card = manifest_card(manifest, card_id)
-        delivery_context = member.get("delivery_context")
-        if not isinstance(delivery_context, dict):
-            delivery_context = _live_card_delivery_context(project_root, run_root, run_state, card_entry, card)
-        expected_receipt_path = resolve_project_path(project_root, str(expected_receipt_paths[index]))
-        body_path_raw = str(member.get("body_path") or "")
-        body_hash = str(member.get("body_hash") or "")
-        if not body_path_raw or not body_hash:
-            raise RouterError(f"system card bundle member {card_id} missing body path or hash")
-        ack_clearance_scope = _card_ack_clearance_scope(
-            delivery_context,
-            card_id=card_id,
-            target_role=role,
-        )
-        ack_clearance_scopes.append(ack_clearance_scope)
-        envelope_card = {
-            "card_id": card_id,
-            "path": card["path"],
-            "delivery_id": member.get("delivery_id"),
-            "delivery_attempt_id": member.get("delivery_attempt_id"),
-            "body_path": body_path_raw,
-            "body_hash": body_hash,
-            "manifest_path": member.get("manifest_path"),
-            "manifest_hash": member.get("manifest_hash"),
-            "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-            "card_return_event": member.get("card_return_event") or _card_return_event_for_card(card_id),
-            "delivery_context": delivery_context,
-            "ack_clearance_scope": ack_clearance_scope,
-        }
-        envelope_cards.append(envelope_card)
-        deliveries.append(
-            {
-                "card_id": card_id,
-                "from": "system",
-                "issued_by": "router",
-                "delivered_by": "controller",
-                "to_role": role,
-                "path": card["path"],
-                "delivery_mode": "same_role_system_card_bundle_v1",
-                "controller_visibility": "system_card_bundle_envelope_only",
-                "sealed_body_reads_allowed": False,
-                "requires_read_receipt": True,
-                "open_method": "open-card-bundle",
-                "card_return_event": envelope_card["card_return_event"],
-                "bundle_return_event": pending.get("card_return_event"),
-                "card_checkin_instruction": pending.get("card_checkin_instruction"),
-                "direct_router_ack_token": pending.get("direct_router_ack_token"),
-                "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
-                "expected_return_path": expected_return_path_raw,
-                "expected_receipt_path": project_relative(project_root, expected_receipt_path),
-                "card_bundle_id": bundle_id,
-                "card_bundle_envelope_path": bundle_path_raw,
-                "card_envelope_path": bundle_path_raw,
-                "delivery_id": member.get("delivery_id"),
-                "delivery_attempt_id": member.get("delivery_attempt_id"),
-                "body_path": body_path_raw,
-                "body_hash": body_hash,
-                "manifest_path": member.get("manifest_path"),
-                "manifest_hash": member.get("manifest_hash"),
-                "target_agent_id": pending.get("target_agent_id"),
-                "resume_tick_id": pending.get("resume_tick_id"),
-                "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
-                "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
-                "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
-                "delivery_context": delivery_context,
-                "ack_clearance_scope": ack_clearance_scope,
-                "delivered_at": delivered_at,
-            }
-        )
-        for key in (
-            "pm_context_paths",
-            "pm_prior_path_context_required_for_decision",
-            "controller_history_is_evidence",
-        ):
-            if key in member:
-                deliveries[-1][key] = member[key]
-    envelope = {
-        "schema_version": card_runtime.CARD_BUNDLE_ENVELOPE_SCHEMA,
-        "run_id": run_state["run_id"],
-        "run_root": project_relative(project_root, run_root),
-        "resume_tick_id": pending.get("resume_tick_id"),
-        "bundle_id": bundle_id,
-        "from": "system",
-        "issued_by": "router",
-        "delivered_by": "controller",
-        "target_role": role,
-        "target_agent_id": pending.get("target_agent_id"),
-        "cards": envelope_cards,
-        "card_ids": [card["card_id"] for card in envelope_cards],
-        "body_visibility": "target_role_runtime_only",
-        "resource_lifecycle": "committed_artifact",
-        "artifact_committed": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "controller_visibility": "system_card_bundle_envelope_only",
-        "sealed_body_reads_allowed": False,
-        "requires_read_receipt": True,
-        "open_method": "open-card-bundle",
-        "card_return_event": pending.get("card_return_event"),
-        "card_checkin_instruction": pending.get("card_checkin_instruction"),
-        "direct_router_ack_token": pending.get("direct_router_ack_token"),
-        "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
-        "expected_receipt_paths": [card["expected_receipt_path"] for card in envelope_cards],
-        "expected_return_path": project_relative(project_root, expected_return_path),
-        "role_io_protocol_hash": pending.get("role_io_protocol_hash"),
-        "role_io_protocol_receipt_path": pending.get("role_io_protocol_receipt_path"),
-        "role_io_protocol_receipt_hash": pending.get("role_io_protocol_receipt_hash"),
-        "delivered_at": delivered_at,
-        "runtime_validates_mechanics_only": True,
-        "semantic_understanding_validated_by_receipt": False,
-        "same_role_bundle": True,
-        "manifest_batch_checked": True,
-    }
-    envelope["bundle_hash"] = card_runtime.stable_json_hash(envelope)
-    write_json(bundle_path, envelope)
-    run_state.setdefault("delivered_cards", [])
-    ledger = read_json_if_exists(run_root / "prompt_delivery_ledger.json") or {
-        "schema_version": "flowpilot.prompt_delivery_ledger.v1",
-        "run_id": run_state["run_id"],
-        "deliveries": [],
-    }
-    card_ledger = _read_card_ledger(run_root, str(run_state["run_id"]))
-    for delivery in deliveries:
-        delivery["card_bundle_envelope_hash"] = envelope["bundle_hash"]
-        delivery["card_envelope_hash"] = envelope["bundle_hash"]
-        delivery["resource_lifecycle"] = "committed_artifact"
-        delivery["artifact_committed"] = True
-        delivery["relay_allowed"] = True
-        delivery["apply_required"] = False
-        run_state["delivered_cards"].append(delivery)
-        card_entry = next(entry for entry in SYSTEM_CARD_SEQUENCE if entry["card_id"] == delivery["card_id"])
-        run_state["flags"][card_entry["flag"]] = True
-        ledger.setdefault("deliveries", []).append(delivery)
-        card_ledger.setdefault("deliveries", []).append(
-            {
-                "card_id": delivery.get("card_id"),
-                "card_bundle_id": bundle_id,
-                "delivery_id": delivery.get("delivery_id"),
-                "delivery_attempt_id": delivery.get("delivery_attempt_id"),
-                "to_role": role,
-                "target_agent_id": delivery.get("target_agent_id"),
-                "card_bundle_envelope_path": bundle_path_raw,
-                "card_envelope_path": bundle_path_raw,
-                "card_bundle_envelope_hash": envelope["bundle_hash"],
-                "card_envelope_hash": envelope["bundle_hash"],
-                "resource_lifecycle": "committed_artifact",
-                "artifact_committed": True,
-                "relay_allowed": True,
-                "apply_required": False,
-                "body_hash": delivery.get("body_hash"),
-                "manifest_hash": delivery.get("manifest_hash"),
-                "role_io_protocol_hash": delivery.get("role_io_protocol_hash"),
-                "role_io_protocol_receipt_path": delivery.get("role_io_protocol_receipt_path"),
-                "role_io_protocol_receipt_hash": delivery.get("role_io_protocol_receipt_hash"),
-                "ack_clearance_scope": delivery.get("ack_clearance_scope"),
-                "requires_read_receipt": True,
-                "card_return_event": delivery.get("card_return_event"),
-                "bundle_return_event": pending.get("card_return_event"),
-                "card_checkin_instruction": delivery.get("card_checkin_instruction"),
-                "direct_router_ack_token_hash": delivery.get("direct_router_ack_token_hash"),
-                "expected_receipt_path": delivery.get("expected_receipt_path"),
-                "expected_return_path": expected_return_path_raw,
-                "delivered_at": delivered_at,
-            }
-        )
-    run_state["manifest_check_requested"] = False
-    run_state["prompt_deliveries"] = int(run_state.get("prompt_deliveries", 0)) + len(deliveries)
-    ledger["updated_at"] = utc_now()
-    write_json(run_root / "prompt_delivery_ledger.json", ledger)
-    card_ledger["updated_at"] = utc_now()
-    write_json(_card_ledger_path(run_root), card_ledger)
-    return_ledger = _read_return_event_ledger(run_root, str(run_state["run_id"]))
-    bundle_ack_clearance_scope = {
-        "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
-        "return_kind": "system_card_bundle",
-        "card_bundle_id": bundle_id,
-        "card_ids": [delivery.get("card_id") for delivery in deliveries],
-        "target_role": role,
-        "member_scopes": ack_clearance_scopes,
-        "required_before": [
-            "gate_or_node_boundary_transition",
-            "formal_work_packet_relay_to_target_role",
-        ],
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-    return_ledger.setdefault("pending_returns", []).append(
-        {
-            "return_kind": "system_card_bundle",
-            "card_return_event": pending.get("card_return_event"),
-            "status": "pending",
-            "card_bundle_id": bundle_id,
-            "card_ids": [delivery.get("card_id") for delivery in deliveries],
-            "delivery_attempt_ids": [delivery.get("delivery_attempt_id") for delivery in deliveries],
-            "target_role": role,
-            "target_agent_id": pending.get("target_agent_id"),
-            "card_bundle_envelope_path": bundle_path_raw,
-            "card_bundle_envelope_hash": envelope["bundle_hash"],
-            "resource_lifecycle": "committed_artifact",
-            "artifact_committed": True,
-            "relay_allowed": True,
-            "apply_required": False,
-            "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
-            "expected_return_path": expected_return_path_raw,
-            "card_checkin_instruction": pending.get("card_checkin_instruction"),
-            "direct_router_ack_token_hash": pending.get("direct_router_ack_token_hash"),
-            "ack_clearance_scope": bundle_ack_clearance_scope,
-            "sent_at": delivered_at,
-        }
-    )
-    return_ledger["updated_at"] = utc_now()
-    write_json(_return_event_ledger_path(run_root), return_ledger)
-    return {
-        "ok": True,
-        "applied": "commit_system_card_bundle_delivery_artifact",
-        "resource_lifecycle": "committed_artifact",
-        "artifact_committed": True,
-        "artifact_exists": True,
-        "artifact_hash_verified": True,
-        "ledger_recorded": True,
-        "return_wait_recorded": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "card_bundle_id": bundle_id,
-        "card_bundle_envelope_path": bundle_path_raw,
-        "card_bundle_envelope_hash": envelope["bundle_hash"],
-        "card_checkin_instruction": pending.get("card_checkin_instruction"),
-        "expected_return_path": expected_return_path_raw,
-        "expected_receipt_paths": [delivery.get("expected_receipt_path") for delivery in deliveries],
-    }
+def _commit_system_card_bundle_delivery_artifact(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._commit_system_card_bundle_delivery_artifact(*args, **kwargs)
 
 
-def _pending_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
-    return flowpilot_router_card_returns._pending_return_record_for_action(sys.modules[__name__], run_root, run_id, action)
+def _pending_return_record_for_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._pending_return_record_for_action(*args, **kwargs)
 
 
-def _pending_bundle_return_record_for_action(run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
-    return flowpilot_router_card_returns._pending_bundle_return_record_for_action(sys.modules[__name__], run_root, run_id, action)
+def _pending_bundle_return_record_for_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._pending_bundle_return_record_for_action(*args, **kwargs)
 
 
-def _apply_card_return_event_check(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending: dict[str, Any],
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._apply_card_return_event_check(sys.modules[__name__], project_root, run_root, run_state, pending)
+def _apply_card_return_event_check(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._apply_card_return_event_check(*args, **kwargs)
 
 
-def _apply_card_bundle_return_event_check(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending: dict[str, Any],
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._apply_card_bundle_return_event_check(sys.modules[__name__], project_root, run_root, run_state, pending)
+def _apply_card_bundle_return_event_check(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._apply_card_bundle_return_event_check(*args, **kwargs)
 
 
-def _try_auto_consume_pending_card_return_ack(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    pending: dict[str, Any],
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._try_auto_consume_pending_card_return_ack(sys.modules[__name__], project_root, run_root, run_state, pending)
+def _try_auto_consume_pending_card_return_ack(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._try_auto_consume_pending_card_return_ack(*args, **kwargs)
 
 
-def _startup_pm_card_bundle_ack_record(record: dict[str, Any]) -> bool:
-    return flowpilot_router_card_returns._startup_pm_card_bundle_ack_record(sys.modules[__name__], record)
+def _startup_pm_card_bundle_ack_record(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._startup_pm_card_bundle_ack_record(*args, **kwargs)
 
 
-def _reconcile_card_wait_rows(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    delivery_attempt_id: str,
-    expected_return_path: str,
-    card_return_event: str,
-    card_id: str,
-    source: str,
-    ack_path: str | None,
-) -> int:
-    return flowpilot_router_card_returns._reconcile_card_wait_rows(sys.modules[__name__], project_root, run_root, run_state, delivery_attempt_id=delivery_attempt_id, expected_return_path=expected_return_path, card_return_event=card_return_event, card_id=card_id, source=source, ack_path=ack_path)
+def _reconcile_card_wait_rows(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._reconcile_card_wait_rows(*args, **kwargs)
 
 
-def _reconcile_card_bundle_wait_rows(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    bundle_id: str,
-    expected_return_path: str,
-    card_return_event: str,
-    source: str,
-    ack_path: str | None,
-) -> int:
-    return flowpilot_router_card_returns._reconcile_card_bundle_wait_rows(sys.modules[__name__], project_root, run_root, run_state, bundle_id=bundle_id, expected_return_path=expected_return_path, card_return_event=card_return_event, source=source, ack_path=ack_path)
+def _reconcile_card_bundle_wait_rows(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._reconcile_card_bundle_wait_rows(*args, **kwargs)
 
 
-def _router_release_startup_user_intake_to_pm(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    source: str,
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._router_release_startup_user_intake_to_pm(sys.modules[__name__], project_root, run_root, run_state, source=source)
+def _router_release_startup_user_intake_to_pm(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._router_release_startup_user_intake_to_pm(*args, **kwargs)
 
 
-def _run_router_return_settlement_finalizers(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    source: str,
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._run_router_return_settlement_finalizers(sys.modules[__name__], project_root, run_root, run_state, source=source)
+def _run_router_return_settlement_finalizers(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._run_router_return_settlement_finalizers(*args, **kwargs)
 
 
-def _mark_card_return_pending_explicit_check(
-    run_root: Path,
-    run_id: str,
-    action: dict[str, Any],
-    *,
-    reason: str,
-    error: object = None,
-) -> None:
-    return flowpilot_router_card_returns._mark_card_return_pending_explicit_check(sys.modules[__name__], run_root, run_id, action, reason=reason, error=error)
+def _mark_card_return_pending_explicit_check(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._mark_card_return_pending_explicit_check(*args, **kwargs)
 
 
-def _preconsume_pending_card_return_ack_before_external_event(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    event: str,
-) -> dict[str, Any]:
-    return flowpilot_router_event_intake.preconsume_pending_card_return_ack_before_external_event(
-        sys.modules[__name__],
-        project_root,
-        run_root,
-        run_state,
-        event=event,
-    )
+def _preconsume_pending_card_return_ack_before_external_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._preconsume_pending_card_return_ack_before_external_event(*args, **kwargs)
 
 
-def _system_card_delivery_flag(card_id: object) -> str:
-    return flowpilot_router_event_intake.system_card_delivery_flag(sys.modules[__name__], card_id)
+def _system_card_delivery_flag(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._system_card_delivery_flag(*args, **kwargs)
 
 
-def _pending_return_card_delivery_flags(pending_return: dict[str, Any]) -> set[str]:
-    return flowpilot_router_event_intake.pending_return_card_delivery_flags(sys.modules[__name__], pending_return)
+def _pending_return_card_delivery_flags(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._pending_return_card_delivery_flags(*args, **kwargs)
 
 
-def _role_list(value: object) -> set[str]:
-    return flowpilot_router_event_intake.role_list(value)
+def _role_list(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._role_list(*args, **kwargs)
 
 
-def _pending_card_return_matches_event_dependency(
-    pending_return: dict[str, Any],
-    event: str,
-    run_state: dict[str, Any],
-) -> bool:
-    return flowpilot_router_event_intake.pending_card_return_matches_event_dependency(
-        sys.modules[__name__],
-        pending_return,
-        event,
-        run_state,
-    )
+def _pending_card_return_matches_event_dependency(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._pending_card_return_matches_event_dependency(*args, **kwargs)
 
 
-def _next_quarantined_role_report_path(run_root: Path, event: str) -> Path:
-    return flowpilot_router_event_intake.next_quarantined_role_report_path(sys.modules[__name__], run_root, event)
+def _next_quarantined_role_report_path(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._next_quarantined_role_report_path(*args, **kwargs)
 
 
-def _clear_stale_role_wait_for_quarantined_report(
-    run_state: dict[str, Any],
-    pending_return: dict[str, Any],
-    event: str,
-) -> str:
-    return flowpilot_router_event_intake.clear_stale_role_wait_for_quarantined_report(
-        sys.modules[__name__],
-        run_state,
-        pending_return,
-        event,
-    )
+def _clear_stale_role_wait_for_quarantined_report(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._clear_stale_role_wait_for_quarantined_report(*args, **kwargs)
 
 
-def _quarantine_missing_ack_report_before_external_event(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    *,
-    event: str,
-    payload: dict[str, Any] | None,
-    envelope_path: str | None,
-    envelope_hash: str | None,
-    pending_return: dict[str, Any],
-) -> dict[str, Any] | None:
-    return flowpilot_router_event_intake.quarantine_missing_ack_report_before_external_event(
-        sys.modules[__name__],
-        project_root,
-        run_root,
-        run_state,
-        event=event,
-        payload=payload,
-        envelope_path=envelope_path,
-        envelope_hash=envelope_hash,
-        pending_return=pending_return,
-    )
+def _quarantine_missing_ack_report_before_external_event(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._quarantine_missing_ack_report_before_external_event(*args, **kwargs)
 
 
-def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
-    del project_root
-    raise RouterError(
-        f"{event} is a system-card ACK return event, and the legacy record-event ACK path is disabled. "
-        "The addressed role must run the card check-in command from the envelope so the ACK is submitted "
-        "directly to Router with its direct Router ACK token."
-    )
+def _record_card_return_event_from_external_entrypoint(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._record_card_return_event_from_external_entrypoint(*args, **kwargs)
 
 
-def _committed_card_bundle_artifact_extra(
-    project_root: Path,
-    record: dict[str, Any],
-    *,
-    relay_allowed_if_ready: bool,
-) -> dict[str, Any]:
-    return flowpilot_router_card_returns._committed_card_bundle_artifact_extra(sys.modules[__name__], project_root, record, relay_allowed_if_ready=relay_allowed_if_ready)
+def _committed_card_bundle_artifact_extra(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._committed_card_bundle_artifact_extra(*args, **kwargs)
 
 
-def _auto_commit_system_card_delivery_action(
-    project_root: Path,
-    run_state: dict[str, Any],
-    run_root: Path,
-    action: dict[str, Any],
-) -> dict[str, Any]:
-    return flowpilot_router_action_handlers.auto_commit_system_card_delivery_action(
-        sys.modules[__name__],
-        project_root,
-        run_state,
-        run_root,
-        action,
-    )
+def _auto_commit_system_card_delivery_action(*args: Any, **kwargs: Any) -> Any:
+    flowpilot_router_system_cards._bind_router(sys.modules[__name__])
+    return flowpilot_router_system_cards._auto_commit_system_card_delivery_action(*args, **kwargs)
 
 
 def _auto_commit_system_card_bundle_delivery_action(

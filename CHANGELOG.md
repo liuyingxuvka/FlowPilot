@@ -2,6 +2,26 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.9 - 2026-05-17
+
+### Added
+
+- Added the `continue-router-facade-slimming` OpenSpec change for the next
+  StructureMesh-guided router facade maintenance wave.
+- Added focused router owner modules for self-interrogation,
+  Controller repair, action factory/dispatch gates, payload contracts,
+  lifecycle requests, route artifacts, system-card delivery, and expected-wait
+  helpers.
+
+### Changed
+
+- Reduced `flowpilot_router.py` to a much smaller compatibility facade while
+  preserving public names, imports, persisted JSON shapes, and CLI behavior.
+- Updated StructureMesh/TestMesh evidence, card-instruction coverage scanning,
+  handoff notes, and local version metadata for the new router owner modules.
+- Prepared local release materials for v0.9.9; GitHub push, tag, and remote
+  release are intentionally deferred.
+
 ## 0.9.8 - 2026-05-17
 
 ### Added

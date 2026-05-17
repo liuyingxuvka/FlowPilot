@@ -15,7 +15,8 @@ import flowpilot_decision_liveness_model as model
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ROUTER_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+ROUTER_ASSETS_ROOT = ROOT / "skills" / "flowpilot" / "assets"
+ROUTER_PATH = ROUTER_ASSETS_ROOT / "flowpilot_router.py"
 RUNTIME_KIT_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit"
 MANIFEST_PATH = RUNTIME_KIT_ROOT / "manifest.json"
 CONTRACT_INDEX_PATH = RUNTIME_KIT_ROOT / "contracts" / "contract_index.json"
@@ -312,6 +313,22 @@ def _literal_set_assignment(source: str, name: str) -> set[str]:
     raise KeyError(name)
 
 
+def _literal_set_assignment_from_router_sources(name: str) -> set[str]:
+    for path in sorted(ROUTER_ASSETS_ROOT.glob("flowpilot_router*.py")):
+        try:
+            return _literal_set_assignment(path.read_text(encoding="utf-8"), name)
+        except KeyError:
+            continue
+    raise KeyError(name)
+
+
+def _combined_router_source() -> str:
+    return "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(ROUTER_ASSETS_ROOT.glob("flowpilot_router*.py"))
+    )
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
@@ -326,13 +343,12 @@ def _contract_entries(contract_index: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _router_static_audit() -> dict[str, object]:
-    source = ROUTER_PATH.read_text(encoding="utf-8")
+    source = _combined_router_source()
     manifest = _load_json(MANIFEST_PATH)
     contract_index = _load_json(CONTRACT_INDEX_PATH)
 
-    allowed = _literal_set_assignment(source, "PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES")
-    repair_authorized = _literal_set_assignment(
-        source,
+    allowed = _literal_set_assignment_from_router_sources("PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES")
+    repair_authorized = _literal_set_assignment_from_router_sources(
         "PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES",
     )
     non_authorizing = sorted(allowed - repair_authorized)

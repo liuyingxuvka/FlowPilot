@@ -546,6 +546,7 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
     for owner_name in (
         "flowpilot_router_protocol_catalog.py",
         "flowpilot_router_route_frontier.py",
+        "flowpilot_router_system_cards.py",
     ):
         owner_path = assets_root / owner_name
         if owner_path.exists():

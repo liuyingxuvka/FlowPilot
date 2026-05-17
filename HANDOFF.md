@@ -59,16 +59,32 @@ for this gate are:
   catalogs, system-card tables, gate contracts, and protocol lookup helpers;
 - `flowpilot_router_startup_flow.py` for startup, bootloader, resume, and
   role-recovery phase bodies;
+- `flowpilot_router_self_interrogation.py` for early understanding checks,
+  concise fallback summaries, and self-interrogation report helpers;
 - `flowpilot_router_controller_scheduler.py` for Controller scheduler rows,
   receipts, foreground standby, and patrol timer behavior;
+- `flowpilot_router_controller_repair.py` for Controller deliverable repair,
+  mail-delivery postcondition folding, and router-owned postcondition reclaim;
+- `flowpilot_router_action_factory.py` for router action construction,
+  dispatch recipient gates, user-send decisions, and action envelope helpers;
+- `flowpilot_router_payload_contracts.py` for payload normalization,
+  interpretation contracts, startup answer payloads, and role identity helpers;
 - `flowpilot_router_work_packets.py` for material, research, current-node
   packet flow, and PM role-work lifecycle;
 - `flowpilot_router_events_repair.py` for control blockers, repair
   transactions, and gate-decision validation;
+- `flowpilot_router_lifecycle_requests.py` for external lifecycle request
+  intake and event queuing;
 - `flowpilot_router_event_dispatcher.py` for the external event dispatcher
   body;
+- `flowpilot_router_route_artifacts.py` for route diagram/readme/report
+  artifact writers and packet-path snapshots;
 - `flowpilot_router_route_frontier.py` for route/frontier projection and node
   completion;
+- `flowpilot_router_system_cards.py` for system-card body construction,
+  delivery contexts, and role card return actions;
+- `flowpilot_router_expected_waits.py` for expected-wait records,
+  acknowledgement guards, and wait-state rendering;
 - `flowpilot_router_terminal_ledger.py` for final ledger, terminal replay,
   closure suite, and terminal reconciliation.
 

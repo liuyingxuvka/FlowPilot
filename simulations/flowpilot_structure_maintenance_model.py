@@ -61,21 +61,21 @@ ROUTER_STRUCTURE_PARTITIONS = (
         owner_module_id="external_events",
         public_surface=True,
         old_path="flowpilot_router._record_external_event_unchecked",
-        new_path="flowpilot_router_event_handlers",
+        new_path="flowpilot_router_event_dispatcher",
     ),
     StructurePartitionItem(
         "daemon_tick_and_status",
         item_type="function_cluster",
         owner_module_id="daemon_loop",
         old_path="flowpilot_router._router_daemon_tick/run_router_daemon",
-        new_path="flowpilot_router_daemon_loop",
+        new_path="flowpilot_router_daemon_runtime",
     ),
     StructurePartitionItem(
         "startup_bootloader_actions",
         item_type="function_cluster",
         owner_module_id="bootloader",
         old_path="flowpilot_router.apply_bootloader_action",
-        new_path="flowpilot_router_bootloader",
+        new_path="flowpilot_router_startup_flow",
     ),
     StructurePartitionItem(
         "router_protocol_catalog",
@@ -89,21 +89,21 @@ ROUTER_STRUCTURE_PARTITIONS = (
         item_type="function_cluster",
         owner_module_id="pm_role_work",
         old_path="flowpilot_router._next_pm_role_work_request_action",
-        new_path="flowpilot_router_pm_role_work",
+        new_path="flowpilot_router_work_packets",
     ),
     StructurePartitionItem(
         "terminal_ledger_writers",
         item_type="function_cluster",
         owner_module_id="terminal_ledger",
         old_path="flowpilot_router._write_final_route_wide_ledger",
-        new_path="flowpilot_router_terminal",
+        new_path="flowpilot_router_terminal_ledger",
     ),
     StructurePartitionItem(
         "control_blocker_repair",
         item_type="function_cluster",
         owner_module_id="control_blockers",
         old_path="flowpilot_router._write_control_blocker_repair_decision",
-        new_path="flowpilot_router_control_blockers",
+        new_path="flowpilot_router_events_repair",
     ),
 )
 
@@ -120,7 +120,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "external_events",
-        path="skills/flowpilot/assets/flowpilot_router_event_handlers.py",
+        path="skills/flowpilot/assets/flowpilot_router_event_dispatcher.py",
         owns_functions=("record_external_event_family", "settle_external_event_family"),
         owns_state=("event_log", "wait_action_status"),
         owns_side_effects=("event_ledger_write", "wait_action_close_write"),
@@ -130,7 +130,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "daemon_loop",
-        path="skills/flowpilot/assets/flowpilot_router_daemon_loop.py",
+        path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
         owns_functions=("router_daemon_tick", "run_router_daemon_loop"),
         owns_state=("daemon_status_record", "standby_snapshot"),
         owns_side_effects=("daemon_status_write",),
@@ -140,7 +140,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "bootloader",
-        path="skills/flowpilot/assets/flowpilot_router_bootloader.py",
+        path="skills/flowpilot/assets/flowpilot_router_startup_flow.py",
         owns_functions=("apply_bootloader_action", "compute_bootloader_action"),
         owns_state=("bootloader_rows", "startup_review_projection"),
         owns_side_effects=("bootloader_row_write",),
@@ -166,7 +166,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "pm_role_work",
-        path="skills/flowpilot/assets/flowpilot_router_pm_role_work.py",
+        path="skills/flowpilot/assets/flowpilot_router_work_packets.py",
         owns_functions=("next_pm_role_work_request_action", "write_pm_role_work_request"),
         owns_state=("pm_role_work_requests", "pm_role_work_results"),
         owns_side_effects=("packet_or_action_write",),
@@ -175,7 +175,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "terminal_ledger",
-        path="skills/flowpilot/assets/flowpilot_router_terminal.py",
+        path="skills/flowpilot/assets/flowpilot_router_terminal_ledger.py",
         owns_functions=("write_final_route_wide_ledger", "write_terminal_backward_replay"),
         owns_state=("final_route_wide_gate_ledger", "terminal_closure_suite"),
         owns_side_effects=("terminal_ledger_write",),
@@ -185,7 +185,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "control_blockers",
-        path="skills/flowpilot/assets/flowpilot_router_control_blockers.py",
+        path="skills/flowpilot/assets/flowpilot_router_events_repair.py",
         owns_functions=("write_control_blocker", "write_control_blocker_repair_decision"),
         owns_state=("control_blocker_records", "repair_transactions"),
         owns_side_effects=("control_blocker_write",),
