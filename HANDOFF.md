@@ -43,6 +43,13 @@ It covers two ownership surfaces:
   facades backed by focused state, transition, invariant, hazard, audit, and
   strategy helpers as applicable.
 
+The current router-facade split also has a narrower FlowGuard gate at
+`simulations/flowpilot_router_facade_split_model.py`, checked by
+`simulations/run_flowpilot_router_facade_split_checks.py`. It covers
+PromptStore manifest/hash behavior, prompt-delivery ownership, card-delivery
+ownership, Controller action-ledger helper ownership, role-output protocol
+helper ownership, and compatibility-facade preservation.
+
 Router runtime regression now uses split background child suites. Run
 `python scripts/run_test_tier.py --tier router --background --background-dir tmp/flowguard_background --json`;
 the runner starts one hidden bounded supervisor (`router_background_supervisor`)
@@ -523,6 +530,14 @@ FlowGuard caught and fixed these design issues:
   `flowpilot_router_action_handlers.py`,
   `flowpilot_router_route.py`, and
   `flowpilot_router_resume.py`.
+- The follow-up router-facade prompt/store pass keeps selected prompt text under
+  `skills/flowpilot/assets/runtime_kit/prompts/` and loads it through
+  `flowpilot_prompt_store.py`. Router prompt delivery, card delivery,
+  Controller action-ledger helper, and role-output protocol helper code now
+  lives in `flowpilot_router_prompt_delivery.py`,
+  `flowpilot_router_card_delivery.py`,
+  `flowpilot_router_controller_ledger.py`, and
+  `flowpilot_router_role_io_protocol.py`.
 - `packet_runtime.py` remains the public facade and delegates schema, path,
   contract, ledger, relay, active-holder, session, and reviewer responsibilities
   to `packet_runtime_*` helper modules.

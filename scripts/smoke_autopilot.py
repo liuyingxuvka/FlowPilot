@@ -62,6 +62,12 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_structure_maintenance_results.json",
     ]
+    router_facade_split_check = [
+        sys.executable,
+        "simulations/run_flowpilot_router_facade_split_checks.py",
+        "--json-out",
+        "simulations/flowpilot_router_facade_split_results.json",
+    ]
     model_test_alignment_check = [
         sys.executable,
         "simulations/run_flowpilot_model_test_alignment_checks.py",
@@ -93,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
         model_mesh_check,
         model_hierarchy_check,
         structure_maintenance_check,
+        router_facade_split_check,
         model_test_alignment_check,
         meta_check,
         capability_check,

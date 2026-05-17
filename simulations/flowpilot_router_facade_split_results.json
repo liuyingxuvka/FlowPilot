@@ -1,0 +1,87 @@
+{
+  "known_bad_hazards": [
+    {
+      "blocked": true,
+      "finding_codes": [
+        "micro_module_explosion"
+      ],
+      "finding_count": 1,
+      "name": "micro_module_explosion"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "one_function_file_split"
+      ],
+      "finding_count": 1,
+      "name": "one_function_file_split"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "missing_prompt_asset"
+      ],
+      "finding_count": 1,
+      "name": "missing_prompt_asset"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "stale_prompt_hash"
+      ],
+      "finding_count": 1,
+      "name": "stale_prompt_hash"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "unsafe_inline_prompt_fallback"
+      ],
+      "finding_count": 1,
+      "name": "unsafe_inline_prompt_fallback"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "prompt_asset_not_installed"
+      ],
+      "finding_count": 1,
+      "name": "prompt_asset_not_installed"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "undeclared_prompt_template_variables"
+      ],
+      "finding_count": 1,
+      "name": "undeclared_prompt_template_variables"
+    }
+  ],
+  "model": "flowpilot_router_facade_split",
+  "ok": true,
+  "prompt_split": {
+    "asset_count": 4,
+    "child_module_count": 18,
+    "findings": [],
+    "micro_module_count": 0,
+    "ok": true
+  },
+  "structure_mesh": {
+    "decision": "structure_mesh_green_can_continue",
+    "decision_scope": "release",
+    "findings": [],
+    "ok": true,
+    "parent_module_id": "flowpilot_router_facade_prompt_store_split",
+    "release_obligations": [],
+    "summary": "OK: parent=flowpilot_router_facade_prompt_store_split scope=release decision=structure_mesh_green_can_continue findings=0"
+  },
+  "test_mesh": {
+    "decision": "test_mesh_green_can_continue",
+    "decision_scope": "release",
+    "findings": [],
+    "ok": true,
+    "parent_suite_id": "flowpilot_router_facade_prompt_store_testmesh",
+    "release_obligations": [],
+    "summary": "OK: parent=flowpilot_router_facade_prompt_store_testmesh scope=release decision=test_mesh_green_can_continue findings=0"
+  }
+}

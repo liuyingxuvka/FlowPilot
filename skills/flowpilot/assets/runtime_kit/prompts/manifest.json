@@ -1,0 +1,39 @@
+{
+  "prompts": [
+    {
+      "id": "controller.action_ledger_table",
+      "path": "prompts/controller/action_ledger_table.md",
+      "sha256": "b02318f2ce27a3d1abf79cb9de38383a28617d0c4b6ff7a51ddb6287bcc55c20",
+      "strip_trailing_newline": true,
+      "template_variables": [
+        "break_glass_text",
+        "patrol_command"
+      ]
+    },
+    {
+      "id": "startup.heartbeat_resume",
+      "path": "prompts/startup/heartbeat_resume.md",
+      "sha256": "c858cbc1cfbe699c38aece31b6b823f0bcbee929a38bdf15c95a4027fd22b80a",
+      "strip_trailing_newline": true,
+      "template_variables": [
+        "project_root",
+        "run_id"
+      ]
+    },
+    {
+      "id": "cards.post_ack_policy",
+      "path": "prompts/cards/post_ack_policy.md",
+      "sha256": "525909ea7a563bd5eab76795e2e493c1ecce35cddd5c02a1cd79ccf781545004",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
+      "id": "cards.bundle_post_ack_policy",
+      "path": "prompts/cards/bundle_post_ack_policy.md",
+      "sha256": "bbcd591e62822a16e567e0d403aaf7b66278de131fce9f62fd1a9ad2b890030f",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    }
+  ],
+  "schema_version": "flowpilot.prompt_store_manifest.v1"
+}

@@ -1,0 +1,9 @@
+id: split-flowpilot-router-facade-prompt-store
+status: active
+created: 2026-05-17
+owner: codex
+areas:
+  - router
+  - prompts
+  - flowguard
+  - verification

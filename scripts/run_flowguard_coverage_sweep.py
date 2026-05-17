@@ -36,6 +36,7 @@ STRONG_COVERAGE = {
     "flowpilot_model_mesh",
     "flowpilot_model_hierarchy",
     "flowpilot_structure_maintenance",
+    "flowpilot_router_facade_split",
     "flowpilot_model_test_alignment",
     "prompt_isolation",
 }

@@ -543,6 +543,14 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
     router_source = (
         project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
     ).read_text(encoding="utf-8")
+    prompt_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts"
+    router_prompt_source = router_source
+    for prompt_path in (
+        prompt_root / "cards" / "post_ack_policy.md",
+        prompt_root / "cards" / "bundle_post_ack_policy.md",
+    ):
+        if prompt_path.exists():
+            router_prompt_source += "\n" + prompt_path.read_text(encoding="utf-8")
     manifest_by_id = {str(card["id"]): card for card in _manifest_entries(project_root)}
     active_roles: dict[str, str] = {}
 
@@ -601,8 +609,8 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
         external_card_flag_errors=tuple(external_card_flag_errors),
         sequence_manifest_errors=tuple(sequence_manifest_errors),
         live_context_errors=tuple(live_context_errors),
-        card_checkin_post_ack_guidance=_has_terms(router_source, ROUTER_CHECKIN_POST_ACK_TERMS),
-        bundle_checkin_post_ack_guidance=_has_terms(router_source, ROUTER_BUNDLE_POST_ACK_TERMS),
+        card_checkin_post_ack_guidance=_has_terms(router_prompt_source, ROUTER_CHECKIN_POST_ACK_TERMS),
+        bundle_checkin_post_ack_guidance=_has_terms(router_prompt_source, ROUTER_BUNDLE_POST_ACK_TERMS),
         orphan_card_files=tuple(orphan_files),
     )
 

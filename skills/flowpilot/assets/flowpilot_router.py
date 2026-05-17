@@ -35,6 +35,27 @@ import flowpilot_router_event_intake
 import flowpilot_router_events
 import flowpilot_router_resume
 import flowpilot_router_route
+from flowpilot_prompt_store import (
+    PromptStoreError,
+    card_manifest_entry,
+    load_card_manifest_from_run,
+)
+from flowpilot_router_card_delivery import (
+    CARD_LEDGER_SCHEMA,
+    CARD_RETURN_EVENT_NAMES,
+    RETURN_EVENT_LEDGER_SCHEMA,
+    card_bundle_return_event_for_role as _card_bundle_return_event_for_role,
+    card_ledger_path as _card_ledger_path,
+    card_return_event_for_card as _card_return_event_for_card,
+    empty_card_ledger as _empty_card_ledger,
+    empty_return_event_ledger as _empty_return_event_ledger,
+    is_card_return_event_name as _is_card_return_event_name,
+    next_card_delivery_attempt as _next_card_delivery_attempt,
+    read_card_ledger as _read_card_ledger,
+    read_return_event_ledger as _read_return_event_ledger,
+    return_event_ledger_path as _return_event_ledger_path,
+    safe_delivery_component as _safe_delivery_component,
+)
 from flowpilot_router_card_settlement import (
     CARD_ACK_COMPLETE_STATUSES,
     CARD_BUNDLE_ACK_COMPLETE_STATUSES,
@@ -72,6 +93,28 @@ from flowpilot_router_controller_boundary import (
     WAIT_TARGET_UNHEALTHY_LIVENESS_RESULTS,
     _controller_patrol_timer_command,
     _format_seconds_for_command,
+)
+from flowpilot_router_controller_ledger import (
+    CONTROLLER_ACTION_LEDGER_SCHEMA,
+    CONTROLLER_ACTION_SCHEMA,
+    CONTROLLER_RECEIPT_SCHEMA,
+    ROUTER_OWNERSHIP_LEDGER_SCHEMA,
+    ROUTER_SCHEDULER_LEDGER_SCHEMA,
+    ROUTER_SCHEDULER_ROW_SCHEMA,
+    controller_action_ledger_path as _controller_action_ledger_path,
+    controller_action_path as _controller_action_path,
+    controller_actions_dir as _controller_actions_dir,
+    controller_receipt_path as _controller_receipt_path,
+    controller_receipts_dir as _controller_receipts_dir,
+    prepare_router_scheduled_action as _prepare_router_scheduled_action_base,
+    router_daemon_event_log_path as _router_daemon_event_log_path,
+    router_daemon_lock_path as _router_daemon_lock_path,
+    router_daemon_status_path as _router_daemon_status_path,
+    router_ownership_ledger_path as _router_ownership_ledger_path,
+    router_scheduler_barrier_kind as _router_scheduler_barrier_kind_base,
+    router_scheduler_ledger_path as _router_scheduler_ledger_path,
+    router_scheduler_progress_class as _router_scheduler_progress_class_base,
+    runtime_dir as _runtime_dir,
 )
 from flowpilot_router_controller_reconciliation import (
     _action_is_passive_wait_status,
@@ -136,6 +179,26 @@ from flowpilot_router_io import (
     write_json_atomic,
 )
 from flowpilot_router_protocol_tables import MAIL_SEQUENCE, RUN_TERMINAL_STATUSES
+from flowpilot_router_prompt_delivery import (
+    card_checkin_instruction as _card_checkin_instruction,
+    controller_break_glass_reminder as _controller_break_glass_reminder,
+    controller_table_prompt as _controller_table_prompt,
+    startup_heartbeat_prompt as _startup_heartbeat_prompt,
+)
+from flowpilot_router_role_io_protocol import (
+    ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA,
+    ROLE_IO_PROTOCOL_LEDGER_SCHEMA,
+    ROLE_IO_PROTOCOL_SCHEMA,
+    append_role_io_protocol_injections as _append_role_io_protocol_injections,
+    empty_role_io_protocol_ledger as _empty_role_io_protocol_ledger,
+    read_role_io_protocol_ledger as _read_role_io_protocol_ledger,
+    role_io_protocol_hash as _role_io_protocol_hash,
+    role_io_protocol_ledger_path as _role_io_protocol_ledger_path,
+    role_io_protocol_payload as _role_io_protocol_payload,
+    role_io_protocol_receipt_dir as _role_io_protocol_receipt_dir,
+    role_io_protocol_receipt_for_agent as _role_io_protocol_receipt_for_agent,
+    role_io_receipt_lifecycle_phase as _role_io_receipt_lifecycle_phase,
+)
 from flowpilot_router_startup_daemon import (
     ROUTER_DAEMON_EVENT_LOG_SCHEMA,
     ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
@@ -172,11 +235,6 @@ BOOTSTRAP_STATE_SCHEMA = "flowpilot.bootstrap_state.v1"
 RUN_STATE_SCHEMA = "flowpilot.run_state.v1"
 PROMPT_MANIFEST_SCHEMA = "flowpilot.prompt_manifest.v1"
 PACKET_LEDGER_SCHEMA = packet_runtime.PACKET_LEDGER_SCHEMA
-CARD_LEDGER_SCHEMA = card_runtime.CARD_LEDGER_SCHEMA
-RETURN_EVENT_LEDGER_SCHEMA = card_runtime.RETURN_EVENT_LEDGER_SCHEMA
-ROLE_IO_PROTOCOL_SCHEMA = "flowpilot.role_io_protocol.v1"
-ROLE_IO_PROTOCOL_LEDGER_SCHEMA = "flowpilot.role_io_protocol_ledger.v1"
-ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA = "flowpilot.role_io_protocol_injection_receipt.v1"
 RESUME_EVIDENCE_SCHEMA = "flowpilot.resume_reentry.v1"
 ROUTE_HISTORY_INDEX_SCHEMA = "flowpilot.route_history_index.v1"
 PM_PRIOR_PATH_CONTEXT_SCHEMA = "flowpilot.pm_prior_path_context.v1"
@@ -219,12 +277,6 @@ OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA = flowpilot_runtime_closure.OFFICER_REQUE
 CONTINUATION_QUARANTINE_SCHEMA = flowpilot_runtime_closure.CONTINUATION_QUARANTINE_SCHEMA
 FINAL_USER_REPORT_SCHEMA = flowpilot_runtime_closure.FINAL_USER_REPORT_SCHEMA
 ROUTE_DISPLAY_REFRESH_SCHEMA = flowpilot_runtime_closure.ROUTE_DISPLAY_REFRESH_SCHEMA
-CONTROLLER_ACTION_LEDGER_SCHEMA = "flowpilot.controller_action_ledger.v1"
-CONTROLLER_ACTION_SCHEMA = "flowpilot.controller_action.v1"
-CONTROLLER_RECEIPT_SCHEMA = "flowpilot.controller_receipt.v1"
-ROUTER_OWNERSHIP_LEDGER_SCHEMA = "flowpilot.router_ownership_ledger.v1"
-ROUTER_SCHEDULER_LEDGER_SCHEMA = "flowpilot.router_scheduler_ledger.v1"
-ROUTER_SCHEDULER_ROW_SCHEMA = "flowpilot.router_scheduler_row.v1"
 CONTROLLER_USER_REPORTING_POLICY_SCHEMA = "flowpilot.controller_user_reporting_policy.v1"
 DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA = "flowpilot.deterministic_bootstrap_seed_evidence.v1"
 FOREGROUND_CONTROLLER_STANDBY_SCHEMA = "flowpilot.foreground_controller_standby.v1"
@@ -2819,66 +2871,6 @@ def _require_single_active_model_miss_review_block(run_state: dict[str, Any], pu
     return active_flags[0]
 
 
-def _card_checkin_instruction(
-    project_root: Path,
-    *,
-    envelope_path: str,
-    role: str,
-    agent_id: str | None,
-    card_return_event: str,
-    bundle: bool,
-) -> dict[str, Any]:
-    command_name = "receive-card-bundle" if bundle else "receive-card"
-    entrypoint = _flowpilot_runtime_entrypoint_ref(project_root)
-    command = [
-        "python",
-        entrypoint,
-        "--root",
-        ".",
-        command_name,
-        "--envelope-path",
-        envelope_path,
-        "--role",
-        role,
-        "--agent-id",
-        agent_id or "<agent-id>",
-    ]
-    post_ack_policy = (
-        "ACK is receipt only; ACK is not completion. After ACK, follow the card body's "
-        "post-ACK rule: role cards wait for authorized phase, event, work packet, or "
-        "output-contract authority; work cards that ask for an output, report, decision, "
-        "result, or blocker must continue immediately, must not stop after ACK, and remain "
-        "unfinished until Router receives the expected output or blocker; event cards use "
-        "Router-authorized event handling."
-    )
-    bundle_post_ack_policy = (
-        "Bundle ACK is receipt only and never a combined role output; after the bundle ACK, "
-        "apply per-member post-ACK rules."
-    )
-    return {
-        "schema_version": "flowpilot.card_checkin_instruction.v1",
-        "required": True,
-        "command_name": command_name,
-        "runtime_entrypoint": entrypoint,
-        "run_from": "project_root",
-        "command": command,
-        "card_return_event": card_return_event,
-        "ack_submission_mode": "direct_to_router",
-        "controller_ack_handoff_allowed": False,
-        "expected_outcome": "runtime writes the read receipt and direct Router ACK envelope",
-        "post_ack_policy": post_ack_policy,
-        "bundle_post_ack_policy": bundle_post_ack_policy if bundle else None,
-        "do_not_handwrite_ack": True,
-        "do_not_record_as_external_event": True,
-        "plain_instruction": (
-            f"Run {command_name} from the project root to open this card through the runtime and submit "
-            f"{card_return_event} directly to Router. Do not hand-write the ACK, do not give the ACK to "
-            "Controller, and do not record it as a normal external event. "
-            f"{bundle_post_ack_policy if bundle else post_ack_policy}"
-        ),
-    }
-
-
 def _direct_router_ack_token_for_card(
     run_state: dict[str, Any],
     run_root: Path,
@@ -4475,50 +4467,6 @@ def save_run_state(run_root: Path, state: dict[str, Any]) -> None:
     write_json(run_state_path(run_root), state)
 
 
-def _runtime_dir(run_root: Path) -> Path:
-    return run_root / "runtime"
-
-
-def _router_daemon_lock_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "router_daemon.lock"
-
-
-def _router_daemon_status_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "router_daemon_status.json"
-
-
-def _router_daemon_event_log_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "router_daemon_events.jsonl"
-
-
-def _controller_action_ledger_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "controller_action_ledger.json"
-
-
-def _router_scheduler_ledger_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "router_scheduler_ledger.json"
-
-
-def _router_ownership_ledger_path(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "router_ownership_ledger.json"
-
-
-def _controller_actions_dir(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "controller_actions"
-
-
-def _controller_receipts_dir(run_root: Path) -> Path:
-    return _runtime_dir(run_root) / "controller_receipts"
-
-
-def _controller_action_path(run_root: Path, action_id: str) -> Path:
-    return _controller_actions_dir(run_root) / f"{action_id}.json"
-
-
-def _controller_receipt_path(run_root: Path, action_id: str) -> Path:
-    return _controller_receipts_dir(run_root) / f"{action_id}.json"
-
-
 def _append_router_daemon_event(run_root: Path, event: str, details: dict[str, Any] | None = None) -> None:
     path = _router_daemon_event_log_path(run_root)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -4754,94 +4702,23 @@ def _action_is_startup_scoped(action: dict[str, Any] | None) -> bool:
 
 
 def _router_scheduler_progress_class(action: dict[str, Any]) -> str:
-    action_type = str(action.get("action_type") or "")
-    explicit = str(action.get("scheduler_progress_class") or action.get("router_scheduler_progress_class") or "").strip()
-    if explicit:
-        return explicit
-    if action_type in {"emit_startup_banner", "create_heartbeat_automation", "write_display_surface_status"}:
-        return "parallel_obligation"
-    if action_type == "sync_display_plan" and _action_is_startup_scoped(action):
-        return "parallel_obligation"
-    if action_type == "start_role_slots":
-        return "local_dependency"
-    if action_type == "load_controller_core":
-        return "phase_handoff"
-    if action_type in {
-        "open_startup_intake_ui",
-        "stop_for_startup_answers",
-        "record_startup_answers",
-        "record_user_request",
-        "await_current_scope_reconciliation",
-        "await_role_decision",
-        "await_card_return_event",
-        "await_card_bundle_return_event",
-        "handle_control_blocker",
-        "run_lifecycle_terminal",
-        "write_terminal_summary",
-        "controller_no_legal_next_action",
-    }:
-        return "true_barrier"
-    if str(action.get("actor") or "") == "host":
-        return "true_barrier"
-    if bool(action.get("requires_user")):
-        return "true_barrier"
-    if bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn")) or bool(action.get("requires_host_automation")):
-        return "true_barrier"
-    if bool(action.get("requires_user_dialog_display_confirmation")):
-        return "true_barrier"
-    return "ordinary"
+    return _router_scheduler_progress_class_base(action, startup_scoped=_action_is_startup_scoped)
 
 
 def _router_scheduler_barrier_kind(action: dict[str, Any]) -> str:
-    action_type = str(action.get("action_type") or "")
-    progress_class = _router_scheduler_progress_class(action)
-    if progress_class in {"parallel_obligation", "local_dependency"}:
-        return "none"
-    if progress_class == "phase_handoff":
-        return action_type or "phase_handoff"
-    if progress_class == "true_barrier" and str(action.get("actor") or "") == "host":
-        return "host_action_barrier"
-    if progress_class == "true_barrier" and (
-        bool(action.get("requires_user")) or bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn"))
-    ):
-        return "external_barrier"
-    if progress_class == "true_barrier" and bool(action.get("requires_host_automation")):
-        return "host_automation_barrier"
-    if progress_class == "true_barrier" and bool(action.get("requires_user_dialog_display_confirmation")):
-        return "user_display_barrier"
-    if action_type in {
-        "await_current_scope_reconciliation",
-        "await_role_decision",
-        "await_card_return_event",
-        "await_card_bundle_return_event",
-        "handle_control_blocker",
-        "run_lifecycle_terminal",
-        "write_terminal_summary",
-        "controller_no_legal_next_action",
-    }:
-        return action_type
-    if action_type == "check_prompt_manifest":
-        return "local_manifest_check"
-    if action_type == "load_controller_core":
-        return "controller_core_handoff"
-    return "none"
+    return _router_scheduler_barrier_kind_base(action, progress_class=_router_scheduler_progress_class(action))
 
 
 def _prepare_router_scheduled_action(project_root: Path, run_root: Path, run_state: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
     del project_root
-    scope_kind, scope_id = _router_scheduler_scope_for_action(action, run_root)
-    action.setdefault("scope_kind", scope_kind)
-    action.setdefault("scope_id", scope_id)
-    action.setdefault("idempotency_key", _router_scheduler_idempotency_key(action, scope_kind, scope_id))
-    action.setdefault("router_scheduler_row_id", _router_scheduler_row_id_for_action(action))
-    action.setdefault("router_scheduler_table", "runtime/router_scheduler_ledger.json")
-    action.setdefault("controller_table", "runtime/controller_action_ledger.json")
-    action.setdefault("controller_table_contract", "simple_work_board")
-    action.setdefault("router_scheduler_progress_class", _router_scheduler_progress_class(action))
-    action.setdefault("router_scheduler_barrier_kind", _router_scheduler_barrier_kind(action))
-    action.setdefault("router_daemon_tick_seconds", ROUTER_DAEMON_TICK_SECONDS)
-    action.setdefault("run_id", run_state.get("run_id"))
-    return action
+    return _prepare_router_scheduled_action_base(
+        run_root,
+        run_state,
+        action,
+        scope_for_action=_router_scheduler_scope_for_action,
+        progress_class_for_action=_router_scheduler_progress_class,
+        barrier_kind_for_action=_router_scheduler_barrier_kind,
+    )
 
 
 def _record_router_scheduler_row(
@@ -5149,92 +5026,6 @@ def _controller_action_completion_class(action: dict[str, Any]) -> dict[str, str
     if postcondition:
         return {"kind": "stateful_host_postcondition", "artifact_kind": "", "postcondition": postcondition}
     return {"kind": "controller_local_receipt", "artifact_kind": "", "postcondition": ""}
-
-
-def _controller_table_prompt() -> dict[str, Any]:
-    patrol_command = _controller_patrol_timer_command()
-    break_glass = _controller_break_glass_reminder()
-    return {
-        "language": "en",
-        "prompt_kind": "controller_action_ledger_table_prompt",
-        "text": (
-            "You are Controller only. This table is your work board.\n\n"
-            "When mentioning Controller work to the user, translate internal action, "
-            "ledger, receipt, packet, wait, daemon, ACK, and scheduler terms into "
-            "plain language first. Use internal names only when the user asks for "
-            "technical detail or when a concrete blocker needs that name.\n\n"
-            "Work from top to bottom. For each ready Controller row, perform that row, "
-            "write its receipt, and mark it complete before moving to the next row. "
-            "Do not call `next`, `apply`, or `run-until-wait` between rows; the row "
-            "completion path is the row action plus Controller receipt. "
-            "Do not skip ready rows. Do not invent route items, read sealed bodies, "
-            "implement worker work, approve gates, or close the route from Controller evidence. "
-            "A Controller receipt is never enough by itself: Router must reconcile required "
-            "postconditions before progress counts. For deliver_mail rows, the receipt is "
-            "accepted only after the packet runtime ledger proves the packet was released "
-            "to the addressed role with a controller relay signature. "
-            "Daemon-owned startup rows use the same table: Controller checks off the simple row, "
-            "while Router's scheduler ledger owns ordering, barrier, scope, and dependency metadata. "
-            "Pure wait states are not ordinary work rows: when Router is waiting for a role, "
-            "card return, or scope reconciliation, read router_daemon_status.current_wait and "
-            "continue through the standby/patrol duty instead of trying to complete an await row. "
-            "If Router creates a send_wait_target_reminder row, that row is executable Controller "
-            "work: send only the Router-authored reminder_text to the named target role, do not "
-            "edit it or read sealed bodies, then write the Controller receipt with the matching "
-            "reminder_text_sha256 and delivery/liveness fields.\n\n"
-            "As long as FlowPilot is still running, keep the foreground Controller work attached. "
-            "Do not stop or close the foreground Controller because this table is quiet, blocked, "
-            "waiting for a user, waiting for repair, waiting for another role, or waiting for a "
-            "diagnostic timeout.\n\n"
-            "If all ordinary rows are complete, enter the final fallback row: "
-            "continuous_controller_standby. This row is a continuous monitoring duty, not a "
-            "finishable checklist item. Its purpose is to prevent accidental foreground exit "
-            "while FlowPilot is still running. To perform it, run this exact patrol timer "
-            f"command and wait for its output: `{patrol_command}`. If the command returns "
-            "continue_patrol, immediately run the same command again and wait for that "
-            "command's next output. Starting or restarting the command is not completion. "
-            "Keep watching router_daemon_status and controller_action_ledger, keep the visible "
-            "Codex plan synchronized from ledger rows and receipts, and when Router exposes "
-            "new Controller work, update this table and return to top-to-bottom row processing.\n\n"
-            f"{break_glass['text']}"
-        ),
-        "applies_to": ["runtime/controller_action_ledger.json"],
-        "break_glass_reminder": break_glass,
-        "row_processing_order": "top_to_bottom",
-        "foreground_controller_must_remain_attached_while_flowpilot_running": True,
-        "continuous_standby_row": CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
-        "patrol_timer_command": patrol_command,
-        "patrol_timer_seconds": CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
-        "sealed_body_reads_allowed": False,
-    }
-
-
-def _controller_break_glass_reminder() -> dict[str, Any]:
-    playbook_path = "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md"
-    return {
-        "schema_version": "flowpilot.controller_break_glass_reminder.v1",
-        "playbook_path": playbook_path,
-        "text": (
-            "Emergency break-glass reminder: use this only if normal FlowPilot "
-            "control flow itself appears broken, stuck, looping, or unable to "
-            "produce a legal next action. For that case only, read "
-            f"`{playbook_path}`. Do not use it for ordinary project bugs, "
-            "worker defects, review failures, or normal PM repair."
-        ),
-        "allowed_only_when": [
-            "normal_flow_itself_broken",
-            "stuck_or_looping_control_flow",
-            "no_legal_next_controller_action",
-            "normal_pm_control_blocker_packet_repair_unavailable_or_contradictory",
-        ],
-        "not_for": [
-            "ordinary_project_bugs",
-            "worker_defects",
-            "review_failures",
-            "normal_pm_repair",
-            "route_or_acceptance_changes",
-        ],
-    }
 
 
 def _controller_action_ledger_has_prompt_header(ledger: dict[str, Any]) -> bool:
@@ -10060,245 +9851,17 @@ def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any
 
 
 def load_manifest_from_run(run_root: Path) -> dict[str, Any]:
-    manifest_path = run_root / "runtime_kit" / "manifest.json"
-    if not manifest_path.exists():
-        manifest_path = runtime_kit_source() / "manifest.json"
-    manifest = read_json(manifest_path)
-    if manifest.get("schema_version") != PROMPT_MANIFEST_SCHEMA:
-        raise RouterError("invalid prompt manifest schema")
-    return manifest
+    try:
+        return load_card_manifest_from_run(run_root, runtime_kit_source())
+    except PromptStoreError as exc:
+        raise RouterError(str(exc)) from exc
 
 
 def manifest_card(manifest: dict[str, Any], card_id: str) -> dict[str, Any]:
-    cards = manifest.get("cards")
-    if not isinstance(cards, list):
-        raise RouterError("prompt manifest cards must be a list")
-    for card in cards:
-        if isinstance(card, dict) and card.get("id") == card_id:
-            return card
-    raise RouterError(f"card not found in prompt manifest: {card_id}")
-
-
-def _safe_delivery_component(value: str) -> str:
-    return "".join(ch if ch.isalnum() or ch in {"-", "_"} else "_" for ch in value).strip("_") or "item"
-
-
-def _card_ledger_path(run_root: Path) -> Path:
-    return run_root / "card_ledger.json"
-
-
-def _return_event_ledger_path(run_root: Path) -> Path:
-    return run_root / "return_event_ledger.json"
-
-
-def _role_io_protocol_ledger_path(run_root: Path) -> Path:
-    return run_root / "role_io_protocol_ledger.json"
-
-
-def _role_io_protocol_receipt_dir(run_root: Path) -> Path:
-    return run_root / "runtime_receipts" / "role_io_protocol"
-
-
-def _role_io_protocol_payload() -> dict[str, Any]:
-    return {
-        "schema_version": ROLE_IO_PROTOCOL_SCHEMA,
-        "name": "FlowPilot role lifecycle I/O protocol",
-        "scope": "role_lifecycle_base_capability",
-        "ordinary_system_card": False,
-        "rules": [
-            "act only on router/controller envelopes",
-            "open system cards, mail, packets, and bundles through runtime",
-            "when a card envelope includes card_checkin_instruction, run its receive-card or receive-card-bundle command instead of hand-writing ACK files",
-            "write read receipts after runtime open",
-            "write reports, decisions, and results to run-scoped files",
-            "submit ACKs and role-output envelopes directly to Router through runtime commands",
-            "do not send card/body/report body text back to chat",
-            "stop with a protocol blocker on wrong role, hash mismatch, stale run, missing envelope, or missing result target",
-        ],
-    }
-
-
-def _role_io_protocol_hash() -> str:
-    return _json_sha256(_role_io_protocol_payload())
-
-
-def _empty_card_ledger(run_id: str) -> dict[str, Any]:
-    return {
-        "schema_version": CARD_LEDGER_SCHEMA,
-        "run_id": run_id,
-        "deliveries": [],
-        "read_receipts": [],
-        "ack_envelopes": [],
-        "updated_at": utc_now(),
-    }
-
-
-def _empty_return_event_ledger(run_id: str) -> dict[str, Any]:
-    return {
-        "schema_version": RETURN_EVENT_LEDGER_SCHEMA,
-        "run_id": run_id,
-        "pending_returns": [],
-        "completed_returns": [],
-        "updated_at": utc_now(),
-    }
-
-
-def _empty_role_io_protocol_ledger(run_id: str) -> dict[str, Any]:
-    return {
-        "schema_version": ROLE_IO_PROTOCOL_LEDGER_SCHEMA,
-        "run_id": run_id,
-        "protocol": _role_io_protocol_payload(),
-        "protocol_hash": _role_io_protocol_hash(),
-        "injection_receipts": [],
-        "ack_receipts": [],
-        "updated_at": utc_now(),
-    }
-
-
-def _read_card_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
-    ledger = read_json_if_exists(_card_ledger_path(run_root)) or _empty_card_ledger(run_id)
-    ledger.setdefault("schema_version", CARD_LEDGER_SCHEMA)
-    ledger.setdefault("run_id", run_id)
-    ledger.setdefault("deliveries", [])
-    ledger.setdefault("read_receipts", [])
-    ledger.setdefault("ack_envelopes", [])
-    return ledger
-
-
-def _read_return_event_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
-    ledger = read_json_if_exists(_return_event_ledger_path(run_root)) or _empty_return_event_ledger(run_id)
-    ledger.setdefault("schema_version", RETURN_EVENT_LEDGER_SCHEMA)
-    ledger.setdefault("run_id", run_id)
-    ledger.setdefault("pending_returns", [])
-    ledger.setdefault("completed_returns", [])
-    return ledger
-
-
-def _read_role_io_protocol_ledger(run_root: Path, run_id: str) -> dict[str, Any]:
-    ledger = read_json_if_exists(_role_io_protocol_ledger_path(run_root)) or _empty_role_io_protocol_ledger(run_id)
-    ledger.setdefault("schema_version", ROLE_IO_PROTOCOL_LEDGER_SCHEMA)
-    ledger.setdefault("run_id", run_id)
-    ledger.setdefault("protocol", _role_io_protocol_payload())
-    ledger.setdefault("protocol_hash", _role_io_protocol_hash())
-    ledger.setdefault("injection_receipts", [])
-    ledger.setdefault("ack_receipts", [])
-    return ledger
-
-
-def _role_io_receipt_lifecycle_phase(record: dict[str, Any], default_phase: str) -> str:
-    if record.get("liveness_decision") == "spawned_replacement_from_current_run_memory":
-        return "missing_agent_replacement"
-    return default_phase
-
-
-def _append_role_io_protocol_injections(
-    project_root: Path,
-    run_root: Path,
-    run_id: str,
-    role_records: list[dict[str, Any]],
-    *,
-    default_lifecycle_phase: str,
-    resume_tick_id: str,
-    source_action: str,
-) -> list[dict[str, Any]]:
-    ledger = _read_role_io_protocol_ledger(run_root, run_id)
-    protocol_hash = str(ledger.get("protocol_hash") or _role_io_protocol_hash())
-    existing_keys = {
-        (
-            item.get("role_key"),
-            item.get("agent_id"),
-            item.get("resume_tick_id"),
-            item.get("protocol_hash"),
-            item.get("lifecycle_phase"),
-        )
-        for item in ledger.get("injection_receipts", [])
-        if isinstance(item, dict)
-    }
-    receipts: list[dict[str, Any]] = []
-    for record in role_records:
-        role = record.get("role_key")
-        agent_id = record.get("agent_id")
-        if not isinstance(role, str) or not role:
-            continue
-        if not isinstance(agent_id, str) or not agent_id.strip():
-            continue
-        lifecycle_phase = _role_io_receipt_lifecycle_phase(record, default_lifecycle_phase)
-        key = (role, agent_id.strip(), resume_tick_id, protocol_hash, lifecycle_phase)
-        if key in existing_keys:
-            continue
-        injected_at = utc_now()
-        identity_hash = hashlib.sha256(f"{run_id}:{resume_tick_id}:{role}:{agent_id}:{lifecycle_phase}".encode("utf-8")).hexdigest()[:16]
-        receipt_id = _safe_delivery_component(f"{role}-{lifecycle_phase}-{identity_hash}-role-io")
-        receipt_path = _role_io_protocol_receipt_dir(run_root) / f"{receipt_id}.json"
-        receipt = {
-            "schema_version": ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA,
-            "receipt_id": receipt_id,
-            "run_id": run_id,
-            "resume_tick_id": resume_tick_id,
-            "role_key": role,
-            "agent_id": agent_id.strip(),
-            "protocol_schema_version": ROLE_IO_PROTOCOL_SCHEMA,
-            "protocol_hash": protocol_hash,
-            "lifecycle_phase": lifecycle_phase,
-            "source_action": source_action,
-            "injected_by": "host_router",
-            "injection_method": "lifecycle_role_io_protocol",
-            "ordinary_system_card_delivery": False,
-            "card_body_visible_to_controller": False,
-            "requires_card_read_receipt_after_envelope": True,
-            "return_to_controller_envelope_only": True,
-            "injected_at": injected_at,
-        }
-        receipt["receipt_hash"] = _json_sha256(receipt)
-        receipt_path.parent.mkdir(parents=True, exist_ok=True)
-        write_json(receipt_path, receipt)
-        summary = {
-            "receipt_id": receipt_id,
-            "receipt_path": project_relative(project_root, receipt_path),
-            "receipt_hash": receipt["receipt_hash"],
-            "run_id": run_id,
-            "resume_tick_id": resume_tick_id,
-            "role_key": role,
-            "agent_id": agent_id.strip(),
-            "protocol_hash": protocol_hash,
-            "lifecycle_phase": lifecycle_phase,
-            "source_action": source_action,
-            "injected_at": injected_at,
-        }
-        ledger.setdefault("injection_receipts", []).append(summary)
-        receipts.append(summary)
-        existing_keys.add(key)
-    ledger["updated_at"] = utc_now()
-    write_json(_role_io_protocol_ledger_path(run_root), ledger)
-    return receipts
-
-
-def _role_io_protocol_receipt_for_agent(
-    run_root: Path,
-    run_id: str,
-    *,
-    role: str,
-    agent_id: str | None,
-    resume_tick_id: str,
-) -> dict[str, Any] | None:
-    if not isinstance(agent_id, str) or not agent_id.strip():
-        return None
-    ledger = _read_role_io_protocol_ledger(run_root, run_id)
-    protocol_hash = str(ledger.get("protocol_hash") or _role_io_protocol_hash())
-    candidates = list(ledger.get("injection_receipts", [])) + list(ledger.get("ack_receipts", []))
-    for item in reversed(candidates):
-        if not isinstance(item, dict):
-            continue
-        if item.get("run_id") != run_id:
-            continue
-        if item.get("role_key") != role or item.get("agent_id") != agent_id:
-            continue
-        if item.get("resume_tick_id") != resume_tick_id:
-            continue
-        if item.get("protocol_hash") != protocol_hash:
-            continue
-        return item
-    return None
+    try:
+        return card_manifest_entry(manifest, card_id)
+    except PromptStoreError as exc:
+        raise RouterError(str(exc)) from exc
 
 
 def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
@@ -10310,75 +9873,6 @@ def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
             if isinstance(agent_id, str) and agent_id.strip():
                 return agent_id.strip()
     return None
-
-
-def _next_card_delivery_attempt(run_root: Path, run_id: str, card_id: str) -> tuple[str, str]:
-    ledger = _read_card_ledger(run_root, run_id)
-    deliveries = [
-        item
-        for item in ledger.get("deliveries", [])
-        if isinstance(item, dict) and item.get("card_id") == card_id
-    ]
-    attempt = len(deliveries) + 1
-    safe_card = _safe_delivery_component(card_id)
-    delivery_id = f"{safe_card}-delivery-{attempt:03d}"
-    return delivery_id, f"{delivery_id}-attempt-001"
-
-
-def _card_return_event_for_card(card_id: str) -> str:
-    if card_id.startswith("controller."):
-        return "controller_card_ack"
-    if card_id.startswith("pm."):
-        return "pm_card_ack"
-    if card_id.startswith("reviewer."):
-        return "reviewer_card_ack"
-    if card_id.startswith("worker."):
-        return "worker_card_ack"
-    if card_id.startswith("process_officer."):
-        return "process_officer_card_ack"
-    if card_id.startswith("product_officer."):
-        return "product_officer_card_ack"
-    return "card_ack"
-
-
-def _card_bundle_return_event_for_role(role: str) -> str:
-    if role == "controller":
-        return "controller_card_bundle_ack"
-    if role == "project_manager":
-        return "pm_card_bundle_ack"
-    if role == "human_like_reviewer":
-        return "reviewer_card_bundle_ack"
-    if role.startswith("worker"):
-        return "worker_card_bundle_ack"
-    if role == "process_flowguard_officer":
-        return "process_officer_card_bundle_ack"
-    if role == "product_flowguard_officer":
-        return "product_officer_card_bundle_ack"
-    return "card_bundle_ack"
-
-
-CARD_RETURN_EVENT_NAMES = frozenset(
-    {
-        "controller_card_ack",
-        "pm_card_ack",
-        "reviewer_card_ack",
-        "worker_card_ack",
-        "process_officer_card_ack",
-        "product_officer_card_ack",
-        "card_ack",
-        "controller_card_bundle_ack",
-        "pm_card_bundle_ack",
-        "reviewer_card_bundle_ack",
-        "worker_card_bundle_ack",
-        "process_officer_card_bundle_ack",
-        "product_officer_card_bundle_ack",
-        "card_bundle_ack",
-    }
-)
-
-
-def _is_card_return_event_name(event: str) -> bool:
-    return event in CARD_RETURN_EVENT_NAMES
 
 
 def _pending_return_records(run_root: Path, run_id: str) -> list[dict[str, Any]]:
@@ -31040,25 +30534,7 @@ def _next_startup_heartbeat_binding_action(project_root: Path, run_state: dict[s
         return None
     automation_id_hint = f"flowpilot-{run_state['run_id']}-heartbeat"
     automation_name = f"FlowPilot {run_state['run_id']} heartbeat"
-    prompt = (
-        f"Wake the active FlowPilot run {run_state['run_id']} in {project_root} by recording the "
-        "heartbeat/manual resume request and then attach to daemon status and the Controller action ledger. "
-        "Every heartbeat wake must record heartbeat_or_manual_resume_requested "
-        "before any wait or resume claim. Do not self-classify the work chain as alive from old "
-        "crew or route state, and do not use wait_agent timeout as proof of liveness. The router must "
-        "load the current resume state, inspect runtime/router_daemon_status.json, "
-        "runtime/router_daemon.lock, and runtime/controller_action_ledger.json. If the daemon heartbeat is "
-        "older than five seconds, Controller must check the process, lock, and status; attach when it is "
-        "alive, and restore the per-run Router daemon only when that check finds it dead. Then attach "
-        "Controller to the current action ledger, restore the visible plan, and request six-role liveness "
-        "rehydration before any PM resume decision. Never start a second Router writer while a live daemon "
-        "lock exists. Any restored or replacement background role "
-        "agent must be explicitly requested with the strongest available host model and highest "
-        "available reasoning effort; do not rely on foreground model inheritance. After role "
-        "rehydration, process only exposed Controller rows or remain in Controller standby while Router consumes local prompt-manifest checks "
-        "internally; deliver the PM resume card only when the router exposes it through daemon status and the Controller action ledger, and stop only at a real role, user, host, payload, packet, or "
-        "await_role_decision boundary. Do not read sealed packet/result/report bodies."
-    )
+    prompt = _startup_heartbeat_prompt(project_root, str(run_state["run_id"]))
     return make_action(
         action_type="create_heartbeat_automation",
         actor="bootloader",

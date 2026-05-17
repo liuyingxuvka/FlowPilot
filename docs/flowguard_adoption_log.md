@@ -14351,3 +14351,89 @@ Friction points:
 Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-17 - Router Facade PromptStore Split
+
+Task: continue reducing `skills/flowpilot/assets/flowpilot_router.py` by
+externalizing selected Router prompt text and moving low-risk helper boundaries
+behind focused modules while keeping `flowpilot_router.py` as the compatibility
+facade.
+
+Trigger reason: the user asked to stop treating the large router script as an
+unbounded bucket and to move prompt/system-card style text out of Python where
+that can be done with a clear manifest and validation contract.
+
+FlowGuard/OpenSpec route:
+
+- OpenSpec change:
+  `openspec/changes/split-flowpilot-router-facade-prompt-store/`.
+- Backup path:
+  `tmp/router_facade_split_backup_main_20260517-171443/`.
+- FlowGuard schema check returned `1.0`.
+- StructureMesh/TestMesh artifact:
+  `simulations/flowpilot_router_facade_split_model.py`.
+- Runner:
+  `simulations/run_flowpilot_router_facade_split_checks.py`.
+
+Implementation summary:
+
+- Added `flowpilot_prompt_store.py` and
+  `skills/flowpilot/assets/runtime_kit/prompts/manifest.json` with hashed
+  prompt assets for Controller table, startup heartbeat resume, card post-ACK,
+  and bundle post-ACK policy text.
+- Moved selected prompt delivery, card delivery, Controller ledger, and role I/O
+  protocol helper responsibilities into:
+  `flowpilot_router_prompt_delivery.py`,
+  `flowpilot_router_card_delivery.py`,
+  `flowpilot_router_controller_ledger.py`, and
+  `flowpilot_router_role_io_protocol.py`.
+- Kept the Router facade and public command/import surface in
+  `flowpilot_router.py`.
+- Updated install checks and card-instruction FlowGuard checks so prompt
+  coverage follows the PromptStore assets instead of forcing prompt text back
+  into the router facade.
+
+Checks:
+
+- `python simulations\run_flowpilot_router_facade_split_checks.py --json-out
+  simulations\flowpilot_router_facade_split_results.json` passed.
+- `python simulations\run_card_instruction_coverage_checks.py --json-out
+  simulations\card_instruction_coverage_results.json` passed after the
+  prompt-asset scan fix.
+- `python scripts\run_test_tier.py --tier fast --json` passed.
+- `python scripts\smoke_autopilot.py --fast` passed from hidden log
+  `tmp\smoke_fast.out.txt`.
+- `python scripts\check_install.py --json`,
+  `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json` passed.
+- Background `router-route` completed through
+  `tmp\flowguard_background\router-route_background_supervisor.*`, exit `0`,
+  status `passed`, proof reuse `false`, with all `11` child suites exit `0`.
+- Background layered Meta completed through
+  `tmp\flowguard_background\run_meta_checks.*`, exit `0`, proof reuse `true`.
+- Background layered Capability completed through
+  `tmp\flowguard_background\run_capability_checks.*`, exit `0`, proof reuse
+  `false`.
+
+Counterexamples and hazards preserved:
+
+- The router-facade split model rejects micro-module explosion,
+  one-function-file splits, missing prompt assets, stale prompt hashes, unsafe
+  inline prompt fallback, missing installed prompt assets, and undeclared prompt
+  template variables.
+- The card-instruction model now treats PromptStore prompt assets as part of the
+  Router prompt surface, so post-ACK guidance can be validated after prompt
+  externalization.
+
+Deferred split notes:
+
+- Deeper card-return finalizers, daemon/bootloader state, control-blocker repair
+  transactions, PM role-work, packet dispatch, frontier, and terminal ledger
+  code remain in `flowpilot_router.py` until their state-owner contracts are
+  clear enough to split without creating one-function files or duplicate state
+  owners.
+
+Skipped steps:
+
+- No push, tag, release, deploy, or public publication was performed.

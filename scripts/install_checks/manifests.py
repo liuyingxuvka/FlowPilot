@@ -156,6 +156,10 @@ def run_checks(result: dict[str, object]) -> None:
 
     try:
         router_source = (ROOT / "skills/flowpilot/assets/flowpilot_router.py").read_text(encoding="utf-8")
+        controller_table_prompt = (
+            ROOT / "skills/flowpilot/assets/runtime_kit/prompts/controller/action_ledger_table.md"
+        ).read_text(encoding="utf-8")
+        source_text = router_source + "\n" + controller_table_prompt
         required_terms = [
             "controller_table_prompt",
             "Work from top to bottom",
@@ -174,7 +178,7 @@ def run_checks(result: dict[str, object]) -> None:
             "plain language first. Use internal names only when the user asks for",
             "concrete blocker needs that name",
         ]
-        missing_terms = [term for term in required_terms if term not in router_source]
+        missing_terms = [term for term in required_terms if term not in source_text]
         ok = not missing_terms
         result["checks"].append(
             {
