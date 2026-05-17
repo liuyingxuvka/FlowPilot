@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from tests.test_flowpilot_router_runtime import FlowPilotRouterRuntimeTests
+from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 
 
 TEST_NAMES = (
@@ -14,11 +14,7 @@ TEST_NAMES = (
 
 
 def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: str | None) -> unittest.TestSuite:
-    del loader, tests, pattern
-    suite = unittest.TestSuite()
-    for name in TEST_NAMES:
-        suite.addTest(FlowPilotRouterRuntimeTests(name))
-    return suite
+    return load_named_runtime_tests(loader, tests, pattern, TEST_NAMES)
 
 
 if __name__ == "__main__":

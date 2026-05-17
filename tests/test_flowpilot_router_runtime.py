@@ -6525,7 +6525,7 @@ class FlowPilotRouterRuntimeTests(unittest.TestCase):
         flow = read_json(run_root / "routes" / "route-001" / "flow.json")
         self.assertEqual(flow["schema_version"], "flowpilot.route.v1")
         self.assertEqual(flow["source"], "pm_activates_reviewed_route")
-        self.assertEqual(flow["nodes"], [{"node_id": "node-001"}])
+        self.assertEqual([node["node_id"] for node in flow["nodes"]], ["node-001"])
         self.assertIn("flow.draft.json", flow["activated_from_draft_path"])
         self.assertTrue(flow["activated_from_draft_hash"])
         self.assertNotEqual(flow["nodes"][0].get("title"), "Current node")

@@ -1762,12 +1762,7 @@ class AutopilotStep:
         "complete early, and must either advance, recover, update the model, or block."
     )
 
-    def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
-        del input_obj
-
-        if state.status in {"blocked", "complete"}:
-            return
-
+    def _apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         if state.status == "new":
             yield _step(
                 state,
@@ -2252,6 +2247,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
         if not state.startup_self_interrogation_pm_ratified:
             yield _step(
                 state,
@@ -2776,6 +2773,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         if state.host_continuation_supported and not state.heartbeat_schedule_created:
             yield _step(
                 state,
@@ -3346,6 +3345,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
         if state.issue == "terminal_backward_review_failure":
             if (
                 state.pm_repair_decision_interrogations
@@ -4004,6 +4005,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
         if (
             state.completed_chunks >= state.required_chunks
             and state.checkpoint_written
@@ -4618,6 +4621,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
         if _route_ready(state) and state.completed_chunks < TARGET_CHUNKS:
             if not state.heartbeat_loaded_state:
                 yield _step(
@@ -5503,6 +5508,8 @@ class AutopilotStep:
             )
             return
 
+
+    def _apply_terminal_blocker_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="blocked_unhandled_state",
@@ -5513,6 +5520,21 @@ class AutopilotStep:
             pause_snapshot_written=True,
             active_node="blocked",
         )
+
+
+    def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
+        del input_obj
+
+        if state.status in {"blocked", "complete"}:
+            return
+
+        yield from self._apply_startup_phase(state)
+        yield from self._apply_material_phase(state)
+        yield from self._apply_route_phase(state)
+        yield from self._apply_repair_mutation_phase(state)
+        yield from self._apply_closure_phase(state)
+        yield from self._apply_node_execution_phase(state)
+        yield from self._apply_terminal_blocker_phase(state)
 
 
 def terminal_predicate(current_output, state: State, trace) -> bool:

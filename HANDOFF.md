@@ -460,6 +460,27 @@ FlowGuard caught and fixed these design issues:
   recheck. The focused model and checker are
   `simulations/flowpilot_route_mutation_activation_model.py` and
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
+- The v0.9.6 router has been structurally reduced without changing protocol
+  semantics. `flowpilot_router.py` remains the compatibility facade, while
+  event dispatch, Controller action providers, Controller action handlers,
+  route activation/mutation, and heartbeat/resume helpers now live in focused
+  modules:
+  `flowpilot_router_events.py`,
+  `flowpilot_router_action_providers.py`,
+  `flowpilot_router_action_handlers.py`,
+  `flowpilot_router_route.py`, and
+  `flowpilot_router_resume.py`.
+- The Meta and Capability FlowGuard parent models now keep short `apply`
+  orchestration methods and move their previous monolithic bodies into phase
+  helpers. The model semantics and hazard labels are intended to stay stable;
+  the background checks are recorded under
+  `tmp/flowguard_background/run_meta_checks.*` and
+  `tmp/flowguard_background/run_capability_checks.*`.
+- Router runtime tests now have domain entry files for resume, cards, packets,
+  route mutation, startup daemon, dispatch gate, Controller, ACK/return,
+  terminal, and closure suites. The legacy aggregate
+  `tests/test_flowpilot_router_runtime.py` remains available while migration
+  continues.
 
 ## Remaining Work
 

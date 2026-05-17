@@ -1,0 +1,271 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=40 initial_states=1 traces=820",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "change_before_baseline": {
+        "detected": true,
+        "expected_failure": "structural refactor changed code before baseline was recorded",
+        "failures": [
+          "structural refactor changed code before baseline was recorded",
+          "structural refactor changed code before OpenSpec contract was ready",
+          "structural refactor changed code before FlowGuard guard passed"
+        ],
+        "state": {
+          "baseline_recorded": false,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": true,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": false,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": false,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "change_before_flowguard": {
+        "detected": true,
+        "expected_failure": "structural refactor changed code before FlowGuard guard passed",
+        "failures": [
+          "structural refactor changed code before FlowGuard guard passed"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": true,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": false,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "change_before_openspec": {
+        "detected": true,
+        "expected_failure": "structural refactor changed code before OpenSpec contract was ready",
+        "failures": [
+          "structural refactor changed code before OpenSpec contract was ready",
+          "structural refactor changed code before FlowGuard guard passed"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": true,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": false,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": false,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "compat_entrypoint_deleted": {
+        "detected": true,
+        "expected_failure": "structural refactor deleted or bypassed compatibility entrypoints",
+        "failures": [
+          "structural refactor deleted or bypassed compatibility entrypoints"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": true,
+          "compatibility_entrypoints_preserved": false,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "model_split_without_heavy_checks": {
+        "detected": true,
+        "expected_failure": "Meta/Capability model split completed before both heavyweight checks completed",
+        "failures": [
+          "Meta/Capability model split completed before both heavyweight checks completed"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [
+            "meta_capability_models"
+          ],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "protocol_shape_changed": {
+        "detected": true,
+        "expected_failure": "structure-only refactor changed protocol or JSON shape",
+        "failures": [
+          "structure-only refactor changed protocol or JSON shape"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": true,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": false,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "remote_sync_before_install_sync": {
+        "detected": true,
+        "expected_failure": "remote sync happened before installed skill sync check",
+        "failures": [
+          "remote sync happened before installed skill sync check"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": true,
+          "remote_sync_done": true,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "remote_sync_before_privacy_check": {
+        "detected": true,
+        "expected_failure": "remote sync happened before public-boundary privacy check",
+        "failures": [
+          "remote sync happened before public-boundary privacy check"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": true,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": true,
+          "status": "running",
+          "tag_or_release_done": false
+        }
+      },
+      "tag_release_in_structure_pass": {
+        "detected": true,
+        "expected_failure": "structure maintenance performed tag or release without explicit release scope",
+        "failures": [
+          "structure maintenance performed tag or release without explicit release scope"
+        ],
+        "state": {
+          "baseline_recorded": true,
+          "behavior_tests_passed": false,
+          "boundaries_completed": [],
+          "boundary_changed": false,
+          "compatibility_entrypoints_preserved": true,
+          "current_boundary": "none",
+          "flowguard_ready": true,
+          "focused_validation_done": false,
+          "install_sync_checked": false,
+          "meta_capability_checks_completed": false,
+          "model_files_touched": false,
+          "openspec_ready": true,
+          "protocol_json_shape_preserved": true,
+          "public_boundary_checked": false,
+          "remote_sync_done": false,
+          "status": "running",
+          "tag_or_release_done": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": [],
+    "terminal_state_count": 1
+  },
+  "safe_graph": {
+    "edge_count": 32,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 33
+  }
+}

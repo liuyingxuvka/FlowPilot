@@ -117,8 +117,13 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_router_startup_daemon.py",
     "skills/flowpilot/assets/flowpilot_router_terminal.py",
     "skills/flowpilot/assets/flowpilot_runtime_closure.py",
+    "skills/flowpilot/assets/flowpilot_router_action_handlers.py",
+    "skills/flowpilot/assets/flowpilot_router_action_providers.py",
     "skills/flowpilot/assets/flowpilot_router.py",
     "skills/flowpilot/assets/packet_runtime.py",
+    "skills/flowpilot/assets/flowpilot_router_events.py",
+    "skills/flowpilot/assets/flowpilot_router_resume.py",
+    "skills/flowpilot/assets/flowpilot_router_route.py",
     "skills/flowpilot/assets/role_output_runtime.py",
     "skills/flowpilot/assets/brand/flowpilot-icon-default.png",
     "skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1",
@@ -558,9 +563,7 @@ STARTUP_INTAKE_PS1_SOURCE_FILES = [
 UTF8_BOM = b"\xef\xbb\xbf"
 
 
-def main() -> int:
-    result: dict[str, object] = {"ok": True, "checks": []}
-
+def _run_file_presence_and_skill_contract_checks(result: dict[str, object]) -> None:
     try:
         flowguard = importlib.import_module("flowguard")
         result["checks"].append(
@@ -678,6 +681,8 @@ def main() -> int:
     if not run_modes_retired:
         result["ok"] = False
 
+
+def _run_manifest_and_prompt_contract_checks(result: dict[str, object]) -> None:
     manifest_path = ROOT / "skills/flowpilot/assets/runtime_kit/manifest.json"
     if manifest_path.exists():
         try:
@@ -891,6 +896,8 @@ def main() -> int:
             }
         )
 
+
+def _run_runtime_module_contract_checks(result: dict[str, object]) -> None:
     assets_path = ROOT / "skills" / "flowpilot" / "assets"
     if assets_path.exists():
         sys.path.insert(0, str(assets_path))
@@ -1360,6 +1367,8 @@ def main() -> int:
                 }
             )
 
+
+def _run_equivalence_matrix_and_auxiliary_skill_checks(result: dict[str, object]) -> None:
     equivalence_path = ROOT / "docs/legacy_to_router_equivalence.json"
     if equivalence_path.exists():
         try:
@@ -1545,6 +1554,8 @@ def main() -> int:
         if not has_name:
             result["ok"] = False
 
+
+def _run_retired_backup_and_json_parse_checks(result: dict[str, object]) -> None:
     legacy_skill_dir = ROOT / "skills/flowguard-project-autopilot"
     legacy_absent = not legacy_skill_dir.exists()
     result["checks"].append(
@@ -1624,6 +1635,16 @@ def main() -> int:
         result["checks"].append(check)
         if not json_ok:
             result["ok"] = False
+
+
+def main() -> int:
+    result: dict[str, object] = {"ok": True, "checks": []}
+
+    _run_file_presence_and_skill_contract_checks(result)
+    _run_manifest_and_prompt_contract_checks(result)
+    _run_runtime_module_contract_checks(result)
+    _run_equivalence_matrix_and_auxiliary_skill_checks(result)
+    _run_retired_backup_and_json_parse_checks(result)
 
     print(json.dumps(result, indent=2, sort_keys=True))
     return 0 if result["ok"] else 1

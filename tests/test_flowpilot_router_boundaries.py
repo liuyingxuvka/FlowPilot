@@ -11,13 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import flowpilot_router as router  # noqa: E402
+import flowpilot_router_action_handlers as action_handlers  # noqa: E402
+import flowpilot_router_action_providers as action_providers  # noqa: E402
 import flowpilot_router_card_settlement as card_settlement  # noqa: E402
 import flowpilot_router_controller_boundary as controller_boundary  # noqa: E402
 import flowpilot_router_controller_reconciliation as controller_reconciliation  # noqa: E402
 import flowpilot_router_dispatch_gate as dispatch_gate  # noqa: E402
+import flowpilot_router_events as router_events  # noqa: E402
 import flowpilot_router_errors as router_errors  # noqa: E402
 import flowpilot_router_io as router_io  # noqa: E402
 import flowpilot_router_protocol_tables as protocol_tables  # noqa: E402
+import flowpilot_router_resume as router_resume  # noqa: E402
+import flowpilot_router_route as router_route  # noqa: E402
 import flowpilot_router_startup_daemon as startup_daemon  # noqa: E402
 import flowpilot_router_terminal as terminal_helpers  # noqa: E402
 
@@ -181,6 +186,93 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             ),
             ["pm_issues_material_and_capability_scan_packets"],
         )
+
+    def test_event_boundary_registry_covers_first_migrated_events(self) -> None:
+        self.assertEqual(
+            set(router_events.PRECHECK_EVENT_HANDLERS),
+            {"heartbeat_or_manual_resume_requested"},
+        )
+        self.assertEqual(
+            set(router_events.SIDE_EFFECT_EVENT_HANDLERS),
+            {
+                "host_records_heartbeat_binding",
+                "pm_activates_reviewed_route",
+                "user_requests_run_cancel",
+                "user_requests_run_stop",
+            },
+        )
+        for event_name in set(router_events.PRECHECK_EVENT_HANDLERS) | set(router_events.SIDE_EFFECT_EVENT_HANDLERS):
+            self.assertIn(event_name, router.EXTERNAL_EVENTS)
+
+    def test_controller_action_provider_order_is_stable(self) -> None:
+        self.assertEqual(
+            action_providers.PROVIDER_ORDER,
+            (
+                "lifecycle",
+                "pending_action",
+                "role_recovery",
+                "resume",
+                "control_blocker",
+                "startup_heartbeat",
+                "display_plan",
+                "controller_boundary",
+                "startup_mechanical_audit",
+                "startup_display",
+                "pending_card_return",
+                "system_card_bundle",
+                "system_card",
+                "resume_wait",
+                "mail",
+                "material_packet",
+                "research_packet",
+                "parent_child_entry",
+                "current_node_packet",
+                "pm_role_work_request",
+                "model_miss_followup",
+                "model_miss_controlled_stop",
+                "expected_role_decision_wait",
+                "no_legal_next_action_blocker",
+            ),
+        )
+
+    def test_controller_action_handler_registry_covers_first_migrated_actions(self) -> None:
+        self.assertEqual(
+            action_handlers.PASSIVE_WAIT_HANDLER_ACTION_TYPES,
+            (
+                "await_role_decision",
+                "await_card_return_event",
+                "await_card_bundle_return_event",
+                "await_user_after_model_miss_stop",
+            ),
+        )
+        for action_type in (
+            "sync_display_plan",
+            "write_terminal_summary",
+            "deliver_system_card",
+            "deliver_system_card_bundle",
+            "run_lifecycle_terminal",
+            *action_handlers.PASSIVE_WAIT_HANDLER_ACTION_TYPES,
+        ):
+            self.assertIn(action_type, action_handlers.ACTION_HANDLERS)
+
+    def test_system_card_auto_commit_helpers_are_thin_router_delegates(self) -> None:
+        self.assertTrue(callable(action_handlers.auto_commit_system_card_delivery_action))
+        self.assertTrue(callable(action_handlers.auto_commit_system_card_bundle_delivery_action))
+
+    def test_route_domain_helpers_are_available_behind_router_facade(self) -> None:
+        self.assertTrue(callable(router_route.route_payload_from_reviewed_draft))
+        self.assertTrue(callable(router_route.write_route_activation))
+        self.assertTrue(callable(router_route.write_route_mutation))
+        self.assertTrue(callable(router._write_route_activation))
+        self.assertTrue(callable(router._write_route_mutation))
+
+    def test_resume_domain_helpers_are_available_behind_router_facade(self) -> None:
+        self.assertTrue(callable(router_resume.write_host_heartbeat_binding))
+        self.assertTrue(callable(router_resume.append_heartbeat_tick))
+        self.assertTrue(callable(router_resume.reset_resume_cycle_for_wakeup))
+        self.assertTrue(callable(router._write_host_heartbeat_binding))
+        self.assertTrue(callable(router._append_heartbeat_tick))
+        self.assertTrue(callable(router._reset_resume_cycle_for_wakeup))
 
     def test_terminal_helpers_stay_reexported_by_router(self) -> None:
         self.assertIs(router._terminal_lifecycle_mode, terminal_helpers._terminal_lifecycle_mode)

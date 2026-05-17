@@ -29,6 +29,11 @@ import card_runtime
 import packet_runtime
 import role_output_runtime
 import flowpilot_runtime_closure
+import flowpilot_router_action_handlers
+import flowpilot_router_action_providers
+import flowpilot_router_events
+import flowpilot_router_resume
+import flowpilot_router_route
 from flowpilot_router_card_settlement import (
     CARD_ACK_COMPLETE_STATUSES,
     CARD_BUNDLE_ACK_COMPLETE_STATUSES,
@@ -19886,51 +19891,13 @@ def _write_initial_continuation_binding(project_root: Path, run_root: Path, run_
 
 
 def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    binding_path = _continuation_binding_path(run_root)
-    binding = read_json_if_exists(binding_path)
-    answers = _startup_answers_from_run(run_root)
-    scheduled_requested = _scheduled_continuation_requested(answers)
-    interval = int(payload.get("route_heartbeat_interval_minutes") or binding.get("route_heartbeat_interval_minutes") or 0)
-    if scheduled_requested and interval != 1:
-        raise RouterError("scheduled FlowPilot heartbeat must be one minute")
-    if scheduled_requested and not payload.get("host_automation_id"):
-        raise RouterError("scheduled FlowPilot heartbeat requires host_automation_id")
-    if scheduled_requested and payload.get("host_automation_verified") is not True:
-        raise RouterError("scheduled FlowPilot heartbeat requires host_automation_verified=true")
-    host_automation_proof = payload.get("host_automation_proof")
-    if scheduled_requested and not isinstance(host_automation_proof, dict):
-        raise RouterError("scheduled FlowPilot heartbeat requires host_automation_proof")
-    if host_automation_proof is not None:
-        if not isinstance(host_automation_proof, dict):
-            raise RouterError("host_automation_proof must be an object")
-        if host_automation_proof.get("source_kind") != "host_receipt":
-            raise RouterError("host_automation_proof requires source_kind=host_receipt")
-        if host_automation_proof.get("run_id") != run_state["run_id"]:
-            raise RouterError("host_automation_proof run_id must match current run")
-        if host_automation_proof.get("host_automation_id") != payload.get("host_automation_id"):
-            raise RouterError("host_automation_proof host_automation_id mismatch")
-        if int(host_automation_proof.get("route_heartbeat_interval_minutes") or 0) != 1:
-            raise RouterError("host_automation_proof requires one-minute heartbeat interval")
-        if host_automation_proof.get("heartbeat_bound_to_current_run") is not True:
-            raise RouterError("host_automation_proof must bind heartbeat to current run")
-    binding.update(
-        {
-            "schema_version": "flowpilot.continuation_binding.v1",
-            "run_id": run_state["run_id"],
-            "mode": "scheduled_heartbeat" if scheduled_requested else "manual_resume",
-            "scheduled_continuation_requested": scheduled_requested,
-            "route_heartbeat_interval_minutes": 1 if scheduled_requested else 0,
-            "heartbeat_active": bool(scheduled_requested),
-            "host_automation_id": payload.get("host_automation_id") if scheduled_requested else None,
-            "host_automation_verified": bool(scheduled_requested),
-            "stable_launcher": _stable_resume_launcher_contract(),
-            **({"host_automation_proof": host_automation_proof} if scheduled_requested and isinstance(host_automation_proof, dict) else {}),
-            "recorded_by": str(payload.get("recorded_by") or "host"),
-            "updated_at": utc_now(),
-        }
+    flowpilot_router_resume.write_host_heartbeat_binding(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        run_state,
+        payload,
     )
-    write_json(binding_path, binding)
-
 
 def _host_heartbeat_binding_ready(run_root: Path, run_state: dict[str, Any]) -> bool:
     binding = read_json_if_exists(_continuation_binding_path(run_root))
@@ -19947,62 +19914,16 @@ def _host_heartbeat_binding_ready(run_root: Path, run_state: dict[str, Any]) -> 
 
 
 def _append_heartbeat_tick(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
-    source = str(payload.get("source") or "heartbeat_or_manual_resume")
-    tick = {
-        "schema_version": "flowpilot.heartbeat_tick.v1",
-        "run_id": run_state["run_id"],
-        "tick_id": f"heartbeat-{len(run_state.get('heartbeat_ticks', [])) + 1:04d}",
-        "work_chain_status": str(payload.get("work_chain_status") or "broken_or_unknown"),
-        "work_chain_status_trust": "diagnostic_only",
-        "recorded_at": utc_now(),
-        "source": source,
-        "resume_requested": True,
-        "router_reentry_required": True,
-        "self_keepalive_allowed": False,
-        "heartbeat_automation_status": str(payload.get("heartbeat_automation_status") or "unknown"),
-        "heartbeat_automation_status_checked": payload.get("heartbeat_automation_status_checked") is True,
-    }
-    ticks_path = run_root / "continuation" / "heartbeat_ticks.jsonl"
-    ticks_path.parent.mkdir(parents=True, exist_ok=True)
-    with ticks_path.open("a", encoding="utf-8") as stream:
-        stream.write(json.dumps(tick, sort_keys=True) + "\n")
-    run_state.setdefault("heartbeat_ticks", []).append(
-        {
-            "tick_id": tick["tick_id"],
-            "work_chain_status": tick["work_chain_status"],
-            "resume_requested": tick["resume_requested"],
-            "router_reentry_required": tick["router_reentry_required"],
-            "self_keepalive_allowed": tick["self_keepalive_allowed"],
-            "heartbeat_automation_status": tick["heartbeat_automation_status"],
-            "heartbeat_automation_status_checked": tick["heartbeat_automation_status_checked"],
-        }
+    return flowpilot_router_resume.append_heartbeat_tick(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        run_state,
+        payload,
     )
-    return tick
-
 
 def _reset_resume_cycle_for_wakeup(run_state: dict[str, Any]) -> None:
-    for flag in (
-        "resume_reentry_requested",
-        "resume_state_loaded",
-        "resume_state_ambiguous",
-        "resume_roles_restored",
-        "resume_role_agents_rehydrated",
-        "crew_rehydration_report_written",
-        "controller_resume_card_delivered",
-        "pm_crew_rehydration_freshness_card_delivered",
-        "pm_resume_decision_card_delivered",
-        "pm_resume_recovery_decision_returned",
-        "role_recovery_requested",
-        "role_recovery_state_loaded",
-        "role_recovery_roles_restored",
-        "role_recovery_report_written",
-        "role_recovery_environment_blocked",
-        "role_recovery_obligations_scanned",
-        "role_recovery_obligation_replay_completed",
-        "role_recovery_pm_escalation_required",
-    ):
-        run_state["flags"][flag] = False
-
+    flowpilot_router_resume.reset_resume_cycle_for_wakeup(sys.modules[__name__], run_state)
 
 def _defect_ledger_reconciliation_status(project_root: Path, run_root: Path) -> dict[str, Any]:
     path = run_root / "defects" / "defect_ledger.json"
@@ -29221,339 +29142,32 @@ def _validate_current_node_reviewer_pass(project_root: Path, run_state: dict[str
 
 
 def _route_payload_from_reviewed_draft(project_root: Path, run_root: Path, payload: dict[str, Any]) -> tuple[dict[str, Any], Path]:
-    draft_path = _current_route_draft_path(run_root)
-    draft = read_json(draft_path)
-    supplied_route = payload.get("route")
-    route_payload = dict(supplied_route) if isinstance(supplied_route, dict) else dict(draft)
-    route_payload["schema_version"] = "flowpilot.route.v1"
-    route_payload["activated_from_draft_path"] = project_relative(project_root, draft_path)
-    route_payload["activated_from_draft_hash"] = hashlib.sha256(draft_path.read_bytes()).hexdigest()
-    route_payload["reviewed_route_activation_source"] = "flow.draft.json"
-    if not route_payload.get("nodes"):
-        raise RouterError("reviewed route activation requires non-empty reviewed route draft nodes")
-    return route_payload, draft_path
+    return flowpilot_router_route.route_payload_from_reviewed_draft(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        payload,
+    )
 
 
 def _write_route_activation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    _require_product_behavior_model_report(project_root, run_root)
-    _require_route_process_pass(project_root, run_root)
-    if not run_state["flags"].get("reviewer_route_check_passed"):
-        raise RouterError("route activation requires reviewer-passed route challenge")
-    route_payload, draft_path = _route_payload_from_reviewed_draft(project_root, run_root, payload)
-    route_id = str(payload.get("route_id") or route_payload.get("route_id") or draft_path.parent.name or "route-001")
-    route_payload["route_id"] = route_id
-    route_version = int(payload.get("route_version") or route_payload.get("route_version") or 1)
-    route_payload["route_version"] = route_version
-    contract = read_json(run_root / "root_acceptance_contract.json")
-    route_payload["nodes"] = _route_nodes_with_requirement_trace(route_payload.get("nodes") or [], _root_requirement_ids(contract))
-    route_payload.setdefault(
-        "requirement_traceability_policy",
-        {
-            "schema_version": "flowpilot.route_requirement_traceability.v1",
-            "source_root_contract": project_relative(project_root, run_root / "root_acceptance_contract.json"),
-            "source_product_architecture": project_relative(project_root, run_root / "product_function_architecture.json"),
-            "full_protocol_required_when_flowpilot_invoked": True,
-            "light_or_simple_profiles_forbidden": True,
-            "every_node_requires_requirement_or_risk_rationale": True,
-            "external_spec_material_advisory_until_pm_imported": True,
-        },
-    )
-    route_nodes = _iter_route_nodes(route_payload)
-    first_node = route_nodes[0] if route_nodes else {}
-    active_node_id = str(
-        payload.get("active_node_id")
-        or payload.get("node_id")
-        or route_payload.get("active_node_id")
-        or first_node.get("node_id")
-        or first_node.get("id")
-        or "node-001"
-    )
-    active_node_definition = _active_node_definition_from_route(route_payload, active_node_id)
-    route_root = run_root / "routes" / route_id
-    route_payload["active_node_id"] = active_node_id
-    route_payload["source"] = "pm_activates_reviewed_route"
-    route_payload["updated_at"] = utc_now()
-    write_json(route_root / "flow.json", route_payload)
-    frontier = {
-        "schema_version": "flowpilot.execution_frontier.v1",
-        "run_id": run_state["run_id"],
-        "status": "current_node_loop",
-        "active_route_id": route_id,
-        "active_node_id": active_node_id,
-        "active_path": _route_active_path(route_payload, active_node_id),
-        "active_leaf_node_id": active_node_id if _node_kind(active_node_definition) in {"leaf", "repair"} else None,
-        "route_version": route_version,
-        "updated_at": utc_now(),
-        "source": "pm_activates_reviewed_route",
-    }
-    write_json(run_root / "execution_frontier.json", frontier)
-    _write_display_plan_from_route(
+    flowpilot_router_route.write_route_activation(
+        sys.modules[__name__],
         project_root,
         run_root,
         run_state,
-        route_id=route_id,
-        route_version=route_version,
-        route_payload=route_payload,
-        active_node_id=active_node_id,
-        source_event="pm_activates_reviewed_route",
+        payload,
     )
 
 
 def _write_route_mutation(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    prior_review = _require_pm_prior_path_context(project_root, run_root, payload, purpose="route mutation")
-    frontier = read_json_if_exists(run_root / "execution_frontier.json")
-    route_id = str(payload.get("route_id") or frontier.get("active_route_id") or "route-001")
-    current_active_node_id = str(frontier.get("active_node_id") or "node-001")
-    active_node_id = str(payload.get("active_node_id") or payload.get("repair_node_id") or current_active_node_id)
-    repair_return_to_node_id = str(
-        payload.get("repair_return_to_node_id")
-        or payload.get("mainline_return_node_id")
-        or payload.get("return_to_node_id")
-        or ""
-    ).strip()
-    repair_of_node_id = str(
-        payload.get("repair_of_node_id")
-        or payload.get("affected_node_id")
-        or payload.get("original_node_id")
-        or current_active_node_id
-    ).strip()
-    continue_after_node_id = str(
-        payload.get("continue_after_node_id")
-        or payload.get("mainline_continue_node_id")
-        or payload.get("replacement_continues_to_node_id")
-        or ""
-    ).strip()
-    route_version = int(payload.get("route_version") or int(frontier.get("route_version") or 1) + 1)
-    superseded_nodes = [str(item) for item in (payload.get("superseded_nodes") or [])]
-    affected_sibling_nodes = [
-        str(item)
-        for item in (
-            payload.get("affected_sibling_nodes")
-            or payload.get("sibling_nodes_to_replace")
-            or payload.get("replaced_sibling_nodes")
-            or []
-        )
-    ]
-    replay_scope_node_id = str(
-        payload.get("replay_scope_node_id")
-        or payload.get("ancestor_replay_scope_node_id")
-        or payload.get("affected_ancestor_node_id")
-        or ""
-    ).strip()
-    stale_evidence = [str(item) for item in (payload.get("stale_evidence") or [])]
-    _validate_route_mutation_phase_boundary(
-        run_root,
-        run_state,
-        route_id=route_id,
-        current_active_node_id=current_active_node_id,
-    )
-    topology_strategy = str(
-        payload.get("topology_strategy")
-        or payload.get("mutation_topology")
-        or payload.get("mutation_strategy")
-        or ""
-    ).strip()
-    current_node_incapability_reason = str(
-        payload.get("why_current_node_cannot_contain_repair")
-        or payload.get("current_node_cannot_contain_repair_reason")
-        or ""
-    ).strip()
-    if not topology_strategy:
-        if repair_return_to_node_id:
-            topology_strategy = "return_to_original"
-        elif superseded_nodes:
-            topology_strategy = "supersede_original"
-        elif affected_sibling_nodes:
-            topology_strategy = "sibling_branch_replacement"
-        elif continue_after_node_id:
-            topology_strategy = "branch_then_continue"
-    if topology_strategy not in {"return_to_original", "supersede_original", "branch_then_continue", "sibling_branch_replacement"}:
-        raise RouterError(
-            "route mutation requires topology_strategy=return_to_original, supersede_original, "
-            "branch_then_continue, or sibling_branch_replacement"
-        )
-    if not repair_of_node_id:
-        raise RouterError("route mutation requires repair_of_node_id")
-    if topology_strategy == "return_to_original" and not repair_return_to_node_id:
-        raise RouterError("return_to_original route mutation requires repair_return_to_node_id")
-    if topology_strategy == "supersede_original":
-        if not superseded_nodes:
-            raise RouterError("supersede_original route mutation requires superseded_nodes")
-        if repair_return_to_node_id:
-            raise RouterError("supersede_original route mutation must not force repair_return_to_node_id")
-    if topology_strategy == "branch_then_continue" and not continue_after_node_id:
-        raise RouterError("branch_then_continue route mutation requires continue_after_node_id")
-    if topology_strategy == "sibling_branch_replacement":
-        if not affected_sibling_nodes:
-            raise RouterError("sibling_branch_replacement route mutation requires affected_sibling_nodes")
-        if not replay_scope_node_id:
-            raise RouterError("sibling_branch_replacement route mutation requires replay_scope_node_id")
-        if repair_return_to_node_id:
-            raise RouterError("sibling_branch_replacement route mutation must not force repair_return_to_node_id")
-        superseded_nodes = sorted({*superseded_nodes, *affected_sibling_nodes})
-    route_topology = {
-        "topology_strategy": topology_strategy,
-        "inserted_node_id": active_node_id,
-        "replacement_branch_root_node_id": active_node_id if topology_strategy == "sibling_branch_replacement" else None,
-        "repair_of_node_id": repair_of_node_id,
-        "repair_return_to_node_id": repair_return_to_node_id or None,
-        "superseded_nodes": superseded_nodes,
-        "affected_sibling_nodes": affected_sibling_nodes,
-        "replay_scope_node_id": replay_scope_node_id or None,
-        "continue_after_node_id": continue_after_node_id or None,
-        "process_officer_recheck_required": True,
-        "route_activation_recheck_required": True,
-        "display_current_route_on_node_entry_only": True,
-    }
-    mutation_record = {
-        "schema_version": "flowpilot.route_mutation.v1",
-        "run_id": run_state["run_id"],
-        "route_id": route_id,
-        "route_version": route_version,
-        "active_node_id": active_node_id,
-        "reason": payload.get("reason") or "reviewer_block",
-        "current_node_cannot_contain_repair_reason": current_node_incapability_reason or None,
-        "stale_evidence": stale_evidence,
-        "superseded_nodes": superseded_nodes,
-        "affected_sibling_nodes": affected_sibling_nodes,
-        "replay_scope_node_id": replay_scope_node_id or None,
-        "prior_path_context_review": prior_review,
-        "topology_strategy": topology_strategy,
-        "route_topology": route_topology,
-        "repair_return_policy": {
-            "repair_node_id": active_node_id,
-            "repair_of_node_id": repair_of_node_id,
-            "repair_return_to_node_id": repair_return_to_node_id or None,
-            "superseded_nodes": superseded_nodes,
-            "affected_sibling_nodes": affected_sibling_nodes,
-            "replay_scope_node_id": replay_scope_node_id or None,
-            "continue_after_node_id": continue_after_node_id or None,
-            "topology_strategy": topology_strategy,
-            "process_officer_recheck_required": True,
-            "route_activation_recheck_required": True,
-        },
-        "repair_restart_policy": {
-            "same_scope_replay_rerun_required": True,
-            "final_ledger_rebuild_required": True,
-            "terminal_replay_restart_default": "restart_from_delivered_product",
-        },
-        "recorded_at": utc_now(),
-        "recorded_by": "project_manager",
-    }
-    mutation_path = run_root / "routes" / route_id / "mutations.json"
-    mutations = read_json_if_exists(mutation_path) or {"schema_version": "flowpilot.route_mutations.v1", "items": []}
-    mutations.setdefault("items", []).append(mutation_record)
-    mutations["updated_at"] = utc_now()
-    write_json(mutation_path, mutations)
-    route_path = run_root / "routes" / route_id / "flow.json"
-    route = read_json_if_exists(route_path)
-    repaired_node = {}
-    try:
-        repaired_node = _active_node_definition_from_route(route, repair_of_node_id) if route else {}
-    except RouterError:
-        repaired_node = {}
-    route.setdefault("schema_version", "flowpilot.route.v1")
-    route.setdefault("route_id", route_id)
-    draft_route = dict(route)
-    draft_route["schema_version"] = "flowpilot.route_draft.v1"
-    draft_route["route_id"] = route_id
-    draft_route["route_version"] = route_version
-    draft_route["source"] = "pm_mutates_route_after_review_block"
-    draft_route["candidate_activation_required"] = True
-    draft_route["candidate_activation_status"] = "pending_route_recheck"
-    draft_route["active_node_id"] = active_node_id
-    draft_route["route_topology"] = route_topology
-    draft_route["route_mutation_source_path"] = project_relative(project_root, mutation_path)
-    draft_route["updated_at"] = utc_now()
-    nodes = [
-        dict(node)
-        for node in draft_route.get("nodes", [])
-        if isinstance(node, dict)
-    ]
-    for node in nodes:
-        if isinstance(node, dict) and str(node.get("node_id") or node.get("id")) in superseded_nodes:
-            node["status"] = "superseded"
-            node["superseded_by"] = active_node_id
-            node["superseded_at"] = utc_now()
-    if not any(isinstance(node, dict) and str(node.get("node_id") or node.get("id")) == active_node_id for node in nodes):
-        nodes.append(
-            {
-                "node_id": active_node_id,
-                "node_kind": "repair",
-                "status": "pending_activation",
-                "title": str(payload.get("repair_node_title") or "Repair node"),
-                "parent_node_id": payload.get("parent_node_id") or repaired_node.get("parent_node_id"),
-                "depth": int(payload.get("repair_node_depth") or repaired_node.get("depth") or repaired_node.get("_computed_depth") or 1),
-                "child_node_ids": [],
-                "user_visible": bool(payload.get("user_visible", True)),
-                "leaf_readiness_gate": {
-                    "status": "pass",
-                    "repair_node": True,
-                    "worker_executable_without_replanning": True,
-                    "reviewed_route_reactivation_required_before_dispatch": True,
-                },
-                "created_by_mutation": True,
-                "mutation_reason": mutation_record["reason"],
-                "topology_strategy": topology_strategy,
-                "repair_of_node_id": repair_of_node_id,
-                "repair_return_to_node_id": repair_return_to_node_id or None,
-                "supersedes_node_ids": superseded_nodes,
-                "affected_sibling_nodes": affected_sibling_nodes,
-                "replacement_branch_root_node_id": active_node_id if topology_strategy == "sibling_branch_replacement" else None,
-                "replay_scope_node_id": replay_scope_node_id or None,
-                "continue_after_node_id": continue_after_node_id or None,
-                "route_topology": route_topology,
-            }
-        )
-    draft_route["nodes"] = nodes
-    write_json(run_root / "routes" / route_id / "flow.draft.json", draft_route)
-    stale_ledger_path = run_root / "evidence" / "stale_evidence_ledger.json"
-    stale_ledger = read_json_if_exists(stale_ledger_path) or {"schema_version": "flowpilot.stale_evidence_ledger.v1", "items": []}
-    for evidence_id in stale_evidence:
-        stale_ledger.setdefault("items", []).append(
-            {
-                "evidence_id": evidence_id,
-                "status": "stale",
-                "reason": mutation_record["reason"],
-                "route_version": route_version,
-                "recorded_at": utc_now(),
-            }
-        )
-    stale_ledger["updated_at"] = utc_now()
-    write_json(stale_ledger_path, stale_ledger)
-    _supersede_active_current_node_packet_for_route_mutation(
+    flowpilot_router_route.write_route_mutation(
+        sys.modules[__name__],
         project_root,
         run_root,
-        frontier=frontier,
-        mutation_record=mutation_record,
+        run_state,
+        payload,
     )
-    frontier.update(
-        {
-            "schema_version": "flowpilot.execution_frontier.v1",
-            "run_id": run_state["run_id"],
-            "status": "route_mutation_pending_recheck",
-            "active_route_id": route_id,
-            "active_node_id": current_active_node_id,
-            "latest_mutation_path": project_relative(project_root, mutation_path),
-            "pending_route_mutation": {
-                "candidate_node_id": active_node_id,
-                "candidate_route_version": route_version,
-                "candidate_route_draft_path": project_relative(project_root, run_root / "routes" / route_id / "flow.draft.json"),
-                "topology_strategy": topology_strategy,
-                "affected_sibling_nodes": affected_sibling_nodes,
-                "replay_scope_node_id": replay_scope_node_id or None,
-                "display_current_route_on_node_entry_only": True,
-            },
-            "updated_at": utc_now(),
-            "source": "pm_mutates_route_after_review_block",
-        }
-    )
-    write_json(run_root / "execution_frontier.json", frontier)
-    _reset_route_hard_gate_approvals_for_recheck(run_state)
-    run_state.setdefault("flags", {})["pm_route_skeleton_card_delivered"] = True
-    run_state.setdefault("flags", {})["route_draft_written_by_pm"] = True
-    _reset_flags(run_state, CURRENT_NODE_CYCLE_FLAGS + ROUTE_COMPLETION_FLAGS)
-
 
 def _write_material_dispatch_repair(
     project_root: Path,
@@ -35268,92 +34882,13 @@ def _auto_commit_system_card_delivery_action(
     run_root: Path,
     action: dict[str, Any],
 ) -> dict[str, Any]:
-    planned = dict(action)
-    planned["resource_lifecycle"] = "planned_internal_action"
-    planned["artifact_committed"] = False
-    planned["relay_allowed"] = False
-    planned["apply_required"] = True
-    planned.setdefault(
-        "planned_artifacts",
-        {
-            "card_envelope_path": planned.get("card_envelope_path"),
-            "expected_receipt_path": planned.get("expected_receipt_path"),
-            "expected_return_path": planned.get("expected_return_path"),
-        },
-    )
-    run_state["pending_action"] = planned
-    append_history(
-        run_state,
-        "router_auto_commits_internal_system_card_delivery",
-        {
-            "action_type": planned.get("action_type"),
-            "card_id": planned.get("card_id"),
-            "planned_artifacts_exposed_to_controller": False,
-        },
-    )
-    commit_result = _commit_system_card_delivery_artifact(project_root, run_state, run_root, planned)
-    append_history(
-        run_state,
-        "router_committed_system_card_delivery_artifact",
-        {
-            "card_id": planned.get("card_id"),
-            "card_envelope_path": commit_result.get("card_envelope_path"),
-            "relay_allowed": commit_result.get("relay_allowed"),
-        },
-    )
-    run_state["pending_action"] = None
-    _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_internal_commit:deliver_system_card")
-    _sync_derived_run_views(
+    return flowpilot_router_action_handlers.auto_commit_system_card_delivery_action(
+        sys.modules[__name__],
         project_root,
+        run_state,
         run_root,
-        run_state,
-        reason="after_router_internal_commit:deliver_system_card",
-        update_display=True,
+        action,
     )
-    save_run_state(run_root, run_state)
-    record = _pending_return_record_for_action(run_root, str(run_state["run_id"]), planned)
-    if record is None:
-        raise RouterError("system card auto-commit did not establish a pending return record")
-    committed_extra = _committed_card_artifact_extra(project_root, record, relay_allowed_if_ready=True)
-    if not committed_extra["relay_allowed"]:
-        raise RouterError("system card auto-commit did not produce a relay-ready committed artifact")
-    committed = {
-        **planned,
-        **committed_extra,
-        "ack_clearance_scope": record.get("ack_clearance_scope"),
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-        "summary": (
-            f"Relay committed system card envelope {planned.get('card_id')} to {planned.get('to_role')}; "
-            f"the role must open it through runtime and return {planned.get('card_return_event')}."
-        ),
-        "allowed_writes": [],
-        "auto_committed_by_router": True,
-        "auto_commit_result": commit_result,
-        "next_after_relay": "await_card_return_event",
-    }
-    committed["next_step_contract"] = {
-        **committed.get("next_step_contract", {}),
-        "resource_lifecycle": committed["resource_lifecycle"],
-        "artifact_committed": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "ack_clearance_scope": committed.get("ack_clearance_scope"),
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-    run_state["pending_action"] = committed
-    append_history(
-        run_state,
-        "router_returned_committed_system_card_relay_action",
-        {
-            "card_id": committed.get("card_id"),
-            "card_envelope_path": committed.get("card_envelope_path"),
-            "relay_allowed": committed.get("relay_allowed"),
-        },
-    )
-    save_run_state(run_root, run_state)
-    return committed
 
 
 def _auto_commit_system_card_bundle_delivery_action(
@@ -35362,94 +34897,13 @@ def _auto_commit_system_card_bundle_delivery_action(
     run_root: Path,
     action: dict[str, Any],
 ) -> dict[str, Any]:
-    planned = dict(action)
-    planned["resource_lifecycle"] = "planned_internal_action"
-    planned["artifact_committed"] = False
-    planned["relay_allowed"] = False
-    planned["apply_required"] = True
-    planned.setdefault(
-        "planned_artifacts",
-        {
-            "card_bundle_envelope_path": planned.get("card_bundle_envelope_path"),
-            "expected_receipt_paths": planned.get("expected_receipt_paths"),
-            "expected_return_path": planned.get("expected_return_path"),
-        },
-    )
-    run_state["pending_action"] = planned
-    append_history(
-        run_state,
-        "router_auto_commits_internal_system_card_bundle_delivery",
-        {
-            "action_type": planned.get("action_type"),
-            "card_ids": planned.get("card_ids"),
-            "planned_artifacts_exposed_to_controller": False,
-        },
-    )
-    commit_result = _commit_system_card_bundle_delivery_artifact(project_root, run_state, run_root, planned)
-    append_history(
-        run_state,
-        "router_committed_system_card_bundle_delivery_artifact",
-        {
-            "card_bundle_id": planned.get("card_bundle_id"),
-            "card_bundle_envelope_path": commit_result.get("card_bundle_envelope_path"),
-            "relay_allowed": commit_result.get("relay_allowed"),
-        },
-    )
-    run_state["pending_action"] = None
-    _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_internal_commit:deliver_system_card_bundle")
-    _sync_derived_run_views(
+    return flowpilot_router_action_handlers.auto_commit_system_card_bundle_delivery_action(
+        sys.modules[__name__],
         project_root,
+        run_state,
         run_root,
-        run_state,
-        reason="after_router_internal_commit:deliver_system_card_bundle",
-        update_display=True,
+        action,
     )
-    save_run_state(run_root, run_state)
-    record = _pending_bundle_return_record_for_action(run_root, str(run_state["run_id"]), planned)
-    if record is None:
-        raise RouterError("system card bundle auto-commit did not establish a pending return record")
-    committed_extra = _committed_card_bundle_artifact_extra(project_root, record, relay_allowed_if_ready=True)
-    if not committed_extra["relay_allowed"]:
-        raise RouterError("system card bundle auto-commit did not produce a relay-ready committed artifact")
-    committed = {
-        **planned,
-        **committed_extra,
-        "card_bundle_envelope_hash": record.get("card_bundle_envelope_hash"),
-        "ack_clearance_scope": record.get("ack_clearance_scope"),
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-        "summary": (
-            f"Relay committed system-card bundle {planned.get('card_bundle_id')} to {planned.get('to_role')}; "
-            f"the role must open it through runtime and return {planned.get('card_return_event')}."
-        ),
-        "allowed_writes": [],
-        "auto_committed_by_router": True,
-        "auto_commit_result": commit_result,
-        "next_after_relay": "await_card_bundle_return_event",
-    }
-    committed["next_step_contract"] = {
-        **committed.get("next_step_contract", {}),
-        "resource_lifecycle": committed["resource_lifecycle"],
-        "artifact_committed": True,
-        "relay_allowed": True,
-        "apply_required": False,
-        "ack_clearance_scope": committed.get("ack_clearance_scope"),
-        "ack_is_read_receipt_only": True,
-        "target_work_completion_evidence_required_separately": True,
-    }
-    run_state["pending_action"] = committed
-    append_history(
-        run_state,
-        "router_returned_committed_system_card_bundle_relay_action",
-        {
-            "card_bundle_id": committed.get("card_bundle_id"),
-            "card_ids": committed.get("card_ids"),
-            "card_bundle_envelope_path": committed.get("card_bundle_envelope_path"),
-            "relay_allowed": committed.get("relay_allowed"),
-        },
-    )
-    save_run_state(run_root, run_state)
-    return committed
 
 
 def _action_is_router_internal_mechanical(action: dict[str, Any] | None) -> bool:
@@ -35627,416 +35081,67 @@ def compute_controller_action(
     *,
     _router_internal_depth: int = 0,
 ) -> dict[str, Any]:
-    terminal_action = _run_lifecycle_terminal_action(project_root, run_state, run_root)
-    if terminal_action is not None:
-        run_state["pending_action"] = terminal_action
-        append_history(run_state, "router_computed_terminal_lifecycle_action", {"action_type": terminal_action["action_type"]})
-        save_run_state(run_root, run_state)
-        return terminal_action
-    _reconcile_controller_receipts(project_root, run_root, run_state)
-    scheduled_reconciliation = _reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
-    receipt_reconciliation = _reconcile_pending_controller_action_receipt(project_root, run_root, run_state)
-    boundary_projection = _reconcile_controller_boundary_confirmation_projection(
-        project_root,
-        run_root,
-        run_state,
-        source="next_action_reconciliation_barrier",
-    )
-    durable_reconciliation = _reconcile_durable_wait_evidence(project_root, run_root, run_state)
-    return_settlement = _run_router_return_settlement_finalizers(
-        project_root,
-        run_root,
-        run_state,
-        source="compute_controller_action_return_settlement",
-    )
-    pending_action = run_state.get("pending_action")
-    if (
-        durable_reconciliation.get("changed")
-        and isinstance(pending_action, dict)
-        and pending_action.get("action_type") == "await_role_decision"
-    ):
-        run_state["pending_action"] = None
-        append_history(
-            run_state,
-            "router_cleared_pending_role_wait_after_durable_reconciliation",
-            {
-                "label": pending_action.get("label"),
-                "allowed_external_events": pending_action.get("allowed_external_events"),
-            },
-        )
-        _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_wait_reconciliation")
-        _sync_derived_run_views(
-            project_root,
-            run_root,
-            run_state,
-            reason="after_router_durable_wait_reconciliation",
-            update_display=True,
-        )
-        save_run_state(run_root, run_state)
-        pending_action = None
-    elif (
-        durable_reconciliation.get("changed")
-        or receipt_reconciliation.get("changed")
-        or scheduled_reconciliation.get("changed")
-        or boundary_projection.get("changed")
-        or return_settlement.get("changed")
-    ):
-        _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_durable_reconciliation_barrier")
-        _sync_derived_run_views(
-            project_root,
-            run_root,
-            run_state,
-            reason="after_router_durable_reconciliation_barrier",
-            update_display=True,
-        )
-        save_run_state(run_root, run_state)
-    stale_pending = _pending_role_decision_staleness(run_state, pending_action)
-    reconciled_pending = None
-    if stale_pending:
-        run_state["pending_action"] = None
-        append_history(run_state, "router_cleared_stale_pending_action", stale_pending)
-        save_run_state(run_root, run_state)
-    else:
-        reconciled_pending = _reconcile_pending_role_wait_from_packet_status(
-            project_root,
-            run_root,
-            run_state,
-            pending_action,
-        )
-        if reconciled_pending is not None:
-            run_state["pending_action"] = None
-            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_reconciled_pending_role_wait")
-            _sync_derived_run_views(
-                project_root,
-                run_root,
-                run_state,
-                reason="after_router_reconciled_pending_role_wait",
-                update_display=True,
-            )
-            save_run_state(run_root, run_state)
-    pending_action = run_state.get("pending_action")
-    if (
-        isinstance(pending_action, dict)
-        and pending_action.get("action_type") == "deliver_system_card"
-        and pending_action.get("artifact_committed") is not True
-    ):
-        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, pending_action)
-        if gated_action.get("action_type") != "deliver_system_card":
-            run_state["pending_action"] = gated_action
-            save_run_state(run_root, run_state)
-            return gated_action
-        return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, pending_action)
-    elif (
-        isinstance(pending_action, dict)
-        and pending_action.get("action_type") == "deliver_system_card_bundle"
-        and pending_action.get("artifact_committed") is not True
-    ):
-        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, pending_action)
-        if gated_action.get("action_type") != "deliver_system_card_bundle":
-            run_state["pending_action"] = gated_action
-            save_run_state(run_root, run_state)
-            return gated_action
-        return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, pending_action)
-    elif _pending_card_return_ack_exists(project_root, pending_action):
-        auto_ack = _try_auto_consume_pending_card_return_ack(project_root, run_root, run_state, pending_action)
-        if auto_ack.get("consumed"):
-            run_state["pending_action"] = None
-            settlement_after_auto_ack = _run_router_return_settlement_finalizers(
-                project_root,
-                run_root,
-                run_state,
-                source="after_router_auto_consumed_card_return_ack",
-            )
-            append_history(
-                run_state,
-                "router_auto_consumed_card_return_ack",
-                {
-                    "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
-                    "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
-                    "status": (auto_ack.get("result") or {}).get("status"),
-                    "return_settlement": settlement_after_auto_ack,
-                },
-            )
-            _refresh_route_memory(project_root, run_root, run_state, trigger="after_router_auto_consumed_card_return_ack")
-            _sync_derived_run_views(
-                project_root,
-                run_root,
-                run_state,
-                reason="after_router_auto_consumed_card_return_ack",
-                update_display=True,
-            )
-            save_run_state(run_root, run_state)
-        elif auto_ack.get("preserve_pending"):
-            append_history(run_state, "router_preserved_card_wait_before_artifact_commit", auto_ack)
-            save_run_state(run_root, run_state)
-            return pending_action
-        else:
-            run_state["pending_action"] = None
-            _mark_card_return_pending_explicit_check(
-                run_root,
-                str(run_state["run_id"]),
-                pending_action,
-                reason=str(auto_ack.get("reason") or "ack_requires_explicit_check"),
-                error=auto_ack.get("error"),
-            )
-            append_history(
-                run_state,
-                "router_deferred_invalid_card_ack_to_explicit_check",
-                {
-                    "action_type": pending_action.get("action_type") if isinstance(pending_action, dict) else None,
-                    "expected_return_path": pending_action.get("expected_return_path") if isinstance(pending_action, dict) else None,
-                    "reason": auto_ack.get("reason"),
-                    "error": auto_ack.get("error"),
-                },
-            )
-            save_run_state(run_root, run_state)
-    elif pending_action:
-        if _action_is_router_internal_mechanical(pending_action if isinstance(pending_action, dict) else None):
-            if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
-                raise RouterError("Router-internal mechanical action chain exceeded max hops")
-            _consume_router_internal_mechanical_action(project_root, run_root, run_state, pending_action)
-            return compute_controller_action(
-                project_root,
-                run_state,
-                run_root,
-                _router_internal_depth=_router_internal_depth + 1,
-            )
-        if isinstance(pending_action, dict):
-            reminder_action = _next_wait_target_reminder_action(project_root, run_root, run_state, pending_action)
-            if reminder_action is not None:
-                append_history(
-                    run_state,
-                    "router_exposed_wait_target_reminder_before_passive_wait",
-                    {
-                        "target_role": reminder_action.get("target_role"),
-                        "wait_class": reminder_action.get("wait_class"),
-                        "source_wait_action_type": pending_action.get("action_type"),
-                    },
-                )
-                save_run_state(run_root, run_state)
-                return reminder_action
-        if (
-            isinstance(pending_action, dict)
-            and pending_action.get("action_type") == "await_role_decision"
-            and pending_action.get("nonblocking_wait") is True
-        ):
-            run_state["pending_action"] = None
-            append_history(
-                run_state,
-                "router_rechecks_before_nonblocking_role_wait",
-                {
-                    "label": pending_action.get("label"),
-                    "dependency_class": pending_action.get("dependency_class"),
-                    "allowed_external_events": pending_action.get("allowed_external_events"),
-                },
-            )
-            save_run_state(run_root, run_state)
-        elif _action_is_startup_async_card_wait(pending_action if isinstance(pending_action, dict) else None):
-            run_state["pending_action"] = None
-            append_history(
-                run_state,
-                "router_rechecks_before_deferred_startup_card_ack_wait",
-                {
-                    "label": pending_action.get("label") if isinstance(pending_action, dict) else None,
-                    "card_id": pending_action.get("card_id") if isinstance(pending_action, dict) else None,
-                    "card_ids": pending_action.get("card_ids") if isinstance(pending_action, dict) else None,
-                    "card_return_event": pending_action.get("card_return_event") if isinstance(pending_action, dict) else None,
-                    "startup_ack_wait_deferred_to_join": True,
-                    "common_progress_source": "runtime/controller_action_ledger.json_and_card_pending_return_ledger",
-                },
-            )
-            save_run_state(run_root, run_state)
-        elif (
-            isinstance(pending_action, dict)
-            and pending_action.get("action_type") == "await_current_scope_reconciliation"
-        ):
-            if _current_scope_reconciliation_wait_still_blocked(project_root, run_root, run_state, pending_action):
-                local_obligation = _next_local_obligation_before_passive_wait(project_root, run_root, run_state, pending_action)
-                if local_obligation is not None:
-                    run_state["pending_action"] = None
-                    append_history(
-                        run_state,
-                        "router_local_obligation_preempted_passive_reconciliation_wait",
-                        {
-                            "wait_action_type": pending_action.get("action_type"),
-                            "wait_label": pending_action.get("label"),
-                            "scope_kind": pending_action.get("scope_kind"),
-                            "scope_id": pending_action.get("scope_id"),
-                            "local_obligation_action_type": local_obligation.get("action_type"),
-                            "local_obligation_label": local_obligation.get("label"),
-                        },
-                    )
-                    save_run_state(run_root, run_state)
-                    if _action_is_router_internal_mechanical(local_obligation):
-                        if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
-                            raise RouterError("Router-internal mechanical action chain exceeded max hops")
-                        _consume_router_internal_mechanical_action(project_root, run_root, run_state, local_obligation)
-                        return compute_controller_action(
-                            project_root,
-                            run_state,
-                            run_root,
-                            _router_internal_depth=_router_internal_depth + 1,
-                        )
-                    run_state["pending_action"] = local_obligation
-                    _sync_derived_run_views(
-                        project_root,
-                        run_root,
-                        run_state,
-                        reason="after_router_local_obligation_preempted_passive_wait",
-                        update_display=True,
-                    )
-                    save_run_state(run_root, run_state)
-                    return local_obligation
-                return pending_action
-            run_state["pending_action"] = None
-            append_history(
-                run_state,
-                "router_rechecks_after_current_scope_reconciliation_cleared",
-                {
-                    "scope_kind": pending_action.get("scope_kind"),
-                    "scope_id": pending_action.get("scope_id"),
-                    "review_trigger": pending_action.get("review_trigger"),
-                },
-            )
-            save_run_state(run_root, run_state)
-        else:
-            return pending_action
-    if not _route_memory_ready(run_root, run_state):
-        _refresh_route_memory(project_root, run_root, run_state, trigger="router_next_action")
-    action = _next_role_recovery_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_resume_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_control_blocker_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_startup_heartbeat_binding_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_display_plan_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_controller_boundary_confirmation_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_startup_mechanical_audit_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_startup_display_action(project_root, run_state, run_root)
-    startup_deferred_returns: list[dict[str, Any]] = []
-    if action is None:
-        _invalidate_route_completion_if_dirty_before_closure(project_root, run_state, run_root)
-        pending_returns = _pending_return_records(run_root, str(run_state["run_id"]))
-        startup_deferred_returns, blocking_returns = _startup_async_pending_returns(run_root, pending_returns)
-        if blocking_returns:
-            action = _next_pending_card_return_action(project_root, run_state, run_root, blocking_returns)
-    if action is None:
-        candidate = _next_system_card_bundle_action(project_root, run_state, run_root)
-        if candidate is not None and (not startup_deferred_returns or _action_is_startup_async_delivery(candidate)):
-            action = candidate
-    if action is None:
-        candidate = _next_system_card_action(project_root, run_state, run_root)
-        if candidate is not None and (not startup_deferred_returns or _action_is_startup_async_delivery(candidate)):
-            action = candidate
-    if action is None and startup_deferred_returns:
-        clearance_reason = (
-            "current_scope_pre_review_reconciliation"
-            if any(_pending_return_is_pre_review_startup_scope(record) for record in startup_deferred_returns)
-            and not _startup_pre_review_ack_join_clean(run_root, run_state)
-            else "router_progress"
-        )
-        action = _next_pending_card_return_action(
-            project_root,
-            run_state,
-            run_root,
-            startup_deferred_returns,
-            clearance_reason=clearance_reason,
-        )
-    if isinstance(action, dict) and action.get("action_type") == "deliver_system_card":
-        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
-        if gated_action.get("action_type") != "deliver_system_card":
-            run_state["pending_action"] = gated_action
-            save_run_state(run_root, run_state)
-            return gated_action
-        return _auto_commit_system_card_delivery_action(project_root, run_state, run_root, action)
-    if isinstance(action, dict) and action.get("action_type") == "deliver_system_card_bundle":
-        gated_action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
-        if gated_action.get("action_type") != "deliver_system_card_bundle":
-            run_state["pending_action"] = gated_action
-            save_run_state(run_root, run_state)
-            return gated_action
-        return _auto_commit_system_card_bundle_delivery_action(project_root, run_state, run_root, action)
-    if action is None and _resume_waits_for_pm_decision(run_state):
-        action = _expected_role_decision_wait_action(
-            project_root,
-            run_state,
-            run_root,
-            label="controller_waits_for_pm_resume_decision",
-            summary="Resume state has been loaded and resume cards delivered. Controller must wait for PM resume decision before continuing any route, mail, or packet work.",
-            allowed_external_events=["pm_resume_recovery_decision_returned"],
-            to_role="project_manager",
-            allowed_reads_extra=[
-                project_relative(project_root, run_root / "continuation" / "resume_reentry.json"),
-            ],
-            payload_contract=_pm_resume_decision_payload_contract(project_root, run_root),
-            pm_work_request_channel=False,
-        )
-    if action is None:
-        action = _next_mail_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_material_packet_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_research_packet_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_parent_child_entry_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_current_node_packet_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_pm_role_work_request_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_model_miss_followup_request_wait_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_model_miss_controlled_stop_action(project_root, run_state, run_root)
-    if action is None:
-        action = _next_expected_role_decision_wait_action(project_root, run_state, run_root)
-    if action is None:
-        _write_control_blocker(
-            project_root,
-            run_root,
-            run_state,
-            source="router_no_legal_next_action",
-            error_message=(
-                "Controller has no legal next action; PM repair or routing decision is required before any "
-                "further route, mail, packet, or project work."
-            ),
-            action_type="controller_no_legal_next_action",
-            payload={
-                "path": project_relative(project_root, run_state_path(run_root)),
-                "role": "controller",
-            },
-        )
-        action = _next_control_blocker_action(project_root, run_state, run_root)
-        if action is None:
-            raise RouterError("no legal next action control blocker was not materialized")
-    action = _apply_formal_work_packet_ack_preflight(project_root, run_state, run_root, action)
-    action = _apply_dispatch_recipient_gate(project_root, run_state, run_root, action)
-    if _action_is_router_internal_mechanical(action):
-        if _router_internal_depth >= ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
-            raise RouterError("Router-internal mechanical action chain exceeded max hops")
-        _consume_router_internal_mechanical_action(project_root, run_root, run_state, action)
-        return compute_controller_action(
-            project_root,
-            run_state,
-            run_root,
-            _router_internal_depth=_router_internal_depth + 1,
-        )
-    run_state["pending_action"] = action
-    append_history(run_state, "router_computed_next_controller_action", {"action_type": action["action_type"]})
-    _sync_derived_run_views(
-        project_root,
-        run_root,
-        run_state,
-        reason="after_router_computed_pending_controller_action",
-        update_display=True,
-    )
-    save_run_state(run_root, run_state)
-    return action
+    router_module = sys.modules[__name__]
 
+    def compute_again(
+        next_project_root: Path,
+        next_run_state: dict[str, Any],
+        next_run_root: Path,
+        next_depth: int,
+    ) -> dict[str, Any]:
+        return compute_controller_action(
+            next_project_root,
+            next_run_state,
+            next_run_root,
+            _router_internal_depth=next_depth,
+        )
+
+    lifecycle_action = flowpilot_router_action_providers.lifecycle_provider(
+        router_module,
+        project_root,
+        run_state,
+        run_root,
+    )
+    if lifecycle_action is not None:
+        return lifecycle_action
+
+    flowpilot_router_action_providers.run_reconciliation_barrier(
+        router_module,
+        project_root,
+        run_state,
+        run_root,
+    )
+    pending_action = flowpilot_router_action_providers.pending_action_provider(
+        router_module,
+        project_root,
+        run_state,
+        run_root,
+        router_internal_depth=_router_internal_depth,
+        compute_again=compute_again,
+    )
+    if pending_action is not None:
+        return pending_action
+
+    action_outcome = flowpilot_router_action_providers.fresh_action_provider(
+        router_module,
+        project_root,
+        run_state,
+        run_root,
+    )
+    if action_outcome is None:
+        raise RouterError("no legal next action provider returned an action")
+    if action_outcome.finalized:
+        return action_outcome.action
+
+    return flowpilot_router_action_providers.finalize_controller_action(
+        router_module,
+        project_root,
+        run_state,
+        run_root,
+        action_outcome.action,
+        router_internal_depth=_router_internal_depth,
+        compute_again=compute_again,
+    )
 
 def next_action(project_root: Path, *, new_invocation: bool = False) -> dict[str, Any]:
     project_root = project_root.resolve()
@@ -36097,7 +35202,20 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     _reconcile_controller_receipts(project_root, run_root, run_state)
     pending = _ensure_pending(run_state, action_type)
     result_extra: dict[str, Any] = {}
-    if action_type == "check_prompt_manifest":
+    handled_action = flowpilot_router_action_handlers.apply_registered_action(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        run_state,
+        pending,
+        action_type,
+        payload,
+    )
+    if handled_action is not None:
+        if handled_action.early_return is not None:
+            return handled_action.early_return
+        result_extra.update(handled_action.result_extra)
+    elif action_type == "check_prompt_manifest":
         run_state["manifest_check_requested"] = True
         run_state["manifest_check_requests"] = int(run_state.get("manifest_check_requests", 0)) + 1
         run_state["manifest_checks"] = int(run_state.get("manifest_checks", 0)) + 1
@@ -36204,10 +35322,6 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
             "role_io_protocol_receipts": receipts,
             "protocol_hash": _role_io_protocol_hash(),
         })
-    elif action_type == "deliver_system_card":
-        raise RouterError("deliver_system_card is relay-only; Router commits the card envelope internally and Controller must only relay it")
-    elif action_type == "deliver_system_card_bundle":
-        raise RouterError("deliver_system_card_bundle is relay-only; Router commits the card bundle envelope internally and Controller must only relay it")
     elif action_type == "check_packet_ledger":
         run_state["ledger_check_requested"] = True
         run_state["ledger_check_requests"] = int(run_state.get("ledger_check_requests", 0)) + 1
@@ -36269,39 +35383,6 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "expected_return_path": bundle_result["expected_return_path"],
                 "waiting_for_role": bundle_result["waiting_for_role"],
             }
-    elif action_type == "await_card_return_event":
-        _maybe_write_controller_receipt_for_pending(
-            project_root,
-            run_root,
-            run_state,
-            pending,
-            status="waiting",
-            payload={"waiting_for": "card_return_event", "expected_return_path": pending.get("expected_return_path")},
-        )
-        save_run_state(run_root, run_state)
-        return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
-    elif action_type == "await_card_bundle_return_event":
-        _maybe_write_controller_receipt_for_pending(
-            project_root,
-            run_root,
-            run_state,
-            pending,
-            status="waiting",
-            payload={"waiting_for": "card_bundle_return_event", "expected_return_path": pending.get("expected_return_path")},
-        )
-        save_run_state(run_root, run_state)
-        return {"ok": True, "applied": action_type, "waiting": True, "expected_return_path": pending.get("expected_return_path")}
-    elif action_type == "await_user_after_model_miss_stop":
-        _maybe_write_controller_receipt_for_pending(
-            project_root,
-            run_root,
-            run_state,
-            pending,
-            status="waiting",
-            payload={"waiting_for": "user"},
-        )
-        save_run_state(run_root, run_state)
-        return {"ok": True, "applied": action_type, "waiting": True, "waiting_for": "user"}
     elif action_type == "relay_material_scan_packets":
         combined_ledger_check = pending.get("combined_ledger_check_and_relay") is True
         if not run_state.get("ledger_check_requested"):
@@ -36658,8 +35739,6 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
                 "source_action": action_type,
             }
         )
-    elif action_type == "sync_display_plan":
-        _apply_sync_display_plan_state(project_root, run_root, run_state, pending, payload or {})
     elif action_type == "write_display_surface_status":
         confirmation = _display_confirmation_for_action(payload, pending)
         _write_display_surface_status(project_root, run_root, run_state, confirmation, payload or {})
@@ -36667,41 +35746,6 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
         run_state["flags"]["startup_display_status_written"] = True
     elif action_type == "handle_control_blocker":
         _mark_control_blocker_delivered(project_root, run_root, run_state, pending)
-    elif action_type == "write_terminal_summary":
-        mode = _terminal_lifecycle_mode(run_state)
-        if not mode:
-            raise RouterError("write_terminal_summary is allowed only after the run is terminal")
-        record = _write_terminal_summary(project_root, run_root, run_state, payload, mode=mode)
-        if not _terminal_summary_written(project_root, run_state, run_root):
-            raise RouterError("terminal summary write did not produce a valid indexed summary")
-        result_extra["terminal_summary_path"] = record["summary_markdown_path"]
-        result_extra["terminal_summary_json_path"] = record["summary_json_path"]
-        result_extra["terminal_summary_sha256"] = record["summary_sha256"]
-        result_extra["final_user_report_schema_version"] = record["final_user_report"]["schema_version"]
-        result_extra["final_user_report_is_completion_authority"] = False
-    elif action_type == "run_lifecycle_terminal":
-        _maybe_write_controller_receipt_for_pending(
-            project_root,
-            run_root,
-            run_state,
-            pending,
-            status="done",
-            payload={"terminal": True, "run_lifecycle_status": _terminal_lifecycle_mode(run_state)},
-        )
-        _mark_router_daemon_terminal(project_root, run_root, run_state, reason="run_lifecycle_terminal_observed")
-        save_run_state(run_root, run_state)
-        return {"ok": True, "applied": action_type, "terminal": True, "run_lifecycle_status": _terminal_lifecycle_mode(run_state)}
-    elif action_type == "await_role_decision":
-        _maybe_write_controller_receipt_for_pending(
-            project_root,
-            run_root,
-            run_state,
-            pending,
-            status="waiting",
-            payload={"waiting_for": pending.get("to_role"), "allowed_external_events": pending.get("allowed_external_events") or []},
-        )
-        save_run_state(run_root, run_state)
-        return {"ok": True, "applied": action_type, "waiting": True}
     else:
         raise RouterError(f"unknown controller action: {action_type}")
     append_history(run_state, str(pending["label"]), {"action_type": action_type})
@@ -36761,34 +35805,17 @@ def _record_external_event_unchecked(
     parent_segment_decision: str | None = None
     model_miss_triage_decision: str | None = None
     _refresh_route_memory(project_root, run_root, run_state, trigger=f"before_external_event:{event}")
-    if event == "heartbeat_or_manual_resume_requested":
-        tick = _append_heartbeat_tick(project_root, run_root, run_state, payload or {})
-        _reset_resume_cycle_for_wakeup(run_state)
-        trigger_source = "manual_resume" if str((payload or {}).get("source") or "").startswith("manual") else "heartbeat_resume"
-        _open_role_recovery_transaction(
-            project_root,
-            run_root,
-            run_state,
-            trigger_source=trigger_source,
-            recovery_scope="all_six_sweep",
-            target_role_keys=list(CREW_ROLE_KEYS),
-            fault_payload=payload or {},
-        )
-        run_state["flags"]["resume_reentry_requested"] = True
-        run_state["flags"]["role_recovery_requested"] = True
-        run_state["pending_action"] = None
-        record = {
-            "event": event,
-            "summary": meta["summary"],
-            "payload": payload or {},
-            "recorded_at": utc_now(),
-        }
-        run_state["events"].append(record)
-        append_history(run_state, event, {"heartbeat_tick": tick})
-        _refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
-        _sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
-        save_run_state(run_root, run_state)
-        return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
+    migrated_precheck_result = flowpilot_router_events.handle_precheck_event(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        run_state,
+        event,
+        meta,
+        payload,
+    )
+    if migrated_precheck_result is not None:
+        return migrated_precheck_result
     if event == "controller_reports_role_no_output":
         return _record_role_no_output_reissue(
             project_root,
@@ -37103,14 +36130,17 @@ def _record_external_event_unchecked(
     route_action = _route_action_for_event(event)
     if route_action:
         _require_legal_route_action(project_root, run_root, run_state, route_action, f"external event {event}")
-    if event in {"user_requests_run_stop", "user_requests_run_cancel"}:
-        _write_run_lifecycle_request(project_root, run_root, run_state, event=event, payload=payload)
-    elif event == "pm_activates_reviewed_route":
-        _write_route_activation(project_root, run_root, run_state, payload)
+    if flowpilot_router_events.apply_migrated_event_side_effect(
+        sys.modules[__name__],
+        project_root,
+        run_root,
+        run_state,
+        event,
+        payload,
+    ):
+        pass
     elif event == "pm_resume_recovery_decision_returned":
         _write_pm_resume_decision(project_root, run_root, run_state, payload)
-    elif event == "host_records_heartbeat_binding":
-        _write_host_heartbeat_binding(project_root, run_root, run_state, payload)
     elif event == "pm_writes_node_acceptance_plan":
         _write_node_acceptance_plan(project_root, run_root, run_state, payload)
     elif event == "pm_revises_node_acceptance_plan":

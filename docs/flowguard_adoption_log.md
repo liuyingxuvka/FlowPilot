@@ -3,6 +3,88 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-17 FlowPilot Behavior-Preserving Structural Reduction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Release-adjacent maintenance to reduce structural weight in
+  the FlowPilot router, model simulations, tests, and install checks without
+  adding features or changing public protocol semantics.
+- Status: completed_structural_reduction_validated
+- OpenSpec change: `behavior-preserving-router-structure-reduction`
+- Skill decision: use_openspec_then_flowguard
+- Flow type: behavior_preserving_maintenance_flow
+- Mode: model_first_structural_refactor
+
+### Risk Intent
+
+- Keep existing router entrypoints, event names, JSON shapes, and action
+  semantics stable while moving implementation details behind narrower modules.
+- Avoid broad rewrites, cross-domain movement, or deletion of compatibility
+  wrappers during the structure pass.
+- Keep model and install-script refactors observable through executable checks
+  rather than treating a green model as maintainability proof.
+
+### Model Files
+
+- `openspec/changes/behavior-preserving-router-structure-reduction/`
+- `simulations/flowpilot_structural_refactor_model.py`
+- `simulations/run_flowpilot_structural_refactor_checks.py`
+- `simulations/flowpilot_structural_refactor_results.json`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+  returned schema `1.0`.
+- OK: `openspec validate behavior-preserving-router-structure-reduction
+  --strict --json`.
+- OK: `python simulations\run_flowpilot_structural_refactor_checks.py`.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\audit_local_install_sync.py --json`; the installed
+  FlowPilot skill is source-fresh.
+- OK: `python scripts\check_public_release.py --json`; the only warning was
+  the expected dirty worktree before commit.
+- OK: final syntax compile for changed Python modules and split test entry
+  files.
+- OK: focused router tests for boundary registries, controller action
+  calculation, ACK/card return, terminal handling, resume, route mutation,
+  packets, closure, dispatch gate, startup daemon, and the user-flow diagram.
+- OK: final combined focused regression ran 66 tests covering boundary,
+  controller, ACK/card return, terminal, resume, and cards entrypoints.
+- OK: background `python simulations\run_meta_checks.py` completed through
+  `tmp/flowguard_background/run_meta_checks.*` with exit code 0.
+- OK: background `python simulations\run_capability_checks.py` completed
+  through `tmp/flowguard_background/run_capability_checks.*` with exit code 0.
+
+### Findings
+
+- `flowpilot_router.py` remains the compatibility facade; migrated boundaries
+  now live in `flowpilot_router_events.py`,
+  `flowpilot_router_action_providers.py`,
+  `flowpilot_router_action_handlers.py`, `flowpilot_router_route.py`, and
+  `flowpilot_router_resume.py`.
+- `compute_controller_action` is now an ordered provider orchestration layer,
+  with provider order covered by boundary tests.
+- Low-risk controller action execution moved behind an action-handler registry
+  while higher-risk actions remain in the compatibility facade.
+- Meta and Capability model `apply` methods now delegate to named phase
+  helpers, preserving the total model while reducing local edit scope.
+- Runtime test entrypoints now expose resume, cards, packets, route mutation,
+  closure, controller, startup, terminal, and dispatch-gate slices while the
+  legacy aggregate file remains available.
+- `check_install.py` now uses named check groups while preserving its JSON
+  output contract.
+
+### Skipped Or Deferred Steps
+
+- No tag, release, deploy, or public publication was performed by this
+  structural pass.
+- The Meta and Capability checks exited successfully, but their generated
+  reports still mark release confidence as requiring a full release-grade
+  regression proof. This is acceptable for this non-release structure pass and
+  remains a release gate before publication.
+
 ## 2026-05-16 FlowPilot Route Repair/Replacement Pre-Release Maintenance
 
 - Project: FlowGuardProjectAutopilot_20260430
