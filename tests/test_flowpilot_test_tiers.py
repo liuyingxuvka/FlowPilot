@@ -174,7 +174,8 @@ class FlowPilotTestTierTests(unittest.TestCase):
             write_case("passed", meta={"status": "passed"}, exit_text="0\n")
             write_case("failed", meta={"status": "failed"}, exit_text="1\n")
             write_case("running", meta={"status": "running"}, exit_text=None)
-            write_case("stale", meta={"status": "running"}, exit_text="0\n")
+            write_case("exit_zero_meta_race", meta={"status": "running"}, exit_text="0\n")
+            write_case("stale_failed", meta={"status": "running"}, exit_text="1\n")
             write_case("progress_only", meta=None, exit_text=None, progress="still running\n")
             write_case("incomplete", meta={"status": "passed"}, exit_text=None)
             write_case(
@@ -186,7 +187,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(run_test_tier.classify_background_artifact(root, "passed")["status"], "passed")
             self.assertEqual(run_test_tier.classify_background_artifact(root, "failed")["status"], "failed")
             self.assertEqual(run_test_tier.classify_background_artifact(root, "running")["status"], "running")
-            self.assertEqual(run_test_tier.classify_background_artifact(root, "stale")["status"], "stale")
+            meta_race = run_test_tier.classify_background_artifact(root, "exit_zero_meta_race")
+            self.assertEqual(meta_race["status"], "passed")
+            self.assertIn("exit_zero_won_meta_update_race", meta_race["reasons"])
+            self.assertEqual(run_test_tier.classify_background_artifact(root, "stale_failed")["status"], "failed")
             self.assertEqual(
                 run_test_tier.classify_background_artifact(root, "progress_only")["status"],
                 "progress_only",
@@ -517,6 +521,38 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
             for path in paths.values():
                 self.assertFalse(path.exists(), path)
+
+    def test_background_child_launch_uses_run_test_tier_entrypoint(self) -> None:
+        launch_globals = run_test_tier._launch_background.__globals__
+        original_popen = launch_globals["subprocess"].Popen
+        captured: dict[str, object] = {}
+
+        class DummyProcess:
+            pid = 12345
+
+        def fake_popen(args, **kwargs):  # type: ignore[no-untyped-def]
+            captured["args"] = list(args)
+            captured["kwargs"] = dict(kwargs)
+            return DummyProcess()
+
+        try:
+            with tempfile.TemporaryDirectory(prefix="flowpilot-tier-launch-") as tmp_name:
+                launch_globals["subprocess"].Popen = fake_popen
+                run_test_tier._launch_background(
+                    run_test_tier.TierCommand(
+                        name="child_entrypoint_fixture",
+                        command=(sys.executable, "-c", "pass"),
+                        description="child entrypoint fixture",
+                    ),
+                    log_root=Path(tmp_name),
+                )
+        finally:
+            launch_globals["subprocess"].Popen = original_popen
+
+        args = captured["args"]
+        self.assertIsInstance(args, list)
+        self.assertEqual(Path(args[1]).resolve(), ROOT / "scripts" / "run_test_tier.py")
+        self.assertIn("--background-child", args)
 
     def test_background_supervisor_records_launch_failures(self) -> None:
         original_launch = run_test_tier._launch_background

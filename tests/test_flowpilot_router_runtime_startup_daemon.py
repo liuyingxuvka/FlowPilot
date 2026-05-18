@@ -44,6 +44,8 @@ TEST_NAMES = (
     "test_runtime_json_dead_owner_write_lock_is_replaced_with_takeover_record",
     "test_router_daemon_corrupted_scheduler_ledger_writes_error_status",
     "test_router_daemon_waits_on_fresh_scheduler_write_lock_before_error",
+    "test_atomic_replace_permission_error_becomes_runtime_write_wait",
+    "test_router_daemon_nested_state_write_lock_wait_does_not_exit",
     "test_terminal_startup_daemon_schedule_does_not_append_boot_rows",
     "test_router_daemon_status_not_active_after_error_lock_or_missing_pid",
     "test_startup_reviewer_event_uses_current_scope_reconciliation",

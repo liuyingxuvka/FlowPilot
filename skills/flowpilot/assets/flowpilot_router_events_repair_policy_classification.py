@@ -103,6 +103,8 @@ def _classify_control_blocker(router: ModuleType, message: str, *, event: str | 
 def _should_materialize_control_blocker(router: ModuleType, message: str, *, event: str | None=None, action_type: str | None=None, payload: dict[str, Any] | None=None) -> bool:
     _bind_router(router)
     lowered = message.lower()
+    if 'runtime ledger write is still in progress' in lowered or 'active runtime json write lock' in lowered:
+        return False
     if lowered.startswith('event ') and ' requires ' in lowered:
         return False
     if "run 'next' before applying" in lowered or 'pending action is' in lowered:

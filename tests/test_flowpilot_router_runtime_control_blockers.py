@@ -6,6 +6,7 @@ from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 
 
 TEST_NAMES = (
+    "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
     "test_control_blocker_reviewer_followup_rejects_pm_origin",
     "test_control_plane_reissue_retry_budget_escalates_to_pm",
     "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",

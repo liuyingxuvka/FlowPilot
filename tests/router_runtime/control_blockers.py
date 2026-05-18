@@ -5,6 +5,27 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 
 class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        blocker = router._try_write_control_blocker_for_exception(  # type: ignore[attr-defined]
+            root,
+            source="router.record_external_event",
+            error_message=(
+                "runtime ledger write is still in progress: "
+                f"{root / '.flowpilot' / 'runs' / 'run-test' / 'runtime' / 'controller_actions' / 'controller-action-1.json'} "
+                "(active runtime JSON write lock)"
+            ),
+            event="reviewer_reports_startup_facts",
+            payload=self.role_report_envelope(
+                root,
+                "reviews/startup_facts_runtime_write_lock",
+                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+            ),
+        )
+
+        self.assertIsNone(blocker)
     def test_control_blocker_reviewer_followup_rejects_pm_origin(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

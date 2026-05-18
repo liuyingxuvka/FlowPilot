@@ -20,6 +20,7 @@ except ImportError:  # pragma: no cover - script execution path
 
 ROOT = Path(__file__).resolve().parents[2]
 ARTIFACT_SUFFIXES = ("out", "err", "combined", "exit", "meta")
+BACKGROUND_CHILD_ENTRYPOINT = ROOT / "scripts" / "run_test_tier.py"
 
 def _safe_base(name: str) -> str:
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "_", name).strip("._")
@@ -145,7 +146,7 @@ def _launch_background(command: TierCommand, *, log_root: Path) -> dict[str, Any
     _write_json(paths["meta"], meta)
     child_args = [
         sys.executable,
-        str(Path(__file__).resolve()),
+        str(BACKGROUND_CHILD_ENTRYPOINT),
         "--background-child",
         "--name",
         command.name,
@@ -263,11 +264,13 @@ def classify_background_artifact(
         status = "progress_only"
     elif exit_code is None:
         status = "incomplete"
-    elif meta is not None and raw_status == "running":
-        status = "stale"
-        reasons.append("running_meta_with_exit_artifact")
     elif exit_code != 0 or raw_status == "failed":
         status = "failed"
+        if meta is not None and raw_status == "running":
+            reasons.append("running_meta_with_exit_artifact")
+    elif meta is not None and raw_status == "running":
+        status = "passed"
+        reasons.append("exit_zero_won_meta_update_race")
     elif meta is None:
         status = "incomplete"
     elif raw_status in {"passed", "pass"}:

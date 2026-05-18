@@ -168,7 +168,6 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "schema_version": "flowpilot.runtime_json_write_lock.v1",
                     "path": str(action_path),
-                    "pid": 0,
                     "created_at": router.utc_now(),
                 },
                 sort_keys=True,
@@ -180,7 +179,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         def finish_write() -> None:
             time.sleep(0.05)
             action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            write_lock.unlink()
+            unlink_with_windows_retry(write_lock)
 
         thread = threading.Thread(target=finish_write, daemon=True)
         thread.start()
@@ -224,7 +223,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         def finish_write() -> None:
             time.sleep(0.05)
             action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            write_lock.unlink()
+            unlink_with_windows_retry(write_lock)
 
         thread = threading.Thread(target=finish_write, daemon=True)
         thread.start()

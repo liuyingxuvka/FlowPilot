@@ -55,7 +55,9 @@ Risk intent brief:
   holders, passive reconciliation owners, and internal Router/Controller work
   even when the legacy wait target is null; Router/Controller durable ledgers stay valid JSON
   after every write, fresh in-progress write locks defer daemon progress
-  instead of surfacing as corruption, durable ledgers are written atomically,
+  instead of surfacing as corruption, nested status/state writes during that
+  wait do not terminate the daemon, runtime write-lock failures remain
+  mechanical before PM semantic repair, durable ledgers are written atomically,
   and daemon active status never contradicts an error lock or missing process;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.

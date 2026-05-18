@@ -91,6 +91,15 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Router scheduler ledger is not valid JSON after a durable write")
     if state.runtime_ledger_write_lock_fresh and state.daemon_crashed_after_ledger_decode_error:
         failures.append("fresh runtime ledger write lock was treated as corruption")
+    if state.nested_wait_status_write_lock and not state.daemon_deferred_after_nested_write_lock:
+        failures.append("nested runtime write-lock wait terminated daemon instead of deferring")
+    if state.runtime_write_lock_promoted_to_pm_semantic_blocker:
+        failures.append("runtime write lock was promoted to PM semantic repair before mechanical settlement")
+    if (
+        state.daemon_deferred_for_runtime_ledger_write
+        and not state.runtime_write_lock_mechanical_settlement_recorded
+    ):
+        failures.append("runtime write-lock wait did not record mechanical settlement evidence")
     if (
         state.runtime_ledger_write_lock_fresh
         and state.runtime_ledger_write_lock_owner == "dead"
@@ -287,6 +296,9 @@ INVARIANTS = (
     _invariant("runtime_ledgers_use_atomic_replace", "runtime ledgers are written without atomic replace semantics"),
     _invariant("router_scheduler_ledger_single_writer", "Router scheduler ledger has more than one writer"),
     _invariant("daemon_does_not_crash_on_corrupted_scheduler_ledger", "Router daemon crashed after reading an invalid scheduler ledger"),
+    _invariant("nested_write_lock_wait_does_not_terminate_daemon", "nested runtime write-lock wait terminated daemon instead of deferring"),
+    _invariant("runtime_write_lock_not_pm_semantic_before_settlement", "runtime write lock was promoted to PM semantic repair before mechanical settlement"),
+    _invariant("runtime_write_lock_wait_records_mechanical_evidence", "runtime write-lock wait did not record mechanical settlement evidence"),
     _invariant("dead_owner_write_lock_not_deferred_as_live_writer", "dead-owner write lock was deferred as live writer settlement"),
     _invariant("dead_owner_write_lock_takeover_records_evidence", "fresh dead-owner write lock was not taken over with diagnostic evidence"),
     _invariant("writer_death_records_lock_incident", "writer death while holding runtime lock was not recorded as takeover evidence"),

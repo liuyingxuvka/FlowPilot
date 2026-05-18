@@ -56,6 +56,22 @@ def hazard_states() -> dict[str, State]:
             daemon_deferred_for_runtime_ledger_write=False,
             daemon_crashed_after_ledger_decode_error=True,
         ),
+        "nested_write_lock_wait_became_daemon_error": replace(
+            safe_active,
+            nested_wait_status_write_lock=True,
+            daemon_deferred_after_nested_write_lock=False,
+            daemon_crashed_after_ledger_decode_error=True,
+        ),
+        "runtime_write_lock_promoted_to_pm_semantic_blocker": replace(
+            safe_active,
+            runtime_write_lock_promoted_to_pm_semantic_blocker=True,
+            runtime_write_lock_mechanical_settlement_recorded=False,
+        ),
+        "runtime_write_lock_wait_missing_mechanical_evidence": replace(
+            safe_active,
+            daemon_deferred_for_runtime_ledger_write=True,
+            runtime_write_lock_mechanical_settlement_recorded=False,
+        ),
         "fresh_dead_owner_write_lock_deferred_as_live_writer": replace(
             safe_active,
             router_scheduler_ledger_valid_json=False,

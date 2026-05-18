@@ -63,7 +63,7 @@ Risk intent brief:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import NamedTuple
 
 @dataclass(frozen=True)
@@ -92,9 +92,13 @@ class State:
     runtime_ledger_write_lock_fresh: bool = False
     runtime_ledger_write_lock_owner: str = "none"  # none | live | dead | unknown
     daemon_deferred_for_runtime_ledger_write: bool = False
+    nested_wait_status_write_lock: bool = field(default=False, compare=False)
+    daemon_deferred_after_nested_write_lock: bool = field(default=False, compare=False)
     dead_owner_write_lock_takeover_recorded: bool = False
     writer_died_while_holding_runtime_lock: bool = False
     dead_owner_recovery_rejoined_flow: bool = False
+    runtime_write_lock_mechanical_settlement_recorded: bool = field(default=False, compare=False)
+    runtime_write_lock_promoted_to_pm_semantic_blocker: bool = field(default=False, compare=False)
     durable_ledger_writes_atomic: bool = True
     router_scheduler_single_writer: bool = True
     daemon_status_active_after_lock_error: bool = False

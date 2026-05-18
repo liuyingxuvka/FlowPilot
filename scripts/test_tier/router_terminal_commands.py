@@ -32,6 +32,9 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.terminal",
         patterns=(
             "test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress",
+            "test_terminal_pending_heartbeat_action_is_noop",
+            "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
+            "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
             "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
         ),
         description="Terminal node-completion and user-stop slice.",
@@ -119,6 +122,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
             "test_control_plane_reissue_retry_budget_escalates_to_pm",
             "test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue",
             "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",
+            "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
         ),
         description="Control-blocker reissue and retry-budget slice.",
     ),

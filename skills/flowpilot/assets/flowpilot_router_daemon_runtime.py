@@ -368,10 +368,17 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
                     runtime_initialized = True
                 tick = router._router_daemon_tick(project_root, run_root, run_state, observe_only=observe_only)
             except router.RouterLedgerWriteInProgress as exc:
-                lock = router._refresh_router_daemon_lock(project_root, run_root)
-                status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_waiting_for_runtime_ledger_write', current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, recovery_hints=['runtime_ledger_write_in_progress_retry_next_daemon_tick', 'if_the_write_lock_becomes_stale_treat_the_ledger_as_corrupt_and_repair_it'], lock=lock)
-                router.save_run_state(run_root, run_state)
-                tick = {'tick_at': status['last_tick_at'], 'observe_only': observe_only, 'deferred': True, 'defer_reason': 'runtime_ledger_write_in_progress', 'ledger_path': router.project_relative(project_root, exc.path), 'write_lock': exc.write_lock, 'terminal': False}
+                nested_exc: Any = None
+                status: dict[str, Any] | None = None
+                try:
+                    lock = router._refresh_router_daemon_lock(project_root, run_root)
+                    status = router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_waiting_for_runtime_ledger_write', current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, recovery_hints=['runtime_ledger_write_in_progress_retry_next_daemon_tick', 'if_the_write_lock_becomes_stale_treat_the_ledger_as_corrupt_and_repair_it'], lock=lock)
+                    router.save_run_state(run_root, run_state)
+                except router.RouterLedgerWriteInProgress as status_exc:
+                    nested_exc = status_exc
+                tick = {'tick_at': (status or {}).get('last_tick_at') or router.utc_now(), 'observe_only': observe_only, 'deferred': True, 'defer_reason': 'runtime_ledger_write_in_progress', 'ledger_path': router.project_relative(project_root, exc.path), 'write_lock': exc.write_lock, 'terminal': False}
+                if isinstance(nested_exc, router.RouterLedgerWriteInProgress):
+                    tick.update({'nested_defer_reason': 'runtime_ledger_write_status_save_in_progress', 'nested_ledger_path': router.project_relative(project_root, nested_exc.path), 'nested_write_lock': nested_exc.write_lock})
             ticks.append(tick)
             if tick.get('terminal'):
                 break
@@ -399,8 +406,11 @@ def run_router_daemon(router: ModuleType, project_root: Path, *, max_ticks: int 
             else:
                 lock = existing_lock
                 final_status = str(lock.get('status') or 'released')
-            router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status=final_status, current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, lock=lock)
-            router.save_run_state(run_root, run_state)
+            try:
+                router._write_router_daemon_status(project_root, run_root, run_state, lifecycle_status=final_status, current_action=run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None, lock=lock)
+                router.save_run_state(run_root, run_state)
+            except router.RouterLedgerWriteInProgress:
+                pass
     status = router.read_json_if_exists(router._router_daemon_status_path(run_root))
     return {'ok': True, 'command': 'daemon', 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'tick_count': len(ticks), 'ticks': ticks, 'observe_only': observe_only, 'lock_path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'lock_status': (router.read_json_if_exists(router._router_daemon_lock_path(run_root)) or {}).get('status'), 'status_path': router.project_relative(project_root, router._router_daemon_status_path(run_root)), 'daemon_status': status}
 

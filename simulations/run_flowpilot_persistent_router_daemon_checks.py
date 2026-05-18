@@ -21,6 +21,7 @@ REQUIRED_LABELS = (
     "runtime_live_writer_write_lock_appears_during_daemon_read",
     "runtime_dead_owner_write_lock_appears_during_daemon_read",
     "daemon_defers_runtime_ledger_read_until_next_tick",
+    "daemon_defers_runtime_ledger_wait_after_nested_state_lock",
     "daemon_schedules_startup_bootloader_row_before_controller_core",
     "controller_executes_startup_bootloader_row_writes_receipt",
     "daemon_consumes_startup_receipt_clears_pending_and_schedules_next",
@@ -68,6 +69,11 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
     "router_scheduler_ledger_corrupted_by_partial_write": "Router scheduler ledger is not valid JSON after a durable write",
     "fresh_runtime_ledger_write_lock_reported_corrupt": "fresh runtime ledger write lock was treated as corruption",
+    "nested_write_lock_wait_became_daemon_error": "nested runtime write-lock wait terminated daemon instead of deferring",
+    "runtime_write_lock_promoted_to_pm_semantic_blocker": (
+        "runtime write lock was promoted to PM semantic repair before mechanical settlement"
+    ),
+    "runtime_write_lock_wait_missing_mechanical_evidence": "runtime write-lock wait did not record mechanical settlement evidence",
     "fresh_dead_owner_write_lock_deferred_as_live_writer": "dead-owner write lock was deferred as live writer settlement",
     "fresh_dead_owner_write_lock_missing_takeover_evidence": "fresh dead-owner write lock was not taken over with diagnostic evidence",
     "writer_died_holding_runtime_lock_without_incident": "writer death while holding runtime lock was not recorded as takeover evidence",
@@ -129,6 +135,10 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_action_ledger_valid_json},write_lock_fresh={state.runtime_ledger_write_lock_fresh},"
         f"write_lock_owner={state.runtime_ledger_write_lock_owner},"
         f"deferred={state.daemon_deferred_for_runtime_ledger_write},atomic={state.durable_ledger_writes_atomic},"
+        f"nested_wait={state.nested_wait_status_write_lock},"
+        f"nested_deferred={state.daemon_deferred_after_nested_write_lock},"
+        f"mechanical_settlement={state.runtime_write_lock_mechanical_settlement_recorded},"
+        f"pm_semantic_lock={state.runtime_write_lock_promoted_to_pm_semantic_blocker},"
         f"dead_takeover={state.dead_owner_write_lock_takeover_recorded},"
         f"writer_died={state.writer_died_while_holding_runtime_lock},"
         f"dead_rejoined={state.dead_owner_recovery_rejoined_flow},"

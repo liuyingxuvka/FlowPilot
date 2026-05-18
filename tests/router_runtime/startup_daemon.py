@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_io as router_io  # noqa: E402
 
 
 class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -377,7 +378,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             time.sleep(0.05)
             ledger = router._empty_router_scheduler_ledger(root, run_root, state)  # type: ignore[attr-defined]
             scheduler_path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-            write_lock.unlink()
+            unlink_with_windows_retry(write_lock)
 
         thread = threading.Thread(target=finish_write, daemon=True)
         thread.start()
@@ -389,6 +390,59 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
         self.assertFalse(result["ticks"][1].get("deferred", False))
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+    def test_atomic_replace_permission_error_becomes_runtime_write_wait(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_scheduler_ledger.json"
+
+        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io,
+            "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
+            0.001,
+        ), mock.patch.object(router_io.os, "replace", side_effect=PermissionError("locked by Windows")):
+            with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
+                router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
+
+        self.assertEqual(raised.exception.path, path)
+        self.assertFalse(router_io._json_write_lock_path(path).exists())
+    def test_router_daemon_nested_state_write_lock_wait_does_not_exit(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        state_path = router.run_state_path(run_root)
+        tick_exc = router.RouterLedgerWriteInProgress(
+            run_root / "runtime" / "router_scheduler_ledger.json",
+            {"active": True, "classification": "active_live_owner", "path": "scheduler.write.lock"},
+            "scheduler write in progress",
+        )
+        nested_exc = router.RouterLedgerWriteInProgress(
+            state_path,
+            {"active": True, "classification": "active_live_owner", "path": str(state_path) + ".write.lock"},
+            "state write in progress",
+        )
+        original_save = router.save_run_state
+        save_count = 0
+
+        def flaky_save(path: Path, payload: dict) -> None:
+            nonlocal save_count
+            save_count += 1
+            if save_count == 1:
+                original_save(path, payload)
+                return
+            raise nested_exc
+
+        with mock.patch.object(router, "_router_daemon_tick", side_effect=tick_exc), mock.patch.object(
+            router,
+            "save_run_state",
+            side_effect=flaky_save,
+        ):
+            result = router.run_router_daemon(root, max_ticks=1, observe_only=True, release_lock_on_exit=True)
+
+        self.assertEqual(result["tick_count"], 1)
+        self.assertTrue(result["ticks"][0]["deferred"])
+        self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
+        self.assertEqual(result["ticks"][0]["nested_defer_reason"], "runtime_ledger_write_status_save_in_progress")
+        lock = read_json(run_root / "runtime" / "router_daemon.lock")
+        self.assertNotEqual(lock.get("status"), "error")
     def test_terminal_startup_daemon_schedule_does_not_append_boot_rows(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root)

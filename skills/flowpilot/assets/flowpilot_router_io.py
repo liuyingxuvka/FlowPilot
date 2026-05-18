@@ -363,9 +363,15 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
             try:
                 os.replace(tmp_path, path)
                 break
-            except PermissionError:
+            except PermissionError as exc:
                 if time.monotonic() >= deadline:
-                    raise
+                    write_lock = _json_write_lock_liveness(path)
+                    write_lock["replace_permission_error"] = True
+                    raise RouterLedgerWriteInProgress(
+                        path,
+                        write_lock,
+                        f"timed out replacing JSON target after PermissionError: {exc}",
+                    ) from exc
                 time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
         if verify:
             read_json(path)
