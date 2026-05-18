@@ -24,7 +24,11 @@ import flowpilot_router_event_dispatcher as event_dispatcher  # noqa: E402
 import flowpilot_router_events as router_events  # noqa: E402
 import flowpilot_router_errors as router_errors  # noqa: E402
 import flowpilot_router_io as router_io  # noqa: E402
+import flowpilot_router_protocol_card_metadata as card_metadata  # noqa: E402
+import flowpilot_router_protocol_startup_catalog as startup_catalog  # noqa: E402
 import flowpilot_router_protocol_catalog as protocol_catalog  # noqa: E402
+import flowpilot_router_protocol_planning_cards as planning_cards  # noqa: E402
+import flowpilot_router_protocol_runtime_cards as runtime_cards  # noqa: E402
 import flowpilot_router_protocol_tables as protocol_tables  # noqa: E402
 import flowpilot_router_resume as router_resume  # noqa: E402
 import flowpilot_router_route as router_route  # noqa: E402
@@ -173,7 +177,38 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
     def test_protocol_tables_and_mail_lookup_belong_to_owner_modules(self) -> None:
         controller_repair._bind_router(router)
         self.assertEqual(controller_repair._mail_sequence_entry("user_intake")["to_role"], "project_manager")
+        self.assertEqual(protocol_tables.mail_sequence_entry("user_intake")["to_role"], "project_manager")
         self.assertIn("completed", protocol_tables.RUN_TERMINAL_STATUSES)
+        self.assertIn("completed", protocol_tables.terminal_statuses())
+
+    def test_startup_boot_catalog_split_preserves_protocol_owner_boundary(self) -> None:
+        catalog = startup_catalog.startup_boot_catalog()
+        system_catalog = protocol_catalog.system_card_catalog()
+        planning_catalog = planning_cards.planning_system_card_catalog()
+        runtime_catalog = runtime_cards.runtime_system_card_catalog()
+        metadata_catalog = card_metadata.system_card_metadata_catalog()
+
+        self.assertEqual(
+            catalog["startup_question_ids"],
+            tuple(question["id"] for question in startup_catalog.STARTUP_QUESTIONS),
+        )
+        self.assertIn("record_startup_answers", catalog["boot_action_types"])
+        self.assertEqual(router.BOOT_ACTIONS, startup_catalog.BOOT_ACTIONS)
+        self.assertEqual(protocol_catalog.BOOT_ACTIONS, startup_catalog.BOOT_ACTIONS)
+        self.assertIn("pm.route_skeleton", startup_catalog.PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS)
+        self.assertEqual(
+            protocol_catalog.SYSTEM_CARD_SEQUENCE,
+            planning_cards.PLANNING_SYSTEM_CARD_SEQUENCE + runtime_cards.RUNTIME_SYSTEM_CARD_SEQUENCE,
+        )
+        self.assertEqual(system_catalog["card_count"], len(protocol_catalog.SYSTEM_CARD_SEQUENCE))
+        self.assertEqual(
+            system_catalog["planning_card_count"] + system_catalog["runtime_card_count"],
+            system_catalog["card_count"],
+        )
+        self.assertEqual(planning_catalog["card_ids"][0], "reviewer.startup_fact_check")
+        self.assertEqual(runtime_catalog["card_ids"][-1], "pm.closure")
+        self.assertIn("pm.route_skeleton", metadata_catalog["phase_card_ids"])
+        self.assertIn("reviewer.startup_fact_check", metadata_catalog["source_path_card_ids"])
 
     def test_startup_daemon_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA, "flowpilot.router_daemon_lock.v1")
@@ -225,6 +260,27 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         )
         for event_name in set(router_events.PRECHECK_EVENT_HANDLERS) | set(router_events.SIDE_EFFECT_EVENT_HANDLERS):
             self.assertIn(event_name, protocol_catalog.EXTERNAL_EVENTS)
+        self.assertIsNone(
+            router_events.handle_precheck_event(
+                router,
+                Path("."),
+                Path("."),
+                {"flags": {}, "events": []},
+                "unknown_event",
+                {"summary": "unknown"},
+                {},
+            )
+        )
+        self.assertFalse(
+            router_events.apply_migrated_event_side_effect(
+                router,
+                Path("."),
+                Path("."),
+                {"flags": {}, "events": []},
+                "unknown_event",
+                {},
+            )
+        )
 
     def test_event_dispatcher_passes_router_facade_to_event_helpers(self) -> None:
         calls: list[object] = []
@@ -468,11 +524,58 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         self.assertTrue(callable(router_route.route_payload_from_reviewed_draft))
         self.assertTrue(callable(router_route.write_route_activation))
         self.assertTrue(callable(router_route.write_route_mutation))
+        with tempfile.TemporaryDirectory(prefix="flowpilot-route-owner-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            draft_path = run_root / "routes" / "route-001" / "flow.draft.json"
+            draft_path.parent.mkdir(parents=True)
+            draft_payload = {
+                "route_id": "route-001",
+                "nodes": [{"node_id": "node-001", "kind": "leaf"}],
+            }
+            draft_path.write_text(json.dumps(draft_payload), encoding="utf-8")
+
+            class FakeRouter:
+                @staticmethod
+                def _current_route_draft_path(run_root_arg: Path) -> Path:
+                    return run_root_arg / "routes" / "route-001" / "flow.draft.json"
+
+                @staticmethod
+                def read_json(path: Path) -> dict:
+                    return json.loads(path.read_text(encoding="utf-8"))
+
+                @staticmethod
+                def project_relative(root: Path, path: Path) -> str:
+                    return path.resolve().relative_to(root.resolve()).as_posix()
+
+            route_payload, returned_draft = router_route.route_payload_from_reviewed_draft(
+                FakeRouter(),
+                project_root,
+                run_root,
+                {},
+            )
+
+            self.assertEqual(returned_draft, draft_path)
+            self.assertEqual(route_payload["schema_version"], "flowpilot.route.v1")
+            self.assertEqual(route_payload["reviewed_route_activation_source"], "flow.draft.json")
+            self.assertEqual(route_payload["activated_from_draft_path"], ".flowpilot/runs/run-test/routes/route-001/flow.draft.json")
 
     def test_resume_domain_helpers_are_available_in_resume_owner(self) -> None:
         self.assertTrue(callable(router_resume.write_host_heartbeat_binding))
         self.assertTrue(callable(router_resume.append_heartbeat_tick))
         self.assertTrue(callable(router_resume.reset_resume_cycle_for_wakeup))
+        flags = {
+            "resume_reentry_requested": True,
+            "resume_state_loaded": True,
+            "role_recovery_pm_escalation_required": True,
+        }
+        run_state = {"flags": flags}
+
+        router_resume.reset_resume_cycle_for_wakeup(router, run_state)
+
+        self.assertFalse(flags["resume_reentry_requested"])
+        self.assertFalse(flags["resume_state_loaded"])
+        self.assertFalse(flags["role_recovery_pm_escalation_required"])
 
     def test_terminal_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(terminal_helpers.TERMINAL_SUMMARY_SCHEMA, "flowpilot.final_summary.v1")

@@ -86,9 +86,9 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
 
         self.assertEqual(diagnostic["gap_counts"].get("missing_model", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("extra_code", 0), 0)
+        self.assertEqual(diagnostic["gap_counts"].get("internal_only_test", 0), 0)
         for code in (
             "missing_test",
-            "internal_only_test",
             "needs_structure_split",
             "stale_evidence",
         ):
@@ -241,6 +241,21 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(deferred["split_status"], "deferred_split")
         self.assertIn("defer_structure_split", deferred["repair_types"])
         self.assertIn("peer_safety_status", deferred)
+
+        completed = surfaces["asset:flowpilot_router_protocol_boot_cards"]
+        self.assertEqual(completed["split_status"], "completed_split")
+        self.assertTrue(completed["has_external_contract"], completed)
+        self.assertNotIn("needs_structure_split", completed["gap_codes"])
+        for surface_id in (
+            "asset:flowpilot_router_protocol_startup_catalog",
+            "asset:flowpilot_router_protocol_planning_cards",
+            "asset:flowpilot_router_protocol_runtime_cards",
+            "asset:flowpilot_router_protocol_card_metadata",
+        ):
+            with self.subTest(completed_split_surface=surface_id):
+                surface = surfaces[surface_id]
+                self.assertTrue(surface["has_external_contract"], surface)
+                self.assertEqual(surface["gap_codes"], [])
 
     def test_full_diagnostic_uses_background_artifact_classification(self) -> None:
         diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]

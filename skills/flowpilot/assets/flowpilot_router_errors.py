@@ -29,3 +29,22 @@ class RouterLedgerWriteInProgress(RouterError):
         self.path = path
         self.write_lock = write_lock
         super().__init__(f"runtime ledger write is still in progress: {path} ({message})")
+
+
+def router_error_record(error: BaseException) -> dict[str, Any]:
+    """Return Controller-visible metadata without exposing sealed runtime bodies."""
+
+    record: dict[str, Any] = {
+        "error_type": type(error).__name__,
+        "message": str(error),
+    }
+    control_blocker = getattr(error, "control_blocker", None)
+    if isinstance(control_blocker, dict):
+        record["control_blocker"] = dict(control_blocker)
+    path = getattr(error, "path", None)
+    if isinstance(path, Path):
+        record["path"] = str(path)
+    write_lock = getattr(error, "write_lock", None)
+    if isinstance(write_lock, dict):
+        record["write_lock_status"] = str(write_lock.get("status") or "")
+    return record

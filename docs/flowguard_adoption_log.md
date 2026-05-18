@@ -15196,3 +15196,52 @@ Skipped steps:
 ### Next Actions
 - Keep `router-terminal` at eight-way background parallelism for regular regression runs.
 - Treat further speed work as fixture/data setup optimization inside the slowest individual shards, not another broad tier split.
+
+## runtime-owner-contracts-and-relay-split-2026-05-18 - Direct runtime owner contracts and safe packet relay split
+
+- Project: FlowPilot
+- Trigger reason: User asked to continue true external-contract tests for remaining runtime owner modules, then split only model-aligned large modules that do not conflict with peer work.
+- Status: completed and locally validated
+- Skill decision: use_flowguard:model_test_alignment + StructureMesh/TestMesh
+- OpenSpec change: add-runtime-owner-contracts-and-safe-splits
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_structure_maintenance_model.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m pytest tests/test_flowpilot_card_runtime.py`
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime tests.test_flowpilot_role_output_runtime tests.test_flowpilot_router_boundaries tests.test_flowpilot_runtime_owner_contracts tests.test_flowpilot_output_contracts`
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py`
+- OK: `openspec validate add-runtime-owner-contracts-and-safe-splits --strict`
+- OK: `python scripts\run_test_tier.py --tier fast --background --background-dir tmp\flowguard_background_runtime_owner_contracts_fast --json`
+- OK: fast background artifacts under `tmp\flowguard_background_runtime_owner_contracts_fast`, supervisor `passed`, exit code `0`, 11 child commands passed plus supervisor artifact.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py`
+
+### Findings
+- Runtime owner `internal_only_test` gaps are now zero.
+- Full diagnostic now covers 532 surfaces, with 426 covered and 106 remaining gap surfaces.
+- `missing_test` decreased from 78 before this pass to 63 after adding direct card, packet, role-output, packet-control-plane state, router-boundary, and runtime-owner source-contract tests.
+- Split `packet_runtime_relay.py` into a 193-line relay writer module and a 381-line `packet_runtime_relay_checks.py` read-only validation module while keeping the old import surface stable.
+- StructureMesh/TestMesh maintenance checks passed after the split.
+
+### Counterexamples
+- source_contract_points_at_wrapper_without_direct_test_call
+- runtime_owner_test_asserts_internal_state_without_external_contract
+- relay_validation_moved_without_facade_reexport
+
+### Friction Points
+- Parallel protocol boot-card catalog splitting was present in the shared worktree and validated with this pass before integration.
+- `public_release_check` remains local-only/stale evidence until public URL proof is rerun without the local-only shortcut.
+- Result JSON model runs can create timestamp-only diffs; stage only scoped evidence.
+
+### Next Actions
+- Continue direct external-contract tests for the remaining router owner surfaces in the `missing_test` list.
+- Defer `run_test_tier.py` and state-ordering-sensitive router modules until peer edits settle or a specific StructureMesh target is written.

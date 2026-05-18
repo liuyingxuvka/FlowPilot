@@ -14,3 +14,14 @@ MAIL_SEQUENCE: tuple[dict[str, str], ...] = (
         "requires_flag": "startup_activation_approved",
     },
 )
+
+
+def terminal_statuses() -> frozenset[str]:
+    return frozenset(RUN_TERMINAL_STATUSES)
+
+
+def mail_sequence_entry(mail_id: str) -> dict[str, str] | None:
+    for entry in MAIL_SEQUENCE:
+        if entry.get("mail_id") == mail_id:
+            return dict(entry)
+    return None

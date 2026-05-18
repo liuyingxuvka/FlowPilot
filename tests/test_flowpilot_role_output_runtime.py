@@ -16,6 +16,10 @@ sys.path.insert(0, str(ASSETS))
 import flowpilot_router as router  # noqa: E402
 import flowpilot_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
+import role_output_runtime_cli  # noqa: E402
+import role_output_runtime_contracts  # noqa: E402
+import role_output_runtime_envelopes  # noqa: E402
+import role_output_runtime_schema  # noqa: E402
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -110,6 +114,52 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 self.assertEqual(session["event_name"], expected_event)
                 self.assertEqual(session["path_key"], contract["path_key"])
                 self.assertEqual(session["hash_key"], contract["hash_key"])
+
+    def test_role_output_owner_modules_expose_direct_external_contracts(self) -> None:
+        root = self.make_project()
+        skeleton = role_output_runtime_contracts.build_output_skeleton(
+            root,
+            output_type="pm_startup_activation_approval",
+            role="project_manager",
+        )
+        self.assertEqual(skeleton["approved_by_role"], "project_manager")
+        self.assertTrue(skeleton["_role_output_contract"]["runtime_validates_mechanics_only"])
+
+        parsed = role_output_runtime_cli.parse_args(
+            [
+                "--root",
+                str(root),
+                "prepare-output",
+                "--output-type",
+                "pm_startup_activation_approval",
+                "--role",
+                "project_manager",
+                "--agent-id",
+                "agent-pm-contract",
+            ]
+        )
+        self.assertEqual(parsed.command, "prepare-output")
+        boundary = role_output_runtime_schema.controller_boundary_constraints()
+        self.assertFalse(boundary["controller_may_read_sealed_bodies"])
+        self.assertFalse(boundary["controller_may_approve_gate"])
+
+        envelope = role_output_runtime_envelopes.submit_output(
+            root,
+            output_type="pm_startup_activation_approval",
+            role="project_manager",
+            agent_id="agent-pm-contract",
+            body={"decision": "approved"},
+        )
+        receipt = role_output_runtime_envelopes.validate_envelope_runtime_receipt(root, envelope)
+        recovered = role_output_runtime_envelopes.runtime_envelope_for_body(
+            root,
+            output_type="pm_startup_activation_approval",
+            body_path=envelope["body_ref"]["path"],
+            body_hash=envelope["body_ref"]["hash"],
+        )
+        self.assertEqual(receipt["body_path"], envelope["body_ref"]["path"])
+        self.assertIsNotNone(recovered)
+        self.assertEqual(recovered["output_contract_id"], envelope["output_contract_id"])
 
     def test_startup_activation_approval_is_registry_bound_runtime_output(self) -> None:
         root = self.make_project()

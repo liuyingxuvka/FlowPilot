@@ -14,6 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import packet_runtime  # noqa: E402
+import packet_control_plane_model_state  # noqa: E402
+import packet_runtime_active_holder  # noqa: E402
+import packet_runtime_cli  # noqa: E402
+import packet_runtime_creation_startup  # noqa: E402
+import packet_runtime_ledger  # noqa: E402
+import packet_runtime_progress  # noqa: E402
+import packet_runtime_relay_checks  # noqa: E402
+import packet_runtime_sessions  # noqa: E402
 
 
 def _write_json(path: Path, payload: dict) -> None:
@@ -115,6 +123,71 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger["controller_boundary"]["role_output_body_must_be_file_backed"])
         self.assertTrue(ledger["controller_boundary"]["role_chat_response_must_be_envelope_only"])
         self.assertTrue(ledger["controller_boundary"]["role_chat_body_content_contaminates_mail"])
+
+    def test_packet_runtime_owner_modules_expose_direct_external_contracts(self) -> None:
+        root = self.make_project()
+        envelope = packet_runtime_creation_startup.create_user_intake_packet(
+            root,
+            packet_id="startup-intake-001",
+            node_id="startup-node",
+            body_text="INITIAL USER REQUEST",
+            run_id="run-test",
+            router_owned_startup_material=True,
+            body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+        )
+        ledger_record = packet_runtime_ledger.packet_ledger_record_for_envelope(root, envelope)
+        self.assertIsNotNone(ledger_record)
+        self.assertEqual(ledger_record["packet_id"], "startup-intake-001")
+        self.assertTrue(ledger_record["router_owned_startup_material"])
+        self.assertEqual(
+            packet_runtime_active_holder._require_concrete_agent_id(
+                "agent-worker-a-runtime",
+                role="worker_a",
+            ),
+            "agent-worker-a-runtime",
+        )
+        self.assertEqual(packet_runtime_progress._validate_progress_message("Working on envelope metadata"), "Working on envelope metadata")
+        parsed = packet_runtime_cli.parse_args(
+            [
+                "--root",
+                str(root),
+                "user-intake",
+                "--packet-id",
+                "startup-intake-002",
+                "--node-id",
+                "startup-node",
+                "--body-text",
+                "hello",
+            ]
+        )
+        self.assertEqual(parsed.command, "user-intake")
+
+        relayed = packet_runtime.router_release_startup_user_intake(
+            root,
+            envelope=envelope,
+            envelope_path=self.packet_envelope_path(root, "startup-intake-001"),
+        )
+        self.assertTrue(relayed["router_startup_release"]["delivered_by_router"])
+        self.assertFalse(relayed["router_startup_release"]["body_was_read_by_router"])
+        self.assertEqual(relayed["router_startup_release"]["recipient_open_authority"], "controller_relay_required")
+        release = packet_runtime_relay_checks.verify_router_startup_release(
+            relayed,
+            recipient_role="project_manager",
+        )
+        self.assertEqual(release["relayed_to_role"], "project_manager")
+        session_dir = packet_runtime_sessions._runtime_sessions_dir(
+            root,
+            self.packet_envelope_path(root, "startup-intake-001"),
+        )
+        self.assertEqual(session_dir.name, "runtime_sessions")
+
+        model_packet = packet_control_plane_model_state._packet_from_id("wrong_delivery-case")
+        self.assertEqual(model_packet.delivered_to_role, "worker_b")
+        self.assertFalse(
+            packet_control_plane_model_state._packet_from_id(
+                "missing_physical_files-case"
+            ).physical_files_written
+        )
 
     def test_controller_handoff_contains_envelope_only_not_body_content(self) -> None:
         root = self.make_project()

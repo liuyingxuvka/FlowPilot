@@ -13,6 +13,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import card_runtime  # noqa: E402
+import card_runtime_bundle  # noqa: E402
+import card_runtime_envelopes  # noqa: E402
+import card_runtime_io  # noqa: E402
+import card_runtime_ledgers  # noqa: E402
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -257,6 +261,66 @@ def test_card_runtime_opens_bundle_and_submits_one_ack_with_per_card_receipts() 
     assert validation["ok"] is True
     assert validation["ack_delivery_mode"] == "direct_to_router"
     assert validation["receipt_ref_count"] == 2
+
+
+def test_card_runtime_owner_modules_expose_direct_external_contracts() -> None:
+    root, run_root, body_path = make_project()
+    envelope_path = make_bundle_envelope(root, run_root, body_path)
+
+    envelope_file, envelope = card_runtime_envelopes._load_bundle_envelope(
+        root,
+        envelope_path.relative_to(root).as_posix(),
+    )
+    card_runtime_envelopes._validate_target_identity(
+        envelope,
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    token, token_hash = card_runtime_envelopes._validate_direct_router_ack_token(
+        envelope,
+        role="project_manager",
+        agent_id="pm-agent-1",
+        bundle=True,
+    )
+    assert token["return_kind"] == "system_card_bundle"
+    assert token_hash == envelope["direct_router_ack_token_hash"]
+    assert card_runtime_io.project_relative(root, envelope_file) == envelope_path.relative_to(root).as_posix()
+    assert card_runtime_io.read_json(envelope_file)["bundle_id"] == "pm-startup-bundle-001"
+
+    card_ledger_path, card_ledger = card_runtime_ledgers._load_card_ledger(root, envelope)
+    return_ledger_path, return_ledger = card_runtime_ledgers._load_return_ledger(root, envelope)
+    assert card_ledger_path == run_root / "card_ledger.json"
+    assert return_ledger_path == run_root / "return_event_ledger.json"
+    assert card_ledger["schema_version"] == card_runtime.CARD_LEDGER_SCHEMA
+    assert return_ledger["schema_version"] == card_runtime.RETURN_EVENT_LEDGER_SCHEMA
+
+    opened = card_runtime_bundle.open_card_bundle(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+    )
+    ack = card_runtime_bundle.submit_card_bundle_ack(
+        root,
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+        role="project_manager",
+        agent_id="pm-agent-1",
+        receipt_paths=opened["read_receipt_paths"],
+    )
+    validation = card_runtime_bundle.validate_card_bundle_ack(
+        root,
+        ack_path=ack["ack_path"],
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+    )
+    inspection = card_runtime_bundle.inspect_card_bundle_ack_incomplete(
+        root,
+        ack_path=ack["ack_path"],
+        envelope_path=envelope_path.relative_to(root).as_posix(),
+    )
+    assert validation["ok"] is True
+    assert validation["member_card_ids"] == ["pm.core", "pm.phase_map"]
+    assert inspection["ok"] is True
+    assert inspection["missing_card_ids"] == []
 
 
 def test_duplicate_card_ack_after_resolved_is_audit_only() -> None:
