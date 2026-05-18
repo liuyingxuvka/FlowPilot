@@ -24,8 +24,8 @@ structure-split repair work.
 | Metric | Count |
 | --- | ---: |
 | Total diagnostic surfaces | 532 |
-| Covered surfaces | 426 |
-| Surfaces with one or more gaps | 106 |
+| Covered surfaces | 433 |
+| Surfaces with one or more gaps | 99 |
 | Compatibility facades | 60 |
 | Owner modules | 118 |
 | Script entrypoints | 17 |
@@ -37,7 +37,7 @@ structure-split repair work.
 
 | Gap code | Count | Meaning |
 | --- | ---: | --- |
-| `missing_test` | 63 | No ordinary external-contract test evidence was found for the surface. |
+| `missing_test` | 55 | No ordinary external-contract test evidence was found for the surface. |
 | `needs_structure_split` | 52 | Module or script is above the diagnostic split threshold. |
 | `stale_evidence` | 3 | Background evidence is failed, stale, incomplete, progress-only, or local-only release proof. |
 
@@ -48,12 +48,12 @@ kept the remaining runtime gaps visible as direct `missing_test` or
 
 Aggregate counts in the JSON include:
 
-- `gap_counts_by_severity`: `critical=1`, `medium=117`.
-- `gap_counts_by_repair_type`: `add_external_contract_test=63`,
+- `gap_counts_by_severity`: `critical=1`, `medium=109`.
+- `gap_counts_by_repair_type`: `add_external_contract_test=55`,
   `split_structure=42`, `defer_structure_split=10`,
   `fix_failing_background_evidence=2`,
   `rerun_public_release_evidence=1`.
-- `gap_counts_by_release_relevance`: `runtime_contract=107`,
+- `gap_counts_by_release_relevance`: `runtime_contract=99`,
   `validation_gate=7`, `release_gate=2`, `legacy_validation=2`.
 
 ## Top Repair Items
@@ -65,10 +65,10 @@ The current highest-priority actionable summary is:
    not public release proof.
 2. `script:run_test_tier`: the tier runner is still above the structure split
    threshold and should be the next StructureMesh-backed split candidate.
-3. Runtime owner modules such as action factory, action handlers, artifact
-   validation, card delivery, child-skill capability, CLI, control
-   transactions, and controller ledger modules still need ordinary direct
-   external-contract tests.
+3. Remaining router owner modules such as CLI, control transactions,
+   controller repair scheduling, controller scheduler receipt shards, event
+   intake/identity, event repair, expected waits, and facade export helpers
+   still need ordinary direct external-contract tests.
 4. `test-tier:legacy-full`: two legacy full-model background artifacts remain
    visible as failed legacy-validation history, but old legacy full-model
    checks are not ranked as current release gates.
@@ -85,6 +85,10 @@ This pass added or strengthened external-contract evidence for:
 - Router owner-boundary helpers already exercised by
   `tests/test_flowpilot_router_boundaries.py`, now bound into the source
   contract plan.
+- Router owner external contracts for action envelopes, dispatch recipient
+  gates, action handler outcome/error paths, artifact validation, card delivery
+  ledgers, child-skill capability sync/approval, and controller scheduler
+  ledger projection, exercised by `tests/test_flowpilot_router_owner_contracts.py`.
 - `flowpilot_router_protocol_boot_cards.py` as a compatibility aggregation
   layer. It dropped from 684 lines before this change to 64 lines after the
   latest split.

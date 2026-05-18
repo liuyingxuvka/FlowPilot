@@ -15294,3 +15294,53 @@ Skipped steps:
 ### Next Actions
 - Continue the next pass with direct tests for the remaining `missing_test` runtime owner modules.
 - Split `run_test_tier.py` only after writing a dedicated StructureMesh target for the tier runner.
+
+## router-owner-contract-tests-2026-05-18 - Direct router owner external-contract tests
+
+- Project: FlowPilot
+- Trigger reason: User asked to continue true external-contract tests for the next batch of runtime/router owner modules using OpenSpec and FlowGuard.
+- Status: completed and locally validated
+- Skill decision: use_flowguard:model_test_alignment + source-contract audit
+- OpenSpec change: add-router-owner-contract-tests
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_structure_maintenance_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m unittest tests.test_flowpilot_router_owner_contracts`
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`
+- OK: `python -m unittest tests.test_flowpilot_model_test_alignment`
+- OK: `openspec validate add-router-owner-contract-tests --strict --json`
+- OK: `python -m py_compile simulations\run_flowpilot_model_test_alignment_checks.py tests\test_flowpilot_router_owner_contracts.py`
+- OK: `python scripts\run_test_tier.py --tier fast --background --background-dir tmp\flowguard_background --background-max-parallel 4 --json`
+- OK: fast background artifacts under `tmp\flowguard_background`, supervisor `passed`, exit code `0`, 11 child commands passed, `proof_reused=false`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- Added direct source-audited tests for action factory dispatch/envelope, basic and role action handlers, artifact validation, card delivery, child-skill capability, and controller scheduler ledgers.
+- Added one shared source obligation with concrete code-contract rows and ordinary test evidence for the selected router owner modules.
+- Full diagnostic still covers 532 surfaces; covered surfaces increased from 426 to 433 and remaining gap surfaces decreased from 106 to 99.
+- `missing_test` decreased from 63 to 55; remaining gap counts are `missing_test=55`, `needs_structure_split=52`, and `stale_evidence=3`.
+- Source audit passed with no findings.
+
+### Counterexamples
+- source_contract_declares_return_for_write_only_function
+- owner_module_has_facade_test_but_no_direct_external_contract_test
+- high_coupling_router_state_module_selected_before_contract_batch
+
+### Friction Points
+- Write-only or error-only owner functions need explicit `external_outputs=()` and side-effect declarations, otherwise source-contract audit correctly rejects the evidence.
+- `event_identity` and `expected_waits` remain higher-coupling router state modules and should be covered in a separate pass.
+- Result JSON model runs can create timestamp-only diffs in unrelated simulation result files; those were left unstaged.
+
+### Next Actions
+- Continue direct external-contract tests for the remaining router owner `missing_test` surfaces, starting with CLI/control transaction/scheduler receipt modules that have clear observable boundaries.
+- Split only those large modules whose model block and direct external-contract evidence are already stable.
