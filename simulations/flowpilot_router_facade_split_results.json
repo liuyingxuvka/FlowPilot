@@ -27,6 +27,46 @@
     {
       "blocked": true,
       "finding_codes": [
+        "facade_line_budget_exceeded"
+      ],
+      "finding_count": 1,
+      "name": "facade_line_budget_exceeded"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "facade_function_budget_exceeded"
+      ],
+      "finding_count": 1,
+      "name": "facade_function_budget_exceeded"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "retained_obsolete_compat_wrapper"
+      ],
+      "finding_count": 1,
+      "name": "retained_obsolete_compat_wrapper"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "owner_export_registry_missing"
+      ],
+      "finding_count": 1,
+      "name": "owner_export_registry_missing"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
+        "missing_public_api_whitelist_entry"
+      ],
+      "finding_count": 1,
+      "name": "missing_public_api_whitelist_entry"
+    },
+    {
+      "blocked": true,
+      "finding_codes": [
         "missing_prompt_asset"
       ],
       "finding_count": 1,
@@ -69,11 +109,15 @@
   "ok": true,
   "prompt_split": {
     "asset_count": 4,
-    "child_module_count": 40,
-    "coarse_owner_count": 16,
+    "child_module_count": 102,
+    "coarse_owner_count": 36,
+    "facade_line_count": 458,
+    "facade_top_level_function_count": 0,
     "findings": [],
     "micro_module_count": 0,
-    "ok": true
+    "obsolete_compat_wrapper_count": 0,
+    "ok": true,
+    "public_api_whitelist_count": 18
   },
   "structure_mesh": {
     "decision": "structure_mesh_green_can_continue",

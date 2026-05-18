@@ -14453,6 +14453,50 @@ Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
 
+## 2026-05-17 - Final Router Skeleton StructureMesh Pass
+
+Trigger:
+
+- The remaining `flowpilot_router.py` skeleton still carried too much structural responsibility after earlier owner splits. The goal was a final main-branch cleanup that kept the router as a small boot/facade skeleton, moved behavior into cohesive owner modules, externalized touched prompt text, synchronized the local installed skill, and avoided any GitHub push or release publication.
+
+OpenSpec:
+
+- Change: `openspec/changes/final-router-skeleton-cleanup`.
+- Scope: local implementation only; remote publishing, tags, and GitHub Releases were explicitly out of scope.
+
+FlowGuard routes used:
+
+- StructureMesh for the router skeleton/facade/owner split.
+- TestMesh and model-test alignment for router runtime evidence.
+- Long-check observability for hidden background router-tier execution.
+- Conformance adoption for local install sync and public-release boundary checks.
+
+Model and validation evidence:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with `1.0`.
+- `python simulations/run_flowpilot_router_facade_split_checks.py --json-out simulations/flowpilot_router_facade_split_results.json` passed. Current skeleton evidence: `flowpilot_router.py` has 458 lines and 0 top-level functions; the split has 102 child modules, 36 coarse owners, no obsolete compatibility wrappers, and 18 allowlisted public API names.
+- `python simulations/run_flowpilot_structure_maintenance_checks.py --json-out simulations/flowpilot_structure_maintenance_results.json` passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` passed.
+- `python simulations/run_card_instruction_coverage_checks.py` passed after the coverage model was updated to scan the new child-module prompt surfaces.
+- `python scripts/smoke_autopilot.py --fast` passed.
+- Hidden background router tier passed from `tmp/flowguard_background/router_background_supervisor.meta.json`: status `passed`, exit `0`, completed `24`, proof reused `false`; artifacts are `router_background_supervisor.out.txt`, `.err.txt`, `.combined.txt`, `.exit.txt`, and `.meta.json`.
+- Full Meta and Capability regressions passed from `tmp/flowguard_background/run_meta_checks.meta.json` and `tmp/flowguard_background/run_capability_checks.meta.json`: both status `passed`, exit `0`, proof reused `false`.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` passed.
+- `python scripts/audit_local_install_sync.py --json` passed.
+- `python scripts/check_public_release.py --json --skip-url-check` passed with one expected dirty-worktree warning before the local commit.
+
+Issues found and fixed:
+
+- `_validate_packet_group_for_reviewer` was missing from the work-packet split and was restored to the current-node owner.
+- Packet action handlers referenced `_request_ledger_check` after the split without importing the helper; an explicit owner import fixed the runtime path.
+- `_write_pm_research_absorption` was left behind during the work-packet child split. The material/research owner now exports it again, and `tests.router_runtime.material_modeling` passes.
+- `scripts/install_flowpilot.py` copied transient `__pycache__` files during repo-owned skill sync, which made local install refresh non-deterministic. The installer now ignores `__pycache__`, `.pyc`, and `.pyo` during skill copies.
+
+Residual risk:
+
+- This pass intentionally kept cohesive owner modules rather than forcing one-function-per-file fragmentation. The largest remaining router-adjacent modules are now owner modules or runtime/model support files, not the main router skeleton.
+- No push, tag, release, deploy, or public publication was performed.
+
 ## 2026-05-17 - StructureMesh target split and protocol catalog extraction
 
 Trigger:

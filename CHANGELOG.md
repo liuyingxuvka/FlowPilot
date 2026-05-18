@@ -2,6 +2,27 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.10 - 2026-05-17
+
+### Added
+
+- Added the `final-router-skeleton-cleanup` OpenSpec change for the final
+  StructureMesh-guided router skeleton and owner-module cleanup pass.
+- Added second-level owner modules for startup bootloader/intake/display,
+  role recovery, startup closure, startup fact-boundary checks, protocol
+  catalogs, work packets, event repair, route artifacts, controller
+  scheduling/repair, route frontier, system cards, and action handlers.
+
+### Changed
+
+- Reduced `flowpilot_router.py` to a public skeleton with an explicit
+  owner-export registry and no behavior-bearing top-level function bodies.
+- Split the largest router owner modules by cohesive behavior boundaries while
+  preserving CLI/runtime behavior, prompt asset hashes, install checks, and
+  FlowGuard StructureMesh/TestMesh evidence.
+- Prepared local v0.9.10 maintenance materials only; GitHub push, tag, and
+  remote release are intentionally deferred.
+
 ## 0.9.9 - 2026-05-17
 
 ### Added

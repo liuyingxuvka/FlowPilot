@@ -24,11 +24,11 @@ ROLE_OUTPUT_BINDING_REQUIRED_FIELDS = {
 }
 
 
-def _role_output_runtime_binding_issues(flowpilot_router, role_output_runtime):
+def _role_output_runtime_binding_issues(protocol_catalog, role_output_runtime):
     registry_path = ROOT / "skills/flowpilot/assets/runtime_kit/contracts/contract_index.json"
     registry = json.loads(registry_path.read_text(encoding="utf-8"))
     runtime_specs = getattr(role_output_runtime, "OUTPUT_TYPE_SPECS", {})
-    router_events = set(getattr(flowpilot_router, "EXTERNAL_EVENTS", {}))
+    router_events = set(getattr(protocol_catalog, "EXTERNAL_EVENTS", {}))
     issues = []
     for item in registry.get("contracts", []):
         if not isinstance(item, dict) or item.get("runtime_channel") != "role_output_runtime":
@@ -79,18 +79,23 @@ def run_checks(result: dict[str, object]) -> None:
         sys.path.insert(0, str(scripts_path))
         try:
             flowpilot_router = importlib.import_module("flowpilot_router")
+            flowpilot_router_control_transactions = importlib.import_module("flowpilot_router_control_transactions")
+            flowpilot_router_protocol_catalog = importlib.import_module("flowpilot_router_protocol_catalog")
+            flowpilot_router_route_frontier = importlib.import_module("flowpilot_router_route_frontier")
             packet_runtime = importlib.import_module("packet_runtime")
             role_output_runtime = importlib.import_module("role_output_runtime")
             flowpilot_runtime = importlib.import_module("flowpilot_runtime")
+            flowpilot_router_control_transactions._bind_router(flowpilot_router)
+            flowpilot_router_route_frontier._bind_router(flowpilot_router)
             schema_match = (
-                getattr(flowpilot_router, "PACKET_LEDGER_SCHEMA", None)
+                getattr(flowpilot_router_protocol_catalog, "PACKET_LEDGER_SCHEMA", None)
                 == getattr(packet_runtime, "PACKET_LEDGER_SCHEMA", None)
             )
             result["checks"].append(
                 {
                     "name": "flowpilot_router_packet_schema_matches_runtime",
                     "ok": schema_match,
-                    "router_schema": getattr(flowpilot_router, "PACKET_LEDGER_SCHEMA", None),
+                    "router_schema": getattr(flowpilot_router_protocol_catalog, "PACKET_LEDGER_SCHEMA", None),
                     "packet_runtime_schema": getattr(packet_runtime, "PACKET_LEDGER_SCHEMA", None),
                 }
             )
@@ -115,7 +120,10 @@ def run_checks(result: dict[str, object]) -> None:
             )
             if not role_output_runtime_ok:
                 result["ok"] = False
-            role_output_binding_issues = _role_output_runtime_binding_issues(flowpilot_router, role_output_runtime)
+            role_output_binding_issues = _role_output_runtime_binding_issues(
+                flowpilot_router_protocol_catalog,
+                role_output_runtime,
+            )
             role_output_binding_ok = not role_output_binding_issues
             result["checks"].append(
                 {
@@ -127,7 +135,7 @@ def run_checks(result: dict[str, object]) -> None:
             )
             if not role_output_binding_ok:
                 result["ok"] = False
-            control_transaction_issues = flowpilot_router._control_transaction_registry_issues()
+            control_transaction_issues = flowpilot_router_control_transactions._control_transaction_registry_issues()
             control_transaction_ok = not control_transaction_issues
             result["checks"].append(
                 {
@@ -139,7 +147,7 @@ def run_checks(result: dict[str, object]) -> None:
             )
             if not control_transaction_ok:
                 result["ok"] = False
-            route_action_policy_issues = flowpilot_router._route_action_policy_issues()
+            route_action_policy_issues = flowpilot_router_route_frontier._route_action_policy_issues(flowpilot_router)
             route_action_policy_ok = not route_action_policy_issues
             result["checks"].append(
                 {

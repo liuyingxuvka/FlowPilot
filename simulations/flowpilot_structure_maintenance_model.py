@@ -29,7 +29,7 @@ from flowguard import (
 
 ROUTER_PUBLIC_ENTRYPOINTS = (
     PublicEntrypointEvidence(
-        "flowpilot_router_imports",
+        "flowpilot_router_public_api",
         old_path="skills/flowpilot/assets/flowpilot_router.py",
         new_path="skills/flowpilot/assets/flowpilot_router.py",
         parity_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
@@ -53,7 +53,22 @@ ROUTER_STRUCTURE_PARTITIONS = (
         item_type="state",
         owner_module_id="router_facade",
         ownership="parent",
-        description="Root run-state coordination and final persistence remain in the facade.",
+        description="Root run-state coordination remains visible through the router skeleton.",
+    ),
+    StructurePartitionItem(
+        "router_public_api_allowlist",
+        item_type="public_entrypoint",
+        owner_module_id="router_facade",
+        ownership="parent",
+        public_surface=True,
+        description="The router skeleton exposes only the supported CLI/runtime allowlist.",
+    ),
+    StructurePartitionItem(
+        "router_owner_export_registry",
+        item_type="config",
+        owner_module_id="facade_exports",
+        old_path="flowpilot_router hand-written compatibility wrappers",
+        new_path="flowpilot_router_facade_exports",
     ),
     StructurePartitionItem(
         "external_event_intake",
@@ -75,7 +90,28 @@ ROUTER_STRUCTURE_PARTITIONS = (
         item_type="function_cluster",
         owner_module_id="bootloader",
         old_path="flowpilot_router.apply_bootloader_action",
-        new_path="flowpilot_router_startup_flow",
+        new_path="flowpilot_router_startup_bootloader",
+    ),
+    StructurePartitionItem(
+        "startup_intake_and_display",
+        item_type="function_cluster",
+        owner_module_id="startup_intake_display",
+        old_path="flowpilot_router_startup_flow intake/display helpers",
+        new_path="flowpilot_router_startup_intake + flowpilot_router_startup_display",
+    ),
+    StructurePartitionItem(
+        "startup_resume_and_recovery",
+        item_type="function_cluster",
+        owner_module_id="startup_role_recovery",
+        old_path="flowpilot_router_startup_flow resume and role-recovery helpers",
+        new_path="flowpilot_router_startup_role_recovery",
+    ),
+    StructurePartitionItem(
+        "startup_closure_and_fact_boundary",
+        item_type="function_cluster",
+        owner_module_id="startup_closure_fact_boundary",
+        old_path="flowpilot_router_startup_flow closure and fact-boundary helpers",
+        new_path="flowpilot_router_startup_closure + flowpilot_router_startup_fact_boundary",
     ),
     StructurePartitionItem(
         "router_protocol_catalog",
@@ -112,9 +148,46 @@ ROUTER_STRUCTURE_MODULES = (
         "router_facade",
         path="skills/flowpilot/assets/flowpilot_router.py",
         layer="parent",
-        owns_functions=("main", "reconcile_current_run", "validate_artifact"),
+        owns_functions=(),
         owns_state=("route_state_root",),
-        behavior_contracts=("public imports", "CLI", "final persistence"),
+        behavior_contracts=("public API allowlist", "CLI skeleton", "owner-export registry installation"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "facade_exports",
+        path="skills/flowpilot/assets/flowpilot_router_facade_exports.py",
+        owns_functions=("install_facade_exports", "resolve_facade_export"),
+        owns_config=("router_owner_export_registry",),
+        dependencies=("router_facade",),
+        behavior_contracts=("transitional owner lookup registry", "obsolete hand-written wrapper removal"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "router_cli",
+        path="skills/flowpilot/assets/flowpilot_router_cli.py",
+        owns_functions=("main", "parse_args"),
+        dependencies=("router_facade",),
+        behavior_contracts=("CLI command surface", "JSON error envelope"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "controller_runtime",
+        path="skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+        owns_functions=("next_action", "apply_action", "record_external_event", "run_until_wait"),
+        dependencies=("router_facade", "external_events"),
+        behavior_contracts=("high-level runtime API allowlist", "controller action loop"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "artifact_validation",
+        path="skills/flowpilot/assets/flowpilot_router_artifact_validation.py",
+        owns_functions=("validate_artifact",),
+        dependencies=("router_facade",),
+        behavior_contracts=("artifact validation public API", "hash validation"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
@@ -140,11 +213,38 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "bootloader",
-        path="skills/flowpilot/assets/flowpilot_router_startup_flow.py",
+        path="skills/flowpilot/assets/flowpilot_router_startup_bootloader.py",
         owns_functions=("apply_bootloader_action", "compute_bootloader_action"),
         owns_state=("bootloader_rows", "startup_review_projection"),
         owns_side_effects=("bootloader_row_write",),
         behavior_contracts=("startup ordering", "question stop boundary"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+    ),
+    ModuleStructureEvidence(
+        "startup_intake_display",
+        path="skills/flowpilot/assets/flowpilot_router_startup_intake.py",
+        owns_functions=("validate_startup_answer_payload", "write_startup_display_plan"),
+        owns_state=("startup_answers", "startup_display"),
+        owns_side_effects=("startup_answer_write", "startup_display_write"),
+        behavior_contracts=("startup answer validation", "display projection"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+    ),
+    ModuleStructureEvidence(
+        "startup_role_recovery",
+        path="skills/flowpilot/assets/flowpilot_router_startup_role_recovery.py",
+        owns_functions=("next_resume_action", "next_role_recovery_action"),
+        owns_state=("resume_role_recovery", "continuation_bindings"),
+        owns_side_effects=("role_recovery_write",),
+        behavior_contracts=("resume re-entry", "role recovery persistence"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+    ),
+    ModuleStructureEvidence(
+        "startup_closure_fact_boundary",
+        path="skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+        owns_functions=("startup_closure_reconciliation_status", "write_startup_fact_report"),
+        owns_state=("startup_closure_reconciliation", "startup_fact_boundary"),
+        owns_side_effects=("startup_fact_write", "closure_reconciliation_write"),
+        behavior_contracts=("startup closure reconciliation", "fact-boundary audit"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
     ),
     ModuleStructureEvidence(
@@ -923,7 +1023,7 @@ def router_target_structure() -> CodeStructureRecommendation:
             ROUTER_STRUCTURE_MODULES,
             public_entrypoints_by_module={
                 "router_facade": (
-                    "flowpilot_router_imports",
+                    "flowpilot_router_public_api",
                     "flowpilot_router_cli",
                 ),
             },
@@ -933,7 +1033,7 @@ def router_target_structure() -> CodeStructureRecommendation:
         side_effect_owner_map=_side_effect_owner_map(ROUTER_STRUCTURE_MODULES),
         config_owner_map=_config_owner_map(ROUTER_STRUCTURE_MODULES),
         public_entrypoint_map=(
-            ("flowpilot_router_imports", "router_facade"),
+            ("flowpilot_router_public_api", "router_facade"),
             ("flowpilot_router_cli", "router_facade"),
         ),
         facade_module_id="router_facade",
@@ -943,9 +1043,9 @@ def router_target_structure() -> CodeStructureRecommendation:
             "router public import and CLI facade parity",
         ),
         rationale=(
-            "The router target structure preserves the facade/root-state parent "
-            "and assigns event, daemon, startup, packet, terminal, and control "
-            "blocker regions to coarse child owners."
+            "The router target structure preserves a small skeleton/root-state "
+            "parent and assigns CLI, runtime API, event, daemon, startup, "
+            "packet, terminal, and control blocker regions to child owners."
         ),
         hierarchical_model_used=True,
     )

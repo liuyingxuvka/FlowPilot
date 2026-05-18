@@ -304,6 +304,7 @@ def _load_router(project_root: Path) -> Any:
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load router module from {router_path}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -543,12 +544,13 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
     assets_root = project_root / "skills" / "flowpilot" / "assets"
     router_source = (assets_root / "flowpilot_router.py").read_text(encoding="utf-8")
     live_context_source = router_source
-    for owner_name in (
-        "flowpilot_router_protocol_catalog.py",
-        "flowpilot_router_route_frontier.py",
-        "flowpilot_router_system_cards.py",
-    ):
-        owner_path = assets_root / owner_name
+    owner_paths = {
+        assets_root / "flowpilot_router_protocol_catalog.py",
+        *assets_root.glob("flowpilot_router_protocol_*.py"),
+        *assets_root.glob("flowpilot_router_route_frontier*.py"),
+        *assets_root.glob("flowpilot_router_system_cards*.py"),
+    }
+    for owner_path in sorted(owner_paths):
         if owner_path.exists():
             live_context_source += "\n" + owner_path.read_text(encoding="utf-8")
     prompt_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts"

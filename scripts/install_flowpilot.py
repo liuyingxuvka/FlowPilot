@@ -20,6 +20,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST_PATH = ROOT / "flowpilot.dependencies.json"
+SKILL_COPY_IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo")
 
 
 def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, Any]:
@@ -231,7 +232,7 @@ def download_github_skill(source: dict[str, Any], destination: Path) -> None:
         source_path = roots[0] / subpath if subpath else roots[0]
         if not (source_path / "SKILL.md").exists():
             raise FileNotFoundError(f"GitHub source did not contain {subpath}/SKILL.md")
-        shutil.copytree(source_path, destination)
+        shutil.copytree(source_path, destination, ignore=SKILL_COPY_IGNORE)
 
 
 def install_python_package(
@@ -298,7 +299,7 @@ def copy_repo_skill(dependency: dict[str, Any], destination: Path) -> None:
     source_path = ROOT / dependency["repo_path"]
     if not (source_path / "SKILL.md").exists():
         raise FileNotFoundError(f"missing repository skill source: {source_path}")
-    shutil.copytree(source_path, destination)
+    shutil.copytree(source_path, destination, ignore=SKILL_COPY_IGNORE)
 
 
 def install_skill(

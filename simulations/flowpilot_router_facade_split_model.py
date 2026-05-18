@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 from dataclasses import dataclass, replace
 import hashlib
 from pathlib import Path
@@ -27,6 +28,29 @@ from flowguard import (
 
 ROOT = Path(__file__).resolve().parents[1]
 PROMPT_MANIFEST = ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts" / "manifest.json"
+ROUTER_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+ROUTER_EXPORTS_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_facade_exports.py"
+
+ROUTER_PUBLIC_API_ALLOWLIST = (
+    "main",
+    "parse_args",
+    "next_action",
+    "apply_action",
+    "apply_controller_action",
+    "record_external_event",
+    "record_controller_action_receipt",
+    "run_until_wait",
+    "run_router_daemon",
+    "stop_router_daemon",
+    "foreground_controller_standby",
+    "controller_patrol_timer",
+    "reconcile_current_run",
+    "validate_artifact",
+    "write_role_output_envelope",
+    "RouterError",
+    "RouterLedgerCorruptionError",
+    "RouterLedgerWriteInProgress",
+)
 
 
 @dataclass(frozen=True)
@@ -41,22 +65,51 @@ class PromptAssetEvidence:
 
 @dataclass(frozen=True)
 class RouterFacadeSplitEvidence:
-    child_module_count: int = 40
-    max_child_module_count: int = 48
+    child_module_count: int = 102
+    max_child_module_count: int = 120
     micro_module_count: int = 0
     max_micro_module_count: int = 2
+    facade_line_count: int = 448
+    max_facade_line_count: int = 800
+    facade_top_level_function_count: int = 0
+    max_facade_top_level_function_count: int = 0
+    obsolete_compat_wrapper_count: int = 0
+    max_obsolete_compat_wrapper_count: int = 0
+    owner_export_registry_declared: bool = True
+    public_api_whitelist: tuple[str, ...] = ROUTER_PUBLIC_API_ALLOWLIST
+    required_public_api_names: tuple[str, ...] = ROUTER_PUBLIC_API_ALLOWLIST
     required_coarse_owner_ids: tuple[str, ...] = (
         "runtime_state",
         "startup_flow",
+        "startup_bootloader",
+        "startup_intake",
+        "startup_display",
+        "startup_role_recovery",
+        "startup_closure",
+        "startup_fact_boundary",
+        "startup_support",
         "controller_scheduler",
+        "controller_runtime",
         "controller_repair",
         "action_factory",
         "payload_contracts",
         "lifecycle_requests",
+        "lifecycle_support",
+        "control_transactions",
         "route_artifacts",
+        "route_completion_support",
         "system_cards",
         "expected_waits",
         "self_interrogation",
+        "proof_validation",
+        "model_gate_state",
+        "child_skill_capability",
+        "role_output_bridge",
+        "pm_role_followup",
+        "internal_actions",
+        "artifact_validation",
+        "cli",
+        "facade_exports",
         "work_packets",
         "events_repair",
         "event_dispatcher",
@@ -66,15 +119,35 @@ class RouterFacadeSplitEvidence:
     coarse_owner_ids: tuple[str, ...] = (
         "runtime_state",
         "startup_flow",
+        "startup_bootloader",
+        "startup_intake",
+        "startup_display",
+        "startup_role_recovery",
+        "startup_closure",
+        "startup_fact_boundary",
+        "startup_support",
         "controller_scheduler",
+        "controller_runtime",
         "controller_repair",
         "action_factory",
         "payload_contracts",
         "lifecycle_requests",
+        "lifecycle_support",
+        "control_transactions",
         "route_artifacts",
+        "route_completion_support",
         "system_cards",
         "expected_waits",
         "self_interrogation",
+        "proof_validation",
+        "model_gate_state",
+        "child_skill_capability",
+        "role_output_bridge",
+        "pm_role_followup",
+        "internal_actions",
+        "artifact_validation",
+        "cli",
+        "facade_exports",
         "work_packets",
         "events_repair",
         "event_dispatcher",
@@ -105,7 +178,7 @@ def prompt_assets_from_manifest() -> tuple[PromptAssetEvidence, ...]:
 
 ROUTER_FACADE_ENTRYPOINTS = (
     PublicEntrypointEvidence(
-        "flowpilot_router_import",
+        "flowpilot_router_public_api",
         old_path="skills/flowpilot/assets/flowpilot_router.py",
         new_path="skills/flowpilot/assets/flowpilot_router.py",
         parity_evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
@@ -130,6 +203,20 @@ ROUTER_FACADE_PARTITIONS = (
         owner_module_id="router_facade",
         ownership="parent",
         public_surface=True,
+    ),
+    StructurePartitionItem(
+        "public_api_allowlist",
+        item_type="public_entrypoint",
+        owner_module_id="router_facade",
+        ownership="parent",
+        public_surface=True,
+    ),
+    StructurePartitionItem(
+        "owner_export_registry",
+        item_type="config",
+        owner_module_id="facade_exports",
+        old_path="flowpilot_router hand-written private compatibility wrappers",
+        new_path="flowpilot_router_facade_exports",
     ),
     StructurePartitionItem(
         "route_state_root",
@@ -240,6 +327,48 @@ ROUTER_FACADE_PARTITIONS = (
         new_path="flowpilot_router_startup_flow",
     ),
     StructurePartitionItem(
+        "startup_bootloader",
+        item_type="function_cluster",
+        owner_module_id="startup_bootloader",
+        old_path="flowpilot_router_startup_flow bootloader action bodies",
+        new_path="flowpilot_router_startup_bootloader",
+    ),
+    StructurePartitionItem(
+        "startup_intake",
+        item_type="function_cluster",
+        owner_module_id="startup_intake",
+        old_path="flowpilot_router_startup_flow intake and answer bodies",
+        new_path="flowpilot_router_startup_intake",
+    ),
+    StructurePartitionItem(
+        "startup_display",
+        item_type="function_cluster",
+        owner_module_id="startup_display",
+        old_path="flowpilot_router_startup_flow display and route-sign bodies",
+        new_path="flowpilot_router_startup_display",
+    ),
+    StructurePartitionItem(
+        "startup_role_recovery",
+        item_type="function_cluster",
+        owner_module_id="startup_role_recovery",
+        old_path="flowpilot_router_startup_flow resume and role-recovery bodies",
+        new_path="flowpilot_router_startup_role_recovery",
+    ),
+    StructurePartitionItem(
+        "startup_closure",
+        item_type="function_cluster",
+        owner_module_id="startup_closure",
+        old_path="flowpilot_router_startup_flow startup closure reconciliation bodies",
+        new_path="flowpilot_router_startup_closure",
+    ),
+    StructurePartitionItem(
+        "startup_fact_boundary",
+        item_type="function_cluster",
+        owner_module_id="startup_fact_boundary",
+        old_path="flowpilot_router_startup_flow startup fact and boundary audit bodies",
+        new_path="flowpilot_router_startup_fact_boundary",
+    ),
+    StructurePartitionItem(
         "self_interrogation",
         item_type="function_cluster",
         owner_module_id="self_interrogation",
@@ -344,9 +473,143 @@ ROUTER_FACADE_MODULES = (
         "router_facade",
         path="skills/flowpilot/assets/flowpilot_router.py",
         layer="parent",
-        owns_functions=("main", "next_action", "apply_action", "record_external_event"),
+        owns_functions=(),
         owns_state=("route_state_root",),
-        behavior_contracts=("public imports", "CLI", "root run-state persistence"),
+        behavior_contracts=("public API allowlist", "CLI skeleton", "owner-export registry installation"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "facade_exports",
+        path="skills/flowpilot/assets/flowpilot_router_facade_exports.py",
+        owns_functions=("install_facade_exports", "resolve_facade_export"),
+        owns_config=("owner_export_registry",),
+        dependencies=("router_facade",),
+        behavior_contracts=("transitional owner export registry", "no hand-written wrapper bodies in router skeleton"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "cli",
+        path="skills/flowpilot/assets/flowpilot_router_cli.py",
+        owns_functions=("parse_args", "main"),
+        dependencies=("router_facade", "controller_runtime"),
+        behavior_contracts=("CLI command surface", "JSON error envelope", "runtime writer settlement"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "controller_runtime",
+        path="skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+        owns_functions=("next_action", "compute_controller_action", "apply_action", "apply_controller_action", "run_until_wait", "record_external_event"),
+        owns_state=("controller_runtime_loop",),
+        dependencies=("action_factory", "action_handlers", "action_providers", "event_dispatcher", "router_facade"),
+        behavior_contracts=("next action loop", "controller apply loop", "external event entrypoint", "safe run-until-wait folding"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "artifact_validation",
+        path="skills/flowpilot/assets/flowpilot_router_artifact_validation.py",
+        owns_functions=("validate_artifact", "_validate_hash_if_present", "_validate_role_output_hash_if_present"),
+        dependencies=("packet_runtime", "role_output_bridge", "router_facade"),
+        behavior_contracts=("artifact validation CLI/API", "hash validation", "role output envelope validation"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "control_transactions",
+        path="skills/flowpilot/assets/flowpilot_router_control_transactions.py",
+        owns_functions=("_control_transaction_registry_issues", "_validate_control_transaction_requirements"),
+        owns_config=("control_transaction_registry",),
+        behavior_contracts=("control transaction registry validation", "output contract coverage"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "internal_actions",
+        path="skills/flowpilot/assets/flowpilot_router_internal_actions.py",
+        owns_functions=("_consume_router_internal_mechanical_action", "_action_is_router_internal_mechanical"),
+        owns_state=("router_internal_mechanical_events",),
+        dependencies=("startup_flow", "router_facade"),
+        behavior_contracts=("internal mechanical action guard", "manifest/ledger check folding", "mechanical audit write"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "role_output_bridge",
+        path="skills/flowpilot/assets/flowpilot_router_role_output_bridge.py",
+        owns_functions=("write_role_output_envelope", "_try_reconcile_startup_fact_role_output_ledger"),
+        owns_state=("role_output_bridge_records",),
+        dependencies=("role_output_runtime", "system_cards", "router_facade"),
+        behavior_contracts=("role output envelope bridge", "startup fact role-output reconciliation", "prompt delivery context repair"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_support",
+        path="skills/flowpilot/assets/flowpilot_router_startup_support.py",
+        owns_functions=("_ensure_startup_run_state", "load_manifest_from_run", "manifest_card"),
+        owns_state=("startup_run_state_creation",),
+        dependencies=("runtime_state", "prompt_store", "router_facade"),
+        behavior_contracts=("startup run state creation", "prompt manifest lookup", "startup event digest helpers"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "lifecycle_support",
+        path="skills/flowpilot/assets/flowpilot_router_lifecycle_support.py",
+        owns_functions=("_write_host_heartbeat_binding", "_reset_resume_cycle_for_wakeup"),
+        owns_state=("lifecycle_support_records",),
+        dependencies=("lifecycle_requests", "router_facade"),
+        behavior_contracts=("heartbeat binding write", "resume cycle reset", "lifecycle record paths"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "child_skill_capability",
+        path="skills/flowpilot/assets/flowpilot_router_child_skill_capability.py",
+        owns_functions=("_approve_child_skill_manifest_for_route", "_sync_capability_evidence"),
+        owns_state=("child_skill_capability_evidence",),
+        dependencies=("route_artifacts", "router_facade"),
+        behavior_contracts=("child-skill manifest approval", "capability evidence sync"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "route_completion_support",
+        path="skills/flowpilot/assets/flowpilot_router_route_completion_support.py",
+        owns_functions=("_active_node_completion_write_missing", "_node_completion_event_advanced_to_next_node"),
+        owns_state=("route_completion_support",),
+        dependencies=("route_frontier", "router_facade"),
+        behavior_contracts=("active node completion helper paths", "resume completion predicates"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "model_gate_state",
+        path="skills/flowpilot/assets/flowpilot_router_model_gate_state.py",
+        owns_functions=("_sync_model_gate_alias_flags", "_require_single_active_model_miss_review_block"),
+        owns_state=("model_gate_alias_flags",),
+        behavior_contracts=("model gate alias flag sync", "model-miss block uniqueness"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "pm_role_followup",
+        path="skills/flowpilot/assets/flowpilot_router_pm_role_followup.py",
+        owns_functions=("_validate_pm_role_work_request_against_followup", "_pm_role_work_channel_open"),
+        dependencies=("work_packets", "events_repair", "router_facade"),
+        behavior_contracts=("PM role-work follow-up validation", "model-miss follow-up channel check"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "proof_validation",
+        path="skills/flowpilot/assets/flowpilot_router_proof_validation.py",
+        owns_functions=("_validate_router_owned_check_proof",),
+        dependencies=("self_interrogation", "packet_runtime", "router_facade"),
+        behavior_contracts=("router-owned proof validation", "non-self-attested evidence requirement"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
@@ -497,10 +760,70 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "startup_flow",
         path="skills/flowpilot/assets/flowpilot_router_startup_flow.py",
-        owns_functions=("compute_bootloader_action", "apply_bootloader_action", "_next_resume_action", "_next_startup_display_action"),
-        owns_state=("startup_bootloader", "startup_answers", "resume_role_recovery"),
-        dependencies=("runtime_state", "controller_scheduler", "router_facade"),
-        behavior_contracts=("startup bootloader action ordering", "startup/resume phase action selection", "role recovery persistence"),
+        owns_functions=(),
+        owns_state=(),
+        dependencies=("startup_bootloader", "startup_intake", "startup_display", "startup_role_recovery", "startup_closure", "startup_fact_boundary"),
+        behavior_contracts=("startup owner-module binding", "startup group ownership boundary"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_bootloader",
+        path="skills/flowpilot/assets/flowpilot_router_startup_bootloader.py",
+        owns_functions=("compute_bootloader_action", "apply_bootloader_action", "_next_bootloader_open_action"),
+        owns_state=("startup_bootloader",),
+        dependencies=("runtime_state", "payload_contracts", "router_facade"),
+        behavior_contracts=("bootloader action ordering", "daemon-control bootstrap", "startup question stop boundary"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_intake",
+        path="skills/flowpilot/assets/flowpilot_router_startup_intake.py",
+        owns_functions=("_validate_startup_answer_payload", "_materialize_startup_intake_answers", "_ensure_startup_intake_ui"),
+        owns_state=("startup_answers", "startup_intake_ui"),
+        dependencies=("startup_support", "router_facade"),
+        behavior_contracts=("startup answer validation", "intake UI materialization", "deterministic bootstrap seed"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_display",
+        path="skills/flowpilot/assets/flowpilot_router_startup_display.py",
+        owns_functions=("_next_startup_display_action", "_write_startup_display_plan", "_ensure_route_sign_display_sync"),
+        owns_state=("startup_display", "route_sign_display"),
+        dependencies=("startup_support", "payload_contracts", "router_facade"),
+        behavior_contracts=("startup display plan", "user dialogue projection", "route sign synchronization"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_role_recovery",
+        path="skills/flowpilot/assets/flowpilot_router_startup_role_recovery.py",
+        owns_functions=("_next_resume_action", "_next_role_recovery_action", "_record_role_spawn_intent"),
+        owns_state=("resume_role_recovery", "role_spawn_intents", "continuation_bindings"),
+        dependencies=("controller_scheduler", "runtime_state", "router_facade"),
+        behavior_contracts=("resume action selection", "role recovery persistence", "continuation binding rehydration"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_closure",
+        path="skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+        owns_functions=("_startup_closure_reconciliation_status", "_next_startup_closure_action"),
+        owns_state=("startup_closure_reconciliation", "heartbeat_host_binding"),
+        dependencies=("lifecycle_support", "terminal_ledger", "router_facade"),
+        behavior_contracts=("startup closure reconciliation", "heartbeat binding readiness", "dirty closure invalidation"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "startup_fact_boundary",
+        path="skills/flowpilot/assets/flowpilot_router_startup_fact_boundary.py",
+        owns_functions=("_next_startup_fact_boundary_action", "_next_startup_mechanical_audit_action", "_write_startup_fact_report"),
+        owns_state=("startup_fact_boundary", "startup_mechanical_audit", "controller_boundary_confirmation"),
+        dependencies=("controller_boundary", "role_output_bridge", "router_facade"),
+        behavior_contracts=("startup fact audit", "controller boundary confirmation", "mechanical audit repair actions"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
@@ -672,7 +995,21 @@ ROUTER_FACADE_MODULES = (
 
 
 ROUTER_FACADE_TARGET_RATIONALES = {
-    "router_facade": "Retains public import, CLI, and root state coordination while delegating owned regions.",
+    "router_facade": "Keeps the executable router file as a small public skeleton with no behavior bodies.",
+    "facade_exports": "Owns the explicit transitional owner-export registry that replaces hand-written wrappers.",
+    "cli": "Owns command parsing and CLI JSON/error envelope behavior.",
+    "controller_runtime": "Owns the high-level next/apply/event controller loop entrypoints.",
+    "artifact_validation": "Owns artifact validation and hash checks exposed through the CLI/API.",
+    "control_transactions": "Owns control transaction registry validation and contract coverage.",
+    "internal_actions": "Owns Router-internal mechanical action guards and consumption.",
+    "role_output_bridge": "Owns role-output envelope bridge behavior and startup fact reconciliation.",
+    "startup_support": "Owns startup run-state support and prompt manifest/card lookup helpers.",
+    "lifecycle_support": "Owns heartbeat binding and lifecycle support helpers moved out of the skeleton.",
+    "child_skill_capability": "Owns child-skill manifest approval and capability evidence sync.",
+    "route_completion_support": "Owns active-node completion helper paths and resume predicates.",
+    "model_gate_state": "Owns model gate alias flag sync and model-miss block checks.",
+    "pm_role_followup": "Owns PM role-work follow-up validation for model-miss repair flows.",
+    "proof_validation": "Owns router-owned proof validation.",
     "prompt_store": "Owns prompt manifest loading, template rendering, and prompt hash authority.",
     "prompt_delivery": "Owns prompt-backed delivery text used by cards, controller tables, and startup heartbeats.",
     "prompt_assets": "Owns external prompt asset files and install-time prompt freshness evidence.",
@@ -684,7 +1021,13 @@ ROUTER_FACADE_TARGET_RATIONALES = {
     "daemon_runtime": "Owns daemon lock, status, and tick lifecycle helpers.",
     "runtime_state": "Owns bootstrap and run-state factories plus persistence wrappers.",
     "protocol_catalog": "Owns router schemas, action catalogs, event metadata, gate contracts, and alias tables.",
-    "startup_flow": "Owns startup, bootloader, resume, and role-recovery action bodies.",
+    "startup_flow": "Groups startup owner-module binding without retaining action bodies.",
+    "startup_bootloader": "Owns bootloader action ordering and daemon-control bootstrap behavior.",
+    "startup_intake": "Owns startup answer validation, intake UI materialization, and bootstrap seed capture.",
+    "startup_display": "Owns startup display plans, user-dialogue projection, and route-sign synchronization.",
+    "startup_role_recovery": "Owns resume, role recovery, role spawn normalization, and continuation binding rehydration.",
+    "startup_closure": "Owns startup closure reconciliation and heartbeat binding readiness checks.",
+    "startup_fact_boundary": "Owns startup fact audit, controller-boundary confirmation, and mechanical-audit repair actions.",
     "controller_scheduler": "Owns controller scheduling, receipt reconciliation, standby, and patrol behavior.",
     "controller_repair": "Owns controller deliverable repair, postcondition reclaim, and mail-delivery folding.",
     "action_factory": "Owns action envelope construction and dispatch-recipient gate policy.",
@@ -703,6 +1046,26 @@ ROUTER_FACADE_TARGET_RATIONALES = {
 
 
 ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
+    ("public_api_allowlist", "router_facade"),
+    ("owner_export_registry", "facade_exports"),
+    ("parse_args", "cli"),
+    ("main", "cli"),
+    ("next_action", "controller_runtime"),
+    ("apply_action", "controller_runtime"),
+    ("apply_controller_action", "controller_runtime"),
+    ("record_external_event", "controller_runtime"),
+    ("run_until_wait", "controller_runtime"),
+    ("validate_artifact", "artifact_validation"),
+    ("control_transaction_registry", "control_transactions"),
+    ("router_internal_mechanical_actions", "internal_actions"),
+    ("role_output_bridge", "role_output_bridge"),
+    ("startup_support", "startup_support"),
+    ("lifecycle_support", "lifecycle_support"),
+    ("child_skill_capability", "child_skill_capability"),
+    ("route_completion_support", "route_completion_support"),
+    ("model_gate_state", "model_gate_state"),
+    ("pm_role_followup", "pm_role_followup"),
+    ("proof_validation", "proof_validation"),
     ("prompt_manifest_loading", "prompt_store"),
     ("card_post_ack_policy", "prompt_delivery"),
     ("controller_table_prompt", "prompt_delivery"),
@@ -720,7 +1083,13 @@ ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
     ("_gate_contract_for_card", "protocol_catalog"),
     ("_gate_contract_for_event", "protocol_catalog"),
     ("_gate_completion_wait_group", "protocol_catalog"),
-    ("startup_flow", "startup_flow"),
+    ("startup_flow_group", "startup_flow"),
+    ("startup_bootloader", "startup_bootloader"),
+    ("startup_intake", "startup_intake"),
+    ("startup_display", "startup_display"),
+    ("startup_role_recovery", "startup_role_recovery"),
+    ("startup_closure", "startup_closure"),
+    ("startup_fact_boundary", "startup_fact_boundary"),
     ("self_interrogation", "self_interrogation"),
     ("payload_contracts", "payload_contracts"),
     ("controller_scheduler", "controller_scheduler"),
@@ -785,7 +1154,7 @@ def router_facade_target_structure() -> CodeStructureRecommendation:
                 owns_side_effects=module.owns_side_effects,
                 owns_config=module.owns_config,
                 public_entrypoints=(
-                    ("flowpilot_router_import", "flowpilot_router_cli")
+                    ("flowpilot_router_public_api", "flowpilot_router_cli")
                     if module.module_id == "router_facade"
                     else ()
                 ),
@@ -800,7 +1169,7 @@ def router_facade_target_structure() -> CodeStructureRecommendation:
         config_owner_map=_config_owner_map(ROUTER_FACADE_MODULES),
         public_entrypoint_map=(
             ("public_router_facade", "router_facade"),
-            ("flowpilot_router_import", "router_facade"),
+            ("flowpilot_router_public_api", "router_facade"),
             ("flowpilot_router_cli", "router_facade"),
         ),
         facade_module_id="router_facade",
@@ -811,9 +1180,10 @@ def router_facade_target_structure() -> CodeStructureRecommendation:
             "install prompt asset audit",
         ),
         rationale=(
-            "FlowGuard target structure keeps the router facade as the public "
-            "boundary and assigns prompt, runtime, startup, packet, repair, "
-            "route, and terminal ownership to coarse child modules."
+            "FlowGuard target structure keeps the router file as a public "
+            "skeleton with an explicit API allowlist and assigns prompt, "
+            "runtime, startup, packet, repair, route, and terminal ownership "
+            "to child modules."
         ),
         hierarchical_model_used=True,
     )
@@ -839,12 +1209,33 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
         partition_items=(
             TestPartitionItem("prompt_store", owner_suite_id="prompt_store_unit"),
             TestPartitionItem("router_facade_prompt_delivery", owner_suite_id="router_boundaries"),
+            TestPartitionItem("public_api_allowlist", owner_suite_id="router_boundaries"),
+            TestPartitionItem("owner_export_registry", owner_suite_id="router_boundaries"),
+            TestPartitionItem("cli", owner_suite_id="startup_runtime"),
+            TestPartitionItem("controller_runtime", owner_suite_id="controller_runtime"),
+            TestPartitionItem("artifact_validation", owner_suite_id="router_boundaries"),
+            TestPartitionItem("control_transactions", owner_suite_id="install_checks"),
+            TestPartitionItem("internal_actions", owner_suite_id="controller_runtime"),
+            TestPartitionItem("role_output_bridge", owner_suite_id="router_boundaries"),
+            TestPartitionItem("startup_support", owner_suite_id="startup_runtime"),
+            TestPartitionItem("lifecycle_support", owner_suite_id="event_dispatch_runtime"),
+            TestPartitionItem("child_skill_capability", owner_suite_id="route_runtime"),
+            TestPartitionItem("route_completion_support", owner_suite_id="route_runtime"),
+            TestPartitionItem("model_gate_state", owner_suite_id="event_dispatch_runtime"),
+            TestPartitionItem("pm_role_followup", owner_suite_id="packet_runtime"),
+            TestPartitionItem("proof_validation", owner_suite_id="router_boundaries"),
             TestPartitionItem("card_return_settlement", owner_suite_id="router_ack_return"),
             TestPartitionItem("event_identity", owner_suite_id="event_contract"),
             TestPartitionItem("daemon_runtime", owner_suite_id="startup_daemon"),
             TestPartitionItem("runtime_state", owner_suite_id="startup_runtime"),
             TestPartitionItem("router_protocol_catalog", owner_suite_id="router_quality_gates"),
             TestPartitionItem("startup_flow", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_bootloader", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_intake", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_display", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_role_recovery", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_closure", owner_suite_id="startup_runtime"),
+            TestPartitionItem("startup_fact_boundary", owner_suite_id="startup_runtime"),
             TestPartitionItem("self_interrogation", owner_suite_id="startup_runtime"),
             TestPartitionItem("payload_contracts", owner_suite_id="router_boundaries"),
             TestPartitionItem("controller_scheduler", owner_suite_id="controller_runtime"),
@@ -1031,12 +1422,33 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
             covered_partition_item_ids=(
                 "prompt_store",
                 "router_facade_prompt_delivery",
+                "public_api_allowlist",
+                "owner_export_registry",
+                "cli",
+                "controller_runtime",
+                "artifact_validation",
+                "control_transactions",
+                "internal_actions",
+                "role_output_bridge",
+                "startup_support",
+                "lifecycle_support",
+                "child_skill_capability",
+                "route_completion_support",
+                "model_gate_state",
+                "pm_role_followup",
+                "proof_validation",
                 "card_return_settlement",
                 "event_identity",
                 "daemon_runtime",
                 "runtime_state",
                 "router_protocol_catalog",
                 "startup_flow",
+                "startup_bootloader",
+                "startup_intake",
+                "startup_display",
+                "startup_role_recovery",
+                "startup_closure",
+                "startup_fact_boundary",
                 "self_interrogation",
                 "payload_contracts",
                 "controller_repair",
@@ -1062,6 +1474,12 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 "runtime_state",
                 "router_protocol_catalog",
                 "startup_flow",
+                "startup_bootloader",
+                "startup_intake",
+                "startup_display",
+                "startup_role_recovery",
+                "startup_closure",
+                "startup_fact_boundary",
                 "self_interrogation",
                 "payload_contracts",
                 "controller_repair",
@@ -1089,7 +1507,19 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
 
 
 def valid_split_evidence() -> RouterFacadeSplitEvidence:
-    return RouterFacadeSplitEvidence(prompt_assets=prompt_assets_from_manifest())
+    router_text = ROUTER_PATH.read_text(encoding="utf-8")
+    router_tree = ast.parse(router_text)
+    facade_top_level_function_count = sum(
+        isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        for node in router_tree.body
+    )
+    return RouterFacadeSplitEvidence(
+        child_module_count=len(tuple((ROOT / "skills" / "flowpilot" / "assets").glob("flowpilot_router*.py"))),
+        facade_line_count=router_text.count("\n") + 1,
+        facade_top_level_function_count=facade_top_level_function_count,
+        owner_export_registry_declared=ROUTER_EXPORTS_PATH.exists(),
+        prompt_assets=prompt_assets_from_manifest(),
+    )
 
 
 def review_split_evidence(evidence: RouterFacadeSplitEvidence) -> dict[str, Any]:
@@ -1108,6 +1538,53 @@ def review_split_evidence(evidence: RouterFacadeSplitEvidence) -> dict[str, Any]
                 "code": "one_function_file_split",
                 "severity": "blocker",
                 "message": "split creates one-function files instead of cohesive behavior owners",
+            }
+        )
+    if evidence.facade_line_count > evidence.max_facade_line_count:
+        findings.append(
+            {
+                "code": "facade_line_budget_exceeded",
+                "severity": "blocker",
+                "line_count": evidence.facade_line_count,
+                "max_line_count": evidence.max_facade_line_count,
+                "message": "router skeleton is too large to remain a readable public entrypoint",
+            }
+        )
+    if evidence.facade_top_level_function_count > evidence.max_facade_top_level_function_count:
+        findings.append(
+            {
+                "code": "facade_function_budget_exceeded",
+                "severity": "blocker",
+                "function_count": evidence.facade_top_level_function_count,
+                "max_function_count": evidence.max_facade_top_level_function_count,
+                "message": "router skeleton still owns behavior functions instead of delegating to owner modules",
+            }
+        )
+    if evidence.obsolete_compat_wrapper_count > evidence.max_obsolete_compat_wrapper_count:
+        findings.append(
+            {
+                "code": "retained_obsolete_compat_wrapper",
+                "severity": "blocker",
+                "wrapper_count": evidence.obsolete_compat_wrapper_count,
+                "message": "obsolete hand-written compatibility wrappers remain in the router skeleton",
+            }
+        )
+    if not evidence.owner_export_registry_declared:
+        findings.append(
+            {
+                "code": "owner_export_registry_missing",
+                "severity": "blocker",
+                "message": "router skeleton needs an explicit owner-export registry for transitional internal lookups",
+            }
+        )
+    missing_public_api = sorted(set(evidence.required_public_api_names) - set(evidence.public_api_whitelist))
+    if missing_public_api:
+        findings.append(
+            {
+                "code": "missing_public_api_whitelist_entry",
+                "severity": "blocker",
+                "missing_names": missing_public_api,
+                "message": "router public API whitelist is missing required CLI/runtime names",
             }
         )
     missing_coarse_owners = sorted(set(evidence.required_coarse_owner_ids) - set(evidence.coarse_owner_ids))
@@ -1175,7 +1652,11 @@ def review_split_evidence(evidence: RouterFacadeSplitEvidence) -> dict[str, Any]
         "asset_count": len(evidence.prompt_assets),
         "child_module_count": evidence.child_module_count,
         "coarse_owner_count": len(evidence.coarse_owner_ids),
+        "facade_line_count": evidence.facade_line_count,
+        "facade_top_level_function_count": evidence.facade_top_level_function_count,
         "micro_module_count": evidence.micro_module_count,
+        "obsolete_compat_wrapper_count": evidence.obsolete_compat_wrapper_count,
+        "public_api_whitelist_count": len(evidence.public_api_whitelist),
     }
 
 
@@ -1187,6 +1668,16 @@ def split_hazard_evidence(name: str) -> RouterFacadeSplitEvidence:
         return replace(evidence, micro_module_count=940)
     if name == "missing_coarse_phase_owner":
         return replace(evidence, coarse_owner_ids=evidence.coarse_owner_ids[:-1])
+    if name == "facade_line_budget_exceeded":
+        return replace(evidence, facade_line_count=4096)
+    if name == "facade_function_budget_exceeded":
+        return replace(evidence, facade_top_level_function_count=73)
+    if name == "retained_obsolete_compat_wrapper":
+        return replace(evidence, obsolete_compat_wrapper_count=1)
+    if name == "owner_export_registry_missing":
+        return replace(evidence, owner_export_registry_declared=False)
+    if name == "missing_public_api_whitelist_entry":
+        return replace(evidence, public_api_whitelist=evidence.public_api_whitelist[1:])
     if name == "missing_prompt_asset":
         assets = evidence.prompt_assets + (
             PromptAssetEvidence("known_bad.missing", "prompts/missing.md", "bad"),
@@ -1211,6 +1702,11 @@ SPLIT_HAZARDS = (
     "micro_module_explosion",
     "one_function_file_split",
     "missing_coarse_phase_owner",
+    "facade_line_budget_exceeded",
+    "facade_function_budget_exceeded",
+    "retained_obsolete_compat_wrapper",
+    "owner_export_registry_missing",
+    "missing_public_api_whitelist_entry",
     "missing_prompt_asset",
     "stale_prompt_hash",
     "unsafe_inline_prompt_fallback",
