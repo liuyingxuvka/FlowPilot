@@ -18,7 +18,7 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [],
     "actionable_summary": [],
-    "covered_surface_count": 697,
+    "covered_surface_count": 698,
     "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [],
@@ -208,13 +208,13 @@
     "ok": true,
     "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 697,
+    "surface_count": 698,
     "surface_counts": {
       "compatibility_facade": 102,
       "model_check_runner": 83,
       "model_check_runner_helper": 18,
       "owner_module": 222,
-      "script_entrypoint": 17,
+      "script_entrypoint": 18,
       "test_tier": 15,
       "test_tier_command": 240
     },
@@ -11141,6 +11141,28 @@
         "split_threshold": 650,
         "surface_id": "script:flowpilot_lifecycle",
         "surface_owner": "script:flowpilot_lifecycle"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "script_entrypoint",
+        "line_count": 294,
+        "max_severity": "none",
+        "model_binding": "maintenance_map_cli",
+        "name": "flowpilot_maintenance_map",
+        "parse_error": "",
+        "path": "scripts/flowpilot_maintenance_map.py",
+        "release_relevance": "public_cli",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "script:flowpilot_maintenance_map",
+        "surface_owner": "script:flowpilot_maintenance_map"
       },
       {
         "covered": true,

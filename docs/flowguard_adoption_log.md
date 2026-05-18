@@ -15344,6 +15344,7 @@ Skipped steps:
 ### Next Actions
 - Continue direct external-contract tests for the remaining router owner `missing_test` surfaces, starting with CLI/control transaction/scheduler receipt modules that have clear observable boundaries.
 - Split only those large modules whose model block and direct external-contract evidence are already stable.
+
 ## complete-flowpilot-diagnostic-convergence-2026-05-18 - Full diagnostic convergence
 
 - Project: FlowPilot
@@ -15400,6 +15401,49 @@ Skipped steps:
 ### Next Actions
 - Split the seven validation runners only under a dedicated `flowpilot_model_check_runner_structure_split` StructureMesh target.
 - Split runtime owner modules in small claimed batches, starting from low-conflict contract-pinned surfaces.
+
+## shared-skill-maintenance-log-2026-05-18 - PM shared maintenance log bookkeeping
+
+- Project: FlowPilot
+- Trigger reason: User requested a minimal PM-owned Spark-style shared maintenance log entry for each formal FlowPilot run.
+- Status: implemented, validated, and synced to the local installed FlowPilot skill
+- Skill decision: use_flowguard:behavior_flow + optional OpenSpec handoff
+- OpenSpec change: add-shared-skill-maintenance-log
+- FlowGuard schema: 1.0
+
+### Model Files
+- `simulations/flowpilot_shared_maintenance_log_model.py`
+- `simulations/run_flowpilot_shared_maintenance_log_checks.py`
+- `simulations/flowpilot_shared_maintenance_log_results.json`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python simulations\run_flowpilot_shared_maintenance_log_checks.py --json-out simulations\flowpilot_shared_maintenance_log_results.json`
+- OK: `python -m py_compile simulations\flowpilot_shared_maintenance_log_model.py simulations\run_flowpilot_shared_maintenance_log_checks.py skills\flowpilot\assets\flowpilot_router_work_packets_material.py`
+- OK: `python -m unittest tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_material_understanding_accepts_file_backed_memo_payload`
+- OK: `openspec validate add-shared-skill-maintenance-log --type change --strict --json`
+- OK: `python scripts\check_install.py --json`
+- OK: `python simulations\run_meta_checks.py` in background, artifacts under `tmp\flowguard_background`, status `completed`, exit code `0`, `valid_proof_reused=false`.
+- OK: `python simulations\run_capability_checks.py` in background, artifacts under `tmp\flowguard_background`, status `completed`, exit code `0`, `valid_proof_reused=false`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- The safe model accepts existing shared-log append and missing-log create-and-append paths.
+- Known-bad hazards are rejected for FlowPilot-private logs, Controller-owned semantic summaries, Router semantic validation, missing lookup fields, missing PM report preservation, reviewer/FlowGuard/route/acceptance gates, replacement of skill-improvement reports, and startup-time final-report requirements.
+
+### Counterexamples
+- `flowpilot_private_log`
+- `controller_writes_semantic_summary`
+- `bookkeeping_acceptance_gate`
+- `final_report_required_at_start`
+
+### Friction Points
+- The public runtime test module uses dynamic `load_tests`; direct class selection must target `tests.router_runtime.material_modeling.MaterialModelingRuntimeTests`.
+
+### Next Actions
+- No follow-up is required for this bookkeeping change. Archive the OpenSpec change only after the surrounding workstream is ready to archive changes.
 
 ## continue-flowpilot-structure-maintenance-2026-05-18 - StructureMesh split batch
 
@@ -15472,6 +15516,48 @@ Skipped steps:
 - Split the remaining six validation runners in dedicated StructureMesh batches.
 - Split runtime owner modules only in claimed batches after confirming external-contract parity for the specific owner surface.
 
+## consider-flowguard-satellite-skills-2026-05-18 - PM child-skill selection reminder
+
+- Project: FlowPilot
+- Trigger reason: User requested a minimal OpenSpec + FlowGuard-backed prompt refinement so PM considers FlowGuard satellite skills during child-skill selection without adding a trigger matrix or duplicate gates.
+- Status: implemented, validated, and synced to the local installed FlowPilot skill
+- Skill decision: use_flowguard:capability-routing prompt governance
+- OpenSpec change: consider-flowguard-satellite-skills
+- FlowGuard schema: 1.0
+
+### Model Files
+- `simulations/flowpilot_planning_quality_model.py`
+- `simulations/run_flowpilot_planning_quality_checks.py`
+- `simulations/run_card_instruction_coverage_checks.py`
+- `simulations/run_capability_checks.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python -m unittest tests.test_flowpilot_planning_quality`
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py`
+- OK: `python simulations\run_card_instruction_coverage_checks.py`
+- OK: `openspec status --change "consider-flowguard-satellite-skills" --json`
+- OK: `openspec validate --changes "consider-flowguard-satellite-skills" --json`
+- OK: `python simulations\run_capability_checks.py` in background, artifacts under `tmp\flowguard_background`, status `complete`, exit code `0`, `valid_proof_reuse=false`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+
+### Findings
+- PM child-skill selection now includes one short reminder to consider FlowGuard satellite skills as process-support candidates.
+- The PM child-skill selection template mirrors that reminder in `selection_rule`.
+- Existing selected-skill, role-skill binding, packet, evidence, and reviewer/officer checking mechanics remain unchanged.
+
+### Counterexamples
+- `process_support_skill_ignored`
+- `role_skill_binding_missing`
+- `role_skill_use_self_attested`
+
+### Friction Points
+- The repository already had unrelated peer-agent modifications. This change avoided those files except for the shared adoption log append.
+
+### Next Actions
+- No additional route or runtime gate is needed unless a future model/test miss shows the lightweight selection reminder is insufficient.
+
 ## finish-flowpilot-structure-debt-2026-05-18 - Full model-code-test structure debt closure
 
 - Project: FlowPilot
@@ -15528,3 +15614,66 @@ Skipped steps:
 
 - No remaining model-code-test coverage or split-debt action is reported by the current full diagnostic.
 - Future large runtime splits should keep facade parity tests and source-contract scan paths updated in the same change.
+
+## complete-flowpilot-maintenance-ideal-state-2026-05-18 - Maintenance map and bounded split convergence
+
+- Project: FlowPilot
+- Trigger reason: User asked to include completed peer-agent changes, finish the remaining ideal-state maintenance work, synchronize the installed local skill, and commit the validated local repository state without publishing to GitHub.
+- Status: implemented, validated locally, synced to the installed FlowPilot skill, and ready for local commit
+- Skill decision: use_flowguard:model-code-test alignment + StructureMesh + TestMesh + Development Process Flow
+- OpenSpec change: complete-flowpilot-maintenance-ideal-state
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Added generated maintenance artifacts: `docs/flowpilot_maintenance_map.json` and `docs/flowpilot_maintenance_map.md`.
+- Added `scripts/flowpilot_maintenance_map.py` and maintenance-tool tests for owner modules, facades, script entries, test tiers, diagnostic coverage, and split decisions.
+- Split `scripts/test_tier/definitions.py` into command-builder and command-group modules while preserving the public `commands_for_tier()` and `tier_names()` facade.
+- Split large declarative model catalogs out of `flowpilot_router_facade_split_model.py`, `flowpilot_structure_maintenance_model.py`, and `flowpilot_model_test_alignment_source_contracts.py` while preserving old model import paths.
+- Adopted peer-completed shared-maintenance-log and FlowGuard satellite-skill reminder changes after focused OpenSpec and FlowGuard validation.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate add-shared-skill-maintenance-log --strict`.
+- OK: `openspec validate consider-flowguard-satellite-skills --strict`.
+- OK: `python simulations\run_flowpilot_shared_maintenance_log_checks.py --json-out simulations\flowpilot_shared_maintenance_log_results.json`.
+- OK: `python simulations\run_flowpilot_planning_quality_checks.py`.
+- OK: `python simulations\run_card_instruction_coverage_checks.py`.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_test_tiering_checks.py --json-out simulations\flowpilot_test_tiering_results.json`.
+- OK: `python simulations\run_flowpilot_slow_test_contract_checks.py --json-out simulations\flowpilot_slow_test_contract_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_test_tiers tests.test_flowpilot_maintenance_tools tests.test_flowpilot_model_test_alignment tests.test_flowpilot_script_surface_contracts -v`.
+- OK: `python scripts\run_test_tier.py --tier fast --json`.
+- OK: `python simulations\run_meta_checks.py --fast` reused current Meta thin-parent proof.
+- OK: `python simulations\run_capability_checks.py --fast` reused current Capability thin-parent proof.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- Runtime owner modules remain below the StructureMesh line threshold: 252 runtime owner modules, zero over threshold in the maintenance map.
+- The full model-code-test diagnostic now reports 698 covered surfaces, zero gap surfaces, zero actionable findings, and `release_convergence_ok=true`.
+- The test-tier facade is now small and grouped by command family; `--list-tiers`, fast dry-run, focused unit tests, and the fast tier all preserved behavior.
+- Large test files remain explicit watchlist items rather than blind-split targets because their fixture and router-runtime coupling needs contract-family splitting before movement.
+- Local installed FlowPilot content is fresh against the repository source.
+
+### Counterexamples
+
+- `flowpilot_maintenance_map` initially appeared as code without a model binding; adding `maintenance_map_cli` to the diagnostic binding table restored full coverage.
+- Stale diagnostic result JSON caused the new maintenance-map test to fail until `run_flowpilot_model_test_alignment_checks.py` refreshed the source of truth.
+- StructureMesh and TestMesh hazards for missing owners, stale evidence, missing facades, removed entrypoints, and progress-only background evidence still fail as expected.
+
+### Friction Points
+
+- The model-test alignment source-contract catalog is still large after splitting because most rows are declarative contract data, but the public facade is now only the plan builder and audit entrypoint.
+- The biggest test files should not be split until the next pass derives a fixture ownership map and externally visible contract-family boundaries.
+
+### Next Actions
+
+- For future cleanup, prioritize `scripts/install_checks/common.py`, install-check runtime helpers, and large router-runtime test files only after a scoped StructureMesh/TestMesh plan names exact owner boundaries.
+- Keep the generated maintenance map refreshed after any new public script, model facade, runtime owner, or test tier is added.

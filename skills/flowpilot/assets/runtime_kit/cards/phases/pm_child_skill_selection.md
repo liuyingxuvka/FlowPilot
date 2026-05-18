@@ -23,6 +23,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 Select child skills from product need and FlowPilot process need, not from raw
 availability.
+Also consider FlowGuard satellite skills as process-support candidates.
 
 Read:
 

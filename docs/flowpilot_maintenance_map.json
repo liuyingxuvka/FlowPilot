@@ -1,0 +1,1216 @@
+{
+  "categories": {
+    "runtime_assets": {
+      "file_count": 324,
+      "largest": [
+        {
+          "lines": 450,
+          "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+        },
+        {
+          "lines": 445,
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py"
+        },
+        {
+          "lines": 439,
+          "path": "skills/flowpilot/assets/card_runtime_bundle.py"
+        },
+        {
+          "lines": 428,
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py"
+        },
+        {
+          "lines": 427,
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_basic.py"
+        },
+        {
+          "lines": 425,
+          "path": "skills/flowpilot/assets/flowpilot_router_io.py"
+        },
+        {
+          "lines": 418,
+          "path": "skills/flowpilot/assets/flowpilot_user_flow_tree.py"
+        },
+        {
+          "lines": 411,
+          "path": "skills/flowpilot/assets/barrier_bundle.py"
+        },
+        {
+          "lines": 408,
+          "path": "skills/flowpilot/assets/packet_control_plane_model_transitions_dispatch_results.py"
+        },
+        {
+          "lines": 406,
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py"
+        },
+        {
+          "lines": 402,
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+        },
+        {
+          "lines": 400,
+          "path": "skills/flowpilot/assets/flowpilot_user_flow_mermaid.py"
+        },
+        {
+          "lines": 393,
+          "path": "skills/flowpilot/assets/role_output_runtime_contracts.py"
+        },
+        {
+          "lines": 392,
+          "path": "skills/flowpilot/assets/flowpilot_router_runtime_state.py"
+        },
+        {
+          "lines": 381,
+          "path": "skills/flowpilot/assets/packet_runtime_relay_checks.py"
+        },
+        {
+          "lines": 375,
+          "path": "skills/flowpilot/assets/packet_runtime_creation_core.py"
+        },
+        {
+          "lines": 367,
+          "path": "skills/flowpilot/assets/flowpilot_router_route.py"
+        },
+        {
+          "lines": 356,
+          "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py"
+        },
+        {
+          "lines": 355,
+          "path": "skills/flowpilot/assets/card_runtime_ack.py"
+        },
+        {
+          "lines": 346,
+          "path": "skills/flowpilot/assets/role_output_runtime_schema_specs.py"
+        }
+      ],
+      "over_threshold": [],
+      "over_threshold_count": 0,
+      "total_lines": 56562
+    },
+    "scripts": {
+      "file_count": 35,
+      "largest": [
+        {
+          "lines": 709,
+          "over_threshold": true,
+          "path": "scripts/install_checks/common.py",
+          "threshold": 450
+        },
+        {
+          "lines": 623,
+          "over_threshold": true,
+          "path": "scripts/install_flowpilot.py",
+          "threshold": 450
+        },
+        {
+          "lines": 590,
+          "over_threshold": true,
+          "path": "scripts/flowpilot_defects.py",
+          "threshold": 450
+        },
+        {
+          "lines": 550,
+          "over_threshold": true,
+          "path": "scripts/install_checks/runtime.py",
+          "threshold": 450
+        },
+        {
+          "lines": 468,
+          "over_threshold": true,
+          "path": "scripts/run_test_tier.py",
+          "threshold": 450
+        },
+        {
+          "lines": 429,
+          "over_threshold": false,
+          "path": "scripts/check_public_release.py",
+          "threshold": 450
+        },
+        {
+          "lines": 372,
+          "over_threshold": false,
+          "path": "scripts/run_flowguard_coverage_sweep.py",
+          "threshold": 450
+        },
+        {
+          "lines": 296,
+          "over_threshold": false,
+          "path": "scripts/test_tier/router_terminal_commands.py",
+          "threshold": 450
+        },
+        {
+          "lines": 295,
+          "over_threshold": false,
+          "path": "scripts/test_tier/background.py",
+          "threshold": 450
+        },
+        {
+          "lines": 294,
+          "over_threshold": false,
+          "path": "scripts/flowpilot_maintenance_map.py",
+          "threshold": 450
+        },
+        {
+          "lines": 251,
+          "over_threshold": false,
+          "path": "scripts/flowpilot_lifecycle.py",
+          "threshold": 450
+        },
+        {
+          "lines": 229,
+          "over_threshold": false,
+          "path": "scripts/install_checks/manifests.py",
+          "threshold": 450
+        },
+        {
+          "lines": 222,
+          "over_threshold": false,
+          "path": "scripts/test_tier/router_startup_foreground_commands.py",
+          "threshold": 450
+        },
+        {
+          "lines": 194,
+          "over_threshold": false,
+          "path": "scripts/install_checks/docs.py",
+          "threshold": 450
+        },
+        {
+          "lines": 192,
+          "over_threshold": false,
+          "path": "scripts/check_runtime_card_capability_reminders.py",
+          "threshold": 450
+        },
+        {
+          "lines": 191,
+          "over_threshold": false,
+          "path": "scripts/audit_local_install_sync.py",
+          "threshold": 450
+        },
+        {
+          "lines": 190,
+          "over_threshold": false,
+          "path": "scripts/flowpilot_runtime_retention.py",
+          "threshold": 450
+        },
+        {
+          "lines": 155,
+          "over_threshold": false,
+          "path": "scripts/audit_validation_artifacts.py",
+          "threshold": 450
+        },
+        {
+          "lines": 146,
+          "over_threshold": false,
+          "path": "scripts/test_tier/router_packet_route_commands.py",
+          "threshold": 450
+        },
+        {
+          "lines": 127,
+          "over_threshold": false,
+          "path": "scripts/install_checks/files.py",
+          "threshold": 450
+        }
+      ],
+      "over_threshold": [
+        {
+          "lines": 709,
+          "over_threshold": true,
+          "path": "scripts/install_checks/common.py",
+          "threshold": 450
+        },
+        {
+          "lines": 623,
+          "over_threshold": true,
+          "path": "scripts/install_flowpilot.py",
+          "threshold": 450
+        },
+        {
+          "lines": 590,
+          "over_threshold": true,
+          "path": "scripts/flowpilot_defects.py",
+          "threshold": 450
+        },
+        {
+          "lines": 550,
+          "over_threshold": true,
+          "path": "scripts/install_checks/runtime.py",
+          "threshold": 450
+        },
+        {
+          "lines": 468,
+          "over_threshold": true,
+          "path": "scripts/run_test_tier.py",
+          "threshold": 450
+        }
+      ],
+      "over_threshold_count": 5,
+      "total_lines": 7211
+    },
+    "simulations": {
+      "file_count": 240,
+      "largest": [
+        {
+          "lines": 4443,
+          "over_threshold": true,
+          "path": "simulations/capability_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 3378,
+          "over_threshold": true,
+          "path": "simulations/meta_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1930,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1683,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_resume_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1569,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_dynamic_return_path_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1569,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_protocol_contract_conformance_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1556,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_card_envelope_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1431,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_two_table_async_scheduler_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1419,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_process_liveness_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1361,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_repair_transaction_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1358,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_startup_control_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1269,
+          "over_threshold": false,
+          "path": "simulations/prompt_isolation_model_transitions.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1250,
+          "over_threshold": false,
+          "path": "simulations/startup_pm_review_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1135,
+          "over_threshold": false,
+          "path": "simulations/capability_model_ui_execution_phase.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1130,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_model_test_alignment_source_code_contracts.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1124,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1086,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_model_mesh_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1053,
+          "over_threshold": false,
+          "path": "simulations/card_instruction_coverage_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1046,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_router_facade_split_catalog.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1041,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_model_test_alignment_diagnostics.py",
+          "threshold": 1600
+        }
+      ],
+      "over_threshold": [
+        {
+          "lines": 4443,
+          "over_threshold": true,
+          "path": "simulations/capability_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 3378,
+          "over_threshold": true,
+          "path": "simulations/meta_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1930,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1683,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_resume_model.py",
+          "threshold": 1600
+        }
+      ],
+      "over_threshold_count": 4,
+      "total_lines": 116760
+    },
+    "tests": {
+      "file_count": 78,
+      "largest": [
+        {
+          "lines": 2380,
+          "over_threshold": true,
+          "path": "tests/router_runtime/common.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1942,
+          "over_threshold": true,
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1702,
+          "over_threshold": true,
+          "path": "tests/router_runtime/foreground_controller.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1327,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1018,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_packet_runtime.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1007,
+          "over_threshold": true,
+          "path": "tests/router_runtime/quality_gates.py",
+          "threshold": 900
+        },
+        {
+          "lines": 947,
+          "over_threshold": true,
+          "path": "tests/router_runtime/packets.py",
+          "threshold": 900
+        },
+        {
+          "lines": 855,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_user_flow_diagram.py",
+          "threshold": 900
+        },
+        {
+          "lines": 845,
+          "over_threshold": false,
+          "path": "tests/router_runtime/resume.py",
+          "threshold": 900
+        },
+        {
+          "lines": 751,
+          "over_threshold": false,
+          "path": "tests/router_runtime/material_modeling.py",
+          "threshold": 900
+        },
+        {
+          "lines": 741,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_role_output_runtime.py",
+          "threshold": 900
+        },
+        {
+          "lines": 716,
+          "over_threshold": false,
+          "path": "tests/router_runtime/control_blockers.py",
+          "threshold": 900
+        },
+        {
+          "lines": 677,
+          "over_threshold": false,
+          "path": "tests/router_runtime/ack_return.py",
+          "threshold": 900
+        },
+        {
+          "lines": 647,
+          "over_threshold": false,
+          "path": "tests/router_runtime/dispatch_gate.py",
+          "threshold": 900
+        },
+        {
+          "lines": 641,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_test_tiers.py",
+          "threshold": 900
+        },
+        {
+          "lines": 593,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_router_boundaries.py",
+          "threshold": 900
+        },
+        {
+          "lines": 560,
+          "over_threshold": false,
+          "path": "tests/router_runtime/cards.py",
+          "threshold": 900
+        },
+        {
+          "lines": 549,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_card_runtime.py",
+          "threshold": 900
+        },
+        {
+          "lines": 459,
+          "over_threshold": false,
+          "path": "tests/flowpilot_route_mutation_contracts.py",
+          "threshold": 900
+        },
+        {
+          "lines": 455,
+          "over_threshold": false,
+          "path": "tests/test_flowpilot_model_test_alignment.py",
+          "threshold": 900
+        }
+      ],
+      "over_threshold": [
+        {
+          "lines": 2380,
+          "over_threshold": true,
+          "path": "tests/router_runtime/common.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1942,
+          "over_threshold": true,
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1702,
+          "over_threshold": true,
+          "path": "tests/router_runtime/foreground_controller.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1327,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1018,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_packet_runtime.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1007,
+          "over_threshold": true,
+          "path": "tests/router_runtime/quality_gates.py",
+          "threshold": 900
+        },
+        {
+          "lines": 947,
+          "over_threshold": true,
+          "path": "tests/router_runtime/packets.py",
+          "threshold": 900
+        }
+      ],
+      "over_threshold_count": 7,
+      "total_lines": 26718
+    }
+  },
+  "current_maintenance_decisions": [
+    "Runtime owner modules are under the StructureMesh line threshold; do not split runtime again without a matching model block and external contract test.",
+    "Test-tier command definitions are split into stable command-group modules while scripts/test_tier/definitions.py remains the compatibility facade.",
+    "Router facade split, structure-maintenance, and source-contract alignment models keep their old import paths while large catalogs move into helper modules.",
+    "Large router-runtime tests stay as watchlist items in this pass; split them only by externally visible contract family and after fixture ownership is clear.",
+    "Remaining large install and defect scripts stay as watchlist items because they are behavior-bearing command surfaces, not pure catalog moves."
+  ],
+  "diagnostic": {
+    "alignment_ok": true,
+    "covered_surface_count": 698,
+    "deferred_structure_split_count": 0,
+    "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
+    "full_coverage_ok": true,
+    "full_diagnostic_ok": true,
+    "gap_surface_count": 0,
+    "known_bad_ok": true,
+    "path": "simulations/flowpilot_model_test_alignment_results.json",
+    "present": true
+  },
+  "facades": {
+    "models": [
+      {
+        "lines": 4443,
+        "over_threshold": true,
+        "path": "simulations/capability_model.py",
+        "threshold": 1600
+      },
+      {
+        "lines": 3378,
+        "over_threshold": true,
+        "path": "simulations/meta_model.py",
+        "threshold": 1600
+      },
+      {
+        "lines": 470,
+        "over_threshold": false,
+        "path": "simulations/flowpilot_structure_maintenance_model.py",
+        "threshold": 1600
+      },
+      {
+        "lines": 830,
+        "over_threshold": false,
+        "path": "simulations/flowpilot_router_facade_split_model.py",
+        "threshold": 1600
+      },
+      {
+        "lines": 71,
+        "over_threshold": false,
+        "path": "simulations/flowpilot_model_test_alignment_source_contracts.py",
+        "threshold": 1600
+      }
+    ],
+    "runtime": [
+      {
+        "lines": 217,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router.py",
+        "threshold": 700
+      },
+      {
+        "lines": 124,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_paths.py",
+        "threshold": 700
+      },
+      {
+        "lines": 29,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_runtime.py",
+        "threshold": 700
+      }
+    ]
+  },
+  "read_only": true,
+  "recommended_next_split_rules": [
+    "Split runtime only when a model block, public facade, and external contract test already agree.",
+    "Prefer catalog/data extraction for oversized model files; keep old model imports as facades.",
+    "Split scripts only around stable command groups or install-check manifests; preserve CLI behavior.",
+    "Split tests by externally visible contract family before moving internal fixtures."
+  ],
+  "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430",
+  "runtime_owner_modules": {
+    "file_count": 252,
+    "largest": [
+      {
+        "lines": 445,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+        "threshold": 450
+      },
+      {
+        "lines": 428,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py",
+        "threshold": 450
+      },
+      {
+        "lines": 427,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_basic.py",
+        "threshold": 450
+      },
+      {
+        "lines": 425,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+        "threshold": 450
+      },
+      {
+        "lines": 406,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+        "threshold": 450
+      },
+      {
+        "lines": 402,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "threshold": 450
+      },
+      {
+        "lines": 392,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_runtime_state.py",
+        "threshold": 450
+      },
+      {
+        "lines": 367,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_route.py",
+        "threshold": 450
+      },
+      {
+        "lines": 356,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py",
+        "threshold": 450
+      },
+      {
+        "lines": 341,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_event_dispatcher.py",
+        "threshold": 450
+      },
+      {
+        "lines": 337,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_facade_export_manifest_route.py",
+        "threshold": 450
+      },
+      {
+        "lines": 333,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_system_cards_selection_next.py",
+        "threshold": 450
+      },
+      {
+        "lines": 329,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "threshold": 450
+      },
+      {
+        "lines": 325,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_system_cards_delivery_bundle.py",
+        "threshold": 450
+      },
+      {
+        "lines": 315,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py",
+        "threshold": 450
+      },
+      {
+        "lines": 315,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py",
+        "threshold": 450
+      },
+      {
+        "lines": 315,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_traceability.py",
+        "threshold": 450
+      },
+      {
+        "lines": 312,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_reconciliation.py",
+        "threshold": 450
+      },
+      {
+        "lines": 312,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_acceptance.py",
+        "threshold": 450
+      },
+      {
+        "lines": 307,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_self_interrogation_records.py",
+        "threshold": 450
+      }
+    ],
+    "over_threshold": [],
+    "over_threshold_count": 0,
+    "total_lines": 42271
+  },
+  "script_entrypoints": [
+    {
+      "lines": 9,
+      "over_threshold": false,
+      "path": "scripts/check_install.py",
+      "threshold": 450
+    },
+    {
+      "lines": 623,
+      "over_threshold": true,
+      "path": "scripts/install_flowpilot.py",
+      "threshold": 450
+    },
+    {
+      "lines": 468,
+      "over_threshold": true,
+      "path": "scripts/run_test_tier.py",
+      "threshold": 450
+    },
+    {
+      "lines": 115,
+      "over_threshold": false,
+      "path": "scripts/smoke_autopilot.py",
+      "threshold": 450
+    },
+    {
+      "lines": 191,
+      "over_threshold": false,
+      "path": "scripts/audit_local_install_sync.py",
+      "threshold": 450
+    },
+    {
+      "lines": 372,
+      "over_threshold": false,
+      "path": "scripts/run_flowguard_coverage_sweep.py",
+      "threshold": 450
+    },
+    {
+      "lines": 294,
+      "over_threshold": false,
+      "path": "scripts/flowpilot_maintenance_map.py",
+      "threshold": 450
+    }
+  ],
+  "test_tiers": {
+    "tier_names": [
+      "collect",
+      "fast",
+      "router-startup",
+      "router-foreground",
+      "router-packets",
+      "router-route",
+      "router-pm-role-work",
+      "router-quality-gates",
+      "router-material-modeling",
+      "router-terminal",
+      "router",
+      "integration",
+      "release",
+      "legacy-full",
+      "all"
+    ],
+    "tiers": {
+      "all": {
+        "background_recommended_count": 2,
+        "command_count": 80,
+        "commands": [
+          "pytest_collect_tests",
+          "flowguard_test_tiering",
+          "flowguard_slow_test_contracts",
+          "flowguard_model_test_alignment",
+          "flowguard_controller_break_glass",
+          "test_tier_runner",
+          "model_test_alignment_tests",
+          "controller_break_glass_tests",
+          "flowguard_proof_tests",
+          "thin_parent_tests",
+          "maintenance_tool_tests",
+          "cli_entrypoint_tests",
+          "router_testmesh_parent",
+          "router_startup_runtime_contracts",
+          "router_bootstrap_cli",
+          "router_startup_bootstrap_core",
+          "router_startup_bootstrap_reconciliation",
+          "router_startup_bootstrap_intake",
+          "router_startup_bootstrap_review",
+          "router_startup_bootstrap_fact_heartbeat",
+          "router_startup_daemon",
+          "router_foreground",
+          "router_controller",
+          "router_dispatch_gate_current_node_review",
+          "router_dispatch_gate_recipient_policy",
+          "router_dispatch_gate_user_pm_control",
+          "router_foreground_controller_core",
+          "router_foreground_controller_standby",
+          "router_foreground_controller_receipts",
+          "router_foreground_controller_boundary",
+          "router_foreground_controller_repair",
+          "router_packet_runtime",
+          "router_packets_material",
+          "router_packets_current_node_direct",
+          "router_packets_current_node_dispatch",
+          "router_packets_current_node_result_audit",
+          "router_packets_current_node_result_decision",
+          "router_packets_batch_and_grants",
+          "router_cards",
+          "router_ack_return",
+          "router_boundaries",
+          "router_route_mutation_draft_activation",
+          "router_route_mutation_model_miss_triage",
+          "router_route_mutation_acceptance_repair",
+          "router_route_mutation_preconditions",
+          "router_route_mutation_transactions",
+          "router_route_mutation_topology",
+          "router_route_mutation_sibling_replacement",
+          "router_route_mutation_parent_backward",
+          "router_route_mutation_contracts",
+          "router_user_flow_diagram",
+          "router_pm_role_work_requests",
+          "router_pm_role_work_results",
+          "router_pm_role_work_waits",
+          "router_quality_gates_background_manifest",
+          "router_quality_gates_decisions",
+          "router_quality_gates_evidence_artifacts",
+          "router_quality_gates_route_model",
+          "router_quality_gates_node_contracts",
+          "router_material_modeling_intake",
+          "router_material_modeling_scan_relay",
+          "router_material_modeling_modelability",
+          "router_terminal_final_ledger",
+          "router_terminal_replay_summary",
+          "router_terminal_node_stop",
+          "router_closure_dirty_ledgers",
+          "router_closure_pm_role_work",
+          "router_resume_reentry",
+          "router_resume_rehydration",
+          "router_resume_role_recovery",
+          "router_resume_liveness_faults",
+          "router_control_blockers_recorded_events",
+          "router_control_blockers_reissue_retry",
+          "router_control_blockers_pm_repair_decisions",
+          "router_control_blockers_protocol_transactions",
+          "router_control_blockers_followup_fatal",
+          "check_install",
+          "audit_local_install_sync",
+          "smoke_autopilot_fast",
+          "flowguard_coverage_sweep"
+        ],
+        "long_running_count": 2,
+        "release_only_count": 0
+      },
+      "collect": {
+        "background_recommended_count": 0,
+        "command_count": 1,
+        "commands": [
+          "pytest_collect_tests"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "fast": {
+        "background_recommended_count": 0,
+        "command_count": 11,
+        "commands": [
+          "flowguard_test_tiering",
+          "flowguard_slow_test_contracts",
+          "flowguard_model_test_alignment",
+          "flowguard_controller_break_glass",
+          "test_tier_runner",
+          "model_test_alignment_tests",
+          "controller_break_glass_tests",
+          "flowguard_proof_tests",
+          "thin_parent_tests",
+          "maintenance_tool_tests",
+          "cli_entrypoint_tests"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "integration": {
+        "background_recommended_count": 2,
+        "command_count": 4,
+        "commands": [
+          "check_install",
+          "audit_local_install_sync",
+          "smoke_autopilot_fast",
+          "flowguard_coverage_sweep"
+        ],
+        "long_running_count": 2,
+        "release_only_count": 0
+      },
+      "legacy-full": {
+        "background_recommended_count": 2,
+        "command_count": 2,
+        "commands": [
+          "meta_legacy_full",
+          "capability_legacy_full"
+        ],
+        "long_running_count": 2,
+        "release_only_count": 2
+      },
+      "release": {
+        "background_recommended_count": 3,
+        "command_count": 4,
+        "commands": [
+          "release_tooling",
+          "meta_full",
+          "capability_full",
+          "public_release_check"
+        ],
+        "long_running_count": 3,
+        "release_only_count": 3
+      },
+      "router": {
+        "background_recommended_count": 0,
+        "command_count": 64,
+        "commands": [
+          "router_testmesh_parent",
+          "router_startup_runtime_contracts",
+          "router_bootstrap_cli",
+          "router_startup_bootstrap_core",
+          "router_startup_bootstrap_reconciliation",
+          "router_startup_bootstrap_intake",
+          "router_startup_bootstrap_review",
+          "router_startup_bootstrap_fact_heartbeat",
+          "router_startup_daemon",
+          "router_foreground",
+          "router_controller",
+          "router_dispatch_gate_current_node_review",
+          "router_dispatch_gate_recipient_policy",
+          "router_dispatch_gate_user_pm_control",
+          "router_foreground_controller_core",
+          "router_foreground_controller_standby",
+          "router_foreground_controller_receipts",
+          "router_foreground_controller_boundary",
+          "router_foreground_controller_repair",
+          "router_packet_runtime",
+          "router_packets_material",
+          "router_packets_current_node_direct",
+          "router_packets_current_node_dispatch",
+          "router_packets_current_node_result_audit",
+          "router_packets_current_node_result_decision",
+          "router_packets_batch_and_grants",
+          "router_cards",
+          "router_ack_return",
+          "router_boundaries",
+          "router_route_mutation_draft_activation",
+          "router_route_mutation_model_miss_triage",
+          "router_route_mutation_acceptance_repair",
+          "router_route_mutation_preconditions",
+          "router_route_mutation_transactions",
+          "router_route_mutation_topology",
+          "router_route_mutation_sibling_replacement",
+          "router_route_mutation_parent_backward",
+          "router_route_mutation_contracts",
+          "router_user_flow_diagram",
+          "router_pm_role_work_requests",
+          "router_pm_role_work_results",
+          "router_pm_role_work_waits",
+          "router_quality_gates_background_manifest",
+          "router_quality_gates_decisions",
+          "router_quality_gates_evidence_artifacts",
+          "router_quality_gates_route_model",
+          "router_quality_gates_node_contracts",
+          "router_material_modeling_intake",
+          "router_material_modeling_scan_relay",
+          "router_material_modeling_modelability",
+          "router_terminal_final_ledger",
+          "router_terminal_replay_summary",
+          "router_terminal_node_stop",
+          "router_closure_dirty_ledgers",
+          "router_closure_pm_role_work",
+          "router_resume_reentry",
+          "router_resume_rehydration",
+          "router_resume_role_recovery",
+          "router_resume_liveness_faults",
+          "router_control_blockers_recorded_events",
+          "router_control_blockers_reissue_retry",
+          "router_control_blockers_pm_repair_decisions",
+          "router_control_blockers_protocol_transactions",
+          "router_control_blockers_followup_fatal"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-foreground": {
+        "background_recommended_count": 0,
+        "command_count": 10,
+        "commands": [
+          "router_foreground",
+          "router_controller",
+          "router_dispatch_gate_current_node_review",
+          "router_dispatch_gate_recipient_policy",
+          "router_dispatch_gate_user_pm_control",
+          "router_foreground_controller_core",
+          "router_foreground_controller_standby",
+          "router_foreground_controller_receipts",
+          "router_foreground_controller_boundary",
+          "router_foreground_controller_repair"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-material-modeling": {
+        "background_recommended_count": 0,
+        "command_count": 3,
+        "commands": [
+          "router_material_modeling_intake",
+          "router_material_modeling_scan_relay",
+          "router_material_modeling_modelability"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-packets": {
+        "background_recommended_count": 0,
+        "command_count": 9,
+        "commands": [
+          "router_packet_runtime",
+          "router_packets_material",
+          "router_packets_current_node_direct",
+          "router_packets_current_node_dispatch",
+          "router_packets_current_node_result_audit",
+          "router_packets_current_node_result_decision",
+          "router_packets_batch_and_grants",
+          "router_cards",
+          "router_ack_return"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-pm-role-work": {
+        "background_recommended_count": 0,
+        "command_count": 3,
+        "commands": [
+          "router_pm_role_work_requests",
+          "router_pm_role_work_results",
+          "router_pm_role_work_waits"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-quality-gates": {
+        "background_recommended_count": 0,
+        "command_count": 5,
+        "commands": [
+          "router_quality_gates_background_manifest",
+          "router_quality_gates_decisions",
+          "router_quality_gates_evidence_artifacts",
+          "router_quality_gates_route_model",
+          "router_quality_gates_node_contracts"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-route": {
+        "background_recommended_count": 0,
+        "command_count": 11,
+        "commands": [
+          "router_boundaries",
+          "router_route_mutation_draft_activation",
+          "router_route_mutation_model_miss_triage",
+          "router_route_mutation_acceptance_repair",
+          "router_route_mutation_preconditions",
+          "router_route_mutation_transactions",
+          "router_route_mutation_topology",
+          "router_route_mutation_sibling_replacement",
+          "router_route_mutation_parent_backward",
+          "router_route_mutation_contracts",
+          "router_user_flow_diagram"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-startup": {
+        "background_recommended_count": 0,
+        "command_count": 8,
+        "commands": [
+          "router_startup_runtime_contracts",
+          "router_bootstrap_cli",
+          "router_startup_bootstrap_core",
+          "router_startup_bootstrap_reconciliation",
+          "router_startup_bootstrap_intake",
+          "router_startup_bootstrap_review",
+          "router_startup_bootstrap_fact_heartbeat",
+          "router_startup_daemon"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      },
+      "router-terminal": {
+        "background_recommended_count": 0,
+        "command_count": 25,
+        "commands": [
+          "router_pm_role_work_requests",
+          "router_pm_role_work_results",
+          "router_pm_role_work_waits",
+          "router_quality_gates_background_manifest",
+          "router_quality_gates_decisions",
+          "router_quality_gates_evidence_artifacts",
+          "router_quality_gates_route_model",
+          "router_quality_gates_node_contracts",
+          "router_material_modeling_intake",
+          "router_material_modeling_scan_relay",
+          "router_material_modeling_modelability",
+          "router_terminal_final_ledger",
+          "router_terminal_replay_summary",
+          "router_terminal_node_stop",
+          "router_closure_dirty_ledgers",
+          "router_closure_pm_role_work",
+          "router_resume_reentry",
+          "router_resume_rehydration",
+          "router_resume_role_recovery",
+          "router_resume_liveness_faults",
+          "router_control_blockers_recorded_events",
+          "router_control_blockers_reissue_retry",
+          "router_control_blockers_pm_repair_decisions",
+          "router_control_blockers_protocol_transactions",
+          "router_control_blockers_followup_fatal"
+        ],
+        "long_running_count": 0,
+        "release_only_count": 0
+      }
+    }
+  },
+  "thresholds": {
+    "model_file_watch_lines": 1600,
+    "runtime_facade_lines": 700,
+    "runtime_owner_module_lines": 450,
+    "script_entry_lines": 450,
+    "test_file_watch_lines": 900
+  }
+}

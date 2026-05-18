@@ -18,6 +18,17 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "material_summary": "file backed material understanding",
                     "route_consequences": ["continue route construction"],
+                    "shared_skill_maintenance_record": {
+                        "status": "created_and_appended",
+                        "log_path": ".codex/skill_maintenance_log.jsonl",
+                        "entry_id": run_root.name,
+                        "skill": "flowpilot",
+                        "work_summary": "file backed material understanding",
+                        "workspace_root": str(root),
+                        "run_root": self.rel(root, run_root),
+                        "final_report_path": None,
+                        "not_acceptance_gate": True,
+                    },
                 },
                 path_key="memo_path",
                 hash_key="memo_hash",
@@ -27,6 +38,9 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         memo = read_json(run_root / "pm_material_understanding.json")
         self.assertEqual(memo["material_summary"], "file backed material understanding")
         self.assertEqual(memo["route_consequences"], ["continue route construction"])
+        self.assertEqual(memo["shared_skill_maintenance_record"]["skill"], "flowpilot")
+        self.assertEqual(memo["shared_skill_maintenance_record"]["run_root"], self.rel(root, run_root))
+        self.assertTrue(memo["shared_skill_maintenance_record"]["not_acceptance_gate"])
         self.assertEqual(memo["_role_output_envelope"]["body_path_key"], "memo_path")
         self.assertTrue((run_root / "material" / "pm_material_understanding_payload.json").exists())
     def test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card(self) -> None:

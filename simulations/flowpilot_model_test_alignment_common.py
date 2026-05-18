@@ -269,6 +269,7 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "check_runtime_card_capability_reminders": "runtime_card_capability_reminders",
     "flowpilot_defects": "defect_governance_cli",
     "flowpilot_lifecycle": "lifecycle_cli",
+    "flowpilot_maintenance_map": "maintenance_map_cli",
     "flowpilot_outputs": "role_output_cli",
     "flowpilot_packets": "packet_runtime_cli",
     "flowpilot_paths": "runtime_path_cli",

@@ -11,7 +11,7 @@
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
     "frozen_contract_path": ".flowpilot/runs/<run-id>/contract.md"
   },
-  "selection_rule": "Product capability needs and FlowPilot process needs choose skills. Local skill availability alone never creates route work.",
+  "selection_rule": "Product capability needs and FlowPilot process needs choose skills, including FlowGuard satellite skills as process-support candidates. Local skill availability alone never creates route work.",
   "selection_dimensions": {
     "deliverable_support": "Does the skill help produce, validate, or inspect the user-visible deliverable?",
     "process_support": "Does the skill help PM, reviewer, officer, worker, or follow-up roles perform FlowPilot planning, modeling, review, validation, or evidence work?",

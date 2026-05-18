@@ -47,6 +47,10 @@ run_flowguard_coverage_sweep = load_module(
     "flowpilot_test_run_flowguard_coverage_sweep",
     ROOT / "scripts" / "run_flowguard_coverage_sweep.py",
 )
+flowpilot_maintenance_map = load_module(
+    "flowpilot_test_maintenance_map",
+    ROOT / "scripts" / "flowpilot_maintenance_map.py",
+)
 
 
 class FlowPilotMaintenanceToolTests(unittest.TestCase):
@@ -157,6 +161,28 @@ if args.json_out:
         self.assertNotIn("--json-out", command)
         self.assertEqual(payload, {"ok": True})
         self.assertIsNone(metadata["parse_error"])
+
+    def test_maintenance_map_records_owner_modules_tiers_and_diagnostic_status(self) -> None:
+        report = flowpilot_maintenance_map.build_report(ROOT)
+
+        self.assertTrue(report["read_only"])
+        self.assertGreater(report["categories"]["runtime_assets"]["file_count"], 0)
+        self.assertGreater(report["runtime_owner_modules"]["file_count"], 0)
+        self.assertEqual(report["runtime_owner_modules"]["over_threshold_count"], 0)
+        self.assertIn("fast", report["test_tiers"]["tier_names"])
+        self.assertTrue(report["diagnostic"]["present"])
+        self.assertTrue(report["diagnostic"]["full_coverage_ok"])
+        self.assertEqual(report["diagnostic"]["gap_surface_count"], 0)
+
+    def test_maintenance_map_markdown_names_public_facades_and_scripts(self) -> None:
+        report = flowpilot_maintenance_map.build_report(ROOT)
+        markdown = flowpilot_maintenance_map.render_markdown(report)
+
+        self.assertIn("FlowPilot Maintenance Map", markdown)
+        self.assertIn("flowpilot_router.py", markdown)
+        self.assertIn("run_test_tier.py", markdown)
+        self.assertIn("Model-test-code diagnostic", markdown)
+        self.assertIn("Current decisions", markdown)
 
 
 if __name__ == "__main__":

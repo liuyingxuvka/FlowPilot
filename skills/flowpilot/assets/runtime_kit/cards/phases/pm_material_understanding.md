@@ -32,5 +32,25 @@ Include:
 - PM decision on whether research was not required or has been absorbed;
 - open questions or route consequences.
 
+Also maintain the shared Spark-style skill maintenance log as a lightweight
+bookkeeping step for this formal FlowPilot run:
+
+- look for an existing shared Spark-style skill maintenance log for this
+  workspace or machine;
+- if one exists, append one concise row to that log;
+- if none exists, create `.codex/skill_maintenance_log.jsonl` at the workspace
+  root using the same shared JSONL style, then append the row;
+- the row records `skill: flowpilot`, the main work summary, workspace root,
+  current `run_id`, current run folder, `status: started`, and
+  `final_report_path: null` when no final report exists yet;
+- include a `shared_skill_maintenance_record` object in
+  `pm_material_understanding.json` with the log path, entry id or run id,
+  work summary, workspace root, run folder, and `not_acceptance_gate: true`.
+
+This bookkeeping row is only an index for future maintenance. Do not create a
+route node, reviewer gate, FlowGuard gate, terminal acceptance item, or
+separate FlowPilot-private maintenance table for it. It does not replace the
+run's final report or FlowPilot skill-improvement report.
+
 This memo is the only material basis for product architecture. Do not proceed
 from raw worker reports or unchecked research.

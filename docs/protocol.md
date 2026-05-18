@@ -314,6 +314,17 @@ must insert discovery, cleanup, spreadsheet analysis, data modeling, research,
 validation, or reconciliation nodes. Messy/raw materials make material
 understanding part of the formal route, not a hidden pre-step.
 
+During the same material-understanding step, the project manager maintains the
+shared Spark-style skill maintenance log. PM uses an existing shared log when
+one is present; otherwise PM creates `.codex/skill_maintenance_log.jsonl` in
+the workspace root using the same shared JSONL style. PM appends one concise
+`skill: flowpilot` row with the work summary, workspace root, current `run_id`,
+and current run folder, then records the selected log path and entry id in
+`pm_material_understanding.json` as `shared_skill_maintenance_record`. This is
+bookkeeping only: it creates no route node, reviewer gate, FlowGuard gate, or
+project acceptance condition, and it does not replace the final report or
+FlowPilot skill-improvement report.
+
 If the PM cannot safely decide from reviewed materials, the gap becomes a
 PM-owned research package instead of a loose note. The package records the
 decision to be made, route impact, allowed local/user/web/browser/source types,

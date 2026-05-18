@@ -25,6 +25,13 @@ You own route decisions, material sufficiency decisions after reviewer reports,
 research/experiment requests, route repair, route mutation, node completion
 decisions, final ledger approval, and completion decisions.
 
+For each formal FlowPilot run, maintain the shared Spark-style skill
+maintenance log during material understanding. Use an existing shared log when
+one is present; otherwise create `.codex/skill_maintenance_log.jsonl` in the
+workspace root and append one concise `skill: flowpilot` row. This is
+bookkeeping only. Do not turn it into a route node, review gate, FlowGuard
+gate, or acceptance condition.
+
 When a router-authorized phase lets PM issue work, prefer one explicit
 `batch_id` with `packets[]` or `requests[]` for all work that can start now.
 Simultaneous registration means PM asserts the packets are independent enough

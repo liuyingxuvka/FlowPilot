@@ -1,0 +1,115 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=78",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "bookkeeping_acceptance_gate": {
+        "detected": true,
+        "expected_failure": "bookkeeping became a project acceptance gate",
+        "failures": [
+          "bookkeeping became a project acceptance gate"
+        ]
+      },
+      "bookkeeping_flowguard_gate": {
+        "detected": true,
+        "expected_failure": "bookkeeping created a FlowGuard gate",
+        "failures": [
+          "bookkeeping created a FlowGuard gate"
+        ]
+      },
+      "bookkeeping_reviewer_gate": {
+        "detected": true,
+        "expected_failure": "bookkeeping created a reviewer gate",
+        "failures": [
+          "bookkeeping created a reviewer gate"
+        ]
+      },
+      "bookkeeping_route_node": {
+        "detected": true,
+        "expected_failure": "bookkeeping created a route node",
+        "failures": [
+          "bookkeeping created a route node"
+        ]
+      },
+      "controller_writes_semantic_summary": {
+        "detected": true,
+        "expected_failure": "PM does not own the maintenance work summary",
+        "failures": [
+          "PM does not own the maintenance work summary",
+          "Controller owns the semantic maintenance summary"
+        ]
+      },
+      "final_report_required_at_start": {
+        "detected": true,
+        "expected_failure": "startup bookkeeping requires final report path before material understanding",
+        "failures": [
+          "startup bookkeeping requires final report path before material understanding",
+          "final report path is not optional in the startup maintenance row"
+        ]
+      },
+      "flowpilot_private_log": {
+        "detected": true,
+        "expected_failure": "maintenance row is not written to a shared Spark-style log",
+        "failures": [
+          "maintenance row is not written to a shared Spark-style log"
+        ]
+      },
+      "missing_required_lookup_fields": {
+        "detected": true,
+        "expected_failure": "maintenance row lacks required skill summary workspace run_id or run_root fields",
+        "failures": [
+          "maintenance row lacks required skill summary workspace run_id or run_root fields"
+        ]
+      },
+      "pm_report_not_preserved": {
+        "detected": true,
+        "expected_failure": "PM material understanding does not preserve the shared maintenance record",
+        "failures": [
+          "PM material understanding does not preserve the shared maintenance record"
+        ]
+      },
+      "replaces_skill_improvement_report": {
+        "detected": true,
+        "expected_failure": "shared maintenance log replaced the FlowPilot skill-improvement report",
+        "failures": [
+          "shared maintenance log replaced the FlowPilot skill-improvement report"
+        ]
+      },
+      "router_validates_log_semantics": {
+        "detected": true,
+        "expected_failure": "Router validates semantic maintenance content instead of preserving PM report",
+        "failures": [
+          "Router validates semantic maintenance content instead of preserving PM report"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_existing_log_append",
+      "valid_missing_log_create_and_append"
+    ],
+    "edge_count": 26,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 27
+  }
+}

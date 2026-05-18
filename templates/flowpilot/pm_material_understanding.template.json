@@ -11,6 +11,17 @@
   "source_packet": ".flowpilot/runs/<run-id>/material_intake_packet.json",
   "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
   "user_intent_interpretation": "<PM interpretation of the task after reviewed materials>",
+  "shared_skill_maintenance_record": {
+    "status": "<appended|created_and_appended|not_written_with_reason>",
+    "log_path": "<shared-spark-style-maintenance-log-path-or-null>",
+    "entry_id": "<entry-id-or-run-id-or-null>",
+    "skill": "flowpilot",
+    "work_summary": "<one-line-summary-of-this-run>",
+    "workspace_root": "<workspace-root>",
+    "run_root": ".flowpilot/runs/<run-id>",
+    "final_report_path": "<path-or-null>",
+    "not_acceptance_gate": true
+  },
   "source_claim_matrix": [
     {
       "claim": "<route-relevant assumption or fact>",

@@ -50,9 +50,10 @@ for review.
    disposition, then releases a formal material sufficiency package for the
    human-like reviewer before PM planning uses it.
 11. Project manager writes `pm_material_understanding.json`, classifies material
-   complexity, and records whether messy/raw materials require discovery,
-   cleanup, modeling, research, validation, or reconciliation nodes. When a
-   material, mechanism, source, or validation gap affects route/product
+   complexity, records the shared Spark-style skill maintenance log entry for
+   this FlowPilot run, and records whether messy/raw materials require
+   discovery, cleanup, modeling, research, validation, or reconciliation nodes.
+   When a material, mechanism, source, or validation gap affects route/product
    decisions, PM writes a formal research package under `research/`, assigns a
    worker to search, inspect, experiment, or reconcile evidence, then releases
    the human-like reviewer to check original sources or outputs directly.
@@ -244,8 +245,9 @@ for review.
 - `local_skill_inventory.template.json`: optional standalone local skill and
   host capability inventory consumed by the material packet and PM selection.
 - `pm_material_understanding.template.json`: PM interpretation, source-claim
-  matrix, open questions, material complexity, discovery decision, and whether
-  formal research packages are required before product architecture.
+  matrix, open questions, shared Spark-style skill maintenance log entry
+  reference, material complexity, discovery decision, and whether formal
+  research packages are required before product architecture.
 - `research_package.template.json`: PM-owned package that turns a material,
   mechanism, source, validation, or experiment gap into bounded worker research
   with explicit tool/source boundaries and reviewer checks.

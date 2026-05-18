@@ -171,6 +171,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("unjustified route bloat", route_card)
         self.assertIn("deliverable_support", child_selection_card)
         self.assertIn("process_support", child_selection_card)
+        self.assertIn("FlowGuard satellite skills", child_selection_card)
         self.assertIn("skill_standard_contracts", child_manifest_card)
         self.assertIn("role_skill_use_bindings", child_manifest_card)
         for category in model.STANDARD_FIELDS:
@@ -204,6 +205,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("low_quality_success_review", product_template)
         self.assertIn("proof_of_depth_required", product_template["low_quality_success_review"]["hard_parts"][0])
         self.assertIn("selection_dimensions", pm_selection_template)
+        self.assertIn("FlowGuard satellite skills", pm_selection_template["selection_rule"])
         self.assertIn("process_support", pm_selection_template["selection_dimensions"])
         skill_decision = pm_selection_template["skill_decisions"][0]
         self.assertIn("support_dimensions", skill_decision)
