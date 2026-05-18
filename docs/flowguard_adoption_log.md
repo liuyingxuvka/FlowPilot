@@ -14453,6 +14453,68 @@ Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
 
+## 2026-05-18 - Router TestMesh Parent/Child Split
+
+Trigger:
+
+- The router background regression was too slow and too opaque as a broad
+  parent run. The user asked to use FlowGuard/TestMesh to split it into a
+  parent/child hierarchy that can run faster and localize slow or failing
+  domains.
+
+Changes:
+
+- Split the router parent tier into 46 child commands under
+  `scripts/run_test_tier.py`.
+- Split startup, foreground/controller, dispatch-gate, and packet current-node
+  suites into smaller `unittest -k` child commands.
+- Added coverage checks in `tests/test_flowpilot_test_tiers.py` so every
+  `-k` child matches at least one test, covers the source module completely,
+  and does not duplicate another child shard for the same module.
+- Updated `simulations/flowpilot_test_tiering_model.py` and
+  `simulations/run_flowpilot_test_tiering_checks.py` so FlowGuard rejects a
+  router child tier that keeps the old slow aggregate or duplicates `-k`
+  shard selection.
+
+Checks:
+
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` passed with
+  `1.0`.
+- `python -m py_compile scripts\run_test_tier.py
+  simulations\flowpilot_test_tiering_model.py
+  simulations\run_flowpilot_test_tiering_checks.py
+  tests\test_flowpilot_test_tiers.py` passed.
+- `python -m unittest tests.test_flowpilot_test_tiers` passed.
+- `python simulations\run_flowpilot_test_tiering_checks.py --json-out
+  simulations\flowpilot_test_tiering_results.json` passed.
+- `python simulations\run_flowpilot_router_facade_split_checks.py --json-out
+  simulations\flowpilot_router_facade_split_results.json` passed.
+- `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out
+  simulations\flowpilot_structure_maintenance_results.json` passed.
+- Hidden router parent regression completed under `tmp\flowguard_background`
+  with `router_background_supervisor.exit.txt` equal to `0`,
+  `router_background_supervisor.meta.json` status `passed`, 46/46 child
+  commands completed, and `proof_reused=false`.
+- Meta and Capability layered full regressions completed under
+  `tmp\flowguard_background` with `run_meta_checks.exit.txt` and
+  `run_capability_checks.exit.txt` equal to `0`.
+
+Findings:
+
+- The first split exposed missing `-k` coverage for startup bootstrap tests.
+  The coverage test caught those gaps before the parent run was trusted.
+- Broad `-k` substrings such as `lock` can accidentally match unrelated words
+  such as `block`, causing slow duplicate execution. The final split records
+  this as an executable FlowGuard hazard and a unit-test invariant.
+- The remaining slow tail is concentrated in genuinely slow router runtime
+  domains such as model-miss triage, terminal/closure, PM role work, quality
+  gates, and material modeling. Further speedup should target those fixtures
+  and wait loops rather than reintroducing broad aggregate commands.
+
+Skipped steps:
+
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
 ## 2026-05-17 - Final Router Skeleton StructureMesh Pass
 
 Trigger:
@@ -14956,3 +15018,49 @@ Skipped steps:
 
 ### Next Actions
 - Investigate router background supervisor reliability before using it as full-tier release evidence for long runtime suites.
+
+
+## flowpilot-full-model-test-code-diagnostics-2026-05-18 - Add full FlowPilot model-test-code diagnostic inventory and current gap report
+
+- Project: FlowPilot
+- Trigger reason: User requested full software diagnosis across owner modules, facades, script entrypoints, and test tiers using OpenSpec and FlowGuard
+- Status: completed
+- Skill decision: use_flowguard:model_test_alignment+structure_mesh+test_mesh diagnostics
+- Started: 2026-05-18T07:53:27+00:00
+- Ended: 2026-05-18T07:53:27+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+
+### Commands
+- OK (0.000s): `python -m py_compile simulations\\run_flowpilot_model_test_alignment_checks.py tests\\test_flowpilot_model_test_alignment.py tests\\test_flowpilot_router_boundaries.py tests\\test_flowpilot_test_tiers.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_model_test_alignment tests.test_flowpilot_router_boundaries`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_test_tiers.py -q`
+- OK (0.000s): `python simulations\\run_flowpilot_model_test_alignment_checks.py --json-out simulations\\flowpilot_model_test_alignment_results.json`
+- OK (0.000s): `openspec validate full-model-test-code-diagnostics --strict`
+- OK (0.000s): `python scripts\\run_test_tier.py --tier fast --background --background-dir tmp\\flowguard_background_full_model_test_code_diagnostics_fast_rerun --json`
+- OK (0.000s): `python scripts\\run_test_tier.py --tier release --background --background-dir tmp\\flowguard_background_full_model_test_code_diagnostics_release --json`
+- OK (0.000s): `python scripts\\install_flowpilot.py --check --json`
+- OK (0.000s): `python scripts\\audit_local_install_sync.py --json`
+- FAIL (0.000s): `python scripts\\run_test_tier.py --tier fast --background --background-dir tmp\\flowguard_background_full_model_test_code_diagnostics_fast --json`
+
+### Findings
+- Full diagnostic inventory now covers 454 surfaces across owner modules, facades, scripts, model-check runners, test tiers, and test-tier commands; full_coverage_ok remains false with 439 gap surfaces.
+- Added direct facade parity tests for controller scheduler receipts and PM role-work compatibility facades, reducing those surfaces from missing_test to internal_only_test.
+- Fast background regression exposed a pytest collection bug in tests/test_flowpilot_test_tiers.py; helper function was renamed and fast rerun passed with complete artifacts.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Many currently reported gaps are coverage-accounting gaps, not immediate runtime failures; broad structure split recommendations overlap active peer owner-module polish work and were reported rather than automatically refactored.
+- Release public boundary command uses --skip-url-check, so it does not prove public URL availability.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Add source-contract rows for packet_runtime facade, terminal closure, daemon lock/status, run_test_tier background machinery, and high-value model-check runners before claiming full coverage.

@@ -8,8 +8,11 @@ against ordinary test evidence by using FlowGuard's Model-Test Alignment API.
 from __future__ import annotations
 
 import argparse
+import ast
+import importlib.util
 import json
 from pathlib import Path
+import sys
 from typing import Any, Sequence
 
 from flowguard import (
@@ -40,6 +43,49 @@ SOURCE_AUDIT_BOUNDARY = (
     "tests directly call the declared code contract symbols and assert their "
     "external boundary. It does not replace the broader declaration alignment, "
     "runtime conformance replay, or long FlowGuard regressions."
+)
+
+FULL_DIAGNOSTIC_BOUNDARY = (
+    "Full model-test-code diagnostics inventory repository maintenance "
+    "surfaces and classify coverage gaps. They are coverage-accounting "
+    "evidence: a covered row means the surface has model/test/code binding "
+    "evidence, not that every internal behavior has been semantically proved."
+)
+
+ASSET_FACADE_MODULES = {
+    "card_runtime",
+    "flowpilot_runtime",
+    "flowpilot_router",
+    "flowpilot_router_action_factory",
+    "flowpilot_router_action_handlers",
+    "flowpilot_router_controller_scheduler",
+    "flowpilot_router_controller_scheduler_receipts",
+    "flowpilot_router_facade_export_manifest",
+    "flowpilot_router_route_artifacts",
+    "flowpilot_router_route_frontier",
+    "flowpilot_router_system_cards",
+    "flowpilot_router_terminal_ledger",
+    "flowpilot_router_work_packets",
+    "flowpilot_router_work_packets_pm_role",
+    "flowpilot_user_flow_diagram",
+    "packet_control_plane_model",
+    "packet_control_plane_model_transitions",
+    "packet_runtime",
+    "role_output_runtime",
+}
+
+OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD = 450
+FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD = 320
+SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD = 650
+
+DIAGNOSTIC_GAP_CODES = (
+    "missing_model",
+    "missing_code",
+    "missing_test",
+    "extra_code",
+    "internal_only_test",
+    "stale_evidence",
+    "needs_structure_split",
 )
 
 
@@ -1427,6 +1473,530 @@ def _finding_counts(findings: Sequence[dict[str, Any]]) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return path.read_text(encoding="utf-8", errors="replace")
+
+
+def _line_count(text: str) -> int:
+    return len(text.splitlines())
+
+
+def _load_module_from_path(module_name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load module from {path}")
+    module = importlib.util.module_from_spec(spec)
+    old_path = list(sys.path)
+    old_module = sys.modules.get(module_name)
+    sys.modules[module_name] = module
+    sys.path.insert(0, str(path.parent))
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.path[:] = old_path
+        if old_module is None:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = old_module
+    return module
+
+
+def _python_summary(path: Path) -> dict[str, Any]:
+    text = _read_text(path)
+    rel_path = _repo_path(str(path.relative_to(ROOT)))
+    summary: dict[str, Any] = {
+        "path": rel_path,
+        "line_count": _line_count(text),
+        "top_level_functions": [],
+        "top_level_classes": [],
+        "local_imports": [],
+        "has_main": False,
+        "parse_error": "",
+        "all_exports_count": 0,
+    }
+    try:
+        tree = ast.parse(text, filename=rel_path)
+    except SyntaxError as exc:
+        summary["parse_error"] = str(exc)
+        return summary
+    functions: list[str] = []
+    classes: list[str] = []
+    imports: list[str] = []
+    all_exports_count = 0
+    for node in tree.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            functions.append(node.name)
+        elif isinstance(node, ast.ClassDef):
+            classes.append(node.name)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            if node.module.startswith(("flowpilot_", "packet_", "card_", "role_", "barrier_")):
+                imports.append(node.module)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name.startswith(("flowpilot_", "packet_", "card_", "role_", "barrier_")):
+                    imports.append(alias.name)
+        elif isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "__all__":
+                    if isinstance(node.value, (ast.Tuple, ast.List)):
+                        all_exports_count = len(node.value.elts)
+    summary["top_level_functions"] = sorted(functions)
+    summary["top_level_classes"] = sorted(classes)
+    summary["local_imports"] = sorted(set(imports))
+    summary["has_main"] = "main" in functions
+    summary["all_exports_count"] = all_exports_count
+    return summary
+
+
+def _text_corpus(paths: Sequence[Path]) -> str:
+    return "\n".join(_read_text(path) for path in paths if path.exists())
+
+
+def _simulation_model_corpus() -> str:
+    paths = [
+        path
+        for path in sorted((ROOT / "simulations").glob("*.py"))
+        if path.name != "run_flowpilot_model_test_alignment_checks.py"
+    ]
+    return _text_corpus(paths)
+
+
+def _test_corpus() -> str:
+    return _text_corpus(sorted((ROOT / "tests").rglob("*.py")))
+
+
+def _surface_mentions(text: str, rel_path: str, stem: str) -> bool:
+    return rel_path in text or stem in text
+
+
+def _surface_kind_for_asset(stem: str, summary: dict[str, Any]) -> str:
+    if stem in ASSET_FACADE_MODULES:
+        return "compatibility_facade"
+    local_imports = summary.get("local_imports", [])
+    if summary.get("all_exports_count", 0) >= 6 and len(local_imports) >= 2:
+        return "compatibility_facade"
+    return "owner_module"
+
+
+def _surface_threshold(kind: str) -> int:
+    if kind == "compatibility_facade":
+        return FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD
+    if kind == "script_entrypoint":
+        return SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD
+    return OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD
+
+
+def _diagnostic_gap_codes(surface: dict[str, Any]) -> list[str]:
+    codes: list[str] = []
+    if not surface.get("has_model", False):
+        codes.append("missing_model")
+    if not surface.get("has_code", False):
+        codes.append("missing_code")
+    if not surface.get("has_test", False):
+        codes.append("missing_test")
+    if surface.get("has_code", False) and not surface.get("has_model", False):
+        codes.append("extra_code")
+    if (
+        surface.get("has_test", False)
+        and surface.get("kind") != "test_tier"
+        and not surface.get("has_external_contract", False)
+    ):
+        codes.append("internal_only_test")
+    if surface.get("evidence_status") in {"running", "missing_final_artifacts", "stale"}:
+        codes.append("stale_evidence")
+    if surface.get("line_count", 0) > int(surface.get("split_threshold", 10**9)):
+        codes.append("needs_structure_split")
+    return [code for code in DIAGNOSTIC_GAP_CODES if code in codes]
+
+
+def _finalize_surface(surface: dict[str, Any]) -> dict[str, Any]:
+    surface = dict(surface)
+    gap_codes = _diagnostic_gap_codes(surface)
+    surface["gap_codes"] = gap_codes
+    surface["covered"] = not gap_codes
+    return surface
+
+
+def _surface_findings(surface: dict[str, Any]) -> list[dict[str, Any]]:
+    findings = []
+    for code in surface["gap_codes"]:
+        findings.append(
+            {
+                "code": code,
+                "surface_id": surface["surface_id"],
+                "kind": surface["kind"],
+                "path": surface.get("path", ""),
+                "name": surface.get("name", surface["surface_id"]),
+                "message": _diagnostic_message(code, surface),
+            }
+        )
+    return findings
+
+
+def _diagnostic_message(code: str, surface: dict[str, Any]) -> str:
+    name = surface.get("name", surface["surface_id"])
+    if code == "missing_model":
+        return f"{name} is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus"
+    if code == "missing_code":
+        return f"{name} references code or command targets that are missing"
+    if code == "missing_test":
+        return f"{name} has no ordinary test evidence in the current diagnostic corpus"
+    if code == "extra_code":
+        return f"{name} exists as code without a model binding"
+    if code == "internal_only_test":
+        return f"{name} has tests or mentions but no source-level external contract binding"
+    if code == "stale_evidence":
+        return f"{name} has running, stale, or incomplete background evidence"
+    if code == "needs_structure_split":
+        return (
+            f"{name} has {surface.get('line_count', 0)} lines, above the "
+            f"{surface.get('split_threshold')} line diagnostic threshold"
+        )
+    return f"{name} has diagnostic gap {code}"
+
+
+def _command_references_exist(command: Sequence[str]) -> bool:
+    for token in command:
+        normalized = token.replace("\\", "/")
+        if normalized.endswith(".py"):
+            if not (ROOT / normalized).exists():
+                return False
+        if normalized.startswith(("tests.", "simulations.")):
+            module_path = ROOT / (normalized.replace(".", "/") + ".py")
+            package_init = ROOT / normalized.replace(".", "/") / "__init__.py"
+            if not module_path.exists() and not package_init.exists():
+                return False
+    return True
+
+
+def _command_contains_test_target(command: Sequence[str]) -> bool:
+    return any(
+        token.startswith("tests.")
+        or token.startswith("tests/")
+        or token.startswith("tests\\")
+        or token.startswith("tests")
+        for token in command
+    )
+
+
+def _command_contains_model_runner(command: Sequence[str]) -> bool:
+    return any(
+        token.startswith("simulations/run_") and token.endswith(".py")
+        for token in command
+    )
+
+
+def _test_tier_command_surfaces(
+    *,
+    model_text: str,
+    test_text: str,
+) -> list[dict[str, Any]]:
+    run_test_tier_path = ROOT / "scripts" / "run_test_tier.py"
+    run_test_tier = _load_module_from_path(
+        "flowpilot_alignment_diagnostic_run_test_tier",
+        run_test_tier_path,
+    )
+    surfaces: list[dict[str, Any]] = []
+    for tier in run_test_tier.tier_names():
+        commands = run_test_tier.commands_for_tier(tier)
+        tier_surface = _finalize_surface(
+            {
+                "surface_id": f"tier:{tier}",
+                "kind": "test_tier",
+                "name": tier,
+                "path": "scripts/run_test_tier.py",
+                "has_model": tier in model_text or tier in test_text,
+                "has_code": True,
+                "has_test": tier in test_text,
+                "has_external_contract": "flowpilot_test_tiering_model.py" in model_text,
+                "evidence_status": "passed",
+                "line_count": len(commands),
+                "split_threshold": 999,
+                "command_count": len(commands),
+            }
+        )
+        surfaces.append(tier_surface)
+        for command in commands:
+            command_text = " ".join(command.command)
+            evidence_status = "passed"
+            if command.background_recommended or command.long_running:
+                evidence_status = "missing_final_artifacts"
+            has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
+            surfaces.append(
+                _finalize_surface(
+                    {
+                        "surface_id": f"tier-command:{tier}:{command.name}",
+                        "kind": "test_tier_command",
+                        "name": command.name,
+                        "path": "scripts/run_test_tier.py",
+                        "tier": tier,
+                        "command": list(command.command),
+                        "has_model": tier_surface["has_model"] or command.name in model_text or command.name in test_text,
+                        "has_code": _command_references_exist(command.command),
+                        "has_test": has_validation_target or command.name in test_text,
+                        "has_external_contract": tier_surface["has_external_contract"],
+                        "evidence_status": evidence_status,
+                        "line_count": 1,
+                        "split_threshold": 999,
+                        "long_running": command.long_running,
+                        "release_only": command.release_only,
+                        "background_recommended": command.background_recommended,
+                        "command_text": command_text,
+                    }
+                )
+            )
+    return surfaces
+
+
+def _asset_surfaces(
+    *,
+    model_text: str,
+    test_text: str,
+    source_contract_paths: set[str],
+) -> list[dict[str, Any]]:
+    surfaces: list[dict[str, Any]] = []
+    for path in sorted((ROOT / "skills" / "flowpilot" / "assets").glob("*.py")):
+        rel_path = _repo_path(str(path.relative_to(ROOT)))
+        stem = path.stem
+        summary = _python_summary(path)
+        kind = _surface_kind_for_asset(stem, summary)
+        has_external_contract = rel_path in source_contract_paths
+        has_model = has_external_contract or _surface_mentions(model_text, rel_path, stem)
+        has_test = has_external_contract or _surface_mentions(test_text, rel_path, stem)
+        surfaces.append(
+            _finalize_surface(
+                {
+                    "surface_id": f"asset:{stem}",
+                    "kind": kind,
+                    "name": stem,
+                    "path": rel_path,
+                    "has_model": has_model,
+                    "has_code": path.exists() and not bool(summary["parse_error"]),
+                    "has_test": has_test,
+                    "has_external_contract": has_external_contract,
+                    "evidence_status": "passed",
+                    "line_count": summary["line_count"],
+                    "split_threshold": _surface_threshold(kind),
+                    "top_level_function_count": len(summary["top_level_functions"]),
+                    "top_level_class_count": len(summary["top_level_classes"]),
+                    "local_import_count": len(summary["local_imports"]),
+                    "parse_error": summary["parse_error"],
+                }
+            )
+        )
+    return surfaces
+
+
+def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]:
+    surfaces: list[dict[str, Any]] = []
+    for path in sorted((ROOT / "scripts").glob("*.py")):
+        rel_path = _repo_path(str(path.relative_to(ROOT)))
+        stem = path.stem
+        summary = _python_summary(path)
+        has_model = _surface_mentions(model_text, rel_path, stem)
+        has_test = _surface_mentions(test_text, rel_path, stem)
+        surfaces.append(
+            _finalize_surface(
+                {
+                    "surface_id": f"script:{stem}",
+                    "kind": "script_entrypoint",
+                    "name": stem,
+                    "path": rel_path,
+                    "has_model": has_model,
+                    "has_code": path.exists() and not bool(summary["parse_error"]),
+                    "has_test": has_test,
+                    "has_external_contract": False,
+                    "evidence_status": "passed",
+                    "line_count": summary["line_count"],
+                    "split_threshold": _surface_threshold("script_entrypoint"),
+                    "has_main": summary["has_main"],
+                    "parse_error": summary["parse_error"],
+                }
+            )
+        )
+    return surfaces
+
+
+def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
+    surfaces: list[dict[str, Any]] = []
+    for path in sorted((ROOT / "simulations").glob("run_*checks.py")):
+        rel_path = _repo_path(str(path.relative_to(ROOT)))
+        stem = path.stem
+        summary = _python_summary(path)
+        surfaces.append(
+            _finalize_surface(
+                {
+                    "surface_id": f"model-check:{stem}",
+                    "kind": "model_check_runner",
+                    "name": stem,
+                    "path": rel_path,
+                    "has_model": True,
+                    "has_code": path.exists() and summary["has_main"] and not bool(summary["parse_error"]),
+                    "has_test": _surface_mentions(test_text, rel_path, stem),
+                    "has_external_contract": stem == "run_flowpilot_model_test_alignment_checks",
+                    "evidence_status": "passed",
+                    "line_count": summary["line_count"],
+                    "split_threshold": _surface_threshold("script_entrypoint"),
+                    "has_main": summary["has_main"],
+                    "parse_error": summary["parse_error"],
+                }
+            )
+        )
+    return surfaces
+
+
+def _full_diagnostic_known_bad_cases() -> list[dict[str, Any]]:
+    return [
+        {
+            "name": "orphan_code",
+            "expected_codes": ["missing_model", "missing_test", "extra_code"],
+            "surface": {
+                "surface_id": "synthetic:orphan_code",
+                "kind": "owner_module",
+                "name": "orphan_code",
+                "path": "skills/flowpilot/assets/orphan_code.py",
+                "has_model": False,
+                "has_code": True,
+                "has_test": False,
+                "has_external_contract": False,
+                "evidence_status": "passed",
+                "line_count": 20,
+                "split_threshold": OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD,
+            },
+        },
+        {
+            "name": "wrapper_only_evidence",
+            "expected_codes": ["internal_only_test"],
+            "surface": {
+                "surface_id": "synthetic:wrapper_only",
+                "kind": "compatibility_facade",
+                "name": "wrapper_only",
+                "path": "skills/flowpilot/assets/wrapper_only.py",
+                "has_model": True,
+                "has_code": True,
+                "has_test": True,
+                "has_external_contract": False,
+                "evidence_status": "passed",
+                "line_count": 20,
+                "split_threshold": FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD,
+            },
+        },
+        {
+            "name": "progress_only_background",
+            "expected_codes": ["stale_evidence"],
+            "surface": {
+                "surface_id": "synthetic:progress_only",
+                "kind": "test_tier_command",
+                "name": "progress_only_background",
+                "path": "scripts/run_test_tier.py",
+                "has_model": True,
+                "has_code": True,
+                "has_test": True,
+                "has_external_contract": True,
+                "evidence_status": "running",
+                "line_count": 1,
+                "split_threshold": 999,
+            },
+        },
+        {
+            "name": "broad_unsplit_module",
+            "expected_codes": ["needs_structure_split"],
+            "surface": {
+                "surface_id": "synthetic:broad_module",
+                "kind": "owner_module",
+                "name": "broad_module",
+                "path": "skills/flowpilot/assets/broad_module.py",
+                "has_model": True,
+                "has_code": True,
+                "has_test": True,
+                "has_external_contract": True,
+                "evidence_status": "passed",
+                "line_count": OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD + 1,
+                "split_threshold": OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD,
+            },
+        },
+    ]
+
+
+def _full_diagnostic_known_bad_report(case: dict[str, Any]) -> dict[str, Any]:
+    surface = _finalize_surface(case["surface"])
+    finding_codes = sorted(surface["gap_codes"])
+    expected = set(case["expected_codes"])
+    return {
+        "name": case["name"],
+        "ok": expected.issubset(finding_codes),
+        "expected_codes": sorted(expected),
+        "finding_codes": finding_codes,
+        "surface": surface,
+    }
+
+
+def build_full_model_test_code_diagnostic() -> dict[str, Any]:
+    source_plan = build_source_contract_alignment_plan()
+    source_contract_paths = {contract.path for contract in source_plan.code_contracts}
+    model_text = _simulation_model_corpus()
+    test_text = _test_corpus()
+    surfaces = []
+    surfaces.extend(
+        _asset_surfaces(
+            model_text=model_text,
+            test_text=test_text,
+            source_contract_paths=source_contract_paths,
+        )
+    )
+    surfaces.extend(_script_surfaces(model_text=model_text, test_text=test_text))
+    surfaces.extend(_model_check_surfaces(test_text=test_text))
+    surfaces.extend(_test_tier_command_surfaces(model_text=model_text, test_text=test_text))
+    surfaces = sorted(surfaces, key=lambda item: (item["kind"], item["surface_id"]))
+    findings: list[dict[str, Any]] = []
+    for surface in surfaces:
+        findings.extend(_surface_findings(surface))
+    known_bad = [
+        _full_diagnostic_known_bad_report(case)
+        for case in _full_diagnostic_known_bad_cases()
+    ]
+    surface_counts: dict[str, int] = {}
+    for surface in surfaces:
+        kind = str(surface["kind"])
+        surface_counts[kind] = surface_counts.get(kind, 0) + 1
+    actionability_order = {
+        "missing_code": 0,
+        "missing_test": 1,
+        "missing_model": 2,
+        "internal_only_test": 3,
+        "needs_structure_split": 4,
+        "extra_code": 5,
+        "stale_evidence": 6,
+    }
+    actionable_findings = sorted(
+        findings,
+        key=lambda item: (
+            actionability_order.get(str(item["code"]), 99),
+            str(item["path"]),
+            str(item["surface_id"]),
+        ),
+    )
+    return {
+        "ok": all(item["ok"] for item in known_bad),
+        "result_type": "flowpilot_full_model_test_code_diagnostic",
+        "diagnostic_boundary": FULL_DIAGNOSTIC_BOUNDARY,
+        "full_coverage_ok": not findings,
+        "surface_count": len(surfaces),
+        "surface_counts": dict(sorted(surface_counts.items())),
+        "covered_surface_count": sum(1 for surface in surfaces if surface["covered"]),
+        "gap_surface_count": sum(1 for surface in surfaces if surface["gap_codes"]),
+        "gap_counts": _finding_counts(findings),
+        "findings": findings,
+        "actionable_findings": actionable_findings[:80],
+        "surfaces": surfaces,
+        "known_bad_ok": all(item["ok"] for item in known_bad),
+        "known_bad_sanity_checks": known_bad,
+    }
+
+
 def _plan_report(entry: dict[str, Any]) -> dict[str, Any]:
     plan: ModelTestAlignmentPlan = entry["plan"]
     report = review_model_test_alignment(plan)
@@ -1495,6 +2065,7 @@ def build_report() -> dict[str, Any]:
     source_known_bad = [
         _source_known_bad_report(case) for case in _source_known_bad_cases()
     ]
+    full_diagnostic = build_full_model_test_code_diagnostic()
     findings: list[dict[str, Any]] = []
     for plan in per_plan:
         for finding in plan["report"]["findings"]:
@@ -1510,20 +2081,25 @@ def build_report() -> dict[str, Any]:
     known_bad_ok = all(case["ok"] for case in known_bad)
     source_audit_ok = source_contract_plan["ok"]
     source_known_bad_ok = all(case["ok"] for case in source_known_bad)
+    full_diagnostic_ok = full_diagnostic["ok"]
     return {
-        "ok": alignment_ok and known_bad_ok and source_audit_ok and source_known_bad_ok,
+        "ok": alignment_ok and known_bad_ok and source_audit_ok and source_known_bad_ok and full_diagnostic_ok,
         "result_type": "flowpilot_model_test_alignment",
         "alignment_ok": alignment_ok,
         "known_bad_ok": known_bad_ok,
         "source_audit_ok": source_audit_ok,
         "source_known_bad_ok": source_known_bad_ok,
+        "full_diagnostic_ok": full_diagnostic_ok,
+        "full_coverage_ok": full_diagnostic["full_coverage_ok"],
         "source_audit_boundary": SOURCE_AUDIT_BOUNDARY,
+        "full_diagnostic_boundary": FULL_DIAGNOSTIC_BOUNDARY,
         "plan_count": len(per_plan),
         "families": [plan["family"] for plan in per_plan],
         "findings": findings,
         "finding_counts": _finding_counts(findings),
         "per_plan": per_plan,
         "source_contract_plan": source_contract_plan,
+        "full_model_test_code_diagnostic": full_diagnostic,
         "known_bad_sanity_checks": known_bad,
         "source_known_bad_sanity_checks": source_known_bad,
     }

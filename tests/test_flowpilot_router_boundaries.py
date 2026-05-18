@@ -17,6 +17,8 @@ import flowpilot_router_card_settlement as card_settlement  # noqa: E402
 import flowpilot_router_controller_boundary as controller_boundary  # noqa: E402
 import flowpilot_router_controller_reconciliation as controller_reconciliation  # noqa: E402
 import flowpilot_router_controller_repair as controller_repair  # noqa: E402
+import flowpilot_router_controller_scheduler as controller_scheduler  # noqa: E402
+import flowpilot_router_controller_scheduler_receipts as controller_scheduler_receipts  # noqa: E402
 import flowpilot_router_dispatch_gate as dispatch_gate  # noqa: E402
 import flowpilot_router_event_dispatcher as event_dispatcher  # noqa: E402
 import flowpilot_router_events as router_events  # noqa: E402
@@ -29,6 +31,8 @@ import flowpilot_router_route as router_route  # noqa: E402
 import flowpilot_router_runtime_state as runtime_state  # noqa: E402
 import flowpilot_router_startup_daemon as startup_daemon  # noqa: E402
 import flowpilot_router_terminal as terminal_helpers  # noqa: E402
+import flowpilot_router_work_packets as work_packets  # noqa: E402
+import flowpilot_router_work_packets_pm_role as work_packets_pm_role  # noqa: E402
 
 
 class FlowPilotRouterBoundaryTests(unittest.TestCase):
@@ -308,6 +312,24 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
     def test_system_card_auto_commit_helpers_are_thin_router_delegates(self) -> None:
         self.assertTrue(callable(action_handlers.auto_commit_system_card_delivery_action))
         self.assertTrue(callable(action_handlers.auto_commit_system_card_bundle_delivery_action))
+
+    def test_controller_receipts_facade_exports_child_owner_symbols(self) -> None:
+        for name in controller_scheduler_receipts.__all__:
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(controller_scheduler_receipts, name), name)
+                self.assertIs(
+                    getattr(controller_scheduler, name),
+                    getattr(controller_scheduler_receipts, name),
+                )
+
+    def test_pm_role_work_facade_exports_child_owner_symbols(self) -> None:
+        for name in work_packets_pm_role.__all__:
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(work_packets_pm_role, name), name)
+                self.assertIs(
+                    getattr(work_packets, name),
+                    getattr(work_packets_pm_role, name),
+                )
 
     def test_route_domain_helpers_are_available_in_route_owner(self) -> None:
         self.assertTrue(callable(router_route.route_payload_from_reviewed_draft))

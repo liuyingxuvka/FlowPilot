@@ -49,6 +49,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertTrue(report["known_bad_ok"])
         self.assertTrue(report["source_audit_ok"], report["findings"])
         self.assertTrue(report["source_known_bad_ok"])
+        self.assertTrue(report["full_diagnostic_ok"])
+        self.assertFalse(report["full_coverage_ok"])
         self.assertEqual(
             report["families"],
             [
@@ -63,6 +65,58 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             ],
         )
         self.assertEqual(report["findings"], [])
+
+    def test_full_diagnostic_inventory_reports_current_gap_classes(self) -> None:
+        report = alignment_runner.build_report()
+        diagnostic = report["full_model_test_code_diagnostic"]
+
+        self.assertTrue(diagnostic["ok"], diagnostic["known_bad_sanity_checks"])
+        self.assertFalse(diagnostic["full_coverage_ok"])
+        self.assertGreater(diagnostic["surface_count"], 100)
+        for kind in (
+            "owner_module",
+            "compatibility_facade",
+            "script_entrypoint",
+            "model_check_runner",
+            "test_tier",
+            "test_tier_command",
+        ):
+            with self.subTest(kind=kind):
+                self.assertGreater(diagnostic["surface_counts"].get(kind, 0), 0)
+
+        for code in (
+            "missing_model",
+            "missing_test",
+            "extra_code",
+            "internal_only_test",
+            "needs_structure_split",
+        ):
+            with self.subTest(code=code):
+                self.assertGreater(diagnostic["gap_counts"].get(code, 0), 0)
+
+        surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
+        self.assertIn("asset:flowpilot_router", surfaces)
+        self.assertIn("script:run_test_tier", surfaces)
+        self.assertIn("model-check:run_flowpilot_model_test_alignment_checks", surfaces)
+        self.assertIn("tier:router", surfaces)
+
+    def test_full_diagnostic_known_bad_cases_cover_false_confidence_hazards(self) -> None:
+        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        checks = {case["name"]: case for case in diagnostic["known_bad_sanity_checks"]}
+
+        for name in (
+            "orphan_code",
+            "wrapper_only_evidence",
+            "progress_only_background",
+            "broad_unsplit_module",
+        ):
+            with self.subTest(name=name):
+                self.assertIn(name, checks)
+                self.assertTrue(checks[name]["ok"], checks[name])
+                self.assertLessEqual(
+                    set(checks[name]["expected_codes"]),
+                    set(checks[name]["finding_codes"]),
+                )
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
         report = alignment_runner.build_report()

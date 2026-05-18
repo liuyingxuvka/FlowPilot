@@ -19,18 +19,28 @@ green row means the declared obligations have current passing evidence for the
 required test kinds. It does not mean production conformance unless a separate
 production replay or release check says that.
 
-The runner has two layers:
+The runner has three layers:
 
 - Declaration alignment: every major model family lists required obligations
   and current ordinary test evidence.
 - Source-contract audit: a conservative AST-supported subset also lists real
   Python `CodeContract` rows, then verifies that selected tests directly call
   those public contract symbols and assert the external contract boundary.
+- Full model-test-code diagnostics: a repository-wide coverage-accounting pass
+  inventories owner modules, compatibility facades, script entrypoints,
+  model-check runners, and test tiers, then reports missing-model,
+  missing-test, extra-code, internal-only-test, stale-evidence, and
+  needs-structure-split gaps.
 
 The source-contract audit is intentionally narrower than the declaration table.
 It proves that critical externally visible Python surfaces are not merely
 mentioned by a test map. It does not claim full Python semantics, replace
 runtime replay, or replace Meta/Capability/Router background regressions.
+
+The full diagnostic layer is intentionally allowed to find gaps while the
+runner exits successfully. `full_diagnostic_ok` means the diagnostic machinery
+and its known-bad cases are working. `full_coverage_ok` is the release-style
+coverage claim and remains false until every inventoried surface is covered.
 
 For source-audited evidence, `TestEvidence.path` points to the file containing
 the real test function or class definition. The `command` may still be a public
@@ -62,6 +72,12 @@ The runner prints a JSON payload with:
   contract subset is green.
 - `source_known_bad_ok`: true only when the synthetic source-audit bad cases are
   rejected.
+- `full_diagnostic_ok`: true only when the full diagnostic report is generated
+  and its false-confidence known-bad cases are rejected.
+- `full_coverage_ok`: true only when the full diagnostic has no current gap
+  findings. This is intentionally separate from `ok`.
+- `full_model_test_code_diagnostic`: surface counts, gap counts, per-surface
+  rows, actionable findings, and full-diagnostic known-bad results.
 - `per_plan`: one entry per family, including the serialized
   `ModelTestAlignmentPlan`, the FlowGuard report, model-check commands, and
   the coverage boundary.
@@ -95,6 +111,15 @@ The source-audit layer adds these synthetic bad cases:
 | Test asserts an internal/helper path but never calls the declared contract | `source_test_missing_code_contract_call`, `source_test_internal_path_only` |
 | Test calls the contract but has no external assertion | `source_test_missing_external_assertion`, `source_test_internal_path_only` |
 | Code surface has undeclared side-effect-looking calls | `source_contract_extra_side_effect` |
+
+The full diagnostic layer adds these synthetic bad cases:
+
+| Full diagnostic known-bad case | Expected diagnostic finding |
+| --- | --- |
+| Orphan code surface | `missing_model`, `missing_test`, `extra_code` |
+| Wrapper-only evidence | `internal_only_test` |
+| Progress-only background evidence | `stale_evidence` |
+| Broad unsplit module | `needs_structure_split` |
 
 These sanity checks are intentionally separate from the main alignment table.
 They should fail as bad plans while the runner as a whole remains green.
