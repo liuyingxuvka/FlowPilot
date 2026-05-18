@@ -33,6 +33,8 @@ REQUIRED_LABELS = {
     "reject_hidden_skipped_tests",
     "reject_stale_child_evidence_used",
     "reject_router_slice_import_broken_counted_green",
+    "reject_router_child_tier_keeps_slow_aggregate",
+    "reject_router_child_tier_duplicates_k_shards",
     "reject_background_progress_only_claimed_pass",
     "reject_background_missing_artifact_set",
     "reject_release_obligation_hidden",
@@ -52,6 +54,12 @@ EXPECTED_HAZARD_FAILURES = {
     "stale_child_evidence_used": {"child_evidence_stale"},
     "router_slice_import_broken_counted_green": {
         "router_slice_import_failure_counted_green",
+    },
+    "router_child_tier_keeps_slow_aggregate": {
+        "router_child_commands_not_granular",
+    },
+    "router_child_tier_duplicates_k_shards": {
+        "router_child_shards_duplicate_test_selection",
     },
     "background_progress_only_claimed_pass": {
         "background_progress_is_not_completion_evidence",
@@ -73,6 +81,9 @@ def _state_id(state: model.State) -> str:
         f"fast={state.fast_tier_foreground_safe},{state.long_regression_in_fast_tier},"
         f"{state.public_release_in_fast_tier},{state.coverage_sweep_blocks_fast_tier}|"
         f"router={state.router_slice_import_ok},{state.router_slice_counted_green}|"
+        f"router_granular={state.router_child_commands_granular},"
+        f"{state.router_k_shards_disjoint},"
+        f"{state.slow_router_aggregate_command_present}|"
         f"background={state.background_requested},{state.background_artifacts_declared},"
         f"{state.background_exit_artifact_present},{state.background_exit_inspected},"
         f"{state.background_progress_claimed_as_pass}|"

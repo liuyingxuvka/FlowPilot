@@ -43,6 +43,9 @@ class State:
     coverage_sweep_blocks_fast_tier: bool = False
     router_slice_import_ok: bool = True
     router_slice_counted_green: bool = False
+    router_child_commands_granular: bool = True
+    router_k_shards_disjoint: bool = True
+    slow_router_aggregate_command_present: bool = False
     background_requested: bool = False
     background_artifacts_declared: bool = False
     background_exit_artifact_present: bool = False
@@ -91,6 +94,9 @@ def _valid_router(name: str) -> State:
         tier_scope="router",
         router_slice_import_ok=True,
         router_slice_counted_green=True,
+        router_child_commands_granular=True,
+        router_k_shards_disjoint=True,
+        slow_router_aggregate_command_present=False,
     )
 
 
@@ -156,6 +162,15 @@ SCENARIOS: dict[str, State] = {
         _valid_router("router_slice_import_broken_counted_green"),
         router_slice_import_ok=False,
         router_slice_counted_green=True,
+    ),
+    "router_child_tier_keeps_slow_aggregate": replace(
+        _valid_router("router_child_tier_keeps_slow_aggregate"),
+        router_child_commands_granular=False,
+        slow_router_aggregate_command_present=True,
+    ),
+    "router_child_tier_duplicates_k_shards": replace(
+        _valid_router("router_child_tier_duplicates_k_shards"),
+        router_k_shards_disjoint=False,
     ),
     "background_progress_only_claimed_pass": replace(
         _valid_background("background_progress_only_claimed_pass"),
@@ -223,6 +238,12 @@ def test_tier_failures(state: State) -> list[str]:
         failures.append("coverage_sweep_blocks_fast_tier")
     if state.router_slice_counted_green and not state.router_slice_import_ok:
         failures.append("router_slice_import_failure_counted_green")
+    if state.tier_scope == "router" and (
+        not state.router_child_commands_granular or state.slow_router_aggregate_command_present
+    ):
+        failures.append("router_child_commands_not_granular")
+    if state.tier_scope == "router" and not state.router_k_shards_disjoint:
+        failures.append("router_child_shards_duplicate_test_selection")
     if state.background_requested and not state.background_artifacts_declared:
         failures.append("background_artifact_set_missing")
     if state.background_progress_claimed_as_pass and (

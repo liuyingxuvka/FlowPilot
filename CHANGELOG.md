@@ -2,6 +2,31 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.12 - 2026-05-18
+
+### Added
+
+- Added the `final-owner-module-polish` OpenSpec change for the final
+  StructureMesh-guided owner-module polish pass.
+- Added focused owner modules for packet control-plane transitions, action
+  factory reconciliation/dispatch/envelope helpers, PM role-work
+  gates/writes/lifecycle/actions, terminal ledger summary/traceability/closure
+  recovery, Controller scheduler receipt writes/effects/pending/scheduled
+  reconciliation, and facade export manifest shards.
+
+### Changed
+
+- Reduced the remaining heavy compatibility facades to small import surfaces
+  while preserving router exports, bound-router behavior, and packet
+  control-plane model behavior.
+- Updated StructureMesh/TestMesh/model-alignment evidence, install required
+  files, and PromptStore manifest hashes for the new owner boundaries.
+- Split the router background regression parent into smaller TestMesh child
+  commands for startup, foreground/controller, and packet domains so slow
+  validation can run with bounded parallelism and clearer failure ownership.
+- Kept this as a local-only maintenance version; GitHub push, tag, and remote
+  release remain intentionally out of scope.
+
 ## 0.9.11 - 2026-05-18
 
 ### Added

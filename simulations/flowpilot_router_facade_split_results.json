@@ -109,7 +109,7 @@
   "ok": true,
   "prompt_split": {
     "asset_count": 7,
-    "child_module_count": 103,
+    "child_module_count": 123,
     "coarse_owner_count": 36,
     "facade_line_count": 458,
     "facade_top_level_function_count": 0,

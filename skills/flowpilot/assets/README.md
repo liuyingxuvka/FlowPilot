@@ -20,6 +20,21 @@ Reusable assets for FlowPilot live here or in the repository-level
   entrypoint backed by source, tree, stage, Mermaid, and Markdown helpers;
 - `packet_control_plane_model.py`, the packet control-plane model facade backed
   by focused state, transition, and invariant helpers;
+- `packet_control_plane_model_transitions.py`, the transition facade backed by
+  issue/resume, packet relay, dispatch/result relay, and reviewer/PM outcome
+  transition owners;
+- `flowpilot_router_action_factory.py`, the action-factory facade backed by
+  reconciliation, dispatch-gate, and action-envelope helpers;
+- `flowpilot_router_work_packets_pm_role.py`, the PM role-work facade backed by
+  gate, write, lifecycle, and next-action helpers;
+- `flowpilot_router_terminal_ledger.py`, the terminal-ledger facade backed by
+  summary, traceability, closure/replay, and recovery helpers;
+- `flowpilot_router_controller_scheduler_receipts.py`, the Controller receipt
+  facade backed by write, receipt-effect, pending, and scheduled
+  reconciliation helpers;
+- `flowpilot_router_facade_export_manifest.py`, the export-manifest aggregator
+  backed by action, controller, route, startup, and terminal/work-packet
+  manifest shards;
 - `route_memory/` files generated inside each run by `flowpilot_router.py`:
   `route_history_index.json` and `pm_prior_path_context.json`;
 - `.flowpilot/` template files;
@@ -38,6 +53,12 @@ protocol is loaded into the main assistant. Put role and phase instructions in
 Put prompt-like reusable text in `runtime_kit/prompts/` and list it in
 `runtime_kit/prompts/manifest.json`; prompt assets are contract inputs, not
 optional inline fallbacks.
+
+During the 0.9.12 owner-module polish pass, touched modules were scanned for
+prompt-like text. The remaining matches are runtime schema fields, ledger
+payloads, dispatch policies, or calls into the existing PromptStore path rather
+than stable reusable prompt assets, so no new prompt asset was added in that
+pass. Existing PromptStore assets remain hash-managed.
 
 The repository-level reusable project-control template is still
 `templates/flowpilot/`. The executable regression models are in `simulations/`.

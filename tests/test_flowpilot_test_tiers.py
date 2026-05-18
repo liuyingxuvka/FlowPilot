@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import fnmatch
 import json
 import os
 import subprocess
@@ -47,6 +48,22 @@ run_slow_contract_checks = load_module(
 )
 
 
+def iter_test_cases(suite: unittest.TestSuite):
+    for item in suite:
+        if isinstance(item, unittest.TestSuite):
+            yield from iter_test_cases(item)
+        else:
+            yield item
+
+
+def ids_for_module(module_name: str) -> set[str]:
+    return {case.id() for case in iter_test_cases(unittest.defaultTestLoader.loadTestsFromName(module_name))}
+
+
+def unittest_k_matches(test_id: str, pattern: str) -> bool:
+    return fnmatch.fnmatchcase(test_id, pattern) if "*" in pattern else pattern in test_id
+
+
 class FlowPilotTestTierTests(unittest.TestCase):
     def command_text(self, tier: str) -> str:
         plan = run_test_tier.plan_for_tier(
@@ -77,10 +94,32 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
     def test_router_parent_composes_child_slice_commands(self) -> None:
         command_names = [command.name for command in run_test_tier.commands_for_tier("router")]
-        self.assertIn("router_startup_runtime", command_names)
-        self.assertIn("router_foreground_controller", command_names)
+        self.assertIn("router_testmesh_parent", command_names)
+        self.assertIn("router_startup_runtime_contracts", command_names)
+        self.assertIn("router_bootstrap_cli", command_names)
+        self.assertIn("router_startup_bootstrap_core", command_names)
+        self.assertIn("router_startup_bootstrap_reconciliation", command_names)
+        self.assertIn("router_startup_bootstrap_intake", command_names)
+        self.assertIn("router_startup_bootstrap_review", command_names)
+        self.assertIn("router_startup_bootstrap_fact_heartbeat", command_names)
+        self.assertIn("router_startup_daemon", command_names)
+        self.assertIn("router_foreground", command_names)
+        self.assertIn("router_controller", command_names)
+        self.assertIn("router_dispatch_gate_current_node_review", command_names)
+        self.assertIn("router_dispatch_gate_recipient_policy", command_names)
+        self.assertIn("router_dispatch_gate_user_pm_control", command_names)
+        self.assertIn("router_foreground_controller_core", command_names)
+        self.assertIn("router_foreground_controller_standby", command_names)
+        self.assertIn("router_foreground_controller_receipts", command_names)
+        self.assertIn("router_foreground_controller_boundary", command_names)
+        self.assertIn("router_foreground_controller_repair", command_names)
         self.assertIn("router_packet_runtime", command_names)
-        self.assertIn("router_packets", command_names)
+        self.assertIn("router_packets_material", command_names)
+        self.assertIn("router_packets_current_node_direct", command_names)
+        self.assertIn("router_packets_current_node_dispatch", command_names)
+        self.assertIn("router_packets_current_node_result_audit", command_names)
+        self.assertIn("router_packets_current_node_result_decision", command_names)
+        self.assertIn("router_packets_batch_and_grants", command_names)
         self.assertIn("router_cards", command_names)
         self.assertIn("router_ack_return", command_names)
         self.assertIn("router_boundaries", command_names)
@@ -102,10 +141,44 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_quality_gates", command_names)
         self.assertIn("router_material_modeling", command_names)
         self.assertNotIn("router_packets_cards_ack", command_names)
+        self.assertNotIn("router_startup_runtime", command_names)
+        self.assertNotIn("router_dispatch_gate", command_names)
+        self.assertNotIn("router_foreground_controller", command_names)
+        self.assertNotIn("router_packets", command_names)
         self.assertNotIn("router_route_mutation", command_names)
         self.assertNotIn("router_route_mutation_core", command_names)
         self.assertNotIn("router_terminal_closure", command_names)
         self.assertNotIn("test_flowpilot_router_runtime.py", self.command_text("router"))
+
+    def test_router_startup_and_foreground_tiers_are_granular_children(self) -> None:
+        self.assertEqual(
+            [command.name for command in run_test_tier.commands_for_tier("router-startup")],
+            [
+                "router_startup_runtime_contracts",
+                "router_bootstrap_cli",
+                "router_startup_bootstrap_core",
+                "router_startup_bootstrap_reconciliation",
+                "router_startup_bootstrap_intake",
+                "router_startup_bootstrap_review",
+                "router_startup_bootstrap_fact_heartbeat",
+                "router_startup_daemon",
+            ],
+        )
+        self.assertEqual(
+            [command.name for command in run_test_tier.commands_for_tier("router-foreground")],
+            [
+                "router_foreground",
+                "router_controller",
+                "router_dispatch_gate_current_node_review",
+                "router_dispatch_gate_recipient_policy",
+                "router_dispatch_gate_user_pm_control",
+                "router_foreground_controller_core",
+                "router_foreground_controller_standby",
+                "router_foreground_controller_receipts",
+                "router_foreground_controller_boundary",
+                "router_foreground_controller_repair",
+            ],
+        )
 
     def test_router_packet_tier_uses_small_stable_child_suites(self) -> None:
         commands = run_test_tier.commands_for_tier("router-packets")
@@ -113,7 +186,12 @@ class FlowPilotTestTierTests(unittest.TestCase):
             [command.name for command in commands],
             [
                 "router_packet_runtime",
-                "router_packets",
+                "router_packets_material",
+                "router_packets_current_node_direct",
+                "router_packets_current_node_dispatch",
+                "router_packets_current_node_result_audit",
+                "router_packets_current_node_result_decision",
+                "router_packets_batch_and_grants",
                 "router_cards",
                 "router_ack_return",
             ],
@@ -121,8 +199,55 @@ class FlowPilotTestTierTests(unittest.TestCase):
         command_text = self.command_text("router-packets")
         self.assertIn("tests.test_flowpilot_packet_runtime", command_text)
         self.assertIn("tests.router_runtime.packets", command_text)
+        self.assertIn("-k current_node_direct", command_text)
+        self.assertIn("-k current_node_completion", command_text)
+        self.assertIn("router_packets_current_node_result_audit", [command.name for command in commands])
+        self.assertIn("router_packets_current_node_result_decision", [command.name for command in commands])
         self.assertIn("tests.router_runtime.cards", command_text)
         self.assertIn("tests.router_runtime.ack_return", command_text)
+
+    def test_router_k_pattern_child_suites_cover_their_modules(self) -> None:
+        covered: dict[str, set[str]] = {}
+        for tier in ("router-startup", "router-foreground", "router-packets"):
+            for command in run_test_tier.commands_for_tier(tier):
+                parts = list(command.command)
+                patterns: list[str] = []
+                modules: list[str] = []
+                index = 0
+                while index < len(parts):
+                    if parts[index] == "-k":
+                        patterns.append(parts[index + 1])
+                        index += 2
+                        continue
+                    if parts[index].startswith("tests."):
+                        modules.append(parts[index])
+                    index += 1
+                if not patterns:
+                    continue
+                for module_name in modules:
+                    module_ids = ids_for_module(module_name)
+                    matched = {
+                        test_id
+                        for test_id in module_ids
+                        if any(unittest_k_matches(test_id, pattern) for pattern in patterns)
+                    }
+                    self.assertTrue(matched, command.name)
+                    already_covered = covered.setdefault(module_name, set())
+                    duplicate_matches = already_covered & matched
+                    self.assertFalse(
+                        duplicate_matches,
+                        f"{module_name} duplicate k-shard coverage in {command.name}: {sorted(duplicate_matches)}",
+                    )
+                    already_covered.update(matched)
+
+        for module_name in (
+            "tests.router_runtime.startup_bootstrap",
+            "tests.router_runtime.dispatch_gate",
+            "tests.router_runtime.foreground_controller",
+            "tests.router_runtime.packets",
+        ):
+            missing = ids_for_module(module_name) - covered.get(module_name, set())
+            self.assertFalse(missing, f"{module_name} missing from k-shards: {sorted(missing)}")
 
     def test_router_route_tier_uses_small_stable_child_suites(self) -> None:
         commands = run_test_tier.commands_for_tier("router-route")
@@ -291,6 +416,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("background_progress_only_claimed_pass", rejected)
         self.assertIn("root_pytest_scans_backup_tests", rejected)
         self.assertIn("router_slice_import_broken_counted_green", rejected)
+        self.assertIn("router_child_tier_duplicates_k_shards", rejected)
         self.assertIn("release_public_check_races_model_proofs", rejected)
         self.assertEqual(report["background_artifact_contract"], ["out", "err", "combined", "exit", "meta"])
 

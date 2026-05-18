@@ -18,3 +18,9 @@ Current prompt groups:
 When moving prompt text out of Python, add the asset here, register it in
 `manifest.json`, and keep the Python side loading by prompt id through the
 PromptStore. Do not add inline fallback copies for hash-managed prompt text.
+
+2026-05-18 owner-module polish note: the newly split action-factory, PM
+role-work, terminal-ledger, Controller receipt, and packet control-plane modules
+were scanned for prompt-like text. The remaining text is runtime metadata,
+schema/policy payload content, ledger summaries, or existing PromptStore call
+sites, so no additional prompt asset met the criteria for safe externalization.

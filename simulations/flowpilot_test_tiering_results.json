@@ -46,6 +46,12 @@
     "root_pytest_scans_backup_tests": [
       "pytest_collection_not_scoped"
     ],
+    "router_child_tier_duplicates_k_shards": [
+      "router_child_shards_duplicate_test_selection"
+    ],
+    "router_child_tier_keeps_slow_aggregate": [
+      "router_child_commands_not_granular"
+    ],
     "router_slice_import_broken_counted_green": [
       "router_slice_import_failure_counted_green"
     ],
@@ -59,12 +65,12 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=57",
+    "summary": "sequences=2 initial_states=1 traces=63",
     "violation_count": 0
   },
   "graph": {
     "accepted_state_count": 4,
-    "edge_count": 38,
+    "edge_count": 42,
     "labels_seen": [
       "accept_valid_background_integration_tier",
       "accept_valid_fast_tier",
@@ -83,6 +89,8 @@
       "reject_release_obligation_hidden",
       "reject_release_public_check_races_model_proofs",
       "reject_root_pytest_scans_backup_tests",
+      "reject_router_child_tier_duplicates_k_shards",
+      "reject_router_child_tier_keeps_slow_aggregate",
       "reject_router_slice_import_broken_counted_green",
       "reject_stale_child_evidence_used",
       "select_background_missing_artifact_set",
@@ -98,6 +106,8 @@
       "select_release_obligation_hidden",
       "select_release_public_check_races_model_proofs",
       "select_root_pytest_scans_backup_tests",
+      "select_router_child_tier_duplicates_k_shards",
+      "select_router_child_tier_keeps_slow_aggregate",
       "select_router_slice_import_broken_counted_green",
       "select_stale_child_evidence_used",
       "select_valid_background_integration_tier",
@@ -107,9 +117,9 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 15,
-    "state_count": 39,
-    "terminal_state_count": 19,
+    "rejected_state_count": 17,
+    "state_count": 43,
+    "terminal_state_count": 21,
     "violations": []
   },
   "model": "flowpilot_test_tiering",
@@ -139,6 +149,8 @@
       "release_obligation_hidden",
       "release_public_check_races_model_proofs",
       "root_pytest_scans_backup_tests",
+      "router_child_tier_duplicates_k_shards",
+      "router_child_tier_keeps_slow_aggregate",
       "router_slice_import_broken_counted_green",
       "stale_child_evidence_used"
     ],

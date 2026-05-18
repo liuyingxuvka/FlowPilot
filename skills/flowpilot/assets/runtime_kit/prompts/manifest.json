@@ -47,7 +47,7 @@
     {
       "id": "packets.result_identity_boundary",
       "path": "prompts/packets/result_identity_boundary.md",
-      "sha256": "b78cba328ba1fb11942331bcbc812f58645de459a7e4ee0ed9944035958d72c0",
+      "sha256": "1e2e9a3906f83458c0dc3290718ccdd56978885b7985759740462c8331588316",
       "strip_trailing_newline": false,
       "template_variables": [
         "result_identity_marker",
