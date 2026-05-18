@@ -279,4 +279,8 @@ OWNER_EXPORTS_TERMINAL_WORK: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flow
                                                    '_write_role_work_result_returned'),
                                                   ('_write_worker_research_report', '_write_worker_research_report'))}
 
-__all__ = ["OWNER_EXPORTS_TERMINAL_WORK"]
+def owner_exports_terminal_work() -> dict[RegistryKey, tuple[ExportSpec, ...]]:
+    return OWNER_EXPORTS_TERMINAL_WORK
+
+
+__all__ = ["OWNER_EXPORTS_TERMINAL_WORK", "owner_exports_terminal_work"]

@@ -592,6 +592,11 @@ EXTERNAL_EVENTS: dict[str, dict[str, Any]] = {
     },
 }
 
+def external_event_contract(event: str) -> dict[str, Any]:
+    return dict(EXTERNAL_EVENTS[event])
+
+
 __all__ = (
     'EXTERNAL_EVENTS',
+    'external_event_contract',
 )

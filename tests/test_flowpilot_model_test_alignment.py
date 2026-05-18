@@ -51,6 +51,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertTrue(report["source_known_bad_ok"])
         self.assertTrue(report["full_diagnostic_ok"])
         self.assertFalse(report["full_coverage_ok"])
+        self.assertTrue(report["release_convergence_ok"])
         self.assertEqual(
             report["families"],
             [
@@ -72,6 +73,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
 
         self.assertTrue(diagnostic["ok"], diagnostic["known_bad_sanity_checks"])
         self.assertFalse(diagnostic["full_coverage_ok"])
+        self.assertTrue(diagnostic["release_convergence_ok"])
         self.assertGreater(diagnostic["surface_count"], 100)
         for kind in (
             "owner_module",
@@ -87,13 +89,14 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(diagnostic["gap_counts"].get("missing_model", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("extra_code", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("internal_only_test", 0), 0)
+        self.assertEqual(diagnostic["gap_counts"].get("missing_test", 0), 0)
+        self.assertEqual(diagnostic["unresolved_non_deferred_gap_count"], 0)
         for code in (
-            "missing_test",
             "needs_structure_split",
-            "stale_evidence",
         ):
             with self.subTest(code=code):
                 self.assertGreater(diagnostic["gap_counts"].get(code, 0), 0)
+        self.assertNotIn("stale_evidence", diagnostic["gap_counts"])
 
         gate_contract_gaps = [
             finding
@@ -279,6 +282,23 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("selected", surface["background_evidence"])
         if surface["evidence_status"] == "release_local_only":
             self.assertIn("rerun_public_release_evidence", surface["repair_types"])
+
+    def test_legacy_full_background_failures_are_reclassified_when_layered_full_is_current(self) -> None:
+        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
+
+        for surface_id in (
+            "tier-command:legacy-full:meta_legacy_full",
+            "tier-command:legacy-full:capability_legacy_full",
+        ):
+            with self.subTest(surface_id=surface_id):
+                surface = surfaces[surface_id]
+                self.assertEqual(surface["evidence_status"], "legacy_full_reclassified")
+                self.assertEqual(surface["gap_codes"], [])
+                reclassification = surface["legacy_full_reclassification"]
+                self.assertTrue(reclassification["ok"], reclassification)
+                self.assertFalse(reclassification["legacy_monolith_required_for_release"])
+                self.assertTrue(reclassification["layered_full_status"]["valid"])
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
         report = alignment_runner.build_report()

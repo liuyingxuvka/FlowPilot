@@ -76,4 +76,9 @@ _OWNER_CHILD_MODULES = (
     _owner_child_4,
 )
 
+
+def owner_child_module_names() -> tuple[str, ...]:
+    return tuple(module.__name__ for module in _OWNER_CHILD_MODULES)
+
+
 _LOCAL_NAMES = set(globals())

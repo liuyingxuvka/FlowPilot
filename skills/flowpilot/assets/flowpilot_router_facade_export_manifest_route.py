@@ -330,4 +330,8 @@ OWNER_EXPORTS_ROUTE: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flowpilot_ro
                                                          '_write_router_owned_check_proof'),
                                                         ('resolve_project_path', 'resolve_project_path'))}
 
-__all__ = ["OWNER_EXPORTS_ROUTE"]
+def owner_exports_route() -> dict[RegistryKey, tuple[ExportSpec, ...]]:
+    return OWNER_EXPORTS_ROUTE
+
+
+__all__ = ["OWNER_EXPORTS_ROUTE", "owner_exports_route"]

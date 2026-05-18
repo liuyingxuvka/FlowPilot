@@ -15344,3 +15344,59 @@ Skipped steps:
 ### Next Actions
 - Continue direct external-contract tests for the remaining router owner `missing_test` surfaces, starting with CLI/control transaction/scheduler receipt modules that have clear observable boundaries.
 - Split only those large modules whose model block and direct external-contract evidence are already stable.
+## complete-flowpilot-diagnostic-convergence-2026-05-18 - Full diagnostic convergence
+
+- Project: FlowPilot
+- Trigger reason: User asked to finish the remaining model-code-test diagnostic convergence work with OpenSpec, FlowGuard, background regressions, local install sync, and local git sync.
+- Status: completed, validated, install-synced
+- Skill decision: use_flowguard:model_test_alignment + StructureMesh + TestMesh + development-process evidence freshness
+- OpenSpec change: complete-flowpilot-diagnostic-convergence
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_test_tiering_results.json
+- simulations/flowpilot_slow_test_contract_results.json
+- simulations/flowpilot_controller_break_glass_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK: `python -m unittest tests.test_flowpilot_full_diagnostic_contracts tests.test_flowpilot_model_test_alignment`.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py -q`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py`.
+- OK: `python simulations\run_flowpilot_test_tiering_checks.py --json-out simulations\flowpilot_test_tiering_results.json`.
+- OK: `python simulations\run_flowpilot_slow_test_contract_checks.py --json-out simulations\flowpilot_slow_test_contract_results.json`.
+- OK: `python simulations\run_flowpilot_controller_break_glass_checks.py --json-out simulations\flowpilot_controller_break_glass_results.json`.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python simulations\run_meta_checks.py --full --fast`.
+- OK: `python simulations\run_capability_checks.py --full --fast`.
+- OK: `python scripts\check_public_release.py --json --skip-validation`.
+- OK: `openspec validate complete-flowpilot-diagnostic-convergence --strict`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+- Full model-test-code diagnostic now reports 533 surfaces, 482 covered, 51 gap surfaces, and `release_convergence_ok=true`.
+- `missing_model`, `missing_code`, `missing_test`, `extra_code`, `internal_only_test`, and `stale_evidence` are zero.
+- The remaining 51 findings are `needs_structure_split` rows, all classified as `defer_structure_split` with explicit StructureMesh safety metadata.
+- `scripts/run_test_tier.py` is split into a small facade plus `scripts/test_tier/definitions.py` and `scripts/test_tier/background.py`.
+- Public release proof now probes dependency URLs while skipping only nested validation.
+- Legacy monolithic Meta/Capability full checks are reclassified as historical compatibility oracles when valid layered full proofs are current.
+
+### Counterexamples
+- progress_only_background_evidence_counted_as_pass
+- release_skip_url_check_claimed_as_public_proof
+- legacy_monolith_failure_treated_as_current_release_blocker_when_layered_full_is_current
+- broad_runtime_split_without_peer_safe_structuremesh_claim
+
+### Friction Points
+- The attempted final fast/release background supervisors stayed `running` without exit artifacts after the legacy monolithic capability run caused memory pressure. The same required checks were rerun foreground with final exit codes and are recorded above.
+- Broad validation-runner and runtime-facade splits remain real structure debt, but further code movement is deferred because peer agents are active and the router facade split model already warns about micro-module explosion.
+
+### Next Actions
+- Split the seven validation runners only under a dedicated `flowpilot_model_check_runner_structure_split` StructureMesh target.
+- Split runtime owner modules in small claimed batches, starting from low-conflict contract-pinned surfaces.

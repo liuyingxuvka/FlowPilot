@@ -40,14 +40,13 @@ runtime replay, or replace Meta/Capability/Router background regressions.
 
 The full diagnostic layer is intentionally allowed to find gaps while the
 runner exits successfully. `full_diagnostic_ok` means the diagnostic machinery
-and its known-bad cases are working. `full_coverage_ok` is the release-style
-coverage claim and remains false until every inventoried surface is covered.
-The current burn-down pass adds aggregate external-contract evidence for
-model-check runner entrypoints and test-tier command surfaces, and explicit
-model bindings for intentional owner/facade/script surfaces that were formerly
-reported as `missing_model`/`extra_code`. Runtime owner modules still need
-direct source-level contract tests before their internal-only evidence can be
-treated as full coverage.
+and its known-bad cases are working. `full_coverage_ok` remains false until
+every inventoried surface is covered, including structure split debt. The
+separate `release_convergence_ok` field is true only when all non-deferred
+model/code/test/background gaps are gone and remaining findings are explicit
+StructureMesh deferrals. The current burn-down pass adds direct
+external-contract evidence for the remaining runtime owner modules and keeps
+oversized modules visible as deferred structure work rather than hiding them.
 
 Each full-diagnostic gap carries triage metadata so maintenance can be planned
 without rereading every large script. The key fields are:
@@ -68,7 +67,8 @@ Background evidence is treated conservatively. Final pass, failed, running,
 stale, incomplete, progress-only, and local-only release proof states are read
 from the stable artifact contract. A progress log alone never counts as passing
 evidence, and a `--skip-url-check` public release proof is marked
-`release_local_only` until a full public boundary check is rerun.
+`release_local_only`. The current public release proof avoids duplicate nested
+validation with `--skip-validation`, but still performs URL probing.
 
 Structure-split findings distinguish immediate code movement from deliberately
 deferred owner-module work. Fresh or state-ordering-sensitive modules may remain
@@ -77,8 +77,10 @@ above the line threshold, but they are still recorded as actionable
 next action metadata.
 
 The `legacy-full` tier is kept visible as legacy validation history but is not
-ranked as the current release gate. Current release confidence comes from the
-thin/layered Meta and Capability checks.
+ranked as the current release gate. When current layered full Meta/Capability
+proofs are valid, failed or still-running legacy monolithic artifacts are
+reclassified as `legacy_full_reclassified`: visible as raw background evidence,
+but not counted as stale release evidence.
 
 For source-audited evidence, `TestEvidence.path` points to the file containing
 the real test function or class definition. The `command` may still be a public
@@ -114,6 +116,8 @@ The runner prints a JSON payload with:
   and its false-confidence known-bad cases are rejected.
 - `full_coverage_ok`: true only when the full diagnostic has no current gap
   findings. This is intentionally separate from `ok`.
+- `release_convergence_ok`: true when remaining full-diagnostic findings are
+  only explicit StructureMesh deferrals.
 - `full_model_test_code_diagnostic`: surface counts, gap counts, per-surface
   rows, actionable findings, deduplicated actionable summary, counts by
   severity/repair/release relevance, and full-diagnostic known-bad results.
@@ -163,9 +167,9 @@ The full diagnostic layer adds these synthetic bad cases:
 
 Additional gate invariants now ensure that `release_gate` and `validation_gate`
 surfaces do not regress to `missing_test` or `internal_only_test` after the
-aggregate test-tier and model-check runner contract tests are present. The
-remaining release-gate gap is intentionally still `release_local_only` when
-`check_public_release.py` is run with `--skip-url-check`.
+aggregate test-tier, model-check runner, and runtime owner contract tests are
+present. Local-only public release evidence is still rejected by the known-bad
+case, but the current release proof is no longer local-only.
 
 These sanity checks are intentionally separate from the main alignment table.
 They should fail as bad plans while the runner as a whole remains green.

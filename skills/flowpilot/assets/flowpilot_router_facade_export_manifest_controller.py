@@ -463,4 +463,8 @@ OWNER_EXPORTS_CONTROLLER: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flowpil
                                                        ('_write_host_heartbeat_binding',
                                                         '_write_host_heartbeat_binding'))}
 
-__all__ = ["OWNER_EXPORTS_CONTROLLER"]
+def owner_exports_controller() -> dict[RegistryKey, tuple[ExportSpec, ...]]:
+    return OWNER_EXPORTS_CONTROLLER
+
+
+__all__ = ["OWNER_EXPORTS_CONTROLLER", "owner_exports_controller"]

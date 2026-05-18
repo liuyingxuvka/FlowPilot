@@ -148,4 +148,8 @@ OWNER_EXPORTS_ACTIONS: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flowpilot_
                                                          '_try_reconcile_startup_fact_role_output_ledger'),
                                                         ('write_role_output_envelope', 'write_role_output_envelope'))}
 
-__all__ = ["OWNER_EXPORTS_ACTIONS"]
+def owner_exports_actions() -> dict[RegistryKey, tuple[ExportSpec, ...]]:
+    return OWNER_EXPORTS_ACTIONS
+
+
+__all__ = ["OWNER_EXPORTS_ACTIONS", "owner_exports_actions"]

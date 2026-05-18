@@ -30,6 +30,7 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+OWNER_MODULE = "flowpilot_router_startup_flow"
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -41,6 +42,10 @@ def _bind_router(router: ModuleType) -> None:
         if name in local_names:
             continue
         current[name] = value
+
+
+def owner_module_name() -> str:
+    return OWNER_MODULE
 
 
 _LOCAL_NAMES = set(globals())

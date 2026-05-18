@@ -279,4 +279,8 @@ OWNER_EXPORTS_STARTUP: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flowpilot_
                                                      ('load_manifest_from_run', 'load_manifest_from_run'),
                                                      ('manifest_card', 'manifest_card'))}
 
-__all__ = ["OWNER_EXPORTS_STARTUP"]
+def owner_exports_startup() -> dict[RegistryKey, tuple[ExportSpec, ...]]:
+    return OWNER_EXPORTS_STARTUP
+
+
+__all__ = ["OWNER_EXPORTS_STARTUP", "owner_exports_startup"]

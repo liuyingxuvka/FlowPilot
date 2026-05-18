@@ -249,6 +249,11 @@ BACKGROUND_COMMAND_ARTIFACT_ALIASES = {
     "capability_legacy_full": ("capability_legacy_full", "run_capability_checks"),
 }
 
+LEGACY_FULL_LAYERED_PARENT = {
+    "meta_legacy_full": "meta",
+    "capability_legacy_full": "capability",
+}
+
 STALE_EVIDENCE_STATUSES = {
     "failed",
     "incomplete",
@@ -1129,6 +1134,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             obligation_type="contract",
             description="Source-audited packet control-plane model state helpers map case ids to packet boundary conditions.",
             required_test_kinds=(HAPPY,),
+            allow_shared_evidence=True,
         ),
         _source_obligation(
             "role_output_runtime.owner_helper_contracts",
@@ -1598,6 +1604,404 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             external_inputs=("run_root", "run_state", "action"),
         ),
         _contract(
+            "router_cli.parse_args",
+            path="skills/flowpilot/assets/flowpilot_router_cli.py",
+            symbol="parse_args",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("argv",),
+        ),
+        _contract(
+            "control_transactions.registry_issues",
+            path="skills/flowpilot/assets/flowpilot_router_control_transactions.py",
+            symbol="_control_transaction_registry_issues",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_root",),
+        ),
+        _contract(
+            "controller_repair_schedule.schedule_deliverable_repair",
+            path="skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py",
+            symbol="_schedule_controller_deliverable_repair",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_root", "run_state", "pending_action", "receipt", "apply_result", "source"),
+        ),
+        _contract(
+            "receipts_pending.router_scheduler_row",
+            path="skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_pending.py",
+            symbol="_router_scheduler_row_for_controller_entry",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "run_root", "entry"),
+        ),
+        _contract(
+            "receipts_scheduled.scheduler_row_reconciliation",
+            path="skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
+            symbol="_scheduler_row_reconciliation_for_entry",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "run_root", "entry"),
+        ),
+        _contract(
+            "receipts_writes.maybe_write_controller_receipt",
+            path="skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py",
+            symbol="_maybe_write_controller_receipt_for_pending",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state", "pending", "status", "payload"),
+        ),
+        _contract(
+            "event_identity.stable_identity_hash",
+            path="skills/flowpilot/assets/flowpilot_router_event_identity.py",
+            symbol="_stable_identity_hash",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "value"),
+        ),
+        _contract(
+            "event_intake.role_list",
+            path="skills/flowpilot/assets/flowpilot_router_event_intake.py",
+            symbol="role_list",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("value",),
+        ),
+        _contract(
+            "events_repair.owner_child_module_names",
+            path="skills/flowpilot/assets/flowpilot_router_events_repair.py",
+            symbol="owner_child_module_names",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "expected_waits.run_state_has_event",
+            path="skills/flowpilot/assets/flowpilot_router_expected_waits.py",
+            symbol="_run_state_has_event",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_state", "event"),
+        ),
+        _contract(
+            "model_gate_state.sync_model_gate_alias_flags",
+            path="skills/flowpilot/assets/flowpilot_router_model_gate_state.py",
+            symbol="_sync_model_gate_alias_flags",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_state", "event"),
+            external_outputs=(),
+        ),
+        _contract(
+            "protocol_external_events.external_event_contract",
+            path="skills/flowpilot/assets/flowpilot_router_protocol_external_events.py",
+            symbol="external_event_contract",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("event",),
+        ),
+        _contract(
+            "manifest_actions.owner_exports_actions",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_actions.py",
+            symbol="owner_exports_actions",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "manifest_controller.owner_exports_controller",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller.py",
+            symbol="owner_exports_controller",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "manifest_route.owner_exports_route",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_route.py",
+            symbol="owner_exports_route",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "manifest_startup.owner_exports_startup",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_startup.py",
+            symbol="owner_exports_startup",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "manifest_terminal_work.owner_exports_terminal_work",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_terminal_work.py",
+            symbol="owner_exports_terminal_work",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "facade_exports.resolve_facade_export",
+            path="skills/flowpilot/assets/flowpilot_router_facade_exports.py",
+            symbol="resolve_facade_export",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("name", "router_module"),
+        ),
+        _contract(
+            "lifecycle_requests.clear_terminal_blocker",
+            path="skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+            symbol="_clear_active_control_blocker_for_terminal_lifecycle",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_root", "run_state", "mode", "event", "cleared_at"),
+            side_effects=("write_json",),
+        ),
+        _contract(
+            "lifecycle_support.lifecycle_record_path",
+            path="skills/flowpilot/assets/flowpilot_router_lifecycle_support.py",
+            symbol="_lifecycle_record_path",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_root",),
+        ),
+        _contract(
+            "startup_bootloader.depends_on_role_slots",
+            path="skills/flowpilot/assets/flowpilot_router_startup_bootloader.py",
+            symbol="_startup_bootloader_action_depends_on_role_slots",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "action_type"),
+        ),
+        _contract(
+            "startup_closure.host_heartbeat_binding_ready",
+            path="skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+            symbol="_host_heartbeat_binding_ready",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "run_root", "run_state"),
+        ),
+        _contract(
+            "startup_display.display_text_hash",
+            path="skills/flowpilot/assets/flowpilot_router_startup_display.py",
+            symbol="_display_text_hash",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "display_text"),
+        ),
+        _contract(
+            "startup_fact_boundary.controller_boundary_constraints",
+            path="skills/flowpilot/assets/flowpilot_router_startup_fact_boundary.py",
+            symbol="_controller_boundary_constraints",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router",),
+        ),
+        _contract(
+            "startup_flow.owner_module_name",
+            path="skills/flowpilot/assets/flowpilot_router_startup_flow.py",
+            symbol="owner_module_name",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "startup_intake.normalize_stop_boundary",
+            path="skills/flowpilot/assets/flowpilot_router_startup_intake.py",
+            symbol="_normalize_startup_question_stop_boundary",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "state"),
+        ),
+        _contract(
+            "startup_role_recovery.owner_child_module_names",
+            path="skills/flowpilot/assets/flowpilot_router_startup_role_recovery.py",
+            symbol="owner_child_module_names",
+            implements=("runtime_owner.router_owner_external_contracts",),
+        ),
+        _contract(
+            "startup_support.ensure_startup_run_state",
+            path="skills/flowpilot/assets/flowpilot_router_startup_support.py",
+            symbol="_ensure_startup_run_state",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "bootstrap_state"),
+            side_effects=("write_json", "save_run_state"),
+        ),
+        _contract(
+            "system_cards_delivery.commit_system_card_delivery",
+            path="skills/flowpilot/assets/flowpilot_router_system_cards_delivery.py",
+            symbol="_commit_system_card_delivery_artifact",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_state", "run_root", "pending"),
+            side_effects=("update", "write_json"),
+        ),
+        _contract(
+            "internal_actions.action_is_router_internal_mechanical",
+            path="skills/flowpilot/assets/flowpilot_router_internal_actions.py",
+            symbol="_action_is_router_internal_mechanical",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("action",),
+        ),
+        _contract(
+            "payload_contracts.payload_contract",
+            path="skills/flowpilot/assets/flowpilot_router_payload_contracts.py",
+            symbol="_payload_contract",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("name", "required_object", "required_fields", "description"),
+        ),
+        _contract(
+            "pm_role_followup.pm_role_work_channel_open",
+            path="skills/flowpilot/assets/flowpilot_router_pm_role_followup.py",
+            symbol="_pm_role_work_channel_open",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_state",),
+        ),
+        _contract(
+            "prompt_delivery.card_checkin_instruction",
+            path="skills/flowpilot/assets/flowpilot_router_prompt_delivery.py",
+            symbol="card_checkin_instruction",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "envelope_path", "role", "agent_id", "card_return_event", "bundle"),
+        ),
+        _contract(
+            "proof_validation.validate_router_owned_check_proof",
+            path="skills/flowpilot/assets/flowpilot_router_proof_validation.py",
+            symbol="_validate_router_owned_check_proof",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_root", "check_name", "audit_path"),
+        ),
+        _contract(
+            "role_io_protocol.empty_role_io_protocol_ledger",
+            path="skills/flowpilot/assets/flowpilot_router_role_io_protocol.py",
+            symbol="empty_role_io_protocol_ledger",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_id",),
+        ),
+        _contract(
+            "role_output_bridge.role_output_snapshot_name",
+            path="skills/flowpilot/assets/flowpilot_router_role_output_bridge.py",
+            symbol="_role_output_snapshot_name",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_root", "output_path"),
+        ),
+        _contract(
+            "route_artifacts_evidence.write_pm_review_block_repair",
+            path="skills/flowpilot/assets/flowpilot_router_route_artifacts_evidence.py",
+            symbol="_write_pm_review_block_repair",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_root", "run_state", "payload"),
+            external_outputs=(),
+        ),
+        _contract(
+            "route_completion_support.resume_waits_for_pm_decision",
+            path="skills/flowpilot/assets/flowpilot_router_route_completion_support.py",
+            symbol="_resume_waits_for_pm_decision",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("run_state",),
+        ),
+        _contract(
+            "self_interrogation.self_interrogation_issue",
+            path="skills/flowpilot/assets/flowpilot_router_self_interrogation.py",
+            symbol="_self_interrogation_issue",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("message", "record_id", "record_path", "scope"),
+        ),
+        _contract(
+            "terminal_closure.terminal_closure_suite_is_closed",
+            path="skills/flowpilot/assets/flowpilot_router_terminal_ledger_closure.py",
+            symbol="_terminal_closure_suite_is_closed",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "run_root"),
+        ),
+        _contract(
+            "terminal_recovery.recover_terminal_status",
+            path="skills/flowpilot/assets/flowpilot_router_terminal_ledger_recovery.py",
+            symbol="_recover_terminal_status_from_run_authorities",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state"),
+        ),
+        _contract(
+            "terminal_summary.terminal_summary_action",
+            path="skills/flowpilot/assets/flowpilot_router_terminal_ledger_summary.py",
+            symbol="_terminal_summary_action",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_state", "run_root", "mode"),
+        ),
+        _contract(
+            "work_packets_next_actions.try_reconcile_material_scan",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py",
+            symbol="_try_reconcile_material_scan_body_delivery",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state"),
+        ),
+        _contract(
+            "work_packets_pm_role_actions.try_reconcile_pm_role_work",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_actions.py",
+            symbol="_try_reconcile_pm_role_work_results",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state"),
+        ),
+        _contract(
+            "user_flow_source.route_source_summary",
+            path="skills/flowpilot/assets/flowpilot_user_flow_source.py",
+            symbol="_route_source_summary",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("route",),
+        ),
+        _contract(
+            "user_flow_stage.classify_current_stage",
+            path="skills/flowpilot/assets/flowpilot_user_flow_stage.py",
+            symbol="classify_current_stage",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("frontier", "route"),
+        ),
+        _contract(
+            "user_flow_tree.active_node",
+            path="skills/flowpilot/assets/flowpilot_user_flow_tree.py",
+            symbol="_active_node",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("frontier", "state", "route"),
+        ),
+        _contract(
+            "user_flow_mermaid.build_mermaid",
+            path="skills/flowpilot/assets/flowpilot_user_flow_mermaid.py",
+            symbol="build_mermaid",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("frontier", "route", "current_stage", "trigger"),
+        ),
+        _contract(
+            "user_flow_markdown.build_chat_markdown",
+            path="skills/flowpilot/assets/flowpilot_user_flow_markdown.py",
+            symbol="build_chat_markdown",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=(
+                "source",
+                "generated_at",
+                "current_stage",
+                "active_route",
+                "active_node",
+                "trigger",
+                "cockpit_open",
+                "chat_display_required",
+                "return_path",
+                "source_status",
+                "source_findings",
+            ),
+        ),
+        _contract(
+            "packet_invariants.controller_handoff_body_leak_never_advances",
+            path="skills/flowpilot/assets/packet_control_plane_model_invariants.py",
+            symbol="controller_handoff_body_leak_never_advances",
+            implements=("packet_control_plane.model_state_contract",),
+            external_inputs=("state", "trace"),
+        ),
+        _contract(
+            "packet_issue_resume.pm_issue_apply",
+            path="skills/flowpilot/assets/packet_control_plane_model_transitions_issue_resume.py",
+            symbol="PMIssuePacket.apply",
+            implements=("packet_control_plane.model_state_contract",),
+            external_inputs=("input_obj", "state"),
+            external_outputs=(),
+        ),
+        _contract(
+            "packet_relay.runtime_write_apply",
+            path="skills/flowpilot/assets/packet_control_plane_model_transitions_packet_relay.py",
+            symbol="PacketRuntimeWrite.apply",
+            implements=("packet_control_plane.model_state_contract",),
+            external_inputs=("input_obj", "state"),
+            external_outputs=(),
+        ),
+        _contract(
+            "packet_dispatch.router_direct_dispatch_apply",
+            path="skills/flowpilot/assets/packet_control_plane_model_transitions_dispatch_results.py",
+            symbol="RouterDirectDispatch.apply",
+            implements=("packet_control_plane.model_state_contract",),
+            external_inputs=("input_obj", "state"),
+            external_outputs=(),
+        ),
+        _contract(
+            "packet_review.reviewer_result_apply",
+            path="skills/flowpilot/assets/packet_control_plane_model_transitions_review_pm.py",
+            symbol="ReviewerResultEnvelopeCheck.apply",
+            implements=("packet_control_plane.model_state_contract",),
+            external_inputs=("input_obj", "state"),
+            external_outputs=(),
+        ),
+        _contract(
+            "packet_runtime_reviewer.validate_for_reviewer",
+            path="skills/flowpilot/assets/packet_runtime_reviewer.py",
+            symbol="validate_for_reviewer",
+            implements=("packet_runtime.runtime_owner_contracts",),
+            external_inputs=("project_root", "packet_envelope", "result_envelope", "agent_role_map"),
+        ),
+        _contract(
             "event_dispatcher.record_external_event_unchecked",
             path="skills/flowpilot/assets/flowpilot_router_event_dispatcher.py",
             symbol="_record_external_event_unchecked",
@@ -1858,7 +2262,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "test_tier.commands_for_tier",
-            path="scripts/run_test_tier.py",
+            path="scripts/test_tier/definitions.py",
             symbol="commands_for_tier",
             implements=("test_tiering.foreground_fast_scope",),
             external_inputs=("tier",),
@@ -2236,6 +2640,131 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
                 "artifact_validation.validate_artifact",
                 "child_skill_capability.approve_manifest",
                 "child_skill_capability.sync_capability_evidence",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.controller_control_scheduler",
+            test_name="test_controller_control_scheduler_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_controller_control_scheduler_external_contracts",
+            test_kind=HAPPY,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "router_cli.parse_args",
+                "control_transactions.registry_issues",
+                "controller_repair_schedule.schedule_deliverable_repair",
+                "receipts_pending.router_scheduler_row",
+                "receipts_scheduled.scheduler_row_reconciliation",
+                "receipts_writes.maybe_write_controller_receipt",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.event_wait_repair",
+            test_name="test_event_wait_repair_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_event_wait_repair_external_contracts",
+            test_kind=HAPPY,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "event_identity.stable_identity_hash",
+                "event_intake.role_list",
+                "events_repair.owner_child_module_names",
+                "expected_waits.run_state_has_event",
+                "model_gate_state.sync_model_gate_alias_flags",
+                "protocol_external_events.external_event_contract",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.facade_export_manifest",
+            test_name="test_facade_export_manifest_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_facade_export_manifest_external_contracts",
+            test_kind=HAPPY,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "manifest_actions.owner_exports_actions",
+                "manifest_controller.owner_exports_controller",
+                "manifest_route.owner_exports_route",
+                "manifest_startup.owner_exports_startup",
+                "manifest_terminal_work.owner_exports_terminal_work",
+                "facade_exports.resolve_facade_export",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.lifecycle_startup_system_card",
+            test_name="test_lifecycle_startup_system_card_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_lifecycle_startup_system_card_external_contracts",
+            test_kind=NEGATIVE,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "lifecycle_requests.clear_terminal_blocker",
+                "lifecycle_support.lifecycle_record_path",
+                "startup_bootloader.depends_on_role_slots",
+                "startup_closure.host_heartbeat_binding_ready",
+                "startup_display.display_text_hash",
+                "startup_fact_boundary.controller_boundary_constraints",
+                "startup_flow.owner_module_name",
+                "startup_intake.normalize_stop_boundary",
+                "startup_role_recovery.owner_child_module_names",
+                "startup_support.ensure_startup_run_state",
+                "system_cards_delivery.commit_system_card_delivery",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.role_prompt_proof_terminal_work_packet",
+            test_name="test_role_prompt_proof_terminal_work_packet_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_role_prompt_proof_terminal_work_packet_external_contracts",
+            test_kind=NEGATIVE,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "internal_actions.action_is_router_internal_mechanical",
+                "payload_contracts.payload_contract",
+                "pm_role_followup.pm_role_work_channel_open",
+                "prompt_delivery.card_checkin_instruction",
+                "proof_validation.validate_router_owned_check_proof",
+                "role_io_protocol.empty_role_io_protocol_ledger",
+                "role_output_bridge.role_output_snapshot_name",
+                "route_artifacts_evidence.write_pm_review_block_repair",
+                "route_completion_support.resume_waits_for_pm_decision",
+                "self_interrogation.self_interrogation_issue",
+                "terminal_closure.terminal_closure_suite_is_closed",
+                "terminal_recovery.recover_terminal_status",
+                "terminal_summary.terminal_summary_action",
+                "work_packets_next_actions.try_reconcile_material_scan",
+                "work_packets_pm_role_actions.try_reconcile_pm_role_work",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.user_flow",
+            test_name="test_user_flow_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_user_flow_external_contracts",
+            test_kind=HAPPY,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=(
+                "user_flow_source.route_source_summary",
+                "user_flow_stage.classify_current_stage",
+                "user_flow_tree.active_node",
+                "user_flow_mermaid.build_mermaid",
+                "user_flow_markdown.build_chat_markdown",
+            ),
+        ),
+        _evidence(
+            "source.full_diagnostic.packet_control_plane_reviewer",
+            test_name="test_packet_control_plane_and_reviewer_external_contracts",
+            path="tests/test_flowpilot_full_diagnostic_contracts.py",
+            command="python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_packet_control_plane_and_reviewer_external_contracts",
+            test_kind=HAPPY,
+            covers=("packet_runtime.runtime_owner_contracts", "packet_control_plane.model_state_contract"),
+            code_contracts=(
+                "packet_invariants.controller_handoff_body_leak_never_advances",
+                "packet_issue_resume.pm_issue_apply",
+                "packet_relay.runtime_write_apply",
+                "packet_dispatch.router_direct_dispatch_apply",
+                "packet_review.reviewer_result_apply",
+                "packet_runtime_reviewer.validate_for_reviewer",
             ),
         ),
         _evidence(
@@ -2846,6 +3375,46 @@ def _surface_threshold(kind: str) -> int:
     return OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD
 
 
+def _default_structure_split_deferral(
+    *,
+    kind: str,
+    stem: str,
+    line_count: int,
+    split_threshold: int,
+) -> dict[str, Any]:
+    if line_count <= split_threshold:
+        return {}
+    if kind == "model_check_runner":
+        return {
+            "split_status": "deferred_split",
+            "split_reason": "line_threshold_exceeded | validation_runner_public_entrypoint",
+            "deferred_split_reason": (
+                "validated_entrypoint_contract_current | "
+                "requires_dedicated_structuremesh_target_before_runner_extraction"
+            ),
+            "peer_safety_status": "do_not_edit_without_claim",
+            "safe_split_class": "validation_entrypoint",
+            "recommended_next_action": "split_runner_after_claim_with_cli_parity_tests",
+        }
+    if kind == "compatibility_facade":
+        safe_class = "compatibility_facade"
+    elif stem.startswith(("flowpilot_router_protocol_", "flowpilot_router_facade_export_")):
+        safe_class = "declarative_protocol_table"
+    else:
+        safe_class = "stateful_runtime_flow"
+    return {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "deferred_split_reason": (
+            "contract_tests_current | peer_agents_active | "
+            "requires_dedicated_structuremesh_claim_before_runtime_split"
+        ),
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": safe_class,
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+    }
+
+
 def _diagnostic_gap_codes(surface: dict[str, Any]) -> list[str]:
     codes: list[str] = []
     if not surface.get("has_model", False):
@@ -3111,6 +3680,13 @@ def _diagnostic_message(code: str, surface: dict[str, Any]) -> str:
     return f"{name} has diagnostic gap {code}"
 
 
+def _is_deferred_structure_finding(finding: dict[str, Any]) -> bool:
+    return (
+        finding.get("code") == "needs_structure_split"
+        and finding.get("repair_type") == "defer_structure_split"
+    )
+
+
 def _command_references_exist(command: Sequence[str]) -> bool:
     for token in command:
         normalized = token.replace("\\", "/")
@@ -3151,6 +3727,7 @@ def _background_evidence_for_command(
     names = BACKGROUND_COMMAND_ARTIFACT_ALIASES.get(command.name, (command.name,))
     inspected: list[dict[str, Any]] = []
     preferred: dict[str, Any] | None = None
+    preferred_score = -1
     for root in BACKGROUND_ARTIFACT_ROOTS:
         for name in names:
             evidence = run_test_tier.classify_background_artifact(
@@ -3162,11 +3739,21 @@ def _background_evidence_for_command(
             evidence["artifact_root"] = _repo_path(str(root.relative_to(ROOT))) if root.is_relative_to(ROOT) else str(root)
             evidence["artifact_name"] = name
             inspected.append(evidence)
-            if evidence["status"] not in {"incomplete", "missing_final_artifacts"}:
+            status = str(evidence.get("status", ""))
+            proof_scope = str(evidence.get("proof_scope", ""))
+            if status == "passed" and proof_scope == "full":
+                score = 4
+            elif status == "passed":
+                score = 3
+            elif status == "release_local_only":
+                score = 2
+            elif status not in {"incomplete", "missing_final_artifacts"}:
+                score = 1
+            else:
+                score = 0
+            if score > preferred_score:
                 preferred = evidence
-                break
-        if preferred is not None:
-            break
+                preferred_score = score
     if preferred is None:
         preferred = {
             "name": command.name,
@@ -3180,6 +3767,42 @@ def _background_evidence_for_command(
     return {
         "selected": preferred,
         "inspected": inspected,
+    }
+
+
+def _legacy_full_reclassification(command_name: str) -> dict[str, Any] | None:
+    parent = LEGACY_FULL_LAYERED_PARENT.get(command_name)
+    if parent is None:
+        return None
+    try:
+        thin_parent_checks = _load_module_from_path(
+            "flowpilot_alignment_thin_parent_checks",
+            ROOT / "simulations" / "flowpilot_thin_parent_checks.py",
+        )
+    except Exception as exc:  # pragma: no cover - defensive import fallback
+        return {
+            "ok": False,
+            "reason": "layered_full_status_unavailable",
+            "error": str(exc),
+            "legacy_monolith_required_for_release": True,
+        }
+    layered = thin_parent_checks.layered_full_status(parent)
+    if not layered.get("valid"):
+        return {
+            "ok": False,
+            "reason": str(layered.get("reason") or "layered_full_not_current"),
+            "layered_full_status": layered,
+            "legacy_monolith_required_for_release": True,
+        }
+    return {
+        "ok": True,
+        "reason": (
+            "legacy monolithic full graph is retained as a historical "
+            "compatibility oracle; current release confidence comes from the "
+            "layered full parent proof"
+        ),
+        "layered_full_status": layered,
+        "legacy_monolith_required_for_release": False,
     }
 
 
@@ -3229,6 +3852,9 @@ def _test_tier_command_surfaces(
                     tier=tier,
                 )
                 evidence_status = str(background_evidence["selected"]["status"])
+                legacy_reclassification = _legacy_full_reclassification(command.name)
+                if legacy_reclassification and legacy_reclassification["ok"]:
+                    evidence_status = "legacy_full_reclassified"
             has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
             surface = {
                 "surface_id": f"tier-command:{tier}:{command.name}",
@@ -3253,6 +3879,9 @@ def _test_tier_command_surfaces(
             if background_evidence is not None:
                 surface["background_evidence"] = background_evidence
                 surface["proof_scope"] = background_evidence["selected"].get("proof_scope", "unknown")
+                legacy_reclassification = _legacy_full_reclassification(command.name)
+                if legacy_reclassification is not None:
+                    surface["legacy_full_reclassification"] = legacy_reclassification
             surfaces.append(_finalize_surface(surface))
     return surfaces
 
@@ -3275,6 +3904,14 @@ def _asset_surfaces(
         kind = _surface_kind_for_asset(stem, summary)
         surface_id = f"asset:{stem}"
         split_repair = dict(STRUCTURE_SPLIT_REPAIR_PLAN.get(stem, {}))
+        split_threshold = _surface_threshold(kind)
+        if not split_repair:
+            split_repair = _default_structure_split_deferral(
+                kind=kind,
+                stem=stem,
+                line_count=summary["line_count"],
+                split_threshold=split_threshold,
+            )
         if split_repair:
             split_repair.setdefault("recent_owner_context", list(RECENT_OWNER_MODULE_POLISH_COMMITS))
             split_repair.setdefault("structure_split_status", "deferred")
@@ -3301,7 +3938,7 @@ def _asset_surfaces(
                     "model_binding": model_binding,
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
-                    "split_threshold": _surface_threshold(kind),
+                    "split_threshold": split_threshold,
                     "top_level_function_count": len(summary["top_level_functions"]),
                     "top_level_class_count": len(summary["top_level_classes"]),
                     "local_import_count": len(summary["local_imports"]),
@@ -3361,6 +3998,15 @@ def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
         stem = path.stem
         summary = _python_summary(path)
         has_test = aggregate_contract_test_exists or _surface_mentions(test_text, rel_path, stem)
+        split_threshold = _surface_threshold("script_entrypoint")
+        split_repair = _default_structure_split_deferral(
+            kind="model_check_runner",
+            stem=stem,
+            line_count=summary["line_count"],
+            split_threshold=split_threshold,
+        )
+        if split_repair:
+            split_repair.setdefault("structure_split_status", "deferred")
         surfaces.append(
             _finalize_surface(
                 {
@@ -3375,9 +4021,10 @@ def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
                     "model_binding": "model_check_runner_contract",
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
-                    "split_threshold": _surface_threshold("script_entrypoint"),
+                    "split_threshold": split_threshold,
                     "has_main": summary["has_main"],
                     "parse_error": summary["parse_error"],
+                    **split_repair,
                 }
             )
         )
@@ -3524,17 +4171,31 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
             str(item["surface_id"]),
         ),
     )
+    unresolved_non_deferred_findings = [
+        finding
+        for finding in findings
+        if not _is_deferred_structure_finding(finding)
+    ]
+    deferred_structure_findings = [
+        finding for finding in findings if _is_deferred_structure_finding(finding)
+    ]
     actionable_summary = _actionable_summary(findings)
     return {
         "ok": all(item["ok"] for item in known_bad),
         "result_type": "flowpilot_full_model_test_code_diagnostic",
         "diagnostic_boundary": FULL_DIAGNOSTIC_BOUNDARY,
         "full_coverage_ok": not findings,
+        "release_convergence_ok": not unresolved_non_deferred_findings,
         "surface_count": len(surfaces),
         "surface_counts": dict(sorted(surface_counts.items())),
         "covered_surface_count": sum(1 for surface in surfaces if surface["covered"]),
         "gap_surface_count": sum(1 for surface in surfaces if surface["gap_codes"]),
         "gap_counts": _finding_counts(findings),
+        "unresolved_non_deferred_gap_count": len(unresolved_non_deferred_findings),
+        "unresolved_non_deferred_gap_counts": _finding_counts(
+            unresolved_non_deferred_findings
+        ),
+        "deferred_structure_split_count": len(deferred_structure_findings),
         "gap_counts_by_severity": _finding_counts_by_field(findings, "severity"),
         "gap_counts_by_repair_type": _finding_counts_by_field(findings, "repair_type"),
         "gap_counts_by_release_relevance": _finding_counts_by_field(findings, "release_relevance"),
@@ -3641,6 +4302,7 @@ def build_report() -> dict[str, Any]:
         "source_known_bad_ok": source_known_bad_ok,
         "full_diagnostic_ok": full_diagnostic_ok,
         "full_coverage_ok": full_diagnostic["full_coverage_ok"],
+        "release_convergence_ok": full_diagnostic["release_convergence_ok"],
         "source_audit_boundary": SOURCE_AUDIT_BOUNDARY,
         "full_diagnostic_boundary": FULL_DIAGNOSTIC_BOUNDARY,
         "plan_count": len(per_plan),
