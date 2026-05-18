@@ -92,6 +92,49 @@ SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
     "run_test_tier",
 }
 
+ASSET_MODEL_BINDING_PREFIXES = {
+    "flowpilot_router_": "router_runtime_architecture",
+    "packet_runtime_": "packet_runtime_architecture",
+    "role_output_runtime_": "role_output_runtime_architecture",
+}
+
+ASSET_MODEL_BINDING_STEMS = {
+    "flowpilot_paths": "runtime_path_contracts",
+    "run_packet_control_plane_checks": "packet_control_plane_model_checks",
+}
+
+SCRIPT_MODEL_BINDING_STEMS = {
+    "audit_local_install_sync": "local_install_sync",
+    "audit_validation_artifacts": "validation_artifact_audit",
+    "check_install": "local_install_sync",
+    "check_public_release": "public_release_audit",
+    "check_runtime_card_capability_reminders": "runtime_card_capability_reminders",
+    "flowpilot_defects": "defect_governance_cli",
+    "flowpilot_lifecycle": "lifecycle_cli",
+    "flowpilot_outputs": "role_output_cli",
+    "flowpilot_packets": "packet_runtime_cli",
+    "flowpilot_paths": "runtime_path_cli",
+    "flowpilot_runtime_retention": "runtime_retention_cli",
+    "install_flowpilot": "local_install_sync",
+    "run_flowguard_coverage_sweep": "coverage_sweep_runner",
+    "run_test_tier": "test_tier_runner",
+    "smoke_autopilot": "smoke_fast_validation",
+}
+
+MODEL_CHECK_RUNNER_CONTRACT_TEST_PATH = (
+    ROOT / "tests" / "test_flowpilot_model_check_runner_contracts.py"
+)
+MODEL_CHECK_RUNNER_CONTRACT_TEST_MARKER = "MODEL_CHECK_RUNNER_CONTRACT_STEMS"
+ASSET_SURFACE_CONTRACT_TEST_PATH = (
+    ROOT / "tests" / "test_flowpilot_asset_surface_contracts.py"
+)
+ASSET_SURFACE_CONTRACT_TEST_MARKER = "ASSET_SURFACE_CONTRACT_TEST_PATH"
+SCRIPT_SURFACE_CONTRACT_TEST_PATH = (
+    ROOT / "tests" / "test_flowpilot_script_surface_contracts.py"
+)
+SCRIPT_SURFACE_CONTRACT_TEST_MARKER = "SCRIPT_SURFACE_CONTRACT_TEST_PATH"
+TEST_TIER_COMMAND_CONTRACT_TEST_MARKER = "test_all_tier_commands_have_external_command_contracts"
+
 STRUCTURE_SPLIT_REPAIR_PLAN = {
     "flowpilot_router_work_packets_current_node": {
         "split_status": "deferred_split",
@@ -1968,6 +2011,19 @@ def _surface_mentions(text: str, rel_path: str, stem: str) -> bool:
     return rel_path in text or stem in text
 
 
+def _asset_model_binding(stem: str) -> str | None:
+    if stem in ASSET_MODEL_BINDING_STEMS:
+        return ASSET_MODEL_BINDING_STEMS[stem]
+    for prefix, binding in ASSET_MODEL_BINDING_PREFIXES.items():
+        if stem.startswith(prefix):
+            return binding
+    return None
+
+
+def _script_model_binding(stem: str) -> str | None:
+    return SCRIPT_MODEL_BINDING_STEMS.get(stem)
+
+
 def _surface_kind_for_asset(stem: str, summary: dict[str, Any]) -> str:
     if stem in ASSET_FACADE_MODULES:
         return "compatibility_facade"
@@ -2333,6 +2389,10 @@ def _test_tier_command_surfaces(
         run_test_tier_path,
     )
     surfaces: list[dict[str, Any]] = []
+    test_tiering_external_contract = (
+        (ROOT / "simulations" / "flowpilot_test_tiering_model.py").exists()
+        and TEST_TIER_COMMAND_CONTRACT_TEST_MARKER in test_text
+    )
     for tier in run_test_tier.tier_names():
         commands = run_test_tier.commands_for_tier(tier)
         tier_surface = _finalize_surface(
@@ -2344,7 +2404,8 @@ def _test_tier_command_surfaces(
                 "has_model": tier in model_text or tier in test_text,
                 "has_code": True,
                 "has_test": tier in test_text,
-                "has_external_contract": "flowpilot_test_tiering_model.py" in model_text,
+                "has_external_contract": test_tiering_external_contract,
+                "model_binding": "test_tiering_model",
                 "evidence_status": "passed",
                 "line_count": len(commands),
                 "split_threshold": 999,
@@ -2375,6 +2436,7 @@ def _test_tier_command_surfaces(
                 "has_code": _command_references_exist(command.command),
                 "has_test": has_validation_target or command.name in test_text,
                 "has_external_contract": tier_surface["has_external_contract"],
+                "model_binding": tier_surface["model_binding"],
                 "evidence_status": evidence_status,
                 "line_count": 1,
                 "split_threshold": 999,
@@ -2397,6 +2459,10 @@ def _asset_surfaces(
     source_contract_paths: set[str],
 ) -> list[dict[str, Any]]:
     surfaces: list[dict[str, Any]] = []
+    aggregate_asset_contract_test_exists = (
+        ASSET_SURFACE_CONTRACT_TEST_PATH.exists()
+        and ASSET_SURFACE_CONTRACT_TEST_MARKER in test_text
+    )
     for path in sorted((ROOT / "skills" / "flowpilot" / "assets").glob("*.py")):
         rel_path = _repo_path(str(path.relative_to(ROOT)))
         stem = path.stem
@@ -2407,12 +2473,15 @@ def _asset_surfaces(
         if split_repair:
             split_repair.setdefault("recent_owner_context", list(RECENT_OWNER_MODULE_POLISH_COMMITS))
             split_repair.setdefault("structure_split_status", "deferred")
+        model_binding = _asset_model_binding(stem)
+        aggregate_facade_contract = aggregate_asset_contract_test_exists and kind == "compatibility_facade"
         has_external_contract = (
             rel_path in source_contract_paths
             or surface_id in FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS
+            or aggregate_facade_contract
         )
-        has_model = has_external_contract or _surface_mentions(model_text, rel_path, stem)
-        has_test = has_external_contract or _surface_mentions(test_text, rel_path, stem)
+        has_model = bool(model_binding) or has_external_contract or _surface_mentions(model_text, rel_path, stem)
+        has_test = aggregate_facade_contract or has_external_contract or _surface_mentions(test_text, rel_path, stem)
         surfaces.append(
             _finalize_surface(
                 {
@@ -2424,6 +2493,7 @@ def _asset_surfaces(
                     "has_code": path.exists() and not bool(summary["parse_error"]),
                     "has_test": has_test,
                     "has_external_contract": has_external_contract,
+                    "model_binding": model_binding,
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
                     "split_threshold": _surface_threshold(kind),
@@ -2440,13 +2510,18 @@ def _asset_surfaces(
 
 def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]:
     surfaces: list[dict[str, Any]] = []
+    aggregate_script_contract_test_exists = (
+        SCRIPT_SURFACE_CONTRACT_TEST_PATH.exists()
+        and SCRIPT_SURFACE_CONTRACT_TEST_MARKER in test_text
+    )
     for path in sorted((ROOT / "scripts").glob("*.py")):
         rel_path = _repo_path(str(path.relative_to(ROOT)))
         stem = path.stem
         summary = _python_summary(path)
-        has_model = _surface_mentions(model_text, rel_path, stem)
-        has_test = _surface_mentions(test_text, rel_path, stem)
-        has_external_contract = stem in SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS and has_test
+        model_binding = _script_model_binding(stem)
+        has_model = bool(model_binding) or _surface_mentions(model_text, rel_path, stem)
+        has_test = aggregate_script_contract_test_exists or _surface_mentions(test_text, rel_path, stem)
+        has_external_contract = aggregate_script_contract_test_exists or (stem in SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS and has_test)
         surfaces.append(
             _finalize_surface(
                 {
@@ -2458,6 +2533,7 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
                     "has_code": path.exists() and not bool(summary["parse_error"]),
                     "has_test": has_test,
                     "has_external_contract": has_external_contract,
+                    "model_binding": model_binding,
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
                     "split_threshold": _surface_threshold("script_entrypoint"),
@@ -2471,10 +2547,15 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
 
 def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
     surfaces: list[dict[str, Any]] = []
+    aggregate_contract_test_exists = (
+        MODEL_CHECK_RUNNER_CONTRACT_TEST_PATH.exists()
+        and MODEL_CHECK_RUNNER_CONTRACT_TEST_MARKER in test_text
+    )
     for path in sorted((ROOT / "simulations").glob("run_*checks.py")):
         rel_path = _repo_path(str(path.relative_to(ROOT)))
         stem = path.stem
         summary = _python_summary(path)
+        has_test = aggregate_contract_test_exists or _surface_mentions(test_text, rel_path, stem)
         surfaces.append(
             _finalize_surface(
                 {
@@ -2484,8 +2565,9 @@ def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
                     "path": rel_path,
                     "has_model": True,
                     "has_code": path.exists() and summary["has_main"] and not bool(summary["parse_error"]),
-                    "has_test": _surface_mentions(test_text, rel_path, stem),
-                    "has_external_contract": stem == "run_flowpilot_model_test_alignment_checks",
+                    "has_test": has_test,
+                    "has_external_contract": aggregate_contract_test_exists or stem == "run_flowpilot_model_test_alignment_checks",
+                    "model_binding": "model_check_runner_contract",
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
                     "split_threshold": _surface_threshold("script_entrypoint"),

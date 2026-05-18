@@ -84,15 +84,24 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             with self.subTest(kind=kind):
                 self.assertGreater(diagnostic["surface_counts"].get(kind, 0), 0)
 
+        self.assertEqual(diagnostic["gap_counts"].get("missing_model", 0), 0)
+        self.assertEqual(diagnostic["gap_counts"].get("extra_code", 0), 0)
         for code in (
-            "missing_model",
             "missing_test",
-            "extra_code",
             "internal_only_test",
             "needs_structure_split",
+            "stale_evidence",
         ):
             with self.subTest(code=code):
                 self.assertGreater(diagnostic["gap_counts"].get(code, 0), 0)
+
+        gate_contract_gaps = [
+            finding
+            for finding in diagnostic["actionable_findings"]
+            if finding["release_relevance"] in {"release_gate", "validation_gate"}
+            and finding["code"] in {"missing_test", "internal_only_test"}
+        ]
+        self.assertEqual(gate_contract_gaps, [])
 
         for field in (
             "gap_counts_by_severity",
@@ -192,6 +201,23 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             with self.subTest(surface_id=surface_id):
                 surface = surfaces[surface_id]
                 self.assertTrue(surface["has_external_contract"], surface)
+                self.assertNotIn("internal_only_test", surface["gap_codes"])
+
+        model_runner = surfaces["model-check:run_barrier_equivalence_checks"]
+        self.assertTrue(model_runner["has_test"], model_runner)
+        self.assertTrue(model_runner["has_external_contract"], model_runner)
+        self.assertNotIn("missing_test", model_runner["gap_codes"])
+        self.assertNotIn("internal_only_test", model_runner["gap_codes"])
+
+        for surface_id in (
+            "tier:integration",
+            "tier-command:integration:smoke_autopilot_fast",
+            "tier-command:all:smoke_autopilot_fast",
+        ):
+            with self.subTest(surface_id=surface_id):
+                surface = surfaces[surface_id]
+                self.assertTrue(surface["has_external_contract"], surface)
+                self.assertNotIn("missing_test", surface["gap_codes"])
                 self.assertNotIn("internal_only_test", surface["gap_codes"])
 
         for surface_id in (

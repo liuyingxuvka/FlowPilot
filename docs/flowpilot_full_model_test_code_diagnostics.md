@@ -22,26 +22,30 @@ background-evidence, and structure-split repair work.
 
 | Metric | Count |
 | --- | ---: |
-| Total diagnostic surfaces | 459 |
-| Covered surfaces | 27 |
-| Surfaces with one or more gaps | 432 |
+| Total diagnostic surfaces | 527 |
+| Covered surfaces | 384 |
+| Surfaces with one or more gaps | 143 |
 | Compatibility facades | 60 |
 | Owner modules | 113 |
 | Script entrypoints | 17 |
 | Model-check runners | 82 |
-| Test tiers | 12 |
-| Test tier commands | 175 |
+| Test tiers | 15 |
+| Test tier commands | 240 |
 
 ## Gap Counts
 
 | Gap code | Count | Meaning |
 | --- | ---: | --- |
-| `internal_only_test` | 226 | There is test/model mention evidence, but no source-level external contract binding. |
-| `missing_test` | 198 | No ordinary test evidence was found for the surface. |
-| `missing_model` | 72 | Code exists without a current model obligation binding. |
-| `extra_code` | 72 | Code exists outside the current accepted model/test map. |
+| `missing_test` | 78 | No ordinary external-contract test evidence was found for the surface. |
 | `needs_structure_split` | 54 | Module or script is above the diagnostic split threshold. |
+| `internal_only_test` | 25 | There is test/model mention evidence, but no source-level external contract binding. |
 | `stale_evidence` | 3 | Background evidence is failed, stale, incomplete, progress-only, or local-only release proof. |
+
+This burn-down pass intentionally reduced `missing_model` and `extra_code` to
+zero by binding intentional owner modules, facades, scripts, and model-check
+runners to diagnostic model categories. It also reduced release/validation gate
+`missing_test` and `internal_only_test` findings to zero through aggregate
+external-contract tests for model-check runners and test-tier commands.
 
 ## Triage Fields
 
@@ -60,15 +64,13 @@ Every finding now includes:
 
 Aggregate counts in the JSON include:
 
-- `gap_counts_by_severity`: `critical=1`, `high=185`, `medium=367`, `low=72`.
-- `gap_counts_by_repair_type`: `add_external_contract_test=198`,
-  `upgrade_to_external_contract_test=226`, `add_model_binding=72`,
-  `classify_or_remove_code=72`, `split_structure=43`,
+- `gap_counts_by_severity`: `critical=1`, `high=25`, `medium=134`.
+- `gap_counts_by_repair_type`: `add_external_contract_test=78`,
+  `upgrade_to_external_contract_test=25`, `split_structure=43`,
   `defer_structure_split=11`, `fix_failing_background_evidence=2`,
   `rerun_public_release_evidence=1`.
-- `gap_counts_by_release_relevance`: `runtime_contract=326`,
-  `release_gate=180`, `validation_gate=88`, `public_cli=27`,
-  `legacy_validation=4`.
+- `gap_counts_by_release_relevance`: `runtime_contract=149`,
+  `validation_gate=7`, `release_gate=2`, `legacy_validation=2`.
 
 ## Top Repair Items
 
@@ -77,16 +79,14 @@ The current highest-priority actionable summary is:
 1. `test-tier:release`: `public_release_check` is classified as
    `release_local_only` because URL checks were skipped; this is local proof,
    not public release proof.
-2. `test-tier:integration` and `smoke_autopilot_fast`: add external-contract
-   test coverage for the integration tier and smoke command surfaces.
-3. Model-check runners such as `run_barrier_equivalence_checks.py`,
-   `run_card_instruction_coverage_checks.py`, and
-   `run_command_refinement_checks.py`: add fast public runner contract tests
-   if they are to count as ordinary external evidence.
-4. Release scripts `check_public_release.py` and `install_flowpilot.py`: they
-   now have CLI smoke tests, but still need explicit model bindings before the
-   full diagnostic can call them fully covered release gates.
-5. `test-tier:legacy-full`: two legacy full-model background artifacts are
+2. Runtime owner modules such as `barrier_bundle.py`,
+   `flowpilot_controller_break_glass.py`, `flowpilot_paths.py`, and
+   `flowpilot_prompt_store.py`: upgrade internal-only tests into direct
+   source-level external contract bindings.
+3. Runtime owner/facade modules with no ordinary test evidence: add focused
+   public contract tests or preserve them as structure-split candidates if a
+   safe test boundary is not yet clear.
+4. `test-tier:legacy-full`: two legacy full-model background artifacts are
    still visible as failed legacy-validation history, but old legacy full-model
    checks are not ranked as current release gates.
 
@@ -110,6 +110,14 @@ This pass added or recognized external-contract evidence for:
 - CLI entrypoint behavior for install, sync audit, public release audit,
   test-tier list/dry-run, lifecycle scan, packet parser, and role-output
   parser surfaces.
+- Aggregate model-check runner public contracts for every
+  `simulations/run_*checks.py` entrypoint.
+- Aggregate test-tier command contracts for command names, referenced targets,
+  integration tier contents, background recommendations, and release-only
+  placement.
+- Aggregate compatibility-facade surface contracts for parseable asset modules,
+  stable export lists, and owner-module delegation.
+- Aggregate script surface contracts for repository CLIs and wrappers.
 
 ## Background Evidence Policy
 

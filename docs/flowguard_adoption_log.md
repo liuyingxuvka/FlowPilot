@@ -15110,3 +15110,49 @@ Skipped steps:
 ### Next Actions
 - Use the actionable summary to burn down high-priority release-gate and validation-gate gaps before claiming full FlowPilot coverage.
 - Rerun public release evidence without `--skip-url-check` before treating release URL availability as proven.
+
+## flowpilot-burn-down-model-code-test-alignment-gaps-2026-05-18 - Burn down model-code-test alignment gaps
+
+- Project: FlowPilot
+- Trigger reason: User asked to continue the FlowPilot full diagnostic burn-down with OpenSpec, FlowGuard, background validation, local install sync, and local git synchronization.
+- Status: completed
+- Skill decision: use_flowguard:model_test_alignment+structure_mesh+test_mesh diagnostics
+- OpenSpec change: burn-down-model-code-test-alignment-gaps
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_structure_maintenance_model.py
+
+### Commands
+- OK: `openspec validate "burn-down-model-code-test-alignment-gaps" --strict`
+- OK: `python -m py_compile simulations\\run_flowpilot_model_test_alignment_checks.py scripts\\run_test_tier.py simulations\\flowpilot_structure_maintenance_model.py tests\\test_flowpilot_model_test_alignment.py tests\\test_flowpilot_model_check_runner_contracts.py tests\\test_flowpilot_asset_surface_contracts.py tests\\test_flowpilot_script_surface_contracts.py tests\\test_flowpilot_test_tiers.py`
+- OK: `python -m pytest tests/test_flowpilot_model_test_alignment.py tests/test_flowpilot_model_check_runner_contracts.py tests/test_flowpilot_asset_surface_contracts.py tests/test_flowpilot_script_surface_contracts.py tests/test_flowpilot_test_tiers.py -q`
+- OK: `python scripts\\run_test_tier.py --tier fast --background --background-dir tmp\\flowguard_background_burn_down_model_code_test_gaps_fast --json`
+- OK: background artifact classifier inspected 12 final artifacts, all `passed`, all `full`, all exit code `0`.
+- OK: `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\\install_flowpilot.py --check --json`
+- OK: `python scripts\\audit_local_install_sync.py --json`
+- OK: `python scripts\\check_install.py`
+
+### Findings
+- The full diagnostic now covers 527 surfaces, with 384 covered and 143 still carrying actionable gaps.
+- `missing_model` and `extra_code` are now zero for the current diagnostic run.
+- Release-gate and validation-gate surfaces have zero `missing_test` and zero `internal_only_test` findings.
+- Added aggregate external-contract tests for model-check runners, asset/facade surfaces, script entrypoints, and test-tier command targets.
+- Integrated the router terminal test-tier sharding into the structure-maintenance model so the model and tier runner agree on PM role-work, quality-gate, and material/modeling child suites.
+
+### Counterexamples
+- aggregate_file_exists_without_contract_marker
+- import_only_facade_claimed_as_owner_definition
+- release_skip_url_check_claimed_as_public_proof
+
+### Friction Points
+- Aggregate contract evidence is appropriate for broad runner/tier/script surface coverage, but runtime owner modules still need direct source-level contract tests before full coverage can be claimed.
+- The remaining top release finding is `public_release_check` local-only evidence when URL checking is skipped; this should stay visible rather than be unit-tested away.
+
+### Next Actions
+- Add direct external-contract tests for the remaining runtime owner-module gaps.
+- Split the 43 remaining actionable structure candidates only where a stable owner boundary is already modeled.
+- Rerun public release evidence without `--skip-url-check` before treating public URL availability as proven.

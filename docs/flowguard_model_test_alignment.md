@@ -42,6 +42,12 @@ The full diagnostic layer is intentionally allowed to find gaps while the
 runner exits successfully. `full_diagnostic_ok` means the diagnostic machinery
 and its known-bad cases are working. `full_coverage_ok` is the release-style
 coverage claim and remains false until every inventoried surface is covered.
+The current burn-down pass adds aggregate external-contract evidence for
+model-check runner entrypoints and test-tier command surfaces, and explicit
+model bindings for intentional owner/facade/script surfaces that were formerly
+reported as `missing_model`/`extra_code`. Runtime owner modules still need
+direct source-level contract tests before their internal-only evidence can be
+treated as full coverage.
 
 Each full-diagnostic gap carries triage metadata so maintenance can be planned
 without rereading every large script. The key fields are:
@@ -154,6 +160,12 @@ The full diagnostic layer adds these synthetic bad cases:
 | Progress-only background evidence | `stale_evidence` |
 | Local-only release proof | `stale_evidence` with `rerun_public_release_evidence` |
 | Broad unsplit module | `needs_structure_split` |
+
+Additional gate invariants now ensure that `release_gate` and `validation_gate`
+surfaces do not regress to `missing_test` or `internal_only_test` after the
+aggregate test-tier and model-check runner contract tests are present. The
+remaining release-gate gap is intentionally still `release_local_only` when
+`check_public_release.py` is run with `--skip-url-check`.
 
 These sanity checks are intentionally separate from the main alignment table.
 They should fail as bad plans while the runner as a whole remains green.

@@ -113,6 +113,48 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertTrue(any(command["release_only"] for command in payload["commands"]))
         self.assertFalse(payload["release_obligation_visible"])
 
+    def test_all_tier_commands_have_external_command_contracts(self) -> None:
+        # Diagnostic evidence literals: integration, smoke_autopilot_fast, flowguard_coverage_sweep.
+        tier_names = set(run_test_tier.tier_names())
+        for tier in ("fast", "integration", "router", "release", "all"):
+            with self.subTest(tier=tier):
+                self.assertIn(tier, tier_names)
+                self.assertTrue(run_test_tier.commands_for_tier(tier))
+
+        for tier in run_test_tier.tier_names():
+            for command in run_test_tier.commands_for_tier(tier):
+                with self.subTest(tier=tier, command=command.name):
+                    self.assertTrue(command.name)
+                    self.assertTrue(command.command)
+                    for token in command.command:
+                        normalized = str(token).replace("\\", "/")
+                        if normalized.endswith(".py"):
+                            self.assertTrue((ROOT / normalized).exists(), normalized)
+                        if normalized.startswith(("tests.", "simulations.")):
+                            module_path = ROOT / (normalized.replace(".", "/") + ".py")
+                            package_init = ROOT / normalized.replace(".", "/") / "__init__.py"
+                            self.assertTrue(
+                                module_path.exists() or package_init.exists(),
+                                normalized,
+                            )
+
+        integration_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("integration")
+        }
+        self.assertIn("smoke_autopilot_fast", integration_commands)
+        self.assertIn("flowguard_coverage_sweep", integration_commands)
+        self.assertTrue(integration_commands["smoke_autopilot_fast"].background_recommended)
+        self.assertTrue(integration_commands["flowguard_coverage_sweep"].background_recommended)
+
+        release_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("release")
+        }
+        self.assertIn("public_release_check", release_commands)
+        self.assertTrue(release_commands["public_release_check"].release_only)
+        self.assertTrue(release_commands["public_release_check"].background_recommended)
+
     def test_background_artifact_classifier_distinguishes_final_evidence_states(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-bg-classifier-") as tmp_name:
             root = Path(tmp_name)
@@ -209,13 +251,31 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_route_mutation_parent_backward", command_names)
         self.assertIn("router_route_mutation_contracts", command_names)
         self.assertIn("router_user_flow_diagram", command_names)
-        self.assertIn("router_terminal", command_names)
-        self.assertIn("router_closure", command_names)
-        self.assertIn("router_resume", command_names)
-        self.assertIn("router_control_blockers", command_names)
-        self.assertIn("router_pm_role_work", command_names)
-        self.assertIn("router_quality_gates", command_names)
-        self.assertIn("router_material_modeling", command_names)
+        self.assertIn("router_terminal_final_ledger", command_names)
+        self.assertIn("router_terminal_replay_summary", command_names)
+        self.assertIn("router_terminal_node_stop", command_names)
+        self.assertIn("router_closure_dirty_ledgers", command_names)
+        self.assertIn("router_closure_pm_role_work", command_names)
+        self.assertIn("router_resume_reentry", command_names)
+        self.assertIn("router_resume_rehydration", command_names)
+        self.assertIn("router_resume_role_recovery", command_names)
+        self.assertIn("router_resume_liveness_faults", command_names)
+        self.assertIn("router_control_blockers_recorded_events", command_names)
+        self.assertIn("router_control_blockers_reissue_retry", command_names)
+        self.assertIn("router_control_blockers_pm_repair_decisions", command_names)
+        self.assertIn("router_control_blockers_protocol_transactions", command_names)
+        self.assertIn("router_control_blockers_followup_fatal", command_names)
+        self.assertIn("router_pm_role_work_requests", command_names)
+        self.assertIn("router_pm_role_work_results", command_names)
+        self.assertIn("router_pm_role_work_waits", command_names)
+        self.assertIn("router_quality_gates_background_manifest", command_names)
+        self.assertIn("router_quality_gates_decisions", command_names)
+        self.assertIn("router_quality_gates_evidence_artifacts", command_names)
+        self.assertIn("router_quality_gates_route_model", command_names)
+        self.assertIn("router_quality_gates_node_contracts", command_names)
+        self.assertIn("router_material_modeling_intake", command_names)
+        self.assertIn("router_material_modeling_scan_relay", command_names)
+        self.assertIn("router_material_modeling_modelability", command_names)
         self.assertNotIn("router_packets_cards_ack", command_names)
         self.assertNotIn("router_startup_runtime", command_names)
         self.assertNotIn("router_dispatch_gate", command_names)
@@ -223,7 +283,14 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertNotIn("router_packets", command_names)
         self.assertNotIn("router_route_mutation", command_names)
         self.assertNotIn("router_route_mutation_core", command_names)
+        self.assertNotIn("router_terminal", command_names)
+        self.assertNotIn("router_closure", command_names)
+        self.assertNotIn("router_resume", command_names)
+        self.assertNotIn("router_control_blockers", command_names)
         self.assertNotIn("router_terminal_closure", command_names)
+        self.assertNotIn("router_pm_role_work", command_names)
+        self.assertNotIn("router_quality_gates", command_names)
+        self.assertNotIn("router_material_modeling", command_names)
         self.assertNotIn("test_flowpilot_router_runtime.py", self.command_text("router"))
 
     def test_router_startup_and_foreground_tiers_are_granular_children(self) -> None:
@@ -282,9 +349,57 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("tests.router_runtime.cards", command_text)
         self.assertIn("tests.router_runtime.ack_return", command_text)
 
+    def test_router_terminal_tier_splits_slow_tail_suites(self) -> None:
+        commands = run_test_tier.commands_for_tier("router-terminal")
+        self.assertEqual(
+            [command.name for command in commands],
+            [
+                "router_terminal_final_ledger",
+                "router_terminal_replay_summary",
+                "router_terminal_node_stop",
+                "router_closure_dirty_ledgers",
+                "router_closure_pm_role_work",
+                "router_resume_reentry",
+                "router_resume_rehydration",
+                "router_resume_role_recovery",
+                "router_resume_liveness_faults",
+                "router_control_blockers_recorded_events",
+                "router_control_blockers_reissue_retry",
+                "router_control_blockers_pm_repair_decisions",
+                "router_control_blockers_protocol_transactions",
+                "router_control_blockers_followup_fatal",
+                "router_pm_role_work_requests",
+                "router_pm_role_work_results",
+                "router_pm_role_work_waits",
+                "router_quality_gates_background_manifest",
+                "router_quality_gates_decisions",
+                "router_quality_gates_evidence_artifacts",
+                "router_quality_gates_route_model",
+                "router_quality_gates_node_contracts",
+                "router_material_modeling_intake",
+                "router_material_modeling_scan_relay",
+                "router_material_modeling_modelability",
+            ],
+        )
+        command_names = [command.name for command in commands]
+        self.assertNotIn("router_terminal", command_names)
+        self.assertNotIn("router_closure", command_names)
+        self.assertNotIn("router_resume", command_names)
+        self.assertNotIn("router_control_blockers", command_names)
+        self.assertNotIn("router_pm_role_work", command_names)
+        self.assertNotIn("router_quality_gates", command_names)
+        self.assertNotIn("router_material_modeling", command_names)
+        command_text = self.command_text("router-terminal")
+        self.assertIn("-k test_final_ledger_records_frozen_contract_replay_source_paths", command_text)
+        self.assertIn("-k test_resume_reentry_attaches_to_live_router_daemon_and_ledger", command_text)
+        self.assertIn("-k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it", command_text)
+        self.assertIn("-k test_pm_role_work_request_requires_valid_recipient_and_contract", command_text)
+        self.assertIn("-k test_gate_decision_event_records_ledger_and_state", command_text)
+        self.assertIn("-k test_material_scan_direct_relay_blocks_body_hash_mismatch", command_text)
+
     def test_router_k_pattern_child_suites_cover_their_modules(self) -> None:
         covered: dict[str, set[str]] = {}
-        for tier in ("router-startup", "router-foreground", "router-packets"):
+        for tier in ("router-startup", "router-foreground", "router-packets", "router-terminal"):
             for command in run_test_tier.commands_for_tier(tier):
                 parts = list(command.command)
                 patterns: list[str] = []
@@ -321,6 +436,13 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "tests.router_runtime.dispatch_gate",
             "tests.router_runtime.foreground_controller",
             "tests.router_runtime.packets",
+            "tests.router_runtime.terminal",
+            "tests.router_runtime.closure",
+            "tests.router_runtime.resume",
+            "tests.router_runtime.control_blockers",
+            "tests.router_runtime.pm_role_work",
+            "tests.router_runtime.quality_gates",
+            "tests.router_runtime.material_modeling",
         ):
             missing = ids_for_module(module_name) - covered.get(module_name, set())
             self.assertFalse(missing, f"{module_name} missing from k-shards: {sorted(missing)}")
@@ -358,7 +480,16 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("tests.test_flowpilot_user_flow_diagram", command_text)
 
     def test_fast_and_router_tiers_do_not_contain_release_only_commands(self) -> None:
-        for tier in ("fast", "router", "router-packets", "router-route", "router-terminal"):
+        for tier in (
+            "fast",
+            "router",
+            "router-packets",
+            "router-route",
+            "router-pm-role-work",
+            "router-quality-gates",
+            "router-material-modeling",
+            "router-terminal",
+        ):
             with self.subTest(tier=tier):
                 self.assertFalse(
                     [command.name for command in run_test_tier.commands_for_tier(tier) if command.release_only]
