@@ -8,14 +8,34 @@ python simulations/run_flowpilot_model_test_alignment_checks.py
 
 The runner does not execute the referenced tests and does not run long
 FlowGuard parent graphs. It uses the real FlowGuard API:
-`ModelObligation`, `TestEvidence`, `ModelTestAlignmentPlan`, and
-`review_model_test_alignment()`.
+`ModelObligation`, `TestEvidence`, `CodeContract`,
+`ModelTestAlignmentPlan`, `review_model_test_alignment()`,
+`audit_python_code_contracts()`, `audit_python_test_assertions()`, and
+`review_python_contract_source_audit()`.
 
 In plain English, each row below says: "This FlowGuard model family owns these
 obligations, and these ordinary tests are the current evidence for them." A
 green row means the declared obligations have current passing evidence for the
 required test kinds. It does not mean production conformance unless a separate
 production replay or release check says that.
+
+The runner has two layers:
+
+- Declaration alignment: every major model family lists required obligations
+  and current ordinary test evidence.
+- Source-contract audit: a conservative AST-supported subset also lists real
+  Python `CodeContract` rows, then verifies that selected tests directly call
+  those public contract symbols and assert the external contract boundary.
+
+The source-contract audit is intentionally narrower than the declaration table.
+It proves that critical externally visible Python surfaces are not merely
+mentioned by a test map. It does not claim full Python semantics, replace
+runtime replay, or replace Meta/Capability/Router background regressions.
+
+For source-audited evidence, `TestEvidence.path` points to the file containing
+the real test function or class definition. The `command` may still be a public
+aggregate wrapper such as `tests.test_flowpilot_router_runtime_startup_daemon`
+when that is the supported command users run.
 
 | Family | Model checks represented | Obligations in the alignment table | Ordinary test evidence | Boundary |
 | --- | --- | --- | --- | --- |
@@ -33,17 +53,25 @@ production replay or release check says that.
 The runner prints a JSON payload with:
 
 - `ok`: true only when all declared alignment plans are green and all known-bad
-  sanity cases are rejected.
+  sanity cases are rejected, including the source-contract audit layer.
 - `alignment_ok`: true only when the main FlowPilot family plans have no
   blocker findings.
 - `known_bad_ok`: true only when FlowGuard rejects the synthetic bad evidence
   cases.
+- `source_audit_ok`: true only when the AST-supported model/code/test source
+  contract subset is green.
+- `source_known_bad_ok`: true only when the synthetic source-audit bad cases are
+  rejected.
 - `per_plan`: one entry per family, including the serialized
   `ModelTestAlignmentPlan`, the FlowGuard report, model-check commands, and
   the coverage boundary.
+- `source_contract_plan`: the serialized source-audited plan, its ordinary
+  alignment report, and its Python source-audit report.
 - `findings`: flattened findings from the main plans.
 - `known_bad_sanity_checks`: synthetic cases proving the reviewer flags bad
   evidence.
+- `source_known_bad_sanity_checks`: synthetic source-audit cases proving stale
+  code/test bindings are rejected.
 
 ## Known-Bad Sanity Checks
 
@@ -58,6 +86,15 @@ is actually enforcing the table:
 | Overclaimed model confidence | `test_overclaims_model_confidence` |
 | Orphan evidence | `orphan_test_evidence` |
 | Duplicate same-kind evidence | `duplicate_test_evidence_owner` |
+
+The source-audit layer adds these synthetic bad cases:
+
+| Source known-bad case | Expected FlowGuard finding |
+| --- | --- |
+| Missing Python symbol | `source_contract_missing_symbol` |
+| Test asserts an internal/helper path but never calls the declared contract | `source_test_missing_code_contract_call`, `source_test_internal_path_only` |
+| Test calls the contract but has no external assertion | `source_test_missing_external_assertion`, `source_test_internal_path_only` |
+| Code surface has undeclared side-effect-looking calls | `source_contract_extra_side_effect` |
 
 These sanity checks are intentionally separate from the main alignment table.
 They should fail as bad plans while the runner as a whole remains green.

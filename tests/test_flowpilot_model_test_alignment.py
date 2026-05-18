@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import contextlib
 import importlib.util
 import io
@@ -46,6 +47,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertTrue(report["ok"], report["findings"])
         self.assertTrue(report["alignment_ok"], report["findings"])
         self.assertTrue(report["known_bad_ok"])
+        self.assertTrue(report["source_audit_ok"], report["findings"])
+        self.assertTrue(report["source_known_bad_ok"])
         self.assertEqual(
             report["families"],
             [
@@ -61,6 +64,38 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(report["findings"], [])
 
+    def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
+        report = alignment_runner.build_report()
+        source_plan = report["source_contract_plan"]
+
+        self.assertTrue(source_plan["ok"], source_plan["findings"])
+        self.assertTrue(source_plan["alignment_report"]["ok"])
+        self.assertTrue(source_plan["source_audit_report"]["ok"])
+        self.assertEqual(source_plan["source_audit_report"]["findings"], [])
+        self.assertIn("AST-supported subset", source_plan["source_audit_boundary"])
+
+        code_contract_ids = {
+            item["code_contract_id"] for item in source_plan["plan"]["code_contracts"]
+        }
+        for code_contract_id in (
+            "router.record_external_event",
+            "packet.create_packet",
+            "card.submit_card_ack",
+            "route_sign.generate",
+            "role_output.prepare_output_session",
+            "test_tier.commands_for_tier",
+            "meta_runner.main",
+            "smoke.main",
+        ):
+            with self.subTest(code_contract_id=code_contract_id):
+                self.assertIn(code_contract_id, code_contract_ids)
+
+        for evidence in source_plan["source_audit_report"]["test_evidence"]:
+            with self.subTest(evidence=evidence["evidence_id"]):
+                self.assertTrue(evidence["found"], evidence)
+                self.assertGreater(evidence["assert_count"], 0, evidence)
+                self.assertEqual(evidence["assertion_scope"], "external_contract")
+
     def test_each_plan_serializes_obligations_evidence_and_flowguard_report(self) -> None:
         report = alignment_runner.build_report()
 
@@ -75,6 +110,40 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertEqual(plan["report"]["findings"], [])
                 self.assertIn("model_test_alignment_green", plan["report"]["summary"])
 
+    def test_each_declared_test_evidence_path_contains_definition_when_source_auditable(self) -> None:
+        skipped_names = {
+            "run_packet_control_plane_checks",
+            "FlowPilotControlGateTests meta/capability invariant checks",
+        }
+        evidence_rows = []
+        for entry in alignment_runner.build_alignment_plan_entries():
+            evidence_rows.extend(entry["plan"].test_evidence)
+        evidence_rows.extend(
+            alignment_runner.build_source_contract_alignment_plan().test_evidence
+        )
+
+        names_by_path: dict[str, set[str]] = {}
+        for evidence in evidence_rows:
+            if evidence.test_name in skipped_names:
+                continue
+            if not (
+                evidence.test_name.startswith("test_")
+                or evidence.test_name.startswith("Test")
+            ):
+                continue
+            names = names_by_path.get(evidence.path)
+            if names is None:
+                source = (ROOT / evidence.path).read_text(encoding="utf-8")
+                tree = ast.parse(source, filename=evidence.path)
+                names = {
+                    node.name
+                    for node in ast.walk(tree)
+                    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
+                }
+                names_by_path[evidence.path] = names
+            with self.subTest(evidence_id=evidence.evidence_id, path=evidence.path):
+                self.assertIn(evidence.test_name, names)
+
     def test_known_bad_sanity_checks_cover_required_hazards(self) -> None:
         report = alignment_runner.build_report()
         checks = {case["name"]: case for case in report["known_bad_sanity_checks"]}
@@ -86,6 +155,28 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "overclaim_model_confidence",
             "orphan_evidence",
             "duplicate_same_kind_evidence",
+        ):
+            with self.subTest(name=name):
+                self.assertIn(name, checks)
+                self.assertTrue(checks[name]["ok"], checks[name])
+                self.assertLessEqual(
+                    set(checks[name]["expected_codes"]),
+                    set(checks[name]["finding_codes"]),
+                )
+                self.assertFalse(checks[name]["report"]["ok"])
+
+    def test_source_known_bad_sanity_checks_cover_ast_hazards(self) -> None:
+        report = alignment_runner.build_report()
+        checks = {
+            case["name"]: case
+            for case in report["source_known_bad_sanity_checks"]
+        }
+
+        for name in (
+            "missing_python_symbol",
+            "internal_path_only_test",
+            "missing_external_assertion",
+            "extra_side_effect",
         ):
             with self.subTest(name=name):
                 self.assertIn(name, checks)

@@ -14911,3 +14911,48 @@ Deferred split notes:
 Skipped steps:
 
 - No push, tag, release, deploy, or public publication was performed.
+
+
+## flowpilot-model-test-code-alignment-2026-05-18 - Upgrade FlowPilot model-test alignment with Python source-contract audit and verify selected model/test/code surfaces
+
+- Project: FlowPilot
+- Trigger reason: User requested FlowPilot model, test, and code alignment inspection and repair using model_test_alignment, OpenSpec, and FlowGuard
+- Status: completed
+- Skill decision: use_flowguard:model_test_alignment source_contract_audit
+- Started: 2026-05-18T07:18:16+00:00
+- Ended: 2026-05-18T07:18:16+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+
+### Commands
+- OK (0.000s): `python -m py_compile simulations\\run_flowpilot_model_test_alignment_checks.py tests\\test_flowpilot_model_test_alignment.py`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_model_test_alignment`
+- OK (0.000s): `python simulations\\run_flowpilot_model_test_alignment_checks.py --json-out simulations\\flowpilot_model_test_alignment_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_test_tiers tests.test_flowguard_result_proof tests.test_flowpilot_packet_runtime tests.test_flowpilot_card_runtime tests.test_flowpilot_role_output_runtime tests.test_flowpilot_output_contracts`
+- OK (0.000s): `python simulations\\run_flowpilot_structure_maintenance_checks.py`
+- OK (0.000s): `python simulations\\run_flowpilot_router_facade_split_checks.py`
+- OK (0.000s): `python scripts\\run_test_tier.py --tier release --background --background-dir tmp\\flowguard_background_model_alignment_release --json`
+- OK (0.000s): `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+- OK (0.000s): `python scripts\\audit_local_install_sync.py --json`
+- OK (0.000s): `python scripts\\install_flowpilot.py --check --json`
+- FAIL (0.000s): `python scripts\\run_test_tier.py --tier router --background --background-dir tmp\\flowguard_background_model_alignment* --json`
+
+### Findings
+- Declaration-only model/test alignment was insufficient; added a conservative AST-backed source-contract layer binding selected model obligations to concrete Python functions and runtime tests.
+- Fixed stale TestEvidence.path rows so source-auditable evidence points at the defining test modules rather than aggregate wrappers.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Router background tier produced stale or incomplete artifacts and exit 4294967295 for long runtime slices; exact source-contract runtime tests passed when rerun directly.
+
+### Skipped Steps
+- none recorded
+
+### Next Actions
+- Investigate router background supervisor reliability before using it as full-tier release evidence for long runtime suites.

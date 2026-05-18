@@ -693,7 +693,7 @@
             "evidence_current": true,
             "evidence_id": "startup.happy.prompt_isolated_run",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_bootstrap.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -709,7 +709,7 @@
             "evidence_current": true,
             "evidence_id": "startup.negative.waits_for_answers",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_bootstrap.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "negative_path",
@@ -725,7 +725,7 @@
             "evidence_current": true,
             "evidence_id": "startup.happy.answer_boundary",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_bootstrap.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -741,7 +741,7 @@
             "evidence_current": true,
             "evidence_id": "startup.failure.activation_requires_reviewer",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_bootstrap.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "failure_path",
@@ -933,7 +933,7 @@
             "evidence_current": true,
             "evidence_id": "ack.edge.preconsume_valid_ack",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_ack_return.py",
+            "path": "tests/router_runtime/ack_return.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "edge_path",
@@ -949,7 +949,7 @@
             "evidence_current": true,
             "evidence_id": "ack.failure.incomplete_bundle",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_ack_return.py",
+            "path": "tests/router_runtime/ack_return.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "failure_path",
@@ -1051,7 +1051,7 @@
             "evidence_current": true,
             "evidence_id": "route_mutation.happy.contract_fixture",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_route_mutation.py",
+            "path": "tests/flowpilot_route_mutation_contracts.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -1206,7 +1206,7 @@
             "evidence_current": true,
             "evidence_id": "terminal.happy.replay_segments",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_terminal.py",
+            "path": "tests/router_runtime/terminal.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -1222,7 +1222,7 @@
             "evidence_current": true,
             "evidence_id": "terminal.negative.final_ledger_sources",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_terminal.py",
+            "path": "tests/router_runtime/terminal.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "negative_path",
@@ -1238,7 +1238,7 @@
             "evidence_current": true,
             "evidence_id": "closure.failure.dirty_defect_ledger",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_closure.py",
+            "path": "tests/router_runtime/closure.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "failure_path",
@@ -1254,7 +1254,7 @@
             "evidence_current": true,
             "evidence_id": "resume.happy.loads_state",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_resume.py",
+            "path": "tests/router_runtime/resume.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -1270,7 +1270,7 @@
             "evidence_current": true,
             "evidence_id": "resume.failure.ambiguous_state",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_resume.py",
+            "path": "tests/router_runtime/resume.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "failure_path",
@@ -1492,7 +1492,7 @@
             "evidence_current": true,
             "evidence_id": "router_loop.happy.direct_dispatch",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_packets.py",
+            "path": "tests/router_runtime/packets.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -1508,7 +1508,7 @@
             "evidence_current": true,
             "evidence_id": "router_loop.failure.reviewer_audit",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_packets.py",
+            "path": "tests/router_runtime/packets.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "failure_path",
@@ -1524,7 +1524,7 @@
             "evidence_current": true,
             "evidence_id": "daemon.happy.formal_startup",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_bootstrap.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -1540,7 +1540,7 @@
             "evidence_current": true,
             "evidence_id": "daemon.edge.fresh_lock_wait",
             "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+            "path": "tests/router_runtime/startup_daemon.py",
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "edge_path",
@@ -1900,5 +1900,3834 @@
     }
   ],
   "plan_count": 8,
-  "result_type": "flowpilot_model_test_alignment"
+  "result_type": "flowpilot_model_test_alignment",
+  "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
+  "source_audit_ok": true,
+  "source_contract_plan": {
+    "alignment_report": {
+      "decision": "model_test_alignment_green",
+      "findings": [],
+      "model_id": "model_test_code_source_contracts",
+      "ok": true,
+      "summary": "OK: model=model_test_code_source_contracts decision=model_test_alignment_green findings=0"
+    },
+    "finding_count": 0,
+    "finding_counts": {},
+    "findings": [],
+    "model_id": "model_test_code_source_contracts",
+    "ok": true,
+    "plan": {
+      "allow_orphan_code_contracts": false,
+      "allow_orphan_tests": false,
+      "code_contracts": [
+        {
+          "code_contract_id": "router.run_until_wait",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "startup.questions.pause_before_work"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "run_until_wait"
+        },
+        {
+          "code_contract_id": "router.apply_action",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "action_type",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "startup.questions.pause_before_work",
+            "resume.current_run_reentry"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "apply_action"
+        },
+        {
+          "code_contract_id": "router.record_external_event",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "event",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "startup.run_isolation_and_activation",
+            "ack.return_wait_preconsumption",
+            "route_mutation.topology_and_recheck",
+            "route_mutation.sibling_replacement_stales_old_evidence",
+            "terminal.final_ledger_and_backward_replay",
+            "resume.current_run_reentry",
+            "router_loop.packet_result_review_loop"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "record_external_event"
+        },
+        {
+          "code_contract_id": "router.next_action",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "startup.questions.pause_before_work",
+            "resume.current_run_reentry"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "next_action"
+        },
+        {
+          "code_contract_id": "packet.create_packet",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "from_role",
+            "to_role",
+            "packet_id"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "route_mutation.topology_and_recheck",
+            "route_mutation.sibling_replacement_stales_old_evidence",
+            "output_contract.packet_binding"
+          ],
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "create_packet"
+        },
+        {
+          "code_contract_id": "packet.build_controller_handoff",
+          "error_paths": [],
+          "external_inputs": [
+            "envelope",
+            "envelope_path"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "packet.physical_body_boundary"
+          ],
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "build_controller_handoff"
+        },
+        {
+          "code_contract_id": "packet.controller_handoff_text",
+          "error_paths": [],
+          "external_inputs": [
+            "handoff"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "packet.physical_body_boundary"
+          ],
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "controller_handoff_text"
+        },
+        {
+          "code_contract_id": "packet.controller_relay_envelope",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "envelope",
+            "envelope_path"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "output_contract.packet_binding"
+          ],
+          "path": "skills/flowpilot/assets/packet_runtime_relay.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "update",
+            "write_json_atomic"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "controller_relay_envelope"
+        },
+        {
+          "code_contract_id": "packet.write_result",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "packet_envelope",
+            "result_body_text"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "output_contract.packet_binding"
+          ],
+          "path": "skills/flowpilot/assets/packet_runtime_results.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "write_result"
+        },
+        {
+          "code_contract_id": "card.open_card",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "envelope_path",
+            "role",
+            "agent_id"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "card.ack_identity_and_bundle",
+            "ack.return_wait_preconsumption"
+          ],
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "open_card"
+        },
+        {
+          "code_contract_id": "card.submit_card_ack",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "envelope_path",
+            "role",
+            "agent_id"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "card.ack_identity_and_bundle",
+            "ack.return_wait_preconsumption"
+          ],
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "submit_card_ack"
+        },
+        {
+          "code_contract_id": "card.validate_card_ack",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "envelope_path",
+            "ack_path"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "card.ack_identity_and_bundle"
+          ],
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "validate_card_ack"
+        },
+        {
+          "code_contract_id": "route_sign.generate",
+          "error_paths": [],
+          "external_inputs": [
+            "root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "route_mutation.sibling_replacement_stales_old_evidence"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_user_flow_diagram.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_text"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "generate"
+        },
+        {
+          "code_contract_id": "role_output.prepare_output_session",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "role",
+            "agent_id",
+            "output_type"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "role_output.registry_authority"
+          ],
+          "path": "skills/flowpilot/assets/role_output_runtime_progress.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_output_progress_status"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "prepare_output_session"
+        },
+        {
+          "code_contract_id": "test_tier.commands_for_tier",
+          "error_paths": [],
+          "external_inputs": [
+            "tier"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "test_tiering.foreground_fast_scope"
+          ],
+          "path": "scripts/run_test_tier.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "commands_for_tier"
+        },
+        {
+          "code_contract_id": "meta_runner.main",
+          "error_paths": [],
+          "external_inputs": [
+            "argv"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "meta_parent.thin_default_and_layered_full_boundary"
+          ],
+          "path": "simulations/run_meta_checks.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_text"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "main"
+        },
+        {
+          "code_contract_id": "smoke.main",
+          "error_paths": [],
+          "external_inputs": [
+            "argv"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "capability_parent.proof_reuse_and_fast_boundary"
+          ],
+          "path": "scripts/smoke_autopilot.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "main"
+        }
+      ],
+      "model_id": "model_test_code_source_contracts",
+      "obligations": [
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited startup boundary for run-until-wait, action application, and next-action answer handling.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "startup.questions.pause_before_work",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited startup activation failure boundary through recorded external events.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "startup.run_isolation_and_activation",
+          "obligation_type": "scenario",
+          "required": true,
+          "required_test_kinds": [
+            "failure_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited Controller handoff boundary that keeps packet bodies out of Controller relay text.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "packet.physical_body_boundary",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited card open/ACK/validation contract for externally visible card acknowledgement mechanics.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "card.ack_identity_and_bundle",
+          "obligation_type": "hazard",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited ACK preconsumption boundary through Router events and card ACK helpers.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "ack.return_wait_preconsumption",
+          "obligation_type": "transition",
+          "required": true,
+          "required_test_kinds": [
+            "edge_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited route mutation precondition boundary through Router events and packet issuance.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "route_mutation.topology_and_recheck",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited sibling replacement boundary through Router events, packet issuance, and route-sign output.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
+          "obligation_type": "hazard",
+          "required": true,
+          "required_test_kinds": [
+            "edge_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited terminal replay/final-ledger boundary through Router event intake.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "terminal.final_ledger_and_backward_replay",
+          "obligation_type": "invariant",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited resume re-entry boundary through Router event intake, next action, and action application.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "resume.current_run_reentry",
+          "obligation_type": "transition",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "failure_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited role-output session preparation contract.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "role_output.registry_authority",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited packet output contract across packet creation, Controller relay, and result writes.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "output_contract.packet_binding",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited current-node packet/result review loop boundary through Router event intake.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "router_loop.packet_result_review_loop",
+          "obligation_type": "transition",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "failure_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited test-tier command selection boundary.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "test_tiering.foreground_fast_scope",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited Meta runner entrypoint for thin-parent default evidence.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "meta_parent.thin_default_and_layered_full_boundary",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited smoke fast-path entrypoint for Capability proof boundary evidence.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "capability_parent.proof_reuse_and_fast_boundary",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        }
+      ],
+      "require_code_contracts": true,
+      "test_evidence": [
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "covered_code_contracts": [
+            "router.run_until_wait",
+            "router.apply_action"
+          ],
+          "covered_obligations": [
+            "startup.questions.pause_before_work"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.startup.waits",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_startup_waits_for_answers_before_banner_or_controller"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "covered_code_contracts": [
+            "router.apply_action",
+            "router.next_action"
+          ],
+          "covered_obligations": [
+            "startup.questions.pause_before_work"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.startup.answer",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "covered_code_contracts": [
+            "router.record_external_event"
+          ],
+          "covered_obligations": [
+            "startup.run_isolation_and_activation"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.startup.activation",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "failure_path",
+          "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_packet_runtime",
+          "covered_code_contracts": [
+            "packet.build_controller_handoff",
+            "packet.controller_handoff_text"
+          ],
+          "covered_obligations": [
+            "packet.physical_body_boundary"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.packet.handoff",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_packet_runtime.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_controller_handoff_contains_envelope_only_not_body_content"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
+          "covered_code_contracts": [
+            "card.open_card",
+            "card.submit_card_ack",
+            "card.validate_card_ack"
+          ],
+          "covered_obligations": [
+            "card.ack_identity_and_bundle"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.card.happy",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_card_runtime.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_card_runtime_opens_card_and_submits_ack"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
+          "covered_code_contracts": [
+            "router.record_external_event",
+            "card.open_card",
+            "card.submit_card_ack"
+          ],
+          "covered_obligations": [
+            "ack.return_wait_preconsumption"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.ack.edge",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/ack_return.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
+          "covered_code_contracts": [
+            "router.record_external_event",
+            "packet.create_packet"
+          ],
+          "covered_obligations": [
+            "route_mutation.topology_and_recheck"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.route.preconditions",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/route_mutation_preconditions.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_route_mutation_and_final_ledger_have_required_preconditions"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+          "covered_code_contracts": [
+            "router.record_external_event",
+            "packet.create_packet"
+          ],
+          "covered_obligations": [
+            "route_mutation.sibling_replacement_stales_old_evidence"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.route.sibling",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/route_mutation_sibling_replacement.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope",
+          "covered_code_contracts": [
+            "route_sign.generate"
+          ],
+          "covered_obligations": [
+            "route_mutation.sibling_replacement_stales_old_evidence"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.route.display",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_user_flow_diagram.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_sibling_branch_replacement_draws_replacement_and_replay_scope"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+          "covered_code_contracts": [
+            "router.record_external_event"
+          ],
+          "covered_obligations": [
+            "terminal.final_ledger_and_backward_replay"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.terminal.replay",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/terminal.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+          "covered_code_contracts": [
+            "router.record_external_event"
+          ],
+          "covered_obligations": [
+            "terminal.final_ledger_and_backward_replay"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.terminal.final",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/terminal.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_final_ledger_rejects_missing_source_of_truth_entries_and_contract_replay"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+          "covered_code_contracts": [
+            "router.record_external_event",
+            "router.next_action",
+            "router.apply_action"
+          ],
+          "covered_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.resume.loads",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/resume.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_resume_reentry_loads_state_before_resume_cards"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+          "covered_code_contracts": [
+            "router.record_external_event",
+            "router.apply_action"
+          ],
+          "covered_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.resume.ambiguous",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/resume.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "failure_path",
+          "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+          "covered_code_contracts": [
+            "role_output.prepare_output_session"
+          ],
+          "covered_obligations": [
+            "role_output.registry_authority"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.role.prep",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_role_output_runtime.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_registry_backed_output_types_are_preparable"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_output_contracts",
+          "covered_code_contracts": [
+            "packet.create_packet",
+            "packet.controller_relay_envelope",
+            "packet.write_result"
+          ],
+          "covered_obligations": [
+            "output_contract.packet_binding"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.output.packet",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_output_contracts.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+          "covered_code_contracts": [
+            "router.record_external_event"
+          ],
+          "covered_obligations": [
+            "router_loop.packet_result_review_loop"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.router.direct",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/packets.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_current_node_packet_relay_uses_router_direct_dispatch"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+          "covered_code_contracts": [
+            "router.record_external_event"
+          ],
+          "covered_obligations": [
+            "router_loop.packet_result_review_loop"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.router.audit",
+          "overclaims_model_confidence": false,
+          "path": "tests/router_runtime/packets.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "failure_path",
+          "test_name": "test_current_node_completion_requires_reviewer_passed_packet_audit"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_test_tiers",
+          "covered_code_contracts": [
+            "test_tier.commands_for_tier"
+          ],
+          "covered_obligations": [
+            "test_tiering.foreground_fast_scope"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.tier.release",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_test_tiers.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_fast_and_router_tiers_do_not_contain_release_only_commands"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
+          "covered_code_contracts": [
+            "meta_runner.main"
+          ],
+          "covered_obligations": [
+            "meta_parent.thin_default_and_layered_full_boundary"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.meta.thin",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_default_meta_runner_uses_thin_parent_without_full_graph"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowguard_result_proof",
+          "covered_code_contracts": [
+            "smoke.main"
+          ],
+          "covered_obligations": [
+            "capability_parent.proof_reuse_and_fast_boundary"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.smoke.fast",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowguard_result_proof.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_smoke_fast_only_marks_slow_model_checks_fast"
+        }
+      ]
+    },
+    "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
+    "source_audit_report": {
+      "code_evidence": [
+        {
+          "calls": [
+            "RouterError",
+            "action.get",
+            "applied.get",
+            "applied_actions.append",
+            "apply_action",
+            "bool",
+            "dict",
+            "len",
+            "next_action",
+            "range",
+            "str"
+          ],
+          "code_contract_id": "router.run_until_wait",
+          "found": true,
+          "parameters": [
+            "max_steps",
+            "new_invocation",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "result"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "RouterError",
+            "SAFE_RUN_UNTIL_WAIT_ACTION_TYPES",
+            "action",
+            "action_crosses_boundary",
+            "action_type",
+            "append",
+            "applied",
+            "applied_actions",
+            "apply_action",
+            "bool",
+            "dict",
+            "get",
+            "int",
+            "len",
+            "list",
+            "max_steps",
+            "new_invocation",
+            "next_action",
+            "project_root",
+            "range",
+            "result",
+            "start_new",
+            "str"
+          ],
+          "state_writes": [
+            "action",
+            "action_crosses_boundary",
+            "action_type",
+            "applied",
+            "applied_actions",
+            "folded_applied_actions",
+            "folded_applied_count",
+            "folded_command",
+            "folded_stop_reason",
+            "result",
+            "start_new"
+          ],
+          "symbol": "run_until_wait"
+        },
+        {
+          "calls": [
+            "RouterError",
+            "_try_write_control_blocker_for_exception",
+            "apply_bootloader_action",
+            "apply_controller_action",
+            "bootstrap.get",
+            "getattr",
+            "isinstance",
+            "load_bootstrap_state",
+            "pending.get",
+            "str"
+          ],
+          "code_contract_id": "router.apply_action",
+          "found": true,
+          "parameters": [
+            "action_type",
+            "payload",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "apply_bootloader_action",
+            "apply_controller_action"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "PacketRuntimeError",
+            "Path",
+            "RouterError",
+            "_try_write_control_blocker_for_exception",
+            "action_type",
+            "apply_bootloader_action",
+            "apply_controller_action",
+            "blocker",
+            "bootstrap",
+            "dict",
+            "exc",
+            "existing_blocker",
+            "get",
+            "getattr",
+            "isinstance",
+            "load_bootstrap_state",
+            "packet_runtime",
+            "payload",
+            "pending",
+            "project_root",
+            "str"
+          ],
+          "state_writes": [
+            "blocker",
+            "bootstrap",
+            "existing_blocker",
+            "pending"
+          ],
+          "symbol": "apply_action"
+        },
+        {
+          "calls": [
+            "RouterError",
+            "_record_external_event_unchecked",
+            "_try_write_control_blocker_for_exception",
+            "getattr",
+            "isinstance",
+            "str"
+          ],
+          "code_contract_id": "router.record_external_event",
+          "found": true,
+          "parameters": [
+            "envelope_hash",
+            "envelope_path",
+            "event",
+            "payload",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "_record_external_event_unchecked"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "PacketRuntimeError",
+            "Path",
+            "RouterError",
+            "_record_external_event_unchecked",
+            "_try_write_control_blocker_for_exception",
+            "blocker",
+            "dict",
+            "envelope_hash",
+            "envelope_path",
+            "event",
+            "exc",
+            "existing_blocker",
+            "getattr",
+            "isinstance",
+            "packet_runtime",
+            "payload",
+            "project_root",
+            "str"
+          ],
+          "state_writes": [
+            "blocker",
+            "existing_blocker"
+          ],
+          "symbol": "record_external_event"
+        },
+        {
+          "calls": [
+            "RouterError",
+            "_daemon_scheduled_bootloader_action",
+            "_router_daemon_can_continue_after_enqueued_action",
+            "_startup_daemon_controls_bootstrap",
+            "_startup_daemon_schedule_bootloader_action",
+            "bootstrap.get",
+            "compute_bootloader_action",
+            "compute_controller_action",
+            "isinstance",
+            "load_bootstrap_state",
+            "load_run_state",
+            "project_root.resolve",
+            "schedule.get"
+          ],
+          "code_contract_id": "router.next_action",
+          "found": true,
+          "parameters": [
+            "new_invocation",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "action",
+            "boot_action",
+            "compute_controller_action"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "RouterError",
+            "_daemon_scheduled_bootloader_action",
+            "_router_daemon_can_continue_after_enqueued_action",
+            "_startup_daemon_controls_bootstrap",
+            "_startup_daemon_schedule_bootloader_action",
+            "action",
+            "bool",
+            "boot_action",
+            "bootstrap",
+            "compute_bootloader_action",
+            "compute_controller_action",
+            "dict",
+            "get",
+            "isinstance",
+            "load_bootstrap_state",
+            "load_run_state",
+            "new_invocation",
+            "pending",
+            "project_root",
+            "resolve",
+            "run_root",
+            "run_state",
+            "schedule",
+            "str"
+          ],
+          "state_writes": [
+            "action",
+            "boot_action",
+            "bootstrap",
+            "pending",
+            "project_root",
+            "run_root",
+            "run_state",
+            "schedule"
+          ],
+          "symbol": "next_action"
+        },
+        {
+          "calls": [
+            "_update_packet_record",
+            "_upsert_packet_record",
+            "dict",
+            "ensure_packet_identity_boundary",
+            "ensure_packet_output_contract_section",
+            "normalize_output_contract",
+            "output_contract.setdefault",
+            "output_contract_id",
+            "packet_paths",
+            "project_relative",
+            "sha256_file",
+            "str",
+            "utc_now",
+            "validate_packet_identity_boundary",
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "code_contract_id": "packet.create_packet",
+          "found": true,
+          "parameters": [
+            "barrier_bundle",
+            "body_text",
+            "body_visibility",
+            "controller_allowed_actions",
+            "controller_forbidden_actions",
+            "from_role",
+            "initial_holder",
+            "initial_ledger_status",
+            "initial_status_packet_status",
+            "is_current_node",
+            "metadata",
+            "next_holder",
+            "node_id",
+            "output_contract",
+            "packet_id",
+            "packet_type",
+            "project_root",
+            "replacement_for",
+            "return_to",
+            "router_owned_startup_material",
+            "run_id",
+            "supersedes",
+            "to_role"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "raised_errors": [],
+          "return_values": [
+            "envelope"
+          ],
+          "returns_value": true,
+          "side_effects": [
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_reads": [
+            "Any",
+            "DEFAULT_CONTROLLER_ALLOWED_ACTIONS",
+            "DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS",
+            "PACKET_ENVELOPE_SCHEMA",
+            "PACKET_IDENTITY_MARKER",
+            "Path",
+            "SEALED_BODY_VISIBILITY",
+            "_update_packet_record",
+            "_upsert_packet_record",
+            "barrier_bundle",
+            "body_hash",
+            "body_path",
+            "body_text",
+            "body_visibility",
+            "bool",
+            "controller_allowed_actions",
+            "controller_forbidden_actions",
+            "controller_status_packet",
+            "controller_status_packet_path",
+            "controller_status_path",
+            "created_at",
+            "dict",
+            "ensure_packet_identity_boundary",
+            "ensure_packet_output_contract_section",
+            "envelope",
+            "from_role",
+            "initial_holder",
+            "initial_ledger_status",
+            "initial_status_packet_status",
+            "is_current_node",
+            "list",
+            "metadata",
+            "next_holder",
+            "node_id",
+            "normalize_output_contract",
+            "output_contract",
+            "output_contract_id",
+            "packet_body",
+            "packet_body_path",
+            "packet_envelope",
+            "packet_envelope_path",
+            "packet_id",
+            "packet_ledger",
+            "packet_paths",
+            "packet_type",
+            "paths",
+            "project_relative",
+            "project_root",
+            "record",
+            "replacement_for",
+            "resolved_run_id",
+            "result_body",
+            "result_body_rel",
+            "result_envelope",
+            "result_envelope_rel",
+            "return_to",
+            "router_owned_startup_material",
+            "run_id",
+            "run_root",
+            "setdefault",
+            "sha256_file",
+            "str",
+            "superseded_id",
+            "supersedes",
+            "to_role",
+            "utc_now",
+            "validate_packet_identity_boundary",
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_writes": [
+            "barrier_bundle",
+            "body_hash",
+            "body_text",
+            "controller_status_path",
+            "envelope",
+            "metadata",
+            "output_contract",
+            "output_contract_id",
+            "packet_body_path",
+            "packet_envelope_path",
+            "paths",
+            "record",
+            "resolved_run_id",
+            "result_body_rel",
+            "result_envelope_rel",
+            "run_root"
+          ],
+          "symbol": "create_packet"
+        },
+        {
+          "calls": [
+            "PacketRuntimeError",
+            "envelope.get",
+            "isinstance",
+            "mutual_role_reminder",
+            "output_contract_id",
+            "set",
+            "sorted",
+            "str"
+          ],
+          "code_contract_id": "packet.build_controller_handoff",
+          "found": true,
+          "parameters": [
+            "envelope",
+            "envelope_path"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "raised_errors": [
+            "PacketRuntimeError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "CONTROLLER_HANDOFF_SCHEMA",
+            "PacketRuntimeError",
+            "RESULT_CONTROLLER_ALLOWED_ACTIONS",
+            "RESULT_CONTROLLER_FORBIDDEN_ACTIONS",
+            "RESULT_ENVELOPE_SCHEMA",
+            "SEALED_BODY_VISIBILITY",
+            "allowed_actions",
+            "body_hash",
+            "body_keys",
+            "body_path",
+            "controller_allowed_actions",
+            "controller_forbidden_actions",
+            "controller_reminder",
+            "dict",
+            "envelope",
+            "envelope_kind",
+            "envelope_path",
+            "forbidden_actions",
+            "from_role",
+            "get",
+            "is_current_node",
+            "is_result_envelope",
+            "isinstance",
+            "leaked_keys",
+            "mutual_reminder",
+            "mutual_role_reminder",
+            "node_id",
+            "output_contract",
+            "output_contract_id",
+            "packet_id",
+            "recipient_reminder",
+            "reply_continuation_reminder",
+            "result_body_hash",
+            "result_body_path",
+            "sender_reminder",
+            "set",
+            "sorted",
+            "str",
+            "to_role"
+          ],
+          "state_writes": [
+            "allowed_actions",
+            "body_hash",
+            "body_keys",
+            "body_path",
+            "envelope_kind",
+            "forbidden_actions",
+            "from_role",
+            "is_result_envelope",
+            "leaked_keys",
+            "mutual_reminder",
+            "output_contract",
+            "to_role"
+          ],
+          "symbol": "build_controller_handoff"
+        },
+        {
+          "calls": [
+            "json.dumps"
+          ],
+          "code_contract_id": "packet.controller_handoff_text",
+          "found": true,
+          "parameters": [
+            "handoff"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/packet_runtime_creation.py",
+          "raised_errors": [],
+          "return_values": [
+            "dumps"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "dict",
+            "dumps",
+            "handoff",
+            "json",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "controller_handoff_text"
+        },
+        {
+          "calls": [
+            "PacketRuntimeError",
+            "_update_packet_record",
+            "audit.get",
+            "envelope.get",
+            "envelope.update",
+            "envelope_hash",
+            "get",
+            "history.append",
+            "list",
+            "mark_controller_contamination",
+            "mutual_role_reminder",
+            "normalize_envelope_aliases",
+            "packet_paths_from_any_envelope",
+            "resolve_project_path",
+            "str",
+            "utc_now",
+            "validate_packet_ready_for_direct_relay",
+            "write_json_atomic"
+          ],
+          "code_contract_id": "packet.controller_relay_envelope",
+          "found": true,
+          "parameters": [
+            "body_was_executed_by_controller",
+            "body_was_read_by_controller",
+            "controller_agent_id",
+            "envelope",
+            "envelope_path",
+            "holder_after",
+            "holder_before",
+            "private_role_to_role_delivery_detected",
+            "project_root",
+            "received_from_role",
+            "relayed_to_role"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/packet_runtime_relay.py",
+          "raised_errors": [
+            "PacketRuntimeError"
+          ],
+          "return_values": [
+            "envelope"
+          ],
+          "returns_value": true,
+          "side_effects": [
+            "update",
+            "write_json_atomic"
+          ],
+          "state_reads": [
+            "Any",
+            "CONTROLLER_RELAY_SCHEMA",
+            "PacketRuntimeError",
+            "Path",
+            "RESULT_ENVELOPE_SCHEMA",
+            "SEALED_BODY_VISIBILITY",
+            "USER_INTAKE_BODY_VISIBILITY",
+            "_update_packet_record",
+            "active_status",
+            "append",
+            "audit",
+            "body_visibility",
+            "body_was_executed_by_controller",
+            "body_was_read_by_controller",
+            "bool",
+            "controller_agent_id",
+            "dict",
+            "envelope",
+            "envelope_hash",
+            "envelope_kind",
+            "envelope_path",
+            "get",
+            "history",
+            "holder_after",
+            "holder_before",
+            "list",
+            "mark_controller_contamination",
+            "mutual_reminder",
+            "mutual_role_reminder",
+            "normalize_envelope_aliases",
+            "packet_id",
+            "packet_ledger",
+            "packet_paths_from_any_envelope",
+            "paths",
+            "private_role_to_role_delivery_detected",
+            "project_root",
+            "reason",
+            "received_from_role",
+            "relay",
+            "relay_kind",
+            "relayed_at",
+            "relayed_to_role",
+            "reply_continuation_reminder",
+            "resolve_project_path",
+            "resolved_envelope_path",
+            "source_role",
+            "str",
+            "target_role",
+            "update",
+            "utc_now",
+            "validate_packet_ready_for_direct_relay",
+            "write_json_atomic"
+          ],
+          "state_writes": [
+            "active_status",
+            "audit",
+            "body_visibility",
+            "controller_relay",
+            "controller_relay_history",
+            "envelope_kind",
+            "history",
+            "mutual_reminder",
+            "paths",
+            "reason",
+            "relay",
+            "relay_kind",
+            "resolved_envelope_path",
+            "source_role",
+            "target_role"
+          ],
+          "symbol": "controller_relay_envelope"
+        },
+        {
+          "calls": [
+            "PacketRuntimeError",
+            "_upsert_packet_record",
+            "contract_self_check_metadata",
+            "ensure_result_identity_boundary",
+            "isinstance",
+            "normalize_envelope_aliases",
+            "output_contract_id",
+            "packet_envelope.get",
+            "packet_paths_from_envelope",
+            "project_relative",
+            "sha256_file",
+            "str",
+            "utc_now",
+            "validate_result_identity_boundary",
+            "verify_controller_relay",
+            "verify_packet_open_receipt",
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "code_contract_id": "packet.write_result",
+          "found": true,
+          "parameters": [
+            "completed_by_agent_id",
+            "completed_by_role",
+            "next_recipient",
+            "packet_envelope",
+            "project_root",
+            "result_body_text",
+            "strict_role"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/packet_runtime_results.py",
+          "raised_errors": [
+            "PacketRuntimeError"
+          ],
+          "return_values": [
+            "result_envelope"
+          ],
+          "returns_value": true,
+          "side_effects": [
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_reads": [
+            "Any",
+            "PacketRuntimeError",
+            "Path",
+            "RESULT_CONTROLLER_ALLOWED_ACTIONS",
+            "RESULT_CONTROLLER_FORBIDDEN_ACTIONS",
+            "RESULT_ENVELOPE_SCHEMA",
+            "RESULT_IDENTITY_MARKER",
+            "SEALED_BODY_VISIBILITY",
+            "_upsert_packet_record",
+            "barrier_bundle",
+            "bool",
+            "completed_by_agent_id",
+            "completed_by_role",
+            "contract_self_check",
+            "contract_self_check_metadata",
+            "dict",
+            "ensure_result_identity_boundary",
+            "get",
+            "isinstance",
+            "next_recipient",
+            "normalize_envelope_aliases",
+            "output_contract",
+            "output_contract_id",
+            "packet_envelope",
+            "packet_id",
+            "packet_ledger",
+            "packet_paths_from_envelope",
+            "paths",
+            "project_relative",
+            "project_root",
+            "record",
+            "result_body",
+            "result_body_hash",
+            "result_body_path",
+            "result_body_text",
+            "result_envelope",
+            "result_envelope_path",
+            "run_id",
+            "run_root",
+            "sha256_file",
+            "str",
+            "strict_role",
+            "to_role",
+            "utc_now",
+            "validate_result_identity_boundary",
+            "verify_controller_relay",
+            "verify_packet_open_receipt",
+            "write_controller_status_packet",
+            "write_json_atomic",
+            "write_text_atomic"
+          ],
+          "state_writes": [
+            "barrier_bundle",
+            "contract_self_check",
+            "output_contract",
+            "packet_envelope",
+            "paths",
+            "record",
+            "result_body_hash",
+            "result_body_path",
+            "result_body_text",
+            "result_envelope",
+            "result_envelope_path"
+          ],
+          "symbol": "write_result"
+        },
+        {
+          "calls": [
+            "CardRuntimeError",
+            "_load_card_ledger",
+            "_load_envelope",
+            "_validate_card_id",
+            "_validate_target_identity",
+            "append",
+            "body_path.exists",
+            "body_path.is_file",
+            "body_path.read_text",
+            "bool",
+            "envelope.get",
+            "isinstance",
+            "ledger.setdefault",
+            "project_relative",
+            "project_root.resolve",
+            "resolve_project_path",
+            "sha256_file",
+            "stable_json_hash",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "code_contract_id": "card.open_card",
+          "found": true,
+          "parameters": [
+            "agent_id",
+            "envelope_path",
+            "project_root",
+            "role"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "raised_errors": [
+            "CardRuntimeError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "CARD_READ_RECEIPT_SCHEMA",
+            "CardRuntimeError",
+            "Path",
+            "_load_card_ledger",
+            "_load_envelope",
+            "_validate_card_id",
+            "_validate_target_identity",
+            "agent_id",
+            "append",
+            "body_hash",
+            "body_path",
+            "body_path_raw",
+            "bool",
+            "card_id",
+            "dict",
+            "envelope",
+            "envelope_file",
+            "envelope_path",
+            "exists",
+            "expected_receipt",
+            "get",
+            "is_file",
+            "isinstance",
+            "ledger",
+            "ledger_path",
+            "opened_at",
+            "project_relative",
+            "project_root",
+            "read_text",
+            "receipt",
+            "receipt_hash",
+            "receipt_path",
+            "resolve",
+            "resolve_project_path",
+            "role",
+            "setdefault",
+            "sha256_file",
+            "stable_json_hash",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "body_hash",
+            "body_path",
+            "body_path_raw",
+            "card_id",
+            "envelope",
+            "envelope_file",
+            "expected_receipt",
+            "ledger",
+            "ledger_path",
+            "opened_at",
+            "project_root",
+            "receipt",
+            "receipt_hash",
+            "receipt_path",
+            "updated_at"
+          ],
+          "symbol": "open_card"
+        },
+        {
+          "calls": [
+            "CardRuntimeError",
+            "_load_card_ledger",
+            "_load_envelope",
+            "_load_return_ledger",
+            "_merge_pending_return_ack",
+            "_resolved_return_keys",
+            "_upsert_completed_return_record",
+            "_validate_direct_router_ack_token",
+            "_validate_target_identity",
+            "append",
+            "envelope.get",
+            "isinstance",
+            "ledger.setdefault",
+            "len",
+            "pending.get",
+            "project_relative",
+            "project_root.resolve",
+            "read_json",
+            "receipt.get",
+            "receipt_refs.append",
+            "resolve_project_path",
+            "return_ledger.setdefault",
+            "stable_json_hash",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "code_contract_id": "card.submit_card_ack",
+          "found": true,
+          "parameters": [
+            "agent_id",
+            "envelope_path",
+            "project_root",
+            "receipt_paths",
+            "role",
+            "status"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "raised_errors": [
+            "CardRuntimeError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "CARD_ACK_ENVELOPE_SCHEMA",
+            "CARD_READ_RECEIPT_SCHEMA",
+            "CardRuntimeError",
+            "Path",
+            "_load_card_ledger",
+            "_load_envelope",
+            "_load_return_ledger",
+            "_merge_pending_return_ack",
+            "_resolved_return_keys",
+            "_upsert_completed_return_record",
+            "_validate_direct_router_ack_token",
+            "_validate_target_identity",
+            "ack",
+            "ack_delivery_mode",
+            "ack_hash",
+            "ack_path",
+            "ack_rel_path",
+            "agent_id",
+            "append",
+            "card_return_event",
+            "completed",
+            "completed_keys",
+            "dict",
+            "direct_token",
+            "direct_token_hash",
+            "envelope",
+            "envelope_file",
+            "envelope_path",
+            "expected_return",
+            "get",
+            "isinstance",
+            "ledger",
+            "ledger_path",
+            "len",
+            "list",
+            "pending",
+            "project_relative",
+            "project_root",
+            "raw_path",
+            "read_json",
+            "receipt",
+            "receipt_path",
+            "receipt_paths",
+            "receipt_refs",
+            "resolve",
+            "resolve_project_path",
+            "return_ledger",
+            "return_path",
+            "returned_at",
+            "role",
+            "setdefault",
+            "stable_json_hash",
+            "status",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "ack",
+            "ack_hash",
+            "ack_path",
+            "ack_rel_path",
+            "completed",
+            "completed_keys",
+            "direct_token",
+            "direct_token_hash",
+            "envelope",
+            "envelope_file",
+            "expected_return",
+            "ledger",
+            "ledger_path",
+            "project_root",
+            "receipt",
+            "receipt_path",
+            "receipt_paths",
+            "receipt_refs",
+            "return_ledger",
+            "return_path",
+            "returned_at",
+            "updated_at"
+          ],
+          "symbol": "submit_card_ack"
+        },
+        {
+          "calls": [
+            "CardRuntimeError",
+            "_load_envelope",
+            "_validate_ack_direct_router_fields",
+            "ack.get",
+            "envelope.get",
+            "isinstance",
+            "len",
+            "project_relative",
+            "project_root.resolve",
+            "read_json",
+            "receipt.get",
+            "ref.get",
+            "resolve_project_path",
+            "stable_json_hash",
+            "validated_refs.append"
+          ],
+          "code_contract_id": "card.validate_card_ack",
+          "found": true,
+          "parameters": [
+            "ack_path",
+            "envelope_path",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/card_runtime_ack.py",
+          "raised_errors": [
+            "CardRuntimeError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "CARD_ACK_ENVELOPE_SCHEMA",
+            "CARD_READ_RECEIPT_SCHEMA",
+            "CardRuntimeError",
+            "Path",
+            "_load_envelope",
+            "_validate_ack_direct_router_fields",
+            "ack",
+            "ack_file",
+            "ack_path",
+            "append",
+            "dict",
+            "envelope",
+            "envelope_file",
+            "envelope_path",
+            "expected_envelope_path",
+            "get",
+            "isinstance",
+            "len",
+            "list",
+            "project_relative",
+            "project_root",
+            "read_json",
+            "receipt",
+            "receipt_path",
+            "ref",
+            "refs",
+            "resolve",
+            "resolve_project_path",
+            "stable_json_hash",
+            "str",
+            "token_hash",
+            "validated_refs"
+          ],
+          "state_writes": [
+            "_token",
+            "ack",
+            "ack_file",
+            "envelope",
+            "envelope_file",
+            "expected_envelope_path",
+            "project_root",
+            "receipt",
+            "receipt_path",
+            "refs",
+            "token_hash",
+            "validated_refs"
+          ],
+          "symbol": "validate_card_ack"
+        },
+        {
+          "calls": [
+            "Path",
+            "_active_node",
+            "_active_route",
+            "_load_json",
+            "_load_route_source",
+            "_review_display",
+            "_route_source_summary",
+            "_snapshot_route",
+            "_write_json",
+            "build_chat_markdown",
+            "build_mermaid",
+            "classify_current_stage",
+            "datetime.now",
+            "diagram_dir.mkdir",
+            "frontier.get",
+            "hashlib.sha256",
+            "hexdigest",
+            "isoformat",
+            "list",
+            "md_path.write_text",
+            "mmd_path.write_text",
+            "replace",
+            "resolve_flowpilot_paths",
+            "route.get",
+            "source.encode",
+            "str"
+          ],
+          "code_contract_id": "route_sign.generate",
+          "found": true,
+          "parameters": [
+            "cockpit_open",
+            "display_surface",
+            "include_drafts",
+            "mark_chat_displayed",
+            "mark_ui_displayed",
+            "reviewer_check",
+            "root",
+            "trigger",
+            "write"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_user_flow_diagram.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_text"
+          ],
+          "state_reads": [
+            "Any",
+            "DISPLAY_TRIGGERS",
+            "Path",
+            "_active_node",
+            "_active_route",
+            "_load_json",
+            "_load_route_source",
+            "_review_display",
+            "_route_source_summary",
+            "_snapshot_route",
+            "_write_json",
+            "active_highlight",
+            "active_node",
+            "active_path",
+            "active_route",
+            "active_run_root_valid",
+            "bool",
+            "build_chat_markdown",
+            "build_mermaid",
+            "canonical_route_available",
+            "chat_display_required",
+            "checklist_item_count",
+            "classify_current_stage",
+            "cockpit_open",
+            "current_declares_run",
+            "current_stage",
+            "datetime",
+            "diagram_dir",
+            "diagrams_dir",
+            "dict",
+            "display_depth",
+            "display_gate_status",
+            "display_packet",
+            "display_packet_path",
+            "display_role",
+            "display_surface",
+            "edge_present",
+            "encode",
+            "findings",
+            "frontier",
+            "frontier_path",
+            "generated_at",
+            "get",
+            "graph_labels_surface_neutral",
+            "hashlib",
+            "hexdigest",
+            "hidden_leaf_progress",
+            "include_drafts",
+            "is_backtrack",
+            "is_placeholder",
+            "isoformat",
+            "layout",
+            "list",
+            "mark_chat_displayed",
+            "mark_ui_displayed",
+            "markdown",
+            "md_path",
+            "mermaid_hash",
+            "mkdir",
+            "mmd_path",
+            "node_count",
+            "now",
+            "path_findings",
+            "path_status",
+            "paths",
+            "repair_target",
+            "replace",
+            "replacement_rule",
+            "required",
+            "resolve_flowpilot_paths",
+            "return_or_repair",
+            "return_source",
+            "review_path",
+            "review_payload",
+            "reviewer_check",
+            "root",
+            "route",
+            "route_path",
+            "route_sign",
+            "route_source_kind",
+            "route_source_summary",
+            "routes_root",
+            "run_id",
+            "run_root",
+            "sha256",
+            "snapshot",
+            "snapshot_route",
+            "source",
+            "source_health",
+            "state",
+            "state_path",
+            "status",
+            "str",
+            "timezone",
+            "trigger",
+            "utc",
+            "write",
+            "write_text"
+          ],
+          "state_writes": [
+            "active_node",
+            "active_route",
+            "canonical_route_available",
+            "chat_display_required",
+            "current_stage",
+            "diagram_dir",
+            "display_packet",
+            "display_packet_path",
+            "display_role",
+            "frontier",
+            "frontier_path",
+            "generated_at",
+            "is_placeholder",
+            "markdown",
+            "md_path",
+            "mermaid_hash",
+            "mmd_path",
+            "paths",
+            "replacement_rule",
+            "review_path",
+            "review_payload",
+            "route",
+            "route_path",
+            "route_sign",
+            "route_source_kind",
+            "route_source_summary",
+            "snapshot",
+            "snapshot_route",
+            "source",
+            "source_health",
+            "state"
+          ],
+          "symbol": "generate"
+        },
+        {
+          "calls": [
+            "_default_output_path",
+            "_project_relative",
+            "_require_concrete_agent_id",
+            "_resolve_project_path",
+            "_role_output_sessions_dir",
+            "_run_paths",
+            "_spec_for",
+            "_write_json",
+            "build_output_skeleton",
+            "default_role_output_status_packet_path",
+            "skeleton.setdefault",
+            "utc_now",
+            "uuid.uuid4",
+            "write_output_progress_status"
+          ],
+          "code_contract_id": "role_output.prepare_output_session",
+          "found": true,
+          "parameters": [
+            "agent_id",
+            "body_path",
+            "controller_status_packet_path",
+            "event_name",
+            "output_type",
+            "project_root",
+            "role",
+            "run_id"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/role_output_runtime_progress.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_output_progress_status"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "ROLE_OUTPUT_RUNTIME_SESSION_SCHEMA",
+            "_default_output_path",
+            "_project_relative",
+            "_require_concrete_agent_id",
+            "_resolve_project_path",
+            "_role_output_contract",
+            "_role_output_sessions_dir",
+            "_run_paths",
+            "_spec_for",
+            "_write_json",
+            "agent_id",
+            "body_path",
+            "build_output_skeleton",
+            "contract_id",
+            "controller_status_packet_path",
+            "default_role_output_status_packet_path",
+            "dict",
+            "event_name",
+            "hash_key",
+            "hex",
+            "output_path",
+            "output_type",
+            "path_key",
+            "project_root",
+            "resolved_agent_id",
+            "resolved_run_id",
+            "role",
+            "run_id",
+            "run_root",
+            "session",
+            "session_id",
+            "session_path",
+            "setdefault",
+            "skeleton",
+            "spec",
+            "status_path",
+            "str",
+            "utc_now",
+            "uuid",
+            "uuid4",
+            "write_output_progress_status"
+          ],
+          "state_writes": [
+            "output_path",
+            "progress_status",
+            "resolved_agent_id",
+            "resolved_run_id",
+            "run_root",
+            "session",
+            "session_path",
+            "skeleton",
+            "spec",
+            "status_path"
+          ],
+          "symbol": "prepare_output_session"
+        },
+        {
+          "calls": [
+            "TierCommand",
+            "_py",
+            "commands_for_tier"
+          ],
+          "code_contract_id": "test_tier.commands_for_tier",
+          "found": true,
+          "parameters": [
+            "tier"
+          ],
+          "parse_error": "",
+          "path": "scripts/run_test_tier.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "FAST_COMMANDS",
+            "INTEGRATION_COMMANDS",
+            "LEGACY_FULL_COMMANDS",
+            "RELEASE_COMMANDS",
+            "ROUTER_FOREGROUND_COMMANDS",
+            "ROUTER_PACKET_COMMANDS",
+            "ROUTER_PARENT_COMMANDS",
+            "ROUTER_ROUTE_COMMANDS",
+            "ROUTER_STARTUP_COMMANDS",
+            "ROUTER_TERMINAL_COMMANDS",
+            "TierCommand",
+            "_py",
+            "collect",
+            "commands_for_tier",
+            "dict",
+            "mapping",
+            "str",
+            "tier",
+            "tuple"
+          ],
+          "state_writes": [
+            "mapping"
+          ],
+          "symbol": "commands_for_tier"
+        },
+        {
+          "calls": [
+            "LEGACY_RESULTS_PATH.write_text",
+            "Path",
+            "_current_input_fingerprint",
+            "_emit_proof_reuse",
+            "_layered_input_fingerprint",
+            "_legacy_input_fingerprint",
+            "_run_sharded_graph_checks",
+            "_valid_layered_proof",
+            "_valid_legacy_proof",
+            "_valid_proof",
+            "_write_legacy_proof",
+            "argparse.ArgumentParser",
+            "json.dumps",
+            "parser.add_argument",
+            "parser.parse_args",
+            "payload.get",
+            "print",
+            "resolve",
+            "run_layered_full_parent",
+            "run_thin_parent"
+          ],
+          "code_contract_id": "meta_runner.main",
+          "found": true,
+          "parameters": [
+            "argv"
+          ],
+          "parse_error": "",
+          "path": "simulations/run_meta_checks.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_text"
+          ],
+          "state_reads": [
+            "ArgumentParser",
+            "LAYERED_PROOF_PATH",
+            "LAYERED_RESULTS_PATH",
+            "LEGACY_PROOF_PATH",
+            "LEGACY_RESULTS_PATH",
+            "PROOF_PATH",
+            "Path",
+            "RESULTS_PATH",
+            "__doc__",
+            "__file__",
+            "_current_input_fingerprint",
+            "_emit_proof_reuse",
+            "_layered_input_fingerprint",
+            "_legacy_input_fingerprint",
+            "_run_sharded_graph_checks",
+            "_valid_layered_proof",
+            "_valid_legacy_proof",
+            "_valid_proof",
+            "_write_legacy_proof",
+            "add_argument",
+            "argparse",
+            "args",
+            "argv",
+            "dumps",
+            "fast",
+            "force",
+            "full",
+            "get",
+            "graph_report",
+            "input_fingerprint",
+            "int",
+            "json",
+            "layered_input_fingerprint",
+            "legacy_full",
+            "legacy_input_fingerprint",
+            "list",
+            "loop_report",
+            "ok",
+            "parse_args",
+            "parser",
+            "payload",
+            "print",
+            "progress_report",
+            "reason",
+            "resolve",
+            "run_layered_full_parent",
+            "run_thin_parent",
+            "str",
+            "valid",
+            "write_text"
+          ],
+          "state_writes": [
+            "args",
+            "graph_report",
+            "input_fingerprint",
+            "layered_input_fingerprint",
+            "legacy_input_fingerprint",
+            "loop_report",
+            "ok",
+            "parser",
+            "payload",
+            "progress_report",
+            "reason",
+            "valid"
+          ],
+          "symbol": "main"
+        },
+        {
+          "calls": [
+            "argparse.ArgumentParser",
+            "capability_check.append",
+            "meta_check.append",
+            "parser.add_argument",
+            "parser.parse_args",
+            "run"
+          ],
+          "code_contract_id": "smoke.main",
+          "found": true,
+          "parameters": [
+            "argv"
+          ],
+          "parse_error": "",
+          "path": "scripts/smoke_autopilot.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "ArgumentParser",
+            "__doc__",
+            "add_argument",
+            "append",
+            "argparse",
+            "args",
+            "argv",
+            "capability_check",
+            "checks",
+            "command",
+            "control_plane_friction_check",
+            "control_transaction_registry_check",
+            "cross_plane_friction_check",
+            "executable",
+            "fast",
+            "int",
+            "list",
+            "meta_check",
+            "model_hierarchy_check",
+            "model_mesh_check",
+            "model_test_alignment_check",
+            "ok",
+            "parse_args",
+            "parser",
+            "persistent_router_daemon_check",
+            "prompt_isolation_check",
+            "router_facade_split_check",
+            "run",
+            "str",
+            "structure_maintenance_check",
+            "sys"
+          ],
+          "state_writes": [
+            "args",
+            "capability_check",
+            "checks",
+            "control_plane_friction_check",
+            "control_transaction_registry_check",
+            "cross_plane_friction_check",
+            "meta_check",
+            "model_hierarchy_check",
+            "model_mesh_check",
+            "model_test_alignment_check",
+            "ok",
+            "parser",
+            "persistent_router_daemon_check",
+            "prompt_isolation_check",
+            "router_facade_split_check",
+            "structure_maintenance_check"
+          ],
+          "symbol": "main"
+        }
+      ],
+      "decision": "python_contract_source_audit_green",
+      "findings": [],
+      "ok": true,
+      "summary": "OK: decision=python_contract_source_audit_green findings=0",
+      "test_evidence": [
+        {
+          "assert_count": 30,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.apply_action",
+            "router.run_until_wait"
+          ],
+          "calls": [
+            "exists",
+            "router.apply_action",
+            "router.run_until_wait",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertIsNone",
+            "self.assertIsNotNone",
+            "self.assertNotIn",
+            "self.assertRaises",
+            "self.assertTrue",
+            "self.bootstrap_state",
+            "self.make_project"
+          ],
+          "evidence_id": "source.startup.waits",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "test_name": "test_startup_waits_for_answers_before_banner_or_controller"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.apply_action",
+            "router.next_action"
+          ],
+          "calls": [
+            "endswith",
+            "read_json",
+            "router.apply_action",
+            "router.next_action",
+            "self.assertEqual",
+            "self.assertRaisesRegex",
+            "self.assertTrue",
+            "self.bootstrap_state",
+            "self.enter_legacy_startup_answer_boundary",
+            "self.make_project",
+            "self.next_and_apply",
+            "self.payload_for_action",
+            "self.run_root_for",
+            "self.startup_answer_interpretation",
+            "str"
+          ],
+          "evidence_id": "source.startup.answer",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "test_name": "test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt"
+        },
+        {
+          "assert_count": 40,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.record_external_event"
+          ],
+          "calls": [
+            "as_posix",
+            "exists",
+            "get",
+            "hashlib.sha256",
+            "hexdigest",
+            "proof_path.exists",
+            "read_bytes",
+            "read_json",
+            "read_text",
+            "router.record_external_event",
+            "router.run_state_path",
+            "run_root.relative_to",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertNotIn",
+            "self.assertRaises",
+            "self.assertRaisesRegex",
+            "self.assertTrue",
+            "self.boot_to_controller",
+            "self.deliver_expected_card",
+            "self.deliver_initial_pm_cards_and_user_intake",
+            "self.deliver_startup_fact_check_card",
+            "self.deliver_user_intake_mail",
+            "self.handle_pending_control_blocker",
+            "self.make_project",
+            "self.material_scan_payload",
+            "self.pm_control_blocker_decision_body",
+            "self.role_decision_envelope",
+            "self.role_report_envelope",
+            "self.startup_fact_report_body"
+          ],
+          "evidence_id": "source.startup.activation",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/startup_bootstrap.py",
+          "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+        },
+        {
+          "assert_count": 12,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "packet.build_controller_handoff",
+            "packet.controller_handoff_text"
+          ],
+          "calls": [
+            "packet_runtime.build_controller_handoff",
+            "packet_runtime.controller_handoff_text",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertNotIn",
+            "self.assertTrue",
+            "self.issue_packet",
+            "self.make_project"
+          ],
+          "evidence_id": "source.packet.handoff",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_packet_runtime.py",
+          "test_name": "test_controller_handoff_contains_envelope_only_not_body_content"
+        },
+        {
+          "assert_count": 15,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "card.open_card",
+            "card.submit_card_ack",
+            "card.validate_card_ack"
+          ],
+          "calls": [
+            "as_posix",
+            "card_runtime.open_card",
+            "card_runtime.submit_card_ack",
+            "card_runtime.validate_card_ack",
+            "envelope_path.relative_to",
+            "exists",
+            "make_envelope",
+            "make_project"
+          ],
+          "evidence_id": "source.card.happy",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_card_runtime.py",
+          "test_name": "test_card_runtime_opens_card_and_submits_ack"
+        },
+        {
+          "assert_count": 5,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "card.open_card",
+            "card.submit_card_ack",
+            "router.record_external_event"
+          ],
+          "calls": [
+            "action.get",
+            "card_runtime.open_card",
+            "card_runtime.submit_card_ack",
+            "isinstance",
+            "item.get",
+            "len",
+            "read_json",
+            "router.record_external_event",
+            "router.run_state_path",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertTrue",
+            "self.boot_to_controller",
+            "self.deliver_startup_fact_check_card_without_ack",
+            "self.make_project",
+            "self.role_report_envelope",
+            "self.startup_fact_report_body",
+            "str"
+          ],
+          "evidence_id": "source.ack.edge",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/ack_return.py",
+          "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+        },
+        {
+          "assert_count": 15,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "packet.create_packet",
+            "router.record_external_event"
+          ],
+          "calls": [
+            "node.get",
+            "packet_runtime.create_packet",
+            "read_json",
+            "replace",
+            "router.record_external_event",
+            "self.absorb_current_node_results_with_pm",
+            "self.activate_route",
+            "self.apply_until_action",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertRaises",
+            "self.assertTrue",
+            "self.boot_to_controller",
+            "self.close_model_miss_triage",
+            "self.complete_pre_route_gates",
+            "self.complete_route_checks",
+            "self.deliver_current_node_cards",
+            "self.deliver_expected_card",
+            "self.flag",
+            "self.make_project",
+            "self.prior_path_context_review",
+            "self.submit_current_node_result_via_active_holder"
+          ],
+          "evidence_id": "source.route.preconditions",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/route_mutation_preconditions.py",
+          "test_name": "test_route_mutation_and_final_ledger_have_required_preconditions"
+        },
+        {
+          "assert_count": 16,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "packet.create_packet",
+            "router.record_external_event"
+          ],
+          "calls": [
+            "json.dumps",
+            "json.loads",
+            "next",
+            "node.get",
+            "packet_runtime.create_packet",
+            "read_json",
+            "replace",
+            "router._effective_route_nodes",
+            "router.record_external_event",
+            "router.run_state_path",
+            "router.save_run_state",
+            "self.absorb_current_node_results_with_pm",
+            "self.apply_until_action",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertNotIn",
+            "self.assertRaisesRegex",
+            "self.boot_to_controller",
+            "self.close_model_miss_triage",
+            "self.complete_pre_route_gates",
+            "self.complete_route_checks",
+            "self.deliver_current_node_cards",
+            "self.deliver_expected_card",
+            "self.final_ledger_payload",
+            "self.make_project",
+            "self.prior_path_context_review",
+            "self.submit_current_node_result_via_active_holder",
+            "state.setdefault",
+            "str"
+          ],
+          "evidence_id": "source.route.sibling",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/route_mutation_sibling_replacement.py",
+          "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "route_sign.generate"
+          ],
+          "calls": [
+            "append",
+            "frontier_path.read_text",
+            "frontier_path.write_text",
+            "json.dumps",
+            "json.loads",
+            "route_path.read_text",
+            "route_path.write_text",
+            "route_sign.generate",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertNotIn",
+            "self.make_project"
+          ],
+          "evidence_id": "source.route.display",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_user_flow_diagram.py",
+          "test_name": "test_sibling_branch_replacement_draws_replacement_and_replay_scope"
+        },
+        {
+          "assert_count": 1,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.record_external_event"
+          ],
+          "calls": [
+            "router.record_external_event",
+            "self.activate_route",
+            "self.assertRaises",
+            "self.boot_to_controller",
+            "self.complete_evidence_quality_package",
+            "self.complete_leaf_node_with_reviewed_result",
+            "self.complete_pre_route_gates",
+            "self.deliver_expected_card",
+            "self.final_ledger_payload",
+            "self.make_project"
+          ],
+          "evidence_id": "source.terminal.replay",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/terminal.py",
+          "test_name": "test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions"
+        },
+        {
+          "assert_count": 1,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.record_external_event"
+          ],
+          "calls": [
+            "router.record_external_event",
+            "self.activate_route",
+            "self.assertRaises",
+            "self.boot_to_controller",
+            "self.complete_evidence_quality_package",
+            "self.complete_leaf_node_with_reviewed_result",
+            "self.complete_pre_route_gates",
+            "self.deliver_expected_card",
+            "self.make_project"
+          ],
+          "evidence_id": "source.terminal.final",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/terminal.py",
+          "test_name": "test_final_ledger_rejects_missing_source_of_truth_entries_and_contract_replay"
+        },
+        {
+          "assert_count": 69,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.apply_action",
+            "router.next_action",
+            "router.record_external_event"
+          ],
+          "calls": [
+            "action.get",
+            "exists",
+            "len",
+            "list",
+            "next",
+            "read_json",
+            "router.apply_action",
+            "router.next_action",
+            "router.record_external_event",
+            "router.run_state_path",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertNotEqual",
+            "self.assertRaisesRegex",
+            "self.assertTrue",
+            "self.assert_payload_contract_mentions",
+            "self.boot_to_controller",
+            "self.complete_startup_activation",
+            "self.deliver_expected_card",
+            "self.make_project",
+            "self.resume_role_agent_payload",
+            "update"
+          ],
+          "evidence_id": "source.resume.loads",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/resume.py",
+          "test_name": "test_resume_reentry_loads_state_before_resume_cards"
+        },
+        {
+          "assert_count": 6,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.apply_action",
+            "router.record_external_event"
+          ],
+          "calls": [
+            "read_json",
+            "router.apply_action",
+            "router.record_external_event",
+            "self.assertEqual",
+            "self.assertRaises",
+            "self.assertTrue",
+            "self.boot_to_controller",
+            "self.deliver_expected_card",
+            "self.make_project",
+            "self.next_after_display_sync",
+            "self.prior_path_context_review",
+            "self.resume_role_agent_payload",
+            "self.role_decision_envelope",
+            "unlink"
+          ],
+          "evidence_id": "source.resume.ambiguous",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/resume.py",
+          "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence"
+        },
+        {
+          "assert_count": 5,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "role_output.prepare_output_session"
+          ],
+          "calls": [
+            "contract.get",
+            "role_output_runtime.prepare_output_session",
+            "self.assertEqual",
+            "self.make_project",
+            "self.read_json"
+          ],
+          "evidence_id": "source.role.prep",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_role_output_runtime.py",
+          "test_name": "test_registry_backed_output_types_are_preparable"
+        },
+        {
+          "assert_count": 17,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "packet.controller_relay_envelope",
+            "packet.create_packet",
+            "packet.write_result"
+          ],
+          "calls": [
+            "body_path.read_text",
+            "envelope_path.with_name",
+            "hashlib.sha256",
+            "hexdigest",
+            "packet_runtime.controller_relay_envelope",
+            "packet_runtime.create_packet",
+            "packet_runtime.default_output_contract",
+            "packet_runtime.read_packet_body_for_role",
+            "packet_runtime.write_result",
+            "result_path.read_bytes",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertTrue",
+            "self.make_project",
+            "self.read_json"
+          ],
+          "evidence_id": "source.output.packet",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_output_contracts.py",
+          "test_name": "test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result"
+        },
+        {
+          "assert_count": 16,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.record_external_event"
+          ],
+          "calls": [
+            "int",
+            "packet_runtime.create_packet",
+            "read_json",
+            "replace",
+            "router._derive_resume_next_recipient_from_packet_ledger",
+            "router.apply_action",
+            "router.next_action",
+            "router.record_external_event",
+            "router.run_state_path",
+            "self.activate_route",
+            "self.active_holder_lease_for_packet",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertRaises",
+            "self.assertTrue",
+            "self.boot_to_controller",
+            "self.complete_pre_route_gates",
+            "self.deliver_current_node_cards",
+            "self.make_project",
+            "self.run_root_for",
+            "state_after.get",
+            "state_before.get"
+          ],
+          "evidence_id": "source.router.direct",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/packets.py",
+          "test_name": "test_current_node_packet_relay_uses_router_direct_dispatch"
+        },
+        {
+          "assert_count": 5,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "router.record_external_event"
+          ],
+          "calls": [
+            "packet_runtime.create_packet",
+            "read_json",
+            "replace",
+            "router.record_external_event",
+            "self.absorb_current_node_results_with_pm",
+            "self.activate_route",
+            "self.apply_until_action",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertRaises",
+            "self.boot_to_controller",
+            "self.complete_evidence_quality_package",
+            "self.complete_final_ledger_and_terminal_replay",
+            "self.complete_parent_backward_replay_if_due",
+            "self.complete_pre_route_gates",
+            "self.deliver_current_node_cards",
+            "self.deliver_expected_card",
+            "self.make_project",
+            "self.role_report_envelope",
+            "self.submit_current_node_result_via_active_holder"
+          ],
+          "evidence_id": "source.router.audit",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/router_runtime/packets.py",
+          "test_name": "test_current_node_completion_requires_reviewer_passed_packet_audit"
+        },
+        {
+          "assert_count": 1,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "test_tier.commands_for_tier"
+          ],
+          "calls": [
+            "run_test_tier.commands_for_tier",
+            "self.assertFalse",
+            "self.subTest"
+          ],
+          "evidence_id": "source.tier.release",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_test_tiers.py",
+          "test_name": "test_fast_and_router_tiers_do_not_contain_release_only_commands"
+        },
+        {
+          "assert_count": 2,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "meta_runner.main"
+          ],
+          "calls": [
+            "AssertionError",
+            "Path",
+            "contextlib.redirect_stdout",
+            "io.StringIO",
+            "json.loads",
+            "run_meta_checks.RESULTS_PATH.read_text",
+            "run_meta_checks.main",
+            "self.assertEqual",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.meta.thin",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "test_name": "test_default_meta_runner_uses_thin_parent_without_full_graph"
+        },
+        {
+          "assert_count": 5,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "smoke.main"
+          ],
+          "calls": [
+            "commands.append",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertNotIn",
+            "smoke_autopilot.main"
+          ],
+          "evidence_id": "source.smoke.fast",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowguard_result_proof.py",
+          "test_name": "test_smoke_fast_only_marks_slow_model_checks_fast"
+        }
+      ]
+    }
+  },
+  "source_known_bad_ok": true,
+  "source_known_bad_sanity_checks": [
+    {
+      "code_contracts": [
+        {
+          "code_contract_id": "source_bad.missing",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [],
+          "implements_obligations": [],
+          "path": "synthetic_source.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "missing_symbol"
+        }
+      ],
+      "expected_codes": [
+        "source_contract_missing_symbol"
+      ],
+      "finding_codes": [
+        "source_contract_missing_symbol"
+      ],
+      "name": "missing_python_symbol",
+      "ok": true,
+      "report": {
+        "code_evidence": [
+          {
+            "calls": [],
+            "code_contract_id": "source_bad.missing",
+            "found": false,
+            "parameters": [],
+            "parse_error": "",
+            "path": "synthetic_source.py",
+            "raised_errors": [],
+            "return_values": [],
+            "returns_value": false,
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "symbol": "missing_symbol"
+          }
+        ],
+        "decision": "source_contract_missing_symbol",
+        "findings": [
+          {
+            "code": "source_contract_missing_symbol",
+            "code_contract_id": "source_bad.missing",
+            "evidence_id": "",
+            "message": "code contract source_bad.missing symbol missing_symbol was not found",
+            "metadata": {
+              "calls": [],
+              "code_contract_id": "source_bad.missing",
+              "found": false,
+              "parameters": [],
+              "parse_error": "",
+              "path": "synthetic_source.py",
+              "raised_errors": [],
+              "return_values": [],
+              "returns_value": false,
+              "side_effects": [],
+              "state_reads": [],
+              "state_writes": [],
+              "symbol": "missing_symbol"
+            },
+            "path": "synthetic_source.py",
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "summary": "BLOCKED: decision=source_contract_missing_symbol findings=1",
+        "test_evidence": []
+      },
+      "test_evidence": []
+    },
+    {
+      "code_contracts": [
+        {
+          "code_contract_id": "source_bad.foo",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [],
+          "implements_obligations": [],
+          "path": "synthetic_source.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "foo"
+        }
+      ],
+      "expected_codes": [
+        "source_test_internal_path_only",
+        "source_test_missing_code_contract_call"
+      ],
+      "finding_codes": [
+        "source_test_internal_path_only",
+        "source_test_missing_code_contract_call"
+      ],
+      "name": "internal_path_only_test",
+      "ok": true,
+      "report": {
+        "code_evidence": [
+          {
+            "calls": [],
+            "code_contract_id": "source_bad.foo",
+            "found": true,
+            "parameters": [
+              "value"
+            ],
+            "parse_error": "",
+            "path": "synthetic_source.py",
+            "raised_errors": [],
+            "return_values": [
+              "value"
+            ],
+            "returns_value": true,
+            "side_effects": [],
+            "state_reads": [
+              "value"
+            ],
+            "state_writes": [],
+            "symbol": "foo"
+          }
+        ],
+        "decision": "source_test_missing_code_contract_call",
+        "findings": [
+          {
+            "code": "source_test_missing_code_contract_call",
+            "code_contract_id": "",
+            "evidence_id": "source_bad.internal_path",
+            "message": "test evidence source_bad.internal_path does not call declared code contract symbols",
+            "metadata": {
+              "assertion": {
+                "assert_count": 1,
+                "assertion_scope": "internal_path",
+                "called_code_contracts": [],
+                "calls": [],
+                "evidence_id": "source_bad.internal_path",
+                "found": true,
+                "parse_error": "",
+                "path": "test_synthetic_source.py",
+                "test_name": "test_foo"
+              },
+              "evidence": {
+                "assertion_scope": "external_contract",
+                "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+                "covered_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "covered_obligations": [],
+                "evidence_current": true,
+                "evidence_id": "source_bad.internal_path",
+                "overclaims_model_confidence": false,
+                "path": "test_synthetic_source.py",
+                "result_status": "passed",
+                "stale_reasons": [],
+                "test_kind": "happy_path",
+                "test_name": "test_foo"
+              },
+              "missing": [
+                "source_bad.foo"
+              ]
+            },
+            "path": "test_synthetic_source.py",
+            "severity": "blocker"
+          },
+          {
+            "code": "source_test_internal_path_only",
+            "code_contract_id": "",
+            "evidence_id": "source_bad.internal_path",
+            "message": "test evidence source_bad.internal_path source does not prove the external contract boundary",
+            "metadata": {
+              "assertion": {
+                "assert_count": 1,
+                "assertion_scope": "internal_path",
+                "called_code_contracts": [],
+                "calls": [],
+                "evidence_id": "source_bad.internal_path",
+                "found": true,
+                "parse_error": "",
+                "path": "test_synthetic_source.py",
+                "test_name": "test_foo"
+              },
+              "evidence": {
+                "assertion_scope": "external_contract",
+                "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+                "covered_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "covered_obligations": [],
+                "evidence_current": true,
+                "evidence_id": "source_bad.internal_path",
+                "overclaims_model_confidence": false,
+                "path": "test_synthetic_source.py",
+                "result_status": "passed",
+                "stale_reasons": [],
+                "test_kind": "happy_path",
+                "test_name": "test_foo"
+              }
+            },
+            "path": "test_synthetic_source.py",
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "summary": "BLOCKED: decision=source_test_missing_code_contract_call findings=2",
+        "test_evidence": [
+          {
+            "assert_count": 1,
+            "assertion_scope": "internal_path",
+            "called_code_contracts": [],
+            "calls": [],
+            "evidence_id": "source_bad.internal_path",
+            "found": true,
+            "parse_error": "",
+            "path": "test_synthetic_source.py",
+            "test_name": "test_foo"
+          }
+        ]
+      },
+      "test_evidence": [
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+          "covered_code_contracts": [
+            "source_bad.foo"
+          ],
+          "covered_obligations": [],
+          "evidence_current": true,
+          "evidence_id": "source_bad.internal_path",
+          "overclaims_model_confidence": false,
+          "path": "test_synthetic_source.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_foo"
+        }
+      ]
+    },
+    {
+      "code_contracts": [
+        {
+          "code_contract_id": "source_bad.foo",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [],
+          "implements_obligations": [],
+          "path": "synthetic_source.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "foo"
+        }
+      ],
+      "expected_codes": [
+        "source_test_internal_path_only",
+        "source_test_missing_external_assertion"
+      ],
+      "finding_codes": [
+        "source_test_internal_path_only",
+        "source_test_missing_external_assertion"
+      ],
+      "name": "missing_external_assertion",
+      "ok": true,
+      "report": {
+        "code_evidence": [
+          {
+            "calls": [],
+            "code_contract_id": "source_bad.foo",
+            "found": true,
+            "parameters": [
+              "value"
+            ],
+            "parse_error": "",
+            "path": "synthetic_source.py",
+            "raised_errors": [],
+            "return_values": [
+              "value"
+            ],
+            "returns_value": true,
+            "side_effects": [],
+            "state_reads": [
+              "value"
+            ],
+            "state_writes": [],
+            "symbol": "foo"
+          }
+        ],
+        "decision": "source_test_missing_external_assertion",
+        "findings": [
+          {
+            "code": "source_test_missing_external_assertion",
+            "code_contract_id": "",
+            "evidence_id": "source_bad.no_assert",
+            "message": "test evidence source_bad.no_assert calls no assertion for the external contract",
+            "metadata": {
+              "assertion": {
+                "assert_count": 0,
+                "assertion_scope": "unknown",
+                "called_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "calls": [
+                  "foo"
+                ],
+                "evidence_id": "source_bad.no_assert",
+                "found": true,
+                "parse_error": "",
+                "path": "test_synthetic_source.py",
+                "test_name": "test_foo"
+              },
+              "evidence": {
+                "assertion_scope": "external_contract",
+                "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+                "covered_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "covered_obligations": [],
+                "evidence_current": true,
+                "evidence_id": "source_bad.no_assert",
+                "overclaims_model_confidence": false,
+                "path": "test_synthetic_source.py",
+                "result_status": "passed",
+                "stale_reasons": [],
+                "test_kind": "happy_path",
+                "test_name": "test_foo"
+              }
+            },
+            "path": "test_synthetic_source.py",
+            "severity": "blocker"
+          },
+          {
+            "code": "source_test_internal_path_only",
+            "code_contract_id": "",
+            "evidence_id": "source_bad.no_assert",
+            "message": "test evidence source_bad.no_assert source does not prove the external contract boundary",
+            "metadata": {
+              "assertion": {
+                "assert_count": 0,
+                "assertion_scope": "unknown",
+                "called_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "calls": [
+                  "foo"
+                ],
+                "evidence_id": "source_bad.no_assert",
+                "found": true,
+                "parse_error": "",
+                "path": "test_synthetic_source.py",
+                "test_name": "test_foo"
+              },
+              "evidence": {
+                "assertion_scope": "external_contract",
+                "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+                "covered_code_contracts": [
+                  "source_bad.foo"
+                ],
+                "covered_obligations": [],
+                "evidence_current": true,
+                "evidence_id": "source_bad.no_assert",
+                "overclaims_model_confidence": false,
+                "path": "test_synthetic_source.py",
+                "result_status": "passed",
+                "stale_reasons": [],
+                "test_kind": "happy_path",
+                "test_name": "test_foo"
+              }
+            },
+            "path": "test_synthetic_source.py",
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "summary": "BLOCKED: decision=source_test_missing_external_assertion findings=2",
+        "test_evidence": [
+          {
+            "assert_count": 0,
+            "assertion_scope": "unknown",
+            "called_code_contracts": [
+              "source_bad.foo"
+            ],
+            "calls": [
+              "foo"
+            ],
+            "evidence_id": "source_bad.no_assert",
+            "found": true,
+            "parse_error": "",
+            "path": "test_synthetic_source.py",
+            "test_name": "test_foo"
+          }
+        ]
+      },
+      "test_evidence": [
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+          "covered_code_contracts": [
+            "source_bad.foo"
+          ],
+          "covered_obligations": [],
+          "evidence_current": true,
+          "evidence_id": "source_bad.no_assert",
+          "overclaims_model_confidence": false,
+          "path": "test_synthetic_source.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_foo"
+        }
+      ]
+    },
+    {
+      "code_contracts": [
+        {
+          "code_contract_id": "source_bad.extra_effect",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [],
+          "implements_obligations": [],
+          "path": "synthetic_source.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "foo"
+        }
+      ],
+      "expected_codes": [
+        "source_contract_extra_side_effect"
+      ],
+      "finding_codes": [
+        "source_contract_extra_side_effect"
+      ],
+      "name": "extra_side_effect",
+      "ok": true,
+      "report": {
+        "code_evidence": [
+          {
+            "calls": [
+              "write_json"
+            ],
+            "code_contract_id": "source_bad.extra_effect",
+            "found": true,
+            "parameters": [
+              "value"
+            ],
+            "parse_error": "",
+            "path": "synthetic_source.py",
+            "raised_errors": [],
+            "return_values": [
+              "value"
+            ],
+            "returns_value": true,
+            "side_effects": [
+              "write_json"
+            ],
+            "state_reads": [
+              "value",
+              "write_json"
+            ],
+            "state_writes": [],
+            "symbol": "foo"
+          }
+        ],
+        "decision": "source_contract_extra_side_effect",
+        "findings": [
+          {
+            "code": "source_contract_extra_side_effect",
+            "code_contract_id": "source_bad.extra_effect",
+            "evidence_id": "",
+            "message": "source for source_bad.extra_effect has side-effect-looking calls not declared by the code contract",
+            "metadata": {
+              "contract": {
+                "code_contract_id": "source_bad.extra_effect",
+                "error_paths": [],
+                "external_inputs": [],
+                "external_outputs": [],
+                "implements_obligations": [],
+                "path": "synthetic_source.py",
+                "required": true,
+                "role": "owner",
+                "side_effects": [],
+                "state_reads": [],
+                "state_writes": [],
+                "surface_type": "function",
+                "symbol": "foo"
+              },
+              "evidence": {
+                "calls": [
+                  "write_json"
+                ],
+                "code_contract_id": "source_bad.extra_effect",
+                "found": true,
+                "parameters": [
+                  "value"
+                ],
+                "parse_error": "",
+                "path": "synthetic_source.py",
+                "raised_errors": [],
+                "return_values": [
+                  "value"
+                ],
+                "returns_value": true,
+                "side_effects": [
+                  "write_json"
+                ],
+                "state_reads": [
+                  "value",
+                  "write_json"
+                ],
+                "state_writes": [],
+                "symbol": "foo"
+              },
+              "extra": [
+                "write_json"
+              ]
+            },
+            "path": "synthetic_source.py",
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "summary": "BLOCKED: decision=source_contract_extra_side_effect findings=1",
+        "test_evidence": []
+      },
+      "test_evidence": []
+    }
+  ]
 }
