@@ -25,6 +25,10 @@ import flowpilot_router_events_repair as events_repair  # noqa: E402
 import flowpilot_router_expected_waits as expected_waits  # noqa: E402
 import flowpilot_router_facade_export_manifest_actions as manifest_actions  # noqa: E402
 import flowpilot_router_facade_export_manifest_controller as manifest_controller  # noqa: E402
+import flowpilot_router_facade_export_manifest_controller_events as manifest_controller_events  # noqa: E402
+import flowpilot_router_facade_export_manifest_controller_lifecycle as manifest_controller_lifecycle  # noqa: E402
+import flowpilot_router_facade_export_manifest_controller_repair as manifest_controller_repair  # noqa: E402
+import flowpilot_router_facade_export_manifest_controller_scheduler as manifest_controller_scheduler  # noqa: E402
 import flowpilot_router_facade_export_manifest_route as manifest_route  # noqa: E402
 import flowpilot_router_facade_export_manifest_startup as manifest_startup  # noqa: E402
 import flowpilot_router_facade_export_manifest_terminal_work as manifest_terminal_work  # noqa: E402
@@ -38,6 +42,10 @@ import flowpilot_router_pm_role_followup as pm_role_followup  # noqa: E402
 import flowpilot_router_prompt_delivery as prompt_delivery  # noqa: E402
 import flowpilot_router_proof_validation as proof_validation  # noqa: E402
 import flowpilot_router_protocol_external_events as protocol_external_events  # noqa: E402
+import flowpilot_router_protocol_external_events_material as external_events_material  # noqa: E402
+import flowpilot_router_protocol_external_events_route as external_events_route  # noqa: E402
+import flowpilot_router_protocol_external_events_startup as external_events_startup  # noqa: E402
+import flowpilot_router_protocol_external_events_terminal as external_events_terminal  # noqa: E402
 import flowpilot_router_role_io_protocol as role_io_protocol  # noqa: E402
 import flowpilot_router_role_output_bridge as role_output_bridge  # noqa: E402
 import flowpilot_router_route_artifacts_evidence as route_artifacts_evidence  # noqa: E402
@@ -218,6 +226,13 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             protocol_external_events.external_event_contract("pm_approves_startup_activation")["flag"],
             "startup_activation_approved",
         )
+        split_events = {
+            **external_events_startup.EXTERNAL_EVENTS_STARTUP,
+            **external_events_material.EXTERNAL_EVENTS_MATERIAL,
+            **external_events_route.EXTERNAL_EVENTS_ROUTE,
+            **external_events_terminal.EXTERNAL_EVENTS_TERMINAL,
+        }
+        self.assertEqual(split_events, protocol_external_events.EXTERNAL_EVENTS)
 
     def test_facade_export_manifest_external_contracts(self) -> None:
         action_exports = manifest_actions.owner_exports_actions()
@@ -229,6 +244,13 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         self.assertIn(("flowpilot_router_cli", True, False), action_exports)
         self.assertTrue(any(key[0] == "flowpilot_router_controller_repair" for key in controller_exports))
+        split_controller_exports = {
+            **manifest_controller_repair.OWNER_EXPORTS_CONTROLLER_REPAIR,
+            **manifest_controller_scheduler.OWNER_EXPORTS_CONTROLLER_SCHEDULER,
+            **manifest_controller_events.OWNER_EXPORTS_CONTROLLER_EVENTS,
+            **manifest_controller_lifecycle.OWNER_EXPORTS_CONTROLLER_LIFECYCLE,
+        }
+        self.assertEqual(split_controller_exports, controller_exports)
         self.assertTrue(any(key[0] == "flowpilot_router_model_gate_state" for key in route_exports))
         self.assertTrue(any(key[0] == "flowpilot_router_startup_bootloader" for key in startup_exports))
         self.assertTrue(any(key[0] == "flowpilot_router_pm_role_followup" for key in terminal_exports))

@@ -25,9 +25,9 @@ structure-split repair work.
 
 | Metric | Count |
 | --- | ---: |
-| Total diagnostic surfaces | 533 |
-| Covered surfaces | 482 |
-| Surfaces with one or more gaps | 51 |
+| Total diagnostic surfaces | 541 |
+| Covered surfaces | 493 |
+| Surfaces with one or more gaps | 48 |
 | Compatibility facades | 60 |
 | Owner modules | 118 |
 | Script entrypoints | 17 |
@@ -39,7 +39,7 @@ structure-split repair work.
 
 | Gap code | Count | Meaning |
 | --- | ---: | --- |
-| `needs_structure_split` | 51 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
+| `needs_structure_split` | 48 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
 
 `missing_model`, `missing_code`, `missing_test`, `extra_code`,
 `internal_only_test`, and `stale_evidence` are all zero in the current
@@ -49,32 +49,36 @@ StructureMesh deferrals visible.
 
 Aggregate counts in the JSON include:
 
-- `gap_counts_by_severity`: `medium=51`.
-- `gap_counts_by_repair_type`: `defer_structure_split=51`.
-- `gap_counts_by_release_relevance`: `runtime_contract=44`,
-  `validation_gate=7`.
+- `gap_counts_by_severity`: `medium=48`.
+- `gap_counts_by_repair_type`: `defer_structure_split=48`.
+- `gap_counts_by_release_relevance`: `runtime_contract=42`,
+  `validation_gate=6`.
 - `unresolved_non_deferred_gap_count`: `0`.
-- `deferred_structure_split_count`: `51`.
+- `deferred_structure_split_count`: `48`.
 
 ## Top Repair Items
 
 The current actionable summary is intentionally a structure backlog, not a
 missing-test backlog:
 
-1. Seven validation runners remain over the script threshold. They are
+1. Six validation runners remain over the script threshold. They are
    reclassified as deferred validation-entrypoint splits because each needs a
    dedicated StructureMesh target and CLI parity preservation before code is
    moved.
-2. Forty-four runtime-contract surfaces remain over the owner/facade
+2. Forty-two runtime-contract surfaces remain over the owner/facade
    threshold. They keep explicit `peer_safety_status`,
    `deferred_split_reason`, `safe_split_class`, and
    `recommended_next_action` metadata.
-3. `run_test_tier.py` has already been split into a small CLI wrapper plus
+3. `run_flowpilot_model_test_alignment_checks.py` is now a small compatibility
+   runner facade. Its common declarations, family plans, source-contract plan,
+   known-bad cases, and full diagnostic surface inventory live in focused
+   `flowpilot_model_test_alignment_*` modules.
+4. `run_test_tier.py` has already been split into a small CLI wrapper plus
    focused tier-definition and background-artifact modules.
-4. `public_release_check` now has current URL-probing evidence from
+5. `public_release_check` now has current URL-probing evidence from
    `python scripts\check_public_release.py --json --skip-validation`; it is no
    longer counted as local-only release proof.
-5. `meta_legacy_full` and `capability_legacy_full` are reclassified as
+6. `meta_legacy_full` and `capability_legacy_full` are reclassified as
    historical compatibility oracles. Current release confidence comes from
    reused valid layered full parent proofs. The failed/running legacy artifacts
    stay visible in `background_evidence` but do not block
@@ -118,6 +122,16 @@ role/prompt/proof/terminal/work-packet, user-flow, and packet control-plane
 surfaces. The source-contract plan now has matching obligations, code
 contracts, and exact test ids for those rows.
 
+The next structure-maintenance pass also split two declarative runtime table
+parents while preserving their public contracts:
+
+- `flowpilot_router_facade_export_manifest_controller.py` dropped to 31 lines
+  and now aggregates controller repair, scheduler, events, and lifecycle export
+  shards. The facade-export contract test checks the child-union parity.
+- `flowpilot_router_protocol_external_events.py` dropped to 40 lines and now
+  aggregates startup, material/product, route, and terminal event shards. The
+  event/wait/repair contract test checks the child-union parity.
+
 ## Background Evidence Policy
 
 Background evidence is classified from final artifacts rather than progress
@@ -156,15 +170,19 @@ claimed StructureMesh target:
 Declarative and validation-runner surfaces remain safer follow-up candidates
 after an explicit claim:
 
-- `flowpilot_router_facade_export_manifest_controller.py`
 - `flowpilot_router_protocol_decision_tables.py`
-- `flowpilot_router_protocol_external_events.py`
 - `flowpilot_router_protocol_gate_outcomes.py`
-- `simulations/run_flowpilot_model_test_alignment_checks.py`
 - `simulations/run_flowpilot_daemon_reconciliation_checks.py`
+- `simulations/run_flowpilot_model_hierarchy_checks.py`
+- `simulations/run_flowpilot_process_liveness_checks.py`
+- `simulations/run_flowpilot_role_output_runtime_checks.py`
 - `simulations/run_meta_checks.py`
 - `simulations/run_capability_checks.py`
 
 `flowpilot_router_protocol_boot_cards.py` is no longer a pending split
 candidate. It is recorded as `completed_split` with the startup, planning,
 runtime, and metadata catalogs extracted into focused modules.
+`flowpilot_router_facade_export_manifest_controller.py`,
+`flowpilot_router_protocol_external_events.py`, and
+`simulations/run_flowpilot_model_test_alignment_checks.py` are also no longer
+pending split candidates at their public facade level.

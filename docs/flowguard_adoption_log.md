@@ -15400,3 +15400,74 @@ Skipped steps:
 ### Next Actions
 - Split the seven validation runners only under a dedicated `flowpilot_model_check_runner_structure_split` StructureMesh target.
 - Split runtime owner modules in small claimed batches, starting from low-conflict contract-pinned surfaces.
+
+## continue-flowpilot-structure-maintenance-2026-05-18 - StructureMesh split batch
+
+- Project: FlowPilot
+- Trigger reason: Continue reducing explicit StructureMesh debt after full model-code-test diagnostic convergence.
+- Status: implemented and validated locally
+- Skill decision: use_flowguard:behavior_flow + StructureMesh + Model-Test Alignment + Development Process Flow
+- OpenSpec change: continue-flowpilot-structure-maintenance
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- `simulations/run_flowpilot_model_test_alignment_checks.py`
+- `simulations/flowpilot_model_test_alignment_common.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/flowpilot_model_test_alignment_source_contracts.py`
+- `simulations/flowpilot_model_test_alignment_known_bad.py`
+- `simulations/flowpilot_model_test_alignment_diagnostics.py`
+- `skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller.py`
+- `skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller_repair.py`
+- `skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller_scheduler.py`
+- `skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller_events.py`
+- `skills/flowpilot/assets/flowpilot_router_facade_export_manifest_controller_lifecycle.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_external_events.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_external_events_startup.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_external_events_material.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_external_events_route.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_external_events_terminal.py`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK: `openspec validate continue-flowpilot-structure-maintenance --strict`.
+- OK: `python -m py_compile` for the touched alignment and runtime split modules.
+- OK: `python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_facade_export_manifest_external_contracts tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_event_wait_repair_external_contracts`.
+- OK: `python -m unittest tests.test_flowpilot_model_test_alignment`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py`.
+- OK: `python -m unittest tests.test_flowpilot_model_check_runner_contracts`.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py -q`.
+- OK: `python simulations\run_meta_checks.py --full --fast`.
+- OK: `python simulations\run_capability_checks.py --full --fast`.
+- OK: `python scripts\run_test_tier.py --tier fast --json`.
+- OK with dirty-worktree warning only: `python scripts\check_public_release.py --json --skip-validation`.
+
+### Findings
+
+- `run_flowpilot_model_test_alignment_checks.py` is now a compatibility facade at 172 lines.
+- The alignment implementation is split into common declarations, family plans, source contracts, known-bad cases, and full diagnostic modules.
+- `flowpilot_router_facade_export_manifest_controller.py` is now 31 lines and aggregates four controller manifest shards.
+- `flowpilot_router_protocol_external_events.py` is now 40 lines and aggregates four external-event shards.
+- The full diagnostic now reports 541 surfaces, 493 covered surfaces, 48 gap surfaces, `release_convergence_ok=true`, and `unresolved_non_deferred_gap_count=0`.
+- Remaining gaps are explicit `needs_structure_split` rows only: 42 runtime-contract surfaces and 6 validation-gate runners.
+- The public release probe passed with one expected dirty-worktree warning because peer-agent changes remain uncommitted outside this batch.
+
+### Counterexamples
+
+- missing_child_contract_after_declarative_split
+- runner_facade_entrypoint_removed
+- split_child_surface_without_external_contract
+- progress_only_background_evidence_counted_as_pass
+
+### Friction Points
+
+- The source-contract plan module remains large because most of its size is declarative evidence rows. Splitting that table further is useful, but lower risk after the runner facade is already thin.
+- Dirty peer-agent files under protocol/material/shared-log/planning surfaces were intentionally avoided and must not be staged as part of this batch.
+
+### Next Actions
+
+- Split the remaining six validation runners in dedicated StructureMesh batches.
+- Split runtime owner modules only in claimed batches after confirming external-contract parity for the specific owner surface.

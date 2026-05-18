@@ -33,6 +33,12 @@ The runner has three layers:
   needs-structure-split gaps with owner, severity, release relevance, repair
   type, dedupe, and priority metadata.
 
+The public runner file is now a compatibility facade. The implementation is
+split into focused `flowpilot_model_test_alignment_*` modules for common
+declarations, family plans, source contracts, known-bad cases, and full
+diagnostic surface inventory. The public command and importable helper names
+remain unchanged.
+
 The source-contract audit is intentionally narrower than the declaration table.
 It proves that critical externally visible Python surfaces are not merely
 mentioned by a test map. It does not claim full Python semantics, replace
@@ -75,6 +81,11 @@ deferred owner-module work. Fresh or state-ordering-sensitive modules may remain
 above the line threshold, but they are still recorded as actionable
 `defer_structure_split` rows with owner, reason, safety status, and recommended
 next action metadata.
+
+The current diagnostic reports 541 surfaces, 493 covered surfaces, and 48
+remaining gap surfaces. All 48 are explicit `needs_structure_split` deferrals;
+`unresolved_non_deferred_gap_count` is zero and `release_convergence_ok` remains
+true.
 
 The `legacy-full` tier is kept visible as legacy validation history but is not
 ranked as the current release gate. When current layered full Meta/Capability
