@@ -15156,3 +15156,43 @@ Skipped steps:
 - Add direct external-contract tests for the remaining runtime owner-module gaps.
 - Split the 43 remaining actionable structure candidates only where a stable owner boundary is already modeled.
 - Rerun public release evidence without `--skip-url-check` before treating public URL availability as proven.
+
+## flowpilot-router-terminal-testmesh-2026-05-18 - Optimize router terminal long-tail test tier
+
+- Project: FlowPilot
+- Trigger reason: User reported the remaining long router test group was repeatedly taking too long and asked to stop the run, optimize the six long tests, and rerun.
+- Status: completed
+- Skill decision: use_flowguard:TestMesh ordering for slow router terminal shards
+- FlowGuard schema: 1.0
+
+### Model Files
+- scripts/run_test_tier.py
+- tests/test_flowpilot_test_tiers.py
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m unittest tests.test_flowpilot_test_tiers`
+- OK: `python scripts\run_test_tier.py --tier router-terminal --dry-run --json`
+- OK: `python scripts\run_test_tier.py --tier router-terminal --background --background-dir tmp\flowguard_background\router_terminal_optimized8 --background-max-parallel 8 --json`
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- The old long router terminal run was stopped before this optimization pass; the final rerun used hidden background artifacts under `tmp\flowguard_background\router_terminal_optimized8`.
+- TestMesh ordering now launches PM role-work, quality-gate, and material/modeling shards before terminal/closure/resume/control-blocker shards so the longest work starts first under parallel supervision.
+- Final supervisor status was `passed`, exit code `0`, `25/25` child shards passed, `max_parallel=8`, `proof_reused=false`, start `2026-05-18T11:36:39.106715+02:00`, end `2026-05-18T11:49:15.799360+02:00`.
+- The remaining runtime cost is concentrated in scenario fixture/data setup inside individual shards, especially terminal final ledger, quality evidence artifacts, PM role-work results, closure dirty ledgers, and material modelability.
+
+### Counterexamples
+- broad_terminal_tail_started_before_slow_child_shards
+- max_parallel_above_eight_increases_contention
+
+### Friction Points
+- Splitting and ordering remove avoidable serial waiting, but they do not eliminate expensive per-test setup inside the slowest scenarios.
+- Result JSON reruns can create timestamp-only diffs; those should not be treated as behavior changes.
+
+### Next Actions
+- Keep `router-terminal` at eight-way background parallelism for regular regression runs.
+- Treat further speed work as fixture/data setup optimization inside the slowest individual shards, not another broad tier split.
