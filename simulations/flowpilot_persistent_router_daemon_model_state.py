@@ -90,7 +90,11 @@ class State:
     router_scheduler_ledger_valid_json: bool = True
     controller_action_ledger_valid_json: bool = True
     runtime_ledger_write_lock_fresh: bool = False
+    runtime_ledger_write_lock_owner: str = "none"  # none | live | dead | unknown
     daemon_deferred_for_runtime_ledger_write: bool = False
+    dead_owner_write_lock_takeover_recorded: bool = False
+    writer_died_while_holding_runtime_lock: bool = False
+    dead_owner_recovery_rejoined_flow: bool = False
     durable_ledger_writes_atomic: bool = True
     router_scheduler_single_writer: bool = True
     daemon_status_active_after_lock_error: bool = False
@@ -103,6 +107,7 @@ class State:
     startup_bootstrap_flag_current: bool = False
     startup_router_row_reconciled: bool = False
     startup_next_row_scheduled_after_receipt: bool = False
+    startup_row_scheduled_after_terminal_fence: bool = False
     startup_same_action_reissue_count: int = 0
     controller_attached: bool = False
     controller_called_router_next_as_metronome: bool = False
@@ -186,7 +191,12 @@ class State:
     heartbeat_restarted_dead_daemon: bool = False
     heartbeat_restored_controller: bool = False
     heartbeat_restored_roles: bool = False
+    heartbeat_binding_scheduled_after_terminal_fence: bool = False
     stop_requested: bool = False
+    terminal_fence_written: bool = False
+    terminal_controller_cleanup_best_effort_failed: bool = False
+    terminal_projection_refreshed: bool = False
+    terminal_next_step_cleared: bool = False
     route_work_allowed: bool = False
 
 

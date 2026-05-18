@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
+import flowpilot_router_io as router_io  # noqa: E402
 
 
 class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -65,6 +66,97 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "write_terminal_summary")
         self.assertEqual(action["run_lifecycle_status"], "cancelled_by_user")
+    def test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        result = router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
+
+        self.assertTrue(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        lock = read_json(run_root / "runtime" / "router_daemon.lock")
+        status = read_json(run_root / "runtime" / "router_daemon_status.json")
+        fence = read_json(run_root / "lifecycle" / "terminal_fence.json")
+        self.assertEqual(state["status"], "stopped_by_user")
+        self.assertFalse(state["daemon_mode_enabled"])
+        self.assertTrue(state["flags"]["terminal_daemon_fence_written"])
+        self.assertTrue(state["flags"]["terminal_projection_refreshed"])
+        self.assertTrue(state["flags"]["terminal_next_step_cleared"])
+        self.assertEqual(lock["status"], "terminal_stopped")
+        self.assertEqual(lock["release_reason"], "user_requests_run_stop_terminal_fence")
+        self.assertEqual(status["lifecycle_status"], "terminal_stopped")
+        self.assertEqual(status["run_lifecycle_status"], "stopped_by_user")
+        self.assertFalse(status["daemon_mode_enabled"])
+        self.assertFalse(status["daemon_live"])
+        self.assertIsNone(status["current_action"])
+        self.assertIsNone(status["continuous_standby_task"])
+        self.assertEqual(status["current_work"]["source"], "terminal_lifecycle")
+        self.assertFalse(status["current_work"]["diagnostics"]["nonterminal_work_allowed"])
+        self.assertEqual(fence["status"], "stopped_by_user")
+        self.assertFalse(fence["controller_may_continue_route_work"])
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "write_terminal_summary")
+    def test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        write_lock = router._json_write_lock_path(scheduler_path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(scheduler_path),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.01):
+            result = router.record_external_event(root, "user_requests_run_stop", {"reason": "stop while scheduler is locked"})
+
+        self.assertTrue(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        lock = read_json(run_root / "runtime" / "router_daemon.lock")
+        status = read_json(run_root / "runtime" / "router_daemon_status.json")
+        fence = read_json(run_root / "lifecycle" / "terminal_fence.json")
+        self.assertEqual(state["status"], "stopped_by_user")
+        self.assertFalse(state["daemon_mode_enabled"])
+        self.assertEqual(lock["status"], "terminal_stopped")
+        self.assertEqual(status["lifecycle_status"], "terminal_stopped")
+        self.assertEqual(status["current_work"]["source"], "terminal_lifecycle")
+        self.assertEqual(fence["controller_work_fence"]["status"], "best_effort_failed")
+        self.assertEqual(fence["controller_work_fence"]["error"]["type"], "RouterLedgerWriteInProgress")
+        write_lock.unlink(missing_ok=True)
+    def test_terminal_pending_heartbeat_action_is_noop(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["status"] = "stopped_by_user"
+        state.setdefault("flags", {})["run_stopped_by_user"] = True
+        state["flags"]["continuation_binding_recorded"] = False
+        state["pending_action"] = router.make_action(
+            action_type="create_heartbeat_automation",
+            actor="bootloader",
+            label="host_bootstraps_startup_heartbeat_automation",
+            summary="Create a heartbeat automation.",
+            extra={"postcondition": "continuation_binding_recorded"},
+        )
+        router.save_run_state(run_root, state)
+        binding_before = read_json(run_root / "continuation" / "continuation_binding.json")
+
+        result = router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
+
+        binding_after = read_json(run_root / "continuation" / "continuation_binding.json")
+        refreshed_state = read_json(router.run_state_path(run_root))
+        self.assertTrue(result["heartbeat_binding_skipped"])
+        self.assertEqual(result["terminal_lifecycle_status"], "stopped_by_user")
+        self.assertEqual(binding_after, binding_before)
+        self.assertFalse(refreshed_state["flags"]["continuation_binding_recorded"])
+        self.assertIsNone(refreshed_state.get("pending_action"))
     def test_reconcile_run_recovers_terminal_status_from_current_pointer(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-terminal-drift", status="startup_bootstrap")

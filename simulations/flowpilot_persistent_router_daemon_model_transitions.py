@@ -86,8 +86,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 lifecycle="terminal",
+                terminal_fence_written=True,
+                terminal_controller_cleanup_best_effort_failed=bool(
+                    state.runtime_ledger_write_lock_fresh
+                    and state.runtime_ledger_write_lock_owner in {"live", "unknown"}
+                ),
+                terminal_projection_refreshed=True,
+                terminal_next_step_cleared=True,
                 daemon_alive=False,
-                daemon_lock_state="none",
+                daemon_lock_state="terminal",
                 daemon_writer_count=0,
                 controller_core_loaded=False,
                 controller_attached=False,
@@ -107,6 +114,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 wait_target_metadata_present=False,
                 controller_action_pending=False,
                 controller_action_ready=False,
+                startup_bootstrap_pending_action_open=False,
+                startup_row_scheduled_after_terminal_fence=False,
+                heartbeat_binding_scheduled_after_terminal_fence=False,
                 legacy_waiting_for_role_null=False,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
@@ -121,14 +131,35 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.runtime_ledger_write_lock_fresh:
+    if state.runtime_ledger_write_lock_fresh and state.runtime_ledger_write_lock_owner in {"live", "unknown"}:
+        yield Transition(
+            "user_requests_terminal_stop_while_cleanup_ledger_locked",
+            _step(state, stop_requested=True),
+        )
         yield Transition(
             "daemon_defers_runtime_ledger_read_until_next_tick",
             _step(
                 state,
                 router_scheduler_ledger_valid_json=True,
                 runtime_ledger_write_lock_fresh=False,
+                runtime_ledger_write_lock_owner="none",
                 daemon_deferred_for_runtime_ledger_write=True,
+            ),
+        )
+        return
+
+    if state.runtime_ledger_write_lock_fresh and state.runtime_ledger_write_lock_owner == "dead":
+        yield Transition(
+            "daemon_takes_over_fresh_dead_owner_write_lock_and_replays",
+            _step(
+                state,
+                router_scheduler_ledger_valid_json=True,
+                runtime_ledger_write_lock_fresh=False,
+                runtime_ledger_write_lock_owner="none",
+                daemon_deferred_for_runtime_ledger_write=False,
+                dead_owner_write_lock_takeover_recorded=True,
+                writer_died_while_holding_runtime_lock=True,
+                dead_owner_recovery_rejoined_flow=True,
             ),
         )
         return
@@ -141,11 +172,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and not state.controller_action_pending
     ):
         yield Transition(
-            "runtime_ledger_write_lock_appears_during_daemon_read",
+            "runtime_live_writer_write_lock_appears_during_daemon_read",
             _step(
                 state,
                 router_scheduler_ledger_valid_json=False,
                 runtime_ledger_write_lock_fresh=True,
+                runtime_ledger_write_lock_owner="live",
+            ),
+        )
+        yield Transition(
+            "runtime_dead_owner_write_lock_appears_during_daemon_read",
+            _step(
+                state,
+                router_scheduler_ledger_valid_json=True,
+                runtime_ledger_write_lock_fresh=False,
+                runtime_ledger_write_lock_owner="none",
+                daemon_deferred_for_runtime_ledger_write=False,
+                dead_owner_write_lock_takeover_recorded=True,
+                writer_died_while_holding_runtime_lock=True,
+                dead_owner_recovery_rejoined_flow=True,
             ),
         )
 
@@ -164,6 +209,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     current_work_source="pending_action",
                 ),
             )
+            yield Transition(
+                "user_requests_terminal_stop_during_startup_scheduling",
+                _step(state, stop_requested=True),
+            )
             return
         if state.startup_bootstrap_pending_action_open and not state.startup_controller_receipt_present:
             yield Transition(
@@ -172,6 +221,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     state,
                     startup_controller_receipt_present=True,
                 ),
+            )
+            yield Transition(
+                "user_requests_terminal_stop_during_startup_scheduling",
+                _step(state, stop_requested=True),
             )
             return
         if state.startup_bootstrap_pending_action_open and state.startup_controller_receipt_present:
@@ -189,6 +242,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     current_work_task_visible=True,
                     current_work_source="router_daemon",
                 ),
+            )
+            yield Transition(
+                "user_requests_terminal_stop_during_startup_scheduling",
+                _step(state, stop_requested=True),
             )
             return
 

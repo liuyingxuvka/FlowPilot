@@ -297,6 +297,37 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             ):
                 payload = read_json(path)
                 self.assertIsInstance(payload, dict)
+    def test_runtime_json_dead_owner_write_lock_is_replaced_with_takeover_record(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        state = read_json(router.run_state_path(run_root))
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        write_lock = router._json_write_lock_path(scheduler_path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(scheduler_path),
+                    "pid": 0,
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        liveness = router._json_write_lock_liveness(scheduler_path)  # type: ignore[attr-defined]
+        self.assertEqual(liveness["classification"], "dead_owner_takeover")
+        self.assertTrue(liveness["takeover_allowed"])
+        router.write_json(scheduler_path, router._empty_router_scheduler_ledger(root, run_root, state))  # type: ignore[attr-defined]
+
+        self.assertFalse(write_lock.exists())
+        takeover_log_path = router._json_write_lock_takeover_log_path(scheduler_path)  # type: ignore[attr-defined]
+        records = [json.loads(line) for line in takeover_log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(records[-1]["classification"], "dead_owner_takeover")
+        self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
     def test_router_daemon_corrupted_scheduler_ledger_writes_error_status(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -333,7 +364,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "schema_version": "flowpilot.runtime_json_write_lock.v1",
                     "path": str(scheduler_path),
-                    "pid": 0,
+                    "pid": os.getpid(),
                     "created_at": router.utc_now(),
                 },
                 sort_keys=True,
@@ -358,6 +389,34 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(result["ticks"][0]["defer_reason"], "runtime_ledger_write_in_progress")
         self.assertFalse(result["ticks"][1].get("deferred", False))
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+    def test_terminal_startup_daemon_schedule_does_not_append_boot_rows(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
+        router.record_external_event(root, "user_requests_run_stop", {"reason": "test terminal startup guard"})
+        state = read_json(router.run_state_path(run_root))
+        before_rows = list(read_json(scheduler_path)["rows"])
+
+        result = router._startup_daemon_schedule_bootloader_action(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test_terminal_startup_guard",
+        )
+
+        after_rows = read_json(scheduler_path)["rows"]
+        self.assertFalse(result["scheduled"])
+        self.assertTrue(result["terminal"])
+        self.assertEqual(result["reason"], "terminal_lifecycle")
+        self.assertEqual(len(after_rows), len(before_rows))
+        self.assertFalse(
+            any(
+                row.get("action_type") == "open_startup_intake_ui"
+                and row.get("router_state") in {"queued", "waiting"}
+                for row in after_rows
+            )
+        )
     def test_router_daemon_status_not_active_after_error_lock_or_missing_pid(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

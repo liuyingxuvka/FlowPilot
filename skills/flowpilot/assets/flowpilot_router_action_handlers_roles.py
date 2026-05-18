@@ -276,6 +276,23 @@ def _apply_create_heartbeat_automation(
     payload: dict[str, Any] | None,
 ) -> ActionHandlerOutcome:
     del pending
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    if terminal_mode:
+        run_state["daemon_mode_enabled"] = False
+        router.append_history(
+            run_state,
+            "heartbeat_automation_creation_skipped_for_terminal_lifecycle",
+            {
+                "terminal_lifecycle_status": terminal_mode,
+                "source_action": "create_heartbeat_automation",
+            },
+        )
+        return ActionHandlerOutcome(
+            result_extra={
+                "heartbeat_binding_skipped": True,
+                "terminal_lifecycle_status": terminal_mode,
+            }
+        )
     router._write_host_heartbeat_binding(project_root, run_root, run_state, payload or {})
     run_state["flags"]["continuation_binding_recorded"] = True
     run_state["events"].append(

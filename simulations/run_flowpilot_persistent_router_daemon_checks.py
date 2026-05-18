@@ -18,7 +18,8 @@ RESULTS_PATH = ROOT / "flowpilot_persistent_router_daemon_results.json"
 
 REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
-    "runtime_ledger_write_lock_appears_during_daemon_read",
+    "runtime_live_writer_write_lock_appears_during_daemon_read",
+    "runtime_dead_owner_write_lock_appears_during_daemon_read",
     "daemon_defers_runtime_ledger_read_until_next_tick",
     "daemon_schedules_startup_bootloader_row_before_controller_core",
     "controller_executes_startup_bootloader_row_writes_receipt",
@@ -55,6 +56,8 @@ REQUIRED_LABELS = (
     "daemon_continues_after_consumed_evidence",
     "heartbeat_wakes_and_finds_live_daemon",
     "user_requests_terminal_stop",
+    "user_requests_terminal_stop_during_startup_scheduling",
+    "user_requests_terminal_stop_while_cleanup_ledger_locked",
     "terminal_stop_reconciles_daemon_controller_roles",
 )
 
@@ -65,6 +68,10 @@ HAZARD_EXPECTED_FAILURES = {
     "duplicate_router_writers": "multiple Router daemon writers exist for one run",
     "router_scheduler_ledger_corrupted_by_partial_write": "Router scheduler ledger is not valid JSON after a durable write",
     "fresh_runtime_ledger_write_lock_reported_corrupt": "fresh runtime ledger write lock was treated as corruption",
+    "fresh_dead_owner_write_lock_deferred_as_live_writer": "dead-owner write lock was deferred as live writer settlement",
+    "fresh_dead_owner_write_lock_missing_takeover_evidence": "fresh dead-owner write lock was not taken over with diagnostic evidence",
+    "writer_died_holding_runtime_lock_without_incident": "writer death while holding runtime lock was not recorded as takeover evidence",
+    "dead_owner_recovery_did_not_rejoin_flow": "dead-owner write lock recovery did not rejoin normal daemon replay or terminal flow",
     "controller_action_ledger_corrupted_by_partial_write": "Controller action ledger is not valid JSON after a durable write",
     "daemon_status_active_after_lock_error": "daemon status reported active after lock error",
     "daemon_status_active_without_process": "daemon status reported active without a live process",
@@ -104,6 +111,10 @@ HAZARD_EXPECTED_FAILURES = {
     "passive_reconciliation_projection_missing_current_work": "passive reconciliation wait is active but current_work does not name the internal owner",
     "router_internal_projection_missing_current_work": "Router internal work is active but current_work does not name Router",
     "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
+    "terminal_stop_scheduled_startup_row": "terminal lifecycle scheduled startup work",
+    "terminal_stop_scheduled_heartbeat_binding": "terminal lifecycle scheduled heartbeat binding work",
+    "terminal_projection_stale_next_step": "terminal projection still exposes a nonterminal next step",
+    "terminal_cleanup_lock_blocked_fence": "terminal cleanup failure blocked immediate daemon fence",
     "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
 }
 
@@ -116,7 +127,11 @@ def _state_id(state: model.State) -> str:
         f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
         f"tick={state.daemon_tick_seconds}|ledgers={state.router_scheduler_ledger_valid_json},"
         f"{state.controller_action_ledger_valid_json},write_lock_fresh={state.runtime_ledger_write_lock_fresh},"
+        f"write_lock_owner={state.runtime_ledger_write_lock_owner},"
         f"deferred={state.daemon_deferred_for_runtime_ledger_write},atomic={state.durable_ledger_writes_atomic},"
+        f"dead_takeover={state.dead_owner_write_lock_takeover_recorded},"
+        f"writer_died={state.writer_died_while_holding_runtime_lock},"
+        f"dead_rejoined={state.dead_owner_recovery_rejoined_flow},"
         f"scheduler_single_writer={state.router_scheduler_single_writer},"
         f"decode_crash={state.daemon_crashed_after_ledger_decode_error},"
         f"status_after_error={state.daemon_status_active_after_lock_error},"
@@ -128,6 +143,7 @@ def _state_id(state: model.State) -> str:
         f"startup_flag={state.startup_bootstrap_flag_current},"
         f"startup_row_reconciled={state.startup_router_row_reconciled},"
         f"startup_next={state.startup_next_row_scheduled_after_receipt},"
+        f"startup_after_terminal={state.startup_row_scheduled_after_terminal_fence},"
         f"startup_reissues={state.startup_same_action_reissue_count}|"
         f"controller={state.controller_attached},"
         f"metronome={state.controller_called_router_next_as_metronome},"
@@ -140,7 +156,8 @@ def _state_id(state: model.State) -> str:
         f"ended_pending_action={state.foreground_controller_ended_while_controller_action_pending},"
         f"ended_no_action={state.foreground_controller_ended_while_daemon_active_no_action}|"
         f"roles={state.roles_live}|"
-        f"heartbeat={state.heartbeat_active},{state.heartbeat_woke}|"
+        f"heartbeat={state.heartbeat_active},{state.heartbeat_woke},"
+        f"heartbeat_after_terminal={state.heartbeat_binding_scheduled_after_terminal_fence}|"
         f"wait={state.current_wait}|"
         f"event_wait={state.event_wait_action_open},{state.external_event_recorded},"
         f"{state.external_event_matches_wait},{state.event_wait_closed_by_router},"
@@ -189,7 +206,10 @@ def _state_id(state: model.State) -> str:
         f"router_fact_from_receipt={state.router_internal_fact_updated_from_receipt},"
         f"cleared_without_fact={state.router_cleared_pending_without_internal_fact},"
         f"same_action_reissues={state.same_controller_action_reissue_count}|"
-        f"stop={state.stop_requested}|route={state.route_work_allowed}"
+        f"stop={state.stop_requested},terminal_fence={state.terminal_fence_written},"
+        f"terminal_cleanup_failed={state.terminal_controller_cleanup_best_effort_failed},"
+        f"terminal_projection={state.terminal_projection_refreshed},"
+        f"terminal_next_clear={state.terminal_next_step_cleared}|route={state.route_work_allowed}"
     )
 
 

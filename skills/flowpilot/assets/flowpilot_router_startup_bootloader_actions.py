@@ -200,6 +200,20 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         _ensure_startup_run_state(project_root, state)
     elif action_type == 'create_heartbeat_automation':
         run_state, run_root = _ensure_startup_run_state(project_root, state)
+        terminal_mode = router._terminal_lifecycle_mode(run_state)
+        if terminal_mode:
+            run_state['daemon_mode_enabled'] = False
+            append_history(
+                run_state,
+                'startup_heartbeat_automation_skipped_for_terminal_lifecycle',
+                {'terminal_lifecycle_status': terminal_mode, 'source_action': action_type},
+            )
+            router.save_run_state(run_root, run_state)
+            result_extra['heartbeat_binding_skipped'] = True
+            result_extra['terminal_lifecycle_status'] = terminal_mode
+            result = {'ok': True, 'applied': action_type, 'postcondition': flag}
+            result.update(result_extra)
+            return result
         _write_host_heartbeat_binding(project_root, run_root, run_state, payload or {})
         run_state['flags']['continuation_binding_recorded'] = True
         run_state['events'].append({'event': 'host_records_heartbeat_binding', 'summary': EXTERNAL_EVENTS['host_records_heartbeat_binding']['summary'], 'payload': payload or {}, 'recorded_at': utc_now(), 'source_action': action_type, 'startup_phase': 'bootloader'})

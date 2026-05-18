@@ -133,9 +133,12 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
             "fresh": False,
             "active": False,
             "stale": False,
+            "takeover_allowed": False,
+            "classification": "missing",
             "path": str(lock_path),
             "age_seconds": None,
             "owner_pid": None,
+            "owner_pid_present": False,
             "owner_process_live": False,
         }
     try:
@@ -149,21 +152,71 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
             payload = parsed
     except (OSError, json.JSONDecodeError, UnicodeDecodeError):
         payload = {}
+    owner_pid_present = "pid" in payload
     owner_pid = payload.get("pid")
     owner_process_live = _process_is_live(owner_pid)
     fresh = age is not None and age <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
-    active = bool(fresh or owner_process_live)
+    stale_by_age = age is not None and age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
+    if owner_process_live:
+        classification = "active_live_owner"
+        active = True
+        takeover_allowed = False
+    elif owner_pid_present:
+        classification = "dead_owner_takeover"
+        active = False
+        takeover_allowed = True
+    elif stale_by_age:
+        classification = "stale_takeover"
+        active = False
+        takeover_allowed = True
+    elif fresh:
+        classification = "active_unknown_owner"
+        active = True
+        takeover_allowed = False
+    else:
+        classification = "stale_takeover"
+        active = False
+        takeover_allowed = True
     return {
         "exists": True,
         "fresh": bool(fresh),
         "active": active,
-        "stale": bool(age is not None and not active),
+        "stale": bool(stale_by_age and not active),
+        "takeover_allowed": takeover_allowed,
+        "classification": classification,
         "path": str(lock_path),
         "age_seconds": age,
         "stale_after_seconds": RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS,
         "owner_pid": owner_pid,
+        "owner_pid_present": owner_pid_present,
         "owner_process_live": owner_process_live,
     }
+
+
+def _json_write_lock_takeover_log_path(path: Path) -> Path:
+    return path.parent / "runtime_json_write_lock_takeovers.jsonl"
+
+
+def _record_json_write_lock_takeover(path: Path, liveness: dict[str, Any], *, reason: str) -> None:
+    record = {
+        "schema_version": "flowpilot.runtime_json_write_lock_takeover.v1",
+        "target_path": str(path),
+        "lock_path": liveness.get("path") or str(_json_write_lock_path(path)),
+        "classification": liveness.get("classification"),
+        "reason": reason,
+        "owner_pid": liveness.get("owner_pid"),
+        "owner_process_live": bool(liveness.get("owner_process_live")),
+        "fresh": bool(liveness.get("fresh")),
+        "age_seconds": liveness.get("age_seconds"),
+        "recorded_at": utc_now(),
+    }
+    log_path = _json_write_lock_takeover_log_path(path)
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+    except OSError:
+        pass
 
 
 def _raise_if_runtime_write_active(path: Path) -> None:
@@ -268,14 +321,15 @@ def _acquire_json_write_lock(path: Path) -> Path:
             fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
             liveness = _json_write_lock_liveness(path)
-            if liveness["stale"]:
+            if liveness.get("takeover_allowed"):
+                _record_json_write_lock_takeover(path, liveness, reason=str(liveness.get("classification") or "takeover"))
                 try:
                     lock_path.unlink()
                 except OSError:
                     pass
                 continue
             if time.monotonic() >= deadline:
-                raise RouterError(f"timed out waiting for JSON write lock: {path}")
+                raise RouterLedgerWriteInProgress(path, liveness, "timed out waiting for JSON write lock")
             time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
             continue
         with os.fdopen(fd, "w", encoding="utf-8") as handle:

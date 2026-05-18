@@ -169,6 +169,7 @@ from flowpilot_router_io import (
     _copy_runtime_kit_into_run_root,
     _flowpilot_runtime_entrypoint_ref,
     _json_sha256,
+    _json_write_lock_takeover_log_path,
     _json_write_lock_liveness,
     _json_write_lock_path,
     _parse_utc_timestamp,

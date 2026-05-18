@@ -84,6 +84,23 @@ def _complete_startup_daemon_bootloader_row(router: ModuleType, project_root: Pa
 
 def _startup_daemon_schedule_bootloader_action(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, lock: dict[str, Any] | None=None, source: str='router_daemon_tick') -> dict[str, Any]:
     _bind_router(router)
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    if terminal_mode:
+        run_state['daemon_mode_enabled'] = False
+        status = router._mark_router_daemon_terminal(
+            project_root,
+            run_root,
+            run_state,
+            reason=f'{source}_saw_terminal_lifecycle',
+        )
+        router.save_run_state(run_root, run_state)
+        return {
+            'scheduled': False,
+            'reason': 'terminal_lifecycle',
+            'terminal_lifecycle_status': terminal_mode,
+            'tick_at': status['last_tick_at'],
+            'terminal': True,
+        }
     bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
     if not router._startup_daemon_controls_bootstrap(bootstrap):
         status = _write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_startup_driver_idle', current_action=None, lock=lock)

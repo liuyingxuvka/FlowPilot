@@ -91,6 +91,25 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Router scheduler ledger is not valid JSON after a durable write")
     if state.runtime_ledger_write_lock_fresh and state.daemon_crashed_after_ledger_decode_error:
         failures.append("fresh runtime ledger write lock was treated as corruption")
+    if (
+        state.runtime_ledger_write_lock_fresh
+        and state.runtime_ledger_write_lock_owner == "dead"
+        and state.daemon_deferred_for_runtime_ledger_write
+    ):
+        failures.append("dead-owner write lock was deferred as live writer settlement")
+    if (
+        state.runtime_ledger_write_lock_owner == "dead"
+        and not state.dead_owner_write_lock_takeover_recorded
+    ):
+        failures.append("fresh dead-owner write lock was not taken over with diagnostic evidence")
+    if state.writer_died_while_holding_runtime_lock and not state.dead_owner_write_lock_takeover_recorded:
+        failures.append("writer death while holding runtime lock was not recorded as takeover evidence")
+    if (
+        state.dead_owner_write_lock_takeover_recorded
+        and state.lifecycle == "active"
+        and not state.dead_owner_recovery_rejoined_flow
+    ):
+        failures.append("dead-owner write lock recovery did not rejoin normal daemon replay or terminal flow")
     if not state.controller_action_ledger_valid_json:
         failures.append("Controller action ledger is not valid JSON after a durable write")
     if not state.durable_ledger_writes_atomic:
@@ -224,6 +243,18 @@ def invariant_failures(state: State) -> list[str]:
     if state.heartbeat_started_second_daemon:
         failures.append("heartbeat started a second Router daemon while one was live")
     if state.lifecycle == "terminal":
+        if state.terminal_controller_cleanup_best_effort_failed and not state.terminal_fence_written:
+            failures.append("terminal cleanup failure blocked immediate daemon fence")
+        if not state.terminal_fence_written:
+            failures.append("terminal lifecycle missing immediate daemon fence")
+        if not state.terminal_projection_refreshed:
+            failures.append("terminal lifecycle did not refresh runtime projections")
+        if not state.terminal_next_step_cleared:
+            failures.append("terminal projection still exposes a nonterminal next step")
+        if state.startup_row_scheduled_after_terminal_fence:
+            failures.append("terminal lifecycle scheduled startup work")
+        if state.heartbeat_binding_scheduled_after_terminal_fence:
+            failures.append("terminal lifecycle scheduled heartbeat binding work")
         if (
             state.daemon_alive
             or state.controller_attached
@@ -256,6 +287,10 @@ INVARIANTS = (
     _invariant("runtime_ledgers_use_atomic_replace", "runtime ledgers are written without atomic replace semantics"),
     _invariant("router_scheduler_ledger_single_writer", "Router scheduler ledger has more than one writer"),
     _invariant("daemon_does_not_crash_on_corrupted_scheduler_ledger", "Router daemon crashed after reading an invalid scheduler ledger"),
+    _invariant("dead_owner_write_lock_not_deferred_as_live_writer", "dead-owner write lock was deferred as live writer settlement"),
+    _invariant("dead_owner_write_lock_takeover_records_evidence", "fresh dead-owner write lock was not taken over with diagnostic evidence"),
+    _invariant("writer_death_records_lock_incident", "writer death while holding runtime lock was not recorded as takeover evidence"),
+    _invariant("dead_owner_recovery_rejoins_flow", "dead-owner write lock recovery did not rejoin normal daemon replay or terminal flow"),
     _invariant("daemon_status_matches_error_lock", "daemon status reported active after lock error"),
     _invariant("daemon_status_matches_live_process", "daemon status reported active without a live process"),
     _invariant("daemon_wait_has_wait_target_metadata", "daemon-owned role wait lacks Router-authored wait target metadata"),
@@ -304,5 +339,11 @@ INVARIANTS = (
     _invariant("foreground_standby_does_not_use_router_metronome", "Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger"),
     _invariant("foreground_standby_polls_daemon_and_ledger", "Foreground standby did not poll daemon status and Controller action ledger"),
     _invariant("heartbeat_does_not_start_second_daemon", "heartbeat started a second Router daemon while one was live"),
+    _invariant("terminal_lifecycle_writes_immediate_fence", "terminal lifecycle missing immediate daemon fence"),
+    _invariant("terminal_cleanup_failure_does_not_block_fence", "terminal cleanup failure blocked immediate daemon fence"),
+    _invariant("terminal_lifecycle_refreshes_projections", "terminal lifecycle did not refresh runtime projections"),
+    _invariant("terminal_projection_clears_nonterminal_next_step", "terminal projection still exposes a nonterminal next step"),
+    _invariant("terminal_scheduler_blocks_startup_rows", "terminal lifecycle scheduled startup work"),
+    _invariant("terminal_scheduler_blocks_heartbeat_binding", "terminal lifecycle scheduled heartbeat binding work"),
     _invariant("terminal_cleanup_stops_runtime", "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active"),
 )

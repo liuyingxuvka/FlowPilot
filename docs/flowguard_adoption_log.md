@@ -15677,3 +15677,66 @@ Skipped steps:
 
 - For future cleanup, prioritize `scripts/install_checks/common.py`, install-check runtime helpers, and large router-runtime test files only after a scoped StructureMesh/TestMesh plan names exact owner boundaries.
 - Keep the generated maintenance map refreshed after any new public script, model facade, runtime owner, or test tier is added.
+
+## harden-flowpilot-daemon-lock-terminal-fence-2026-05-18 - Daemon lock recovery and terminal fence
+
+- Project: FlowPilot
+- Trigger reason: User asked to complete the root-cause fix for dead-owner runtime JSON locks, daemon death, stop-after-terminal drift, and confidence that FlowGuard recovery paths rejoin the normal main flow.
+- Status: implemented, validated locally, synced to the installed FlowPilot skill, and ready for local commit
+- Skill decision: use_flowguard:persistent daemon lock/terminal lifecycle recovery
+- OpenSpec change: harden-flowpilot-daemon-lock-terminal-fence
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Added runtime JSON write-lock liveness classification with durable takeover diagnostics for fresh locks whose owner process is already dead.
+- Converted live or uncertain writer contention into a daemon-deferrable write-in-progress condition instead of a fatal generic Router error.
+- Added an immediate user stop/cancel terminal fence that marks daemon status and daemon lock terminal, clears stale current work, disables daemon mode, and then attempts nonterminal Controller/startup cleanup as best effort.
+- Guarded Router daemon ticks, startup daemon scheduling, startup receipt effects, bootloader heartbeat actions, and role heartbeat binding against terminal lifecycle drift.
+- Extended the persistent daemon FlowGuard model with dead-owner takeover, writer-death, terminal-stop-during-startup, heartbeat-after-terminal, and stale-next-step hazards.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate --changes harden-flowpilot-daemon-lock-terminal-fence`.
+- OK: focused daemon lock and terminal runtime unit tests.
+- OK: `python simulations/run_flowpilot_persistent_router_daemon_checks.py --json-out tmp/flowguard_background/run_flowpilot_persistent_router_daemon_checks_lock_fence_after_cleanup_order.results.json`.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime_startup_daemon` -> 63 tests.
+- OK: `python -m unittest tests.test_flowpilot_router_runtime_terminal` -> 15 tests.
+- OK: `python simulations/run_release_tooling_checks.py`.
+- OK: `python simulations/run_meta_checks.py --full`.
+- OK: `python simulations/run_capability_checks.py --full`.
+- OK: `python scripts/check_public_release.py --json --skip-validation`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- Fresh dead-owner write locks now have a direct recovery path: takeover is recorded, the dead lock is removed, and daemon replay rejoins the ordinary active or terminal flow.
+- Live-owner and unknown-owner locks still defer instead of being stolen, so a genuinely active writer keeps its protection.
+- User stop/cancel now establishes terminal truth first; later daemon, startup, Controller, and heartbeat paths observe that fence and avoid scheduling ordinary startup work.
+- Terminal controller cleanup is best effort after the fence; if cleanup hits a live scheduler lock, the terminal daemon fence and terminal projection still land first.
+- The focused persistent daemon FlowGuard run reached 18,197 states and 39,311 edges with zero invariant failures, zero hazards missed, and progress/explorer checks passing.
+- Version is now `0.9.13`, and the installed local FlowPilot skill is fresh against the repository source.
+
+### Counterexamples
+
+- `dead_owner_takeover_recovery_overwrites_current_work_projection_before_rejoining_main_flow`
+- `writer_died_while_holding_runtime_lock_without_takeover_record`
+- `terminal_stop_during_startup_scheduling_creates_boot_rows`
+- `heartbeat_binding_scheduled_after_terminal_fence`
+- `terminal_cleanup_lock_blocked_fence`
+- `progress_only_background_artifact_claimed_as_release_pass`
+
+### Friction Points
+
+- `run_test_tier --tier release --background` left running metadata without final stdout/stderr/exit artifacts, so it was not counted as pass evidence.
+- The equivalent release checks were rerun directly and passed with final exit codes.
+- Dead-owner lock recovery must preserve the current user-visible main-flow projection while clearing the lock; otherwise the lock recovers but the displayed next step can still be wrong.
+
+### Next Actions
+
+- Keep terminal-fence tests paired with any future startup/heartbeat scheduling changes.
+- Treat background artifact completeness as a release-evidence requirement: progress metadata alone is liveness evidence, not pass evidence.

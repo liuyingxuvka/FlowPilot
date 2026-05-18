@@ -184,6 +184,15 @@ def _apply_startup_bootloader_receipt_effects(router: ModuleType, project_root: 
     bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
     flag = str(action_meta.get('flag') or _pending_action_postcondition(action) or '')
     result: dict[str, Any] = {'applied': True, 'source': 'startup_bootloader_controller_receipt', 'postcondition': flag, 'action_type': action_type}
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    if terminal_mode:
+        append_history(
+            run_state,
+            'startup_bootloader_receipt_ignored_for_terminal_lifecycle',
+            {'action_type': action_type, 'terminal_lifecycle_status': terminal_mode},
+        )
+        result.update({'source': 'terminal_lifecycle_skipped_startup_receipt', 'terminal_lifecycle_status': terminal_mode})
+        return result
     if action_type == 'open_startup_intake_ui' and str(receipt_payload.get('source') or '') != 'startup_daemon_bootloader_apply':
         result.update(router._apply_startup_intake_result_to_bootstrap(project_root, bootstrap, receipt_payload))
         router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)

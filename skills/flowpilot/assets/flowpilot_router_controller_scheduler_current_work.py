@@ -141,6 +141,19 @@ def _current_work_from_passive_waits(router: ModuleType, project_root: Path, run
 
 def _derive_current_work(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, current_wait: dict[str, Any] | None=None, current_action: dict[str, Any] | None=None, controller_ledger: dict[str, Any] | None=None) -> dict[str, Any]:
     _bind_router(router)
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    if terminal_mode:
+        return router._current_work_payload(
+            owner_key='controller',
+            task_label='Run is terminal; only terminal cleanup or summary is allowed',
+            source='terminal_lifecycle',
+            source_path=project_relative(project_root, router.run_state_path(run_root)),
+            diagnostics={
+                'run_status': run_state.get('status'),
+                'terminal_lifecycle_status': terminal_mode,
+                'nonterminal_work_allowed': False,
+            },
+        )
     pending = run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else {}
     if pending:
         payload = router._current_work_from_action(pending, source='pending_action', source_path=project_relative(project_root, router.run_state_path(run_root)))

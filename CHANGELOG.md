@@ -2,6 +2,30 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.13 - 2026-05-18
+
+### Added
+
+- Added the `harden-flowpilot-daemon-lock-terminal-fence` OpenSpec change for
+  Router daemon write-lock recovery and terminal lifecycle fencing.
+- Added focused runtime regressions for fresh dead-owner JSON write-lock
+  takeover, live-writer deferral, immediate terminal daemon fencing, terminal
+  startup scheduling, and terminal heartbeat no-ops.
+
+### Changed
+
+- Hardened runtime JSON write-lock classification so fresh locks owned by dead
+  processes are taken over with durable diagnostics, while live or uncertain
+  writer contention remains daemon-deferrable instead of becoming a fatal
+  Router daemon error.
+- Made user stop/cancel requests write an immediate terminal fence that closes
+  daemon mode, marks daemon lock/status terminal, and refreshes terminal
+  projections from one terminal fact before best-effort nonterminal
+  Controller/startup cleanup runs.
+- Guarded Router daemon start/tick, startup daemon scheduling, startup
+  bootloader heartbeat handling, Controller receipt effects, and heartbeat
+  binding actions so terminal runs cannot schedule or bind new active work.
+
 ## 0.9.12 - 2026-05-18
 
 ### Added
