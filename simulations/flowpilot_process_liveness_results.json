@@ -3,13 +3,11 @@
     "daemon_lifecycle": "terminal_stopped",
     "evidence_paths": [
       ".flowpilot\\current.json",
-      ".flowpilot\\runs\\run-20260515-174018\\execution_frontier.json",
-      ".flowpilot\\runs\\run-20260515-174018\\router_state.json",
-      ".flowpilot\\runs\\run-20260515-174018\\runtime\\router_daemon_status.json",
-      ".flowpilot\\runs\\run-20260515-174018\\packet_ledger.json",
-      ".flowpilot\\runs\\run-20260515-174018\\final_summary.json",
-      ".flowpilot\\runs\\run-20260515-174018\\route_memory\\route_history_index.json",
-      ".flowpilot\\runs\\run-20260515-174018\\control_blocks\\control-blocker-0001-20260515T174422476336Z.json"
+      ".flowpilot\\runs\\run-20260516-201229\\execution_frontier.json",
+      ".flowpilot\\runs\\run-20260516-201229\\router_state.json",
+      ".flowpilot\\runs\\run-20260516-201229\\runtime\\router_daemon_status.json",
+      ".flowpilot\\runs\\run-20260516-201229\\packet_ledger.json",
+      ".flowpilot\\runs\\run-20260516-201229\\route_memory\\route_history_index.json"
     ],
     "findings": [
       {
@@ -18,54 +16,13 @@
         "severity": "info",
         "status": "stopped_by_user",
         "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
-        "terminal_event": "user_requests_run_stop"
-      },
-      {
-        "blockers": [
-          {
-            "blocker_id": "control-blocker-0001-20260515T174422476336Z",
-            "handling_lane": "pm_repair_decision_required",
-            "resolution_status": "superseded_by_terminal_lifecycle",
-            "resolved_by_event": "user_requests_run_stop"
-          }
-        ],
-        "id": "blocker_resolved_by_terminal_stop_not_repair",
-        "severity": "info",
-        "summary": "a blocker was cleared by user-stop terminal lifecycle, not by the normal PM repair return path"
-      },
-      {
-        "blockers": [
-          {
-            "blocker_id": "control-blocker-0001-20260515T174422476336Z",
-            "delivery_status": "pending",
-            "handling_lane": "pm_repair_decision_required",
-            "resolution_status": "superseded_by_terminal_lifecycle",
-            "source": "controller_action_receipt_missing_router_postcondition"
-          }
-        ],
-        "id": "local_fix_style_blocker_routed_to_pm",
-        "severity": "warning",
-        "summary": "a blocker that looks like local settlement/reconciliation repair was routed to PM repair lane"
-      },
-      {
-        "blockers": [
-          {
-            "blocker_id": "control-blocker-0001-20260515T174422476336Z",
-            "direct_retry_attempts_used": 0,
-            "direct_retry_budget": 0,
-            "direct_retry_budget_exhausted": false,
-            "handling_lane": "pm_repair_decision_required"
-          }
-        ],
-        "id": "blocker_retry_budget_flag_inconsistent",
-        "severity": "warning",
-        "summary": "a blocker retry budget is already exhausted by count but not marked exhausted"
+        "terminal_event": "reconcile_current_run"
       },
       {
         "controller_open_rows": 2,
         "daemon_lifecycle": "terminal_stopped",
         "id": "terminal_run_retains_open_work_rows",
-        "scheduler_open_rows": 2,
+        "scheduler_open_rows": 3,
         "severity": "warning",
         "summary": "terminal run still has open Controller or scheduler rows; safe only as stopped-run history"
       },
@@ -84,23 +41,18 @@
       },
       {
         "id": "packet_loop_stopped_by_user",
-        "previous_active_packet_status": "packet-with-controller",
+        "previous_active_packet_status": "stopped_by_user",
         "severity": "info",
         "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
-      },
-      {
-        "id": "terminal_summary_matches_user_stop",
-        "severity": "info",
-        "summary": "final summary reports stopped_by_user and forbids controller continuation"
       }
     ],
     "frontier_status": "stopped_by_user",
     "frontier_terminal": true,
     "ok": true,
-    "run_root": ".flowpilot\\runs\\run-20260515-174018",
+    "run_root": ".flowpilot\\runs\\run-20260516-201229",
     "severity_counts": {
-      "info": 6,
-      "warning": 3
+      "info": 4,
+      "warning": 1
     },
     "status": "stopped_by_user"
   },

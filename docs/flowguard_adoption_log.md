@@ -15471,3 +15471,60 @@ Skipped steps:
 
 - Split the remaining six validation runners in dedicated StructureMesh batches.
 - Split runtime owner modules only in claimed batches after confirming external-contract parity for the specific owner surface.
+
+## finish-flowpilot-structure-debt-2026-05-18 - Full model-code-test structure debt closure
+
+- Project: FlowPilot
+- Trigger reason: User requested full software diagnosis and cleanup across owner modules, facades, script entries, and test tiers using model-code-test alignment, OpenSpec, FlowGuard, StructureMesh, and TestMesh.
+- Status: implemented, validated locally, and synced to the installed local FlowPilot skill
+- Skill decision: use_flowguard:model-code-test alignment + StructureMesh + TestMesh + Development Process Flow
+- OpenSpec change: finish-flowpilot-structure-debt
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Validation runner facades and helper modules under `simulations/run_*checks.py` and `simulations/*_checks_runner_*.py`.
+- Full diagnostic and source-contract alignment modules under `simulations/flowpilot_model_test_alignment_*.py`.
+- Runtime owner/facade split surfaces under `skills/flowpilot/assets/flowpilot_router*.py`, `flowpilot_runtime*.py`, `packet_runtime*.py`, `packet_control_plane_model_invariants*.py`, and `role_output_runtime_schema*.py`.
+- External contract tests under `tests/test_flowpilot_full_diagnostic_contracts.py`, `tests/test_flowpilot_model_test_alignment.py`, and `tests/test_flowpilot_asset_surface_contracts.py`.
+- Install-check manifest source scanning in `scripts/install_checks/manifests.py` for the split router facade import surface.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m py_compile simulations\run_meta_checks.py simulations\run_capability_checks.py scripts\install_checks\manifests.py`.
+- OK: `python -m pytest tests/test_flowguard_result_proof.py tests/test_flowpilot_thin_parent_checks.py -q`.
+- OK: `python -m pytest tests/test_flowpilot_model_test_alignment.py -q`.
+- OK: `python simulations\run_meta_checks.py --full`.
+- OK: `python simulations\run_capability_checks.py --full`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python scripts\run_test_tier.py --tier fast --json`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json` after detecting and overwriting stale installed FlowPilot content.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The full diagnostic now reports 697 surfaces, all covered, zero actionable findings, zero gap counts, zero deferred split rows, and `release_convergence_ok=true`.
+- The former legacy full Meta/Capability background failures are reclassified only when current layered full parent proofs are valid; after runner facade edits, the layered proofs had to be regenerated because their input fingerprints changed.
+- `flowpilot_router.py` is now a thin compatibility facade, with import/export ownership moved to `flowpilot_router_facade_imports.py`.
+- `flowpilot_router_work_packets_current_node.py` is now a thin compatibility facade with path, relay, and validation child modules.
+- Install checks now inspect the split facade import module so source-level prompt guidance checks still bind to the real exported runtime surface.
+
+### Counterexamples
+
+- runner_facade_mutable_globals_not_synced_to_impl
+- facade_split_moves_source_contract_outside_old_scan_path
+- dynamic_all_not_counted_as_export_declaration
+- layered_full_proof_stale_after_runner_source_edit
+
+### Friction Points
+
+- The worktree contains peer-agent changes for shared maintenance log and FlowGuard satellite-skill prompt work; those were intentionally kept out of this structure-debt scope.
+- Generated result JSON must be refreshed after runner facade edits, because proof fingerprints correctly change with source-level compatibility-wrapper changes.
+
+### Next Actions
+
+- No remaining model-code-test coverage or split-debt action is reported by the current full diagnostic.
+- Future large runtime splits should keep facade parity tests and source-contract scan paths updated in the same change.

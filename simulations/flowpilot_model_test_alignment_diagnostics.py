@@ -153,6 +153,8 @@ def _surface_kind_for_asset(stem: str, summary: dict[str, Any]) -> str:
 
 
 def _surface_threshold(kind: str) -> int:
+    if kind == "model_check_runner_helper":
+        return SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD
     if kind == "compatibility_facade":
         return FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD
     if kind == "script_entrypoint":
@@ -264,7 +266,7 @@ def _diagnostic_release_relevance(surface: dict[str, Any]) -> str:
     }
     if surface.get("release_only") or stem in release_scripts:
         return "release_gate"
-    if kind in {"test_tier", "test_tier_command", "model_check_runner"}:
+    if kind in {"test_tier", "test_tier_command", "model_check_runner", "model_check_runner_helper"}:
         return "validation_gate"
     if kind in {"compatibility_facade", "owner_module"}:
         return "runtime_contract"
@@ -816,6 +818,51 @@ def _model_check_surfaces(*, test_text: str) -> list[dict[str, Any]]:
     return surfaces
 
 
+def _model_check_helper_surfaces(*, test_text: str) -> list[dict[str, Any]]:
+    surfaces: list[dict[str, Any]] = []
+    aggregate_contract_test_exists = (
+        MODEL_CHECK_RUNNER_CONTRACT_TEST_PATH.exists()
+        and MODEL_CHECK_RUNNER_CONTRACT_TEST_MARKER in test_text
+    )
+    helper_paths: set[Path] = set()
+    for pattern in (
+        "*runner_impl.py",
+        "*runner_contract.py",
+        "*runner_graph.py",
+        "*runner_inventory.py",
+        "*runner_source.py",
+        "*checks_projection*.py",
+    ):
+        helper_paths.update((ROOT / "simulations").glob(pattern))
+    for path in sorted(helper_paths):
+        rel_path = _repo_path(str(path.relative_to(ROOT)))
+        stem = path.stem
+        summary = _python_summary(path)
+        surfaces.append(
+            _finalize_surface(
+                {
+                    "surface_id": f"model-check-helper:{stem}",
+                    "kind": "model_check_runner_helper",
+                    "name": stem,
+                    "path": rel_path,
+                    "has_model": True,
+                    "has_code": path.exists() and not bool(summary["parse_error"]),
+                    "has_test": aggregate_contract_test_exists or _surface_mentions(test_text, rel_path, stem),
+                    "has_external_contract": aggregate_contract_test_exists,
+                    "model_binding": "model_check_runner_implementation_contract",
+                    "evidence_status": "passed",
+                    "line_count": summary["line_count"],
+                    "split_threshold": _surface_threshold("model_check_runner_helper"),
+                    "top_level_function_count": len(summary["top_level_functions"]),
+                    "top_level_class_count": len(summary["top_level_classes"]),
+                    "local_import_count": len(summary["local_imports"]),
+                    "parse_error": summary["parse_error"],
+                }
+            )
+        )
+    return surfaces
+
+
 def _full_diagnostic_known_bad_cases() -> list[dict[str, Any]]:
     return [
         {
@@ -935,6 +982,7 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
     )
     surfaces.extend(_script_surfaces(model_text=model_text, test_text=test_text))
     surfaces.extend(_model_check_surfaces(test_text=test_text))
+    surfaces.extend(_model_check_helper_surfaces(test_text=test_text))
     surfaces.extend(_test_tier_command_surfaces(model_text=model_text, test_text=test_text))
     surfaces = sorted(surfaces, key=lambda item: (item["kind"], item["surface_id"]))
     findings: list[dict[str, Any]] = []

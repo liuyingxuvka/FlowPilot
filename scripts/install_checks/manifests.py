@@ -156,10 +156,13 @@ def run_checks(result: dict[str, object]) -> None:
 
     try:
         router_source = (ROOT / "skills/flowpilot/assets/flowpilot_router.py").read_text(encoding="utf-8")
+        router_facade_import_source = (
+            ROOT / "skills/flowpilot/assets/flowpilot_router_facade_imports.py"
+        ).read_text(encoding="utf-8")
         controller_table_prompt = (
             ROOT / "skills/flowpilot/assets/runtime_kit/prompts/controller/action_ledger_table.md"
         ).read_text(encoding="utf-8")
-        source_text = router_source + "\n" + controller_table_prompt
+        source_text = router_source + "\n" + router_facade_import_source + "\n" + controller_table_prompt
         required_terms = [
             "controller_table_prompt",
             "Work from top to bottom",

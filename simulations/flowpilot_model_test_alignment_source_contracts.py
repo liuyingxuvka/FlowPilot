@@ -315,7 +315,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "route_sign.generate",
-            path="skills/flowpilot/assets/flowpilot_user_flow_diagram.py",
+            path="skills/flowpilot/assets/flowpilot_user_flow_diagram_generate.py",
             symbol="generate",
             implements=("route_mutation.sibling_replacement_stales_old_evidence",),
             external_inputs=("root",),
@@ -517,7 +517,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "action_providers.lifecycle_provider",
-            path="skills/flowpilot/assets/flowpilot_router_action_providers.py",
+            path="skills/flowpilot/assets/flowpilot_router_action_providers_lifecycle.py",
             symbol="lifecycle_provider",
             implements=("runtime_owner.high_priority_owner_contracts",),
             external_inputs=("router", "project_root", "run_state", "run_root"),
@@ -525,7 +525,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "card_returns.pending_return_card_ids",
-            path="skills/flowpilot/assets/flowpilot_router_card_returns.py",
+            path="skills/flowpilot/assets/flowpilot_router_card_returns_records.py",
             symbol="_pending_return_card_ids",
             implements=("runtime_owner.high_priority_owner_contracts",),
             external_inputs=("router", "pending_return"),
@@ -576,7 +576,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "action_factory_dispatch.apply_dispatch_recipient_gate",
-            path="skills/flowpilot/assets/flowpilot_router_action_factory_dispatch.py",
+            path="skills/flowpilot/assets/flowpilot_router_action_factory_dispatch_apply.py",
             symbol="_apply_dispatch_recipient_gate",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("project_root", "run_state", "run_root", "action"),
@@ -696,7 +696,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "event_identity.stable_identity_hash",
-            path="skills/flowpilot/assets/flowpilot_router_event_identity.py",
+            path="skills/flowpilot/assets/flowpilot_router_event_identity_scopes.py",
             symbol="_stable_identity_hash",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("router", "value"),
@@ -716,7 +716,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "expected_waits.run_state_has_event",
-            path="skills/flowpilot/assets/flowpilot_router_expected_waits.py",
+            path="skills/flowpilot/assets/flowpilot_router_expected_waits_events.py",
             symbol="_run_state_has_event",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("run_state", "event"),
@@ -790,7 +790,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "startup_bootloader.depends_on_role_slots",
-            path="skills/flowpilot/assets/flowpilot_router_startup_bootloader.py",
+            path="skills/flowpilot/assets/flowpilot_router_startup_bootloader_progress.py",
             symbol="_startup_bootloader_action_depends_on_role_slots",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("router", "action_type"),
@@ -811,7 +811,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "startup_fact_boundary.controller_boundary_constraints",
-            path="skills/flowpilot/assets/flowpilot_router_startup_fact_boundary.py",
+            path="skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
             symbol="_controller_boundary_constraints",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("router",),
@@ -824,7 +824,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "startup_intake.normalize_stop_boundary",
-            path="skills/flowpilot/assets/flowpilot_router_startup_intake.py",
+            path="skills/flowpilot/assets/flowpilot_router_startup_intake_ui.py",
             symbol="_normalize_startup_question_stop_boundary",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("router", "state"),
@@ -845,7 +845,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "system_cards_delivery.commit_system_card_delivery",
-            path="skills/flowpilot/assets/flowpilot_router_system_cards_delivery.py",
+            path="skills/flowpilot/assets/flowpilot_router_system_cards_delivery_single.py",
             symbol="_commit_system_card_delivery_artifact",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("project_root", "run_state", "run_root", "pending"),
@@ -860,7 +860,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "payload_contracts.payload_contract",
-            path="skills/flowpilot/assets/flowpilot_router_payload_contracts.py",
+            path="skills/flowpilot/assets/flowpilot_router_payload_contracts_core.py",
             symbol="_payload_contract",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("name", "required_object", "required_fields", "description"),
@@ -917,7 +917,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "self_interrogation.self_interrogation_issue",
-            path="skills/flowpilot/assets/flowpilot_router_self_interrogation.py",
+            path="skills/flowpilot/assets/flowpilot_router_self_interrogation_records.py",
             symbol="_self_interrogation_issue",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("message", "record_id", "record_path", "scope"),
@@ -1006,7 +1006,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "packet_invariants.controller_handoff_body_leak_never_advances",
-            path="skills/flowpilot/assets/packet_control_plane_model_invariants.py",
+            path="skills/flowpilot/assets/packet_control_plane_model_invariants_handoff.py",
             symbol="controller_handoff_body_leak_never_advances",
             implements=("packet_control_plane.model_state_contract",),
             external_inputs=("state", "trace"),
@@ -1241,7 +1241,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "packet_active_holder.require_concrete_agent_id",
-            path="skills/flowpilot/assets/packet_runtime_active_holder.py",
+            path="skills/flowpilot/assets/packet_runtime_active_holder_core.py",
             symbol="_require_concrete_agent_id",
             implements=("packet_runtime.runtime_owner_contracts",),
             external_inputs=("agent_id", "role"),
@@ -1255,7 +1255,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "packet_cli.parse_args",
-            path="skills/flowpilot/assets/packet_runtime_cli.py",
+            path="skills/flowpilot/assets/packet_runtime_cli_args.py",
             symbol="parse_args",
             implements=("packet_runtime.runtime_owner_contracts",),
             external_inputs=("argv",),
@@ -1297,7 +1297,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "role_output_schema.controller_boundary_constraints",
-            path="skills/flowpilot/assets/role_output_runtime_schema.py",
+            path="skills/flowpilot/assets/role_output_runtime_schema_io.py",
             symbol="controller_boundary_constraints",
             implements=("role_output_runtime.owner_helper_contracts",),
             external_inputs=(),
@@ -1322,7 +1322,6 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             symbol="main",
             implements=("meta_parent.thin_default_and_layered_full_boundary",),
             external_inputs=("argv",),
-            side_effects=("write_text",),
         ),
         _contract(
             "smoke.main",

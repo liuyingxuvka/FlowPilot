@@ -50,7 +50,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertTrue(report["source_audit_ok"], report["findings"])
         self.assertTrue(report["source_known_bad_ok"])
         self.assertTrue(report["full_diagnostic_ok"])
-        self.assertFalse(report["full_coverage_ok"])
+        self.assertTrue(report["full_coverage_ok"])
         self.assertTrue(report["release_convergence_ok"])
         self.assertEqual(
             report["families"],
@@ -72,7 +72,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         diagnostic = report["full_model_test_code_diagnostic"]
 
         self.assertTrue(diagnostic["ok"], diagnostic["known_bad_sanity_checks"])
-        self.assertFalse(diagnostic["full_coverage_ok"])
+        self.assertTrue(diagnostic["full_coverage_ok"])
         self.assertTrue(diagnostic["release_convergence_ok"])
         self.assertGreater(diagnostic["surface_count"], 100)
         for kind in (
@@ -90,12 +90,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(diagnostic["gap_counts"].get("extra_code", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("internal_only_test", 0), 0)
         self.assertEqual(diagnostic["gap_counts"].get("missing_test", 0), 0)
+        self.assertEqual(diagnostic["gap_counts"].get("needs_structure_split", 0), 0)
         self.assertEqual(diagnostic["unresolved_non_deferred_gap_count"], 0)
-        for code in (
-            "needs_structure_split",
-        ):
-            with self.subTest(code=code):
-                self.assertGreater(diagnostic["gap_counts"].get(code, 0), 0)
         self.assertNotIn("stale_evidence", diagnostic["gap_counts"])
 
         gate_contract_gaps = [
@@ -114,7 +110,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         ):
             with self.subTest(field=field):
                 self.assertIn(field, diagnostic)
-                self.assertTrue(diagnostic[field])
+        self.assertEqual(diagnostic["actionable_findings"], [])
+        self.assertEqual(diagnostic["actionable_summary"], [])
 
         surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
         self.assertIn("asset:flowpilot_router", surfaces)
@@ -145,18 +142,6 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 ):
                     self.assertIn(field, finding)
 
-        summary = diagnostic["actionable_summary"][0]
-        for field in (
-            "severity",
-            "surface_owner",
-            "release_relevance",
-            "repair_type",
-            "dedupe_key",
-            "finding_count",
-            "surface_ids",
-        ):
-            with self.subTest(summary_field=field):
-                self.assertIn(field, summary)
         priority_scores = [
             item["priority_score"] for item in diagnostic["actionable_findings"]
         ]
@@ -239,11 +224,11 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(surface["has_external_contract"], surface)
                 self.assertNotIn("internal_only_test", surface["gap_codes"])
 
-        deferred = surfaces["asset:flowpilot_router_card_returns"]
-        self.assertEqual(deferred["structure_split_status"], "deferred")
-        self.assertEqual(deferred["split_status"], "deferred_split")
-        self.assertIn("defer_structure_split", deferred["repair_types"])
-        self.assertIn("peer_safety_status", deferred)
+        completed_runtime_split = surfaces["asset:flowpilot_router_card_returns"]
+        self.assertEqual(completed_runtime_split["split_status"], "completed_split")
+        self.assertTrue(completed_runtime_split["has_external_contract"], completed_runtime_split)
+        self.assertNotIn("needs_structure_split", completed_runtime_split["gap_codes"])
+        self.assertIn("peer_safety_status", completed_runtime_split)
 
         completed = surfaces["asset:flowpilot_router_protocol_boot_cards"]
         self.assertEqual(completed["split_status"], "completed_split")

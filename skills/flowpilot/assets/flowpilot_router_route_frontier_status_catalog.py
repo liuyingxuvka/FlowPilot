@@ -1,0 +1,156 @@
+"""Cohesive child helpers for FlowPilot route-frontier compatibility facades."""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from types import ModuleType
+from typing import Any, Callable, Iterable
+
+import card_runtime
+import flowpilot_runtime_closure
+import flowpilot_user_flow_diagram
+import packet_runtime
+import role_output_runtime
+from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
+from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+
+_DEFAULT_SENTINEL = object()
+
+
+def _bind_router(router: ModuleType) -> None:
+    current = globals()
+    local_names = current.get('_LOCAL_NAMES', set())
+    for name, value in vars(router).items():
+        if name.startswith('__') and name.endswith('__'):
+            continue
+        if name in local_names:
+            continue
+        current[name] = value
+
+def _active_ui_task_catalog(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+    _bind_router(router)
+    current = read_json_if_exists(project_root / '.flowpilot' / 'current.json') or {}
+    index = read_json_if_exists(project_root / '.flowpilot' / 'index.json') or {}
+    run_id = str(run_state.get('run_id') or '')
+    run_root_rel = project_relative(project_root, run_root)
+    current_run_id = str(current.get('current_run_id') or current.get('active_run_id') or '')
+    current_run_root = str(current.get('current_run_root') or current.get('active_run_root') or '')
+    run_status = str(run_state.get('status') or '')
+    current_status = str(current.get('status') or '')
+    hidden_statuses = {'completed', 'closed', 'stopped', 'stopped_by_user', 'cancelled_by_user', 'protocol_dead_end', 'abandoned', 'discarded', 'stale'}
+    effective_status = run_status if run_status in hidden_statuses else current_status or run_status
+    current_pointer_matches = current_run_id == run_id and current_run_root == run_root_rel
+    active_tasks: list[dict[str, Any]] = []
+    seen_run_ids: set[str] = set()
+    for item in index.get('runs', []):
+        if not isinstance(item, dict):
+            continue
+        item_run_id = str(item.get('run_id') or '')
+        item_run_root = str(item.get('run_root') or '')
+        item_status = str(item.get('status') or '')
+        if not item_run_id or item_status in hidden_statuses:
+            continue
+        seen_run_ids.add(item_run_id)
+        focus_selected = item_run_id == current_run_id
+        active_tasks.append({'run_id': item_run_id, 'run_root': item_run_root, 'status': item_status or 'running', 'display_plan_path': project_relative(project_root, project_root / item_run_root / 'display_plan.json') if item_run_root else None, 'route_state_snapshot_path': project_relative(project_root, project_root / item_run_root / 'route_state_snapshot.json') if item_run_root else None, 'focus_selected': focus_selected, 'background_active': not focus_selected, 'close_tab_behavior': 'return_to_dialog_route_display' if focus_selected else 'keep_background_run_available'})
+    if current_pointer_matches and effective_status not in hidden_statuses and (run_id not in seen_run_ids):
+        active_tasks.append({'run_id': run_id, 'run_root': run_root_rel, 'status': effective_status or 'running', 'display_plan_path': project_relative(project_root, router._display_plan_path(run_root)), 'route_state_snapshot_path': project_relative(project_root, router._route_state_snapshot_path(run_root)), 'focus_selected': True, 'background_active': False, 'close_tab_behavior': 'return_to_dialog_route_display'})
+    active_tasks.sort(key=lambda item: (not bool(item.get('focus_selected')), str(item.get('run_id') or '')))
+    background_active_tasks = [item for item in active_tasks if item.get('background_active')]
+    return {'schema_version': 'flowpilot.active_ui_task_catalog.v1', 'authority': 'index_active_runs_with_current_focus', 'current_pointer_matches_run': current_pointer_matches, 'current_pointer_is_ui_focus_only': True, 'active_tasks': active_tasks, 'background_active_tasks': background_active_tasks, 'hidden_non_current_running_index_entries': [], 'completed_abandoned_stale_history_default_visible': False}
+
+
+def _route_node_checklist(router: ModuleType, node: dict[str, Any], *, node_complete: bool=False) -> list[dict[str, Any]]:
+    _bind_router(router)
+    raw_items = node.get('checklist')
+    if not isinstance(raw_items, list):
+        raw_items = node.get('required_gates')
+    if not isinstance(raw_items, list):
+        raw_items = node.get('acceptance_checklist')
+    if not isinstance(raw_items, list):
+        raw_items = []
+    checklist: list[dict[str, Any]] = []
+    for index, raw in enumerate(raw_items, start=1):
+        if isinstance(raw, dict):
+            item_id = str(raw.get('id') or raw.get('gate_id') or raw.get('label') or f'check-{index:03d}')
+            label = str(raw.get('label') or raw.get('title') or raw.get('gate') or item_id)
+            status = 'completed' if node_complete else router._plan_item_status(raw.get('status'), active=False)
+        else:
+            item_id = str(raw)
+            label = item_id.replace('_', ' ')
+            status = 'completed' if node_complete else 'pending'
+        checklist.append({'id': item_id, 'label': label, 'status': status})
+    return checklist
+
+
+def _active_route_payload(router: ModuleType, run_root: Path, route_id: str | None=None) -> dict[str, Any] | None:
+    _bind_router(router)
+    route_root = run_root / 'routes'
+    candidates: list[Path] = []
+    if route_id:
+        candidates.append(route_root / route_id / 'flow.json')
+    if route_root.exists():
+        candidates.extend(sorted(route_root.glob('*/flow.json')))
+    seen: set[Path] = set()
+    for path in candidates:
+        if path in seen:
+            continue
+        seen.add(path)
+        if path.exists():
+            return read_json(path)
+    return None
+
+
+def _current_status_summary_path(router: ModuleType, run_root: Path) -> Path:
+    _bind_router(router)
+    return run_root / 'display' / 'current_status_summary.json'
+
+
+def _run_elapsed_seconds(router: ModuleType, run_root: Path, run_state: dict[str, Any]) -> int | None:
+    _bind_router(router)
+    timestamps: list[datetime] = []
+
+    def add_timestamp(raw: object) -> None:
+        parsed = _parse_utc_timestamp(raw)
+        if parsed is not None:
+            timestamps.append(parsed)
+    for key in ('created_at', 'started_at'):
+        add_timestamp(run_state.get(key))
+    history = run_state.get('history')
+    if isinstance(history, list):
+        for item in history:
+            if isinstance(item, dict):
+                add_timestamp(item.get('at'))
+    bootstrap = read_json_if_exists(run_root / 'bootstrap' / 'startup_state.json')
+    for key in ('created_at', 'started_at'):
+        add_timestamp(bootstrap.get(key))
+    bootstrap_history = bootstrap.get('history')
+    if isinstance(bootstrap_history, list):
+        for item in bootstrap_history:
+            if isinstance(item, dict):
+                add_timestamp(item.get('at'))
+    if not timestamps:
+        return None
+    started_at = min(timestamps)
+    return max(0, int((datetime.now(timezone.utc) - started_at).total_seconds()))
+
+
+__all__ = (
+    '_active_ui_task_catalog',
+    '_route_node_checklist',
+    '_active_route_payload',
+    '_current_status_summary_path',
+    '_run_elapsed_seconds',
+)
+
+_LOCAL_NAMES = set(globals())

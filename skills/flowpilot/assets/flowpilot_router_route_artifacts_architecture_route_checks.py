@@ -1,0 +1,242 @@
+"""Internal router owner helpers extracted from flowpilot_router.
+
+The public compatibility names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so legacy private helper lookups remain
+stable while the implementation body lives outside the facade.
+"""
+
+from __future__ import annotations
+
+import argparse
+import ast
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from types import ModuleType
+from typing import Any, Callable, Iterable
+
+import card_runtime
+import flowpilot_runtime_closure
+import flowpilot_user_flow_diagram
+import packet_runtime
+import role_output_runtime
+from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
+from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_protocol_catalog import *
+
+_DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
+
+
+def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    _BOUND_ROUTER = router
+    current = globals()
+    local_names = current.get("_LOCAL_NAMES", set())
+    for name, value in vars(router).items():
+        if name.startswith("__") and name.endswith("__"):
+            continue
+        if name in local_names:
+            continue
+        current[name] = value
+
+
+def _bound_router() -> ModuleType:
+    if _BOUND_ROUTER is None:
+        raise RuntimeError("router facade is not bound")
+    return _BOUND_ROUTER
+
+OWNER_MODULE = "flowpilot_router_route_artifacts"
+
+def _write_route_process_pass_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "process_flowguard_officer":
+        raise RouterError("route process check must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("passed") is not True or payload.get("process_viability_verdict") != "pass":
+        raise RouterError("route process check requires process_viability_verdict=pass")
+    required_true = (
+        "product_behavior_model_checked",
+        "route_can_reach_product_model",
+        "repair_return_policy_checked",
+        "serial_execution_model_checked",
+        "all_effective_nodes_reachable_in_order",
+        "recursive_child_routes_serialized",
+    )
+    missing = [field for field in required_true if payload.get(field) is not True]
+    if missing:
+        raise RouterError("route process check requires " + ", ".join(f"{field}=true" for field in missing))
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
+        run_root / "root_acceptance_contract.json",
+        run_root / "child_skill_gate_manifest.json",
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route process check is missing source paths: {', '.join(missing_paths)}")
+    canonical_path = _process_route_model_report_path(run_root)
+    write_json(
+        canonical_path,
+        {
+            "schema_version": "flowpilot.process_route_model.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "process_flowguard_officer",
+            "passed": True,
+            "process_viability_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_can_reach_product_model": True,
+            "repair_return_policy_checked": True,
+            "serial_execution_model_checked": True,
+            "all_effective_nodes_reachable_in_order": True,
+            "recursive_child_routes_serialized": True,
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+    _write_compatibility_alias_artifact(
+        project_root,
+        canonical_path,
+        _route_process_check_path(run_root),
+        schema_version="flowpilot.route_process_check.v1",
+        alias_kind="route_process_check",
+    )
+
+def _write_route_process_issue_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    expected_verdict: str,
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "process_flowguard_officer":
+        raise RouterError("route process issue report must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("passed") is True:
+        raise RouterError("route process issue report cannot pass")
+    if payload.get("process_viability_verdict") != expected_verdict:
+        raise RouterError(f"route process issue report requires process_viability_verdict={expected_verdict}")
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
+        run_root / "root_acceptance_contract.json",
+        run_root / "child_skill_gate_manifest.json",
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route process issue report is missing source paths: {', '.join(missing_paths)}")
+    canonical_path = _process_route_model_report_path(run_root)
+    write_json(
+        canonical_path,
+        {
+            "schema_version": "flowpilot.process_route_model.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "process_flowguard_officer",
+            "passed": False,
+            "process_viability_verdict": expected_verdict,
+            "product_behavior_model_checked": bool(payload.get("product_behavior_model_checked")),
+            "route_can_reach_product_model": bool(payload.get("route_can_reach_product_model")),
+            "repair_return_policy_checked": bool(payload.get("repair_return_policy_checked")),
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "blocking_findings": payload.get("blocking_findings") or payload.get("findings") or [],
+            "recommended_resolution": payload.get("recommended_resolution"),
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+    _write_compatibility_alias_artifact(
+        project_root,
+        canonical_path,
+        _route_process_check_path(run_root),
+        schema_version="flowpilot.route_process_check.v1",
+        alias_kind="route_process_check",
+    )
+    for flag in (
+        "route_draft_written_by_pm",
+        "process_officer_route_check_card_delivered",
+        "process_route_model_submitted",
+        "process_route_model_repair_required",
+        "process_route_model_blocked",
+        "process_officer_route_check_passed",
+        "pm_process_route_model_decision_card_delivered",
+        "pm_process_route_model_accepted",
+        "pm_process_route_model_rebuild_requested",
+        "product_officer_route_check_card_delivered",
+        "product_officer_route_check_passed",
+        "reviewer_route_check_card_delivered",
+        "reviewer_route_check_passed",
+        "route_activated_by_pm",
+    ):
+        run_state.setdefault("flags", {})[flag] = False
+    run_state["route_process_viability"] = {
+        "verdict": expected_verdict,
+        "report_path": project_relative(project_root, canonical_path),
+        "reported_at": utc_now(),
+    }
+
+def _write_route_product_pass_report(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    payload: dict[str, Any],
+) -> None:
+    payload = _load_file_backed_role_payload(project_root, payload)
+    if payload.get("reviewed_by_role") != "product_flowguard_officer":
+        raise RouterError("route product check must be reviewed_by_role=product_flowguard_officer")
+    if payload.get("passed") is not True or payload.get("route_model_review_verdict") != "pass":
+        raise RouterError("route product check requires route_model_review_verdict=pass")
+    required_true = (
+        "product_behavior_model_checked",
+        "route_maps_to_product_behavior_model",
+    )
+    missing = [field for field in required_true if payload.get(field) is not True]
+    if missing:
+        raise RouterError("route product check requires " + ", ".join(f"{field}=true" for field in missing))
+    checked_paths = [
+        _current_route_draft_path(run_root),
+        _require_product_behavior_model_report(project_root, run_root),
+        run_root / "root_acceptance_contract.json",
+        _require_process_route_model_report(project_root, run_root),
+        run_root / "flowguard" / "process_route_model_pm_decision.json",
+    ]
+    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
+    if missing_paths:
+        raise RouterError(f"route product check is missing source paths: {', '.join(missing_paths)}")
+    write_json(
+        _route_product_check_path(run_root),
+        {
+            "schema_version": "flowpilot.route_product_check.v1",
+            "run_id": run_state["run_id"],
+            "reviewed_by_role": "product_flowguard_officer",
+            "passed": True,
+            "route_model_review_verdict": "pass",
+            "product_behavior_model_checked": True,
+            "route_maps_to_product_behavior_model": True,
+            "source_paths": [project_relative(project_root, item) for item in checked_paths],
+            "residual_blindspots": payload.get("residual_blindspots") or [],
+            "reported_at": utc_now(),
+            **_role_output_envelope_record(payload),
+        },
+    )
+
+__all__ = (
+    '_write_route_process_pass_report',
+    '_write_route_process_issue_report',
+    '_write_route_product_pass_report',
+)
+
+_LOCAL_NAMES = set(globals())

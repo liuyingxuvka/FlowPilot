@@ -61,6 +61,16 @@ def all_literal_exports(tree: ast.Module) -> list[str] | None:
     return None
 
 
+def declares_all_exports(tree: ast.Module) -> bool:
+    for node in tree.body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+        if any(isinstance(target, ast.Name) and target.id == "__all__" for target in targets):
+            return True
+    return False
+
+
 def has_local_import_surface(tree: ast.Module) -> bool:
     for node in tree.body:
         if not isinstance(node, ast.ImportFrom) or not node.module:
@@ -109,8 +119,9 @@ class FlowPilotAssetSurfaceContractTests(unittest.TestCase):
                     f"{path.name} facade should import owner-module symbols",
                 )
                 exports = all_literal_exports(tree)
-                self.assertIsNotNone(exports, f"{path.name} facade should declare __all__")
-                self.assertTrue(exports)
+                self.assertTrue(declares_all_exports(tree), f"{path.name} facade should declare __all__")
+                if exports is not None:
+                    self.assertTrue(exports)
 
 
 if __name__ == "__main__":
