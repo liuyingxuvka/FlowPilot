@@ -15245,3 +15245,52 @@ Skipped steps:
 ### Next Actions
 - Continue direct external-contract tests for the remaining router owner surfaces in the `missing_test` list.
 - Defer `run_test_tier.py` and state-ordering-sensitive router modules until peer edits settle or a specific StructureMesh target is written.
+
+## protocol-boot-card-catalog-split-2026-05-18 - Complete declarative boot-card catalog split
+
+- Project: FlowPilot
+- Trigger reason: User asked to keep using FlowGuard/OpenSpec to finish the remaining safe structure and contract cleanup without stopping mid-pass.
+- Status: completed and locally validated
+- Skill decision: use_flowguard:StructureMesh + model_test_alignment + TestMesh
+- OpenSpec change: add-runtime-owner-contracts-and-safe-splits
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_structure_maintenance_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router_protocol_boot_cards.py skills\flowpilot\assets\flowpilot_router_protocol_planning_cards.py skills\flowpilot\assets\flowpilot_router_protocol_runtime_cards.py skills\flowpilot\assets\flowpilot_router_protocol_card_metadata.py tests\test_flowpilot_router_boundaries.py simulations\run_flowpilot_model_test_alignment_checks.py`
+- OK: `python -m unittest tests.test_flowpilot_runtime_owner_contracts tests.test_flowpilot_router_boundaries tests.test_flowpilot_model_test_alignment`
+- OK: `python -m pytest tests/test_flowpilot_asset_surface_contracts.py tests/test_flowpilot_script_surface_contracts.py tests/test_flowpilot_test_tiers.py -q`
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`
+- OK: `openspec validate add-runtime-owner-contracts-and-safe-splits --strict`
+- OK: `python scripts\run_test_tier.py --tier fast --background --background-dir tmp\flowguard_background_add_runtime_owner_contracts_fast --json`
+- OK: fast background artifacts under `tmp\flowguard_background_add_runtime_owner_contracts_fast`, supervisor `passed`, exit code `0`, 11 child commands passed, `proof_reused=false`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+- `flowpilot_router_protocol_boot_cards.py` is now a 64-line compatibility aggregation layer.
+- Declarative boot-card data is split into focused catalogs: startup 196 lines, planning cards 253 lines, runtime cards 157 lines, and card metadata 151 lines.
+- The model-test diagnostic now covers 532 surfaces, with 426 covered and 106 remaining gap surfaces.
+- `internal_only_test` is zero; remaining gap counts are `missing_test=63`, `needs_structure_split=52`, and `stale_evidence=3`.
+- The completed boot-card split surfaces have external-contract evidence and no diagnostic gap codes.
+
+### Counterexamples
+- completed_split_still_above_line_threshold
+- split_catalog_without_direct_source_contract_evidence
+- progress_only_background_evidence_counted_as_pass
+
+### Friction Points
+- `run_test_tier.py` is now the highest-priority StructureMesh split candidate, but it needs a separate target model because it is release-gate tooling.
+- Public release evidence remains local-only until URL checks run without the local shortcut.
+
+### Next Actions
+- Continue the next pass with direct tests for the remaining `missing_test` runtime owner modules.
+- Split `run_test_tier.py` only after writing a dedicated StructureMesh target for the tier runner.
