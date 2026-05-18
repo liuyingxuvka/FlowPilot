@@ -755,6 +755,7 @@ def collect_packet_prompt_facts(project_root: Path) -> PacketPromptFacts:
     result_body = (project_root / "templates" / "flowpilot" / "packets" / "result_body.template.md").read_text(
         encoding="utf-8"
     )
+    packet_prompt_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts" / "packets"
     packet_runtime = "\n".join(
         (
             (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime.py").read_text(
@@ -763,6 +764,9 @@ def collect_packet_prompt_facts(project_root: Path) -> PacketPromptFacts:
             (project_root / "skills" / "flowpilot" / "assets" / "packet_runtime_contracts.py").read_text(
                 encoding="utf-8"
             ),
+            (packet_prompt_root / "packet_identity_boundary.md").read_text(encoding="utf-8"),
+            (packet_prompt_root / "result_identity_boundary.md").read_text(encoding="utf-8"),
+            (packet_prompt_root / "output_contract_section.md").read_text(encoding="utf-8"),
         )
     )
     combined = "\n".join((packet_body, result_body, packet_runtime))

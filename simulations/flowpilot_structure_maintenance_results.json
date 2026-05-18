@@ -24,7 +24,7 @@
       },
       {
         "blocked": true,
-        "blocker_count": 3,
+        "blocker_count": 4,
         "decision": "facade_compatibility_blocked",
         "finding_codes": [
           "facade_missing"
@@ -33,7 +33,7 @@
       },
       {
         "blocked": true,
-        "blocker_count": 6,
+        "blocker_count": 8,
         "decision": "entrypoint_compatibility_blocked",
         "finding_codes": [
           "entrypoint_removed",

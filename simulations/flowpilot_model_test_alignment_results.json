@@ -24,21 +24,32 @@
       "name": "missing_evidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_missing_evidence",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": []
       },
       "report": {
@@ -46,18 +57,27 @@
         "findings": [
           {
             "code": "missing_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "",
             "message": "model obligation known_bad.required_obligation has no current passing test evidence",
             "metadata": {
               "allow_shared_evidence": false,
+              "allow_shared_implementation": false,
               "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "error_paths": [],
+              "exact_external_contract": false,
+              "external_inputs": [],
+              "external_outputs": [],
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
               "required_test_kinds": [
                 "happy_path"
               ],
-              "risk_level": "high"
+              "risk_level": "high",
+              "side_effects": [],
+              "state_reads": [],
+              "state_writes": []
             },
             "obligation_id": "known_bad.required_obligation",
             "severity": "blocker"
@@ -79,24 +99,37 @@
       "name": "stale_evidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_stale_evidence",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "known_bad.required_obligation"
             ],
@@ -118,10 +151,13 @@
         "findings": [
           {
             "code": "stale_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "known_bad.stale",
             "message": "test evidence known_bad.stale is stale",
             "metadata": {
+              "assertion_scope": "external_contract",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_code_contracts": [],
               "covered_obligations": [
                 "known_bad.required_obligation"
               ],
@@ -141,18 +177,27 @@
           },
           {
             "code": "missing_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "",
             "message": "model obligation known_bad.required_obligation has no current passing test evidence",
             "metadata": {
               "allow_shared_evidence": false,
+              "allow_shared_implementation": false,
               "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "error_paths": [],
+              "exact_external_contract": false,
+              "external_inputs": [],
+              "external_outputs": [],
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
               "required_test_kinds": [
                 "happy_path"
               ],
-              "risk_level": "high"
+              "risk_level": "high",
+              "side_effects": [],
+              "state_reads": [],
+              "state_writes": []
             },
             "obligation_id": "known_bad.required_obligation",
             "severity": "blocker"
@@ -174,24 +219,37 @@
       "name": "progress_only_background_evidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_progress_only",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "known_bad.required_obligation"
             ],
@@ -211,10 +269,13 @@
         "findings": [
           {
             "code": "test_evidence_not_passing",
+            "code_contract_id": "",
             "evidence_id": "known_bad.progress_only",
             "message": "test evidence known_bad.progress_only status is running",
             "metadata": {
+              "assertion_scope": "external_contract",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_code_contracts": [],
               "covered_obligations": [
                 "known_bad.required_obligation"
               ],
@@ -232,18 +293,27 @@
           },
           {
             "code": "missing_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "",
             "message": "model obligation known_bad.required_obligation has no current passing test evidence",
             "metadata": {
               "allow_shared_evidence": false,
+              "allow_shared_implementation": false,
               "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "error_paths": [],
+              "exact_external_contract": false,
+              "external_inputs": [],
+              "external_outputs": [],
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
               "required_test_kinds": [
                 "happy_path"
               ],
-              "risk_level": "high"
+              "risk_level": "high",
+              "side_effects": [],
+              "state_reads": [],
+              "state_writes": []
             },
             "obligation_id": "known_bad.required_obligation",
             "severity": "blocker"
@@ -264,24 +334,37 @@
       "name": "overclaim_model_confidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_overclaim",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "known_bad.required_obligation"
             ],
@@ -301,10 +384,13 @@
         "findings": [
           {
             "code": "test_overclaims_model_confidence",
+            "code_contract_id": "",
             "evidence_id": "known_bad.overclaim",
             "message": "test evidence known_bad.overclaim claims more model confidence than its obligation bindings prove",
             "metadata": {
+              "assertion_scope": "external_contract",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_code_contracts": [],
               "covered_obligations": [
                 "known_bad.required_obligation"
               ],
@@ -337,24 +423,37 @@
       "name": "orphan_evidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_orphan",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [],
             "evidence_current": true,
             "evidence_id": "known_bad.orphan",
@@ -372,10 +471,13 @@
         "findings": [
           {
             "code": "orphan_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "known_bad.orphan",
             "message": "test evidence known_bad.orphan is not bound to any model obligation",
             "metadata": {
+              "assertion_scope": "external_contract",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+              "covered_code_contracts": [],
               "covered_obligations": [],
               "evidence_current": true,
               "evidence_id": "known_bad.orphan",
@@ -391,18 +493,27 @@
           },
           {
             "code": "missing_test_evidence",
+            "code_contract_id": "",
             "evidence_id": "",
             "message": "model obligation known_bad.required_obligation has no current passing test evidence",
             "metadata": {
               "allow_shared_evidence": false,
+              "allow_shared_implementation": false,
               "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+              "error_paths": [],
+              "exact_external_contract": false,
+              "external_inputs": [],
+              "external_outputs": [],
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
               "required_test_kinds": [
                 "happy_path"
               ],
-              "risk_level": "high"
+              "risk_level": "high",
+              "side_effects": [],
+              "state_reads": [],
+              "state_writes": []
             },
             "obligation_id": "known_bad.required_obligation",
             "severity": "blocker"
@@ -423,24 +534,37 @@
       "name": "duplicate_same_kind_evidence",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "known_bad_duplicate",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Synthetic obligation used only to prove the FlowGuard alignment reviewer rejects bad evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "happy_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "known_bad.required_obligation"
             ],
@@ -454,7 +578,9 @@
             "test_name": "synthetic duplicate evidence first owner"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "known_bad.required_obligation"
             ],
@@ -474,6 +600,7 @@
         "findings": [
           {
             "code": "duplicate_test_evidence_owner",
+            "code_contract_id": "",
             "evidence_id": "",
             "message": "model obligation known_bad.required_obligation has multiple current passing happy_path evidence owners",
             "metadata": {
@@ -508,12 +635,19 @@
       "model_id": "startup",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "startup",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Startup asks the three questions, waits for answers, and blocks banner/controller work until the answer boundary is satisfied.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "startup.questions.pause_before_work",
             "obligation_type": "contract",
             "required": true,
@@ -521,11 +655,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Startup creates prompt-isolated current-run state and requires reviewer facts plus PM approval before work beyond startup.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "startup.run_isolation_and_activation",
             "obligation_type": "scenario",
             "required": true,
@@ -533,12 +675,18 @@
               "happy_path",
               "failure_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "startup.run_isolation_and_activation"
             ],
@@ -552,7 +700,9 @@
             "test_name": "test_startup_sequence_creates_prompt_isolated_run"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "startup.questions.pause_before_work"
             ],
@@ -566,7 +716,9 @@
             "test_name": "test_startup_waits_for_answers_before_banner_or_controller"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "startup.questions.pause_before_work"
             ],
@@ -580,7 +732,9 @@
             "test_name": "test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "startup.run_isolation_and_activation"
             ],
@@ -612,17 +766,25 @@
       "model_checks": [
         "python simulations/run_flowpilot_packet_lifecycle_checks.py",
         "python simulations/run_flowpilot_card_envelope_checks.py",
-        "python simulations/run_flowpilot_event_contract_checks.py"
+        "python simulations/run_flowpilot_event_contract_checks.py",
+        "python skills/flowpilot/assets/run_packet_control_plane_checks.py"
       ],
       "model_id": "packet_card_ack",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "packet_card_ack",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Packet envelopes, bodies, result files, hashes, and recipient reads stay physically separated from Controller relay text.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "packet.physical_body_boundary",
             "obligation_type": "contract",
             "required": true,
@@ -630,11 +792,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Card and bundle ACKs require correct role, token, receipt, hash, and per-card completion before advancing.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "card.ack_identity_and_bundle",
             "obligation_type": "hazard",
             "required": true,
@@ -642,11 +812,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Router preconsumes valid ACK/return events and blocks incomplete or invalid pre-ACK reports without advancing stale waits.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "ack.return_wait_preconsumption",
             "obligation_type": "transition",
             "required": true,
@@ -654,12 +832,37 @@
               "edge_path",
               "failure_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Packet control-plane model keeps its facade import path while state, transition, and invariant owners remain executable.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "packet_control_plane.facade_split_integrity",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_packet_runtime",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "packet.physical_body_boundary"
             ],
@@ -673,7 +876,9 @@
             "test_name": "test_pm_issue_writes_physical_envelope_body_and_ledger"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_packet_runtime",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "packet.physical_body_boundary"
             ],
@@ -687,7 +892,9 @@
             "test_name": "test_controller_handoff_contains_envelope_only_not_body_content"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "card.ack_identity_and_bundle"
             ],
@@ -701,7 +908,9 @@
             "test_name": "test_card_runtime_opens_card_and_submits_ack"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "card.ack_identity_and_bundle"
             ],
@@ -715,7 +924,9 @@
             "test_name": "test_card_runtime_rejects_wrong_role_and_ack_without_receipt"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "ack.return_wait_preconsumption"
             ],
@@ -729,7 +940,9 @@
             "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "ack.return_wait_preconsumption"
             ],
@@ -741,6 +954,22 @@
             "stale_reasons": [],
             "test_kind": "failure_path",
             "test_name": "test_record_external_event_does_not_preconsume_incomplete_bundle_ack"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python skills/flowpilot/assets/run_packet_control_plane_checks.py",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "packet_control_plane.facade_split_integrity"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_control_plane.happy.split_runner",
+            "overclaims_model_confidence": false,
+            "path": "skills/flowpilot/assets/run_packet_control_plane_checks.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "run_packet_control_plane_checks"
           }
         ]
       },
@@ -764,12 +993,19 @@
       "model_id": "route_mutation",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "route_mutation",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Route mutation declares topology, affected nodes, process/product rechecks, and old packet supersession before activation.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "route_mutation.topology_and_recheck",
             "obligation_type": "contract",
             "required": true,
@@ -777,11 +1013,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Sibling branch replacement marks old sibling evidence stale and projects replacement/replay scope in the route display.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
             "obligation_type": "hazard",
             "required": true,
@@ -789,12 +1033,18 @@
               "negative_path",
               "edge_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "route_mutation.topology_and_recheck"
             ],
@@ -808,7 +1058,9 @@
             "test_name": "TestRouteMutationChildContractFixture"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "route_mutation.topology_and_recheck"
             ],
@@ -822,7 +1074,9 @@
             "test_name": "test_route_mutation_and_final_ledger_have_required_preconditions"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "route_mutation.sibling_replacement_stales_old_evidence"
             ],
@@ -836,7 +1090,9 @@
             "test_name": "test_sibling_branch_replacement_draws_replacement_and_replay_scope"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "route_mutation.sibling_replacement_stales_old_evidence"
             ],
@@ -873,12 +1129,19 @@
       "model_id": "terminal_closure_resume",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "terminal_closure_resume",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Terminal completion requires a clean PM-built final ledger, delivered-product backward replay, and PM completion approval.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "terminal.final_ledger_and_backward_replay",
             "obligation_type": "invariant",
             "required": true,
@@ -886,22 +1149,38 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Closure blocks dirty defect, PM-suggestion, role-memory, quarantine, or source-of-truth state after terminal replay.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "closure.dirty_ledgers_block_completion",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "failure_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Resume re-entry loads current-run state, frontier, packet ledger, daemon/owner state, role memory, and recovery evidence before PM work.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "resume.current_run_reentry",
             "obligation_type": "transition",
             "required": true,
@@ -909,12 +1188,18 @@
               "happy_path",
               "failure_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "terminal.final_ledger_and_backward_replay"
             ],
@@ -928,7 +1213,9 @@
             "test_name": "test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "terminal.final_ledger_and_backward_replay"
             ],
@@ -942,7 +1229,9 @@
             "test_name": "test_final_ledger_rejects_missing_source_of_truth_entries_and_contract_replay"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_closure",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "closure.dirty_ledgers_block_completion"
             ],
@@ -956,7 +1245,9 @@
             "test_name": "test_terminal_closure_blocks_dirty_defect_ledger_after_terminal_replay"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "resume.current_run_reentry"
             ],
@@ -970,7 +1261,9 @@
             "test_name": "test_resume_reentry_loads_state_before_resume_cards"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "resume.current_run_reentry"
             ],
@@ -1006,12 +1299,19 @@
       "model_id": "role_output_contracts",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "role_output_contracts",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Role outputs are registry-bound, role-authored, authority-checked, and submitted only through current Router waits.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "role_output.registry_authority",
             "obligation_type": "contract",
             "required": true,
@@ -1019,11 +1319,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Output contracts are repeated in packet envelope/body/ledger/result and rejected for wrong recipients.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "output_contract.packet_binding",
             "obligation_type": "contract",
             "required": true,
@@ -1031,12 +1339,18 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "role_output.registry_authority"
             ],
@@ -1050,7 +1364,9 @@
             "test_name": "test_registry_backed_output_types_are_preparable"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "role_output.registry_authority"
             ],
@@ -1064,7 +1380,9 @@
             "test_name": "test_runtime_rejects_wrong_role_and_role_key_agent_id"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_output_contracts",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "output_contract.packet_binding"
             ],
@@ -1078,7 +1396,9 @@
             "test_name": "test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_output_contracts",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "output_contract.packet_binding"
             ],
@@ -1114,12 +1434,19 @@
       "model_id": "router_loop_daemon",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "router_loop_daemon",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "The current-node loop dispatches packets only after direct-dispatch preflight and routes results through PM/reviewer gates.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "router_loop.packet_result_review_loop",
             "obligation_type": "transition",
             "required": true,
@@ -1127,11 +1454,19 @@
               "happy_path",
               "failure_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "daemon.lock_status_and_queue_progress",
             "obligation_type": "invariant",
             "required": true,
@@ -1139,12 +1474,18 @@
               "happy_path",
               "edge_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "router_loop.packet_result_review_loop"
             ],
@@ -1158,7 +1499,9 @@
             "test_name": "test_current_node_packet_relay_uses_router_direct_dispatch"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "router_loop.packet_result_review_loop"
             ],
@@ -1172,7 +1515,9 @@
             "test_name": "test_current_node_completion_requires_reviewer_passed_packet_audit"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "daemon.lock_status_and_queue_progress"
             ],
@@ -1186,7 +1531,9 @@
             "test_name": "test_formal_startup_starts_router_daemon_before_controller_core"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "daemon.lock_status_and_queue_progress"
             ],
@@ -1222,12 +1569,19 @@
       "model_id": "test_tiering_slow_contracts",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "test_tiering_slow_contracts",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Fast/router tiers are scoped, foreground-safe, and exclude release-only, coverage sweep, and legacy full regressions.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "test_tiering.foreground_fast_scope",
             "obligation_type": "contract",
             "required": true,
@@ -1235,22 +1589,38 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Background validation needs final out/err/combined/exit/meta artifacts; progress lines alone are not pass evidence.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "test_tiering.background_artifact_contract",
             "obligation_type": "hazard",
             "required": true,
             "required_test_kinds": [
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Slow-test parents declare child owners and I/O contracts and do not replay child internals as parent proof.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "slow_test.parent_child_contracts",
             "obligation_type": "contract",
             "required": true,
@@ -1258,12 +1628,18 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_test_tiers",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "test_tiering.foreground_fast_scope"
             ],
@@ -1277,7 +1653,9 @@
             "test_name": "test_fast_tier_excludes_release_coverage_and_legacy_full"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_test_tiers",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "test_tiering.foreground_fast_scope"
             ],
@@ -1291,7 +1669,9 @@
             "test_name": "test_fast_and_router_tiers_do_not_contain_release_only_commands"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "test_tiering.background_artifact_contract"
             ],
@@ -1305,7 +1685,9 @@
             "test_name": "test_tiering_flowguard_model_rejects_known_bad_hazards"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "slow_test.parent_child_contracts"
             ],
@@ -1319,7 +1701,9 @@
             "test_name": "test_slow_test_contract_flowguard_model_rejects_parent_child_hazards"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "slow_test.parent_child_contracts"
             ],
@@ -1357,12 +1741,19 @@
       "model_id": "meta_capability_parents",
       "ok": true,
       "plan": {
+        "allow_orphan_code_contracts": false,
         "allow_orphan_tests": false,
+        "code_contracts": [],
         "model_id": "meta_capability_parents",
         "obligations": [
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Meta parent routine evidence uses thin-parent proof by default and layered full proof only when explicitly requested.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "meta_parent.thin_default_and_layered_full_boundary",
             "obligation_type": "contract",
             "required": true,
@@ -1370,11 +1761,19 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Capability parent evidence rejects stale proof reuse and keeps fast smoke on the non-legacy path.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "capability_parent.proof_reuse_and_fast_boundary",
             "obligation_type": "contract",
             "required": true,
@@ -1382,23 +1781,37 @@
               "happy_path",
               "negative_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           },
           {
             "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Meta/Capability parent model evidence stays bounded as abstract model-hierarchy confidence, not ordinary production conformance.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
             "obligation_id": "parents.abstract_not_ordinary_conformance",
             "obligation_type": "invariant",
             "required": true,
             "required_test_kinds": [
               "edge_path"
             ],
-            "risk_level": "high"
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
+        "require_code_contracts": false,
         "test_evidence": [
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "meta_parent.thin_default_and_layered_full_boundary"
             ],
@@ -1412,7 +1825,9 @@
             "test_name": "test_default_meta_runner_uses_thin_parent_without_full_graph"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "meta_parent.thin_default_and_layered_full_boundary"
             ],
@@ -1426,7 +1841,9 @@
             "test_name": "test_legacy_full_meta_runner_preserves_monolithic_path"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowguard_result_proof",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "capability_parent.proof_reuse_and_fast_boundary"
             ],
@@ -1440,7 +1857,9 @@
             "test_name": "test_capability_result_proof_rejects_stale_reuse"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowguard_result_proof",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "capability_parent.proof_reuse_and_fast_boundary"
             ],
@@ -1454,7 +1873,9 @@
             "test_name": "test_smoke_fast_only_marks_slow_model_checks_fast"
           },
           {
+            "assertion_scope": "external_contract",
             "command": "python -m unittest tests.test_flowpilot_control_gates",
+            "covered_code_contracts": [],
             "covered_obligations": [
               "parents.abstract_not_ordinary_conformance"
             ],

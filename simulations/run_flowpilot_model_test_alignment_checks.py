@@ -179,6 +179,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="Router preconsumes valid ACK/return events and blocks incomplete or invalid pre-ACK reports without advancing stale waits.",
                 required_test_kinds=(EDGE, FAILURE),
             ),
+            _obligation(
+                "packet_control_plane.facade_split_integrity",
+                obligation_type="contract",
+                description="Packet control-plane model keeps its facade import path while state, transition, and invariant owners remain executable.",
+                required_test_kinds=(HAPPY,),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -228,6 +234,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_router_runtime_ack_return",
                 test_kind=FAILURE,
                 covers=("ack.return_wait_preconsumption",),
+            ),
+            _evidence(
+                "packet_control_plane.happy.split_runner",
+                test_name="run_packet_control_plane_checks",
+                path="skills/flowpilot/assets/run_packet_control_plane_checks.py",
+                command="python skills/flowpilot/assets/run_packet_control_plane_checks.py",
+                test_kind=HAPPY,
+                covers=("packet_control_plane.facade_split_integrity",),
             ),
         ),
     )
@@ -603,6 +617,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "python simulations/run_flowpilot_packet_lifecycle_checks.py",
                 "python simulations/run_flowpilot_card_envelope_checks.py",
                 "python simulations/run_flowpilot_event_contract_checks.py",
+                "python skills/flowpilot/assets/run_packet_control_plane_checks.py",
             ),
             coverage_boundary="Packet/card/ACK alignment covers mechanical handoff, identity, hash, receipt, and ACK/return hazards. It does not treat ACK as semantic role approval.",
         ),

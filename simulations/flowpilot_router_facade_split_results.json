@@ -108,8 +108,8 @@
   "model": "flowpilot_router_facade_split",
   "ok": true,
   "prompt_split": {
-    "asset_count": 4,
-    "child_module_count": 102,
+    "asset_count": 7,
+    "child_module_count": 103,
     "coarse_owner_count": 36,
     "facade_line_count": 458,
     "facade_top_level_function_count": 0,

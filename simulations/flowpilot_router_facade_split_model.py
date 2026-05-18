@@ -30,6 +30,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PROMPT_MANIFEST = ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "prompts" / "manifest.json"
 ROUTER_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
 ROUTER_EXPORTS_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_facade_exports.py"
+ROUTER_EXPORT_MANIFEST_PATH = (
+    ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_facade_export_manifest.py"
+)
 
 ROUTER_PUBLIC_API_ALLOWLIST = (
     "main",
@@ -214,6 +217,13 @@ ROUTER_FACADE_PARTITIONS = (
     StructurePartitionItem(
         "owner_export_registry",
         item_type="config",
+        owner_module_id="facade_export_manifest",
+        old_path="flowpilot_router hand-written private compatibility wrappers",
+        new_path="flowpilot_router_facade_export_manifest",
+    ),
+    StructurePartitionItem(
+        "owner_export_installer",
+        item_type="function_cluster",
         owner_module_id="facade_exports",
         old_path="flowpilot_router hand-written private compatibility wrappers",
         new_path="flowpilot_router_facade_exports",
@@ -255,6 +265,27 @@ ROUTER_FACADE_PARTITIONS = (
         item_type="prompt",
         owner_module_id="prompt_delivery",
         new_path="runtime_kit/prompts/startup",
+    ),
+    StructurePartitionItem(
+        "packet_identity_prompt",
+        item_type="prompt",
+        owner_module_id="prompt_assets",
+        old_path="packet_runtime_contracts inline packet identity text",
+        new_path="runtime_kit/prompts/packets",
+    ),
+    StructurePartitionItem(
+        "packet_result_identity_prompt",
+        item_type="prompt",
+        owner_module_id="prompt_assets",
+        old_path="packet_runtime_contracts inline result identity text",
+        new_path="runtime_kit/prompts/packets",
+    ),
+    StructurePartitionItem(
+        "packet_output_contract_prompt",
+        item_type="prompt",
+        owner_module_id="prompt_assets",
+        old_path="packet_runtime_contracts inline output contract text",
+        new_path="runtime_kit/prompts/packets",
     ),
     StructurePartitionItem(
         "controller_ledger_paths",
@@ -483,9 +514,16 @@ ROUTER_FACADE_MODULES = (
         "facade_exports",
         path="skills/flowpilot/assets/flowpilot_router_facade_exports.py",
         owns_functions=("install_facade_exports", "resolve_facade_export"),
+        dependencies=("facade_export_manifest", "router_facade"),
+        behavior_contracts=("owner export installation", "no hand-written wrapper bodies in router skeleton"),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "facade_export_manifest",
+        path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest.py",
         owns_config=("owner_export_registry",),
-        dependencies=("router_facade",),
-        behavior_contracts=("transitional owner export registry", "no hand-written wrapper bodies in router skeleton"),
+        behavior_contracts=("transitional owner export registry", "public export allowlist authority"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
@@ -996,7 +1034,8 @@ ROUTER_FACADE_MODULES = (
 
 ROUTER_FACADE_TARGET_RATIONALES = {
     "router_facade": "Keeps the executable router file as a small public skeleton with no behavior bodies.",
-    "facade_exports": "Owns the explicit transitional owner-export registry that replaces hand-written wrappers.",
+    "facade_exports": "Owns the registry resolver and installer for transitional internal lookups.",
+    "facade_export_manifest": "Owns the explicit transitional owner-export registry that replaces hand-written wrappers.",
     "cli": "Owns command parsing and CLI JSON/error envelope behavior.",
     "controller_runtime": "Owns the high-level next/apply/event controller loop entrypoints.",
     "artifact_validation": "Owns artifact validation and hash checks exposed through the CLI/API.",
@@ -1047,7 +1086,8 @@ ROUTER_FACADE_TARGET_RATIONALES = {
 
 ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
     ("public_api_allowlist", "router_facade"),
-    ("owner_export_registry", "facade_exports"),
+    ("owner_export_registry", "facade_export_manifest"),
+    ("owner_export_installer", "facade_exports"),
     ("parse_args", "cli"),
     ("main", "cli"),
     ("next_action", "controller_runtime"),
@@ -1070,6 +1110,9 @@ ROUTER_FACADE_FUNCTION_BLOCK_MAP = (
     ("card_post_ack_policy", "prompt_delivery"),
     ("controller_table_prompt", "prompt_delivery"),
     ("startup_heartbeat_prompt", "prompt_delivery"),
+    ("packet_identity_prompt", "prompt_assets"),
+    ("packet_result_identity_prompt", "prompt_assets"),
+    ("packet_output_contract_prompt", "prompt_assets"),
     ("controller_ledger_paths", "controller_ledger"),
     ("router_scheduler_projection", "controller_ledger"),
     ("card_delivery_ledgers", "card_delivery"),
@@ -1211,6 +1254,8 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
             TestPartitionItem("router_facade_prompt_delivery", owner_suite_id="router_boundaries"),
             TestPartitionItem("public_api_allowlist", owner_suite_id="router_boundaries"),
             TestPartitionItem("owner_export_registry", owner_suite_id="router_boundaries"),
+            TestPartitionItem("owner_export_manifest", owner_suite_id="install_checks"),
+            TestPartitionItem("packet_prompt_assets", owner_suite_id="install_checks"),
             TestPartitionItem("cli", owner_suite_id="startup_runtime"),
             TestPartitionItem("controller_runtime", owner_suite_id="controller_runtime"),
             TestPartitionItem("artifact_validation", owner_suite_id="router_boundaries"),
@@ -1394,7 +1439,7 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 result_status=TEST_STATUS_PASSED,
                 evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
                 result_path="simulations/flowpilot_router_facade_split_results.json",
-                owns_state=("install_prompt_assets",),
+                owns_state=("install_prompt_assets", "owner_export_manifest", "packet_prompt_assets"),
                 release_required=True,
             ),
         ),
@@ -1424,6 +1469,8 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 "router_facade_prompt_delivery",
                 "public_api_allowlist",
                 "owner_export_registry",
+                "owner_export_manifest",
+                "packet_prompt_assets",
                 "cli",
                 "controller_runtime",
                 "artifact_validation",
@@ -1464,6 +1511,8 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 "route_frontier",
                 "terminal_ledger",
                 "install_prompt_assets",
+                "owner_export_manifest",
+                "packet_prompt_assets",
             ),
             state_owner_fields=(
                 "prompt_store",
@@ -1495,6 +1544,8 @@ def router_facade_testmesh_plan() -> TestMeshPlan:
                 "route_frontier",
                 "terminal_ledger",
                 "install_prompt_assets",
+                "owner_export_manifest",
+                "packet_prompt_assets",
             ),
             rationale=(
                 "Router facade release confidence is derived from focused child "
@@ -1517,7 +1568,8 @@ def valid_split_evidence() -> RouterFacadeSplitEvidence:
         child_module_count=len(tuple((ROOT / "skills" / "flowpilot" / "assets").glob("flowpilot_router*.py"))),
         facade_line_count=router_text.count("\n") + 1,
         facade_top_level_function_count=facade_top_level_function_count,
-        owner_export_registry_declared=ROUTER_EXPORTS_PATH.exists(),
+        owner_export_registry_declared=ROUTER_EXPORTS_PATH.exists()
+        and ROUTER_EXPORT_MANIFEST_PATH.exists(),
         prompt_assets=prompt_assets_from_manifest(),
     )
 

@@ -32,7 +32,7 @@ resolver, persisted ledgers, CLI/install sync, and real ack validation.
 | Order | Optimization | Current Friction | Target Behavior | Scope Guard |
 | --- | --- | --- | --- | --- |
 | 1 | Add global same-role card-bundle model path | `card_bundle_fold` is currently rejected because generic bundling lacks dedicated replay semantics | A guarded same-role system-card bundle passes only with same run, role, agent, resume tick, manifest hashes, per-card receipts, and one bundle ACK referencing every card | Model only; no runtime change until hazards are proven catchable |
-| 2 | Add bundle envelope and runtime ACK support | `card_runtime` opens and ACKs one card envelope at a time | `open_card_bundle` writes one read receipt per card; `submit_card_bundle_ack` writes one envelope-only ACK that references all per-card receipts | No body text in ACK; no semantic approval from receipts |
+| 2 | Add bundle envelope and runtime ACK support | `card_runtime` is now a facade backed by focused IO, ledger, envelope, ACK, and bundle helpers | `open_card_bundle` writes one read receipt per card; `submit_card_bundle_ack` writes one envelope-only ACK that references all per-card receipts | No body text in ACK; no semantic approval from receipts |
 | 3 | Add router bundle resolver | `_next_system_card_action` emits one `deliver_system_card` at a time | Router scans the next contiguous safe card segment and emits `deliver_system_card_bundle` when at least two cards are globally eligible | Fallback to existing single-card path when eligibility is not proven |
 | 4 | Add router bundle commit/check loop | Return ledger currently tracks one pending card return per card | Bundle delivery records per-card deliveries plus one pending bundle return; `check_card_bundle_return_event` validates all receipts and resolves member returns | `run-until-wait` still stops at role/card boundary |
 | 5 | Remove startup-specific framing from docs/checks | Prior startup plan says same-role card batching is future-only | Documentation distinguishes rejected generic folds from supported guarded same-role bundles | Do not add cross-role batches, packet relay folding, role-output folding, or artifact merge |
@@ -63,7 +63,9 @@ resolver, persisted ledgers, CLI/install sync, and real ack validation.
    success and recovery path plus hazard cases B1-B8/B11-B13.
 2. Run the model checks and confirm every known-bad hazard is detected before
    changing runtime code.
-3. Add bundle schemas and functions to `card_runtime.py`.
+3. Add bundle schemas and functions through the `card_runtime.py` facade and
+   the focused `card_runtime_bundle.py`, `card_runtime_ack.py`,
+   `card_runtime_envelopes.py`, and `card_runtime_ledgers.py` helpers.
 4. Add global bundle eligibility and delivery commit/check support to
    `flowpilot_router.py`, keeping the single-card path as fallback.
 5. Add the incomplete bundle ACK branch: record `bundle_ack_incomplete`, keep

@@ -2,6 +2,22 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.11 - 2026-05-18
+
+### Added
+
+- Added maintainer documentation for the current runtime clarity split,
+  including router facade export manifest notes, focused packet/card runtime
+  helpers, user-flow diagram helpers, and packet control-plane model helpers.
+- Added prompt-store documentation for packet prompt fragments under
+  `runtime_kit/prompts/packets/` and their hash-managed manifest entries.
+
+### Changed
+
+- Refreshed legacy prompt/card and system-card bundle maintenance notes so
+  future work targets the new facades and helper modules instead of stale
+  monolithic runtime files.
+
 ## 0.9.10 - 2026-05-17
 
 ### Added

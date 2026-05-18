@@ -33,6 +33,41 @@
       "sha256": "bbcd591e62822a16e567e0d403aaf7b66278de131fce9f62fd1a9ad2b890030f",
       "strip_trailing_newline": true,
       "template_variables": []
+    },
+    {
+      "id": "packets.packet_identity_boundary",
+      "path": "prompts/packets/packet_identity_boundary.md",
+      "sha256": "653f6352fb74eededaa7286b4b01e3e28162556cd53cf3f629758936ed8224ad",
+      "strip_trailing_newline": false,
+      "template_variables": [
+        "packet_identity_marker",
+        "role"
+      ]
+    },
+    {
+      "id": "packets.result_identity_boundary",
+      "path": "prompts/packets/result_identity_boundary.md",
+      "sha256": "b78cba328ba1fb11942331bcbc812f58645de459a7e4ee0ed9944035958d72c0",
+      "strip_trailing_newline": false,
+      "template_variables": [
+        "result_identity_marker",
+        "role"
+      ]
+    },
+    {
+      "id": "packets.output_contract_section",
+      "path": "prompts/packets/output_contract_section.md",
+      "sha256": "48a9ac896640b4cc32543e0b518b1988e11e3a85f5f7e2497dfd488bfe51aad6",
+      "strip_trailing_newline": false,
+      "template_variables": [
+        "allowed_decisions_block",
+        "body_template_block",
+        "json_contract",
+        "required_envelope_block",
+        "required_sections_block",
+        "required_values_block",
+        "segment_values_block"
+      ]
     }
   ],
   "schema_version": "flowpilot.prompt_store_manifest.v1"

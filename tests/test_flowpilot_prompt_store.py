@@ -92,6 +92,45 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
         encoded = json.dumps(manifest, sort_keys=True)
         self.assertIn("controller.action_ledger_table", encoded)
         self.assertIn("startup.heartbeat_resume", encoded)
+        self.assertIn("packets.packet_identity_boundary", encoded)
+
+    def test_packet_prompt_assets_render_without_inline_fallback(self) -> None:
+        packet_boundary = render_prompt_text(
+            "packets.packet_identity_boundary",
+            {
+                "packet_identity_marker": "flowpilot_packet_identity",
+                "role": "worker_a",
+            },
+        )
+        self.assertIn("flowpilot_packet_identity: true", packet_boundary)
+        self.assertIn("recipient_role: worker_a", packet_boundary)
+        self.assertIn("Packet ACK is receipt only", packet_boundary)
+
+        result_boundary = render_prompt_text(
+            "packets.result_identity_boundary",
+            {
+                "result_identity_marker": "flowpilot_result_identity",
+                "role": "worker_a",
+            },
+        )
+        self.assertIn("flowpilot_result_identity: true", result_boundary)
+        self.assertIn("completed_by_role: worker_a", result_boundary)
+
+        output_contract = render_prompt_text(
+            "packets.output_contract_section",
+            {
+                "allowed_decisions_block": "",
+                "body_template_block": "",
+                "json_contract": '{\n  "contract_id": "demo"\n}',
+                "required_envelope_block": "",
+                "required_sections_block": "",
+                "required_values_block": "",
+                "segment_values_block": "",
+            },
+        )
+        self.assertIn("## Output Contract", output_contract)
+        self.assertIn('"contract_id": "demo"', output_contract)
+        self.assertIn("Contract Self-Check", output_contract)
 
 
 if __name__ == "__main__":

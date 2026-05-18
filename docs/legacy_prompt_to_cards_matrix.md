@@ -43,6 +43,16 @@ snapshot, field-level validators for future specialized officer report
 families, and production replay adapters if abstract models become conformance
 checks.
 
+The current runtime clarity split keeps compatibility facades in place while
+moving maintenance-heavy bodies into focused helpers. `packet_runtime.py`,
+`card_runtime.py`, `flowpilot_user_flow_diagram.py`, and
+`packet_control_plane_model.py` remain maintainer-facing entrypoints, backed by
+packet progress/creation/result/audit/CLI helpers, card IO/ledger/envelope/ACK,
+and bundle helpers, user-flow source/tree/stage/Mermaid/Markdown helpers, and
+packet-control state/transition/invariant helpers. Packet prompt fragments now
+live under `runtime_kit/prompts/packets/` and are registered in the prompt
+manifest instead of being copied as inline Python text.
+
 ## Key Architectural Decision
 
 The old startup hard gate should not be copied wholesale.
@@ -100,7 +110,7 @@ authority rather than old prompt contamination:
 | Legacy section | Coverage | Decision | Current mapping | Next action |
 | --- | --- | --- | --- | --- |
 | Core Rule | Covered | Preserve as hard gate | `pm.core`, `pm.final_ledger`, `pm.closure`, final-ledger replay | Keep source-of-truth and frozen-contract replay regressions current |
-| Experimental Packet-Gated Control Plane | Covered | Preserve as router validator | Controller/reviewer cards, `packet_runtime`, router-loop/resume/runtime-closure models | Keep packet checks aligned as specialized report families grow |
+| Experimental Packet-Gated Control Plane | Covered | Preserve as router validator | Controller/reviewer cards, `packet_runtime` facade plus packet progress/creation/result/audit/CLI helpers, packet prompt assets, router-loop/resume/runtime-closure models | Keep packet checks aligned as specialized report families grow |
 | Required Dependencies | Partial | Preserve as router validator | Officer core cards, `check_install.py`, dependencies manifest | Add capability-probe cards/events only when needed |
 | Explicit Activation Only | Covered | Downgrade to router invariant | Small launcher and router tests | Keep small-launcher and no implicit activation checks |
 | Four-Question Startup Gate -> Three-Question Startup Gate | Covered | Preserve as hard gate | `BOOT_ACTIONS`, startup banner, prompt-isolation model | Keep three explicit startup answers; the old run-mode question stays retired |
@@ -132,7 +142,7 @@ authority rather than old prompt contamination:
 | `.flowpilot/` Source Of Truth | Partial | Preserve as router validator | run shell, resume state load, continuation quarantine, final-ledger source-of-truth builder | Expand old-file import disposition beyond the quarantine baseline |
 | Real Heartbeat Continuation | Partial | Preserve as hard gate | heartbeat templates, resume cards, one-minute binding/tick writer, continuation binding card | Wire host automation adapters to record the same binding event |
 | Capability Routing | Partial | Preserve as system card | capability templates/model, PM selection/gate-manifest/officer cards | Add loaded-file evidence, domain review, and child-loop closure validator |
-| Prompt Layer Boundary | Covered | Downgrade to router invariant | small launcher, manifest, check_install | Keep enforcing small launcher and card delivery |
+| Prompt Layer Boundary | Covered | Downgrade to router invariant | small launcher, system-card manifest, prompt manifest, PromptStore, check_install | Keep enforcing small launcher, card delivery, and hash-managed prompt loading |
 | Visual Example Particle | Covered | Merge into existing card | generated resource ledger, PM evidence quality UI/visual old-asset rejection | Keep old visual assets quarantined as historical references only |
 | UI And Visual Evidence | Covered | Preserve as system card | PM evidence quality package, reviewer evidence quality review, generated-resource ledger, UI screenshot/old-asset validator | Add richer UI walkthrough fields when Cockpit/UI route work resumes |
 | Final Route-Wide Gate Ledger | Covered | Preserve as hard gate | final ledger templates/card, source-of-truth final ledger writer, segmented reviewer replay, terminal map, closure suite, router-loop model | Keep replay segment generation aligned with future source-of-truth entry types |
