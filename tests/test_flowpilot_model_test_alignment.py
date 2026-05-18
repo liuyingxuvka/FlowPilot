@@ -94,11 +94,62 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             with self.subTest(code=code):
                 self.assertGreater(diagnostic["gap_counts"].get(code, 0), 0)
 
+        for field in (
+            "gap_counts_by_severity",
+            "gap_counts_by_repair_type",
+            "gap_counts_by_release_relevance",
+            "actionable_summary",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, diagnostic)
+                self.assertTrue(diagnostic[field])
+
         surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
         self.assertIn("asset:flowpilot_router", surfaces)
         self.assertIn("script:run_test_tier", surfaces)
         self.assertIn("model-check:run_flowpilot_model_test_alignment_checks", surfaces)
         self.assertIn("tier:router", surfaces)
+        for surface_id in (
+            "asset:flowpilot_router",
+            "script:run_test_tier",
+            "tier:router",
+        ):
+            with self.subTest(surface_id=surface_id):
+                surface = surfaces[surface_id]
+                self.assertIn("surface_owner", surface)
+                self.assertIn("release_relevance", surface)
+                self.assertIn("repair_types", surface)
+                self.assertIn("max_severity", surface)
+
+        for finding in diagnostic["actionable_findings"][:20]:
+            with self.subTest(finding=finding["dedupe_key"]):
+                for field in (
+                    "severity",
+                    "surface_owner",
+                    "release_relevance",
+                    "repair_type",
+                    "dedupe_key",
+                    "priority_score",
+                ):
+                    self.assertIn(field, finding)
+
+        summary = diagnostic["actionable_summary"][0]
+        for field in (
+            "severity",
+            "surface_owner",
+            "release_relevance",
+            "repair_type",
+            "dedupe_key",
+            "finding_count",
+            "surface_ids",
+        ):
+            with self.subTest(summary_field=field):
+                self.assertIn(field, summary)
+        priority_scores = [
+            item["priority_score"] for item in diagnostic["actionable_findings"]
+        ]
+        self.assertEqual(priority_scores, sorted(priority_scores))
+
 
     def test_full_diagnostic_known_bad_cases_cover_false_confidence_hazards(self) -> None:
         diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
@@ -108,6 +159,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "orphan_code",
             "wrapper_only_evidence",
             "progress_only_background",
+            "local_only_release_proof",
             "broad_unsplit_module",
         ):
             with self.subTest(name=name):
@@ -117,6 +169,75 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                     set(checks[name]["expected_codes"]),
                     set(checks[name]["finding_codes"]),
                 )
+                surface = checks[name]["surface"]
+                self.assertIn("surface_owner", surface)
+                self.assertIn("release_relevance", surface)
+                self.assertIn("repair_types", surface)
+
+        self.assertIn(
+            "rerun_public_release_evidence",
+            checks["local_only_release_proof"]["surface"]["repair_types"],
+        )
+
+    def test_full_diagnostic_recognizes_public_contract_and_split_metadata(self) -> None:
+        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
+
+        for surface_id in (
+            "asset:packet_runtime",
+            "asset:flowpilot_router_controller_scheduler_receipts",
+            "asset:flowpilot_router_work_packets_pm_role",
+            "asset:flowpilot_router_terminal_ledger",
+        ):
+            with self.subTest(surface_id=surface_id):
+                surface = surfaces[surface_id]
+                self.assertTrue(surface["has_external_contract"], surface)
+                self.assertNotIn("internal_only_test", surface["gap_codes"])
+
+        for surface_id in (
+            "script:install_flowpilot",
+            "script:audit_local_install_sync",
+            "script:check_install",
+            "script:check_public_release",
+            "script:flowpilot_packets",
+            "script:flowpilot_outputs",
+            "script:flowpilot_lifecycle",
+            "script:run_test_tier",
+        ):
+            with self.subTest(surface_id=surface_id):
+                surface = surfaces[surface_id]
+                self.assertTrue(surface["has_test"], surface)
+                self.assertTrue(surface["has_external_contract"], surface)
+                self.assertNotIn("internal_only_test", surface["gap_codes"])
+
+        deferred = surfaces["asset:flowpilot_router_card_returns"]
+        self.assertEqual(deferred["structure_split_status"], "deferred")
+        self.assertEqual(deferred["split_status"], "deferred_split")
+        self.assertIn("defer_structure_split", deferred["repair_types"])
+        self.assertIn("peer_safety_status", deferred)
+
+    def test_full_diagnostic_uses_background_artifact_classification(self) -> None:
+        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
+        surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
+        surface = surfaces["tier-command:release:public_release_check"]
+
+        self.assertIn(
+            surface["evidence_status"],
+            {
+                "failed",
+                "incomplete",
+                "missing_final_artifacts",
+                "passed",
+                "progress_only",
+                "release_local_only",
+                "running",
+                "stale",
+            },
+        )
+        self.assertIn("background_evidence", surface)
+        self.assertIn("selected", surface["background_evidence"])
+        if surface["evidence_status"] == "release_local_only":
+            self.assertIn("rerun_public_release_evidence", surface["repair_types"])
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
         report = alignment_runner.build_report()
@@ -137,6 +258,12 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "card.submit_card_ack",
             "route_sign.generate",
             "role_output.prepare_output_session",
+            "runtime_closure.validate_officer_request_record",
+            "runtime_closure.continuation_quarantine_record",
+            "daemon.run_router_daemon",
+            "daemon.acquire_lock",
+            "daemon.write_status",
+            "startup_daemon.heartbeat_monitor",
             "test_tier.commands_for_tier",
             "meta_runner.main",
             "smoke.main",

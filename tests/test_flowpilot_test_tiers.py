@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import importlib.util
 import fnmatch
 import json
@@ -82,11 +84,85 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertNotIn("backups", command)
         self.assertNotIn("tmp", command)
 
+    def test_main_list_tiers_json_uses_public_cli_contract(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()) as stdout:
+            exit_code = run_test_tier.main(["--list-tiers", "--json"])
+
+        self.assertEqual(exit_code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertIn("fast", payload["tiers"])
+        self.assertIn("release", payload["tiers"])
+
+    def test_main_release_dry_run_json_marks_release_only_commands(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-tier-cli-") as tmp_name:
+            with contextlib.redirect_stdout(io.StringIO()) as stdout:
+                exit_code = run_test_tier.main(
+                    [
+                        "--tier",
+                        "release",
+                        "--dry-run",
+                        "--json",
+                        "--background-dir",
+                        tmp_name,
+                    ]
+                )
+
+        self.assertEqual(exit_code, 0)
+        payload = json.loads(stdout.getvalue())
+        self.assertEqual(payload["tier"], "release")
+        self.assertTrue(any(command["release_only"] for command in payload["commands"]))
+        self.assertFalse(payload["release_obligation_visible"])
+
+    def test_background_artifact_classifier_distinguishes_final_evidence_states(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-bg-classifier-") as tmp_name:
+            root = Path(tmp_name)
+
+            def write_case(name: str, *, meta: dict[str, object] | None, exit_text: str | None, progress: str = ""):
+                paths = run_test_tier.artifact_paths(root, name)
+                if meta is not None:
+                    paths["meta"].write_text(
+                        "\ufeff" + json.dumps(meta, sort_keys=True),
+                        encoding="utf-8",
+                    )
+                if exit_text is not None:
+                    paths["exit"].write_text(exit_text, encoding="utf-8")
+                if progress:
+                    paths["combined"].write_text(progress, encoding="utf-8")
+
+            write_case("passed", meta={"status": "passed"}, exit_text="0\n")
+            write_case("failed", meta={"status": "failed"}, exit_text="1\n")
+            write_case("running", meta={"status": "running"}, exit_text=None)
+            write_case("stale", meta={"status": "running"}, exit_text="0\n")
+            write_case("progress_only", meta=None, exit_text=None, progress="still running\n")
+            write_case("incomplete", meta={"status": "passed"}, exit_text=None)
+            write_case(
+                "release_local",
+                meta={"status": "passed", "command": ["python", "scripts/check_public_release.py", "--skip-url-check"]},
+                exit_text="0\n",
+            )
+
+            self.assertEqual(run_test_tier.classify_background_artifact(root, "passed")["status"], "passed")
+            self.assertEqual(run_test_tier.classify_background_artifact(root, "failed")["status"], "failed")
+            self.assertEqual(run_test_tier.classify_background_artifact(root, "running")["status"], "running")
+            self.assertEqual(run_test_tier.classify_background_artifact(root, "stale")["status"], "stale")
+            self.assertEqual(
+                run_test_tier.classify_background_artifact(root, "progress_only")["status"],
+                "progress_only",
+            )
+            self.assertEqual(
+                run_test_tier.classify_background_artifact(root, "incomplete")["status"],
+                "incomplete",
+            )
+            local = run_test_tier.classify_background_artifact(root, "release_local")
+            self.assertEqual(local["status"], "release_local_only")
+            self.assertEqual(local["proof_scope"], "local_only")
+
     def test_fast_tier_excludes_release_coverage_and_legacy_full(self) -> None:
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
         self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
         self.assertIn("tests/test_flowpilot_model_test_alignment.py", text)
+        self.assertIn("tests/test_flowpilot_cli_entrypoints.py", text)
         self.assertNotIn("check_public_release.py", text)
         self.assertNotIn("run_flowguard_coverage_sweep.py", text)
         self.assertNotIn("--legacy-full", text)

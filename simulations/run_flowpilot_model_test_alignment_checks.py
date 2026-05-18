@@ -74,9 +74,142 @@ ASSET_FACADE_MODULES = {
     "role_output_runtime",
 }
 
+FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
+    "asset:packet_runtime",
+    "asset:flowpilot_router_controller_scheduler_receipts",
+    "asset:flowpilot_router_work_packets_pm_role",
+    "asset:flowpilot_router_terminal_ledger",
+}
+
+SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
+    "audit_local_install_sync",
+    "check_install",
+    "check_public_release",
+    "flowpilot_lifecycle",
+    "flowpilot_outputs",
+    "flowpilot_packets",
+    "install_flowpilot",
+    "run_test_tier",
+}
+
+STRUCTURE_SPLIT_REPAIR_PLAN = {
+    "flowpilot_router_work_packets_current_node": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | mixed_owner_families",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_card_returns": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | mixed_owner_families",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "role_output_runtime_schema": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | mixed_owner_families",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_protocol_boot_cards": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | declarative_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "declarative_protocol_table",
+        "recommended_next_action": "immediate_declarative_split_after_claim",
+    },
+    "flowpilot_router_protocol_decision_tables": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | declarative_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "declarative_protocol_table",
+        "recommended_next_action": "immediate_declarative_split_after_claim",
+    },
+    "flowpilot_router_facade_export_manifest_controller": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | declarative_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "declarative_manifest",
+        "recommended_next_action": "immediate_declarative_split_after_claim",
+    },
+    "flowpilot_router_route_artifacts_architecture": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | route_artifact_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_route_artifacts_nodes": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | route_artifact_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_route_artifacts_planning": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | route_artifact_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_route_frontier_policy": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | route_frontier_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+    "flowpilot_router_route_frontier_status": {
+        "split_status": "deferred_split",
+        "split_reason": "line_threshold_exceeded | route_frontier_families_mixed",
+        "deferred_split_reason": "fresh_owner_module_polish | state_ordering_sensitive | needs_structuremesh_target",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "claim_and_model_before_split",
+    },
+}
+
+RECENT_OWNER_MODULE_POLISH_COMMITS = ("bd83ae52", "435292eb", "c874e8b3")
+
 OWNER_STRUCTURE_SPLIT_LINE_THRESHOLD = 450
 FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD = 320
 SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD = 650
+
+BACKGROUND_ARTIFACT_ROOTS = (
+    ROOT / "tmp" / "flowguard_background",
+    ROOT / "tmp" / "test_background",
+)
+
+BACKGROUND_COMMAND_ARTIFACT_ALIASES = {
+    "meta_full": ("meta_full", "run_meta_checks"),
+    "capability_full": ("capability_full", "run_capability_checks"),
+    "meta_legacy_full": ("meta_legacy_full", "run_meta_checks"),
+    "capability_legacy_full": ("capability_legacy_full", "run_capability_checks"),
+}
+
+STALE_EVIDENCE_STATUSES = {
+    "failed",
+    "incomplete",
+    "missing_final_artifacts",
+    "progress_only",
+    "release_local_only",
+    "running",
+    "stale",
+}
 
 DIAGNOSTIC_GAP_CODES = (
     "missing_model",
@@ -87,6 +220,23 @@ DIAGNOSTIC_GAP_CODES = (
     "stale_evidence",
     "needs_structure_split",
 )
+
+DIAGNOSTIC_REPAIR_TYPES = {
+    "missing_model": "add_model_binding",
+    "missing_code": "restore_code_reference",
+    "missing_test": "add_external_contract_test",
+    "extra_code": "classify_or_remove_code",
+    "internal_only_test": "upgrade_to_external_contract_test",
+    "stale_evidence": "rerun_or_reclassify_evidence",
+    "needs_structure_split": "split_structure",
+}
+
+DIAGNOSTIC_SEVERITY_SCORE = {
+    "critical": 0,
+    "high": 10,
+    "medium": 20,
+    "low": 30,
+}
 
 
 def _repo_path(path: str) -> str:
@@ -854,6 +1004,30 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             required_test_kinds=(HAPPY, FAILURE),
         ),
         _source_obligation(
+            "runtime_closure.officer_lifecycle_contract",
+            obligation_type="contract",
+            description="Source-audited officer request/result lifecycle records keep PM authority, sealed-body boundaries, and validation results explicit.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
+            "runtime_closure.continuation_and_final_report_contract",
+            obligation_type="contract",
+            description="Source-audited continuation quarantine, final user report, and route display refresh records separate current-run authority from display/report artifacts.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
+            "daemon.lock_status_queue_contract",
+            obligation_type="contract",
+            description="Source-audited daemon lock/status/tick contracts prevent duplicate writers and distinguish live, stale, stopped, and errored daemon states.",
+            required_test_kinds=(HAPPY, EDGE, NEGATIVE),
+        ),
+        _source_obligation(
+            "startup_daemon.lock_liveness_contract",
+            obligation_type="contract",
+            description="Source-audited startup-daemon liveness helpers classify lock freshness and heartbeat monitor requirements.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
             "test_tiering.foreground_fast_scope",
             obligation_type="contract",
             description="Source-audited test-tier command selection boundary.",
@@ -911,7 +1085,7 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "packet.create_packet",
-            path="skills/flowpilot/assets/packet_runtime_creation.py",
+            path="skills/flowpilot/assets/packet_runtime_creation_core.py",
             symbol="create_packet",
             implements=(
                 "route_mutation.topology_and_recheck",
@@ -923,14 +1097,14 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         ),
         _contract(
             "packet.build_controller_handoff",
-            path="skills/flowpilot/assets/packet_runtime_creation.py",
+            path="skills/flowpilot/assets/packet_runtime_creation_handoff.py",
             symbol="build_controller_handoff",
             implements=("packet.physical_body_boundary",),
             external_inputs=("envelope", "envelope_path"),
         ),
         _contract(
             "packet.controller_handoff_text",
-            path="skills/flowpilot/assets/packet_runtime_creation.py",
+            path="skills/flowpilot/assets/packet_runtime_creation_handoff.py",
             symbol="controller_handoff_text",
             implements=("packet.physical_body_boundary",),
             external_inputs=("handoff",),
@@ -989,6 +1163,146 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             implements=("role_output.registry_authority",),
             external_inputs=("project_root", "role", "agent_id", "output_type"),
             side_effects=("write_output_progress_status",),
+        ),
+        _contract(
+            "runtime_closure.validate_officer_request_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="validate_officer_request_record",
+            implements=("runtime_closure.officer_lifecycle_contract",),
+            external_inputs=("record",),
+        ),
+        _contract(
+            "runtime_closure.validate_officer_result_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="validate_officer_result_record",
+            implements=("runtime_closure.officer_lifecycle_contract",),
+            external_inputs=("record", "result"),
+        ),
+        _contract(
+            "runtime_closure.officer_lifecycle_entry_from_request",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="officer_lifecycle_entry_from_request",
+            implements=("runtime_closure.officer_lifecycle_contract",),
+            external_inputs=("record", "now"),
+        ),
+        _contract(
+            "runtime_closure.continuation_quarantine_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="continuation_quarantine_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("run_id", "run_root", "current_pointer", "run_index", "created_at"),
+        ),
+        _contract(
+            "runtime_closure.validate_continuation_quarantine_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="validate_continuation_quarantine_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("record",),
+        ),
+        _contract(
+            "runtime_closure.final_user_report_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="final_user_report_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("run_id", "lifecycle_status", "summary_path", "summary_json_path", "summary_sha256", "displayed_to_user", "written_at"),
+        ),
+        _contract(
+            "runtime_closure.validate_final_user_report_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="validate_final_user_report_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("record",),
+        ),
+        _contract(
+            "runtime_closure.route_display_refresh_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="route_display_refresh_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("run_id", "display_plan_path", "route_state_snapshot_path", "projection_hash", "refreshed_at"),
+        ),
+        _contract(
+            "runtime_closure.validate_route_display_refresh_record",
+            path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
+            symbol="validate_route_display_refresh_record",
+            implements=("runtime_closure.continuation_and_final_report_contract",),
+            external_inputs=("record",),
+        ),
+        _contract(
+            "daemon.run_router_daemon",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="run_router_daemon",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root"),
+            side_effects=("save_run_state",),
+        ),
+        _contract(
+            "daemon.stop_router_daemon",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="stop_router_daemon",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "reason"),
+            side_effects=("save_run_state",),
+        ),
+        _contract(
+            "daemon.acquire_lock",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_acquire_router_daemon_lock",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "run_root", "run_state"),
+            side_effects=("write", "write_json"),
+        ),
+        _contract(
+            "daemon.refresh_lock",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_refresh_router_daemon_lock",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "run_root"),
+            side_effects=("write_json",),
+        ),
+        _contract(
+            "daemon.release_lock",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_release_router_daemon_lock",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "run_root", "reason"),
+            side_effects=("write_json",),
+        ),
+        _contract(
+            "daemon.write_status",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_write_router_daemon_status",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "run_root", "run_state", "lifecycle_status"),
+            side_effects=("write_json",),
+        ),
+        _contract(
+            "daemon.tick",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            symbol="_router_daemon_tick",
+            implements=("daemon.lock_status_queue_contract",),
+            external_inputs=("router", "project_root", "run_root", "run_state", "observe_only"),
+            side_effects=("save_run_state", "update"),
+        ),
+        _contract(
+            "startup_daemon.lock_liveness",
+            path="skills/flowpilot/assets/flowpilot_router_startup_daemon.py",
+            symbol="_router_daemon_lock_liveness",
+            implements=("startup_daemon.lock_liveness_contract",),
+            external_inputs=("lock",),
+        ),
+        _contract(
+            "startup_daemon.heartbeat_monitor",
+            path="skills/flowpilot/assets/flowpilot_router_startup_daemon.py",
+            symbol="_router_daemon_heartbeat_monitor",
+            implements=("startup_daemon.lock_liveness_contract",),
+            external_inputs=("lock", "liveness", "status_exists", "status_ok"),
+        ),
+        _contract(
+            "startup_daemon.lock_is_live",
+            path="skills/flowpilot/assets/flowpilot_router_startup_daemon.py",
+            symbol="_router_daemon_lock_is_live",
+            implements=("startup_daemon.lock_liveness_contract",),
+            external_inputs=("lock",),
         ),
         _contract(
             "test_tier.commands_for_tier",
@@ -1139,6 +1453,77 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
             test_kind=HAPPY,
             covers=("role_output.registry_authority",),
             code_contracts=("role_output.prepare_output_session",),
+        ),
+        _evidence(
+            "source.runtime_closure.records",
+            test_name="test_runtime_closure_external_record_contracts_are_self_validating",
+            path="tests/test_flowpilot_router_boundaries.py",
+            command="python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_closure_external_record_contracts_are_self_validating",
+            test_kind=HAPPY,
+            covers=(
+                "runtime_closure.officer_lifecycle_contract",
+                "runtime_closure.continuation_and_final_report_contract",
+            ),
+            code_contracts=(
+                "runtime_closure.validate_officer_request_record",
+                "runtime_closure.validate_officer_result_record",
+                "runtime_closure.officer_lifecycle_entry_from_request",
+                "runtime_closure.continuation_quarantine_record",
+                "runtime_closure.validate_continuation_quarantine_record",
+                "runtime_closure.final_user_report_record",
+                "runtime_closure.validate_final_user_report_record",
+                "runtime_closure.route_display_refresh_record",
+                "runtime_closure.validate_route_display_refresh_record",
+            ),
+        ),
+        _evidence(
+            "source.daemon.run_stop",
+            test_name="test_router_daemon_observation_initializes_lock_status_and_ledger",
+            path="tests/router_runtime/startup_daemon.py",
+            command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            test_kind=HAPPY,
+            covers=("daemon.lock_status_queue_contract",),
+            code_contracts=("daemon.run_router_daemon", "daemon.stop_router_daemon"),
+        ),
+        _evidence(
+            "source.daemon.tick_bound",
+            test_name="test_router_daemon_tick_stays_bound_when_current_focus_changes",
+            path="tests/router_runtime/startup_daemon.py",
+            command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            test_kind=EDGE,
+            covers=("daemon.lock_status_queue_contract",),
+            code_contracts=("daemon.acquire_lock", "daemon.tick"),
+        ),
+        _evidence(
+            "source.daemon.refresh_lock",
+            test_name="test_router_daemon_refresh_does_not_reactivate_released_lock",
+            path="tests/router_runtime/startup_daemon.py",
+            command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            test_kind=NEGATIVE,
+            covers=("daemon.lock_status_queue_contract",),
+            code_contracts=("daemon.acquire_lock", "daemon.refresh_lock", "daemon.release_lock"),
+        ),
+        _evidence(
+            "source.daemon.status",
+            test_name="test_router_daemon_status_not_active_after_error_lock_or_missing_pid",
+            path="tests/router_runtime/startup_daemon.py",
+            command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+            test_kind=FAILURE,
+            covers=("daemon.lock_status_queue_contract",),
+            code_contracts=("daemon.write_status",),
+        ),
+        _evidence(
+            "source.startup_daemon.liveness",
+            test_name="test_startup_daemon_helpers_belong_to_owner_module",
+            path="tests/test_flowpilot_router_boundaries.py",
+            command="python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_startup_daemon_helpers_belong_to_owner_module",
+            test_kind=HAPPY,
+            covers=("startup_daemon.lock_liveness_contract",),
+            code_contracts=(
+                "startup_daemon.lock_liveness",
+                "startup_daemon.heartbeat_monitor",
+                "startup_daemon.lock_is_live",
+            ),
         ),
         _evidence(
             "source.output.packet",
@@ -1473,6 +1858,17 @@ def _finding_counts(findings: Sequence[dict[str, Any]]) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
+def _finding_counts_by_field(
+    findings: Sequence[dict[str, Any]],
+    field_name: str,
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for finding in findings:
+        value = str(finding.get(field_name, "unknown"))
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
 def _read_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -1605,24 +2001,162 @@ def _diagnostic_gap_codes(surface: dict[str, Any]) -> list[str]:
         and not surface.get("has_external_contract", False)
     ):
         codes.append("internal_only_test")
-    if surface.get("evidence_status") in {"running", "missing_final_artifacts", "stale"}:
+    if surface.get("evidence_status") in STALE_EVIDENCE_STATUSES:
         codes.append("stale_evidence")
     if surface.get("line_count", 0) > int(surface.get("split_threshold", 10**9)):
         codes.append("needs_structure_split")
     return [code for code in DIAGNOSTIC_GAP_CODES if code in codes]
 
 
+def _diagnostic_surface_owner(surface: dict[str, Any]) -> str:
+    owner = surface.get("surface_owner") or surface.get("owner")
+    if owner:
+        return str(owner)
+    kind = str(surface.get("kind", "unknown"))
+    if kind == "test_tier_command":
+        return f"test-tier:{surface.get('tier', 'unknown')}"
+    if kind == "test_tier":
+        return "test-tier"
+    path = str(surface.get("path", ""))
+    if path:
+        stem = Path(path).stem
+        if path.startswith("skills/flowpilot/assets/"):
+            return stem
+        if path.startswith("scripts/"):
+            return f"script:{stem}"
+        if path.startswith("simulations/"):
+            return f"model-check:{stem}"
+    return str(surface.get("name", surface.get("surface_id", "unknown")))
+
+
+def _diagnostic_release_relevance(surface: dict[str, Any]) -> str:
+    relevance = surface.get("release_relevance")
+    if relevance:
+        return str(relevance)
+    kind = str(surface.get("kind", "unknown"))
+    path = str(surface.get("path", ""))
+    stem = Path(path).stem if path else str(surface.get("name", ""))
+    if surface.get("tier") == "legacy-full" or str(surface.get("name", "")).startswith(
+        ("meta_legacy", "capability_legacy")
+    ):
+        return "legacy_validation"
+    release_scripts = {
+        "audit_local_install_sync",
+        "check_install",
+        "check_public_release",
+        "install_flowpilot",
+        "run_test_tier",
+    }
+    if surface.get("release_only") or stem in release_scripts:
+        return "release_gate"
+    if kind in {"test_tier", "test_tier_command", "model_check_runner"}:
+        return "validation_gate"
+    if kind in {"compatibility_facade", "owner_module"}:
+        return "runtime_contract"
+    if kind == "script_entrypoint":
+        return "public_cli"
+    return "maintenance"
+
+
+def _diagnostic_repair_type(code: str, surface: dict[str, Any]) -> str:
+    if code == "needs_structure_split" and surface.get("structure_split_status") == "deferred":
+        return "defer_structure_split"
+    if code == "stale_evidence" and surface.get("evidence_status") == "release_local_only":
+        return "rerun_public_release_evidence"
+    if code == "stale_evidence" and surface.get("evidence_status") == "failed":
+        return "fix_failing_background_evidence"
+    if code == "stale_evidence" and surface.get("evidence_status") in {
+        "incomplete",
+        "missing_final_artifacts",
+        "progress_only",
+        "running",
+        "stale",
+    }:
+        return "complete_background_evidence"
+    return DIAGNOSTIC_REPAIR_TYPES.get(code, "inspect_gap")
+
+
+def _diagnostic_severity(code: str, surface: dict[str, Any]) -> str:
+    relevance = str(surface.get("release_relevance", _diagnostic_release_relevance(surface)))
+    kind = str(surface.get("kind", "unknown"))
+    if code == "missing_code":
+        return "critical"
+    if code == "stale_evidence" and relevance in {"release_gate", "validation_gate"}:
+        return "critical"
+    if code == "missing_test" and relevance in {"release_gate", "validation_gate"}:
+        return "high"
+    if code in {"missing_model", "internal_only_test"} and kind in {
+        "compatibility_facade",
+        "owner_module",
+        "script_entrypoint",
+    }:
+        return "high"
+    if code == "needs_structure_split":
+        return "medium"
+    if code == "extra_code":
+        return "low"
+    return "medium"
+
+
+def _diagnostic_priority_score(code: str, surface: dict[str, Any]) -> int:
+    severity = _diagnostic_severity(code, surface)
+    relevance = str(surface.get("release_relevance", _diagnostic_release_relevance(surface)))
+    code_order = {
+        "missing_code": 0,
+        "stale_evidence": 1,
+        "missing_test": 2,
+        "internal_only_test": 3,
+        "missing_model": 4,
+        "needs_structure_split": 5,
+        "extra_code": 6,
+    }
+    release_boost = {
+        "release_gate": 0,
+        "validation_gate": 2,
+        "runtime_contract": 4,
+        "public_cli": 6,
+        "maintenance": 8,
+        "legacy_validation": 12,
+    }.get(relevance, 8)
+    return (
+        DIAGNOSTIC_SEVERITY_SCORE.get(severity, 99)
+        + release_boost
+        + code_order.get(code, 20)
+    )
+
+
+def _diagnostic_dedupe_key(code: str, surface: dict[str, Any]) -> str:
+    owner = str(surface.get("surface_owner", _diagnostic_surface_owner(surface)))
+    repair_type = _diagnostic_repair_type(code, surface)
+    return f"{owner}|{repair_type}|{code}"
+
+
 def _finalize_surface(surface: dict[str, Any]) -> dict[str, Any]:
     surface = dict(surface)
+    surface["surface_owner"] = _diagnostic_surface_owner(surface)
+    surface["release_relevance"] = _diagnostic_release_relevance(surface)
     gap_codes = _diagnostic_gap_codes(surface)
     surface["gap_codes"] = gap_codes
     surface["covered"] = not gap_codes
+    surface["repair_types"] = sorted(
+        {_diagnostic_repair_type(code, surface) for code in gap_codes}
+    )
+    surface["max_severity"] = (
+        min(
+            (_diagnostic_severity(code, surface) for code in gap_codes),
+            key=lambda item: DIAGNOSTIC_SEVERITY_SCORE.get(item, 99),
+        )
+        if gap_codes
+        else "none"
+    )
     return surface
 
 
 def _surface_findings(surface: dict[str, Any]) -> list[dict[str, Any]]:
     findings = []
     for code in surface["gap_codes"]:
+        repair_type = _diagnostic_repair_type(code, surface)
+        severity = _diagnostic_severity(code, surface)
         findings.append(
             {
                 "code": code,
@@ -1630,10 +2164,67 @@ def _surface_findings(surface: dict[str, Any]) -> list[dict[str, Any]]:
                 "kind": surface["kind"],
                 "path": surface.get("path", ""),
                 "name": surface.get("name", surface["surface_id"]),
+                "surface_owner": surface["surface_owner"],
+                "release_relevance": surface["release_relevance"],
+                "repair_type": repair_type,
+                "severity": severity,
+                "dedupe_key": _diagnostic_dedupe_key(code, surface),
+                "priority_score": _diagnostic_priority_score(code, surface),
                 "message": _diagnostic_message(code, surface),
             }
         )
     return findings
+
+
+def _actionable_summary(findings: Sequence[dict[str, Any]], *, limit: int = 40) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for finding in sorted(
+        findings,
+        key=lambda item: (
+            int(item.get("priority_score", 999)),
+            str(item.get("path", "")),
+            str(item.get("surface_id", "")),
+        ),
+    ):
+        key = str(finding["dedupe_key"])
+        group = grouped.get(key)
+        if group is None:
+            group = {
+                "dedupe_key": key,
+                "severity": finding["severity"],
+                "surface_owner": finding["surface_owner"],
+                "release_relevance": finding["release_relevance"],
+                "repair_type": finding["repair_type"],
+                "primary_code": finding["code"],
+                "priority_score": finding["priority_score"],
+                "message": finding["message"],
+                "finding_count": 0,
+                "gap_codes": [],
+                "surface_ids": [],
+                "paths": [],
+            }
+            grouped[key] = group
+        group["finding_count"] += 1
+        if finding["code"] not in group["gap_codes"]:
+            group["gap_codes"].append(finding["code"])
+        if finding["surface_id"] not in group["surface_ids"]:
+            group["surface_ids"].append(finding["surface_id"])
+        path = finding.get("path", "")
+        if path and path not in group["paths"]:
+            group["paths"].append(path)
+    for group in grouped.values():
+        group["gap_codes"] = sorted(group["gap_codes"])
+        group["surface_ids"] = group["surface_ids"][:12]
+        group["paths"] = group["paths"][:8]
+    return sorted(
+        grouped.values(),
+        key=lambda item: (
+            int(item["priority_score"]),
+            str(item["surface_owner"]),
+            str(item["repair_type"]),
+            str(item["primary_code"]),
+        ),
+    )[:limit]
 
 
 def _diagnostic_message(code: str, surface: dict[str, Any]) -> str:
@@ -1649,7 +2240,8 @@ def _diagnostic_message(code: str, surface: dict[str, Any]) -> str:
     if code == "internal_only_test":
         return f"{name} has tests or mentions but no source-level external contract binding"
     if code == "stale_evidence":
-        return f"{name} has running, stale, or incomplete background evidence"
+        status = surface.get("evidence_status", "unknown")
+        return f"{name} has non-final background evidence status: {status}"
     if code == "needs_structure_split":
         return (
             f"{name} has {surface.get('line_count', 0)} lines, above the "
@@ -1689,6 +2281,47 @@ def _command_contains_model_runner(command: Sequence[str]) -> bool:
     )
 
 
+def _background_evidence_for_command(
+    run_test_tier: Any,
+    command: Any,
+    *,
+    tier: str,
+) -> dict[str, Any]:
+    names = BACKGROUND_COMMAND_ARTIFACT_ALIASES.get(command.name, (command.name,))
+    inspected: list[dict[str, Any]] = []
+    preferred: dict[str, Any] | None = None
+    for root in BACKGROUND_ARTIFACT_ROOTS:
+        for name in names:
+            evidence = run_test_tier.classify_background_artifact(
+                root,
+                name,
+                command=command,
+                tier=tier,
+            )
+            evidence["artifact_root"] = _repo_path(str(root.relative_to(ROOT))) if root.is_relative_to(ROOT) else str(root)
+            evidence["artifact_name"] = name
+            inspected.append(evidence)
+            if evidence["status"] not in {"incomplete", "missing_final_artifacts"}:
+                preferred = evidence
+                break
+        if preferred is not None:
+            break
+    if preferred is None:
+        preferred = {
+            "name": command.name,
+            "status": "missing_final_artifacts",
+            "execution_status": "missing_final_artifacts",
+            "ok": False,
+            "proof_scope": "unknown",
+            "reasons": ["no_final_background_artifacts_found"],
+            "artifacts": {},
+        }
+    return {
+        "selected": preferred,
+        "inspected": inspected,
+    }
+
+
 def _test_tier_command_surfaces(
     *,
     model_text: str,
@@ -1722,32 +2355,38 @@ def _test_tier_command_surfaces(
         for command in commands:
             command_text = " ".join(command.command)
             evidence_status = "passed"
+            background_evidence: dict[str, Any] | None = None
             if command.background_recommended or command.long_running:
-                evidence_status = "missing_final_artifacts"
-            has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
-            surfaces.append(
-                _finalize_surface(
-                    {
-                        "surface_id": f"tier-command:{tier}:{command.name}",
-                        "kind": "test_tier_command",
-                        "name": command.name,
-                        "path": "scripts/run_test_tier.py",
-                        "tier": tier,
-                        "command": list(command.command),
-                        "has_model": tier_surface["has_model"] or command.name in model_text or command.name in test_text,
-                        "has_code": _command_references_exist(command.command),
-                        "has_test": has_validation_target or command.name in test_text,
-                        "has_external_contract": tier_surface["has_external_contract"],
-                        "evidence_status": evidence_status,
-                        "line_count": 1,
-                        "split_threshold": 999,
-                        "long_running": command.long_running,
-                        "release_only": command.release_only,
-                        "background_recommended": command.background_recommended,
-                        "command_text": command_text,
-                    }
+                background_evidence = _background_evidence_for_command(
+                    run_test_tier,
+                    command,
+                    tier=tier,
                 )
-            )
+                evidence_status = str(background_evidence["selected"]["status"])
+            has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
+            surface = {
+                "surface_id": f"tier-command:{tier}:{command.name}",
+                "kind": "test_tier_command",
+                "name": command.name,
+                "path": "scripts/run_test_tier.py",
+                "tier": tier,
+                "command": list(command.command),
+                "has_model": tier_surface["has_model"] or command.name in model_text or command.name in test_text,
+                "has_code": _command_references_exist(command.command),
+                "has_test": has_validation_target or command.name in test_text,
+                "has_external_contract": tier_surface["has_external_contract"],
+                "evidence_status": evidence_status,
+                "line_count": 1,
+                "split_threshold": 999,
+                "long_running": command.long_running,
+                "release_only": command.release_only,
+                "background_recommended": command.background_recommended,
+                "command_text": command_text,
+            }
+            if background_evidence is not None:
+                surface["background_evidence"] = background_evidence
+                surface["proof_scope"] = background_evidence["selected"].get("proof_scope", "unknown")
+            surfaces.append(_finalize_surface(surface))
     return surfaces
 
 
@@ -1763,13 +2402,21 @@ def _asset_surfaces(
         stem = path.stem
         summary = _python_summary(path)
         kind = _surface_kind_for_asset(stem, summary)
-        has_external_contract = rel_path in source_contract_paths
+        surface_id = f"asset:{stem}"
+        split_repair = dict(STRUCTURE_SPLIT_REPAIR_PLAN.get(stem, {}))
+        if split_repair:
+            split_repair.setdefault("recent_owner_context", list(RECENT_OWNER_MODULE_POLISH_COMMITS))
+            split_repair.setdefault("structure_split_status", "deferred")
+        has_external_contract = (
+            rel_path in source_contract_paths
+            or surface_id in FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS
+        )
         has_model = has_external_contract or _surface_mentions(model_text, rel_path, stem)
         has_test = has_external_contract or _surface_mentions(test_text, rel_path, stem)
         surfaces.append(
             _finalize_surface(
                 {
-                    "surface_id": f"asset:{stem}",
+                    "surface_id": surface_id,
                     "kind": kind,
                     "name": stem,
                     "path": rel_path,
@@ -1784,6 +2431,7 @@ def _asset_surfaces(
                     "top_level_class_count": len(summary["top_level_classes"]),
                     "local_import_count": len(summary["local_imports"]),
                     "parse_error": summary["parse_error"],
+                    **split_repair,
                 }
             )
         )
@@ -1798,6 +2446,7 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
         summary = _python_summary(path)
         has_model = _surface_mentions(model_text, rel_path, stem)
         has_test = _surface_mentions(test_text, rel_path, stem)
+        has_external_contract = stem in SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS and has_test
         surfaces.append(
             _finalize_surface(
                 {
@@ -1808,7 +2457,7 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
                     "has_model": has_model,
                     "has_code": path.exists() and not bool(summary["parse_error"]),
                     "has_test": has_test,
-                    "has_external_contract": False,
+                    "has_external_contract": has_external_contract,
                     "evidence_status": "passed",
                     "line_count": summary["line_count"],
                     "split_threshold": _surface_threshold("script_entrypoint"),
@@ -1902,6 +2551,24 @@ def _full_diagnostic_known_bad_cases() -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "local_only_release_proof",
+            "expected_codes": ["stale_evidence"],
+            "surface": {
+                "surface_id": "synthetic:local_only_release",
+                "kind": "test_tier_command",
+                "name": "local_only_release",
+                "path": "scripts/run_test_tier.py",
+                "has_model": True,
+                "has_code": True,
+                "has_test": True,
+                "has_external_contract": True,
+                "evidence_status": "release_local_only",
+                "line_count": 1,
+                "split_threshold": 999,
+                "release_only": True,
+            },
+        },
+        {
             "name": "broad_unsplit_module",
             "expected_codes": ["needs_structure_split"],
             "surface": {
@@ -1962,23 +2629,15 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
     for surface in surfaces:
         kind = str(surface["kind"])
         surface_counts[kind] = surface_counts.get(kind, 0) + 1
-    actionability_order = {
-        "missing_code": 0,
-        "missing_test": 1,
-        "missing_model": 2,
-        "internal_only_test": 3,
-        "needs_structure_split": 4,
-        "extra_code": 5,
-        "stale_evidence": 6,
-    }
     actionable_findings = sorted(
         findings,
         key=lambda item: (
-            actionability_order.get(str(item["code"]), 99),
+            int(item.get("priority_score", 999)),
             str(item["path"]),
             str(item["surface_id"]),
         ),
     )
+    actionable_summary = _actionable_summary(findings)
     return {
         "ok": all(item["ok"] for item in known_bad),
         "result_type": "flowpilot_full_model_test_code_diagnostic",
@@ -1989,8 +2648,12 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
         "covered_surface_count": sum(1 for surface in surfaces if surface["covered"]),
         "gap_surface_count": sum(1 for surface in surfaces if surface["gap_codes"]),
         "gap_counts": _finding_counts(findings),
+        "gap_counts_by_severity": _finding_counts_by_field(findings, "severity"),
+        "gap_counts_by_repair_type": _finding_counts_by_field(findings, "repair_type"),
+        "gap_counts_by_release_relevance": _finding_counts_by_field(findings, "release_relevance"),
         "findings": findings,
         "actionable_findings": actionable_findings[:80],
+        "actionable_summary": actionable_summary,
         "surfaces": surfaces,
         "known_bad_ok": all(item["ok"] for item in known_bad),
         "known_bad_sanity_checks": known_bad,

@@ -31,8 +31,14 @@ import flowpilot_router_route as router_route  # noqa: E402
 import flowpilot_router_runtime_state as runtime_state  # noqa: E402
 import flowpilot_router_startup_daemon as startup_daemon  # noqa: E402
 import flowpilot_router_terminal as terminal_helpers  # noqa: E402
+import flowpilot_router_terminal_ledger as terminal_ledger  # noqa: E402
 import flowpilot_router_work_packets as work_packets  # noqa: E402
 import flowpilot_router_work_packets_pm_role as work_packets_pm_role  # noqa: E402
+import flowpilot_runtime_closure as runtime_closure  # noqa: E402
+import packet_runtime  # noqa: E402
+import packet_runtime_paths  # noqa: E402
+import packet_runtime_relay  # noqa: E402
+import packet_runtime_schema  # noqa: E402
 
 
 class FlowPilotRouterBoundaryTests(unittest.TestCase):
@@ -171,6 +177,17 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
 
     def test_startup_daemon_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA, "flowpilot.router_daemon_lock.v1")
+        liveness = startup_daemon._router_daemon_lock_liveness(
+            {
+                "schema_version": startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA,
+                "status": "active",
+                "last_tick_at": "2026-05-18T00:00:00Z",
+                "stale_after_seconds": 60,
+                "owner": {"pid": 0, "process_name": "boundary-test"},
+            }
+        )
+        self.assertFalse(startup_daemon._router_daemon_lock_is_live({}))
+        self.assertIn("owner_process_not_live", liveness["reasons"])
         monitor = startup_daemon._router_daemon_heartbeat_monitor(
             {"status": "active"},
             {"schema_ok": True, "status_active": True, "process_live": True, "age_seconds": 0},
@@ -322,6 +339,27 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                     getattr(controller_scheduler_receipts, name),
                 )
 
+    def test_packet_runtime_facade_exports_child_owner_contract_symbols(self) -> None:
+        expected_owner_by_export = {
+            "PacketRuntimeError": packet_runtime_schema,
+            "PACKET_IDENTITY_MARKER": packet_runtime_schema,
+            "RESULT_IDENTITY_MARKER": packet_runtime_schema,
+            "ROLE_PACKET_SESSION_SCHEMA": packet_runtime_schema,
+            "RESULT_REVIEW_SESSION_SCHEMA": packet_runtime_schema,
+            "CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA": packet_runtime_schema,
+            "load_envelope": packet_runtime_paths,
+            "validate_packet_ready_for_direct_relay": packet_runtime_relay,
+            "validate_result_ready_for_reviewer_relay": packet_runtime_relay,
+            "verify_controller_relay": packet_runtime_relay,
+            "verify_packet_open_receipt": packet_runtime_relay,
+            "verify_router_startup_release": packet_runtime_relay,
+        }
+
+        for name, owner_module in expected_owner_by_export.items():
+            with self.subTest(name=name):
+                self.assertIn(name, packet_runtime.__all__)
+                self.assertIs(getattr(packet_runtime, name), getattr(owner_module, name))
+
     def test_pm_role_work_facade_exports_child_owner_symbols(self) -> None:
         for name in work_packets_pm_role.__all__:
             with self.subTest(name=name):
@@ -330,6 +368,101 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                     getattr(work_packets, name),
                     getattr(work_packets_pm_role, name),
                 )
+
+    def test_terminal_ledger_facade_exports_router_symbols(self) -> None:
+        for name in terminal_ledger.__all__:
+            with self.subTest(name=name):
+                self.assertTrue(hasattr(terminal_ledger, name), name)
+                self.assertTrue(callable(getattr(router, name)), name)
+                self.assertTrue(callable(getattr(terminal_ledger, name)), name)
+
+    def test_runtime_closure_external_record_contracts_are_self_validating(self) -> None:
+        officer_request = {
+            "request_id": "officer-1",
+            "packet_id": "packet-1",
+            "requested_by_role": "project_manager",
+            "to_role": "process_flowguard_officer",
+            "process_kind": "officer_model_report",
+            "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
+            "packet_type": "officer_request",
+            "status": "registered",
+            "strict_process_contract_binding": True,
+            "required_result_next_recipient": "project_manager",
+            "controller_may_read_packet_body": False,
+            "process_contract_binding": {
+                "process_kind": "officer_model_report",
+                "packet_type": "officer_request",
+                "required_result_next_recipient": "project_manager",
+            },
+            "packet_envelope_path": "packets/officer-1.envelope.json",
+            "packet_body_path": "packets/officer-1.body.md",
+            "packet_body_hash": "body-hash",
+            "result_envelope_path": "results/officer-1.result.json",
+            "result_body_path": "results/officer-1.result.md",
+        }
+        officer_result = {
+            "packet_id": "packet-1",
+            "completed_by_role": "process_flowguard_officer",
+            "next_recipient": "project_manager",
+            "result_body_path": "results/officer-1.result.md",
+            "result_body_hash": "result-hash",
+        }
+
+        self.assertEqual(runtime_closure.validate_officer_request_record(officer_request), [])
+        self.assertEqual(runtime_closure.validate_officer_result_record(officer_request, officer_result), [])
+        lifecycle_entry = runtime_closure.officer_lifecycle_entry_from_request(
+            officer_request,
+            now="2026-05-18T00:00:00Z",
+        )
+        self.assertTrue(lifecycle_entry["validation_passed"])
+        self.assertFalse(lifecycle_entry["controller_may_read_packet_body"])
+
+        quarantine = runtime_closure.continuation_quarantine_record(
+            run_id="run-current",
+            run_root=".flowpilot/runs/run-current",
+            current_pointer={
+                "current_run_id": "run-current",
+                "current_run_root": ".flowpilot/runs/run-current",
+            },
+            run_index={
+                "runs": [
+                    {
+                        "run_id": "run-old",
+                        "run_root": ".flowpilot/runs/run-old",
+                        "status": "closed",
+                    }
+                ]
+            },
+            created_at="2026-05-18T00:00:00Z",
+        )
+        self.assertEqual(runtime_closure.validate_continuation_quarantine_record(quarantine), [])
+        self.assertFalse(quarantine["prior_run_files_are_evidence_by_default"])
+
+        final_report = runtime_closure.final_user_report_record(
+            run_id="run-current",
+            lifecycle_status="closed",
+            summary_path="final_summary.md",
+            summary_json_path="final_summary.json",
+            summary_sha256="abc",
+            displayed_to_user=True,
+            written_at="2026-05-18T00:00:00Z",
+        )
+        self.assertEqual(runtime_closure.validate_final_user_report_record(final_report), [])
+        self.assertFalse(final_report["controller_may_continue_route_work"])
+
+        route_refresh = runtime_closure.route_display_refresh_record(
+            run_id="run-current",
+            display_plan_path="display_plan.json",
+            route_state_snapshot_path="route_state_snapshot.json",
+            route_state_snapshot_hash="snapshot-hash",
+            projection_hash="projection-hash",
+            route_sign_markdown_path="route_sign.md",
+            route_sign_mermaid_sha256="mermaid-hash",
+            display_kind="chat",
+            refreshed_at="2026-05-18T00:00:00Z",
+        )
+        self.assertEqual(runtime_closure.validate_route_display_refresh_record(route_refresh), [])
+        self.assertFalse(route_refresh["display_is_route_authority"])
 
     def test_route_domain_helpers_are_available_in_route_owner(self) -> None:
         self.assertTrue(callable(router_route.route_payload_from_reviewed_draft))

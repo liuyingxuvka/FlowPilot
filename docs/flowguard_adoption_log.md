@@ -15064,3 +15064,49 @@ Skipped steps:
 
 ### Next Actions
 - Add source-contract rows for packet_runtime facade, terminal closure, daemon lock/status, run_test_tier background machinery, and high-value model-check runners before claiming full coverage.
+
+## flowpilot-prioritize-full-diagnostic-gap-closure-2026-05-18 - Prioritize model-code-test diagnostic gap closure
+
+- Project: FlowPilot
+- Trigger reason: User asked to execute the remaining five phases of the FlowPilot model/code/test diagnostic plan with OpenSpec, FlowGuard, local install sync, background regression, and local git synchronization.
+- Status: completed
+- Skill decision: use_flowguard:model_test_alignment+structure_mesh+test_mesh diagnostics
+- OpenSpec change: prioritize-full-diagnostic-gap-closure
+- FlowGuard schema: 1.0
+
+### Model Files
+- simulations/run_flowpilot_model_test_alignment_checks.py
+- simulations/flowpilot_model_test_alignment_results.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `openspec validate "prioritize-full-diagnostic-gap-closure" --strict`
+- OK: `python -m unittest tests.test_flowpilot_model_test_alignment tests.test_flowpilot_router_boundaries tests.test_flowpilot_cli_entrypoints`
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py -q`
+- OK: `python -m py_compile simulations\\run_flowpilot_model_test_alignment_checks.py scripts\\run_test_tier.py tests\\test_flowpilot_model_test_alignment.py tests\\test_flowpilot_router_boundaries.py tests\\test_flowpilot_cli_entrypoints.py tests\\test_flowpilot_test_tiers.py skills\\flowpilot\\assets\\packet_runtime.py`
+- OK: `python simulations\\run_flowpilot_model_test_alignment_checks.py --json-out simulations\\flowpilot_model_test_alignment_results.json`
+- OK: `python scripts\\run_test_tier.py --tier fast --background --background-dir tmp\\flowguard_background_prioritize_full_diagnostic_gap_closure_fast --json`
+- OK: `python scripts\\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\\install_flowpilot.py --check --json`
+- OK: `python scripts\\audit_local_install_sync.py --json`
+
+### Findings
+- Full diagnostic inventory now covers 459 surfaces; 27 are covered and 432 still report at least one diagnostic gap.
+- Gap categories are now prioritized by severity, repair type, release relevance, owner surface, and dedupe key instead of a flat code list.
+- The top critical gap is release proof scope: `public_release_check` has local-only evidence when `--skip-url-check` is used.
+- Packet runtime facade parity, runtime closure, daemon lock/status, and public CLI entrypoints now have direct external-contract evidence in focused tests.
+- Broad structure split candidates remain reported as actionable repair items when they overlap recent owner-module polish or peer-agent work.
+
+### Counterexamples
+- source_contract_points_at_import_only_facade
+- progress_only_background_evidence_claimed_as_pass
+- release_skip_url_check_claimed_as_public_proof
+- broad_structure_split_overlaps_recent_owner_polish
+
+### Friction Points
+- Several background artifacts in historical roots are useful diagnostic evidence but not final proof; the classifier must distinguish failed, running, stale, progress-only, and local-only evidence.
+- Source-contract diagnostics should point at real owner function definitions; facade parity is a separate external contract surface.
+
+### Next Actions
+- Use the actionable summary to burn down high-priority release-gate and validation-gate gaps before claiming full FlowPilot coverage.
+- Rerun public release evidence without `--skip-url-check` before treating release URL availability as proven.

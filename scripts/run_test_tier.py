@@ -130,6 +130,11 @@ FAST_COMMANDS = (
         "tests/test_flowpilot_maintenance_tools.py",
         description="Small maintenance-tool regression tests.",
     ),
+    _pytest(
+        "cli_entrypoint_tests",
+        "tests/test_flowpilot_cli_entrypoints.py",
+        description="Fast public CLI entrypoint smoke tests.",
+    ),
 )
 
 ROUTER_PARENT_COMMANDS = (
@@ -843,6 +848,110 @@ def _read_exit_code(path: Path) -> int | None:
         return 1
 
 
+def _read_background_meta(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    if not path.exists():
+        return None, "missing_meta"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return None, f"invalid_meta:{type(exc).__name__}"
+    if not isinstance(payload, dict):
+        return None, "invalid_meta:not_object"
+    return payload, None
+
+
+def _artifact_has_progress(paths: MappingLike) -> bool:
+    for key in ("out", "err", "combined"):
+        path = paths.get(key)
+        if not isinstance(path, Path) or not path.exists():
+            continue
+        try:
+            if path.read_text(encoding="utf-8", errors="replace").strip():
+                return True
+        except OSError:
+            continue
+    return False
+
+
+def _release_local_only_proof(
+    *,
+    command: TierCommand | None,
+    tier: str,
+    meta: MappingLike | None,
+) -> bool:
+    command_parts: list[str] = []
+    if command is not None:
+        command_parts.extend(command.command)
+    if isinstance(meta, dict):
+        meta_command = meta.get("command")
+        if isinstance(meta_command, list):
+            command_parts.extend(str(part) for part in meta_command)
+        if meta.get("proof_scope") == "local_only" or meta.get("local_only") is True:
+            return True
+    command_text = " ".join(command_parts)
+    return bool(
+        "--skip-url-check" in command_parts
+        or "--skip-url-check" in command_text
+    )
+
+
+def classify_background_artifact(
+    log_root: Path,
+    name: str,
+    *,
+    command: TierCommand | None = None,
+    tier: str = "",
+) -> dict[str, Any]:
+    paths = artifact_paths(log_root, name)
+    meta, meta_error = _read_background_meta(paths["meta"])
+    exit_code = _read_exit_code(paths["exit"])
+    progress_seen = _artifact_has_progress(paths)
+    reasons: list[str] = []
+    raw_status = str((meta or {}).get("status") or "")
+
+    if meta_error:
+        reasons.append(meta_error)
+    if exit_code is None:
+        reasons.append("missing_exit")
+
+    if meta is not None and raw_status == "running" and exit_code is None:
+        status = "running"
+    elif exit_code is None and progress_seen:
+        status = "progress_only"
+    elif exit_code is None:
+        status = "incomplete"
+    elif meta is not None and raw_status == "running":
+        status = "stale"
+        reasons.append("running_meta_with_exit_artifact")
+    elif exit_code != 0 or raw_status == "failed":
+        status = "failed"
+    elif meta is None:
+        status = "incomplete"
+    elif raw_status in {"passed", "pass"}:
+        status = "passed"
+    else:
+        status = "incomplete"
+        reasons.append(f"unexpected_meta_status:{raw_status or 'missing'}")
+
+    local_only = _release_local_only_proof(command=command, tier=tier, meta=meta)
+    if status == "passed" and local_only:
+        status = "release_local_only"
+        reasons.append("release_url_check_skipped_or_release_only_tier")
+
+    return {
+        "name": name,
+        "status": status,
+        "execution_status": "passed" if status in {"passed", "release_local_only"} else status,
+        "ok": status in {"passed", "release_local_only"},
+        "exit_code": exit_code,
+        "meta_status": raw_status or None,
+        "progress_seen": progress_seen,
+        "proof_scope": "local_only" if local_only else "full",
+        "reasons": reasons,
+        "artifacts": {key: str(path) for key, path in paths.items()},
+    }
+
+
 def next_background_launch_index(
     pending: Sequence[TierCommand],
     running: Sequence[TierCommand],
@@ -966,14 +1075,27 @@ def run_background_supervisor(
                     if exit_code is None:
                         still_running.append(command)
                         continue
-                    result = {"name": command.name, "exit_code": exit_code, "ok": exit_code == 0}
+                    evidence = classify_background_artifact(
+                        log_root,
+                        command.name,
+                        command=command,
+                        tier=tier,
+                    )
+                    result = {
+                        "name": command.name,
+                        "exit_code": exit_code,
+                        "ok": bool(evidence["ok"]),
+                        "evidence_status": evidence["status"],
+                        "proof_scope": evidence["proof_scope"],
+                        "reasons": evidence["reasons"],
+                    }
                     completed.append(result)
-                    line = f"completed {command.name} exit={exit_code}\n"
+                    line = f"completed {command.name} exit={exit_code} evidence={evidence['status']}\n"
                     out_file.write(line)
                     out_file.flush()
                     combined_file.write(f"[supervisor] {line}")
                     combined_file.flush()
-                    if exit_code != 0:
+                    if not result["ok"]:
                         err_file.write(line)
                         err_file.flush()
                 running = still_running

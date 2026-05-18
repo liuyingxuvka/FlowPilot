@@ -30,7 +30,8 @@ The runner has three layers:
   inventories owner modules, compatibility facades, script entrypoints,
   model-check runners, and test tiers, then reports missing-model,
   missing-test, extra-code, internal-only-test, stale-evidence, and
-  needs-structure-split gaps.
+  needs-structure-split gaps with owner, severity, release relevance, repair
+  type, dedupe, and priority metadata.
 
 The source-contract audit is intentionally narrower than the declaration table.
 It proves that critical externally visible Python surfaces are not merely
@@ -41,6 +42,37 @@ The full diagnostic layer is intentionally allowed to find gaps while the
 runner exits successfully. `full_diagnostic_ok` means the diagnostic machinery
 and its known-bad cases are working. `full_coverage_ok` is the release-style
 coverage claim and remains false until every inventoried surface is covered.
+
+Each full-diagnostic gap carries triage metadata so maintenance can be planned
+without rereading every large script. The key fields are:
+
+- `severity`: critical, high, medium, or low.
+- `surface_owner`: the module, script, tier, or model runner that owns the
+  repair.
+- `release_relevance`: whether the gap blocks release tooling, validation,
+  runtime contracts, public CLI behavior, legacy validation, or maintenance
+  only.
+- `repair_type`: the next repair class, such as adding external-contract tests,
+  completing background evidence, rerunning public release evidence, or
+  deferring a StructureMesh split.
+- `dedupe_key` and `priority_score`: stable grouping and ordering fields for
+  turning many raw rows into an actionable queue.
+
+Background evidence is treated conservatively. Final pass, failed, running,
+stale, incomplete, progress-only, and local-only release proof states are read
+from the stable artifact contract. A progress log alone never counts as passing
+evidence, and a `--skip-url-check` public release proof is marked
+`release_local_only` until a full public boundary check is rerun.
+
+Structure-split findings distinguish immediate code movement from deliberately
+deferred owner-module work. Fresh or state-ordering-sensitive modules may remain
+above the line threshold, but they are still recorded as actionable
+`defer_structure_split` rows with owner, reason, safety status, and recommended
+next action metadata.
+
+The `legacy-full` tier is kept visible as legacy validation history but is not
+ranked as the current release gate. Current release confidence comes from the
+thin/layered Meta and Capability checks.
 
 For source-audited evidence, `TestEvidence.path` points to the file containing
 the real test function or class definition. The `command` may still be a public
@@ -77,7 +109,8 @@ The runner prints a JSON payload with:
 - `full_coverage_ok`: true only when the full diagnostic has no current gap
   findings. This is intentionally separate from `ok`.
 - `full_model_test_code_diagnostic`: surface counts, gap counts, per-surface
-  rows, actionable findings, and full-diagnostic known-bad results.
+  rows, actionable findings, deduplicated actionable summary, counts by
+  severity/repair/release relevance, and full-diagnostic known-bad results.
 - `per_plan`: one entry per family, including the serialized
   `ModelTestAlignmentPlan`, the FlowGuard report, model-check commands, and
   the coverage boundary.
@@ -119,6 +152,7 @@ The full diagnostic layer adds these synthetic bad cases:
 | Orphan code surface | `missing_model`, `missing_test`, `extra_code` |
 | Wrapper-only evidence | `internal_only_test` |
 | Progress-only background evidence | `stale_evidence` |
+| Local-only release proof | `stale_evidence` with `rerun_public_release_evidence` |
 | Broad unsplit module | `needs_structure_split` |
 
 These sanity checks are intentionally separate from the main alignment table.
