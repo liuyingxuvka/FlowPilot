@@ -131,6 +131,10 @@ workflow fact and must reconcile the receipt before route progress is counted.
 Use `foreground_required_mode` as the plain stop-check answer:
 `process_controller_action` means do the queued Controller work;
 `watch_router_daemon` means run the patrol timer command and wait for its
-output; terminal status with `controller_stop_allowed: true` is the only normal
-condition for ending foreground Controller because FlowPilot is no longer
-running.
+output; `return_for_user_input` or `user_status_update_allowed` means report or
+handle the nonterminal user-facing duty, not stop the Controller role. Terminal
+status with `controller_stop_allowed: true` is the only normal condition for
+ending foreground Controller because FlowPilot is no longer running. The current
+status summary is display-only; stale `next_step` or completed display action
+projections never override Router daemon status plus the Controller action
+ledger.

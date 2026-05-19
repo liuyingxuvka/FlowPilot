@@ -773,6 +773,11 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(standby["controller_must_process_pending_action_before_exit"])
         self.assertFalse(standby["foreground_exit_allowed"])
         self.assertFalse(standby["controller_stop_allowed"])
+        self.assertFalse(standby["user_status_update_allowed"])
+        self.assertTrue(standby["controller_patrol_required"])
+        self.assertTrue(standby["foreground_turn_return_is_not_controller_stop"])
+        self.assertFalse(standby["final_answer_preflight"]["final_answer_allowed"])
+        self.assertTrue(standby["final_answer_preflight"]["status_projection_is_not_stop_authority"])
         self.assertEqual(standby["foreground_required_mode"], "watch_router_daemon")
         self.assertEqual(standby["controller_action_ledger"]["pending_action_ids"], [])
         self.assertTrue(standby["exit_policy"]["live_daemon_wait_requires_standby"])
@@ -834,6 +839,10 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(result["command_start_is_completion"])
         self.assertFalse(result["command_restart_is_completion"])
         self.assertEqual(result["monitor_source"], "existing_router_daemon_monitor")
+        self.assertFalse(result["final_answer_preflight"]["final_answer_allowed"])
+        self.assertFalse(result["final_answer_preflight"]["controller_stop_allowed"])
+        self.assertEqual(result["final_answer_preflight"]["continuous_controller_standby_status"], "in_progress")
+        self.assertFalse(result["display_projection_is_stop_authority"])
     def test_controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -904,10 +913,17 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_controller_patrol_timer_allows_terminal_return_only_when_stopped(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
         state = read_json(router.run_state_path(run_root))
         state["status"] = "completed"
         state["pending_action"] = None
         state["daemon_mode_enabled"] = True
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
         router.save_run_state(run_root, state)
 
         patrol = router.controller_patrol_timer(root, seconds=0)
@@ -915,6 +931,37 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(patrol["patrol_result"], "terminal_return")
         self.assertTrue(patrol["controller_stop_allowed"])
         self.assertEqual(patrol["completion_allowed_only_when"], "terminal_return_and_controller_stop_allowed_true")
+        self.assertTrue(patrol["final_answer_preflight"]["final_answer_allowed"])
+        self.assertEqual(patrol["final_answer_preflight"]["continuous_controller_standby_status"], "released")
+    def test_nonterminal_user_status_return_is_not_controller_stop(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = router.make_action(
+            action_type="record_user_request",
+            actor="controller",
+            label="controller_waits_for_user_status_confirmation",
+            summary="Controller waits for a user-facing status confirmation.",
+            extra={"requires_user": True, "requires_payload": "user_request"},
+        )
+        state["daemon_mode_enabled"] = True
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01, bounded_diagnostic=True)
+        patrol = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(standby["standby_state"], "user_input_required")
+        self.assertEqual(standby["foreground_required_mode"], "return_for_user_input")
+        self.assertTrue(standby["foreground_turn_return_allowed"])
+        self.assertTrue(standby["user_status_update_allowed"])
+        self.assertTrue(standby["foreground_turn_return_is_not_controller_stop"])
+        self.assertFalse(standby["foreground_exit_allowed"])
+        self.assertFalse(standby["controller_stop_allowed"])
+        self.assertFalse(standby["final_answer_preflight"]["final_answer_allowed"])
+        self.assertEqual(standby["final_answer_preflight"]["blocked_reason"], "nonterminal_controller_must_stay_attached")
+        self.assertEqual(patrol["patrol_result"], "return_for_user_input")
+        self.assertFalse(patrol["final_answer_preflight"]["final_answer_allowed"])
+        self.assertTrue(patrol["final_answer_preflight"]["user_status_update_is_not_stop_permission"])
     def test_foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
@@ -928,6 +975,9 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(standby["foreground_exit_allowed"])
         self.assertFalse(standby["controller_stop_allowed"])
         self.assertTrue(standby["foreground_turn_return_allowed"])
+        self.assertTrue(standby["foreground_turn_return_is_not_controller_stop"])
+        self.assertTrue(standby["user_status_update_allowed"])
+        self.assertFalse(standby["final_answer_preflight"]["final_answer_allowed"])
         self.assertEqual(standby["foreground_required_mode"], "check_liveness")
         self.assertEqual(standby["router_daemon"]["heartbeat_status"], "check_liveness")
         self.assertFalse(standby["router_daemon"]["monitor_can_decide_recovery"])

@@ -23,6 +23,8 @@ REQUIRED_LABELS = (
     "patrol_reads_existing_router_monitor",
     "patrol_returns_continue_with_anti_exit_rerun_and_wait",
     "controller_reruns_patrol_timer_and_waits_for_next_output",
+    "nonterminal_status_update_return_keeps_controller_attached",
+    "stale_projection_remains_display_only",
     "new_controller_work_arrives_while_timer_waits",
     "patrol_returns_new_controller_work",
     "controller_processes_ready_action_ledger",
@@ -41,6 +43,11 @@ HAZARD_EXPECTED_FAILURES = {
     "rerun_without_waiting": "Controller reran patrol command without waiting for next output",
     "separate_monitor_used": "patrol timer used a separate monitor instead of the existing daemon monitor",
     "router_next_used_as_metronome": "Controller used router next/apply/run-until-wait as the patrol metronome",
+    "nonterminal_status_return_final_answer": "final answer was allowed without terminal controller_stop_allowed preflight",
+    "nonterminal_status_return_closed_foreground": "nonterminal status update closed the foreground Controller",
+    "standby_waiting_final_answer_allowed": "final answer was allowed without terminal controller_stop_allowed preflight",
+    "stale_projection_stop_authority": "stale status summary projection was used as Controller stop authority",
+    "stale_projection_not_display_only": "stale status summary projection was not marked display-only",
 }
 
 
@@ -58,7 +65,11 @@ def _state_id(state: model.State) -> str:
         f"complete_restart={state.command_restart_marked_complete}|"
         f"rerun_started={state.next_command_rerun_started},"
         f"waiting={state.waiting_for_next_output}|closed={state.foreground_closed}|"
-        f"stop_allowed={state.controller_stop_allowed}|next_metronome={state.router_next_used_as_metronome}"
+        f"stop_allowed={state.controller_stop_allowed},status_update={state.user_status_update_allowed},"
+        f"patrol_required={state.controller_patrol_required},final_answer={state.final_answer_allowed}|"
+        f"summary_display_only={state.current_status_summary_display_only},"
+        f"stale_next={state.stale_next_step_projection},summary_stop={state.status_summary_used_as_stop_authority}|"
+        f"next_metronome={state.router_next_used_as_metronome}"
     )
 
 

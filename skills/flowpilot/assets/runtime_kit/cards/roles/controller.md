@@ -105,8 +105,13 @@ Allowed actions:
 - before any final/stop decision, read the status `foreground_required_mode`.
   `process_controller_action` means do the pending Controller action now;
   `watch_router_daemon` means run the patrol timer command and wait for its
-  output; only terminal status with `controller_stop_allowed: true` may end the
-  Controller role;
+  output; `return_for_user_input`, `foreground_turn_return_allowed`, or
+  `user_status_update_allowed` means report status or handle the named
+  nonterminal duty, not stop the Controller role. Only terminal status with
+  `controller_stop_allowed: true` may end the Controller role. The current
+  status summary is display-only; stale `next_step` or completed display
+  action projections never override Router daemon status plus the Controller
+  action ledger;
 - when daemon status shows a live `await_card_return_event`,
   `await_card_bundle_return_event`, or `await_role_decision` and the action
   ledger has no executable Controller action, call the patrol timer command

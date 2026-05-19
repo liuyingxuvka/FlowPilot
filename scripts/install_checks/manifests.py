@@ -129,6 +129,10 @@ def run_checks(result: dict[str, object]) -> None:
             "must not mark the visible plan item done",
             "timeout_still_waiting",
             "diagnostic-only",
+            "user_status_update_allowed",
+            "not stop the Controller role",
+            "status summary is display-only",
+            "stale `next_step`",
             "translating control-plane state",
             "Keep internal Router, action, ledger, packet, ACK, scheduler, receipt, hash",
             "concrete blocker cannot be explained accurately",
@@ -180,6 +184,11 @@ def run_checks(result: dict[str, object]) -> None:
             "ledger, receipt, packet, wait, daemon, ACK, and scheduler terms",
             "plain language first. Use internal names only when the user asks for",
             "concrete blocker needs that name",
+            "user_status_update_allowed",
+            "not Controller stop permission",
+            "Final-answer is allowed only",
+            "status summary is display-only",
+            "stale `next_step`",
         ]
         missing_terms = [term for term in required_terms if term not in source_text]
         ok = not missing_terms

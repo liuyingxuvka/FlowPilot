@@ -139,6 +139,47 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("Reconcile current scope", daemon_status["current_work"]["task_label"])
         self.assertEqual(status_summary["current_work"]["owner_key"], "controller")
         self.assertEqual(status_summary["current_work"]["source"], "controller_action_ledger.passive_waits")
+
+    def test_current_status_summary_marks_stale_pending_projection_display_only(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="write_display_surface_status",
+            actor="controller",
+            label="stale_display_status_projection",
+            summary="Display status action that has already been receipted.",
+            extra={"postcondition": "startup_display_status_written"},
+        )
+        state["pending_action"] = action
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"display_confirmation": {"rendered_to": "chat"}},
+        )
+        router.save_run_state(run_root, state)
+
+        router._write_current_status_summary(run_root, state)  # type: ignore[attr-defined]
+        status_summary = read_json(run_root / "display" / "current_status_summary.json")
+
+        self.assertEqual(status_summary["state_kind"], "running")
+        self.assertTrue(status_summary["projection_authority"]["display_only"])
+        self.assertFalse(status_summary["projection_authority"]["controller_stop_authority"])
+        self.assertEqual(
+            status_summary["projection_authority"]["control_authorities"],
+            ["runtime/router_daemon_status.json", "runtime/controller_action_ledger.json"],
+        )
+        self.assertEqual(status_summary["next_step"]["action_type"], "write_display_surface_status")
+        self.assertEqual(status_summary["next_step"]["source_action_id"], entry["action_id"])
+        self.assertFalse(status_summary["next_step"]["fresh_for_controller_decision"])
+        self.assertTrue(status_summary["next_step"]["display_only"])
+        self.assertFalse(status_summary["next_step"]["controller_stop_authority"])
+        self.assertFalse(status_summary["foreground_exit_policy"]["controller_stop_allowed"])
+        self.assertFalse(status_summary["foreground_exit_policy"]["final_answer_preflight"]["final_answer_allowed"])
     def test_reconciled_scheduler_row_is_not_downgraded_by_later_receipt_sync(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

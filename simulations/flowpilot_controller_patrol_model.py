@@ -69,6 +69,12 @@ class State:
     waiting_for_next_output: bool = False
     foreground_closed: bool = False
     controller_stop_allowed: bool = False
+    user_status_update_allowed: bool = False
+    controller_patrol_required: bool = False
+    current_status_summary_display_only: bool = True
+    stale_next_step_projection: bool = False
+    status_summary_used_as_stop_authority: bool = False
+    final_answer_allowed: bool = False
     router_next_used_as_metronome: bool = False
 
 
@@ -130,6 +136,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 continuous_standby_visible=True,
                 continuous_standby_status="in_progress",
                 patrol_command_named_in_prompt=True,
+                controller_patrol_required=True,
             ),
         )
         yield Transition(
@@ -162,6 +169,37 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(state, controller_action_ledger_processed=True, lifecycle="done"),
         )
         return
+
+    if (
+        state.continuous_standby_visible
+        and state.continuous_standby_status == "in_progress"
+        and not state.patrol_command_started
+        and not state.user_status_update_allowed
+    ):
+        yield Transition(
+            "nonterminal_status_update_return_keeps_controller_attached",
+            _step(
+                state,
+                foreground_required_mode="return_for_user_input",
+                user_status_update_allowed=True,
+                controller_stop_allowed=False,
+                controller_patrol_required=True,
+                final_answer_allowed=False,
+                lifecycle="done",
+            ),
+        )
+        yield Transition(
+            "stale_projection_remains_display_only",
+            _step(
+                state,
+                stale_next_step_projection=True,
+                current_status_summary_display_only=True,
+                status_summary_used_as_stop_authority=False,
+                controller_patrol_required=True,
+                final_answer_allowed=False,
+                lifecycle="done",
+            ),
+        )
 
     if not state.patrol_command_started:
         yield Transition(
@@ -290,6 +328,39 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_action_ledger_processed and not state.ordinary_controller_work_ready:
         failures.append("Controller processed action ledger without ready work")
 
+    if state.final_answer_allowed and not (
+        state.patrol_result == "terminal_return" and state.controller_stop_allowed
+    ):
+        failures.append("final answer was allowed without terminal controller_stop_allowed preflight")
+
+    if (
+        state.user_status_update_allowed
+        and not state.controller_stop_allowed
+        and state.foreground_closed
+    ):
+        failures.append("nonterminal status update closed the foreground Controller")
+
+    if (
+        state.user_status_update_allowed
+        and not state.controller_stop_allowed
+        and state.final_answer_allowed
+    ):
+        failures.append("nonterminal status update was treated as Controller stop permission")
+
+    if (
+        state.controller_patrol_required
+        and state.continuous_standby_status == "in_progress"
+        and state.final_answer_allowed
+        and not state.controller_stop_allowed
+    ):
+        failures.append("active continuous standby passed final-answer preflight")
+
+    if state.stale_next_step_projection and state.status_summary_used_as_stop_authority:
+        failures.append("stale status summary projection was used as Controller stop authority")
+
+    if state.stale_next_step_projection and not state.current_status_summary_display_only:
+        failures.append("stale status summary projection was not marked display-only")
+
     return failures
 
 
@@ -319,6 +390,12 @@ INVARIANTS = (
     _invariant("new_work_requires_ready_action", "patrol reported new Controller work when no action was ready"),
     _invariant("new_work_switches_foreground_mode", "new Controller work did not switch foreground mode to process_controller_action"),
     _invariant("action_processing_requires_ready_work", "Controller processed action ledger without ready work"),
+    _invariant("final_answer_requires_terminal_stop_preflight", "final answer was allowed without terminal controller_stop_allowed preflight"),
+    _invariant("nonterminal_status_update_keeps_foreground", "nonterminal status update closed the foreground Controller"),
+    _invariant("status_update_is_not_stop_permission", "nonterminal status update was treated as Controller stop permission"),
+    _invariant("active_standby_blocks_final_answer", "active continuous standby passed final-answer preflight"),
+    _invariant("stale_summary_not_stop_authority", "stale status summary projection was used as Controller stop authority"),
+    _invariant("stale_summary_marked_display_only", "stale status summary projection was not marked display-only"),
 )
 
 
@@ -388,6 +465,36 @@ def hazard_states() -> dict[str, State]:
         ),
         "separate_monitor_used": replace(base, separate_monitor_used=True),
         "router_next_used_as_metronome": replace(base, router_next_used_as_metronome=True),
+        "nonterminal_status_return_final_answer": replace(
+            base,
+            foreground_required_mode="return_for_user_input",
+            user_status_update_allowed=True,
+            controller_stop_allowed=False,
+            controller_patrol_required=True,
+            final_answer_allowed=True,
+        ),
+        "nonterminal_status_return_closed_foreground": replace(
+            base,
+            foreground_required_mode="return_for_user_input",
+            user_status_update_allowed=True,
+            controller_stop_allowed=False,
+            foreground_closed=True,
+        ),
+        "standby_waiting_final_answer_allowed": replace(
+            base,
+            controller_patrol_required=True,
+            final_answer_allowed=True,
+        ),
+        "stale_projection_stop_authority": replace(
+            base,
+            stale_next_step_projection=True,
+            status_summary_used_as_stop_authority=True,
+        ),
+        "stale_projection_not_display_only": replace(
+            base,
+            stale_next_step_projection=True,
+            current_status_summary_display_only=False,
+        ),
     }
 
 

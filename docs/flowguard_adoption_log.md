@@ -15849,3 +15849,60 @@ Skipped steps:
 
 - Keep runtime write-lock model branches owner-aware: missing owner, other live owner, dead owner, fresh self owner, stale safe self owner, and stale unsafe self owner are distinct states.
 - Consider improving the reusable background-check wrapper so it records child exit codes reliably without needing result-JSON correction.
+
+## 2026-05-19 - harden-controller-standby-stop-gate
+
+- Project: FlowPilot
+- Trigger reason: User reported a FlowPilot run where the Router daemon was still live, but the foreground Controller treated a nonterminal user/status return and stale current-status projection as permission to stop watching the daemon.
+- Status: implemented, validated locally, installed skill synced, and prepared for scoped local commit
+- Skill decision: use_openspec + use_flowguard:controller-patrol-stop-gate
+- OpenSpec change: harden-controller-standby-stop-gate
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Foreground Controller standby snapshots now separate `user_status_update_allowed` from `controller_stop_allowed`.
+- Patrol timer results now carry a `final_answer_preflight` that only allows a final answer when terminal lifecycle, no pending Controller actions, and no continuous standby duty all agree.
+- Current status summaries now mark stale or completed next-step projections as display-only and expose projection source/freshness instead of acting as Controller stop authority.
+- Controller role, resume/reentry, action-ledger table prompt, and top-level skill wording now say status/user return is not stop permission.
+- Focused runtime tests cover nonterminal user/status return, waiting standby patrol continuation, terminal stop allowance, and stale display-only projection.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate "harden-controller-standby-stop-gate" --strict`.
+- OK: `python simulations\run_flowpilot_controller_patrol_checks.py --json-out simulations\flowpilot_controller_patrol_results.json`.
+- OK: `python -m unittest tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_nonterminal_user_status_return_is_not_controller_stop tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_controller_patrol_timer_continue_patrol_restarts_and_waits tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_controller_patrol_timer_allows_terminal_return_only_when_stopped tests.router_runtime.controller.ControllerRuntimeTests.test_current_status_summary_marks_stale_pending_projection_display_only`.
+- OK: `python -m unittest tests.test_flowpilot_prompt_store`.
+- OK: `python scripts\check_install.py`.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, stderr empty, result `ok: true`.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, stderr empty, result `ok: true`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- A foreground user/status return is only permission to update the user or wait for input; it is not permission for the Controller to stop its standby patrol.
+- The Controller stop decision must be ledger-backed and terminal: lifecycle terminal, `controller_stop_allowed=true`, no pending Controller actions, and no active continuous standby.
+- Current status summary is a display surface. It can show stale/completed next-step information for humans, but it must not become a stop-authority source.
+- Prompt wording alone is not enough; runtime payloads and tests need explicit field names that make the wrong interpretation hard.
+
+### Counterexamples
+
+- `nonterminal_status_return_final_answer`
+- `nonterminal_status_return_closed_foreground`
+- `standby_waiting_final_answer_allowed`
+- `stale_projection_stop_authority`
+- `stale_projection_not_display_only`
+
+### Friction Points
+
+- A broad `tests.router_runtime.foreground_controller tests.router_runtime.controller` unittest aggregate timed out and was not counted as pass evidence; focused runtime tests plus model checks supplied the evidence for this change.
+- Existing peer changes were present in README/readme hero files; they were preserved but left outside this Controller stop-gate scope.
+
+### Next Actions
+
+- Keep future Controller standby changes explicit about three separate ideas: status update allowed, patrol required, and final answer/stop allowed.
+- When a status summary field names a next step, keep projection source and freshness visible so stale display data cannot masquerade as Controller authority.
