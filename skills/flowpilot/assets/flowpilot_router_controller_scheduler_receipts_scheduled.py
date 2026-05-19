@@ -107,6 +107,44 @@ def _canonicalize_legacy_startup_daemon_reconciliation(router: ModuleType, proje
     canonical.update({'applied': True, 'source': 'startup_bootloader_controller_receipt', 'canonicalized_from': source, 'controller_receipt_path': project_relative(project_root, _controller_receipt_path(run_root, str(receipt.get('action_id') or entry.get('action_id') or ''))), 'postcondition': flag, 'bootstrap_postcondition': current.get('bootstrap_postcondition') or flag, 'bootstrap_flag_satisfied': True})
     return canonical
 
+def _clear_pending_controller_action_if_matches(router: ModuleType, run_state: dict[str, Any], entry: dict[str, Any], action: dict[str, Any], *, action_id: str, source: str) -> bool:
+    _bind_router(router)
+    pending = run_state.get('pending_action')
+    if not isinstance(pending, dict):
+        return False
+    row_id = str(entry.get('router_scheduler_row_id') or action.get('router_scheduler_row_id') or '').strip()
+    pending_row_id = str(pending.get('router_scheduler_row_id') or '').strip()
+    action_type = str(entry.get('action_type') or action.get('action_type') or '').strip()
+    pending_action_type = str(pending.get('action_type') or '').strip()
+    label = str(entry.get('label') or action.get('label') or '').strip()
+    pending_label = str(pending.get('label') or '').strip()
+    idempotency_key = str(action.get('idempotency_key') or '').strip()
+    pending_idempotency_key = str(pending.get('idempotency_key') or '').strip()
+    postcondition = str(_pending_action_postcondition(action) or '').strip()
+    pending_postcondition = str(_pending_action_postcondition(pending) or '').strip()
+    matches = bool(
+        (action_id and str(pending.get('controller_action_id') or '').strip() == action_id)
+        or (row_id and pending_row_id == row_id)
+        or (idempotency_key and pending_idempotency_key == idempotency_key)
+        or (action_type and pending_action_type == action_type and postcondition and pending_postcondition == postcondition)
+        or (action_type and pending_action_type == action_type and label and pending_label == label)
+    )
+    if not matches:
+        return False
+    run_state['pending_action'] = None
+    append_history(
+        run_state,
+        'router_cleared_resolved_controller_pending_projection',
+        {
+            'action_type': action_type,
+            'controller_action_id': action_id,
+            'router_scheduler_row_id': row_id,
+            'postcondition': postcondition,
+            'source': source,
+        },
+    )
+    return True
+
 def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     action_dir = _controller_actions_dir(run_root)
@@ -172,6 +210,95 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
         if entry.get('status') != 'done':
             continue
         if entry.get('router_reconciliation_status') == 'reconciled' or entry.get('router_reconciled_at'):
+            postcondition = _pending_action_postcondition(action)
+            action_class = router._controller_action_completion_class(action) if action else {}
+            stateful_kind = str(action_class.get('kind') or '')
+            if (
+                postcondition
+                and not _pending_action_postcondition_satisfied(run_state, postcondition)
+                and stateful_kind in {'display_status', 'router_owned_durable_artifact', 'stateful_host_postcondition'}
+            ):
+                if receipt.get('schema_version') == CONTROLLER_RECEIPT_SCHEMA and receipt.get('status') == 'done':
+                    try:
+                        applied = router._apply_done_controller_receipt_effects(project_root, run_root, run_state, action, receipt)
+                    except RouterLedgerWriteInProgress:
+                        raise
+                    except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
+                        applied = {'applied': False, 'reason': str(exc), 'postcondition': postcondition}
+                else:
+                    applied = {'applied': False, 'reason': 'reconciled_stateful_action_missing_done_receipt', 'postcondition': postcondition, 'action_type': action.get('action_type')}
+                if applied.get('applied') and _pending_action_postcondition_satisfied(run_state, postcondition):
+                    now = utc_now()
+                    reconciliation = dict(entry.get('router_reconciliation')) if isinstance(entry.get('router_reconciliation'), dict) else {}
+                    reconciliation.update(
+                        {
+                            'applied': True,
+                            'postcondition': postcondition,
+                            'postcondition_replay_source': 'already_reconciled_controller_action_postcondition_drift_replay',
+                            'postcondition_replayed_at': now,
+                            'postcondition_replay_result': applied,
+                        }
+                    )
+                    entry['status'] = 'done'
+                    entry['completed_at'] = entry.get('completed_at') or now
+                    entry['router_reconciliation_status'] = 'reconciled'
+                    entry['router_reconciled_at'] = entry.get('router_reconciled_at') or now
+                    entry['router_reconciliation'] = reconciliation
+                    entry['router_pending_apply_required'] = False
+                    entry['router_postcondition_drift_reconciled_at'] = now
+                    if isinstance(entry.get('action'), dict):
+                        entry['action']['router_pending_apply_required'] = False
+                    write_json(action_path, entry)
+                    row_id = str(entry.get('router_scheduler_row_id') or '')
+                    if row_id:
+                        router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=reconciliation)
+                    router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=reconciliation)
+                    append_history(
+                        run_state,
+                        'router_replayed_reconciled_controller_postcondition',
+                        {
+                            'action_type': action.get('action_type'),
+                            'controller_action_id': action_id,
+                            'router_scheduler_row_id': entry.get('router_scheduler_row_id'),
+                            'postcondition': postcondition,
+                            'source': reconciliation.get('postcondition_replay_source'),
+                        },
+                    )
+                    router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='already_reconciled_controller_action_postcondition_drift_replay')
+                    router.save_run_state(run_root, run_state)
+                    changed = True
+                    reconciled += 1
+                    continue
+                if applied.get('repair_scheduled') or applied.get('repair_pending'):
+                    if router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='already_reconciled_controller_action_postcondition_repair_pending'):
+                        router.save_run_state(run_root, run_state)
+                    changed = True
+                    continue
+                if applied.get('blocked'):
+                    if router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='already_reconciled_controller_action_postcondition_blocked'):
+                        router.save_run_state(run_root, run_state)
+                    blocked += 1
+                    changed = True
+                    continue
+                retry = _defer_controller_postcondition_reconciliation_retry(project_root, run_root, run_state, entry=entry, action=action, apply_result=applied)
+                if retry.get('retry_pending'):
+                    if router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='already_reconciled_controller_action_postcondition_retry_pending'):
+                        router.save_run_state(run_root, run_state)
+                    changed = True
+                    continue
+                if retry.get('retry_budget_exhausted'):
+                    entry['postcondition_reconciliation_exhausted'] = True
+                    entry['max_postcondition_reconciliation_attempts'] = retry.get('direct_retry_budget')
+                    entry['router_reconciliation_status'] = 'blocked'
+                    entry['router_reconciliation_blocked_at'] = utc_now()
+                    entry['router_reconciliation_blocker'] = applied
+                    write_json(action_path, entry)
+                    router._write_control_blocker(project_root, run_root, run_state, source=CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE, error_message=f"Controller action {entry.get('action_type')} was already reconciled, but Router could not replay its required postcondition after state drift.", action_type=str(entry.get('action_type') or ''), payload={'controller_action_id': action_id, 'router_scheduler_row_id': entry.get('router_scheduler_row_id'), 'postcondition': retry.get('postcondition') or applied.get('postcondition'), 'direct_retry_attempts_used': retry.get('direct_retry_attempts_used'), 'direct_retry_budget': retry.get('direct_retry_budget'), 'direct_retry_budget_exhausted': True, 'apply_result': applied})
+                    if router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='already_reconciled_controller_action_postcondition_retry_exhausted'):
+                        router.save_run_state(run_root, run_state)
+                    blocked += 1
+                    changed = True
+                    continue
             scheduler_backfill = router._backfill_scheduler_row_from_reconciled_controller_action(project_root, run_root, run_state, entry, source='reconciled_controller_action_scheduler_backfill')
             blocker_resolution = router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action or {'action_type': entry.get('action_type')}, entry=entry, reconciliation=entry.get('router_reconciliation') if isinstance(entry.get('router_reconciliation'), dict) else None)
             if scheduler_backfill.get('changed') or blocker_resolution.get('changed'):
@@ -268,6 +395,7 @@ __all__ = (
     '_scheduler_row_reconciliation_for_entry',
     '_backfill_scheduler_row_from_reconciled_controller_action',
     '_canonicalize_legacy_startup_daemon_reconciliation',
+    '_clear_pending_controller_action_if_matches',
     '_reconcile_scheduled_controller_action_receipts',
 )
 

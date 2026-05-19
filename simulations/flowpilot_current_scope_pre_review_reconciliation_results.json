@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-05-16T08:38:57.197238+00:00",
+  "checked_at": "2026-05-19T11:57:44.922767+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=42",
+    "summary": "sequences=2 initial_states=1 traces=54",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -42,6 +42,15 @@
           "scenario": "ack_used_as_semantic_completion",
           "scope_exited": true,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -76,6 +85,15 @@
           "scenario": "local_deferred_without_carry_forward",
           "scope_exited": false,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -110,6 +128,15 @@
           "scenario": "local_reconciliation_clears_future_scope",
           "scope_exited": false,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -144,6 +171,15 @@
           "scenario": "no_review_scope_exit_without_reconciliation",
           "scope_exited": true,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -178,6 +214,15 @@
           "scenario": "passive_wait_status_counted_as_local_obligation",
           "scope_exited": false,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -212,6 +257,15 @@
           "scenario": "review_started_before_local_reconciliation",
           "scope_exited": false,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -246,6 +300,105 @@
           "scenario": "scope_exit_before_review_created_closure",
           "scope_exited": true,
           "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "none",
+          "stateful_postcondition_applied_claimed": false,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "none",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": false,
+          "stateful_postcondition_receipt_done": false,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": false,
+          "stateful_postcondition_same_action_requeued": false,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "startup_display_reconciled_flag_missing": {
+        "detected": true,
+        "expected_failure": "reconciled stateful postcondition did not satisfy its Router-owned flag",
+        "failures": [
+          "reconciled stateful postcondition did not satisfy its Router-owned flag",
+          "already-reconciled stateful postcondition was skipped while its Router flag remained false",
+          "same stateful controller action was requeued after reconciled postcondition drift"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "startup",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": true,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": false,
+          "passive_wait_action_type": "none",
+          "passive_wait_controller_receipt_required": false,
+          "passive_wait_controller_side_effect_required": false,
+          "passive_wait_counted_as_local_obligation": false,
+          "passive_wait_status_pending": false,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": false,
+          "scenario": "startup_display_reconciled_flag_missing",
+          "scope_exited": false,
+          "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "write_display_surface_status",
+          "stateful_postcondition_applied_claimed": true,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "startup_display_status_written",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": true,
+          "stateful_postcondition_receipt_done": true,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": true,
+          "stateful_postcondition_same_action_requeued": true,
+          "status": "rejected",
+          "terminal_reason": "invalid"
+        }
+      },
+      "stateful_postcondition_requeued_after_drift": {
+        "detected": true,
+        "expected_failure": "same stateful controller action was requeued after reconciled postcondition drift",
+        "failures": [
+          "reconciled stateful postcondition did not satisfy its Router-owned flag",
+          "already-reconciled stateful postcondition was skipped while its Router flag remained false",
+          "same stateful controller action was requeued after reconciled postcondition drift"
+        ],
+        "state": {
+          "ack_returned": false,
+          "active_scope": "node",
+          "carry_forward_reason_recorded": false,
+          "carry_forward_target_scope": false,
+          "future_obligation_cleared_by_local_reconciliation": false,
+          "future_obligation_pending": false,
+          "has_final_review": true,
+          "local_obligation_carried_forward": false,
+          "local_obligation_pending": true,
+          "local_reconciliation_checked": true,
+          "local_reconciliation_clean": false,
+          "passive_wait_action_type": "none",
+          "passive_wait_controller_receipt_required": false,
+          "passive_wait_controller_side_effect_required": false,
+          "passive_wait_counted_as_local_obligation": false,
+          "passive_wait_status_pending": false,
+          "review_created_obligation_closed": false,
+          "review_created_obligation_pending": false,
+          "reviewer_passed": false,
+          "reviewer_work_started": false,
+          "scenario": "stateful_postcondition_requeued_after_drift",
+          "scope_exited": false,
+          "semantic_work_completed": false,
+          "stateful_postcondition_action_type": "stateful_controller_action",
+          "stateful_postcondition_applied_claimed": true,
+          "stateful_postcondition_flag_satisfied": false,
+          "stateful_postcondition_name": "router_owned_flag",
+          "stateful_postcondition_reapply_skipped_as_already_reconciled": true,
+          "stateful_postcondition_receipt_done": true,
+          "stateful_postcondition_repair_or_blocker_recorded": false,
+          "stateful_postcondition_router_reconciled": true,
+          "stateful_postcondition_same_action_requeued": true,
           "status": "rejected",
           "terminal_reason": "invalid"
         }
@@ -253,7 +406,7 @@
     },
     "ok": true
   },
-  "model_boundary": "focused current-scope review-start and scope-exit reconciliation; runtime tests remain required",
+  "model_boundary": "focused current-scope review-start and scope-exit reconciliation; includes stateful receipt/postcondition projection drift; runtime tests remain required",
   "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
@@ -269,9 +422,11 @@
       "node_clean_review",
       "review_created_obligation_closed",
       "startup_clean_review",
-      "startup_passive_reconciliation_wait_ignored"
+      "startup_display_postcondition_reconciled",
+      "startup_passive_reconciliation_wait_ignored",
+      "stateful_postcondition_reconciled_flag_match"
     ],
-    "edge_count": 28,
+    "edge_count": 36,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -282,8 +437,10 @@
       "no_review_scope_exit_without_reconciliation",
       "passive_wait_status_counted_as_local_obligation",
       "review_started_before_local_reconciliation",
-      "scope_exit_before_review_created_closure"
+      "scope_exit_before_review_created_closure",
+      "startup_display_reconciled_flag_missing",
+      "stateful_postcondition_requeued_after_drift"
     ],
-    "state_count": 29
+    "state_count": 37
   }
 }

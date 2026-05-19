@@ -10,6 +10,9 @@ Risk purpose:
   no-review scopes transitioning before local reconciliation.
 - Guards against startup pre-review reconciliation treating its own passive
   wait status row as unresolved Controller work.
+- Guards against a stateful Controller receipt being marked Router-reconciled
+  while its Router-owned postcondition flag remains false, which would let the
+  scheduler skip reapplication and repeatedly queue the same action.
 - Update and run this model whenever Router review-start, current-node
   completion, startup review, pending-return, or node-scope obligation logic
   changes.
@@ -25,13 +28,15 @@ Risk intent brief:
 - Adversarial branches: review starts before local join, local join clears
   future obligations, carry-forward lacks target/reason, scope exits before
   review-created obligations close, no-review scope exits before reconciliation,
-  ACK/read receipt is treated as semantic completion, and passive wait status
-  rows self-block reconciliation.
+  ACK/read receipt is treated as semantic completion, passive wait status rows
+  self-block reconciliation, and already-reconciled stateful receipts drift
+  away from their Router-owned postcondition flags.
 - Hard invariants: reconciliation is local to the active scope; reviewer work
   waits for local reconciliation; carried-forward local items have explicit
   metadata; review-created obligations close before scope exit; no-review
   scopes reconcile before transition; ACK does not imply semantic work done;
-  passive wait status rows are not Controller work.
+  passive wait status rows are not Controller work; reconciled stateful
+  postconditions imply their Router-owned flags or an explicit repair/blocker.
 - Blindspot: this is a focused control-plane model. Runtime tests must still
   exercise concrete Router actions, ledgers, cards, and install sync.
 """
@@ -51,6 +56,8 @@ LOCAL_CARRY_FORWARD_EXPLICIT = "local_carry_forward_explicit"
 REVIEW_CREATED_OBLIGATION_CLOSED = "review_created_obligation_closed"
 NO_REVIEW_SCOPE_CLEAN_TRANSITION = "no_review_scope_clean_transition"
 STARTUP_PASSIVE_RECONCILIATION_WAIT_IGNORED = "startup_passive_reconciliation_wait_ignored"
+STARTUP_DISPLAY_POSTCONDITION_RECONCILED = "startup_display_postcondition_reconciled"
+STATEFUL_POSTCONDITION_RECONCILED_FLAG_MATCH = "stateful_postcondition_reconciled_flag_match"
 
 REVIEW_STARTED_BEFORE_LOCAL_RECONCILIATION = "review_started_before_local_reconciliation"
 LOCAL_RECONCILIATION_CLEARS_FUTURE_SCOPE = "local_reconciliation_clears_future_scope"
@@ -59,6 +66,8 @@ SCOPE_EXIT_BEFORE_REVIEW_CREATED_CLOSURE = "scope_exit_before_review_created_clo
 NO_REVIEW_SCOPE_EXIT_WITHOUT_RECONCILIATION = "no_review_scope_exit_without_reconciliation"
 ACK_USED_AS_SEMANTIC_COMPLETION = "ack_used_as_semantic_completion"
 PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION = "passive_wait_status_counted_as_local_obligation"
+STARTUP_DISPLAY_RECONCILED_FLAG_MISSING = "startup_display_reconciled_flag_missing"
+STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT = "stateful_postcondition_requeued_after_drift"
 
 VALID_SCENARIOS = (
     STARTUP_CLEAN_REVIEW,
@@ -68,6 +77,8 @@ VALID_SCENARIOS = (
     REVIEW_CREATED_OBLIGATION_CLOSED,
     NO_REVIEW_SCOPE_CLEAN_TRANSITION,
     STARTUP_PASSIVE_RECONCILIATION_WAIT_IGNORED,
+    STARTUP_DISPLAY_POSTCONDITION_RECONCILED,
+    STATEFUL_POSTCONDITION_RECONCILED_FLAG_MATCH,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -78,6 +89,8 @@ NEGATIVE_SCENARIOS = (
     NO_REVIEW_SCOPE_EXIT_WITHOUT_RECONCILIATION,
     ACK_USED_AS_SEMANTIC_COMPLETION,
     PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION,
+    STARTUP_DISPLAY_RECONCILED_FLAG_MISSING,
+    STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -115,6 +128,16 @@ class State:
     passive_wait_controller_side_effect_required: bool = False
     passive_wait_controller_receipt_required: bool = False
     passive_wait_counted_as_local_obligation: bool = False
+
+    stateful_postcondition_action_type: str = "none"
+    stateful_postcondition_name: str = "none"
+    stateful_postcondition_receipt_done: bool = False
+    stateful_postcondition_router_reconciled: bool = False
+    stateful_postcondition_applied_claimed: bool = False
+    stateful_postcondition_flag_satisfied: bool = False
+    stateful_postcondition_reapply_skipped_as_already_reconciled: bool = False
+    stateful_postcondition_same_action_requeued: bool = False
+    stateful_postcondition_repair_or_blocker_recorded: bool = False
 
     reviewer_work_started: bool = False
     reviewer_passed: bool = False
@@ -242,6 +265,45 @@ def scenario_state(scenario: str) -> State:
             ack_returned=True,
             semantic_work_completed=True,
         )
+    if scenario == STARTUP_DISPLAY_POSTCONDITION_RECONCILED:
+        return _accepted(
+            scenario,
+            active_scope="startup",
+            local_obligation_pending=False,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=True,
+            stateful_postcondition_action_type="write_display_surface_status",
+            stateful_postcondition_name="startup_display_status_written",
+            stateful_postcondition_receipt_done=True,
+            stateful_postcondition_router_reconciled=True,
+            stateful_postcondition_applied_claimed=True,
+            stateful_postcondition_flag_satisfied=True,
+            reviewer_work_started=True,
+            reviewer_passed=True,
+            review_created_obligation_closed=True,
+            scope_exited=True,
+            ack_returned=True,
+            semantic_work_completed=True,
+        )
+    if scenario == STATEFUL_POSTCONDITION_RECONCILED_FLAG_MATCH:
+        return _accepted(
+            scenario,
+            active_scope="node",
+            local_obligation_pending=False,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=True,
+            stateful_postcondition_action_type="stateful_controller_action",
+            stateful_postcondition_name="router_owned_flag",
+            stateful_postcondition_receipt_done=True,
+            stateful_postcondition_router_reconciled=True,
+            stateful_postcondition_applied_claimed=True,
+            stateful_postcondition_flag_satisfied=True,
+            reviewer_work_started=True,
+            reviewer_passed=True,
+            review_created_obligation_closed=True,
+            scope_exited=True,
+            semantic_work_completed=True,
+        )
     if scenario == REVIEW_STARTED_BEFORE_LOCAL_RECONCILIATION:
         return _rejected(
             scenario,
@@ -318,6 +380,40 @@ def scenario_state(scenario: str) -> State:
             local_reconciliation_checked=True,
             local_reconciliation_clean=False,
         )
+    if scenario == STARTUP_DISPLAY_RECONCILED_FLAG_MISSING:
+        return _rejected(
+            scenario,
+            active_scope="startup",
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+            stateful_postcondition_action_type="write_display_surface_status",
+            stateful_postcondition_name="startup_display_status_written",
+            stateful_postcondition_receipt_done=True,
+            stateful_postcondition_router_reconciled=True,
+            stateful_postcondition_applied_claimed=True,
+            stateful_postcondition_flag_satisfied=False,
+            stateful_postcondition_reapply_skipped_as_already_reconciled=True,
+            stateful_postcondition_same_action_requeued=True,
+            stateful_postcondition_repair_or_blocker_recorded=False,
+        )
+    if scenario == STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT:
+        return _rejected(
+            scenario,
+            active_scope="node",
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+            stateful_postcondition_action_type="stateful_controller_action",
+            stateful_postcondition_name="router_owned_flag",
+            stateful_postcondition_receipt_done=True,
+            stateful_postcondition_router_reconciled=True,
+            stateful_postcondition_applied_claimed=True,
+            stateful_postcondition_flag_satisfied=False,
+            stateful_postcondition_reapply_skipped_as_already_reconciled=True,
+            stateful_postcondition_same_action_requeued=True,
+            stateful_postcondition_repair_or_blocker_recorded=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -344,11 +440,14 @@ class CurrentScopeReconciliationStep:
 
     Input x State -> Set(Output x State)
     reads: active scope, local pending obligations, future pending obligations,
-    review-created obligations, ACK/read-receipt state, and completion state
+    review-created obligations, stateful Controller receipts, Router-owned
+    postcondition flags, ACK/read-receipt state, and completion state
     writes: local reconciliation summary, reviewer-start permission,
-    carry-forward metadata, and scope-exit permission
+    carry-forward metadata, Router-owned postcondition flags,
+    repair/blocker records, and scope-exit permission
     idempotency: reconciliation is scope-id keyed and monotonic for a stable
-    review package
+    review package; already-reconciled stateful receipts are not skipped while
+    their Router-owned postcondition flags remain false
     """
 
     name = "CurrentScopeReconciliationStep"
@@ -359,6 +458,8 @@ class CurrentScopeReconciliationStep:
         "local_obligations",
         "future_obligations",
         "controller_wait_status_rows",
+        "stateful_controller_receipts",
+        "router_owned_postcondition_flags",
         "review_created_obligations",
         "ack_receipts",
         "semantic_completion",
@@ -367,9 +468,15 @@ class CurrentScopeReconciliationStep:
         "local_reconciliation_summary",
         "review_start_permission",
         "carry_forward_record",
+        "router_owned_postcondition_flags",
+        "postcondition_repair_or_blocker",
         "scope_exit_permission",
     )
-    idempotency = "scope_id-keyed reconciliation summaries are monotonic for a stable package"
+    idempotency = (
+        "scope_id-keyed reconciliation summaries are monotonic for a stable "
+        "package; already-reconciled stateful receipts are not skipped while "
+        "their Router-owned postcondition flags remain false"
+    )
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj
@@ -386,6 +493,28 @@ def current_scope_reconciliation_failures(state: State) -> list[str]:
         and state.passive_wait_counted_as_local_obligation
     ):
         failures.append("passive wait status row was counted as current-scope Controller work")
+    if (
+        state.stateful_postcondition_receipt_done
+        and state.stateful_postcondition_router_reconciled
+        and state.stateful_postcondition_applied_claimed
+        and not state.stateful_postcondition_flag_satisfied
+        and not state.stateful_postcondition_repair_or_blocker_recorded
+    ):
+        failures.append("reconciled stateful postcondition did not satisfy its Router-owned flag")
+    if (
+        state.stateful_postcondition_router_reconciled
+        and state.stateful_postcondition_reapply_skipped_as_already_reconciled
+        and not state.stateful_postcondition_flag_satisfied
+        and not state.stateful_postcondition_repair_or_blocker_recorded
+    ):
+        failures.append("already-reconciled stateful postcondition was skipped while its Router flag remained false")
+    if (
+        state.stateful_postcondition_same_action_requeued
+        and state.stateful_postcondition_router_reconciled
+        and not state.stateful_postcondition_flag_satisfied
+        and not state.stateful_postcondition_repair_or_blocker_recorded
+    ):
+        failures.append("same stateful controller action was requeued after reconciled postcondition drift")
     if state.reviewer_work_started and not (
         state.local_reconciliation_checked and state.local_reconciliation_clean
     ):

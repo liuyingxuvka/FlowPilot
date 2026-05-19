@@ -8,6 +8,9 @@ All notable changes to FlowPilot will be documented in this file.
 
 - Added the `harden-flowpilot-daemon-lock-terminal-fence` OpenSpec change for
   Router daemon write-lock recovery and terminal lifecycle fencing.
+- Added the `harden-router-reconciliation-gate` OpenSpec change for
+  Router/Controller receipt reconciliation, stateful postcondition replay, and
+  duplicate-dispatch prevention.
 - Added focused runtime regressions for fresh dead-owner JSON write-lock
   takeover, live-writer deferral, immediate terminal daemon fencing, terminal
   startup scheduling, and terminal heartbeat no-ops.
@@ -25,6 +28,10 @@ All notable changes to FlowPilot will be documented in this file.
 - Guarded Router daemon start/tick, startup daemon scheduling, startup
   bootloader heartbeat handling, Controller receipt effects, and heartbeat
   binding actions so terminal runs cannot schedule or bind new active work.
+- Replayed or reclaimed Router-owned stateful postconditions for already
+  reconciled Controller rows before new dispatch decisions; missing evidence now
+  routes to bounded retry/control-blocker handling instead of reissuing the same
+  ordinary Controller command.
 
 ## 0.9.12 - 2026-05-18
 

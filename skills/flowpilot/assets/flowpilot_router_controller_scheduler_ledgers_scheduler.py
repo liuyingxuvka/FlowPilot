@@ -208,6 +208,33 @@ def _controller_action_open_for(router: ModuleType, run_root: Path, *, action_ty
     return False
 
 
+def _controller_action_reconciled_for(router: ModuleType, run_root: Path, *, action_type: str | None=None, postcondition: str | None=None, idempotency_key: str | None=None, label: str | None=None) -> bool:
+    _bind_router(router)
+    action_dir = _controller_actions_dir(run_root)
+    if not action_dir.exists():
+        return False
+    for path in sorted(action_dir.glob('*.json')):
+        entry = read_json_if_exists(path)
+        if entry.get('schema_version') != CONTROLLER_ACTION_SCHEMA:
+            continue
+        if entry.get('status') not in CONTROLLER_ACTION_CLOSED_STATUSES:
+            continue
+        reconciliation_status = str(entry.get('router_reconciliation_status') or '')
+        if not (reconciliation_status in {'reconciled', 'retry_pending', 'blocked'} or entry.get('router_reconciled_at')):
+            continue
+        action = entry.get('action') if isinstance(entry.get('action'), dict) else {}
+        if action_type and entry.get('action_type') != action_type:
+            continue
+        if postcondition and _pending_action_postcondition(action) != postcondition:
+            continue
+        if idempotency_key and action.get('idempotency_key') != idempotency_key:
+            continue
+        if label and entry.get('label') != label:
+            continue
+        return True
+    return False
+
+
 __all__ = (
     '_empty_router_scheduler_ledger',
     '_read_router_scheduler_ledger',
@@ -222,6 +249,7 @@ __all__ = (
     '_record_router_scheduler_row',
     '_update_router_scheduler_row',
     '_controller_action_open_for',
+    '_controller_action_reconciled_for',
 )
 
 _LOCAL_NAMES = set(globals())

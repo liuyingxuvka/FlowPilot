@@ -15956,3 +15956,53 @@ Skipped steps:
 
 - No GitHub push, tag, remote release, or public publication was performed.
 - Unrelated peer edits in `README.md` and `assets/readme-hero/hero_design_note.md` were preserved and intentionally left outside this scoped commit.
+
+## 2026-05-19 - harden-router-reconciliation-gate
+
+- Project: FlowPilot
+- Trigger reason: Router could see a Controller action as already done/reconciled while the Router-owned postcondition flag had drifted false, which allowed the same startup display action to be reissued instead of first reconciling the receipt evidence.
+- Status: implemented, validated, background regressions passed, installed skill synced
+- Skill decision: use_openspec + use_flowguard
+- OpenSpec change: harden-router-reconciliation-gate
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- The OpenSpec change defines the pre-decision reconciliation gate, stateful Controller postcondition replay, two-table async scheduler dedupe, current-scope pre-review gate, and startup display-surface obligations.
+- Focused FlowGuard current-scope reconciliation model includes the startup display drift and same-action requeue hazards; the safe graph passes with 37 states and 36 edges.
+- Runtime now replays registered stateful postconditions for already-reconciled Controller rows, clears matching stale pending projections, and blocks duplicate startup display dispatch while a matching row is open, reconciled, retrying, or blocked.
+- Missing or invalid stateful evidence now goes through bounded postcondition retry/control-blocker handling instead of ordinary duplicate dispatch.
+- Local installed `flowpilot` skill is fresh against repository source; real `flowguard` imports with schema `1.0`.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate harden-router-reconciliation-gate --strict --json`.
+- OK: `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py --json-out simulations\flowpilot_current_scope_pre_review_reconciliation_results.json`.
+- OK: focused `python -m py_compile` for touched Router modules and startup runtime tests.
+- OK: 3 targeted startup display reconciliation tests.
+- OK: 11 focused Router/Controller runtime regression tests.
+- OK: background `python simulations\run_meta_checks.py --full` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status passed, proof reused false.
+- OK: background `python simulations\run_capability_checks.py --full` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status passed, proof reused false.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- A Controller row being `done/reconciled` is not enough if the Router-owned postcondition flag is false; the Router must replay/reclaim the postcondition from valid done receipt evidence before deciding new work.
+- If the receipt is missing or invalid, the safe path is retry/control-blocker evidence, not issuing the same ordinary Controller action again.
+- Closed-but-retry/blocker Controller rows still need to suppress equivalent ordinary re-dispatch so the repair lane remains the authority.
+- `pending_action` can be a stale projection after scheduled reconciliation; clearing the matching projection keeps the user-facing next action from reviving old work.
+
+### Skipped Or Limited
+
+- `python scripts\smoke_autopilot.py` previously timed out and was not counted as pass evidence for this change.
+- A broad `tests.router_runtime.startup_bootstrap tests.router_runtime.foreground_controller tests.router_runtime.controller` aggregate previously timed out and was not counted as pass evidence; focused runtime tests plus FlowGuard/background model regressions supplied the scoped evidence.
+- No GitHub push, tag, remote release, or public publication was performed.
+- Existing peer edits in `README.md`, `assets/readme-hero/hero_design_note.md`, and the focused reconciliation model/results were preserved.
+
+### Next Actions
+
+- Treat future Router dispatch changes as source-of-truth reconciliation work: read receipts, fold state, then decide.
+- Keep the difference explicit between "Controller still has ordinary work open" and "Router has a repair/retry/blocker obligation for a closed row."

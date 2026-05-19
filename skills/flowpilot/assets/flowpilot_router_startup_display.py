@@ -287,6 +287,8 @@ def _next_startup_display_action(router: ModuleType, project_root: Path, run_sta
         return None
     if router._controller_action_open_for(run_root, action_type='write_display_surface_status', postcondition='startup_display_status_written'):
         return None
+    if router._controller_action_reconciled_for(run_root, action_type='write_display_surface_status', postcondition='startup_display_status_written'):
+        return None
     route_sign = router._startup_route_sign_payload(project_root, write=False, mark_chat_displayed=False)
     answers = router._startup_answers_from_run(run_root)
     requested_display_surface = str(answers.get('display_surface') or 'chat')

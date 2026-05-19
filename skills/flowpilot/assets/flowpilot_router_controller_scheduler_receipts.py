@@ -59,6 +59,7 @@ __all__ = (
     '_scheduler_row_reconciliation_for_entry',
     '_backfill_scheduler_row_from_reconciled_controller_action',
     '_canonicalize_legacy_startup_daemon_reconciliation',
+    '_clear_pending_controller_action_if_matches',
     '_reconcile_scheduled_controller_action_receipts',
 )
 

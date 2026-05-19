@@ -46,6 +46,12 @@ HAZARD_EXPECTED_FAILURES = {
     model.PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION: (
         "passive wait status row was counted as current-scope Controller work"
     ),
+    model.STARTUP_DISPLAY_RECONCILED_FLAG_MISSING: (
+        "reconciled stateful postcondition did not satisfy its Router-owned flag"
+    ),
+    model.STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT: (
+        "same stateful controller action was requeued after reconciled postcondition drift"
+    ),
 }
 
 
@@ -63,6 +69,15 @@ def _state_id(state: model.State) -> str:
         f"side_effect={state.passive_wait_controller_side_effect_required},"
         f"receipt={state.passive_wait_controller_receipt_required},"
         f"counted={state.passive_wait_counted_as_local_obligation}|"
+        f"stateful_postcondition={state.stateful_postcondition_action_type},"
+        f"{state.stateful_postcondition_name},"
+        f"receipt_done={state.stateful_postcondition_receipt_done},"
+        f"reconciled={state.stateful_postcondition_router_reconciled},"
+        f"applied={state.stateful_postcondition_applied_claimed},"
+        f"flag={state.stateful_postcondition_flag_satisfied},"
+        f"skipped={state.stateful_postcondition_reapply_skipped_as_already_reconciled},"
+        f"requeued={state.stateful_postcondition_same_action_requeued},"
+        f"repair={state.stateful_postcondition_repair_or_blocker_recorded}|"
         f"review_created={state.review_created_obligation_pending},"
         f"{state.review_created_obligation_closed}|exit={state.scope_exited}|"
         f"ack={state.ack_returned}|semantic={state.semantic_work_completed}|"
@@ -220,7 +235,7 @@ def run_checks() -> dict[str, object]:
         "hazard_checks": hazards,
         "model_boundary": (
             "focused current-scope review-start and scope-exit reconciliation; "
-            "runtime tests remain required"
+            "includes stateful receipt/postcondition projection drift; runtime tests remain required"
         ),
     }
 

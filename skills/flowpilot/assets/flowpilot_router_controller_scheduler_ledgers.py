@@ -27,6 +27,7 @@ from flowpilot_router_controller_scheduler_ledgers_ownership import (
 from flowpilot_router_controller_scheduler_ledgers_scheduler import (
     _action_is_startup_scoped,
     _controller_action_open_for,
+    _controller_action_reconciled_for,
     _empty_router_scheduler_ledger,
     _ensure_router_scheduler_ledger,
     _prepare_router_scheduled_action,
@@ -66,6 +67,7 @@ __all__ = (
     '_record_router_scheduler_row',
     '_update_router_scheduler_row',
     '_controller_action_open_for',
+    '_controller_action_reconciled_for',
     '_router_ownership_counts',
     '_empty_router_ownership_ledger',
     '_read_router_ownership_ledger',

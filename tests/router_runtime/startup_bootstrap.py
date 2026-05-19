@@ -1848,6 +1848,118 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("continuation_binding", resume_evidence["loaded_paths"])
         self.assertEqual(resume_evidence["loaded_paths"]["continuation_binding"], self.rel(root, binding_path))
         self.assertEqual(resume_evidence["resume_next_recipient_from_packet_ledger"]["source"], "packet_ledger")
+    def test_reconciled_startup_display_receipt_replays_missing_flag(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "write_display_surface_status")
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload=self.payload_for_action(action),
+        )
+        state = read_json(router.run_state_path(run_root))
+        router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+        self.assertTrue(read_json(router.run_state_path(run_root))["flags"]["startup_display_status_written"])
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["startup_display_status_written"] = False
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+        display_entry = next(
+            item
+            for item in (
+                read_json(path)
+                for path in sorted((run_root / "runtime" / "controller_actions").glob("*.json"))
+            )
+            if item.get("action_type") == "write_display_surface_status"
+        )
+        self.assertEqual(display_entry["status"], "done")
+        self.assertEqual(display_entry["router_reconciliation_status"], "reconciled")
+
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_display_status_written"])
+        refreshed_entry = read_json(run_root / "runtime" / "controller_actions" / f"{display_entry['action_id']}.json")
+        self.assertEqual(
+            refreshed_entry["router_reconciliation"]["postcondition_replay_source"],
+            "already_reconciled_controller_action_postcondition_drift_replay",
+        )
+        self.assertTrue(any(
+            item.get("label") == "router_replayed_reconciled_controller_postcondition"
+            for item in state.get("history", [])
+        ))
+    def test_reconciled_startup_display_action_is_not_requeued_after_flag_drift(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "write_display_surface_status")
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload=self.payload_for_action(action),
+        )
+        state = read_json(router.run_state_path(run_root))
+        router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["startup_display_status_written"] = False
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+
+        self.assertIsNone(router._next_startup_display_action(root, state, run_root))  # type: ignore[attr-defined]
+        next_action = router.next_action(root)
+
+        self.assertNotEqual(next_action["action_type"], "write_display_surface_status")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["startup_display_status_written"])
+    def test_reconciled_startup_display_missing_receipt_retries_without_requeue(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "write_display_surface_status")
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload=self.payload_for_action(action),
+        )
+        state = read_json(router.run_state_path(run_root))
+        router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        receipt_path = run_root / "runtime" / "controller_receipts" / f"{entry['action_id']}.json"
+        receipt_path.unlink()
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["startup_display_status_written"] = False
+        stale_pending = dict(action)
+        stale_pending["controller_action_id"] = entry["action_id"]
+        stale_pending["router_scheduler_row_id"] = entry["router_scheduler_row_id"]
+        state["pending_action"] = stale_pending
+        router.save_run_state(run_root, state)
+
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        refreshed_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(refreshed_entry["router_reconciliation_status"], "retry_pending")
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"]["startup_display_status_written"])
+        self.assertIsNone(state["pending_action"])
+        self.assertTrue(any(
+            item.get("label") == "router_cleared_resolved_controller_pending_projection"
+            for item in state.get("history", [])
+        ))
+        self.assertIsNone(router._next_startup_display_action(root, state, run_root))  # type: ignore[attr-defined]
     def test_startup_reconciliation_wait_does_not_hide_router_local_obligation(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
