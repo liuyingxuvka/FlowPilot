@@ -12,22 +12,177 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": true,
+  "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [],
-    "actionable_summary": [],
-    "covered_surface_count": 698,
-    "deferred_structure_split_count": 0,
+    "actionable_findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_controller_scheduler_standby has 344 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_standby",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
+        "surface_owner": "flowpilot_router_controller_scheduler_standby"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_io",
+        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_io",
+        "surface_owner": "flowpilot_router_io"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_lifecycle_requests",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_lifecycle_requests",
+        "surface_owner": "flowpilot_router_lifecycle_requests"
+      }
+    ],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_scheduler_standby has 344 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_standby"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_standby"
+      },
+      {
+        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_io.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_io"
+        ],
+        "surface_owner": "flowpilot_router_io"
+      },
+      {
+        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_lifecycle_requests"
+        ],
+        "surface_owner": "flowpilot_router_lifecycle_requests"
+      }
+    ],
+    "covered_surface_count": 696,
+    "deferred_structure_split_count": 3,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
-    "findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
-    "gap_counts_by_release_relevance": {},
-    "gap_counts_by_repair_type": {},
-    "gap_counts_by_severity": {},
-    "gap_surface_count": 0,
+    "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_controller_scheduler_standby has 344 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_standby",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
+        "surface_owner": "flowpilot_router_controller_scheduler_standby"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_io",
+        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_io",
+        "surface_owner": "flowpilot_router_io"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_lifecycle_requests",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_lifecycle_requests",
+        "surface_owner": "flowpilot_router_lifecycle_requests"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 3
+    },
+    "gap_counts_by_release_relevance": {
+      "runtime_contract": 3
+    },
+    "gap_counts_by_repair_type": {
+      "defer_structure_split": 3
+    },
+    "gap_counts_by_severity": {
+      "medium": 3
+    },
+    "gap_surface_count": 3,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -208,12 +363,12 @@
     "ok": true,
     "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 698,
+    "surface_count": 699,
     "surface_counts": {
       "compatibility_facade": 102,
       "model_check_runner": 83,
       "model_check_runner_helper": 18,
-      "owner_module": 222,
+      "owner_module": 223,
       "script_entrypoint": 18,
       "test_tier": 15,
       "test_tier_command": 240
@@ -598,7 +753,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 178,
+        "line_count": 191,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -686,7 +841,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 293,
+        "line_count": 302,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -702,24 +857,40 @@
         "top_level_function_count": 9
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 284,
+        "line_count": 344,
         "local_import_count": 7,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_standby",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "compatibility_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
         "surface_owner": "flowpilot_router_controller_scheduler_standby",
         "top_level_class_count": 0,
@@ -1993,7 +2164,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 215,
+        "line_count": 234,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -3362,7 +3533,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 233,
+        "line_count": 244,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_controller_patrol_checks",
@@ -3978,7 +4149,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 361,
+        "line_count": 405,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_persistent_router_daemon_checks",
@@ -5205,7 +5376,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 282,
+        "line_count": 297,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -5613,6 +5784,30 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
+        "line_count": 46,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": null,
+        "name": "flowpilot_process_liveness",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_process_liveness.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_process_liveness",
+        "surface_owner": "flowpilot_process_liveness",
+        "top_level_class_count": 0,
+        "top_level_function_count": 1
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
         "line_count": 188,
         "local_import_count": 0,
         "max_severity": "none",
@@ -5918,7 +6113,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 329,
+        "line_count": 346,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6751,7 +6946,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 402,
+        "line_count": 431,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7055,7 +7250,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 144,
+        "line_count": 146,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7496,7 +7691,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 251,
+        "line_count": 252,
         "local_import_count": 46,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7536,52 +7731,84 @@
         "top_level_function_count": 6
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 425,
-        "local_import_count": 1,
-        "max_severity": "none",
+        "line_count": 574,
+        "local_import_count": 2,
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_io",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_io",
         "surface_owner": "flowpilot_router_io",
         "top_level_class_count": 0,
-        "top_level_function_count": 32
+        "top_level_function_count": 39
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 445,
+        "line_count": 653,
         "local_import_count": 8,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_lifecycle_requests",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_lifecycle_requests",
         "surface_owner": "flowpilot_router_lifecycle_requests",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 11
       },
       {
         "covered": true,
@@ -8787,7 +9014,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 243,
+        "line_count": 257,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8811,7 +9038,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 148,
+        "line_count": 165,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8883,8 +9110,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 159,
-        "local_import_count": 1,
+        "line_count": 122,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_startup_daemon",
@@ -8896,7 +9123,7 @@
         "surface_id": "asset:flowpilot_router_startup_daemon",
         "surface_owner": "flowpilot_router_startup_daemon",
         "top_level_class_count": 0,
-        "top_level_function_count": 7
+        "top_level_function_count": 6
       },
       {
         "covered": true,
@@ -12546,9 +12773,11 @@
           "test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue",
           "-k",
           "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",
+          "-k",
+          "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted -k test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14517,10 +14746,16 @@
           "-k",
           "test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress",
           "-k",
+          "test_terminal_pending_heartbeat_action_is_noop",
+          "-k",
+          "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
+          "-k",
+          "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
+          "-k",
           "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
           "tests.router_runtime.terminal"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_terminal_pending_heartbeat_action_is_noop -k test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work -k test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -15482,17 +15717,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -15539,19 +15772,19 @@
             }
           ],
           "selected": {
-            "artifact_name": "capability_legacy_full",
-            "artifact_root": "tmp/test_background",
+            "artifact_name": "run_capability_checks",
+            "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
             },
             "execution_status": "failed",
             "exit_code": 1,
-            "meta_status": "failed",
-            "name": "capability_legacy_full",
+            "meta_status": "completed",
+            "name": "run_capability_checks",
             "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
@@ -15576,13 +15809,13 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-18T15:41:30.082500+00:00",
-            "edge_count": 14,
+            "created_at": "2026-05-19T08:55:22.810034+00:00",
+            "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
-            "state_count": 9,
+            "state_count": 10,
             "valid": true
           },
           "legacy_monolith_required_for_release": false,
@@ -15732,13 +15965,13 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-18T15:41:30.186347+00:00",
-            "edge_count": 18,
+            "created_at": "2026-05-19T08:55:22.846547+00:00",
+            "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
-            "state_count": 11,
+            "state_count": 12,
             "valid": true
           },
           "legacy_monolith_required_for_release": false,
@@ -15793,17 +16026,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -18298,9 +18529,11 @@
           "test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue",
           "-k",
           "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",
+          "-k",
+          "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted -k test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18981,10 +19214,16 @@
           "-k",
           "test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress",
           "-k",
+          "test_terminal_pending_heartbeat_action_is_noop",
+          "-k",
+          "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
+          "-k",
+          "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
+          "-k",
           "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
           "tests.router_runtime.terminal"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_terminal_pending_heartbeat_action_is_noop -k test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work -k test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -19418,9 +19657,11 @@
           "test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue",
           "-k",
           "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",
+          "-k",
+          "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_plane_reissue_retry_budget_escalates_to_pm -k test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue -k test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted -k test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21389,10 +21630,16 @@
           "-k",
           "test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress",
           "-k",
+          "test_terminal_pending_heartbeat_action_is_noop",
+          "-k",
+          "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
+          "-k",
+          "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
+          "-k",
           "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
           "tests.router_runtime.terminal"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress -k test_terminal_pending_heartbeat_action_is_noop -k test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work -k test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup -k test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work tests.router_runtime.terminal",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24001,7 +24248,8 @@
           "required": true,
           "role": "owner",
           "side_effects": [
-            "save_run_state"
+            "save_run_state",
+            "update"
           ],
           "state_reads": [],
           "state_writes": [],
@@ -24165,6 +24413,28 @@
           "state_writes": [],
           "surface_type": "function",
           "symbol": "_router_daemon_tick"
+        },
+        {
+          "code_contract_id": "process_liveness.probe",
+          "error_paths": [],
+          "external_inputs": [
+            "pid"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "startup_daemon.lock_liveness_contract",
+            "runtime_owner.router_boundary_helpers"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_process_liveness.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "process_is_live"
         },
         {
           "code_contract_id": "startup_daemon.lock_liveness",
@@ -27798,6 +28068,7 @@
           "assertion_scope": "external_contract",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_startup_daemon_helpers_belong_to_owner_module",
           "covered_code_contracts": [
+            "process_liveness.probe",
             "startup_daemon.lock_liveness",
             "startup_daemon.heartbeat_monitor",
             "startup_daemon.lock_is_live"
@@ -30348,6 +30619,7 @@
             "router._acquire_router_daemon_lock",
             "router._append_router_daemon_event",
             "router._ensure_daemon_runtime_state",
+            "router._mark_router_daemon_terminal",
             "router._refresh_router_daemon_lock",
             "router._release_router_daemon_lock",
             "router._resolve_run_root_target",
@@ -30355,6 +30627,7 @@
             "router._router_daemon_status_path",
             "router._router_daemon_tick",
             "router._router_daemon_tick_requests_immediate_next_tick",
+            "router._terminal_lifecycle_mode",
             "router._write_router_daemon_status",
             "router.load_bootstrap_state",
             "router.load_run_state_from_run_root",
@@ -30362,9 +30635,11 @@
             "router.read_json_if_exists",
             "router.save_run_state",
             "router.time.sleep",
+            "router.utc_now",
             "run_state.get",
             "str",
             "tick.get",
+            "tick.update",
             "ticks.append",
             "type"
           ],
@@ -30388,7 +30663,8 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
-            "save_run_state"
+            "save_run_state",
+            "update"
           ],
           "state_reads": [
             "Any",
@@ -30403,6 +30679,7 @@
             "_acquire_router_daemon_lock",
             "_append_router_daemon_event",
             "_ensure_daemon_runtime_state",
+            "_mark_router_daemon_terminal",
             "_refresh_router_daemon_lock",
             "_release_router_daemon_lock",
             "_resolve_run_root_target",
@@ -30410,6 +30687,7 @@
             "_router_daemon_status_path",
             "_router_daemon_tick",
             "_router_daemon_tick_requests_immediate_next_tick",
+            "_terminal_lifecycle_mode",
             "_write_router_daemon_status",
             "append",
             "bool",
@@ -30422,13 +30700,13 @@
             "get",
             "int",
             "isinstance",
-            "last_tick_at",
             "len",
             "list",
             "load_bootstrap_state",
             "load_run_state_from_run_root",
             "lock",
             "max_ticks",
+            "nested_exc",
             "observe_only",
             "path",
             "project_relative",
@@ -30445,12 +30723,15 @@
             "save_run_state",
             "sleep",
             "status",
+            "status_exc",
             "str",
             "target_run_root",
             "tick",
             "ticks",
             "time",
             "type",
+            "update",
+            "utc_now",
             "write_lock"
           ],
           "state_writes": [
@@ -30460,6 +30741,7 @@
             "existing_lock",
             "final_status",
             "lock",
+            "nested_exc",
             "project_root",
             "run_root",
             "run_state",
@@ -30881,6 +31163,7 @@
           ],
           "state_writes": [
             "controller_ledger_summary",
+            "current_action",
             "current_wait",
             "current_work",
             "effective_lifecycle_status",
@@ -30912,9 +31195,11 @@
             "router._reconcile_controller_receipts",
             "router._reconcile_scheduled_controller_action_receipts",
             "router._refresh_router_daemon_lock",
+            "router._release_router_daemon_lock",
             "router._router_daemon_fill_action_queue",
             "router._startup_daemon_controls_bootstrap",
             "router._startup_daemon_schedule_bootloader_action",
+            "router._terminal_lifecycle_mode",
             "router._write_controller_action_entry",
             "router._write_router_daemon_status",
             "router.load_bootstrap_state",
@@ -30958,9 +31243,11 @@
             "_reconcile_controller_receipts",
             "_reconcile_scheduled_controller_action_receipts",
             "_refresh_router_daemon_lock",
+            "_release_router_daemon_lock",
             "_router_daemon_fill_action_queue",
             "_startup_daemon_controls_bootstrap",
             "_startup_daemon_schedule_bootloader_action",
+            "_terminal_lifecycle_mode",
             "_write_controller_action_entry",
             "_write_router_daemon_status",
             "action",
@@ -31012,6 +31299,70 @@
             "status"
           ],
           "symbol": "_router_daemon_tick"
+        },
+        {
+          "calls": [
+            "bool",
+            "ctypes.byref",
+            "ctypes.c_ulong",
+            "ctypes.windll.kernel32.CloseHandle",
+            "ctypes.windll.kernel32.GetExitCodeProcess",
+            "ctypes.windll.kernel32.OpenProcess",
+            "int",
+            "os.getpid",
+            "os.kill"
+          ],
+          "code_contract_id": "process_liveness.probe",
+          "found": true,
+          "parameters": [
+            "pid"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_process_liveness.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "CloseHandle",
+            "Exception",
+            "GetExitCodeProcess",
+            "OSError",
+            "OpenProcess",
+            "PermissionError",
+            "ProcessLookupError",
+            "TypeError",
+            "ValueError",
+            "bool",
+            "byref",
+            "c_ulong",
+            "ctypes",
+            "exit_code",
+            "getpid",
+            "handle",
+            "int",
+            "kernel32",
+            "kill",
+            "ok",
+            "os",
+            "pid",
+            "platform",
+            "query_limited_information",
+            "still_active",
+            "sys",
+            "value",
+            "windll"
+          ],
+          "state_writes": [
+            "exit_code",
+            "handle",
+            "ok",
+            "query_limited_information",
+            "still_active",
+            "value"
+          ],
+          "symbol": "process_is_live"
         },
         {
           "calls": [
@@ -38260,17 +38611,22 @@
           "test_name": "test_router_daemon_status_not_active_after_error_lock_or_missing_pid"
         },
         {
-          "assert_count": 5,
+          "assert_count": 9,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
+            "process_liveness.probe",
             "startup_daemon.heartbeat_monitor",
             "startup_daemon.lock_is_live",
             "startup_daemon.lock_liveness"
           ],
           "calls": [
+            "os.getpid",
+            "process_liveness.process_is_live",
             "self.assertEqual",
             "self.assertFalse",
             "self.assertIn",
+            "self.assertIs",
+            "self.assertTrue",
             "startup_daemon._router_daemon_heartbeat_monitor",
             "startup_daemon._router_daemon_lock_is_live",
             "startup_daemon._router_daemon_lock_liveness"

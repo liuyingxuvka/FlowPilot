@@ -15914,3 +15914,45 @@ Skipped steps:
 
 - Keep future Controller standby changes explicit about three separate ideas: status update allowed, patrol required, and final answer/stop allowed.
 - When a status summary field names a next step, keep projection source and freshness visible so stale display data cannot masquerade as Controller authority.
+
+## 2026-05-19 - verify-flowguard-hierarchy-release-closure
+
+- Project: FlowPilot
+- Trigger reason: User requested OpenSpec + FlowGuard closure verification after the Controller standby stop-gate work, with local install sync, background model regressions, and preservation of active peer-agent README/hero edits.
+- Status: validated locally, installed skill synced, peer edits preserved, and scoped evidence ready for local commit
+- Skill decision: use_openspec + use_flowguard:model-mesh
+- OpenSpec change: harden-controller-standby-stop-gate
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- OpenSpec contract for `harden-controller-standby-stop-gate` validates strictly and includes the visible/user-triggerable branch coverage gate.
+- FlowGuard hierarchy evidence is closed at the parent/child level: 35 registered child results, no missing child results, no stale visible-branch evidence accepted, and no enabled visible control without implementation.
+- Meta and capability parents both report `release_confidence=current_with_layered_full_parent`; the old legacy monolith proof remains available as compatibility evidence but is not required for release confidence.
+- Model-test-code alignment reports `alignment_ok=true` and `full_diagnostic_ok=true`.
+- Local installed `flowpilot` skill is fresh against the repository source digest; real `flowguard` imports with schema `1.0`.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate "harden-controller-standby-stop-gate" --strict`.
+- OK: `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out simulations\flowpilot_model_hierarchy_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: background `python simulations\run_meta_checks.py --full` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, `release_confidence=current_with_layered_full_parent`.
+- OK: background `python simulations\run_capability_checks.py --full` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, `release_confidence=current_with_layered_full_parent`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The current closure mechanism is now a hierarchy, not a single giant graph: thin parent models decide release confidence only when required child partitions and proofs are current.
+- The specific Controller-stop miss is covered by runtime fields, prompts, tests, and model hierarchy: user/status return can update display or ask for input, but cannot stop standby unless terminal stop authority is explicit.
+- Visible controls, status returns, recovery paths, and stop branches are now part of the model-mesh responsibility boundary; future visible branches must either have current model evidence or be disabled/hidden/out of scope.
+- The model-test-code diagnostic still reports three medium structure-split follow-ups: `flowpilot_router_controller_scheduler_standby`, `flowpilot_router_io`, and `flowpilot_router_lifecycle_requests`. These are maintainability debt, not release-closure failures for this change.
+
+### Skipped
+
+- No GitHub push, tag, remote release, or public publication was performed.
+- Unrelated peer edits in `README.md` and `assets/readme-hero/hero_design_note.md` were preserved and intentionally left outside this scoped commit.
