@@ -6,9 +6,9 @@ Use `flowpilot-icon-default.png` as the default FlowPilot software icon.
 
 - Path: `assets/brand/flowpilot-icon-default.png`
 - Format: PNG with alpha transparency
-- Source: text-to-image generated icon approved on 2026-05-13
+- Source: text-to-image generated icon approved on 2026-05-19
 - Source copy: `assets/brand/source/flowpilot-icon-generated-source.png`
 
-The mark is a minimal black hexagram with a single centered ring node. Treat it
-as the canonical icon for FlowPilot UI work unless a later approved brand asset
-explicitly replaces it.
+The mark is a rounded red-purple gradient hexagram with a single centered
+white ring node. Treat it as the canonical icon for FlowPilot UI work unless a
+later approved brand asset explicitly replaces it.

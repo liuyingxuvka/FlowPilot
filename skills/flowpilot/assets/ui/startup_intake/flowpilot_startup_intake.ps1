@@ -275,7 +275,7 @@ $Xaml = @"
     MinWidth="780"
     MinHeight="650"
     WindowStartupLocation="CenterScreen"
-    Background="#FFFDF7"
+    Background="#FFFFFF"
     FontFamily="Segoe UI Variable Text, Segoe UI"
     TextOptions.TextFormattingMode="Display"
     TextOptions.TextRenderingMode="ClearType"
@@ -283,20 +283,25 @@ $Xaml = @"
     SnapsToDevicePixels="True"
     ResizeMode="CanResizeWithGrip">
   <Window.Resources>
-    <SolidColorBrush x:Key="InkBrush" Color="#141414" />
-    <SolidColorBrush x:Key="MutedBrush" Color="#706A62" />
-    <SolidColorBrush x:Key="LineBrush" Color="#E2DCD2" />
+    <SolidColorBrush x:Key="InkBrush" Color="#19121B" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#746677" />
+    <SolidColorBrush x:Key="LineBrush" Color="#EEE2EF" />
     <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="FieldBrush" Color="#FBFAF7" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#B9821D" />
+    <SolidColorBrush x:Key="FieldBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#8A5AD0" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#7A49C3" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#6537A7" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#F0E7FA" />
+    <SolidColorBrush x:Key="AccentLineBrush" Color="#D8C6EE" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#61309A" />
 
     <Style x:Key="PrimaryButton" TargetType="Button">
       <Setter Property="MinWidth" Value="132" />
       <Setter Property="Height" Value="44" />
       <Setter Property="Padding" Value="20,0" />
-      <Setter Property="Foreground" Value="#FFFDF7" />
-      <Setter Property="Background" Value="#141414" />
-      <Setter Property="BorderBrush" Value="#141414" />
+      <Setter Property="Foreground" Value="#FFFFFF" />
+      <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
@@ -313,11 +318,11 @@ $Xaml = @"
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="ButtonBorder" Property="Background" Value="#2A2723" />
-                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#2A2723" />
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentHoverBrush}" />
+                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentHoverBrush}" />
               </Trigger>
               <Trigger Property="IsPressed" Value="True">
-                <Setter TargetName="ButtonBorder" Property="Background" Value="#000000" />
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentPressedBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -328,7 +333,7 @@ $Xaml = @"
     <Style x:Key="LanguageChoice" TargetType="RadioButton">
       <Setter Property="Height" Value="30" />
       <Setter Property="MinWidth" Value="68" />
-      <Setter Property="Foreground" Value="#625C55" />
+      <Setter Property="Foreground" Value="#6D5F70" />
       <Setter Property="FontSize" Value="12.5" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
@@ -346,12 +351,12 @@ $Xaml = @"
             </Border>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="True">
-                <Setter TargetName="ChoiceBorder" Property="Background" Value="#141414" />
-                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="#141414" />
-                <Setter Property="Foreground" Value="#FFFDF7" />
+                <Setter TargetName="ChoiceBorder" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="{StaticResource AccentLineBrush}" />
+                <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
               </Trigger>
               <Trigger Property="IsMouseOver" Value="True">
-                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="#CFC7BA" />
+                <Setter TargetName="ChoiceBorder" Property="BorderBrush" Value="{StaticResource AccentLineBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -374,7 +379,7 @@ $Xaml = @"
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Thumb">
-            <Border Background="#CBC3B8" CornerRadius="4" />
+            <Border Background="#D9B7DA" CornerRadius="4" />
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -415,14 +420,14 @@ $Xaml = @"
             <Grid Width="88" Height="40" SnapsToDevicePixels="True">
               <Border
                   x:Name="Track"
-                  Background="#141414"
-                  BorderBrush="#141414"
+                  Background="{StaticResource AccentSoftBrush}"
+                  BorderBrush="{StaticResource AccentLineBrush}"
                   BorderThickness="1"
                   CornerRadius="20" />
               <TextBlock
                   x:Name="StateLabel"
                   Text="ON"
-                  Foreground="#FFFDF7"
+                  Foreground="{StaticResource AccentTextBrush}"
                   FontSize="10"
                   FontWeight="Bold"
                   HorizontalAlignment="Left"
@@ -432,8 +437,8 @@ $Xaml = @"
                   x:Name="Knob"
                   Width="30"
                   Height="30"
-                  Fill="#FFFDF7"
-                  Stroke="#D8CFC1"
+                  Fill="#FFFFFF"
+                  Stroke="#E8C8E8"
                   StrokeThickness="1"
                   HorizontalAlignment="Right"
                   VerticalAlignment="Center"
@@ -441,16 +446,17 @@ $Xaml = @"
             </Grid>
             <ControlTemplate.Triggers>
               <Trigger Property="IsChecked" Value="False">
-                <Setter TargetName="Track" Property="Background" Value="#D6D0C7" />
-                <Setter TargetName="Track" Property="BorderBrush" Value="#A69E94" />
+                <Setter TargetName="Track" Property="Background" Value="#D9D9D9" />
+                <Setter TargetName="Track" Property="BorderBrush" Value="#B8B8B8" />
                 <Setter TargetName="StateLabel" Property="Text" Value="OFF" />
-                <Setter TargetName="StateLabel" Property="Foreground" Value="#514B44" />
+                <Setter TargetName="StateLabel" Property="Foreground" Value="#4F4F4F" />
                 <Setter TargetName="StateLabel" Property="HorizontalAlignment" Value="Right" />
                 <Setter TargetName="StateLabel" Property="Margin" Value="0,0,12,0" />
                 <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Left" />
+                <Setter TargetName="Knob" Property="Stroke" Value="#CFCFCF" />
               </Trigger>
               <Trigger Property="IsKeyboardFocused" Value="True">
-                <Setter TargetName="Track" Property="BorderBrush" Value="#B9821D" />
+                <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
           </ControlTemplate>
@@ -503,11 +509,11 @@ $Xaml = @"
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
               <Viewbox Width="18" Height="18" Margin="0,0,7,0">
                 <Canvas Width="24" Height="24">
-                  <Ellipse Width="18" Height="18" Canvas.Left="3" Canvas.Top="3" Stroke="#141414" StrokeThickness="1.5" />
-                  <Line X1="4" Y1="9" X2="20" Y2="9" Stroke="#141414" StrokeThickness="1.5" />
-                  <Line X1="4" Y1="15" X2="20" Y2="15" Stroke="#141414" StrokeThickness="1.5" />
-                  <Path Data="M12 3 C15 6 15 18 12 21" Stroke="#141414" StrokeThickness="1.5" Fill="{x:Null}" />
-                  <Path Data="M12 3 C9 6 9 18 12 21" Stroke="#141414" StrokeThickness="1.5" Fill="{x:Null}" />
+                  <Ellipse Width="18" Height="18" Canvas.Left="3" Canvas.Top="3" Stroke="#8A5AD0" StrokeThickness="1.5" />
+                  <Line X1="4" Y1="9" X2="20" Y2="9" Stroke="#8A5AD0" StrokeThickness="1.5" />
+                  <Line X1="4" Y1="15" X2="20" Y2="15" Stroke="#8A5AD0" StrokeThickness="1.5" />
+                  <Path Data="M12 3 C15 6 15 18 12 21" Stroke="#8A5AD0" StrokeThickness="1.5" Fill="{x:Null}" />
+                  <Path Data="M12 3 C9 6 9 18 12 21" Stroke="#8A5AD0" StrokeThickness="1.5" Fill="{x:Null}" />
                 </Canvas>
               </Viewbox>
               <Border Background="Transparent" CornerRadius="17" Padding="2">
@@ -551,7 +557,7 @@ $Xaml = @"
                       AcceptsReturn="True"
                       TextWrapping="Wrap"
                       VerticalScrollBarVisibility="Auto"
-                      BorderBrush="#C9BFAF"
+                      BorderBrush="#E2C7E2"
                       BorderThickness="1"
                       Background="{StaticResource FieldBrush}"
                       Foreground="{StaticResource InkBrush}"
@@ -561,7 +567,7 @@ $Xaml = @"
                   <TextBlock
                       x:Name="PlaceholderText"
                       Text="Write the instructions you want the AI to follow."
-                      Foreground="#8D857A"
+                      Foreground="#9A869E"
                       FontSize="14"
                       Margin="18,15,18,0"
                       TextWrapping="Wrap"
