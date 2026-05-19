@@ -195,7 +195,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="run_router_daemon",
             implements=("daemon.lock_status_queue_contract",),
             external_inputs=("router", "project_root"),
-            side_effects=("save_run_state",),
+            side_effects=("save_run_state", "update"),
         ),
         _contract(
             "daemon.stop_router_daemon",
@@ -244,6 +244,13 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             implements=("daemon.lock_status_queue_contract",),
             external_inputs=("router", "project_root", "run_root", "run_state", "observe_only"),
             side_effects=("save_run_state", "update"),
+        ),
+        _contract(
+            "process_liveness.probe",
+            path="skills/flowpilot/assets/flowpilot_process_liveness.py",
+            symbol="process_is_live",
+            implements=("startup_daemon.lock_liveness_contract", "runtime_owner.router_boundary_helpers"),
+            external_inputs=("pid",),
         ),
         _contract(
             "startup_daemon.lock_liveness",

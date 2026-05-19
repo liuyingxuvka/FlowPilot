@@ -15740,3 +15740,56 @@ Skipped steps:
 
 - Keep terminal-fence tests paired with any future startup/heartbeat scheduling changes.
 - Treat background artifact completeness as a release-evidence requirement: progress metadata alone is liveness evidence, not pass evidence.
+
+## 2026-05-19 - clarify-flowpilot-lock-boundaries
+
+- Project: FlowPilot
+- Trigger reason: User asked to reorganize scattered lock-related code with OpenSpec and FlowGuard, sync the local installed skill, and commit locally while peer agents were active.
+- Status: implemented, validated locally, installed skill synced, and ready for local commit
+- Skill decision: use_flowguard:lock-boundary/module-boundary cleanup
+- OpenSpec change: clarify-flowpilot-lock-boundaries
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Added `flowpilot_process_liveness.py` as the shared pid-liveness probe.
+- Routed runtime JSON write-lock and startup daemon lock liveness through the shared probe without moving lock-domain decisions.
+- Added a maintainer-facing lock boundary map that keeps runtime JSON write locks, Router daemon locks, packet active-holder leases, and process-liveness probing separate.
+- Updated StructureMesh and model-test alignment evidence so the new helper is not treated as an ownerless internal-only module.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate "clarify-flowpilot-lock-boundaries" --strict --json`.
+- OK: `python -m py_compile <changed runtime/model/test files>`.
+- OK: `python -m unittest tests.test_flowpilot_router_boundaries`.
+- OK: three focused Router daemon/runtime write-lock unit tests.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, proof reuse false.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, proof reuse false.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python simulations\run_release_tooling_checks.py`.
+- OK: `python scripts\check_public_release.py --json --skip-url-check --skip-validation`.
+
+### Findings
+
+- The safe cleanup point was shared process liveness, not a broader merge of all lock-like concepts.
+- Runtime JSON write locks still own file-write contention and takeover evidence in `flowpilot_router_io.py`.
+- Router daemon lock lifecycle remains owned by daemon runtime/startup daemon helpers.
+- Packet active-holder leases remain packet protocol authority and were intentionally not merged into filesystem lock ownership.
+- The full public-release wrapper timed out inside `smoke_autopilot.py --fast`; the stuck process was stopped and the decomposed release-tooling/install/public-release boundary checks passed instead.
+
+### Counterexamples
+
+- `shared_pid_probe_becomes_lock_domain_owner`
+- `packet_active_holder_lease_merged_into_filesystem_lock`
+- `progress_only_or_timeout_smoke_claimed_as_public_release_pass`
+
+### Next Actions
+
+- Keep future lock cleanup domain-first: identify the lock or lease owner before moving code.
+- If public-release confidence is required, rerun the full smoke/autopilot check in a dedicated long background slot and inspect final artifacts before claiming it.

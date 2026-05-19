@@ -6,55 +6,18 @@ import hashlib
 import json
 import os
 import shutil
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_process_liveness import process_is_live as _process_is_live
 
 
 RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
 RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS = 30.0
 RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
-
-
-def _process_is_live(pid: object) -> bool:
-    try:
-        value = int(pid)  # type: ignore[arg-type]
-    except (TypeError, ValueError):
-        return False
-    if value <= 0:
-        return False
-    if value == os.getpid():
-        return True
-    if sys.platform == "win32":
-        try:
-            import ctypes
-
-            query_limited_information = 0x1000
-            still_active = 259
-            handle = ctypes.windll.kernel32.OpenProcess(query_limited_information, False, value)
-            if not handle:
-                return False
-            try:
-                exit_code = ctypes.c_ulong()
-                ok = ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code))
-                return bool(ok) and exit_code.value == still_active
-            finally:
-                ctypes.windll.kernel32.CloseHandle(handle)
-        except Exception:
-            return False
-    try:
-        os.kill(value, 0)
-    except ProcessLookupError:
-        return False
-    except PermissionError:
-        return True
-    except OSError:
-        return False
-    return True
 
 
 def utc_now() -> str:

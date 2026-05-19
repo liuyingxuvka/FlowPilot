@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -24,6 +25,7 @@ import flowpilot_router_event_dispatcher as event_dispatcher  # noqa: E402
 import flowpilot_router_events as router_events  # noqa: E402
 import flowpilot_router_errors as router_errors  # noqa: E402
 import flowpilot_router_io as router_io  # noqa: E402
+import flowpilot_process_liveness as process_liveness  # noqa: E402
 import flowpilot_router_protocol_card_metadata as card_metadata  # noqa: E402
 import flowpilot_router_protocol_startup_catalog as startup_catalog  # noqa: E402
 import flowpilot_router_protocol_catalog as protocol_catalog  # noqa: E402
@@ -212,6 +214,10 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
 
     def test_startup_daemon_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA, "flowpilot.router_daemon_lock.v1")
+        self.assertIs(router_io._process_is_live, process_liveness.process_is_live)
+        self.assertIs(startup_daemon._process_is_live, process_liveness.process_is_live)
+        self.assertTrue(process_liveness.process_is_live(os.getpid()))
+        self.assertFalse(process_liveness.process_is_live(0))
         liveness = startup_daemon._router_daemon_lock_liveness(
             {
                 "schema_version": startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA,

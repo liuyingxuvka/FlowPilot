@@ -201,6 +201,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=HAPPY,
             covers=("startup_daemon.lock_liveness_contract",),
             code_contracts=(
+                "process_liveness.probe",
                 "startup_daemon.lock_liveness",
                 "startup_daemon.heartbeat_monitor",
                 "startup_daemon.lock_is_live",

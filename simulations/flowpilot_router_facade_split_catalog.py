@@ -167,6 +167,13 @@ ROUTER_FACADE_PARTITIONS = (
         new_path="flowpilot_router_daemon_runtime",
     ),
     StructurePartitionItem(
+        "process_liveness_probe",
+        item_type="function_cluster",
+        owner_module_id="process_liveness",
+        old_path="duplicated process liveness helpers in router IO and startup daemon",
+        new_path="flowpilot_process_liveness",
+    ),
+    StructurePartitionItem(
         "runtime_state",
         item_type="function_cluster",
         owner_module_id="runtime_state",
@@ -631,6 +638,14 @@ ROUTER_FACADE_MODULES = (
             "bounded queue fill",
             "foreground console hidden by tier runner",
         ),
+        behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
+        release_required=True,
+    ),
+    ModuleStructureEvidence(
+        "process_liveness",
+        path="skills/flowpilot/assets/flowpilot_process_liveness.py",
+        owns_functions=("process_is_live",),
+        behavior_contracts=("shared pid liveness probe", "no lock-domain state ownership"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),
