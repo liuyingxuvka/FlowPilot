@@ -27,9 +27,9 @@
       },
       "delayed_heartbeat_reported_ok": {
         "detected": true,
-        "expected": "monitor reported ok after the five-second heartbeat window",
+        "expected": "monitor reported ok after the thirty-second heartbeat window",
         "failures": [
-          "monitor reported ok after the five-second heartbeat window",
+          "monitor reported ok after the thirty-second heartbeat window",
           "Controller continued after delayed heartbeat without liveness check"
         ]
       },
@@ -51,7 +51,7 @@
     },
     "ok": true
   },
-  "heartbeat_check_seconds": 5,
+  "heartbeat_check_seconds": 30,
   "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,

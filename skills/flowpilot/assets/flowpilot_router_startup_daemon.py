@@ -14,8 +14,8 @@ ROUTER_DAEMON_LOCK_SCHEMA = "flowpilot.router_daemon_lock.v1"
 ROUTER_DAEMON_STATUS_SCHEMA = "flowpilot.router_daemon_status.v1"
 ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
-ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 5.0
-ROUTER_DAEMON_LOCK_STALE_SECONDS = 10
+ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 30.0
+ROUTER_DAEMON_LOCK_STALE_SECONDS = 30
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
 ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
 ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK = 16
@@ -93,7 +93,7 @@ def _router_daemon_heartbeat_monitor(
     if age is None:
         reasons.append("heartbeat_timestamp_missing_or_invalid")
     elif float(age) > ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS:
-        reasons.append("heartbeat_older_than_five_seconds")
+        reasons.append("heartbeat_older_than_thirty_seconds")
     if not liveness.get("process_live"):
         reasons.append("owner_process_liveness_needs_check")
     status = "check_liveness" if reasons else "ok"

@@ -17,8 +17,8 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_daemon_liveness_results.json"
 
 REQUIRED_LABELS = (
-    "monitor_reports_ok_inside_five_second_window",
-    "monitor_reports_check_liveness_after_five_second_window",
+    "monitor_reports_ok_inside_thirty_second_window",
+    "monitor_reports_check_liveness_after_thirty_second_window",
     "monitor_reports_check_liveness_for_dead_daemon_after_window",
     "controller_attaches_after_liveness_check_finds_alive_daemon",
     "controller_recovers_after_liveness_check_finds_dead_daemon",
@@ -26,7 +26,7 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "delayed_heartbeat_reported_ok": "monitor reported ok after the five-second heartbeat window",
+    "delayed_heartbeat_reported_ok": "monitor reported ok after the thirty-second heartbeat window",
     "monitor_decides_restart_from_timestamp": "monitor decided recovery before Controller liveness check",
     "controller_skips_liveness_check": "Controller continued after delayed heartbeat without liveness check",
     "dead_daemon_left_dead_after_check": "Controller found dead daemon without recovering current run daemon",

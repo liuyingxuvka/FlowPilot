@@ -15,7 +15,7 @@ from typing import Iterable
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-HEARTBEAT_CHECK_SECONDS = 5
+HEARTBEAT_CHECK_SECONDS = 30
 
 
 @dataclass(frozen=True)
@@ -71,7 +71,7 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
     if state.monitor_status == "unread":
         return (
             (
-                "monitor_reports_ok_inside_five_second_window",
+                "monitor_reports_ok_inside_thirty_second_window",
                 _step(
                     state,
                     daemon_process="alive",
@@ -81,7 +81,7 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
                 ),
             ),
             (
-                "monitor_reports_check_liveness_after_five_second_window",
+                "monitor_reports_check_liveness_after_thirty_second_window",
                 _step(
                     state,
                     daemon_process="alive",
@@ -137,7 +137,7 @@ def invariant_failures(state: State) -> list[str]:
     heartbeat_delayed = state.heartbeat_age_seconds > HEARTBEAT_CHECK_SECONDS
 
     if heartbeat_delayed and state.monitor_status == "ok":
-        failures.append("monitor reported ok after the five-second heartbeat window")
+        failures.append("monitor reported ok after the thirty-second heartbeat window")
     if heartbeat_delayed and state.monitor_status == "repair_or_restart" and not state.controller_liveness_checked:
         failures.append("monitor decided recovery before Controller liveness check")
     if heartbeat_delayed and state.next_action_allowed and not state.controller_liveness_checked:
@@ -168,7 +168,7 @@ def _invariant(name: str, expected: str) -> Invariant:
 
 
 INVARIANTS = (
-    _invariant("freshness_window_controls_ok_status", "monitor reported ok after the five-second heartbeat window"),
+    _invariant("freshness_window_controls_ok_status", "monitor reported ok after the thirty-second heartbeat window"),
     _invariant("monitor_does_not_decide_recovery", "monitor decided recovery before Controller liveness check"),
     _invariant("controller_checks_delayed_heartbeat", "Controller continued after delayed heartbeat without liveness check"),
     _invariant("check_liveness_is_not_final", "check_liveness was treated as final without Controller liveness check"),

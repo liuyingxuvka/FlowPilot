@@ -197,6 +197,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_foreground_next_waits_on_stale_lock_when_owner_process_is_live(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
         action_path = sorted((run_root / "runtime" / "controller_actions").glob("*.json"))[0]
         original_entry = read_json(action_path)
         action_path.write_text(
@@ -843,6 +844,43 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(result["final_answer_preflight"]["controller_stop_allowed"])
         self.assertEqual(result["final_answer_preflight"]["continuous_controller_standby_status"], "in_progress")
         self.assertFalse(result["display_projection_is_stop_authority"])
+    def test_controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        runtime_dir = run_root / "runtime"
+        for name in ("controller_actions", "controller_receipts"):
+            path = runtime_dir / name
+            if path.exists():
+                shutil.rmtree(path)
+            path.mkdir(parents=True, exist_ok=True)
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = None
+        state["daemon_mode_enabled"] = True
+        router._rebuild_controller_action_ledger(root, run_root, state)  # type: ignore[attr-defined]
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        lock["last_tick_at"] = (
+            datetime.now(timezone.utc).replace(microsecond=0) - timedelta(seconds=20)
+        ).isoformat().replace("+00:00", "Z")
+        router.write_json(run_root / "runtime" / "router_daemon.lock", lock)
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=None,
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        result = router.controller_patrol_timer(root, seconds=0)
+
+        self.assertEqual(result["patrol_result"], "continue_patrol")
+        router_daemon = result["standby_snapshot"]["router_daemon"]
+        self.assertEqual(router_daemon["heartbeat_status"], "ok")
+        self.assertTrue(router_daemon["lock_live"])
+        self.assertEqual(router_daemon["heartbeat_check_after_seconds"], 30.0)
+        self.assertLess(router_daemon["heartbeat_age_seconds"], router.ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS)
+        self.assertFalse(router_daemon["controller_liveness_check_required"])
     def test_controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

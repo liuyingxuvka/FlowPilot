@@ -13,7 +13,7 @@
     {
       "id": "startup.heartbeat_resume",
       "path": "prompts/startup/heartbeat_resume.md",
-      "sha256": "c858cbc1cfbe699c38aece31b6b823f0bcbee929a38bdf15c95a4027fd22b80a",
+      "sha256": "bba65a761f65ac744896d66925794cf3bec618beda0c0ba7ca38fedb362add5e",
       "strip_trailing_newline": true,
       "template_variables": [
         "project_root",

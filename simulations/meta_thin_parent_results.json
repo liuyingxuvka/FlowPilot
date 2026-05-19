@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-19T08:55:24.199776+00:00",
+  "created_at": "2026-05-19T09:50:23.123909+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": false,
     "status": {
-      "created_at": "2026-05-19T08:55:22.846547+00:00",
+      "created_at": "2026-05-19T09:50:21.572909+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "legacy_monolith_required": false,
@@ -242,7 +242,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_daemon_liveness_results.json",
-            "result_fingerprint": "618c50fd9fee5a41061cb2cb6a974f1c27f55051bf8fb9a722b424e4b42413f1",
+            "result_fingerprint": "7eb430f733c34962143ba42256dd25e5f9553d57c419d6807593ba41886c6475",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 9
