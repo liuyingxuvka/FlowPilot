@@ -591,12 +591,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         request_mode: str = "blocking",
         output_contract_id: str = "flowpilot.output_contract.flowguard_model_miss_report.v1",
         body_text: str = "Analyze why the FlowGuard model missed this bug class and recommend a minimal repair.",
+        supersedes_request_id: str | None = None,
     ) -> dict:
         run_root = self.run_root_for(root)
         body_path = run_root / "test_role_outputs" / "pm_role_work" / f"{request_id}.md"
         body_path.parent.mkdir(parents=True, exist_ok=True)
         body_path.write_text(body_text, encoding="utf-8")
-        return {
+        payload = {
             "requested_by_role": "project_manager",
             "request_id": request_id,
             "to_role": to_role,
@@ -606,6 +607,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "packet_body_path": self.rel(root, body_path),
             "packet_body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
         }
+        if supersedes_request_id:
+            payload["supersedes_request_id"] = supersedes_request_id
+        return payload
     def open_role_work_packet_and_write_result(
         self,
         root: Path,

@@ -38,6 +38,86 @@ def _bind_router(router: ModuleType) -> None:
         current[name] = value
 
 
+def _pm_role_work_superseded_request_ids(payload: dict[str, Any]) -> list[str]:
+    raw_values = []
+    for key in ("supersedes_request_id", "replacement_for_request_id"):
+        value = payload.get(key)
+        if value not in (None, "", []):
+            raw_values.append(value)
+    for key in ("supersedes_request_ids", "supersedes_requests"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            raw_values.extend(value)
+    request_ids: list[str] = []
+    for value in raw_values:
+        if isinstance(value, list):
+            candidates = value
+        else:
+            candidates = [value]
+        for candidate in candidates:
+            request_id = str(candidate or "").strip()
+            if request_id and request_id not in request_ids:
+                request_ids.append(request_id)
+    return request_ids
+
+
+def _mark_pm_role_work_superseded_requests(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    index: dict[str, Any],
+    *,
+    superseded_request_ids: list[str],
+    replacement_request_id: str,
+    replacement_packet_id: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    _bind_router(router)
+    if not superseded_request_ids:
+        return ([], [])
+    if replacement_request_id in superseded_request_ids:
+        raise RouterError("PM role-work request cannot supersede itself")
+    changed_records: list[dict[str, Any]] = []
+    superseded_packet_ids: list[str] = []
+    now = utc_now()
+    for old_request_id in superseded_request_ids:
+        old_record = router._pm_role_work_request_record(index, old_request_id)
+        if not isinstance(old_record, dict):
+            raise RouterError(f"PM role-work supersedes unknown request_id: {old_request_id}")
+        status = str(old_record.get("status") or "").strip()
+        already_superseded_by_replacement = (
+            status == "superseded"
+            and str(old_record.get("superseded_by_request_id") or "") == replacement_request_id
+        )
+        if status not in PM_ROLE_WORK_OPEN_STATUSES and not already_superseded_by_replacement:
+            raise RouterError(f"PM role-work supersedes only unresolved requests: {old_request_id}")
+        old_packet_id = str(old_record.get("packet_id") or "").strip()
+        if old_packet_id and old_packet_id not in superseded_packet_ids:
+            superseded_packet_ids.append(old_packet_id)
+        old_record["status"] = "superseded"
+        old_record["superseded_by_request_id"] = replacement_request_id
+        old_record["replacement_request_id"] = replacement_request_id
+        old_record["replacement_packet_id"] = replacement_packet_id
+        old_record["superseded_at"] = old_record.get("superseded_at") or now
+        old_record["active"] = False
+        changed_records.append(old_record)
+    active_ids = [str(item) for item in index.get("active_request_ids", []) if str(item) not in set(superseded_request_ids)]
+    index["active_request_ids"] = active_ids
+    if str(index.get("active_request_id") or "") in set(superseded_request_ids):
+        index["active_request_id"] = active_ids[0] if active_ids else None
+    if index.get("active_batch_id") and not active_ids:
+        index["active_batch_id"] = None
+    for old_record in changed_records:
+        router._record_officer_lifecycle_status(
+            project_root,
+            run_root,
+            run_state,
+            old_record,
+            lifecycle_status="superseded",
+        )
+    return (changed_records, superseded_packet_ids)
+
+
 def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)
     if not isinstance(payload, dict):
@@ -105,6 +185,17 @@ def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root
     validated_packet_type = router._pm_role_work_packet_type_from_contract(run_root, contract_id=output_contract_id, to_role=to_role, request_kind=request_kind)
     if validated_packet_type != packet_type:
         raise RouterError('PM role-work packet type does not match process contract binding')
+    superseded_request_ids = _pm_role_work_superseded_request_ids(payload)
+    superseded_records, superseded_packet_ids = _mark_pm_role_work_superseded_requests(
+        router,
+        project_root,
+        run_root,
+        run_state,
+        index,
+        superseded_request_ids=superseded_request_ids,
+        replacement_request_id=request_id,
+        replacement_packet_id=packet_id,
+    )
     selected_contract = dict(output_contract) if output_contract else router._pm_role_work_output_contract(run_root, contract_id=output_contract_id, to_role=to_role, packet_type=packet_type, node_id=node_id)
     if output_contract:
         if str(selected_contract.get('contract_id') or output_contract_id) != output_contract_id:
@@ -124,13 +215,15 @@ def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root
     target_gate_contract = router._pm_role_work_target_gate_contract(payload)
     if target_gate_contract is not None:
         selected_contract['target_gate_contract'] = target_gate_contract
-    envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id=node_id, body_text=body_text, is_current_node=False, packet_type=packet_type, metadata={'source': PM_ROLE_WORK_REQUEST_EVENT, 'request_id': request_id, 'request_kind': request_kind, 'request_mode': request_mode, 'pm_role_work_request': True, 'strict_process_contract_binding': True, 'process_contract_binding': process_binding, **({'target_gate_contract': target_gate_contract} if target_gate_contract is not None else {})}, output_contract=selected_contract)
+    envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id=node_id, body_text=body_text, is_current_node=False, packet_type=packet_type, replacement_for=superseded_packet_ids[0] if superseded_packet_ids else None, supersedes=superseded_packet_ids or None, metadata={'source': PM_ROLE_WORK_REQUEST_EVENT, 'request_id': request_id, 'request_kind': request_kind, 'request_mode': request_mode, 'pm_role_work_request': True, 'strict_process_contract_binding': True, 'process_contract_binding': process_binding, 'supersedes_request_ids': superseded_request_ids, 'supersedes_packet_ids': superseded_packet_ids, **({'target_gate_contract': target_gate_contract} if target_gate_contract is not None else {})}, output_contract=selected_contract)
     paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state['run_id']))
-    record = {'schema_version': PM_ROLE_WORK_REQUEST_SCHEMA, 'request_id': request_id, 'batch_id': payload.get('batch_id'), 'requested_by_role': 'project_manager', 'to_role': to_role, 'request_mode': request_mode, 'dependency_class': request_mode, 'request_kind': request_kind, 'status': 'open', 'packet_id': packet_id, 'packet_type': packet_type, 'packet_envelope_path': envelope['body_path'].replace('packet_body.md', 'packet_envelope.json'), 'packet_body_path': envelope['body_path'], 'packet_body_hash': envelope['body_hash'], 'result_envelope_path': project_relative(project_root, paths['result_envelope']), 'result_body_path': project_relative(project_root, paths['result_body']), 'output_contract_id': envelope.get('output_contract_id') or output_contract_id, 'process_kind': process_binding['process_kind'], 'process_contract_binding': process_binding, 'strict_process_contract_binding': True, 'required_result_next_recipient': process_binding['required_result_next_recipient'], 'target_gate_contract': target_gate_contract, 'controller_may_read_packet_body': False, 'body_source': body_ref, 'registered_at': utc_now()}
+    record = {'schema_version': PM_ROLE_WORK_REQUEST_SCHEMA, 'request_id': request_id, 'batch_id': payload.get('batch_id'), 'requested_by_role': 'project_manager', 'to_role': to_role, 'request_mode': request_mode, 'dependency_class': request_mode, 'request_kind': request_kind, 'status': 'open', 'packet_id': packet_id, 'packet_type': packet_type, 'packet_envelope_path': envelope['body_path'].replace('packet_body.md', 'packet_envelope.json'), 'packet_body_path': envelope['body_path'], 'packet_body_hash': envelope['body_hash'], 'result_envelope_path': project_relative(project_root, paths['result_envelope']), 'result_body_path': project_relative(project_root, paths['result_body']), 'output_contract_id': envelope.get('output_contract_id') or output_contract_id, 'process_kind': process_binding['process_kind'], 'process_contract_binding': process_binding, 'strict_process_contract_binding': True, 'required_result_next_recipient': process_binding['required_result_next_recipient'], 'target_gate_contract': target_gate_contract, 'controller_may_read_packet_body': False, 'body_source': body_ref, 'registered_at': utc_now(), 'supersedes_request_ids': superseded_request_ids, 'supersedes_packet_ids': superseded_packet_ids, 'replacement_for_request_id': superseded_request_ids[0] if superseded_request_ids else None, 'replacement_for_packet_id': superseded_packet_ids[0] if superseded_packet_ids else None, 'supersedes': superseded_packet_ids, 'replacement_for': superseded_packet_ids[0] if superseded_packet_ids else None}
     if isinstance(existing, dict):
         existing.update(record)
     else:
         index.setdefault('requests', []).append(record)
+    for old_record in superseded_records:
+        old_record["superseded_by_packet_id"] = packet_id
     index['active_request_id'] = request_id
     if not payload.get('batch_id'):
         batch_id = f'pm-role-work-batch-{router._safe_packet_id_component(request_id)}'

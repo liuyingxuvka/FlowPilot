@@ -406,6 +406,44 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         result_path = root / result["result_body_path"]
         self.assertEqual(result["result_body_hash"], hashlib.sha256(result_path.read_bytes()).hexdigest())
 
+    def test_contract_self_check_metadata_accepts_common_heading_and_decision_formats(self) -> None:
+        contract = {
+            "schema_version": "flowpilot.output_contract.v1",
+            "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
+            "contract_self_check_required": True,
+        }
+
+        h1 = packet_runtime.contract_self_check_metadata(
+            "# Contract Self-Check\n\n\"self_check_decision\": \"satisfied\"\n",
+            contract,
+        )
+        self.assertTrue(h1["completed"])
+        self.assertTrue(h1["passed"])
+
+        plain_heading = packet_runtime.contract_self_check_metadata(
+            "Status\n\nComplete\n\nContract Self-Check\n\nPassed.",
+            contract,
+        )
+        self.assertTrue(plain_heading["completed"])
+        self.assertTrue(plain_heading["passed"])
+
+        failed = packet_runtime.contract_self_check_metadata(
+            "## Contract Self-Check\n\n- self_check_decision: failed\n",
+            contract,
+        )
+        self.assertTrue(failed["completed"])
+        self.assertFalse(failed["passed"])
+
+        wrong_contract = packet_runtime.contract_self_check_metadata(
+            "## Contract Self-Check\n\n"
+            "- source_output_contract_id: flowpilot.output_contract.other.v1\n"
+            "- self_check_decision: satisfied\n",
+            contract,
+        )
+        self.assertTrue(wrong_contract["completed"])
+        self.assertFalse(wrong_contract["passed"])
+        self.assertFalse(wrong_contract["source_output_contract_id_matches"])
+
     def test_packet_rejects_contract_for_wrong_recipient(self) -> None:
         root = self.make_project()
 

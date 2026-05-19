@@ -125,12 +125,53 @@ def _dispatch_gate_pm_role_work_blocker(
 ) -> dict[str, Any] | None:
     index_path = _pm_role_work_request_index_path(run_root)
     index = _load_pm_role_work_request_index(run_root, run_state)
+    candidate_superseded_request_ids: set[str] = set()
+    candidate_superseded_packet_ids: set[str] = set()
+    action_supersedes_request_id = str(action.get("supersedes_request_id") or action.get("replacement_for_request_id") or "").strip()
+    if action_supersedes_request_id:
+        candidate_superseded_request_ids.add(action_supersedes_request_id)
+    raw_action_supersedes_request_ids = action.get("supersedes_request_ids")
+    if isinstance(raw_action_supersedes_request_ids, list):
+        candidate_superseded_request_ids.update(str(item).strip() for item in raw_action_supersedes_request_ids if str(item).strip())
+    action_supersedes_packet_id = str(action.get("replacement_for_packet_id") or action.get("replacement_for") or "").strip()
+    if action_supersedes_packet_id:
+        candidate_superseded_packet_ids.add(action_supersedes_packet_id)
+    raw_action_supersedes_packet_ids = action.get("supersedes_packet_ids") or action.get("supersedes")
+    if isinstance(raw_action_supersedes_packet_ids, list):
+        candidate_superseded_packet_ids.update(str(item).strip() for item in raw_action_supersedes_packet_ids if str(item).strip())
     for record in index.get("requests", []):
         if not isinstance(record, dict):
             continue
         request_id = str(record.get("request_id") or "").strip()
         packet_id = str(record.get("packet_id") or "").strip()
         if (request_id and request_id in candidate_request_ids) or (packet_id and packet_id in candidate_packet_ids):
+            for field in ("supersedes_request_ids", "supersedes_requests"):
+                raw = record.get(field)
+                if isinstance(raw, list):
+                    candidate_superseded_request_ids.update(str(item).strip() for item in raw if str(item).strip())
+            replacement_request_id = str(record.get("replacement_for_request_id") or record.get("supersedes_request_id") or "").strip()
+            if replacement_request_id:
+                candidate_superseded_request_ids.add(replacement_request_id)
+            for field in ("supersedes_packet_ids", "supersedes"):
+                raw = record.get(field)
+                if isinstance(raw, list):
+                    candidate_superseded_packet_ids.update(str(item).strip() for item in raw if str(item).strip())
+            replacement_packet_id = str(record.get("replacement_for_packet_id") or record.get("replacement_for") or "").strip()
+            if replacement_packet_id:
+                candidate_superseded_packet_ids.add(replacement_packet_id)
+    for record in index.get("requests", []):
+        if not isinstance(record, dict):
+            continue
+        request_id = str(record.get("request_id") or "").strip()
+        packet_id = str(record.get("packet_id") or "").strip()
+        if (request_id and request_id in candidate_request_ids) or (packet_id and packet_id in candidate_packet_ids):
+            continue
+        if request_id and request_id in candidate_superseded_request_ids:
+            continue
+        if packet_id and packet_id in candidate_superseded_packet_ids:
+            continue
+        superseded_by = str(record.get("superseded_by_request_id") or record.get("replacement_request_id") or "").strip()
+        if superseded_by and superseded_by in candidate_request_ids:
             continue
         status = str(record.get("status") or "").strip()
         to_role = str(record.get("to_role") or "").strip()

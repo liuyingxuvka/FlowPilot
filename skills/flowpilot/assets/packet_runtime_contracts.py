@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from packet_runtime_schema import (
@@ -323,19 +324,69 @@ def ensure_packet_output_contract_section(body_text: str, output_contract: dict[
     return body_text.rstrip() + "\n" + output_contract_section(output_contract)
 
 
+_CONTRACT_SELF_CHECK_HEADING_RE = re.compile(
+    r"(?im)^\s{0,3}(?:#{1,6}\s*)?Contract Self-Check\s*:?\s*$"
+)
+_CONTRACT_SELF_CHECK_NEXT_HEADING_RE = re.compile(r"(?im)^\s{0,3}#{1,6}\s+\S")
+_CONTRACT_SELF_CHECK_DECISION_RE = re.compile(
+    r"""(?im)
+    ["']?
+    self[\s_-]*check[\s_-]*decision
+    ["']?
+    \s*[:=]\s*
+    ["']?
+    (?P<decision>satisfied|pass|passed|ok|failed|fail|blocked|not[\s_-]*satisfied|unsatisfied)
+    ["']?
+    """,
+    re.VERBOSE,
+)
+_CONTRACT_SELF_CHECK_INLINE_PASS_RE = re.compile(
+    r"(?im)^\s*(?:[-*]\s*)?(?:passed|satisfied)\.?\s*$"
+)
+_CONTRACT_SELF_CHECK_SOURCE_CONTRACT_RE = re.compile(
+    r"""(?im)
+    ["']?
+    source_output_contract_id
+    ["']?
+    \s*[:=]\s*
+    ["']?
+    (?P<contract_id>[A-Za-z0-9_.:-]+)
+    ["']?
+    """,
+    re.VERBOSE,
+)
+
+
+def _contract_self_check_section(result_body_text: str) -> tuple[bool, str]:
+    match = _CONTRACT_SELF_CHECK_HEADING_RE.search(result_body_text)
+    if match is None:
+        return (False, "")
+    rest = result_body_text[match.end() :]
+    next_heading = _CONTRACT_SELF_CHECK_NEXT_HEADING_RE.search(rest)
+    section = rest[: next_heading.start()] if next_heading else rest
+    return (True, section)
+
+
 def contract_self_check_metadata(result_body_text: str, output_contract: dict[str, Any] | None) -> dict[str, Any]:
     required = bool(output_contract and output_contract.get("contract_self_check_required", True))
-    completed = "## Contract Self-Check" in result_body_text
-    lower = result_body_text.lower()
-    passed = completed and (
-        "self_check_decision: satisfied" in lower
-        or "self-check decision: satisfied" in lower
-        or "self_check_decision: pass" in lower
-    )
+    completed, section = _contract_self_check_section(result_body_text)
+    decision_match = _CONTRACT_SELF_CHECK_DECISION_RE.search(section) if completed else None
+    decision = (decision_match.group("decision").lower().replace(" ", "_").replace("-", "_") if decision_match else "")
+    declared_contract_match = _CONTRACT_SELF_CHECK_SOURCE_CONTRACT_RE.search(section) if completed else None
+    declared_contract_id = declared_contract_match.group("contract_id") if declared_contract_match else ""
+    expected_contract_id = output_contract_id(output_contract)
+    contract_matches = not declared_contract_id or not expected_contract_id or declared_contract_id == expected_contract_id
+    explicit_pass = decision in {"satisfied", "pass", "passed", "ok"}
+    explicit_fail = decision in {"failed", "fail", "blocked", "not_satisfied", "unsatisfied"}
+    implied_pass = bool(_CONTRACT_SELF_CHECK_INLINE_PASS_RE.search(section)) if completed and not decision else False
+    passed = completed and contract_matches and (explicit_pass or (implied_pass and not explicit_fail))
     return {
         "required": required,
-        "source_output_contract_id": output_contract_id(output_contract),
+        "source_output_contract_id": expected_contract_id,
+        "declared_source_output_contract_id": declared_contract_id or None,
+        "source_output_contract_id_matches": contract_matches,
         "result_body_section": "Contract Self-Check",
+        "decision": decision or None,
         "completed": completed,
         "passed": passed,
     }

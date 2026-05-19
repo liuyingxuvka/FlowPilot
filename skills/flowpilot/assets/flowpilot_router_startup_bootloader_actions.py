@@ -241,7 +241,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         result_extra['controller_boundary_confirmation'] = boundary_reconciliation.get('controller_boundary_confirmation')
         result_extra['coalesced_postconditions'] = ['controller_core_loaded', 'controller_role_confirmed']
         router._refresh_route_memory(project_root, run_root, run_state, trigger='load_controller_core')
-        write_json(router.run_state_path(run_root), run_state)
+        router.save_run_state(run_root, run_state)
     else:
         raise RouterError(f'unimplemented action: {action_type}')
     router._finish_bootloader_action(project_root, state, pending, flag=flag, label=str(pending['label']), action_type=action_type, result_extra=result_extra)

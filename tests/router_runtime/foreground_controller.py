@@ -678,6 +678,12 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(return_ledger["pending_returns"][0]["last_wait_reminder_at"])
 
         state = read_json(router.run_state_path(run_root))
+        rebuilt_wait = router._next_pending_card_return_action(root, state, run_root)  # type: ignore[attr-defined]
+        self.assertEqual(rebuilt_wait["last_wait_reminder_at"], return_ledger["pending_returns"][0]["last_wait_reminder_at"])
+        state["pending_action"] = rebuilt_wait
+        current_wait = router._pending_wait_summary(state, project_root=root)  # type: ignore[attr-defined]
+        self.assertFalse(current_wait["reminder"]["due"])
+
         state["pending_action"]["created_at"] = self.old_utc(minutes=11)
         state["pending_action"]["last_wait_reminder_at"] = self.old_utc(minutes=11)
         lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]

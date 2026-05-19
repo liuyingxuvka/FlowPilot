@@ -16082,3 +16082,86 @@ Skipped steps:
 
 - No GitHub push, tag, remote release, or public publication was performed.
 - Existing peer edits in `README.md` and `assets/readme-hero/hero_design_note.md` were preserved and intentionally left outside this scoped commit.
+
+## 2026-05-19 - control-plane-state-consistency-model-miss
+
+- Project: FlowPilot
+- Trigger reason: User challenged a Router/Controller repair plan because the prior FlowGuard model had not simulated the full same-class state-consistency miss before proposing a root fix.
+- Status: model upgraded and simulated; production repair not implemented in this step
+- Skill decision: use_flowguard / model_miss_review
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- Added a focused control-plane state-consistency model for the shared failure class: receipt flags, durable batch lifecycle, Router projection, PM role-work lifecycle, dispatch target-busy state, daemon save freshness, wait-reminder identity, and result body/envelope metadata projection must agree before Router computes the next action.
+- The model accepts safe cases for full receipt fold projection, supersede terminalization, true-holder dispatch busy semantics, daemon merge-save, stable reminder cooldown, self-check metadata projection, and the unified root fix.
+- The model rejects the observed incident and same-class generalized bad cases: receipt flag without batch lifecycle, superseded old request still open, unrelayed Controller-held old request blocking a replacement, stale daemon snapshot erasing foreground evidence, reminder recreation after pending-wait loss, and body self-check not projected into envelope metadata.
+- Repair-candidate simulation rejects receipt-only, receipt-plus-supersede-only, and case-patches-without-shared-reconciler plans. Only `unified_reconciler_with_cas_and_true_holder_gate` passes.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations\run_flowpilot_control_plane_state_consistency_checks.py --json` -> 35 states, 34 edges, 10 hazards detected, only the unified root candidate passed.
+- OK: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py`.
+- OK: `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py`.
+
+### Findings
+
+- The earlier model gap was checking action occurrence more strongly than post-action cross-ledger agreement.
+- The minimal root repair must introduce a shared durable reconciliation barrier before next-action computation, plus CAS/merge save semantics and true-holder dispatch busy semantics.
+- Per-symptom fixes can make the observed incident look better while still failing the generalized model because they leave Router able to decide from stale or partial projections.
+
+### Skipped Or Limited
+
+- No production Router/Controller code was modified.
+- No OpenSpec production change, install sync, GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-19 - harden-control-plane-state-consistency
+
+- Project: FlowPilot
+- Trigger reason: A real FlowPilot run exposed cross-ledger Router/Controller divergence: Controller receipts relayed results but durable batch lifecycle, PM role-work lifecycle, dispatch busy state, daemon saves, reminders, and result metadata could disagree.
+- Status: implemented, focused validated, installed skill synced, ready for scoped local commit
+- Skill decision: use_openspec + use_flowguard + model_miss_review
+- OpenSpec change: harden-control-plane-state-consistency
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- Added a focused control-plane state consistency model that rejects the observed incident and same-class hazards. The passing implementation boundary is the unified reconciler/CAS-merge/true-holder dispatch candidate, not a receipt-only patch.
+- Controller receipt folds now update durable batch and PM role-work lifecycle projections, so Router flags and lifecycle state advance together.
+- PM role-work supersession now terminalizes replaced open requests, records replacement metadata, and prevents unrelayed Controller-held old requests from blocking valid replacement dispatch.
+- Router state saves now merge newer foreground evidence when a stale daemon snapshot tries to save, preserving append-only history/events, true flags, and wait reminder cooldown fields.
+- Wait reminder recovery now keeps durable cooldown information across rebuilt pending waits.
+- Result envelope self-check metadata now accepts common heading and decision formats instead of missing a valid body section.
+- Startup `load_controller_core` now also uses the unified state save path instead of directly writing the run state file.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate harden-control-plane-state-consistency --strict --json`.
+- OK: focused compile checks for touched FlowPilot modules.
+- OK: focused runtime tests for receipt lifecycle folds, PM role-work supersession, dispatch replacement/busy gating, stale state save merge, wait reminder cooldown recovery, self-check parsing, and startup `load_controller_core` save path.
+- OK: `python simulations\run_flowpilot_control_plane_state_consistency_checks.py --json`.
+- OK: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py`.
+- OK: `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py`.
+- OK: `python simulations\run_flowpilot_daemon_reconciliation_checks.py --skip-live-projection`.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, proof reused false.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, proof reused false.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- The root failure class is cross-ledger state divergence before next-action computation, not worker inactivity.
+- The earlier FlowGuard coverage missed this because it checked local action occurrence more strongly than durable agreement among batch lifecycle, packet ledger, PM role-work index, officer lifecycle, wait reminders, and run-state projections.
+- Dispatch busy state must mean the target role truly owns relayed work; an old unrelayed Controller-held superseded request must be cleaned up or ignored as a busy blocker.
+- A daemon save must not be able to erase newer foreground receipts or reminder cooldowns.
+
+### Skipped Or Limited
+
+- Non-skipped daemon live-run projection audit still fails on an existing active `.flowpilot` run projection gap, so only the model-only daemon reconciliation check is counted here.
+- `python simulations\run_flowpilot_persistent_router_daemon_checks.py` was attempted and timed out after 7 minutes; it is not counted as passed evidence.
+- `python simulations\run_meta_checks.py --full` was also attempted and failed because regenerating `flowpilot_persistent_router_daemon_results.json` exceeded the meta thin-parent threshold (`child_result_exceeds_thin_threshold`). That generated failure artifact was not counted as pass evidence.
+- Broad dispatch-gate aggregate tests include several intentionally slow current-node cases; those heavy cases were run individually and passed, while the broad aggregate timeout is not counted as pass evidence.
+- No GitHub push, tag, remote release, or public publication was performed.

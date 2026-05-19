@@ -173,6 +173,26 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(status_a["run_id"], "run-a")
         self.assertEqual(status_a["run_root"], ".flowpilot/runs/run-a")
         self.assertFalse((run_b / "runtime" / "controller_action_ledger.json").exists())
+    def test_stale_router_state_save_preserves_foreground_events_and_true_flags(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-stale-save")
+        stale_state, _ = router.load_run_state_from_run_root(root, run_root)
+        self.assertIsInstance(stale_state, dict)
+
+        foreground = read_json(router.run_state_path(run_root))
+        foreground["flags"]["material_scan_results_relayed_to_pm"] = True
+        foreground["events"].append({"event": "foreground_event", "payload": {"source": "test"}})
+        router.write_json(router.run_state_path(run_root), foreground)
+
+        stale_state["daemon_mode_enabled"] = True
+        stale_state["history"].append({"event": "daemon_history", "payload": {"source": "test"}})
+        router.save_run_state(run_root, stale_state)
+
+        saved = read_json(router.run_state_path(run_root))
+        self.assertTrue(saved["daemon_mode_enabled"])
+        self.assertTrue(saved["flags"]["material_scan_results_relayed_to_pm"])
+        self.assertIn({"event": "foreground_event", "payload": {"source": "test"}}, saved["events"])
+        self.assertIn({"event": "daemon_history", "payload": {"source": "test"}}, saved["history"])
     def test_router_daemon_stop_targets_one_parallel_run(self) -> None:
         root = self.make_project()
         run_a = self.write_minimal_run(root, "run-a")

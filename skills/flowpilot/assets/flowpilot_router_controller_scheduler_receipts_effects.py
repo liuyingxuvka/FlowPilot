@@ -114,6 +114,7 @@ def _mark_pending_return_wait_reminded(router: ModuleType, run_root: Path, run_i
         reminded_ids.append(str(record.get('return_id') or record.get('card_bundle_id') or record.get('delivery_attempt_id') or ''))
         changed = True
     if changed:
+        ledger['updated_at'] = utc_now()
         write_json(_return_event_ledger_path(run_root), ledger)
     return {'changed': changed, 'reminded_return_ids': [item for item in reminded_ids if item]}
 

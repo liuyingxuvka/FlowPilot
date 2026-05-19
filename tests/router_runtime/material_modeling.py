@@ -755,6 +755,47 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(refreshed_entry["router_reconciliation"]["source"], "controller_receipt_evidence_fold")
         self.assertFalse(refreshed_entry["router_reconciliation"]["sealed_body_reads"])
         self.assertNotEqual(router.next_action(root)["action_type"], "relay_material_scan_packets")
+    def test_material_scan_result_receipt_folds_batch_lifecycle(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path)
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        router.record_external_event(root, "worker_scan_results_returned")
+        relay_action = self.next_after_display_sync(root)
+        self.assertEqual(relay_action["action_type"], "relay_material_scan_results_to_pm")
+        router.apply_action(root, "relay_material_scan_results_to_pm")
+
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, relay_action)  # type: ignore[attr-defined]
+        batch = router._active_parallel_packet_batch(run_root, "material_scan")
+        self.assertIsInstance(batch, dict)
+        batch["status"] = "results_joined"
+        router._write_parallel_packet_batch_state(run_root, batch)
+        state["flags"]["material_scan_results_relayed_to_pm"] = False
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+
+        receipt_result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"sealed_body_reads": False, "test_receipt": "material scan result relay evidence already exists"},
+        )
+        self.assertTrue(receipt_result["ok"])
+
+        state = read_json(router.run_state_path(run_root))
+        router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["material_scan_results_relayed_to_pm"])
+        batch = router._active_parallel_packet_batch(run_root, "material_scan")
+        self.assertEqual(batch["status"], "results_relayed_to_pm")
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)

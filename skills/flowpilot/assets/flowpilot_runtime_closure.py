@@ -136,6 +136,10 @@ def officer_lifecycle_entry_from_request(record: dict[str, Any], *, now: str) ->
         "strict_process_contract_binding": True,
         "validation_passed": not issues,
         "validation_issues": issues,
+        "replacement_for_request_id": record.get("replacement_for_request_id"),
+        "supersedes_request_ids": record.get("supersedes_request_ids") or [],
+        "replacement_for_packet_id": record.get("replacement_for_packet_id"),
+        "supersedes_packet_ids": record.get("supersedes_packet_ids") or [],
         "registered_at": record.get("registered_at") or now,
         "updated_at": now,
     }
@@ -152,6 +156,10 @@ def officer_lifecycle_status_update(record: dict[str, Any], *, lifecycle_status:
         update["packet_relayed_at"] = record.get("packet_relayed_at") or now
     elif lifecycle_status == "result_relayed_to_pm":
         update["result_relayed_to_pm_at"] = record.get("result_relayed_to_pm_at") or now
+    elif lifecycle_status == "superseded":
+        update["superseded_at"] = record.get("superseded_at") or now
+        update["superseded_by_request_id"] = record.get("superseded_by_request_id")
+        update["superseded_by_packet_id"] = record.get("superseded_by_packet_id") or record.get("replacement_packet_id")
     return update
 
 

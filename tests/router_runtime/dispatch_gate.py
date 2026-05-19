@@ -240,6 +240,79 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(gate["busy_source"], "pm_role_work_index")
         self.assertEqual(gate["busy_reason"], "pm_role_work_result_disposition_pending")
         self.assertEqual(gate["request_id"], "prior-role-work")
+    def test_dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-dispatch-gate-pm-role-work-replacement")
+        state = read_json(router.run_state_path(run_root))
+        index = router._empty_pm_role_work_request_index(state)
+        index["active_request_id"] = "replacement-role-work"
+        index["active_request_ids"] = ["replacement-role-work"]
+        index["requests"].extend(
+            [
+                {
+                    "request_id": "old-role-work",
+                    "packet_id": "pm-role-work-old-role-work",
+                    "to_role": "worker_b",
+                    "status": "open",
+                    "superseded_by_request_id": "replacement-role-work",
+                },
+                {
+                    "request_id": "replacement-role-work",
+                    "packet_id": "pm-role-work-replacement-role-work",
+                    "to_role": "worker_b",
+                    "status": "open",
+                    "supersedes_request_ids": ["old-role-work"],
+                    "supersedes_packet_ids": ["pm-role-work-old-role-work"],
+                },
+            ]
+        )
+        router.write_json(run_root / "pm_work_requests" / "index.json", index)
+
+        action = router.make_action(
+            action_type="relay_pm_role_work_request_packet",
+            actor="controller",
+            label="relay_replacement_role_work_to_worker_b",
+            summary="Relay a replacement PM role-work packet to worker_b.",
+            to_role="worker_b",
+            extra={"request_id": "replacement-role-work", "packet_id": "pm-role-work-replacement-role-work"},
+        )
+        gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)
+
+        self.assertEqual(gated["action_type"], "relay_pm_role_work_request_packet")
+        self.assertTrue(gated["dispatch_recipient_gate"]["passed"])
+    def test_dispatch_recipient_gate_still_blocks_relayed_role_work_target(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-dispatch-gate-pm-role-work-relayed")
+        state = read_json(router.run_state_path(run_root))
+        index = router._empty_pm_role_work_request_index(state)
+        index["active_request_id"] = "prior-role-work"
+        index["active_request_ids"] = ["prior-role-work"]
+        index["requests"].append(
+            {
+                "request_id": "prior-role-work",
+                "packet_id": "pm-role-work-prior-role-work",
+                "to_role": "worker_b",
+                "status": "packet_relayed",
+            }
+        )
+        router.write_json(run_root / "pm_work_requests" / "index.json", index)
+
+        action = router.make_action(
+            action_type="relay_pm_role_work_request_packet",
+            actor="controller",
+            label="relay_new_role_work_to_worker_b",
+            summary="Relay a new PM role-work packet to worker_b.",
+            to_role="worker_b",
+            extra={"request_id": "new-role-work", "packet_id": "pm-role-work-new-role-work"},
+        )
+        gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)
+
+        self.assertEqual(gated["action_type"], "await_role_decision")
+        self.assertEqual(gated["to_role"], "worker_b")
+        gate = gated["dispatch_recipient_gate"]
+        self.assertFalse(gate["passed"])
+        self.assertEqual(gate["busy_reason"], "target_role_pm_role_work_unfinished")
+        self.assertEqual(gate["request_id"], "prior-role-work")
     def test_dispatch_recipient_gate_allows_same_role_system_card_bundle(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-dispatch-gate-card-bundle")

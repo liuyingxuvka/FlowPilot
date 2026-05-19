@@ -318,6 +318,120 @@ def _sync_pm_role_work_request_summary(
     }
 
 
+def _result_relay_record_status(spec: dict[str, str]) -> str:
+    to_role = str(spec.get("to_role") or "").strip()
+    if to_role == "human_like_reviewer":
+        return "result_relayed_to_reviewer"
+    return "result_relayed_to_pm"
+
+
+def _result_relay_batch_status(spec: dict[str, str]) -> str:
+    to_role = str(spec.get("to_role") or "").strip()
+    if to_role == "human_like_reviewer":
+        return "results_relayed_to_reviewer"
+    return "results_relayed_to_pm"
+
+
+def _apply_parallel_batch_receipt_lifecycle(
+    router: ModuleType,
+    run_root: Path,
+    spec: dict[str, str],
+    records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    _bind_router(router)
+    family = spec["family"]
+    batch = router._active_parallel_packet_batch(run_root, family)
+    if not isinstance(batch, dict):
+        return {"changed": False, "reason": "no_active_parallel_batch"}
+    packet_ids = {str(record.get("packet_id") or "").strip() for record in records if record.get("packet_id")}
+    if not packet_ids:
+        return {"changed": False, "reason": "no_packet_ids"}
+    changed = False
+    now = utc_now()
+    if spec["kind"] == "packet_dispatch":
+        for record in batch.get("packets") or []:
+            if isinstance(record, dict) and str(record.get("packet_id") or "") in packet_ids:
+                if record.get("status") != "packet_relayed":
+                    record["status"] = "packet_relayed"
+                    changed = True
+                record.setdefault("relayed_at", now)
+        if batch.get("status") != "packets_relayed":
+            batch["status"] = "packets_relayed"
+            changed = True
+        counts = batch.setdefault("counts", {})
+        relayed = len([item for item in batch.get("packets") or [] if isinstance(item, dict) and item.get("status") == "packet_relayed"])
+        if counts.get("relayed") != relayed:
+            counts["relayed"] = relayed
+            changed = True
+    elif spec["kind"] == "result_relay":
+        record_status = _result_relay_record_status(spec)
+        timestamp_field = f"{record_status}_at"
+        for record in batch.get("packets") or []:
+            if isinstance(record, dict) and str(record.get("packet_id") or "") in packet_ids:
+                if record.get("status") != record_status:
+                    record["status"] = record_status
+                    changed = True
+                record.setdefault(timestamp_field, now)
+        batch_status = _result_relay_batch_status(spec)
+        if batch.get("status") != batch_status:
+            batch["status"] = batch_status
+            changed = True
+    if changed:
+        router._write_parallel_packet_batch_state(run_root, batch)
+    return {"changed": changed, "batch_id": batch.get("batch_id"), "batch_status": batch.get("status")}
+
+
+def _apply_pm_role_work_receipt_lifecycle(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    spec: dict[str, str],
+    records: list[dict[str, Any]],
+) -> dict[str, Any]:
+    _bind_router(router)
+    if spec["family"] != "pm_role_work":
+        return {"changed": False, "reason": "not_pm_role_work"}
+    index = router._load_pm_role_work_request_index(run_root, run_state)
+    changed = False
+    now = utc_now()
+    touched_request_ids: list[str] = []
+    for source in records:
+        request_id = str(source.get("request_id") or "").strip()
+        if not request_id:
+            continue
+        record = router._pm_role_work_request_record(index, request_id)
+        if not isinstance(record, dict):
+            continue
+        if spec["kind"] == "packet_dispatch":
+            target_status = "packet_relayed"
+            timestamp_field = "packet_relayed_at"
+            lifecycle_status = "packet_relayed"
+        elif spec["kind"] == "result_relay":
+            target_status = _result_relay_record_status(spec)
+            timestamp_field = f"{target_status}_at"
+            lifecycle_status = target_status
+        else:
+            continue
+        if record.get("status") != target_status:
+            record["status"] = target_status
+            changed = True
+        record.setdefault(timestamp_field, now)
+        router._record_officer_lifecycle_status(
+            project_root,
+            run_root,
+            run_state,
+            record,
+            lifecycle_status=lifecycle_status,
+        )
+        touched_request_ids.append(request_id)
+    if touched_request_ids:
+        index["active_request_id"] = touched_request_ids[0]
+    if changed:
+        router._write_pm_role_work_request_index(run_root, index)
+    return {"changed": changed, "request_ids": touched_request_ids}
+
+
 def _apply_registered_controller_receipt_evidence_fold(
     router: ModuleType,
     project_root: Path,
@@ -373,6 +487,15 @@ def _apply_registered_controller_receipt_evidence_fold(
         }
     flag = spec["postcondition"]
     run_state.setdefault("flags", {})[flag] = True
+    batch_lifecycle = _apply_parallel_batch_receipt_lifecycle(router, run_root, spec, records)
+    pm_role_work_lifecycle = _apply_pm_role_work_receipt_lifecycle(
+        router,
+        project_root,
+        run_root,
+        run_state,
+        spec,
+        records,
+    )
     if spec["family"] == "pm_role_work":
         _sync_pm_role_work_request_summary(router, project_root, run_root, run_state, records)
     if action.get("ledger_check_receipt_required") or action.get("combined_ledger_check_and_relay"):
@@ -386,6 +509,8 @@ def _apply_registered_controller_receipt_evidence_fold(
             "fold_kind": spec["kind"],
             "packet_ids": [item.get("packet_id") for item in record_results],
             "record_source": spec["record_source"],
+            "batch_lifecycle": batch_lifecycle,
+            "pm_role_work_lifecycle": pm_role_work_lifecycle,
         },
     )
     return {
@@ -397,6 +522,8 @@ def _apply_registered_controller_receipt_evidence_fold(
         "record_context": record_context,
         "record_count": len(record_results),
         "evidence": record_results,
+        "batch_lifecycle": batch_lifecycle,
+        "pm_role_work_lifecycle": pm_role_work_lifecycle,
         "sealed_body_reads": False,
     }
 

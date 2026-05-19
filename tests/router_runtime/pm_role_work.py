@@ -275,6 +275,71 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         bad_role = self.pm_role_work_request_payload(root, request_id="bad-role", to_role="controller")
         with self.assertRaisesRegex(router.RouterError, "other than PM or Controller"):
             router.record_external_event(root, "pm_registers_role_work_request", bad_role)
+    def test_pm_role_work_request_supersedes_unrelayed_old_request(self) -> None:
+        root = self.make_project()
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-supersede")
+        run_root = self.run_root_for(root)
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.deliver_expected_card(root, "pm.model_miss_triage")
+        self.deliver_expected_card(root, "pm.event.reviewer_blocked")
+        router.record_external_event(
+            root,
+            "pm_records_model_miss_triage_decision",
+            self.role_decision_envelope(
+                root,
+                "decisions/model_miss_role_work_supersede",
+                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+            ),
+        )
+        router.record_external_event(
+            root,
+            "pm_registers_role_work_request",
+            self.pm_role_work_request_payload(
+                root,
+                request_id="model-miss-process-001",
+                to_role="process_flowguard_officer",
+                body_text="Analyze the process invariant miss.",
+            ),
+        )
+        router.record_external_event(
+            root,
+            "pm_registers_role_work_request",
+            self.pm_role_work_request_payload(
+                root,
+                request_id="model-miss-process-002",
+                to_role="process_flowguard_officer",
+                body_text="Replacement analysis with clarified process invariant scope.",
+                supersedes_request_id="model-miss-process-001",
+            ),
+        )
+
+        index = read_json(run_root / "pm_work_requests" / "index.json")
+        old_record = next(record for record in index["requests"] if record["request_id"] == "model-miss-process-001")
+        new_record = next(record for record in index["requests"] if record["request_id"] == "model-miss-process-002")
+        self.assertEqual(old_record["status"], "superseded")
+        self.assertEqual(old_record["superseded_by_request_id"], "model-miss-process-002")
+        self.assertEqual(index["active_request_id"], "model-miss-process-002")
+        self.assertEqual(index["active_request_ids"], ["model-miss-process-002"])
+        self.assertEqual(new_record["status"], "open")
+        self.assertEqual(new_record["supersedes_request_ids"], ["model-miss-process-001"])
+        self.assertEqual(new_record["replacement_for_packet_id"], "pm-role-work-model-miss-process-001")
+
+        lifecycle = read_json(run_root / "pm_work_requests" / "officer_request_lifecycle_index.json")
+        old_lifecycle = next(record for record in lifecycle["requests"] if record["request_id"] == "model-miss-process-001")
+        self.assertEqual(old_lifecycle["lifecycle_status"], "superseded")
+        self.assertEqual(lifecycle["active_request_ids"], ["model-miss-process-002"])
+
+        ledger = read_json(run_root / "packet_ledger.json")
+        old_packet = next(record for record in ledger["packets"] if record["packet_id"] == "pm-role-work-model-miss-process-001")
+        self.assertEqual(old_packet["replaced_by"], "pm-role-work-model-miss-process-002")
+        self.assertEqual(old_packet["replacement_packet_id"], "pm-role-work-model-miss-process-002")
+        new_envelope = packet_runtime.load_envelope(root, new_record["packet_envelope_path"])
+        self.assertEqual(new_envelope["replacement_for"], "pm-role-work-model-miss-process-001")
+        self.assertEqual(new_envelope["supersedes"], ["pm-role-work-model-miss-process-001"])
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
+        self.assertEqual(action["request_id"], "model-miss-process-002")
     def test_pm_role_work_request_rejects_current_node_contract_family(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

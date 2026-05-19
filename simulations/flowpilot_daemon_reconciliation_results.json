@@ -5465,15 +5465,10 @@
     "ok": true
   },
   "live_run_projection": {
-    "classification_ok": true,
-    "current_run_can_continue": true,
-    "decision": "no_daemon_reconciliation_projection_gap",
-    "finding_count": 0,
-    "findings": [],
+    "classification_ok": false,
     "ok": true,
-    "run_id": "run-20260516-201229",
-    "run_root": ".flowpilot\\runs\\run-20260516-201229",
-    "skipped": false
+    "skip_reason": "model_only_preimplementation_gate",
+    "skipped": true
   },
   "ok": true,
   "progress": {
@@ -5491,5 +5486,7 @@
     "state_count": 1141,
     "terminal_state_count": 360
   },
-  "skipped_checks": {}
+  "skipped_checks": {
+    "live_run_projection": "skipped_with_reason: model_only_preimplementation_gate"
+  }
 }
