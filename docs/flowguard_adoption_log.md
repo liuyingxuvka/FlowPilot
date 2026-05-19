@@ -16006,3 +16006,79 @@ Skipped steps:
 
 - Treat future Router dispatch changes as source-of-truth reconciliation work: read receipts, fold state, then decide.
 - Keep the difference explicit between "Controller still has ordinary work open" and "Router has a repair/retry/blocker obligation for a closed row."
+
+## 2026-05-19 - controller-receipt-evidence-fold-model-miss
+
+- Project: FlowPilot
+- Trigger reason: A latest FlowPilot run proved material scan packets were relayed, opened, and leased, but `relay_material_scan_packets` Controller receipt reconciliation returned `unsupported_stateful_controller_receipt` and left `material_scan_packets_relayed` false.
+- Status: model upgraded; production repair not implemented in this audit step
+- Skill decision: use_flowguard / model_miss_review
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- Added a focused Controller receipt evidence-fold model covering the class where a direct apply handler sets a Router-owned flag but the Controller receipt path has no idempotent evidence fold.
+- The abstract FlowGuard model accepts safe cases for display status, mail delivery, packet relay, in-progress packet work, missing-evidence retry/blocker, and local receipts without Router-owned flags.
+- The model rejects same-class hazards: unsupported receipt with packet evidence, direct-apply-only flag writes, false blocker with evidence available, duplicate requeue while work is already in flight, downstream wait gated by an unfolded dispatch flag, and reconciled receipt without the flag.
+- The source-contract audit is intentionally red against current code and identifies evidence-backed packet/result relay actions whose direct handlers write flags while receipt reconciliation lacks a registered fold path.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py --skip-source-audit --json-out simulations\flowpilot_controller_receipt_evidence_fold_model_only_results.json`.
+- Expected red until production repair: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py --json-out simulations\flowpilot_controller_receipt_evidence_fold_results.json`.
+
+### Findings
+
+- The previous current-scope reconciliation model covered postcondition drift after a row was already reconciled, but not the upstream contract gap where an evidence-backed Controller receipt action had no registered fold handler at all.
+- The failure class is broader than `relay_material_scan_packets`: current-node packet/result relay, material scan packet/result relay, research packet/result relay, and PM role-work packet/result relay all follow the same direct-flag-write pattern and need the same evidence-fold contract.
+- The minimal root repair should be a shared packet/result relay receipt-fold registry that validates packet ledger, batch state, relay history, result envelopes, and active-holder leases, then sets the owning Router flag idempotently.
+
+### Skipped Or Limited
+
+- No production Router repair was implemented in this audit/model step.
+- No install sync, GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-19 - add-controller-receipt-evidence-folds
+
+- Project: FlowPilot
+- Trigger reason: The latest FlowPilot run proved material scan packets were relayed/opened/leased while the Controller receipt path still returned `unsupported_stateful_controller_receipt` and left `material_scan_packets_relayed` false.
+- Status: implemented, validated, installed skill synced
+- Skill decision: use_openspec + use_flowguard
+- OpenSpec change: add-controller-receipt-evidence-folds
+- FlowGuard schema: 1.0
+
+### Evidence Summary
+
+- Added a shared Controller receipt evidence-fold registry for material scan, research, current-node, and PM role-work packet/result relay actions.
+- The stateful Controller receipt path now tries the registered fold before unsupported-postcondition retry/blocker handling.
+- Packet dispatch folds read Router-visible envelopes, parallel batches, active-holder leases, and packet-open receipts; result folds read result envelopes and Controller relay metadata. Sealed packet/result bodies remain unread by the fold.
+- The focused FlowGuard model and source-contract audit are now green and fail the same-class hazards when a direct flag-writing relay action lacks a registered receipt fold.
+- Runtime coverage includes the material scan drift case: packet evidence exists, the aggregate flag is stale false, the done receipt folds the evidence, and Router does not reissue `relay_material_scan_packets`.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate add-controller-receipt-evidence-folds --strict`.
+- OK: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py --skip-source-audit --json-out simulations\flowpilot_controller_receipt_evidence_fold_model_only_results.json`.
+- OK: `python simulations\run_flowpilot_controller_receipt_evidence_fold_checks.py --json-out simulations\flowpilot_controller_receipt_evidence_fold_results.json`.
+- OK: focused `python -m py_compile` for touched Router modules, model runner, and material runtime test.
+- OK: 3 focused runtime tests covering material relay evidence folding and existing startup display receipt replay.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, proof reused false.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, proof reused false.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The root bug was not that workers failed to receive packets. The Router lacked a registered receipt fold that could copy already-visible packet evidence back into the Router-owned postcondition flag.
+- The fix is a narrow registry, not a per-action patch: every evidence-backed relay action that writes a Router flag must declare its receipt fold.
+- Worker open/ACK/lease evidence proves dispatch or in-flight work, not worker completion; Router may wait on it but may not treat it as a returned result.
+- Missing or contradictory fold evidence still goes through the existing bounded repair path.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, remote release, or public publication was performed.
+- Existing peer edits in `README.md` and `assets/readme-hero/hero_design_note.md` were preserved and intentionally left outside this scoped commit.

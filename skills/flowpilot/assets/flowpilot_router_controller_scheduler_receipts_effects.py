@@ -27,6 +27,7 @@ import packet_runtime
 import role_output_runtime
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_controller_scheduler_receipts_packet_folds import _apply_registered_controller_receipt_evidence_fold
 
 _DEFAULT_SENTINEL = object()
 
@@ -51,6 +52,9 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
     durable_reclaim = _reclaim_router_owned_postcondition_from_artifact(project_root, run_root, run_state, pending_action, receipt_payload)
     if durable_reclaim.get('applied') or durable_reclaim.get('action_class', {}).get('kind') == 'router_owned_durable_artifact':
         return durable_reclaim
+    relay_evidence_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, pending_action, receipt_payload)
+    if relay_evidence_fold.get('applied') or relay_evidence_fold.get('reason') != 'not_registered_controller_receipt_evidence_fold':
+        return relay_evidence_fold
     if action_type == 'load_role_recovery_state':
         router._load_role_recovery_state(project_root, run_root, run_state)
         return {'applied': True, 'postcondition': 'role_recovery_state_loaded'}

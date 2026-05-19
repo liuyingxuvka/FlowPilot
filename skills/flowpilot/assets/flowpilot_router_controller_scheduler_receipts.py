@@ -27,16 +27,19 @@ import flowpilot_router_controller_scheduler_receipts_writes as _owner_child_0
 import flowpilot_router_controller_scheduler_receipts_effects as _owner_child_1
 import flowpilot_router_controller_scheduler_receipts_pending as _owner_child_2
 import flowpilot_router_controller_scheduler_receipts_scheduled as _owner_child_3
+import flowpilot_router_controller_scheduler_receipts_packet_folds as _owner_child_4
 from flowpilot_router_controller_scheduler_receipts_writes import *
 from flowpilot_router_controller_scheduler_receipts_effects import *
 from flowpilot_router_controller_scheduler_receipts_pending import *
 from flowpilot_router_controller_scheduler_receipts_scheduled import *
+from flowpilot_router_controller_scheduler_receipts_packet_folds import *
 
 _OWNER_CHILD_MODULES = (
     _owner_child_0,
     _owner_child_1,
     _owner_child_2,
     _owner_child_3,
+    _owner_child_4,
 )
 
 __all__ = (
@@ -52,6 +55,9 @@ __all__ = (
     '_matching_bootstrap_pending_action',
     '_apply_startup_bootloader_receipt_effects',
     '_apply_done_controller_receipt_effects',
+    'CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY',
+    '_registered_controller_receipt_evidence_fold_actions',
+    '_apply_registered_controller_receipt_evidence_fold',
     '_router_scheduler_row_for_controller_entry',
     '_done_controller_receipt_for_entry',
     '_clear_pending_after_reconciled_controller_receipt',

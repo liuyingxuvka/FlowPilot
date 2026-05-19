@@ -714,6 +714,47 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(state["flags"]["material_scan_dispatch_recheck_protocol_blocked"])
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
+    def test_material_scan_relay_receipt_folds_existing_packet_evidence(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        relay_action = self.next_after_display_sync(root)
+        self.assertEqual(relay_action["action_type"], "relay_material_scan_packets")
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, relay_action)  # type: ignore[attr-defined]
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        for record in material_index["packets"]:
+            envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+            packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["material_scan_packets_relayed"])
+        state["flags"]["material_scan_packets_relayed"] = False
+        state["pending_action"] = None
+        router.save_run_state(run_root, state)
+        receipt_result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"sealed_body_reads": False, "test_receipt": "material scan relay evidence already exists"},
+        )
+        self.assertTrue(receipt_result["ok"])
+
+        state = read_json(router.run_state_path(run_root))
+        router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["material_scan_packets_relayed"])
+        refreshed_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(refreshed_entry["router_reconciliation_status"], "reconciled")
+        self.assertEqual(refreshed_entry["router_reconciliation"]["source"], "controller_receipt_evidence_fold")
+        self.assertFalse(refreshed_entry["router_reconciliation"]["sealed_body_reads"])
+        self.assertNotEqual(router.next_action(root)["action_type"], "relay_material_scan_packets")
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)

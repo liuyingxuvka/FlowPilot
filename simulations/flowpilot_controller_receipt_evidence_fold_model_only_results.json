@@ -1,0 +1,249 @@
+{
+  "checked_at": "2026-05-19T14:40:03.742121+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "direct_apply_only_no_receipt_fold": {
+        "detected": true,
+        "expected_failure": "direct apply writes a Router flag but Controller receipt has no registered evidence fold",
+        "failures": [
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": false,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "direct_apply_only_no_receipt_fold",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": false,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "downstream_wait_gated_by_unfolded_dispatch": {
+        "detected": true,
+        "expected_failure": "worker wait was gated by an unfurled dispatch flag instead of evidence-backed packet relay",
+        "failures": [
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold",
+          "evidence-backed Controller receipt has no registered fold handler",
+          "worker wait was gated by an unfurled dispatch flag instead of evidence-backed packet relay"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "downstream_wait_gated_by_unfolded_dispatch",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": false,
+          "worker_packet_opened_or_acknowledged": true,
+          "worker_result_still_pending": true
+        }
+      },
+      "duplicate_requeue_while_receipt_done": {
+        "detected": true,
+        "expected_failure": "same Controller action was requeued while the previous receipt or packet work was already in flight",
+        "failures": [
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold",
+          "evidence-backed Controller receipt has no registered fold handler",
+          "same Controller action was requeued while the previous receipt or packet work was already in flight"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": true,
+          "scenario": "duplicate_requeue_while_receipt_done",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": false,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "false_blocker_with_evidence_available": {
+        "detected": true,
+        "expected_failure": "control blocker was recorded even though Router-visible evidence could satisfy the postcondition",
+        "failures": [
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold",
+          "evidence-backed Controller receipt has no registered fold handler",
+          "evidence-backed Controller receipt returned unsupported_stateful_controller_receipt",
+          "control blocker was recorded even though Router-visible evidence could satisfy the postcondition"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": true,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "false_blocker_with_evidence_available",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": true,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "reconciled_receipt_without_flag": {
+        "detected": true,
+        "expected_failure": "registered receipt fold did not satisfy the Router-owned postcondition flag",
+        "failures": [
+          "registered receipt fold did not satisfy the Router-owned postcondition flag",
+          "Controller receipt was marked reconciled while its Router-owned flag remained false"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": true,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": true,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "reconciled_receipt_without_flag",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": false,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "unsupported_receipt_with_packet_evidence": {
+        "detected": true,
+        "expected_failure": "evidence-backed Controller receipt returned unsupported_stateful_controller_receipt",
+        "failures": [
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold",
+          "evidence-backed Controller receipt has no registered fold handler",
+          "evidence-backed Controller receipt returned unsupported_stateful_controller_receipt"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": true,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "unsupported_receipt_with_packet_evidence",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": true,
+          "worker_packet_opened_or_acknowledged": true,
+          "worker_result_still_pending": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused Controller receipt evidence-fold contract for Router-owned postconditions; source audit checks direct flag writers against receipt fold registration",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "display_status_registered_fold",
+      "local_receipt_without_router_flag",
+      "mail_delivery_registered_fold",
+      "missing_evidence_retry_or_block",
+      "packet_relay_in_progress_waits",
+      "packet_relay_registered_fold"
+    ],
+    "edge_count": 24,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "direct_apply_only_no_receipt_fold",
+      "downstream_wait_gated_by_unfolded_dispatch",
+      "duplicate_requeue_while_receipt_done",
+      "false_blocker_with_evidence_available",
+      "reconciled_receipt_without_flag",
+      "unsupported_receipt_with_packet_evidence"
+    ],
+    "state_count": 25
+  },
+  "source_contract": {
+    "ok": true,
+    "skipped": true
+  }
+}
