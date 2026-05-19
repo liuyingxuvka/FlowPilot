@@ -15793,3 +15793,59 @@ Skipped steps:
 
 - Keep future lock cleanup domain-first: identify the lock or lease owner before moving code.
 - If public-release confidence is required, rerun the full smoke/autopilot check in a dedicated long background slot and inspect final artifacts before claiming it.
+
+## 2026-05-19 - recover-self-owned-runtime-write-locks
+
+- Project: FlowPilot
+- Trigger reason: User hit a repeated FlowPilot control-plane stall where a runtime JSON write lock was owned by a live FlowPilot daemon process, but the lock itself had stopped progressing.
+- Status: implemented, validated locally, installed skill synced, and prepared for scoped local commit
+- Skill decision: use_openspec + use_flowguard:model-miss/runtime-lock-recovery
+- OpenSpec change: recover-self-owned-runtime-write-locks
+- FlowGuard schema: 1.0
+
+### Changed Surfaces
+
+- Runtime JSON write-lock liveness now distinguishes a fresh self-owned lock, a safe stale self-owned takeover, and an unsafe stale self-owned lock that still has partial-write evidence.
+- Normal same-call cleanup remains a direct cleanup path after the atomic write; if cleanup fails, it retries briefly and records a diagnostic JSONL entry instead of swallowing the failure silently.
+- Safe stale self-owned takeover now requires a valid target JSON file and no temp artifact in the runtime directory before clearing the lock.
+- The persistent Router daemon FlowGuard model now includes self-owned stale write-lock state, cleanup diagnostics, unsafe temp-artifact blocking, and recovery rejoin obligations.
+- Focused runtime tests cover safe self-owned stale takeover, fresh self lock deferral, unsafe temp artifact blocking, and cleanup failure logging.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate recover-self-owned-runtime-write-locks --strict --json`.
+- OK: `python -m py_compile <changed runtime/model/test files>`.
+- OK: seven focused runtime write-lock tests, including dead-owner compatibility and the four new self-owned/cleanup cases.
+- OK: persistent daemon model graph/hazard pass: 18,199 states, 39,315 edges, zero invariant failures, zero missing labels, progress ok, hazard ok.
+- OK: background `python simulations/run_meta_checks.py` via `tmp\flowguard_background_self_owned_lock\run_meta_checks.*`, exit code 0, status completed, proof reuse false.
+- OK: background `python simulations/run_capability_checks.py` via `tmp\flowguard_background_self_owned_lock\run_capability_checks.*`, exit code 0, status completed, proof reuse false.
+- OK: background `python simulations/run_flowpilot_persistent_router_daemon_checks.py --json-out tmp/flowguard_background_self_owned_lock/run_flowpilot_persistent_router_daemon_checks.results.json`, result JSON ok true, 1,304,586 traces, zero violations, zero dead branches, zero exception branches, zero reachability failures, 58/58 hazards detected.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+
+### Findings
+
+- A live owner is not enough information: the model must distinguish "another live owner" from "this same process owns a stale lock it failed to clean up."
+- Self-owned stale recovery is safe only after the finished target file is valid and there is no temp-write artifact left behind.
+- The normal cleanup path should stay simple and direct; the stale-self takeover path is only for later recovery after ordinary cleanup failed.
+- Cleanup failure needs durable diagnostics, because otherwise the later stale-lock symptom looks like a mysterious live-owner stall.
+
+### Counterexamples
+
+- `self_owned_stale_write_lock_deferred_as_live_owner`
+- `self_owned_stale_write_lock_missing_cleanup_diagnostics`
+- `self_owned_stale_write_lock_cleared_with_tmp_file_present`
+- `runtime_write_lock_cleanup_error_swallowed`
+- `self_owned_stale_write_lock_recovery_did_not_rejoin_flow`
+
+### Friction Points
+
+- The first background PowerShell wrapper did not capture the child process exit code for the persistent daemon runner; the authoritative runner result JSON was parsed and the background metadata was corrected.
+- A broad startup-daemon unittest aggregate was interrupted before completion and was not counted as validation evidence; focused lock tests and model regressions supplied the evidence for this change.
+
+### Next Actions
+
+- Keep runtime write-lock model branches owner-aware: missing owner, other live owner, dead owner, fresh self owner, stale safe self owner, and stale unsafe self owner are distinct states.
+- Consider improving the reusable background-check wrapper so it records child exit codes reliably without needing result-JSON correction.

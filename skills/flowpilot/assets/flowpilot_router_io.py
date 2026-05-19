@@ -18,6 +18,7 @@ from flowpilot_process_liveness import process_is_live as _process_is_live
 RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
 RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS = 30.0
 RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.02
+RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS = 0.2
 
 
 def utc_now() -> str:
@@ -88,6 +89,25 @@ def _json_write_lock_path(path: Path) -> Path:
     return path.with_name(path.name + ".write.lock")
 
 
+def _json_write_lock_cleanup_log_path(path: Path) -> Path:
+    return path.parent / "runtime_json_write_lock_cleanup_failures.jsonl"
+
+
+def _runtime_json_target_valid(path: Path) -> bool:
+    try:
+        parsed = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return False
+    return isinstance(parsed, dict)
+
+
+def _runtime_json_tmp_artifact_present(path: Path) -> bool:
+    try:
+        return any(path.parent.glob(".tmp-*.json"))
+    except OSError:
+        return True
+
+
 def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
     lock_path = _json_write_lock_path(path)
     if not lock_path.exists():
@@ -103,6 +123,9 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
             "owner_pid": None,
             "owner_pid_present": False,
             "owner_process_live": False,
+            "owner_is_self": False,
+            "target_valid_json": _runtime_json_target_valid(path),
+            "tmp_artifact_present": _runtime_json_tmp_artifact_present(path),
         }
     try:
         age = time.time() - lock_path.stat().st_mtime
@@ -118,9 +141,28 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
     owner_pid_present = "pid" in payload
     owner_pid = payload.get("pid")
     owner_process_live = _process_is_live(owner_pid)
+    try:
+        owner_is_self = int(owner_pid) == os.getpid()  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        owner_is_self = False
     fresh = age is not None and age <= RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
     stale_by_age = age is not None and age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
-    if owner_process_live:
+    target_valid_json = _runtime_json_target_valid(path)
+    tmp_artifact_present = _runtime_json_tmp_artifact_present(path)
+    if owner_is_self and owner_process_live and stale_by_age:
+        if target_valid_json and not tmp_artifact_present:
+            classification = "self_owned_stale_takeover"
+            active = False
+            takeover_allowed = True
+        else:
+            classification = "self_owned_stale_unsafe"
+            active = True
+            takeover_allowed = False
+    elif owner_is_self and owner_process_live:
+        classification = "active_self_owner"
+        active = True
+        takeover_allowed = False
+    elif owner_process_live:
         classification = "active_live_owner"
         active = True
         takeover_allowed = False
@@ -153,6 +195,9 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
         "owner_pid": owner_pid,
         "owner_pid_present": owner_pid_present,
         "owner_process_live": owner_process_live,
+        "owner_is_self": owner_is_self,
+        "target_valid_json": target_valid_json,
+        "tmp_artifact_present": tmp_artifact_present,
     }
 
 
@@ -169,8 +214,12 @@ def _record_json_write_lock_takeover(path: Path, liveness: dict[str, Any], *, re
         "reason": reason,
         "owner_pid": liveness.get("owner_pid"),
         "owner_process_live": bool(liveness.get("owner_process_live")),
+        "owner_is_self": bool(liveness.get("owner_is_self")),
         "fresh": bool(liveness.get("fresh")),
+        "stale": bool(liveness.get("stale")),
         "age_seconds": liveness.get("age_seconds"),
+        "target_valid_json": bool(liveness.get("target_valid_json")),
+        "tmp_artifact_present": bool(liveness.get("tmp_artifact_present")),
         "recorded_at": utc_now(),
     }
     log_path = _json_write_lock_takeover_log_path(path)
@@ -180,6 +229,75 @@ def _record_json_write_lock_takeover(path: Path, liveness: dict[str, Any], *, re
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     except OSError:
         pass
+
+
+def _record_json_write_lock_cleanup_failure(
+    path: Path,
+    lock_path: Path,
+    *,
+    error: BaseException,
+    phase: str,
+    target_verified: bool,
+    cleanup_attempts: int,
+) -> None:
+    record = {
+        "schema_version": "flowpilot.runtime_json_write_lock_cleanup_failure.v1",
+        "target_path": str(path),
+        "lock_path": str(lock_path),
+        "phase": phase,
+        "pid": os.getpid(),
+        "target_verified": bool(target_verified),
+        "target_valid_json": _runtime_json_target_valid(path),
+        "tmp_artifact_present": _runtime_json_tmp_artifact_present(path),
+        "cleanup_attempts": cleanup_attempts,
+        "error_type": type(error).__name__,
+        "error_message": str(error),
+        "recorded_at": utc_now(),
+    }
+    log_path = _json_write_lock_cleanup_log_path(path)
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, sort_keys=True) + "\n")
+    except OSError:
+        pass
+
+
+def _unlink_runtime_json_write_lock(lock_path: Path) -> None:
+    lock_path.unlink()
+
+
+def _cleanup_runtime_json_write_lock(
+    path: Path,
+    lock_path: Path,
+    *,
+    phase: str,
+    target_verified: bool,
+    timeout_seconds: float | None = None,
+) -> bool:
+    if timeout_seconds is None:
+        timeout_seconds = RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS
+    deadline = time.monotonic() + max(0.0, timeout_seconds)
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            _unlink_runtime_json_write_lock(lock_path)
+            return True
+        except FileNotFoundError:
+            return True
+        except OSError as exc:
+            if time.monotonic() >= deadline:
+                _record_json_write_lock_cleanup_failure(
+                    path,
+                    lock_path,
+                    error=exc,
+                    phase=phase,
+                    target_verified=target_verified,
+                    cleanup_attempts=attempts,
+                )
+                return False
+            time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
 
 
 def _raise_if_runtime_write_active(path: Path) -> None:
@@ -286,11 +404,13 @@ def _acquire_json_write_lock(path: Path) -> Path:
             liveness = _json_write_lock_liveness(path)
             if liveness.get("takeover_allowed"):
                 _record_json_write_lock_takeover(path, liveness, reason=str(liveness.get("classification") or "takeover"))
-                try:
-                    lock_path.unlink()
-                except OSError:
-                    pass
-                continue
+                if _cleanup_runtime_json_write_lock(
+                    path,
+                    lock_path,
+                    phase=str(liveness.get("classification") or "takeover"),
+                    target_verified=bool(liveness.get("target_valid_json")),
+                ):
+                    continue
             if time.monotonic() >= deadline:
                 raise RouterLedgerWriteInProgress(path, liveness, "timed out waiting for JSON write lock")
             time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
@@ -315,6 +435,7 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = _acquire_json_write_lock(path)
     tmp_path = path.with_name(f".tmp-{os.getpid()}-{time.time_ns():x}.json")
+    target_verified = False
     try:
         body = json.dumps(payload, indent=2, sort_keys=sort_keys) + "\n"
         with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
@@ -338,16 +459,21 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
                 time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
         if verify:
             read_json(path)
+            target_verified = True
+        else:
+            target_verified = _runtime_json_target_valid(path)
     finally:
         try:
             if tmp_path.exists():
                 tmp_path.unlink()
         except OSError:
             pass
-        try:
-            lock_path.unlink()
-        except OSError:
-            pass
+        _cleanup_runtime_json_write_lock(
+            path,
+            lock_path,
+            phase="write_json_atomic_finally",
+            target_verified=target_verified,
+        )
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:

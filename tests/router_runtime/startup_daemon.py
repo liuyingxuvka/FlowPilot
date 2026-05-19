@@ -329,6 +329,135 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         records = [json.loads(line) for line in takeover_log_path.read_text(encoding="utf-8").splitlines()]
         self.assertEqual(records[-1]["classification"], "dead_owner_takeover")
         self.assertEqual(read_json(scheduler_path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+
+    def test_runtime_json_self_owned_stale_write_lock_is_safely_recovered(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "controller_action_ledger.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"schema_version": "flowpilot.controller_action_ledger.v1"}) + "\n", encoding="utf-8")
+        write_lock = router_io._json_write_lock_path(path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(path),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        stale_time = time.time() - router_io.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
+        os.utime(write_lock, (stale_time, stale_time))
+
+        liveness = router_io._json_write_lock_liveness(path)  # type: ignore[attr-defined]
+        self.assertEqual(liveness["classification"], "self_owned_stale_takeover")
+        self.assertTrue(liveness["takeover_allowed"])
+        router_io.write_json_atomic(path, {"schema_version": "flowpilot.controller_action_ledger.v1", "ok": True})
+
+        self.assertFalse(write_lock.exists())
+        self.assertTrue(read_json(path)["ok"])
+        takeover_log_path = router_io._json_write_lock_takeover_log_path(path)  # type: ignore[attr-defined]
+        records = [json.loads(line) for line in takeover_log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(records[-1]["classification"], "self_owned_stale_takeover")
+        self.assertTrue(records[-1]["owner_is_self"])
+        self.assertTrue(records[-1]["target_valid_json"])
+        self.assertFalse(records[-1]["tmp_artifact_present"])
+
+    def test_runtime_json_fresh_self_owned_write_lock_is_not_stolen(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_scheduler_ledger.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA}) + "\n", encoding="utf-8")
+        write_lock = router_io._json_write_lock_path(path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(path),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io,
+            "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
+            0.001,
+        ):
+            with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
+                router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
+
+        self.assertEqual(raised.exception.write_lock["classification"], "active_self_owner")
+        self.assertFalse(raised.exception.write_lock["takeover_allowed"])
+        self.assertTrue(write_lock.exists())
+
+    def test_runtime_json_self_owned_stale_lock_with_temp_artifact_is_not_cleared(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_scheduler_ledger.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA}) + "\n", encoding="utf-8")
+        write_lock = router_io._json_write_lock_path(path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(path),
+                    "pid": os.getpid(),
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        tmp_path = path.parent / ".tmp-test-self-owned-lock.json"
+        tmp_path.write_text("partial", encoding="utf-8")
+        stale_time = time.time() - router_io.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
+        os.utime(write_lock, (stale_time, stale_time))
+
+        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io,
+            "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
+            0.001,
+        ):
+            with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
+                router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
+
+        self.assertEqual(raised.exception.write_lock["classification"], "self_owned_stale_unsafe")
+        self.assertFalse(raised.exception.write_lock["takeover_allowed"])
+        self.assertTrue(raised.exception.write_lock["tmp_artifact_present"])
+        self.assertTrue(write_lock.exists())
+
+    def test_runtime_json_lock_cleanup_failure_is_recorded(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_scheduler_ledger.json"
+
+        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS", 0.01), mock.patch.object(
+            router_io,
+            "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
+            0.001,
+        ), mock.patch.object(
+            router_io,
+            "_unlink_runtime_json_write_lock",
+            side_effect=PermissionError("scanner still has the lock"),
+        ):
+            router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
+
+        cleanup_log_path = router_io._json_write_lock_cleanup_log_path(path)  # type: ignore[attr-defined]
+        records = [json.loads(line) for line in cleanup_log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(records[-1]["phase"], "write_json_atomic_finally")
+        self.assertEqual(records[-1]["error_type"], "PermissionError")
+        self.assertTrue(records[-1]["target_verified"])
+        self.assertTrue(records[-1]["target_valid_json"])
+        self.assertTrue(router_io._json_write_lock_path(path).exists())  # type: ignore[attr-defined]
+
     def test_router_daemon_corrupted_scheduler_ledger_writes_error_status(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

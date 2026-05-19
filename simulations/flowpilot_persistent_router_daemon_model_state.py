@@ -29,8 +29,10 @@ Risk intent brief:
   monitor current-work projection dropping active packet holders or internal
   reconciliation owners after `pending_action` is cleared,
   treating a fresh runtime write lock as corruption instead of a one-tick
-  defer, daemon status claiming active after an error lock or missing process,
-  and terminal stop leaving daemon/Controller/roles active.
+  defer, treating the daemon's own stale write-lock sentinel as another live
+  writer forever, swallowing lock cleanup failures without diagnostic evidence,
+  daemon status claiming active after an error lock or missing process, and
+  terminal stop leaving daemon/Controller/roles active.
 - Hard invariants: formal startup must start a live one-second Router daemon
   before Controller core loads; active ordinary waits have a live daemon; one
   daemon writer owns a run; mailbox evidence is consumed at most once;
@@ -55,8 +57,10 @@ Risk intent brief:
   holders, passive reconciliation owners, and internal Router/Controller work
   even when the legacy wait target is null; Router/Controller durable ledgers stay valid JSON
   after every write, fresh in-progress write locks defer daemon progress
-  instead of surfacing as corruption, durable ledgers are written atomically,
-  and daemon active status never contradicts an error lock or missing process;
+  instead of surfacing as corruption, self-owned stale write locks are cleared
+  only after safe artifact checks and diagnostic evidence, durable ledgers are
+  written atomically, and daemon active status never contradicts an error lock
+  or missing process;
   heartbeat restarts only dead/stale daemon state; and terminal stop disables
   daemon, Controller, heartbeat, roles, and route work.
 """
@@ -90,15 +94,22 @@ class State:
     router_scheduler_ledger_valid_json: bool = True
     controller_action_ledger_valid_json: bool = True
     runtime_ledger_write_lock_fresh: bool = False
-    runtime_ledger_write_lock_owner: str = "none"  # none | live | dead | unknown
+    runtime_ledger_write_lock_stale: bool = False
+    runtime_ledger_write_lock_owner: str = "none"  # none | self | live | dead | unknown
+    runtime_write_lock_target_valid_json: bool = field(default=True, compare=False)
+    runtime_write_lock_tmp_file_present: bool = field(default=False, compare=False)
     daemon_deferred_for_runtime_ledger_write: bool = False
     nested_wait_status_write_lock: bool = field(default=False, compare=False)
     daemon_deferred_after_nested_write_lock: bool = field(default=False, compare=False)
+    self_owned_write_lock_takeover_recorded: bool = field(default=False, compare=False)
+    self_owned_write_lock_recovery_rejoined_flow: bool = field(default=False, compare=False)
     dead_owner_write_lock_takeover_recorded: bool = False
     writer_died_while_holding_runtime_lock: bool = False
     dead_owner_recovery_rejoined_flow: bool = False
     runtime_write_lock_mechanical_settlement_recorded: bool = field(default=False, compare=False)
     runtime_write_lock_promoted_to_pm_semantic_blocker: bool = field(default=False, compare=False)
+    runtime_write_lock_cleanup_failure_recorded: bool = field(default=False, compare=False)
+    runtime_write_lock_cleanup_error_swallowed: bool = field(default=False, compare=False)
     durable_ledger_writes_atomic: bool = True
     router_scheduler_single_writer: bool = True
     daemon_status_active_after_lock_error: bool = False

@@ -20,8 +20,10 @@ REQUIRED_LABELS = (
     "formal_startup_starts_builtin_router_daemon",
     "runtime_live_writer_write_lock_appears_during_daemon_read",
     "runtime_dead_owner_write_lock_appears_during_daemon_read",
+    "runtime_self_owned_stale_write_lock_left_after_successful_write",
     "daemon_defers_runtime_ledger_read_until_next_tick",
     "daemon_defers_runtime_ledger_wait_after_nested_state_lock",
+    "daemon_clears_self_owned_stale_write_lock_and_replays",
     "daemon_schedules_startup_bootloader_row_before_controller_core",
     "controller_executes_startup_bootloader_row_writes_receipt",
     "daemon_consumes_startup_receipt_clears_pending_and_schedules_next",
@@ -74,6 +76,11 @@ HAZARD_EXPECTED_FAILURES = {
         "runtime write lock was promoted to PM semantic repair before mechanical settlement"
     ),
     "runtime_write_lock_wait_missing_mechanical_evidence": "runtime write-lock wait did not record mechanical settlement evidence",
+    "self_owned_stale_write_lock_deferred_as_live_owner": "self-owned stale write lock was deferred as another live owner",
+    "self_owned_stale_write_lock_missing_cleanup_diagnostics": "self-owned stale write lock recovery lacked cleanup failure diagnostics",
+    "self_owned_stale_write_lock_cleared_with_tmp_file_present": "self-owned stale write lock was cleared without safe artifact checks",
+    "runtime_write_lock_cleanup_error_swallowed": "runtime write-lock cleanup failure was swallowed without diagnostic evidence",
+    "self_owned_stale_write_lock_recovery_did_not_rejoin_flow": "self-owned stale write lock recovery did not rejoin normal daemon replay or terminal flow",
     "fresh_dead_owner_write_lock_deferred_as_live_writer": "dead-owner write lock was deferred as live writer settlement",
     "fresh_dead_owner_write_lock_missing_takeover_evidence": "fresh dead-owner write lock was not taken over with diagnostic evidence",
     "writer_died_holding_runtime_lock_without_incident": "writer death while holding runtime lock was not recorded as takeover evidence",
@@ -133,12 +140,19 @@ def _state_id(state: model.State) -> str:
         f"{state.daemon_alive},{state.daemon_lock_state},{state.daemon_writer_count},"
         f"tick={state.daemon_tick_seconds}|ledgers={state.router_scheduler_ledger_valid_json},"
         f"{state.controller_action_ledger_valid_json},write_lock_fresh={state.runtime_ledger_write_lock_fresh},"
+        f"write_lock_stale={state.runtime_ledger_write_lock_stale},"
         f"write_lock_owner={state.runtime_ledger_write_lock_owner},"
+        f"write_lock_target_valid={state.runtime_write_lock_target_valid_json},"
+        f"write_lock_tmp={state.runtime_write_lock_tmp_file_present},"
         f"deferred={state.daemon_deferred_for_runtime_ledger_write},atomic={state.durable_ledger_writes_atomic},"
         f"nested_wait={state.nested_wait_status_write_lock},"
         f"nested_deferred={state.daemon_deferred_after_nested_write_lock},"
         f"mechanical_settlement={state.runtime_write_lock_mechanical_settlement_recorded},"
         f"pm_semantic_lock={state.runtime_write_lock_promoted_to_pm_semantic_blocker},"
+        f"self_takeover={state.self_owned_write_lock_takeover_recorded},"
+        f"self_rejoined={state.self_owned_write_lock_recovery_rejoined_flow},"
+        f"cleanup_recorded={state.runtime_write_lock_cleanup_failure_recorded},"
+        f"cleanup_swallowed={state.runtime_write_lock_cleanup_error_swallowed},"
         f"dead_takeover={state.dead_owner_write_lock_takeover_recorded},"
         f"writer_died={state.writer_died_while_holding_runtime_lock},"
         f"dead_rejoined={state.dead_owner_recovery_rejoined_flow},"

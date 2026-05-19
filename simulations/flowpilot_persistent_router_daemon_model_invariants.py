@@ -101,6 +101,33 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("runtime write-lock wait did not record mechanical settlement evidence")
     if (
+        state.runtime_ledger_write_lock_stale
+        and state.runtime_ledger_write_lock_owner == "self"
+        and state.daemon_deferred_for_runtime_ledger_write
+    ):
+        failures.append("self-owned stale write lock was deferred as another live owner")
+    if state.runtime_write_lock_cleanup_error_swallowed:
+        failures.append("runtime write-lock cleanup failure was swallowed without diagnostic evidence")
+    if (
+        state.self_owned_write_lock_takeover_recorded
+        and not state.runtime_write_lock_cleanup_failure_recorded
+    ):
+        failures.append("self-owned stale write lock recovery lacked cleanup failure diagnostics")
+    if (
+        state.self_owned_write_lock_takeover_recorded
+        and (
+            not state.runtime_write_lock_target_valid_json
+            or state.runtime_write_lock_tmp_file_present
+        )
+    ):
+        failures.append("self-owned stale write lock was cleared without safe artifact checks")
+    if (
+        state.self_owned_write_lock_takeover_recorded
+        and state.lifecycle == "active"
+        and not state.self_owned_write_lock_recovery_rejoined_flow
+    ):
+        failures.append("self-owned stale write lock recovery did not rejoin normal daemon replay or terminal flow")
+    if (
         state.runtime_ledger_write_lock_fresh
         and state.runtime_ledger_write_lock_owner == "dead"
         and state.daemon_deferred_for_runtime_ledger_write
@@ -299,6 +326,11 @@ INVARIANTS = (
     _invariant("nested_write_lock_wait_does_not_terminate_daemon", "nested runtime write-lock wait terminated daemon instead of deferring"),
     _invariant("runtime_write_lock_not_pm_semantic_before_settlement", "runtime write lock was promoted to PM semantic repair before mechanical settlement"),
     _invariant("runtime_write_lock_wait_records_mechanical_evidence", "runtime write-lock wait did not record mechanical settlement evidence"),
+    _invariant("self_owned_stale_write_lock_not_deferred_as_live_owner", "self-owned stale write lock was deferred as another live owner"),
+    _invariant("runtime_write_lock_cleanup_failures_are_logged", "runtime write-lock cleanup failure was swallowed without diagnostic evidence"),
+    _invariant("self_owned_stale_write_lock_records_cleanup_diagnostics", "self-owned stale write lock recovery lacked cleanup failure diagnostics"),
+    _invariant("self_owned_stale_write_lock_checks_artifacts_before_clear", "self-owned stale write lock was cleared without safe artifact checks"),
+    _invariant("self_owned_stale_write_lock_rejoins_flow", "self-owned stale write lock recovery did not rejoin normal daemon replay or terminal flow"),
     _invariant("dead_owner_write_lock_not_deferred_as_live_writer", "dead-owner write lock was deferred as live writer settlement"),
     _invariant("dead_owner_write_lock_takeover_records_evidence", "fresh dead-owner write lock was not taken over with diagnostic evidence"),
     _invariant("writer_death_records_lock_incident", "writer death while holding runtime lock was not recorded as takeover evidence"),

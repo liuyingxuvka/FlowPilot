@@ -131,6 +131,43 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if state.runtime_ledger_write_lock_stale and state.runtime_ledger_write_lock_owner == "self":
+        if state.runtime_write_lock_target_valid_json and not state.runtime_write_lock_tmp_file_present:
+            yield Transition(
+                "daemon_clears_self_owned_stale_write_lock_and_replays",
+                _step(
+                    state,
+                    router_scheduler_ledger_valid_json=True,
+                    controller_action_ledger_valid_json=True,
+                    runtime_ledger_write_lock_fresh=False,
+                    runtime_ledger_write_lock_stale=False,
+                    runtime_ledger_write_lock_owner="none",
+                    daemon_deferred_for_runtime_ledger_write=False,
+                    self_owned_write_lock_takeover_recorded=True,
+                    self_owned_write_lock_recovery_rejoined_flow=True,
+                    runtime_write_lock_cleanup_failure_recorded=True,
+                    runtime_write_lock_mechanical_settlement_recorded=True,
+                    startup_bootstrap_pending_action_open=True,
+                    startup_bootstrap_flag_current=False,
+                    startup_same_action_reissue_count=state.startup_same_action_reissue_count + 1,
+                    current_work_owner_kind="controller",
+                    current_work_owner_key="controller",
+                    current_work_task_visible=True,
+                    current_work_source="pending_action",
+                ),
+            )
+        else:
+            yield Transition(
+                "daemon_blocks_unsafe_self_owned_stale_write_lock_for_repair",
+                _step(
+                    state,
+                    daemon_deferred_for_runtime_ledger_write=False,
+                    runtime_write_lock_mechanical_settlement_recorded=True,
+                    stop_requested=True,
+                ),
+            )
+        return
+
     if state.runtime_ledger_write_lock_fresh and state.runtime_ledger_write_lock_owner in {"live", "unknown"}:
         yield Transition(
             "user_requests_terminal_stop_while_cleanup_ledger_locked",
@@ -149,6 +186,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     state,
                     router_scheduler_ledger_valid_json=True,
                     runtime_ledger_write_lock_fresh=False,
+                    runtime_ledger_write_lock_stale=False,
                     runtime_ledger_write_lock_owner="none",
                     daemon_deferred_for_runtime_ledger_write=True,
                     nested_wait_status_write_lock=True,
@@ -163,6 +201,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     state,
                     router_scheduler_ledger_valid_json=True,
                     runtime_ledger_write_lock_fresh=False,
+                    runtime_ledger_write_lock_stale=False,
                     runtime_ledger_write_lock_owner="none",
                     daemon_deferred_for_runtime_ledger_write=True,
                     runtime_write_lock_mechanical_settlement_recorded=True,
@@ -177,6 +216,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 router_scheduler_ledger_valid_json=True,
                 runtime_ledger_write_lock_fresh=False,
+                runtime_ledger_write_lock_stale=False,
                 runtime_ledger_write_lock_owner="none",
                 daemon_deferred_for_runtime_ledger_write=False,
                 dead_owner_write_lock_takeover_recorded=True,
@@ -210,6 +250,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 router_scheduler_ledger_valid_json=True,
                 runtime_ledger_write_lock_fresh=False,
+                runtime_ledger_write_lock_stale=False,
                 runtime_ledger_write_lock_owner="none",
                 daemon_deferred_for_runtime_ledger_write=False,
                 dead_owner_write_lock_takeover_recorded=True,
@@ -218,6 +259,27 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 runtime_write_lock_mechanical_settlement_recorded=True,
             ),
         )
+        if (
+            not state.self_owned_write_lock_takeover_recorded
+            and not state.controller_core_loaded
+            and not state.startup_bootstrap_pending_action_open
+            and not state.startup_controller_receipt_present
+        ):
+            yield Transition(
+                "runtime_self_owned_stale_write_lock_left_after_successful_write",
+                _step(
+                    state,
+                    router_scheduler_ledger_valid_json=True,
+                    controller_action_ledger_valid_json=True,
+                    runtime_ledger_write_lock_fresh=False,
+                    runtime_ledger_write_lock_stale=True,
+                    runtime_ledger_write_lock_owner="self",
+                    runtime_write_lock_target_valid_json=True,
+                    runtime_write_lock_tmp_file_present=False,
+                    runtime_write_lock_cleanup_failure_recorded=True,
+                    runtime_write_lock_mechanical_settlement_recorded=False,
+                ),
+            )
 
     if not state.controller_core_loaded and not state.startup_controller_receipt_consumed:
         if not state.startup_bootstrap_pending_action_open and not state.startup_controller_receipt_present:
