@@ -1,11 +1,11 @@
 {
-  "created_at": "2026-05-18T18:05:55.118420+00:00",
+  "created_at": "2026-05-19T08:48:16.388433+00:00",
   "graph": {
-    "edge_count": 14,
+    "edge_count": 16,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "ok": true,
-    "state_count": 9
+    "state_count": 10
   },
   "layered_full_parent": {
     "covered_release_partitions": [
@@ -27,10 +27,10 @@
       }
     },
     "ok": true,
-    "partition_count": 6,
-    "thin_parent_edge_count": 12,
+    "partition_count": 7,
+    "thin_parent_edge_count": 14,
     "thin_parent_result_type": "thin_parent",
-    "thin_parent_state_count": 7
+    "thin_parent_state_count": 8
   },
   "loop": {
     "nonterminating_component_count": 0,

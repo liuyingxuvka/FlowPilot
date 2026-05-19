@@ -30,6 +30,9 @@ The repository already contains relevant surfaces:
   for `next_step` projections.
 - Add a known-bad model/runtime case where stale/completed display projection
   plus nonterminal return permission cannot end standby.
+- Require full-model confidence to include all visible/user-triggerable
+  controls, buttons, status returns, recovery duties, and stop branches, or to
+  make unavailable branches disabled/explicitly out of scope.
 - Sync the validated repository source to the local installed FlowPilot skill.
 
 **Non-Goals:**
@@ -79,6 +82,17 @@ The repository already contains relevant surfaces:
    capability checks may run through the repository's background log contract
    after targeted checks pass.
 
+5. **Visible/user-triggerable branches are model obligations.**
+
+   Model-hierarchy checks will treat visible controls and user-triggerable
+   branches as required coverage input for full confidence. A button, status
+   return, recovery action, or terminal/stop branch cannot remain visible and
+   enabled unless it is implemented and covered by current model evidence.
+
+   Alternative considered: leave this as reviewer guidance only. That is too
+   weak because the failure mode is exactly a visible/status branch being
+   interpreted outside the authoritative model.
+
 ## Risks / Trade-offs
 
 - **Legacy field confusion remains visible** -> Mitigate by marking
@@ -92,6 +106,9 @@ The repository already contains relevant surfaces:
 - **Parallel agents may edit nearby files** -> Mitigate by keeping this change
   scoped to Controller standby/status/prompt/model/test files and checking git
   state before final sync.
+- **Full visible-branch coverage can grow large** -> Mitigate by keeping the
+  hierarchy model responsible for inventory/freshness obligations while child
+  models cover each concrete branch.
 
 ## Migration Plan
 
@@ -100,7 +117,8 @@ The repository already contains relevant surfaces:
 3. Add focused runtime tests for nonterminal user return versus stop permission
    and stale/completed `next_step` projection.
 4. Run focused FlowGuard and runtime checks.
-5. Start heavy meta/capability regressions in the background log directory and
+5. Run model-hierarchy checks for visible/user-triggerable branch coverage.
+6. Start heavy meta/capability regressions in the background log directory and
    inspect final artifacts.
-6. Sync the local installed FlowPilot skill from the validated repository source
+7. Sync the local installed FlowPilot skill from the validated repository source
    and run install audit/check.

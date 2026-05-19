@@ -97,6 +97,23 @@
           "release_obligation": "thin_parent_ok"
         },
         {
+          "id": "visible_user_controls_and_branches",
+          "owner_type": "shared_kernel",
+          "evidence_ids": [
+            "user_flow_diagram",
+            "flowpilot_route_display",
+            "flowpilot_controller_patrol",
+            "flowpilot_startup_intake_ui"
+          ],
+          "invariant_families": [
+            "visible_user_branch_inventory",
+            "visible_control_implementation",
+            "status_return_modes",
+            "controller_stop_gate"
+          ],
+          "release_obligation": "thin_parent_ok"
+        },
+        {
           "id": "terminal_ledger",
           "owner_type": "shared_kernel",
           "evidence_ids": [
@@ -198,6 +215,23 @@
           "release_obligation": "thin_parent_ok"
         },
         {
+          "id": "visible_user_controls_and_branches",
+          "owner_type": "shared_kernel",
+          "evidence_ids": [
+            "user_flow_diagram",
+            "flowpilot_route_display",
+            "flowpilot_controller_patrol",
+            "flowpilot_startup_intake_ui"
+          ],
+          "invariant_families": [
+            "visible_user_branch_inventory",
+            "visible_control_implementation",
+            "status_return_modes",
+            "controller_stop_gate"
+          ],
+          "release_obligation": "thin_parent_ok"
+        },
+        {
           "id": "terminal_ledger",
           "owner_type": "shared_kernel",
           "evidence_ids": [
@@ -257,6 +291,14 @@
     {
       "field": "packet_envelope",
       "owner": "packet_and_role_authority"
+    },
+    {
+      "field": "visible_user_branch_inventory",
+      "owner": "visible_user_controls_and_branches"
+    },
+    {
+      "field": "visible_user_control_state",
+      "owner": "visible_user_controls_and_branches"
     },
     {
       "field": "child_skill_bindings",

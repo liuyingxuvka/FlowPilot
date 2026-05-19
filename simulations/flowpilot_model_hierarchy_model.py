@@ -3,7 +3,8 @@
 This model reviews the hierarchy used to keep FlowPilot's heavyweight
 FlowGuard parents inspectable. It does not expand child state graphs. It
 checks that oversized parents, focused child models, partition ownership,
-freshness, overlap, and heavyweight-regression obligations stay explicit.
+visible/user-triggerable branch coverage, freshness, overlap, and
+heavyweight-regression obligations stay explicit.
 """
 
 from __future__ import annotations
@@ -26,6 +27,7 @@ PARTITION_ITEMS = (
     "router_daemon_resume",
     "packet_and_role_authority",
     "child_skill_capability",
+    "visible_user_controls_and_branches",
     "terminal_ledger",
     "evidence_mesh_and_install_sync",
 )
@@ -42,6 +44,11 @@ class State:
     partition_map_written: bool = False
     partition_coverage_complete: bool = False
     partition_out_of_scope_explicit: bool = True
+    visible_user_branch_inventory_written: bool = False
+    visible_user_branch_coverage_complete: bool = False
+    visible_user_branch_out_of_scope_explicit: bool = True
+    visible_user_branch_evidence_current: bool = True
+    visible_user_control_unimplemented_but_enabled: bool = False
     shared_kernel_declared: bool = True
     sibling_ownership_overlap: bool = False
     child_inventory_complete: bool = False
@@ -84,6 +91,8 @@ def _valid_hierarchy(name: str) -> State:
         split_review_required=True,
         partition_map_written=True,
         partition_coverage_complete=True,
+        visible_user_branch_inventory_written=True,
+        visible_user_branch_coverage_complete=True,
         shared_kernel_declared=True,
         child_inventory_complete=True,
         child_evidence_registered=True,
@@ -111,6 +120,24 @@ SCENARIOS: dict[str, State] = {
         _valid_hierarchy("parent_partition_gap"),
         partition_coverage_complete=False,
         partition_out_of_scope_explicit=False,
+    ),
+    "visible_branch_inventory_missing": replace(
+        _valid_hierarchy("visible_branch_inventory_missing"),
+        visible_user_branch_inventory_written=False,
+        visible_user_branch_coverage_complete=False,
+    ),
+    "visible_branch_coverage_gap": replace(
+        _valid_hierarchy("visible_branch_coverage_gap"),
+        visible_user_branch_coverage_complete=False,
+        visible_user_branch_out_of_scope_explicit=False,
+    ),
+    "stale_visible_branch_evidence_used": replace(
+        _valid_hierarchy("stale_visible_branch_evidence_used"),
+        visible_user_branch_evidence_current=False,
+    ),
+    "visible_control_enabled_without_implementation": replace(
+        _valid_hierarchy("visible_control_enabled_without_implementation"),
+        visible_user_control_unimplemented_but_enabled=True,
     ),
     "sibling_ownership_overlap": replace(
         _valid_hierarchy("sibling_ownership_overlap"),
@@ -177,6 +204,17 @@ def hierarchy_failures(state: State) -> list[str]:
         failures.append("parent_partition_map_missing")
     if not state.partition_coverage_complete and not state.partition_out_of_scope_explicit:
         failures.append("parent_partition_coverage_gap")
+    if not state.visible_user_branch_inventory_written:
+        failures.append("visible_user_branch_inventory_missing")
+    if (
+        not state.visible_user_branch_coverage_complete
+        and not state.visible_user_branch_out_of_scope_explicit
+    ):
+        failures.append("visible_user_branch_coverage_gap")
+    if not state.visible_user_branch_evidence_current:
+        failures.append("visible_user_branch_evidence_stale_or_foreign")
+    if state.visible_user_control_unimplemented_but_enabled:
+        failures.append("visible_user_control_unimplemented_but_enabled")
     if state.sibling_ownership_overlap and not state.shared_kernel_declared:
         failures.append("unsafe_sibling_ownership_overlap")
     if state.sibling_ownership_overlap:
@@ -279,6 +317,22 @@ def parent_partitions_must_be_covered(state: State, _trace: Sequence[object]) ->
     return InvariantResult.pass_()
 
 
+def visible_user_branches_must_be_covered(
+    state: State, _trace: Sequence[object]
+) -> InvariantResult:
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    if not state.visible_user_branch_inventory_written:
+        return InvariantResult.fail("accepted hierarchy without visible branch inventory")
+    if not state.visible_user_branch_coverage_complete:
+        return InvariantResult.fail("accepted hierarchy with uncovered visible user branch")
+    if not state.visible_user_branch_evidence_current:
+        return InvariantResult.fail("accepted hierarchy with stale visible branch evidence")
+    if state.visible_user_control_unimplemented_but_enabled:
+        return InvariantResult.fail("accepted hierarchy with enabled but unimplemented visible control")
+    return InvariantResult.pass_()
+
+
 def release_claim_requires_full_regression(state: State, _trace: Sequence[object]) -> InvariantResult:
     if (
         state.status == "accepted"
@@ -328,6 +382,11 @@ INVARIANTS = (
         "parent_partitions_must_be_covered",
         "Parent-space items must be covered or explicitly out of scope.",
         parent_partitions_must_be_covered,
+    ),
+    Invariant(
+        "visible_user_branches_must_be_covered",
+        "Every visible/user-triggerable branch must be modeled, explicitly out of scope, or disabled.",
+        visible_user_branches_must_be_covered,
     ),
     Invariant(
         "release_claim_requires_full_regression",

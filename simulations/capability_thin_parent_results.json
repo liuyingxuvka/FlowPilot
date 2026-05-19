@@ -1,25 +1,25 @@
 {
-  "created_at": "2026-05-19T08:38:57.215004+00:00",
+  "created_at": "2026-05-19T08:48:17.745332+00:00",
   "graph": {
-    "edge_count": 12,
+    "edge_count": 14,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "ok": true,
-    "state_count": 7
+    "state_count": 8
   },
   "legacy_full_regression": {
     "current": true,
     "required_for_release": false,
     "status": {
-      "created_at": "2026-05-18T18:05:55.152421+00:00",
-      "edge_count": 14,
+      "created_at": "2026-05-19T08:48:16.404432+00:00",
+      "edge_count": 16,
       "kind": "layered_full_parent",
       "legacy_monolith_required": false,
       "proof_file": "simulations/capability_layered_full_results.proof.json",
       "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/capability_layered_full_results.json",
-      "state_count": 9,
+      "state_count": 10,
       "valid": true
     }
   },
@@ -47,7 +47,7 @@
     ],
     "ledger_file": "simulations/flowpilot_parent_responsibility_ledger.json",
     "ok": true,
-    "partition_count": 6,
+    "partition_count": 7,
     "partitions": [
       {
         "evidence": [
@@ -301,6 +301,78 @@
           "active_child_skill_bindings",
           "role_output_runtime",
           "packet_open_authority"
+        ],
+        "ok": true,
+        "owner_type": "shared_kernel",
+        "release_obligation": "thin_parent_ok"
+      },
+      {
+        "evidence": [
+          {
+            "edge_count": 81,
+            "failures": [],
+            "missing": false,
+            "model_id": "user_flow_diagram",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/user_flow_diagram_results.json",
+            "result_fingerprint": "c15692bdd49f49923fb60ef1774a5df264779087ba88c9094b4d99b5481bc3b5",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 82
+          },
+          {
+            "edge_count": 39,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_route_display",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_route_display_checks_results.json",
+            "result_fingerprint": "5725b4b52df31ecd2850f3daa31368370268c4dddaf01ba021c83b15440f4dda",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 35
+          },
+          {
+            "edge_count": 18,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_controller_patrol",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_controller_patrol_results.json",
+            "result_fingerprint": "4fb674217c037de4111f65969681682b8a57705c6984582dfbcaaf831d5bd16a",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 18
+          },
+          {
+            "edge_count": 24,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_startup_intake_ui",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_startup_intake_ui_checks_results.json",
+            "result_fingerprint": "5a3cb6e301afc08ad316a50725c5b348d99514fe1212220f8076a69528508197",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 25
+          }
+        ],
+        "evidence_ids": [
+          "user_flow_diagram",
+          "flowpilot_route_display",
+          "flowpilot_controller_patrol",
+          "flowpilot_startup_intake_ui"
+        ],
+        "id": "visible_user_controls_and_branches",
+        "invariant_families": [
+          "visible_user_branch_inventory",
+          "visible_control_implementation",
+          "status_return_modes",
+          "controller_stop_gate"
         ],
         "ok": true,
         "owner_type": "shared_kernel",

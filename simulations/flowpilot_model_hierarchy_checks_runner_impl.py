@@ -40,6 +40,10 @@ REQUIRED_LABELS = {
     "accept_valid_release_hierarchy_with_current_heavy_proof",
     "reject_heavy_parent_without_split_review",
     "reject_parent_partition_gap",
+    "reject_visible_branch_inventory_missing",
+    "reject_visible_branch_coverage_gap",
+    "reject_stale_visible_branch_evidence_used",
+    "reject_visible_control_enabled_without_implementation",
     "reject_sibling_ownership_overlap",
     "reject_stale_child_evidence_used",
     "reject_hidden_child_skipped_checks",
@@ -55,6 +59,12 @@ REQUIRED_LABELS = {
 EXPECTED_HAZARD_FAILURES = {
     "heavy_parent_without_split_review": {"heavy_parent_split_review_missing"},
     "parent_partition_gap": {"parent_partition_coverage_gap"},
+    "visible_branch_inventory_missing": {"visible_user_branch_inventory_missing"},
+    "visible_branch_coverage_gap": {"visible_user_branch_coverage_gap"},
+    "stale_visible_branch_evidence_used": {"visible_user_branch_evidence_stale_or_foreign"},
+    "visible_control_enabled_without_implementation": {
+        "visible_user_control_unimplemented_but_enabled",
+    },
     "sibling_ownership_overlap": {
         "sibling_overlap_requires_explicit_shared_kernel_or_refactor",
     },
@@ -88,6 +98,11 @@ def _state_id(state: model.State) -> str:
         f"parent={state.heavyweight_parent_registered},{state.parent_exceeds_threshold},"
         f"{state.split_review_required}|partition={state.partition_map_written},"
         f"{state.partition_coverage_complete},{state.sibling_ownership_overlap}|"
+        f"visible={state.visible_user_branch_inventory_written},"
+        f"{state.visible_user_branch_coverage_complete},"
+        f"{state.visible_user_branch_out_of_scope_explicit},"
+        f"{state.visible_user_branch_evidence_current},"
+        f"{state.visible_user_control_unimplemented_but_enabled}|"
         f"child={state.child_inventory_complete},{state.child_evidence_registered},"
         f"{state.child_evidence_current},{state.child_expands_parent_graph}|"
         f"layer={state.release_obligation_visible},{state.full_regression_used_as_routine_gate}|"

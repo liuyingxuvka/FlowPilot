@@ -15865,6 +15865,7 @@ Skipped steps:
 - Patrol timer results now carry a `final_answer_preflight` that only allows a final answer when terminal lifecycle, no pending Controller actions, and no continuous standby duty all agree.
 - Current status summaries now mark stale or completed next-step projections as display-only and expose projection source/freshness instead of acting as Controller stop authority.
 - Controller role, resume/reentry, action-ledger table prompt, and top-level skill wording now say status/user return is not stop permission.
+- Model hierarchy now requires a `visible_user_controls_and_branches` partition so full FlowGuard confidence cannot omit visible/user-triggerable controls, buttons, status returns, recovery paths, or terminal/stop branches.
 - Focused runtime tests cover nonterminal user/status return, waiting standby patrol continuation, terminal stop allowance, and stale display-only projection.
 
 ### Commands
@@ -15872,11 +15873,13 @@ Skipped steps:
 - OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
 - OK: `openspec validate "harden-controller-standby-stop-gate" --strict`.
 - OK: `python simulations\run_flowpilot_controller_patrol_checks.py --json-out simulations\flowpilot_controller_patrol_results.json`.
+- OK: `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out simulations\flowpilot_model_hierarchy_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_thin_parent_checks`.
 - OK: `python -m unittest tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_nonterminal_user_status_return_is_not_controller_stop tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_controller_patrol_timer_continue_patrol_restarts_and_waits tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_controller_patrol_timer_allows_terminal_return_only_when_stopped tests.router_runtime.controller.ControllerRuntimeTests.test_current_status_summary_marks_stale_pending_projection_display_only`.
 - OK: `python -m unittest tests.test_flowpilot_prompt_store`.
 - OK: `python scripts\check_install.py`.
-- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed, stderr empty, result `ok: true`.
-- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed, stderr empty, result `ok: true`.
+- OK: background `python simulations\run_meta_checks.py --full` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status passed, proof reused false, current layered full proof valid.
+- OK: background `python simulations\run_capability_checks.py --full` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status passed, proof reused false, current layered full proof valid.
 - OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
 - OK: `python scripts\audit_local_install_sync.py --json`.
 - OK: `python scripts\install_flowpilot.py --check --json`.
@@ -15887,6 +15890,7 @@ Skipped steps:
 - A foreground user/status return is only permission to update the user or wait for input; it is not permission for the Controller to stop its standby patrol.
 - The Controller stop decision must be ledger-backed and terminal: lifecycle terminal, `controller_stop_allowed=true`, no pending Controller actions, and no active continuous standby.
 - Current status summary is a display surface. It can show stale/completed next-step information for humans, but it must not become a stop-authority source.
+- Full FlowGuard confidence must include every visible/enabled user branch in current model evidence, or the branch must be disabled, hidden, or explicitly out of scope.
 - Prompt wording alone is not enough; runtime payloads and tests need explicit field names that make the wrong interpretation hard.
 
 ### Counterexamples
@@ -15896,6 +15900,10 @@ Skipped steps:
 - `standby_waiting_final_answer_allowed`
 - `stale_projection_stop_authority`
 - `stale_projection_not_display_only`
+- `visible_branch_inventory_missing`
+- `visible_branch_coverage_gap`
+- `stale_visible_branch_evidence_used`
+- `visible_control_enabled_without_implementation`
 
 ### Friction Points
 

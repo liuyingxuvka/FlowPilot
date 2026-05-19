@@ -19,7 +19,11 @@
       "release_obligation_hidden",
       "routine_thin_parent_blocked_by_full_regression",
       "sibling_ownership_overlap",
-      "stale_child_evidence_used"
+      "stale_child_evidence_used",
+      "stale_visible_branch_evidence_used",
+      "visible_branch_coverage_gap",
+      "visible_branch_inventory_missing",
+      "visible_control_enabled_without_implementation"
     ]
   },
   "flowguard_explorer": {
@@ -27,13 +31,13 @@
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
-    "summary": "sequences=2 initial_states=1 traces=42",
+    "summary": "sequences=2 initial_states=1 traces=54",
     "violation_count": 0,
     "violations": []
   },
   "graph": {
     "accepted_state_count": 2,
-    "edge_count": 28,
+    "edge_count": 36,
     "labels_seen": [
       "accept_valid_hierarchy_with_background_obligation",
       "accept_valid_release_hierarchy_with_current_heavy_proof",
@@ -49,6 +53,10 @@
       "reject_routine_thin_parent_blocked_by_full_regression",
       "reject_sibling_ownership_overlap",
       "reject_stale_child_evidence_used",
+      "reject_stale_visible_branch_evidence_used",
+      "reject_visible_branch_coverage_gap",
+      "reject_visible_branch_inventory_missing",
+      "reject_visible_control_enabled_without_implementation",
       "select_authority_mesh_confused_with_partition",
       "select_background_progress_only_claimed_pass",
       "select_child_model_inlines_parent_graph",
@@ -61,14 +69,18 @@
       "select_routine_thin_parent_blocked_by_full_regression",
       "select_sibling_ownership_overlap",
       "select_stale_child_evidence_used",
+      "select_stale_visible_branch_evidence_used",
       "select_valid_hierarchy_with_background_obligation",
-      "select_valid_release_hierarchy_with_current_heavy_proof"
+      "select_valid_release_hierarchy_with_current_heavy_proof",
+      "select_visible_branch_coverage_gap",
+      "select_visible_branch_inventory_missing",
+      "select_visible_control_enabled_without_implementation"
     ],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 12,
-    "state_count": 29,
-    "terminal_state_count": 14,
+    "rejected_state_count": 16,
+    "state_count": 37,
+    "terminal_state_count": 18,
     "violations": []
   },
   "hazard_review": {
@@ -204,6 +216,50 @@
         ],
         "ok": true,
         "scenario": "stale_child_evidence_used"
+      },
+      {
+        "expected_failures": [
+          "visible_user_branch_evidence_stale_or_foreign"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "visible_user_branch_evidence_stale_or_foreign"
+        ],
+        "ok": true,
+        "scenario": "stale_visible_branch_evidence_used"
+      },
+      {
+        "expected_failures": [
+          "visible_user_branch_coverage_gap"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "visible_user_branch_coverage_gap"
+        ],
+        "ok": true,
+        "scenario": "visible_branch_coverage_gap"
+      },
+      {
+        "expected_failures": [
+          "visible_user_branch_inventory_missing"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "visible_user_branch_inventory_missing"
+        ],
+        "ok": true,
+        "scenario": "visible_branch_inventory_missing"
+      },
+      {
+        "expected_failures": [
+          "visible_user_control_unimplemented_but_enabled"
+        ],
+        "missing_expected_failures": [],
+        "observed_failures": [
+          "visible_user_control_unimplemented_but_enabled"
+        ],
+        "ok": true,
+        "scenario": "visible_control_enabled_without_implementation"
       }
     ],
     "ok": true
@@ -211,7 +267,7 @@
   "inventory": {
     "child_evidence_tier_counts": {
       "medium": 3,
-      "small": 27,
+      "small": 30,
       "unknown": 2
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
@@ -226,7 +282,7 @@
     "ok": true,
     "parents": [
       {
-        "edge_count": 16,
+        "edge_count": 18,
         "full_state_count": 1949768,
         "legacy_full_regression": {
           "current": true,
@@ -240,15 +296,15 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-18T15:26:32.782987+00:00",
-            "edge_count": 18,
+            "created_at": "2026-05-19T08:48:16.421432+00:00",
+            "edge_count": 20,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
-            "state_count": 11,
+            "state_count": 12,
             "valid": true
           },
           "required_for_release": false,
@@ -268,15 +324,15 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-18T15:26:32.782987+00:00",
-          "edge_count": 18,
+          "created_at": "2026-05-19T08:48:16.421432+00:00",
+          "edge_count": 20,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
           "proof_file": "simulations/meta_layered_full_results.proof.json",
           "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/meta_layered_full_results.json",
-          "state_count": 11,
+          "state_count": 12,
           "valid": true
         },
         "release_confidence": "current_with_layered_full_parent",
@@ -287,10 +343,10 @@
         "routine_confidence": "current",
         "routine_validation_command": "python simulations/run_meta_checks.py --fast",
         "split_review_required": true,
-        "state_count": 9,
+        "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-18T15:26:34.163985+00:00",
+            "created_at": "2026-05-19T08:48:17.826883+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -298,21 +354,21 @@
             "valid": true
           },
           "result": {
-            "edge_count": 16,
+            "edge_count": 18,
             "model_id": "meta",
             "ok": true,
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
-            "state_count": 9,
+            "state_count": 10,
             "tier": "small"
           }
         },
         "tier": "small"
       },
       {
-        "edge_count": 12,
+        "edge_count": 14,
         "full_state_count": 1959064,
         "legacy_full_regression": {
           "current": true,
@@ -326,15 +382,15 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-18T15:26:32.750835+00:00",
-            "edge_count": 14,
+            "created_at": "2026-05-19T08:48:16.404432+00:00",
+            "edge_count": 16,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
-            "state_count": 9,
+            "state_count": 10,
             "valid": true
           },
           "required_for_release": false,
@@ -354,15 +410,15 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-18T15:26:32.750835+00:00",
-          "edge_count": 14,
+          "created_at": "2026-05-19T08:48:16.404432+00:00",
+          "edge_count": 16,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
           "proof_file": "simulations/capability_layered_full_results.proof.json",
           "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/capability_layered_full_results.json",
-          "state_count": 9,
+          "state_count": 10,
           "valid": true
         },
         "release_confidence": "current_with_layered_full_parent",
@@ -373,10 +429,10 @@
         "routine_confidence": "current",
         "routine_validation_command": "python simulations/run_capability_checks.py --fast",
         "split_review_required": true,
-        "state_count": 7,
+        "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-18T15:26:34.076757+00:00",
+            "created_at": "2026-05-19T08:48:17.755870+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -384,14 +440,14 @@
             "valid": true
           },
           "result": {
-            "edge_count": 12,
+            "edge_count": 14,
             "model_id": "capability",
             "ok": true,
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
-            "state_count": 7,
+            "state_count": 8,
             "tier": "small"
           }
         },
@@ -612,6 +668,31 @@
           "release_obligations": [
             "thin_parent_ok"
           ]
+        },
+        "visible_user_controls_and_branches": {
+          "children": [
+            "flowpilot_controller_patrol",
+            "flowpilot_route_display",
+            "flowpilot_startup_intake_ui",
+            "user_flow_diagram"
+          ],
+          "invariant_families": [
+            "controller_stop_gate",
+            "status_return_modes",
+            "visible_control_implementation",
+            "visible_user_branch_inventory"
+          ],
+          "owners": [
+            "shared_kernel",
+            "shared_kernel"
+          ],
+          "parents": [
+            "meta",
+            "capability"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
         }
       },
       "failures": [],
@@ -716,6 +797,24 @@
               "capability_backward_replay",
               "terminal_capability_ledger",
               "defect_zero_blocking"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "capability",
+            "release_obligation": "thin_parent_ok"
+          },
+          "visible_user_controls_and_branches": {
+            "children": [
+              "user_flow_diagram",
+              "flowpilot_route_display",
+              "flowpilot_controller_patrol",
+              "flowpilot_startup_intake_ui"
+            ],
+            "invariant_families": [
+              "visible_user_branch_inventory",
+              "visible_control_implementation",
+              "status_return_modes",
+              "controller_stop_gate"
             ],
             "owner": "shared_kernel",
             "owner_type": "shared_kernel",
@@ -855,6 +954,24 @@
             "owner_type": "shared_kernel",
             "parent": "meta",
             "release_obligation": "thin_parent_ok"
+          },
+          "visible_user_controls_and_branches": {
+            "children": [
+              "user_flow_diagram",
+              "flowpilot_route_display",
+              "flowpilot_controller_patrol",
+              "flowpilot_startup_intake_ui"
+            ],
+            "invariant_families": [
+              "visible_user_branch_inventory",
+              "visible_control_implementation",
+              "status_return_modes",
+              "controller_stop_gate"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
           }
         }
       },
@@ -884,6 +1001,14 @@
           "owner": "packet_and_role_authority"
         },
         {
+          "field": "visible_user_branch_inventory",
+          "owner": "visible_user_controls_and_branches"
+        },
+        {
+          "field": "visible_user_control_state",
+          "owner": "visible_user_controls_and_branches"
+        },
+        {
           "field": "child_skill_bindings",
           "owner": "child_skill_capability"
         },
@@ -906,6 +1031,7 @@
       "router_daemon_resume",
       "packet_and_role_authority",
       "child_skill_capability",
+      "visible_user_controls_and_branches",
       "terminal_ledger",
       "evidence_mesh_and_install_sync"
     ],
@@ -1122,9 +1248,34 @@
         "release_obligations": [
           "thin_parent_ok"
         ]
+      },
+      "visible_user_controls_and_branches": {
+        "children": [
+          "flowpilot_controller_patrol",
+          "flowpilot_route_display",
+          "flowpilot_startup_intake_ui",
+          "user_flow_diagram"
+        ],
+        "invariant_families": [
+          "controller_stop_gate",
+          "status_return_modes",
+          "visible_control_implementation",
+          "visible_user_branch_inventory"
+        ],
+        "owners": [
+          "shared_kernel",
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta",
+          "capability"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
       }
     },
-    "registered_child_count": 32,
+    "registered_child_count": 35,
     "registered_children": [
       {
         "edge_count": null,
@@ -1164,6 +1315,16 @@
         "result_file": "simulations/flowpilot_control_transaction_registry_checks_results.json",
         "role": "child_evidence",
         "state_count": 49,
+        "tier": "small"
+      },
+      {
+        "edge_count": 18,
+        "model_id": "flowpilot_controller_patrol",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_controller_patrol_results.json",
+        "role": "child_evidence",
+        "state_count": 18,
         "tier": "small"
       },
       {
@@ -1357,6 +1518,16 @@
         "tier": "small"
       },
       {
+        "edge_count": 39,
+        "model_id": "flowpilot_route_display",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_route_display_checks_results.json",
+        "role": "child_evidence",
+        "state_count": 35,
+        "tier": "small"
+      },
+      {
         "edge_count": 42,
         "model_id": "flowpilot_route_replanning_policy",
         "ok": true,
@@ -1445,6 +1616,16 @@
         "role": "child_evidence",
         "state_count": 3149,
         "tier": "medium"
+      },
+      {
+        "edge_count": 81,
+        "model_id": "user_flow_diagram",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/user_flow_diagram_results.json",
+        "role": "child_evidence",
+        "state_count": 82,
+        "tier": "small"
       }
     ],
     "release_confidence": "current",

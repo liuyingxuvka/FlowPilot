@@ -19,6 +19,8 @@ for the Controller to final-answer or stop.
 - Add focused FlowGuard and runtime regression coverage for the known-bad case:
   live daemon, waiting `continuous_controller_standby`, nonterminal return
   signal, and stale/completed display action projection.
+- Extend model-hierarchy coverage so full FlowGuard confidence includes every
+  visible/user-triggerable branch or explicitly marks it disabled/out of scope.
 
 ## Capabilities
 
@@ -36,6 +38,9 @@ for the Controller to final-answer or stop.
 - `controller-user-status`: current status summaries must be explicitly
   display-only projections with source/freshness metadata and non-authoritative
   `next_step` semantics.
+- `flowguard-model-hierarchy`: full-model confidence must require an inventory
+  and current evidence for visible/user-triggerable controls, buttons, status
+  returns, recovery paths, and terminal/stop branches.
 
 ## Impact
 
@@ -44,5 +49,5 @@ for the Controller to final-answer or stop.
 - Affected prompt surfaces: Controller role card, resume/reentry card,
   generated Controller table prompt, and related runtime prompt assets.
 - Affected verification: focused FlowGuard patrol model/checks, targeted router
-  runtime tests, install checks, local install sync, and background meta /
-  capability regressions.
+  runtime tests, model-hierarchy checks, install checks, local install sync,
+  and background meta / capability regressions.

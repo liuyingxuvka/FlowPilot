@@ -2,6 +2,7 @@
 
 - [x] 1.1 Extend the focused Controller patrol FlowGuard model with nonterminal status-return and stale-projection hazards.
 - [x] 1.2 Update OpenSpec validation and focused model checks so the known-bad case fails if final-answer is allowed without `controller_stop_allowed=true`.
+- [x] 1.3 Extend model-hierarchy checks so full FlowGuard confidence cannot omit visible/user-triggerable controls, buttons, status returns, recovery paths, or terminal/stop branches.
 
 ## 2. Runtime Payloads
 
