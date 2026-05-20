@@ -204,6 +204,20 @@ def _apply_startup_bootloader_receipt_effects(router: ModuleType, project_root: 
     if action_type == 'open_startup_intake_ui' and str(receipt_payload.get('source') or '') != 'startup_daemon_bootloader_apply':
         result.update(router._apply_startup_intake_result_to_bootstrap(project_root, bootstrap, receipt_payload))
         router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+    elif action_type == 'record_startup_answers':
+        startup_answers = router._validate_startup_answers(receipt_payload)
+        existing_answers = bootstrap.get('startup_answers') if isinstance(bootstrap.get('startup_answers'), dict) else None
+        if existing_answers is not None and existing_answers != startup_answers:
+            return {'applied': False, 'reason': 'startup_answers_conflict_with_durable_answers', 'action_type': action_type, 'postcondition': flag}
+        interpretation = router._validate_startup_answer_interpretation(receipt_payload, startup_answers)
+        if existing_answers is None:
+            bootstrap['startup_answers'] = startup_answers
+            bootstrap['startup_answer_interpretation'] = interpretation
+            bootstrap['startup_state'] = 'answers_complete'
+            result['startup_answers_recorded_from_receipt'] = True
+        else:
+            result['startup_answers_replay_confirmed'] = True
+        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
     elif action_type == 'emit_startup_banner':
         banner = router._startup_banner_display()
         confirmation = router._display_confirmation_for_action(receipt_payload, action)
@@ -242,6 +256,9 @@ def _apply_startup_bootloader_receipt_effects(router: ModuleType, project_root: 
         result['coalesced_postconditions'] = sorted(set(result.get('coalesced_postconditions') or []) | {'controller_role_confirmed'})
         result['source'] = 'startup_bootloader_controller_receipt'
     elif str(receipt_payload.get('source') or '') == 'startup_daemon_bootloader_apply':
+        seed_projection = router._sync_completed_deterministic_startup_seed_to_bootstrap(project_root, bootstrap, source=f'{action_type}_daemon_apply_receipt')
+        if seed_projection.get('changed'):
+            result['deterministic_seed_projection'] = seed_projection
         bootstrap_flags = bootstrap.get('flags') if isinstance(bootstrap.get('flags'), dict) else {}
         if flag and (not (receipt_payload.get('bootstrap_flag_satisfied') or bootstrap_flags.get(flag))):
             return {'applied': False, 'reason': 'startup_bootloader_receipt_postcondition_missing', 'action_type': action_type, 'postcondition': flag}

@@ -102,8 +102,12 @@ def _startup_daemon_schedule_bootloader_action(router: ModuleType, project_root:
             'terminal': True,
         }
     bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
+    seed_projection = router._sync_completed_deterministic_startup_seed_to_bootstrap(project_root, bootstrap, source=f'{source}_daemon_schedule')
+    if seed_projection.get('changed'):
+        append_history(run_state, 'router_daemon_reprojected_completed_startup_seed', {'source': source, 'evidence_path': seed_projection.get('evidence_path'), 'required_flags': seed_projection.get('required_flags')})
     if not router._startup_daemon_controls_bootstrap(bootstrap):
         status = _write_router_daemon_status(project_root, run_root, run_state, lifecycle_status='daemon_startup_driver_idle', current_action=None, lock=lock)
+        router.save_bootstrap_state(project_root, bootstrap)
         router.save_run_state(run_root, run_state)
         return {'scheduled': False, 'reason': 'startup_not_daemon_controlled', 'tick_at': status['last_tick_at'], 'terminal': bool(status.get('run_lifecycle_status'))}
     queued_actions: list[dict[str, Any]] = []
@@ -114,6 +118,16 @@ def _startup_daemon_schedule_bootloader_action(router: ModuleType, project_root:
     for _index in range(ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK):
         pending = bootstrap.get('pending_action')
         if isinstance(pending, dict):
+            postcondition = str(pending.get('postcondition') or '')
+            flags = bootstrap.get('flags') if isinstance(bootstrap.get('flags'), dict) else {}
+            if router._daemon_scheduled_bootloader_action(pending) and postcondition and flags.get(postcondition):
+                bootstrap['pending_action'] = None
+                append_history(bootstrap, 'startup_daemon_reconciled_already_satisfied_bootloader_row', {'action_type': pending.get('action_type'), 'postcondition': postcondition, 'source': source})
+                router.save_bootstrap_state(project_root, bootstrap)
+                completion = router._complete_startup_daemon_bootloader_row(project_root, bootstrap, pending, applied_action_type=str(pending.get('action_type') or 'already_satisfied_bootloader_row'))
+                queued_actions.append({'action_type': pending.get('action_type'), 'controller_action_id': pending.get('controller_action_id'), 'router_scheduler_row_id': pending.get('router_scheduler_row_id'), 'progress_class': pending.get('router_scheduler_progress_class'), 'barrier_kind': pending.get('router_scheduler_barrier_kind'), 'existing': True, 'already_satisfied': True, 'completion': completion})
+                stop_reason = 'continued_after_already_satisfied_startup_row'
+                continue
             if not router._daemon_scheduled_bootloader_action(pending):
                 return {'scheduled': False, 'reason': 'non_daemon_bootloader_pending', 'action': pending}
             action = router._prepare_router_scheduled_action(project_root, run_root, run_state, pending)

@@ -379,6 +379,57 @@ def _run_deterministic_startup_bootstrap_seed(router: ModuleType, project_root: 
     append_history(state, 'deterministic_startup_bootstrap_seed_completed', {'evidence_path': state['deterministic_bootstrap_seed_evidence_path'], 'artifacts': sorted(artifacts)})
     return proof
 
+def _sync_completed_deterministic_startup_seed_to_bootstrap(router: ModuleType, project_root: Path, state: dict[str, Any], *, save: bool=False, source: str='deterministic_seed_projection') -> dict[str, Any]:
+    _bind_router(router)
+    if not state.get('run_id') or not state.get('run_root'):
+        return {'changed': False, 'reason': 'run_shell_missing'}
+    run_root = project_root / str(state['run_root'])
+    evidence_path = router._deterministic_bootstrap_seed_evidence_path(run_root)
+    proof = read_json_if_exists(evidence_path)
+    if proof.get('schema_version') != DETERMINISTIC_BOOTSTRAP_SEED_EVIDENCE_SCHEMA or proof.get('completed') is not True:
+        return {'changed': False, 'reason': 'completed_seed_evidence_missing'}
+    required = proof.get('required_flags') if isinstance(proof.get('required_flags'), dict) else {}
+    if not required or not all(bool(value) for value in required.values()):
+        return {'changed': False, 'reason': 'completed_seed_required_flags_incomplete'}
+
+    changed = False
+    flags = state.setdefault('flags', {})
+    for flag, value in required.items():
+        if value and not flags.get(flag):
+            flags[flag] = True
+            changed = True
+    if not flags.get('deterministic_bootstrap_seed_completed'):
+        flags['deterministic_bootstrap_seed_completed'] = True
+        changed = True
+    rel_evidence = project_relative(project_root, evidence_path)
+    if state.get('deterministic_bootstrap_seed_evidence_path') != rel_evidence:
+        state['deterministic_bootstrap_seed_evidence_path'] = rel_evidence
+        changed = True
+
+    answers_record = read_json_if_exists(run_root / 'startup_answers.json')
+    answers = answers_record.get('answers') if isinstance(answers_record.get('answers'), dict) else None
+    if answers is not None and state.get('startup_answers') != answers:
+        state['startup_answers'] = answers
+        changed = True
+    if answers is not None and state.get('startup_state') != 'answers_complete':
+        state['startup_state'] = 'answers_complete'
+        changed = True
+    if answers is not None and not flags.get('startup_answers_recorded'):
+        flags['startup_answers_recorded'] = True
+        changed = True
+
+    artifacts = proof.get('artifacts') if isinstance(proof.get('artifacts'), dict) else {}
+    snapshot = artifacts.get('flowguard_capability_snapshot') if isinstance(artifacts.get('flowguard_capability_snapshot'), dict) else {}
+    snapshot_path = snapshot.get('path') if isinstance(snapshot, dict) else None
+    if snapshot_path and state.get('flowguard_capability_snapshot_path') != snapshot_path:
+        state['flowguard_capability_snapshot_path'] = snapshot_path
+        changed = True
+    if changed:
+        append_history(state, 'deterministic_startup_bootstrap_seed_reprojected', {'source': source, 'evidence_path': rel_evidence, 'required_flags': sorted(required)})
+        if save:
+            router.save_bootstrap_state(project_root, state)
+    return {'changed': changed, 'evidence_path': rel_evidence, 'required_flags': sorted(required)}
+
 __all__ = (
     '_copy_startup_intake_file',
     '_materialize_startup_intake_record',
@@ -396,6 +447,7 @@ __all__ = (
     '_record_startup_user_request_ref',
     '_write_startup_user_intake_scaffold',
     '_run_deterministic_startup_bootstrap_seed',
+    '_sync_completed_deterministic_startup_seed_to_bootstrap',
 )
 
 _LOCAL_NAMES = set(globals())

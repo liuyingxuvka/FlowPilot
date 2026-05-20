@@ -707,6 +707,124 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         next_action = router.run_until_wait(root)
         self.assertEqual(next_action["action_type"], "load_controller_core")
+
+    def test_startup_seed_projection_prevents_reissued_answer_row_after_stale_daemon_snapshot(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        run_root = self.run_root_for(root)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        completed = self.bootstrap_state(root)
+        self.assertTrue(completed["flags"]["deterministic_bootstrap_seed_completed"])
+        self.assertTrue((run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json").exists())
+
+        stale = json.loads(json.dumps(completed))
+        stale["startup_answers"] = None
+        stale["startup_state"] = "awaiting_answers_stopped"
+        for flag in (
+            "startup_answers_recorded",
+            "deterministic_bootstrap_seed_completed",
+            "placeholders_filled",
+            "mailbox_initialized",
+            "user_request_recorded",
+            "user_intake_ready",
+            "flowguard_capability_snapshot_written",
+        ):
+            stale["flags"][flag] = False
+        stale["pending_action"] = None
+        router.write_json(router.bootstrap_state_path(root), stale)
+
+        run_state = read_json(router.run_state_path(run_root))
+        schedule = router._startup_daemon_schedule_bootloader_action(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            run_state,
+            source="test_stale_startup_seed_projection",
+        )
+
+        self.assertTrue(schedule["scheduled"])
+        self.assertEqual(schedule["action"]["action_type"], "load_controller_core")
+        queued = [item["action_type"] for item in schedule["queued_actions"]]
+        self.assertNotIn("record_startup_answers", queued)
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
+        self.assertTrue(bootstrap["flags"]["startup_answers_recorded"])
+        self.assertTrue(bootstrap["flags"]["deterministic_bootstrap_seed_completed"])
+        control_blocks = run_root / "control_blocks"
+        self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
+
+    def test_record_startup_answers_receipt_replay_is_idempotent_and_conflicts_do_not_overwrite(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        run_root = self.run_root_for(root)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        run_state = read_json(router.run_state_path(run_root))
+        bootstrap_rel = self.rel(root, router.bootstrap_state_path(root))
+        action = router.make_action(
+            action_type="record_startup_answers",
+            actor="bootloader",
+            label="test_record_startup_answers_replay",
+            summary="Replay startup answer recording after deterministic seed completion.",
+            allowed_reads=[bootstrap_rel],
+            allowed_writes=[bootstrap_rel],
+            extra={
+                "scope_kind": "startup",
+                "scope_id": "startup",
+                "startup_daemon_scheduled": True,
+                "scheduled_by_router_daemon": True,
+                "requires_payload": "startup_answers",
+                "postcondition": "startup_answers_recorded",
+            },
+        )
+        entry = router._write_controller_action_entry(root, run_root, run_state, action)  # type: ignore[attr-defined]
+
+        result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"startup_answers": STARTUP_ANSWERS},
+        )
+
+        self.assertTrue(result["ok"])
+        reconciled = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(reconciled["router_reconciliation_status"], "reconciled")
+        self.assertTrue(reconciled["router_reconciliation"]["startup_answers_replay_confirmed"])
+
+        conflict_root = self.make_project()
+        router.run_until_wait(conflict_root, new_invocation=True)
+        conflict_run_root = self.run_root_for(conflict_root)
+        router.apply_action(conflict_root, "open_startup_intake_ui", self.startup_intake_payload(conflict_root))
+        conflict_state = read_json(router.run_state_path(conflict_run_root))
+        conflict_bootstrap_rel = self.rel(conflict_root, router.bootstrap_state_path(conflict_root))
+        conflict_action = router.make_action(
+            action_type="record_startup_answers",
+            actor="bootloader",
+            label="test_record_startup_answers_conflict",
+            summary="Conflicting startup answer receipt must not overwrite durable answers.",
+            allowed_reads=[conflict_bootstrap_rel],
+            allowed_writes=[conflict_bootstrap_rel],
+            extra={
+                "scope_kind": "startup",
+                "scope_id": "startup",
+                "startup_daemon_scheduled": True,
+                "scheduled_by_router_daemon": True,
+                "requires_payload": "startup_answers",
+                "postcondition": "startup_answers_recorded",
+            },
+        )
+        conflict_entry = router._write_controller_action_entry(conflict_root, conflict_run_root, conflict_state, conflict_action)  # type: ignore[attr-defined]
+        conflicting_answers = {**STARTUP_ANSWERS, "display_surface": "cockpit"}
+
+        conflict_result = router.record_controller_action_receipt(
+            conflict_root,
+            action_id=conflict_entry["action_id"],
+            status="done",
+            payload={"startup_answers": conflicting_answers},
+        )
+
+        self.assertTrue(conflict_result["ok"])
+        conflict_record = read_json(conflict_run_root / "runtime" / "controller_actions" / f"{conflict_entry['action_id']}.json")
+        self.assertNotEqual(conflict_record.get("router_reconciliation_status"), "reconciled")
+        self.assertEqual(self.bootstrap_state(conflict_root)["startup_answers"], STARTUP_ANSWERS)
     def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

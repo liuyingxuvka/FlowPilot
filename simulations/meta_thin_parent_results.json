@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-20T17:08:33.105906+00:00",
+  "created_at": "2026-05-20T18:00:11.186546+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -8,19 +8,28 @@
     "state_count": 10
   },
   "legacy_full_regression": {
-    "current": true,
-    "required_for_release": false,
+    "current": false,
+    "required_for_release": true,
     "status": {
-      "created_at": "2026-05-20T17:07:16.027924+00:00",
-      "edge_count": 20,
-      "kind": "layered_full_parent",
-      "legacy_monolith_required": false,
-      "proof_file": "simulations/meta_layered_full_results.proof.json",
-      "reason": "valid proof",
-      "release_confidence": "current_with_layered_full_parent",
-      "result_file": "simulations/meta_layered_full_results.json",
-      "state_count": 12,
-      "valid": true
+      "created_at": "2026-05-16T11:44:29.842028+00:00",
+      "edge_count": 2010665,
+      "kind": "legacy_full_parent",
+      "layered_status": {
+        "created_at": "2026-05-20T17:07:16.027924+00:00",
+        "edge_count": 20,
+        "proof_file": "simulations/meta_layered_full_results.proof.json",
+        "reason": "input fingerprint changed",
+        "release_confidence": "current_with_layered_full_parent",
+        "result_file": "simulations/meta_layered_full_results.json",
+        "state_count": 12,
+        "valid": false
+      },
+      "legacy_monolith_required": true,
+      "proof_file": "simulations/results.proof.json",
+      "reason": "full proof fingerprint mismatch",
+      "result_file": "simulations/results.json",
+      "state_count": 1949768,
+      "valid": false
     }
   },
   "loop": {
@@ -36,7 +45,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "current_with_layered_full_parent",
+  "release_confidence": "requires_full_regression",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -338,7 +347,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
-            "result_fingerprint": "ef806f58236d9411116e8a8f467cd6f5c0b4666774e62df8468f1bd18ef52e22",
+            "result_fingerprint": "3a0f8311f31ab2843d98144264cb62a368572a6674b113f5d014369632d6b4c9",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 1141

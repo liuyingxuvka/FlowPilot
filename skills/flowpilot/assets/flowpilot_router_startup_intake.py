@@ -76,6 +76,7 @@ from flowpilot_router_startup_intake_materialization import (
     _write_startup_user_intake_scaffold,
     _write_flowguard_capability_snapshot,
     _run_deterministic_startup_bootstrap_seed,
+    _sync_completed_deterministic_startup_seed_to_bootstrap,
 )
 
 _CHILD_MODULES = (
