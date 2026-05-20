@@ -61,6 +61,9 @@ LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE = (
     "legacy_reviewer_relay_used_as_current_acceptance"
 )
 PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER = "pm_forwarded_raw_package_to_reviewer"
+PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY = (
+    "pm_formal_package_release_without_identity"
+)
 
 VALID_SCENARIOS = (
     VALID_CURRENT_NODE_PM_GATE,
@@ -81,6 +84,7 @@ NEGATIVE_SCENARIOS = (
     CONTROLLER_READS_SEALED_BODY,
     LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE,
     PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER,
+    PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -152,6 +156,8 @@ class State:
     pm_disposition_recorded: bool = False
 
     pm_gate_package_written: bool = False
+    pm_gate_package_released_by_disposition: bool = False
+    pm_gate_package_identity_recorded: bool = False
     reviewer_received_raw_worker_result: bool = False
     pm_forwarded_raw_package_to_reviewer: bool = False
     reviewer_gate_started: bool = False
@@ -233,6 +239,8 @@ def _scenario_base(scenario: str) -> State:
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
             pm_gate_package_written=True,
+            pm_gate_package_released_by_disposition=True,
+            pm_gate_package_identity_recorded=True,
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
             formal_evidence_uses_worker_result=True,
@@ -253,6 +261,8 @@ def _scenario_base(scenario: str) -> State:
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
             pm_gate_package_written=True,
+            pm_gate_package_released_by_disposition=True,
+            pm_gate_package_identity_recorded=True,
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
             formal_evidence_uses_worker_result=True,
@@ -276,6 +286,8 @@ def _scenario_base(scenario: str) -> State:
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
             pm_gate_package_written=True,
+            pm_gate_package_released_by_disposition=True,
+            pm_gate_package_identity_recorded=True,
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
             formal_evidence_uses_worker_result=True,
@@ -290,6 +302,7 @@ def _scenario_base(scenario: str) -> State:
             gate_kind=GATE_ROUTE_CHALLENGE,
             critical_gate_required=True,
             pm_gate_package_written=True,
+            pm_gate_package_identity_recorded=True,
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
             route_or_node_decision_recorded=True,
@@ -308,6 +321,8 @@ def _scenario_state(scenario: str) -> State:
             pm_disposition=DISPOSITION_NONE,
             pm_disposition_recorded=False,
             pm_gate_package_written=False,
+            pm_gate_package_released_by_disposition=False,
+            pm_gate_package_identity_recorded=False,
             reviewer_received_raw_worker_result=True,
         )
     if scenario == FORMAL_EVIDENCE_FROM_UNDISPOSITIONED_RESULT:
@@ -323,6 +338,8 @@ def _scenario_state(scenario: str) -> State:
             _scenario_base(VALID_CURRENT_NODE_PM_GATE),
             scenario=scenario,
             pm_gate_package_written=False,
+            pm_gate_package_released_by_disposition=False,
+            pm_gate_package_identity_recorded=False,
             reviewer_gate_started=True,
             reviewer_gate_passed=True,
         )
@@ -354,6 +371,8 @@ def _scenario_state(scenario: str) -> State:
             pm_disposition=DISPOSITION_NONE,
             pm_disposition_recorded=False,
             pm_gate_package_written=False,
+            pm_gate_package_released_by_disposition=False,
+            pm_gate_package_identity_recorded=False,
             reviewer_received_raw_worker_result=True,
         )
     if scenario == MATERIAL_RESEARCH_DECISION_WITHOUT_GATE:
@@ -361,6 +380,8 @@ def _scenario_state(scenario: str) -> State:
             _scenario_base(VALID_RESEARCH_PM_GATE),
             scenario=scenario,
             pm_gate_package_written=False,
+            pm_gate_package_released_by_disposition=False,
+            pm_gate_package_identity_recorded=False,
             reviewer_gate_started=False,
             reviewer_gate_passed=False,
             material_or_research_affects_decision=True,
@@ -385,6 +406,14 @@ def _scenario_state(scenario: str) -> State:
             pm_forwarded_raw_package_to_reviewer=True,
             reviewer_received_raw_worker_result=True,
             pm_gate_package_written=False,
+            pm_gate_package_released_by_disposition=False,
+            pm_gate_package_identity_recorded=False,
+        )
+    if scenario == PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY:
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
+            scenario=scenario,
+            pm_gate_package_identity_recorded=False,
         )
     raise KeyError(scenario)
 
@@ -450,6 +479,30 @@ def package_absorption_failures(state: State) -> list[str]:
         failures.append("formal evidence used a worker result without PM absorbed disposition")
     if state.reviewer_gate_started and not state.pm_gate_package_written:
         failures.append("reviewer gate started without a PM-built formal gate package")
+    if (
+        pm_issued_package
+        and state.reviewer_gate_started
+        and not (
+            state.pm_gate_package_written
+            and state.pm_gate_package_released_by_disposition
+            and state.pm_gate_package_identity_recorded
+        )
+    ):
+        failures.append(
+            "reviewer gate started without PM disposition release and formal gate package identity"
+        )
+    if (
+        pm_issued_package
+        and state.pm_gate_package_released_by_disposition
+        and not (
+            state.pm_disposition_recorded
+            and state.pm_disposition == DISPOSITION_ABSORBED
+            and state.pm_gate_package_identity_recorded
+        )
+    ):
+        failures.append(
+            "PM formal gate package release lacked absorbed disposition or package identity"
+        )
     if state.reviewer_gate_passed and not state.reviewer_gate_started:
         failures.append("reviewer gate passed without reviewer gate start")
     if (

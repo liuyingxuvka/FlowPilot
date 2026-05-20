@@ -18,7 +18,7 @@ class FlowPilotControlGateTests(unittest.TestCase):
         result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
 
         self.assertFalse(result.ok)
-        self.assertIn("PM release order", result.message)
+        self.assertIn("PM release evidence", result.message)
 
     def test_meta_reviewer_starts_after_pm_release(self) -> None:
         state = meta_model.State(
@@ -49,6 +49,52 @@ class FlowPilotControlGateTests(unittest.TestCase):
         result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
 
         self.assertTrue(result.ok)
+
+    def test_meta_reviewer_starts_after_absorbed_pm_formal_package_release(self) -> None:
+        state = meta_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_package_result_disposition_recorded=True,
+            pm_package_result_disposition_absorbed=True,
+            pm_formal_gate_package_released=True,
+            pm_formal_gate_package_identity_recorded=True,
+            packet_runtime_physical_files_written=True,
+            controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            node_human_review_context_loaded=True,
+        )
+
+        result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
+
+        self.assertTrue(result.ok)
+
+    def test_meta_formal_package_release_requires_identity_and_absorbed_disposition(self) -> None:
+        state = meta_model.State(
+            worker_output_ready_for_review=True,
+            pm_package_result_disposition_recorded=True,
+            pm_package_result_disposition_absorbed=True,
+            pm_formal_gate_package_released=True,
+            pm_formal_gate_package_identity_recorded=False,
+        )
+
+        result = meta_model.pm_review_release_controls_reviewer_start(state, trace=())
+
+        self.assertFalse(result.ok)
+        self.assertIn("formal gate package release", result.message)
 
     def test_meta_reviewer_requires_packet_role_origin_audit(self) -> None:
         state = meta_model.State(
@@ -146,6 +192,8 @@ class FlowPilotControlGateTests(unittest.TestCase):
         state = meta_model.State(
             router_hard_rejection_seen=True,
             control_blocker_artifact_written=True,
+            blocker_repair_policy_snapshot_written=True,
+            blocker_policy_row_attached=True,
             control_blocker_handling_lane="control_plane_reissue",
             control_blocker_delivered_to_pm=True,
         )
@@ -159,8 +207,13 @@ class FlowPilotControlGateTests(unittest.TestCase):
         state = meta_model.State(
             router_hard_rejection_seen=True,
             control_blocker_artifact_written=True,
+            blocker_repair_policy_snapshot_written=True,
+            blocker_policy_row_attached=True,
             control_blocker_handling_lane="pm_repair_decision_required",
             control_blocker_delivered_to_pm=True,
+            pm_blocker_recovery_option_recorded=True,
+            pm_blocker_return_gate_recorded=True,
+            pm_blocker_silent_pass_forbidden=True,
         )
 
         result = meta_model.router_hard_rejection_requires_control_blocker_lane(state, trace=())
@@ -230,7 +283,59 @@ class FlowPilotControlGateTests(unittest.TestCase):
         )
 
         self.assertFalse(result.ok)
-        self.assertIn("PM release order", result.message)
+        self.assertIn("PM release evidence", result.message)
+
+    def test_capability_reviewer_starts_after_absorbed_pm_formal_package_release(self) -> None:
+        state = capability_model.State(
+            pm_review_hold_instruction_written=True,
+            worker_output_ready_for_review=True,
+            pm_package_result_disposition_recorded=True,
+            pm_package_result_disposition_absorbed=True,
+            pm_formal_gate_package_released=True,
+            pm_formal_gate_package_identity_recorded=True,
+            packet_runtime_physical_files_written=True,
+            controller_context_body_exclusion_verified=True,
+            controller_relay_signature_audit_done=True,
+            recipient_pre_open_relay_check_done=True,
+            packet_mail_chain_audit_done=True,
+            unopened_mail_pm_recovery_policy_recorded=True,
+            packet_envelope_body_audit_done=True,
+            packet_envelope_to_role_checked=True,
+            packet_body_hash_verified=True,
+            result_envelope_checked=True,
+            result_body_hash_verified=True,
+            completed_agent_id_role_verified=True,
+            controller_body_boundary_verified=True,
+            wrong_role_relabel_forbidden_verified=True,
+            packet_role_origin_audit_done=True,
+            packet_result_author_verified=True,
+            packet_result_author_matches_assignment=True,
+            implementation_human_review_context_loaded=True,
+        )
+
+        result = capability_model.pm_review_release_controls_reviewer_start(
+            state,
+            trace=(),
+        )
+
+        self.assertTrue(result.ok)
+
+    def test_capability_formal_package_release_requires_identity_and_absorbed_disposition(self) -> None:
+        state = capability_model.State(
+            worker_output_ready_for_review=True,
+            pm_package_result_disposition_recorded=True,
+            pm_package_result_disposition_absorbed=True,
+            pm_formal_gate_package_released=True,
+            pm_formal_gate_package_identity_recorded=False,
+        )
+
+        result = capability_model.pm_review_release_controls_reviewer_start(
+            state,
+            trace=(),
+        )
+
+        self.assertFalse(result.ok)
+        self.assertIn("formal gate package release", result.message)
 
     def test_capability_reviewer_requires_packet_role_origin_audit(self) -> None:
         state = capability_model.State(
@@ -340,6 +445,8 @@ class FlowPilotControlGateTests(unittest.TestCase):
         state = capability_model.State(
             router_hard_rejection_seen=True,
             control_blocker_artifact_written=True,
+            blocker_repair_policy_snapshot_written=True,
+            blocker_policy_row_attached=True,
             control_blocker_handling_lane="control_plane_reissue",
             control_blocker_delivered_to_responsible_role=True,
         )
@@ -355,6 +462,8 @@ class FlowPilotControlGateTests(unittest.TestCase):
         state = capability_model.State(
             router_hard_rejection_seen=True,
             control_blocker_artifact_written=True,
+            blocker_repair_policy_snapshot_written=True,
+            blocker_policy_row_attached=True,
             control_blocker_handling_lane="fatal_protocol_violation",
             control_blocker_delivered_to_responsible_role=True,
         )

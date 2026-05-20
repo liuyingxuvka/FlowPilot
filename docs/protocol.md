@@ -610,8 +610,9 @@ child-to-parent closure. Authorized workers may draft evidence or
 implementation output, but their self-approval is invalid.
 
 Every packet has a mandatory role-origin audit. Before a reviewer passes any
-packet result, the reviewer checks the PM-authored packet, router direct-dispatch
-evidence, the assigned worker or authorized role, and the actual result author.
+formal packet gate package, the reviewer checks the PM-authored packet, router
+direct-dispatch evidence, the assigned worker or authorized role, and the
+actual result author.
 If the actual author is the controller, unknown, or different
 from the assigned role, the reviewer must return
 `block_invalid_role_origin`, record the controller-boundary warning, and send
@@ -679,10 +680,12 @@ restart node, repair node, or sender reissue; controller cannot fill the gap.
 The project manager owns reviewer timing. Before worker or controller work
 that will later need review, the PM writes a review hold instruction naming the
 expected gate and saying the reviewer waits. After worker output,
-verification, and anti-rough-finish evidence are ready, the PM writes a review
-release order naming the gate, evidence paths, scope, and required
-inspections. Reviewer work before that release is precheck only: it may note
-risks for PM, but it cannot open, close, or block the gate.
+verification, and anti-rough-finish evidence are ready, PM releases the
+reviewer either by writing an explicit review release order or by recording an
+absorbed package-result disposition that writes a formal gate package path,
+hash, review scope, and raw-result boundary. Reviewer work before that release
+evidence is precheck only: it may note risks for PM, but it cannot open, close,
+or block the gate.
 
 If a required authority blocks a gate, FlowPilot does not advance on evidence
 existence. It records the block, grills the issue when needed, asks the project
@@ -971,9 +974,11 @@ packet is active, the controller asks PM for `PM_DECISION`. If PM issues or
 reissues a packet envelope/body pair, the decision must include
 `controller_reminder`, and the envelope must pass router direct-dispatch
 preflight before any worker sees the body. If a worker result envelope is
-already present, the controller sends that `RESULT_ENVELOPE` to reviewer. If
-the holder, worker identity, prior router direct-dispatch preflight, envelope/body hash, or
-worker-result state is ambiguous, the controller blocks and asks PM for
+already present for a PM-issued packet, the controller relays that
+`RESULT_ENVELOPE` to PM for package-result disposition before any formal
+reviewer gate package is released. If the holder, worker identity, prior
+router direct-dispatch preflight, envelope/body hash, or worker-result state is
+ambiguous, the controller blocks and asks PM for
 recovery, reissue, reassignment, quarantine, or route mutation. It does not
 read bodies, infer missing worker work, or finish the packet itself.
 

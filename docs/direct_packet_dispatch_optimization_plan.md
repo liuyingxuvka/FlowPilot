@@ -16,7 +16,7 @@ gates, and PM decision challenges, not for packet-envelope dispatch approval.
 | 3 | Prove model hazard coverage | `skills/flowpilot/assets/run_packet_control_plane_checks.py` | Known-bad packet cases fail before worker result creation or PM advance |
 | 4 | Strengthen runtime/router mechanical preflight | Packet relay path in `flowpilot_router.py` and/or `packet_runtime.py` | Direct relay checks envelope fields, body hash, target role, contract, sealed visibility, and result paths |
 | 5 | Remove reviewer dispatch from PM work packet flow | Material scan and current-node packet next-action logic | PM packet issuance leads to packet relay after ledger check, not `reviewer.dispatch_request` |
-| 6 | Keep result review intact | Result relay and reviewer result cards | Worker results still go to reviewer before PM may use them |
+| 6 | Keep result review intact through PM formal packages | Result relay, PM disposition, and reviewer package cards | Worker results return to PM first; only an absorbed PM disposition with a formal gate package releases reviewer review |
 | 7 | Update tests and docs | Focused router/runtime tests plus preflight docs | Old "requires reviewer dispatch" tests become direct-dispatch tests |
 | 8 | Sync local installation and local git | `scripts/install_flowpilot.py --sync-repo-owned`, checks, local commit | Installed skill is source-fresh and changes are committed locally without remote push |
 
@@ -32,7 +32,7 @@ gates, and PM decision challenges, not for packet-envelope dispatch approval.
 | R6 | Output contract recipient does not match `to_role` | Runtime contract validation blocks before dispatch | Hazard case: `contract_recipient_mismatch_packet` blocks |
 | R7 | Result paths escape the run packet directory | Router preflight blocks before dispatch | Hazard case: `result_path_escape_packet` blocks |
 | R8 | Controller reads or executes packet body while direct dispatching | Controller contamination still returns packet to sender | Existing hazard cases continue to block |
-| R9 | Worker result bypasses reviewer after direct dispatch | Result relay and PM advance still require reviewer pass | Invariant: PM advance requires reviewer pass |
+| R9 | Worker result bypasses PM disposition or reviewer package review after direct dispatch | Result relay returns PM-issued results to PM, and PM advance still requires a formal reviewer package pass | Invariant: PM advance requires absorbed PM disposition, formal gate package, and reviewer pass |
 | R10 | Heartbeat/manual resume creates fresh packets without PM decision | Resume packet path still requires PM request and loaded state | Existing heartbeat invariants remain required |
 
 ## Explicit Non-Goals

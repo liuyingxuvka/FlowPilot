@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=90",
+    "summary": "sequences=3 initial_states=1 traces=96",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -30,6 +30,7 @@
         "expected_failure": "formal evidence used a worker result without PM absorbed disposition",
         "failures": [
           "formal evidence used a worker result without PM absorbed disposition",
+          "PM formal gate package release lacked absorbed disposition or package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
@@ -39,6 +40,7 @@
         "failures": [
           "PM-issued worker result did not return to project_manager",
           "formal evidence used a worker result without PM absorbed disposition",
+          "PM formal gate package release lacked absorbed disposition or package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate",
           "legacy direct-reviewer relay flag was used as current acceptance"
         ]
@@ -59,6 +61,14 @@
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
+      "pm_formal_package_release_without_identity": {
+        "detected": true,
+        "expected_failure": "reviewer gate started without PM disposition release and formal gate package identity",
+        "failures": [
+          "reviewer gate started without PM disposition release and formal gate package identity",
+          "PM formal gate package release lacked absorbed disposition or package identity"
+        ]
+      },
       "pm_forwarded_raw_package_to_reviewer": {
         "detected": true,
         "expected_failure": "raw PM-issued worker result reached reviewer before PM gate package",
@@ -66,6 +76,7 @@
           "raw PM-issued worker result reached reviewer before PM gate package",
           "PM disposition forwarded a raw worker package to reviewer",
           "reviewer gate started without a PM-built formal gate package",
+          "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
@@ -77,6 +88,7 @@
           "PM-issued worker result did not return to project_manager",
           "formal evidence used a worker result without PM absorbed disposition",
           "reviewer gate started without a PM-built formal gate package",
+          "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
@@ -88,6 +100,7 @@
           "PM-issued worker result did not return to project_manager",
           "formal evidence used a worker result without PM absorbed disposition",
           "reviewer gate started without a PM-built formal gate package",
+          "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate",
           "resume worker result bypassed PM disposition"
         ]
@@ -97,6 +110,7 @@
         "expected_failure": "reviewer gate started without a PM-built formal gate package",
         "failures": [
           "reviewer gate started without a PM-built formal gate package",
+          "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       }
@@ -118,7 +132,7 @@
       "valid_research_pm_gate",
       "valid_resume_result_to_pm"
     ],
-    "edge_count": 30,
+    "edge_count": 32,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -129,11 +143,12 @@
       "legacy_reviewer_relay_used_as_current_acceptance",
       "material_research_decision_without_gate",
       "node_completion_without_reviewer_gate",
+      "pm_formal_package_release_without_identity",
       "pm_forwarded_raw_package_to_reviewer",
       "raw_worker_result_relayed_to_reviewer",
       "resume_result_direct_to_reviewer",
       "reviewer_started_without_pm_gate_package"
     ],
-    "state_count": 31
+    "state_count": 33
   }
 }

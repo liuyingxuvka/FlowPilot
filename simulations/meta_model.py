@@ -338,6 +338,10 @@ class State:
     anti_rough_finish_done: bool = False
     pm_review_hold_instruction_written: bool = False
     worker_output_ready_for_review: bool = False
+    pm_package_result_disposition_recorded: bool = False
+    pm_package_result_disposition_absorbed: bool = False
+    pm_formal_gate_package_released: bool = False
+    pm_formal_gate_package_identity_recorded: bool = False
     pm_review_release_order_written: bool = False
     pm_released_reviewer_for_current_gate: bool = False
     packet_runtime_physical_files_written: bool = False
@@ -517,6 +521,10 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "node_human_review_reviewer_approved": False,
         "pm_review_hold_instruction_written": False,
         "worker_output_ready_for_review": False,
+        "pm_package_result_disposition_recorded": False,
+        "pm_package_result_disposition_absorbed": False,
+        "pm_formal_gate_package_released": False,
+        "pm_formal_gate_package_identity_recorded": False,
         "pm_review_release_order_written": False,
         "pm_released_reviewer_for_current_gate": False,
         "packet_runtime_physical_files_written": False,
@@ -1295,6 +1303,10 @@ class AutopilotStep:
         "anti_rough_finish_done",
         "pm_review_hold_instruction_written",
         "worker_output_ready_for_review",
+        "pm_package_result_disposition_recorded",
+        "pm_package_result_disposition_absorbed",
+        "pm_formal_gate_package_released",
+        "pm_formal_gate_package_identity_recorded",
         "pm_review_release_order_written",
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
@@ -1632,6 +1644,10 @@ class AutopilotStep:
         "anti_rough_finish_done",
         "pm_review_hold_instruction_written",
         "worker_output_ready_for_review",
+        "pm_package_result_disposition_recorded",
+        "pm_package_result_disposition_absorbed",
+        "pm_formal_gate_package_released",
+        "pm_formal_gate_package_identity_recorded",
         "pm_review_release_order_written",
         "pm_released_reviewer_for_current_gate",
         "worker_child_skill_use_evidence_returned",
@@ -2476,6 +2492,16 @@ def human_review_judgement_requires_neutral_observation(state: State, trace) -> 
 
 def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantResult:
     del trace
+    explicit_pm_release_ready = (
+        state.pm_review_release_order_written
+        and state.pm_released_reviewer_for_current_gate
+    )
+    disposition_pm_release_ready = (
+        state.pm_package_result_disposition_recorded
+        and state.pm_package_result_disposition_absorbed
+        and state.pm_formal_gate_package_released
+        and state.pm_formal_gate_package_identity_recorded
+    )
     reviewer_started_current_node = (
         state.node_human_review_context_loaded
         or state.node_human_neutral_observation_written
@@ -2487,8 +2513,7 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
     if reviewer_started_current_node and not (
         state.pm_review_hold_instruction_written
         and state.worker_output_ready_for_review
-        and state.pm_review_release_order_written
-        and state.pm_released_reviewer_for_current_gate
+        and (explicit_pm_release_ready or disposition_pm_release_ready)
         and state.packet_runtime_physical_files_written
         and state.controller_context_body_exclusion_verified
         and state.controller_relay_signature_audit_done
@@ -2508,11 +2533,24 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         and state.packet_result_author_matches_assignment
     ):
         return InvariantResult.fail(
-            "human-like reviewer started current-node review before PM release order, physical packet isolation, controller mail-chain audit, envelope/body audit, and per-packet role-origin audit"
+            "human-like reviewer started current-node review before PM release evidence, physical packet isolation, controller mail-chain audit, envelope/body audit, and per-packet role-origin audit"
         )
     if state.pm_review_release_order_written and not state.worker_output_ready_for_review:
         return InvariantResult.fail(
             "PM wrote a current-gate review release before worker output was ready"
+        )
+    if state.pm_package_result_disposition_absorbed and not state.pm_package_result_disposition_recorded:
+        return InvariantResult.fail(
+            "PM absorbed package-result disposition lacks a recorded disposition"
+        )
+    if state.pm_formal_gate_package_released and not (
+        state.worker_output_ready_for_review
+        and state.pm_package_result_disposition_recorded
+        and state.pm_package_result_disposition_absorbed
+        and state.pm_formal_gate_package_identity_recorded
+    ):
+        return InvariantResult.fail(
+            "PM formal gate package release lacks absorbed disposition, worker-output readiness, or package path/hash identity"
         )
     return InvariantResult.pass_()
 

@@ -310,6 +310,94 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(package["reviewer_receives_raw_worker_result"])
         self.assertTrue(package["content_boundary"]["excludes_worker_result_bodies"])
 
+    def test_absorbed_pm_disposition_records_reviewer_release_evidence(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-disposition-release")
+        run_state = read_json(router.run_state_path(run_root))
+        records: list[dict[str, object]] = []
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="packet-release",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="material scan",
+        )
+        packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        packet = packet_runtime.controller_relay_envelope(
+            root,
+            envelope=packet,
+            envelope_path=packet_path,
+            controller_agent_id="agent-controller",
+            received_from_role="project_manager",
+            relayed_to_role="worker_a",
+        )
+        packet_runtime.read_packet_body_for_role(root, packet, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=packet,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a",
+            result_body_text="scan result",
+            next_recipient="project_manager",
+        )
+        result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
+        result = packet_runtime.controller_relay_envelope(
+            root,
+            envelope=result,
+            envelope_path=result_path,
+            controller_agent_id="agent-controller",
+            received_from_role="worker_a",
+            relayed_to_role="project_manager",
+        )
+        packet_runtime.read_result_body_for_role(root, result, role="project_manager")
+        records.append(
+            {
+                "packet_id": "packet-release",
+                "to_role": "worker_a",
+                "packet_envelope_path": router.project_relative(root, packet_path),
+                "result_envelope_path": router.project_relative(root, result_path),
+                "status": "result_relayed_to_pm",
+            }
+        )
+        batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            run_state,
+            batch_id="batch-release",
+            batch_kind="material_scan",
+            phase="material_scan",
+            records=records,
+            node_id="material-intake",
+            join_policy="all_results_before_pm_absorption",
+            review_policy="pm_absorbs_batch_before_material_sufficiency_review",
+            pm_absorption_required=True,
+        )
+        batch["status"] = "results_relayed_to_pm"
+        router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
+        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+
+        pm_decisions._write_pm_package_result_disposition(
+            router,
+            root,
+            run_root,
+            run_state,
+            {"decided_by_role": "project_manager", "decision": "absorbed"},
+            batch_kind="material_scan",
+            package_label="material_scan",
+            gate_kind="material_sufficiency",
+            output_path=output_path,
+        )
+
+        disposition = read_json(output_path)
+        release = disposition["pm_reviewer_release_evidence"]
+        self.assertTrue(disposition["formal_gate_package_released"])
+        self.assertTrue(release["release_satisfied"])
+        self.assertEqual(release["release_kind"], "absorbed_pm_package_result_disposition")
+        self.assertTrue(release["formal_gate_package_path"])
+        self.assertTrue(release["formal_gate_package_hash"])
+        self.assertFalse(release["reviewer_receives_raw_worker_result"])
+
     def test_stale_run_state_save_cannot_resurrect_cleared_pending_wait(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-stale-pending-nonresurrection")

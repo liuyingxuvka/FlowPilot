@@ -22,7 +22,7 @@ from packet_runtime_paths import (
     project_relative,
     resolve_project_path,
 )
-from packet_runtime_relay import validate_result_ready_for_reviewer_relay
+from packet_runtime_relay import validate_result_ready_for_recipient_relay
 from packet_runtime_schema import (
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
     envelope_hash,
@@ -138,7 +138,7 @@ def active_holder_submit_existing_result(
     )
     result_envelope = load_envelope(project_root, str(result_envelope_path))
     paths = packet_paths_from_envelope(project_root, packet_envelope)
-    audit = validate_result_ready_for_reviewer_relay(
+    audit = validate_result_ready_for_recipient_relay(
         project_root,
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,

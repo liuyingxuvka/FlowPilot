@@ -39,6 +39,11 @@ and the packet-runtime audit proving PM opened and dispositioned the material
 scan results. Do not treat raw worker results as your normal review packet, and
 do not accept a Controller summary as evidence.
 
+When Router provides a `router_owned_check_proof`, use it only for mechanical
+packet facts such as envelope identity, target role, body hashes, ledger
+absorption, and Controller no-body-read signatures. Do not use Router proof as
+source sufficiency, material quality, or PM readiness evidence.
+
 Report whether the material is sufficient for PM product understanding. Your
 report must identify:
 

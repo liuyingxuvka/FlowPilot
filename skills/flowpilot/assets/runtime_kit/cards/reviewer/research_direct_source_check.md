@@ -37,6 +37,12 @@ sources or experiment outputs. The worker research report is PM intake material:
 verify that PM opened it through the runtime, recorded an absorbed disposition,
 and released a formal research package for this gate before you judge it.
 
+When Router provides a `router_owned_check_proof`, use it only for mechanical
+packet facts such as envelope identity, target role, body hashes, ledger
+absorption, and Controller no-body-read signatures. Do not use Router proof as
+source truth, experiment validity, contradiction handling, or PM readiness
+evidence.
+
 Pass only when:
 
 - the report matches the checked evidence;

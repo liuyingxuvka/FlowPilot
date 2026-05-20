@@ -353,6 +353,21 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             agent_role_map={"agent-worker-a-1": "worker_a"},
         )
         self.assertTrue(audit["passed"])
+        self.assertEqual(
+            audit["recipient_neutral_schema_version"],
+            "flowpilot.result_ready_for_recipient_relay_audit.v1",
+        )
+        neutral_audit = packet_runtime.validate_result_ready_for_recipient_relay(
+            root,
+            packet_envelope=opened_envelope,
+            result_envelope=result,
+            agent_role_map={"agent-worker-a-1": "worker_a"},
+        )
+        self.assertTrue(neutral_audit["passed"])
+        self.assertEqual(
+            neutral_audit["schema_version"],
+            "flowpilot.result_ready_for_recipient_relay_audit.v1",
+        )
 
         ledger = self.read_json(ledger_path)
         packet_record = ledger["packets"][0]

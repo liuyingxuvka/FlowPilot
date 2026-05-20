@@ -39,6 +39,12 @@ worker result bodies. Treat worker result envelopes and packet-runtime audits as
 traceability evidence for PM's package; judge whether PM's accepted evidence can
 actually close the current node.
 
+When Router provides a `router_owned_check_proof`, use it only for mechanical
+packet facts such as envelope identity, target role, body hashes, ledger
+absorption, and Controller no-body-read signatures. Do not use Router proof as
+node acceptance, result quality, product usefulness, freshness, or final-user
+fit evidence.
+
 When Router provides `batch_id`, `packet_ids`, or a packet index, verify that PM
 opened each relayed result body through the runtime and recorded a PM
 disposition before this gate. The sealed review body must identify `batch_id`,

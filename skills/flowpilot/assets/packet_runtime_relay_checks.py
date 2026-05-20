@@ -235,7 +235,7 @@ def _completed_agent_id_is_role_key(completed_by_agent_id: Any) -> bool:
     return str(completed_by_agent_id or "").strip() in ROLE_KEYS
 
 
-def validate_result_ready_for_reviewer_relay(
+def validate_result_ready_for_recipient_relay(
     project_root: Path,
     *,
     packet_envelope: dict[str, Any],
@@ -304,8 +304,9 @@ def validate_result_ready_for_reviewer_relay(
         blockers.append("completed_agent_id_not_assigned_to_role")
 
     return {
-        "schema_version": "flowpilot.result_ready_for_reviewer_relay_audit.v1",
+        "schema_version": "flowpilot.result_ready_for_recipient_relay_audit.v1",
         "packet_id": packet_envelope.get("packet_id"),
+        "relay_recipient": result_envelope.get("next_recipient"),
         "packet_body_hash_matches_envelope": packet_body_hash_matches,
         "result_body_hash_matches_envelope": result_body_hash_matches,
         "packet_ledger_record_found": ledger_record_found,
@@ -323,6 +324,25 @@ def validate_result_ready_for_reviewer_relay(
         "blockers": blockers,
         "passed": not blockers,
     }
+
+
+def validate_result_ready_for_reviewer_relay(
+    project_root: Path,
+    *,
+    packet_envelope: dict[str, Any],
+    result_envelope: dict[str, Any],
+    agent_role_map: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    audit = validate_result_ready_for_recipient_relay(
+        project_root,
+        packet_envelope=packet_envelope,
+        result_envelope=result_envelope,
+        agent_role_map=agent_role_map,
+    )
+    legacy_audit = dict(audit)
+    legacy_audit["schema_version"] = "flowpilot.result_ready_for_reviewer_relay_audit.v1"
+    legacy_audit["recipient_neutral_schema_version"] = audit["schema_version"]
+    return legacy_audit
 
 
 def verify_router_startup_release(

@@ -20,6 +20,7 @@ from packet_runtime_relay_checks import (
     _completed_agent_id_is_role_key,
     _same_project_path,
     validate_packet_ready_for_direct_relay,
+    validate_result_ready_for_recipient_relay,
     validate_result_ready_for_reviewer_relay,
     verify_controller_relay,
     verify_packet_open_receipt,

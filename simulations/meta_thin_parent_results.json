@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-20T10:11:42.674745+00:00",
+  "created_at": "2026-05-20T15:43:30.762882+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": false,
     "status": {
-      "created_at": "2026-05-20T08:56:26.043864+00:00",
+      "created_at": "2026-05-20T15:23:36.152566+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "legacy_monolith_required": false,
@@ -123,17 +123,17 @@
       {
         "evidence": [
           {
-            "edge_count": 30,
+            "edge_count": 32,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_pm_package_absorption",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/flowpilot_pm_package_absorption_checks_results.json",
-            "result_fingerprint": "a3895afe47f0cf7bd53a87a3536576acee56b51102efe902bbc651a187eea4bc",
+            "result_file": "simulations/flowpilot_pm_package_absorption_results.json",
+            "result_fingerprint": "c3765921bbcf0ea27f21dcd6357eba61ee0894862b0cfff8ade4524853bef2a5",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 31
+            "state_count": 33
           },
           {
             "edge_count": 40,

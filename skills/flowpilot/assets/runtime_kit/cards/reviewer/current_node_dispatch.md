@@ -10,6 +10,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 -->
 # Reviewer Current Node Dispatch
 
+Legacy compatibility card. New current-node packets do not require Reviewer
+pre-dispatch approval. PM registers the packet, Router performs direct-dispatch
+validation, and Controller relays only the envelope to the addressed role. Use
+this card only for old run records or an explicit legacy repair path that still
+names this card.
+
 ## Role Capability Reminder
 
 - Do not contact workers or officers directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
@@ -32,7 +38,7 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
-Review whether the current-node packet may be dispatched.
+Review whether the legacy current-node packet may be dispatched.
 
 Check:
 

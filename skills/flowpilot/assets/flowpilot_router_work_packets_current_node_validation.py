@@ -157,7 +157,7 @@ def _validate_current_node_result_event(router: ModuleType, project_root: Path, 
     packet_path = resolve_project_path(project_root, str(expected_grant.get('packet_envelope_path') or ''))
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
     agent_role_map = router._agent_role_map_from_crew_ledger(run_root)
-    audit = packet_runtime.validate_result_ready_for_reviewer_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
+    audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
     if not audit.get('passed'):
         raise RouterError(f"current-node result failed pre-relay packet runtime audit: {audit.get('blockers')}")
     router._mark_parallel_batch_results_joined(project_root, run_root, run_state, 'current_node')

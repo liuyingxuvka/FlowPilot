@@ -34,6 +34,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.CONTROLLER_READS_SEALED_BODY: "Controller read sealed packet/result body",
     model.LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE: "PM-issued worker result did not return to project_manager",
     model.PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
+    model.PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY: "reviewer gate started without PM disposition release and formal gate package identity",
 }
 
 
@@ -44,6 +45,8 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_disposition_recorded},{state.pm_disposition}|"
         f"pm_gate={state.pm_gate_package_written}|review={state.reviewer_gate_started},"
         f"{state.reviewer_gate_passed}|raw={state.reviewer_received_raw_worker_result}|"
+        f"formal_release={state.pm_gate_package_released_by_disposition},"
+        f"{state.pm_gate_package_identity_recorded}|"
         f"decision={state.route_or_node_decision_recorded}|node={state.node_completion_recorded}|"
         f"reason={state.terminal_reason}"
     )
