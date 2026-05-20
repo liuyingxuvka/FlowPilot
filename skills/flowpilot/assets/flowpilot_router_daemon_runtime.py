@@ -315,7 +315,7 @@ def _router_daemon_tick(router: ModuleType, project_root: Path, run_root: Path, 
     run_state['daemon_mode_enabled'] = True
     router._ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status='daemon_active')
     startup_flag_fold = router._fold_stable_startup_role_flags_from_bootstrap(project_root, run_root, run_state)
-    receipt_summary = router._reconcile_controller_receipts(project_root, run_root, run_state)
+    receipt_summary = router._reconcile_controller_receipts(project_root, run_root, run_state, scheduler_fold_owner='daemon')
     scheduled_reconciliation = router._reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     boundary_projection = router._reconcile_controller_boundary_confirmation_projection(project_root, run_root, run_state, source='router_daemon_tick_projection_barrier')
     current_action = run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else None

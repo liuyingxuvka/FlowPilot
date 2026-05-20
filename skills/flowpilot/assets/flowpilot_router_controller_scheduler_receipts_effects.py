@@ -142,17 +142,20 @@ def _apply_wait_target_reminder_receipt(router: ModuleType, project_root: Path, 
     if pending and _action_is_passive_wait_status(pending):
         current_identity = router._wait_target_identity(pending, router._pending_wait_summary(run_state, project_root=None))
         if current_identity == action.get('source_wait_identity'):
-            pending['last_wait_reminder_at'] = delivered_at
-            pending['wait_reminder_text'] = action.get('reminder_text')
-            pending['wait_reminder_text_sha256'] = expected_hash
-            reminder_history = pending.setdefault('wait_reminder_history', [])
-            if isinstance(reminder_history, list):
-                reminder_history.append({'at': delivered_at, 'target_role': target_role, 'reminder_text_sha256': expected_hash, 'controller_action_id': action.get('controller_action_id')})
-            if liveness_result:
-                pending['last_liveness_probe'] = {'checked_at': liveness_checked_at, 'result': liveness_result, 'evidence_path': liveness_payload.get('evidence_path') or receipt_payload.get('liveness_probe_evidence_path')}
-                pending['liveness_probe_result'] = liveness_result
-            run_state['pending_action'] = pending
-            pending_updated = True
+            current_last_reminder_at = str(pending.get('last_wait_reminder_at') or '')
+            stale_replay = bool(current_last_reminder_at and delivered_at <= current_last_reminder_at)
+            if not stale_replay:
+                pending['last_wait_reminder_at'] = delivered_at
+                pending['wait_reminder_text'] = action.get('reminder_text')
+                pending['wait_reminder_text_sha256'] = expected_hash
+                reminder_history = pending.setdefault('wait_reminder_history', [])
+                if isinstance(reminder_history, list):
+                    reminder_history.append({'at': delivered_at, 'target_role': target_role, 'reminder_text_sha256': expected_hash, 'controller_action_id': action.get('controller_action_id')})
+                if liveness_result:
+                    pending['last_liveness_probe'] = {'checked_at': liveness_checked_at, 'result': liveness_result, 'evidence_path': liveness_payload.get('evidence_path') or receipt_payload.get('liveness_probe_evidence_path')}
+                    pending['liveness_probe_result'] = liveness_result
+                run_state['pending_action'] = pending
+                pending_updated = True
     return_update = {'changed': False, 'reminded_return_ids': []}
     if str(action.get('wait_class') or '') == 'ack':
         return_update = router._mark_pending_return_wait_reminded(run_root, str(run_state['run_id']), action, delivered_at=delivered_at, reminder_hash=expected_hash, receipt_payload=receipt_payload)

@@ -16205,3 +16205,41 @@ Skipped steps:
 - Full wrapper unittest modules `tests.test_flowpilot_router_runtime_control_blockers` and `tests.test_flowpilot_router_runtime_packets` timed out at 244 seconds and are not counted as pass evidence. Representative targeted runtime tests passed.
 - Existing peer edits in `autonomous-concept-ui-redesign`, wait-reminder receipt replay files, foreground controller tests, and generated result JSONs were preserved for staging.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-20 - FlowPilot Control-Plane Ledger Consolidation
+
+### Evidence Summary
+
+- Added the `consolidate-flowpilot-control-plane-ledgers` OpenSpec change to make Controller receipts durable while keeping Router/daemon as the scheduler-fold owner.
+- Added a focused FlowGuard model for the same-class hazards: foreground scheduler mutation during daemon ownership, transient readback permission failure, stale `pending_action` authority, worker-batch role collapse, stale passive waits, and signed-envelope mutation.
+- Runtime JSON write verification now treats transient readback access denial as retryable `RouterLedgerWriteInProgress` instead of killing the daemon.
+- Foreground Controller receipt writes now keep receipt/action-local metadata and defer scheduler-row folding to the daemon when a live daemon owns the run.
+- Current-work projection now derives missing worker roles from packet batch member state before old `pending_action` or event-name inference.
+- Stale current-scope passive wait rows are superseded once their prerequisite scope is no longer blocked.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations\run_flowpilot_control_plane_ledger_consolidation_checks.py --json-out simulations\flowpilot_control_plane_ledger_consolidation_results.json`.
+- OK: focused `py_compile` for touched runtime and test files.
+- OK: focused unittests for daemon readback permission retry, foreground receipt scheduler deferral, stale passive wait supersession, stale pending projection demotion, and material batch current-work projection.
+- OK: `python -m unittest tests.test_flowpilot_control_plane_contracts tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_accepts_common_heading_and_decision_formats`.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status completed.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status completed.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: final `python scripts\audit_local_install_sync.py --json`.
+- OK: final `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- The next root issue was not another isolated wait bug; it was still too easy for foreground receipt handling, daemon folding, legacy `pending_action`, and batch/member projections to each claim partial authority.
+- The durable receipt table may be append-first, but scheduler row state must fold through the Router-owned lane when the daemon is live.
+- `pending_action` is useful as a display projection, but it must not outrank the Controller action ledger for executable authority.
+- Batch waits should be projected from member state, not from a generic event name such as `worker_scan_results_returned`.
+
+### Skipped Or Limited
+
+- The broad combined command `python -m unittest tests.router_runtime.controller tests.router_runtime.packets tests.router_runtime.startup_daemon` exceeded the 10-minute foreground timeout and is not counted as pass evidence; the directly affected tests were rerun in smaller groups and passed.
+- The first parallel local-install audit raced with the install sync and saw the pre-sync digest; final serial audit/check passed and is the counted evidence.
+- Pre-existing peer edits in `autonomous-concept-ui-redesign`, wait-reminder receipt replay files, foreground controller tests, and generated result JSONs were preserved.
+- No GitHub push, tag, remote release, or public publication was performed.

@@ -1,0 +1,301 @@
+{
+  "checked_at": "2026-05-20T10:10:33.496614+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "foreground_receipt_writes_scheduler_during_daemon": {
+        "detected": true,
+        "expected_failure": "foreground receipt path mutated Router scheduler ledger while daemon owned folding",
+        "failures": [
+          "foreground receipt path mutated Router scheduler ledger while daemon owned folding",
+          "Controller receipt was not preserved as action-local durable metadata"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_receipt_persisted": true,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": true,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": false,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "foreground_receipt_writes_scheduler_during_daemon",
+          "scheduler_fold_owner": "foreground",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected"
+        }
+      },
+      "pending_action_overrides_controller_ledger": {
+        "detected": true,
+        "expected_failure": "legacy pending_action overrode Controller action ledger authority",
+        "failures": [
+          "legacy pending_action overrode Controller action ledger authority",
+          "conflicting legacy pending_action was not labeled as projection"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": true,
+          "controller_action_wait_mode": "receipt_only",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": true,
+          "legacy_pending_apply_required": true,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": false,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "pending_action_overrides_controller_ledger",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected"
+        }
+      },
+      "readback_permission_kills_daemon": {
+        "detected": true,
+        "expected_failure": "transient ledger access denial released daemon lock as error",
+        "failures": [
+          "transient daemon-critical JSON access denial was not deferred",
+          "transient ledger access denial released daemon lock as error"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": true,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": true,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": true,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": false,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "readback_permission_kills_daemon",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected"
+        }
+      },
+      "signed_envelope_mutated_for_projection": {
+        "detected": true,
+        "expected_failure": "signed packet or result envelope was mutated after relay",
+        "failures": [
+          "signed packet or result envelope was mutated after relay"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": false,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "signed_envelope_mutated_for_projection",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": true,
+          "signed_envelope_relayed": true,
+          "status": "rejected"
+        }
+      },
+      "stale_passive_wait_left_open": {
+        "detected": true,
+        "expected_failure": "stale passive wait remained unresolved after prerequisite resolved",
+        "failures": [
+          "stale passive wait remained unresolved after prerequisite resolved",
+          "stale passive wait stayed in open scheduler rows"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "passive_wait_in_open_rows": true,
+          "passive_wait_open": true,
+          "passive_wait_prerequisite_resolved": true,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "stale_passive_wait_left_open",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected"
+        }
+      },
+      "worker_event_collapses_batch_to_worker_a": {
+        "detected": true,
+        "expected_failure": "batch wait projection did not derive missing roles from member state",
+        "failures": [
+          "batch wait projection did not derive missing roles from member state"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [
+            "worker_a",
+            "worker_b"
+          ],
+          "batch_returned_roles": [
+            "worker_a"
+          ],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "worker_a",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": false,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [
+            "worker_a"
+          ],
+          "scenario": "worker_event_collapses_batch_to_worker_a",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected"
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused control-plane ledger consolidation model; runtime tests and install sync remain required for production confidence",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "batch_wait_members_project_missing_roles",
+      "pending_action_projection_demoted",
+      "receipt_append_daemon_folds_scheduler",
+      "signed_envelope_projection_sidecar",
+      "stale_passive_wait_superseded",
+      "transient_readback_permission_deferred"
+    ],
+    "edge_count": 24,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "foreground_receipt_writes_scheduler_during_daemon",
+      "pending_action_overrides_controller_ledger",
+      "readback_permission_kills_daemon",
+      "signed_envelope_mutated_for_projection",
+      "stale_passive_wait_left_open",
+      "worker_event_collapses_batch_to_worker_a"
+    ],
+    "state_count": 25
+  }
+}

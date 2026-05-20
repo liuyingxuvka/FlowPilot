@@ -105,6 +105,84 @@ def _current_work_from_packet_ledger(router: ModuleType, project_root: Path, run
     task = f"Advance active packet {packet_id or 'work'} ({status})"
     return router._current_work_payload(owner_key=holder, task_label=task, source='packet_ledger', source_path=project_relative(project_root, path), packet_id=packet_id or None, diagnostics={'active_packet_status': status, 'active_packet_holder': holder, 'packet_ledger_schema': packet_ledger.get('schema_version')})
 
+def _current_work_from_active_batch_summary(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any] | None:
+    _bind_router(router)
+    try:
+        active_batch = router._current_status_active_batch_summary(run_root)
+    except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
+        return None
+    if not isinstance(active_batch, dict):
+        return None
+    candidates: list[dict[str, Any]] = []
+    for key in ('active_partial_batches', 'batches'):
+        items = active_batch.get(key)
+        if isinstance(items, list):
+            candidates.extend([item for item in items if isinstance(item, dict)])
+    for batch in candidates:
+        missing_roles = [str(role).strip() for role in batch.get('missing_roles') or [] if str(role).strip()]
+        if not missing_roles or batch.get('all_results_returned'):
+            continue
+        returned_roles = [str(role).strip() for role in batch.get('returned_roles') or [] if str(role).strip()]
+        batch_kind = str(batch.get('batch_kind') or 'packet_batch')
+        batch_id = str(batch.get('batch_id') or '').strip()
+        source_path = None
+        if batch_id:
+            try:
+                source_path = project_relative(project_root, router._parallel_packet_batch_path(run_root, batch_id))
+            except (RouterError, OSError, ValueError, TypeError):
+                source_path = None
+        owner_key = ','.join(missing_roles)
+        task = f"Wait for {', '.join(missing_roles)} to return {batch_kind.replace('_', ' ')} result"
+        if len(missing_roles) > 1:
+            task += "s"
+        return router._current_work_payload(
+            owner_key=owner_key,
+            task_label=task,
+            source='packet_batch_member_status',
+            source_path=source_path,
+            wait_class='role_decision',
+            diagnostics={
+                'batch_kind': batch_kind,
+                'batch_id': batch_id or None,
+                'missing_roles': missing_roles,
+                'returned_roles': returned_roles,
+                'packet_count': batch.get('packet_count'),
+                'results_returned': batch.get('results_returned'),
+                'partial_results_returned': bool(batch.get('partial_results_returned')),
+                'all_results_returned': bool(batch.get('all_results_returned')),
+            },
+        )
+    return None
+
+def _pending_action_has_controller_authority(router: ModuleType, pending: dict[str, Any], controller_ledger: dict[str, Any]) -> bool:
+    _bind_router(router)
+    if not isinstance(pending, dict) or not pending:
+        return False
+    action_id = str(pending.get('controller_action_id') or '').strip()
+    if not action_id:
+        try:
+            action_id = router._controller_action_id_for_action(pending)
+        except (RouterError, ValueError, TypeError):
+            action_id = ''
+    if not action_id:
+        return True
+    active_ids: set[str] = set()
+    for key in ('pending_action_ids', 'waiting_action_ids', 'passive_wait_action_ids'):
+        values = controller_ledger.get(key) if isinstance(controller_ledger, dict) else []
+        if isinstance(values, list):
+            active_ids.update(str(value) for value in values if value)
+    return action_id in active_ids
+
+def _pending_role_wait_should_use_batch_projection(router: ModuleType, pending: dict[str, Any]) -> bool:
+    _bind_router(router)
+    if not isinstance(pending, dict) or pending.get('action_type') != 'await_role_decision':
+        return False
+    target = str(pending.get('to_role') or pending.get('waiting_for_role') or pending.get('target_role') or '').strip()
+    if target.startswith('worker_') or ',' in target:
+        return True
+    allowed = pending.get('allowed_external_events')
+    return bool(isinstance(allowed, list) and any(str(event).startswith('worker_') for event in allowed))
+
 def _current_work_from_passive_waits(router: ModuleType, project_root: Path, run_root: Path, *, controller_ledger: dict[str, Any] | None=None) -> dict[str, Any] | None:
     _bind_router(router)
     if controller_ledger is None:
@@ -155,7 +233,13 @@ def _derive_current_work(router: ModuleType, project_root: Path, run_root: Path,
             },
         )
     pending = run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else {}
-    if pending:
+    if controller_ledger is None:
+        controller_ledger = router._controller_action_ledger_summary(run_root)
+    if pending and _pending_role_wait_should_use_batch_projection(router, pending):
+        batch_payload = _current_work_from_active_batch_summary(router, project_root, run_root)
+        if batch_payload:
+            return batch_payload
+    if pending and _pending_action_has_controller_authority(router, pending, controller_ledger):
         payload = router._current_work_from_action(pending, source='pending_action', source_path=project_relative(project_root, router.run_state_path(run_root)))
         if payload:
             return payload
@@ -184,6 +268,9 @@ __all__ = (
     '_current_work_from_action',
     '_packet_status_allows_current_work',
     '_current_work_from_packet_ledger',
+    '_current_work_from_active_batch_summary',
+    '_pending_action_has_controller_authority',
+    '_pending_role_wait_should_use_batch_projection',
     '_current_work_from_passive_waits',
     '_derive_current_work',
 )

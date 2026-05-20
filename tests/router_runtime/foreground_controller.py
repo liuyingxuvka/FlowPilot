@@ -494,6 +494,105 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state["pending_action"]["last_liveness_probe"]["result"], "working")
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
         self.assertEqual(action_record["status"], "done")
+    def test_reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self.force_startup_fact_role_wait(root)
+        state = read_json(router.run_state_path(run_root))
+        stale_checked_at = self.old_utc(minutes=11)
+        delivered_at = router.utc_now()
+        state["pending_action"]["created_at"] = self.old_utc(minutes=12)
+        state["pending_action"]["last_wait_reminder_at"] = stale_checked_at
+        state["pending_action"]["last_liveness_probe"] = {
+            "checked_at": stale_checked_at,
+            "result": "message_submission_accepted",
+            "evidence_path": None,
+        }
+        state["pending_action"]["liveness_probe_result"] = "message_submission_accepted"
+        lock = router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
+        router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+            current_action=state["pending_action"],
+            lock=lock,
+        )
+        router.save_run_state(run_root, state)
+
+        standby = router.foreground_controller_standby(root, max_seconds=5, poll_seconds=0.01)
+
+        materialized = standby["materialized_wait_target_controller_action"]
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        reminder_action = action_record["action"]
+        receipt = router.record_controller_action_receipt(
+            root,
+            action_id=materialized["controller_action_id"],
+            status="done",
+            payload={
+                "target_role": "human_like_reviewer",
+                "delivered_to_role": "human_like_reviewer",
+                "reminder_text_sha256": reminder_action["reminder_text_sha256"],
+                "sealed_body_reads": False,
+                "delivered_at": delivered_at,
+                "liveness_probe": {"checked_at": delivered_at, "result": "message_submission_accepted"},
+                "liveness_probe_result": "message_submission_accepted",
+                "liveness_probe_checked_at": delivered_at,
+            },
+        )
+        self.assertTrue(receipt["ok"])
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{materialized['controller_action_id']}.json")
+        self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
+        state_after_receipt = read_json(router.run_state_path(run_root))
+        stale_replay = router._apply_done_controller_receipt_effects(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state_after_receipt,
+            reminder_action,
+            {
+                "schema_version": router.CONTROLLER_RECEIPT_SCHEMA,
+                "status": "done",
+                "payload": {
+                    "target_role": "human_like_reviewer",
+                    "delivered_to_role": "human_like_reviewer",
+                    "reminder_text_sha256": reminder_action["reminder_text_sha256"],
+                    "sealed_body_reads": False,
+                    "delivered_at": stale_checked_at,
+                    "liveness_probe": {
+                        "checked_at": stale_checked_at,
+                        "result": "message_submission_accepted",
+                    },
+                    "liveness_probe_result": "message_submission_accepted",
+                    "liveness_probe_checked_at": stale_checked_at,
+                },
+            },
+        )
+        self.assertTrue(stale_replay["applied"])
+        self.assertFalse(stale_replay["pending_wait_updated"])
+        self.assertEqual(state_after_receipt["pending_action"]["last_wait_reminder_at"], delivered_at)
+
+        drifted = read_json(router.run_state_path(run_root))
+        drifted["pending_action"]["last_wait_reminder_at"] = stale_checked_at
+        drifted["pending_action"]["last_liveness_probe"] = {
+            "checked_at": stale_checked_at,
+            "result": "message_submission_accepted",
+            "evidence_path": None,
+        }
+        drifted["pending_action"]["liveness_probe_result"] = "message_submission_accepted"
+        router.save_run_state(run_root, drifted)
+
+        reconcile = router.reconcile_current_run(root)
+
+        self.assertTrue(reconcile["repaired"]["scheduled_controller_receipts"]["changed"])
+        repaired = read_json(router.run_state_path(run_root))
+        self.assertEqual(repaired["pending_action"]["last_wait_reminder_at"], delivered_at)
+        self.assertEqual(repaired["pending_action"]["last_liveness_probe"]["checked_at"], delivered_at)
+        labels = [item["label"] for item in repaired["history"] if isinstance(item, dict)]
+        self.assertIn("router_replayed_reconciled_wait_target_reminder_receipt", labels)
+        standby_after_replay = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01, bounded_diagnostic=True)
+        self.assertNotEqual(standby_after_replay["standby_state"], "wait_target_check_due")
+        self.assertFalse(standby_after_replay["controller_must_process_wait_target_before_exit"])
     def test_foreground_controller_standby_default_waits_past_timeout_until_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

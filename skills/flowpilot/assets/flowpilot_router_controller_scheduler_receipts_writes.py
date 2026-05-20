@@ -131,7 +131,7 @@ def _write_controller_receipt(router: ModuleType, project_root: Path, run_root: 
     receipt = {'schema_version': CONTROLLER_RECEIPT_SCHEMA, 'run_id': run_state.get('run_id'), 'action_id': action_id, 'action_type': action.get('action_type'), 'status': status, 'recorded_by': 'controller', 'recorded_at': utc_now(), 'controller_visibility': 'receipt_metadata_only', 'payload': payload or {}}
     write_json(_controller_receipt_path(run_root, action_id), receipt)
     _append_router_daemon_event(run_root, 'controller_receipt_recorded', {'action_id': action_id, 'status': status, 'receipt_path': project_relative(project_root, _controller_receipt_path(run_root, action_id))})
-    router._reconcile_controller_receipts(project_root, run_root, run_state)
+    router._reconcile_controller_receipts(project_root, run_root, run_state, scheduler_fold_owner='foreground_receipt')
     return receipt
 
 def _maybe_write_controller_receipt_for_pending(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], pending: dict[str, Any], *, status: str, payload: dict[str, Any] | None=None) -> dict[str, Any] | None:
@@ -141,11 +141,39 @@ def _maybe_write_controller_receipt_for_pending(router: ModuleType, project_root
         return None
     return router._write_controller_receipt(project_root, run_root, run_state, action_id=action_id, status=status, payload=payload)
 
-def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
+def _controller_receipt_scheduler_fold_allowed(router: ModuleType, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str) -> tuple[bool, str]:
+    _bind_router(router)
+    if scheduler_fold_owner == 'daemon':
+        return (True, 'daemon_fold_owner')
+    if not run_state.get('daemon_mode_enabled'):
+        return (True, 'daemon_mode_disabled')
+    try:
+        lock = read_json_if_exists(_router_daemon_lock_path(run_root))
+    except OSError:
+        return (False, 'daemon_lock_unreadable')
+    if not lock:
+        return (True, 'daemon_lock_missing')
+    try:
+        liveness = router._router_daemon_lock_liveness(lock)
+        if router._router_daemon_lock_has_live_owner(liveness):
+            return (False, 'live_daemon_owns_scheduler_ledger')
+    except (OSError, ValueError, TypeError, RouterError):
+        return (True, 'daemon_liveness_unknown')
+    return (True, 'daemon_not_live')
+
+def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str='fallback') -> dict[str, Any]:
     _bind_router(router)
     receipt_dir = _controller_receipts_dir(run_root)
     reconciled = 0
     blocked = 0
+    scheduler_folds = 0
+    deferred_scheduler_folds = 0
+    scheduler_fold_allowed, scheduler_fold_reason = _controller_receipt_scheduler_fold_allowed(
+        router,
+        run_root,
+        run_state,
+        scheduler_fold_owner=scheduler_fold_owner,
+    )
     if receipt_dir.exists():
         for receipt_path in sorted(receipt_dir.glob('*.json')):
             receipt = read_json_if_exists(receipt_path)
@@ -174,19 +202,57 @@ def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_r
                 blocked += 1
                 action['blocked_at'] = receipt.get('recorded_at')
                 action['blocked_payload'] = receipt.get('payload') or {}
-            write_json(action_path, action)
             row_id = str(action.get('router_scheduler_row_id') or '')
+            router_state = None
             if row_id:
                 router_state = 'waiting' if preserve_router_status and previous_status == 'repair_pending' else 'superseded' if preserve_router_status and previous_status == 'superseded' else 'reconciled' if preserve_router_status and previous_status == 'resolved' else 'receipt_done' if status == 'done' else 'blocked' if status == 'blocked' else 'skipped' if status == 'skipped' else 'waiting'
-                router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state=router_state, reconciliation={'receipt_status': status, 'receipt_path': project_relative(project_root, receipt_path), 'receipt_recorded_at': receipt.get('recorded_at')})
+                if scheduler_fold_allowed:
+                    for key in (
+                        'router_scheduler_fold_deferred',
+                        'router_scheduler_fold_deferred_at',
+                        'router_scheduler_fold_deferred_reason',
+                        'router_scheduler_fold_owner',
+                    ):
+                        action.pop(key, None)
+                else:
+                    action['router_scheduler_fold_deferred'] = True
+                    action['router_scheduler_fold_deferred_at'] = utc_now()
+                    action['router_scheduler_fold_deferred_reason'] = scheduler_fold_reason
+                    action['router_scheduler_fold_owner'] = 'daemon'
+            write_json(action_path, action)
+            if row_id and router_state:
+                if scheduler_fold_allowed:
+                    scheduler_folds += 1
+                    router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state=router_state, reconciliation={'receipt_status': status, 'receipt_path': project_relative(project_root, receipt_path), 'receipt_recorded_at': receipt.get('recorded_at')})
+                else:
+                    deferred_scheduler_folds += 1
+                    append_history(
+                        run_state,
+                        'router_deferred_controller_receipt_scheduler_fold_to_daemon',
+                        {
+                            'controller_action_id': action_id,
+                            'router_scheduler_row_id': row_id,
+                            'receipt_status': status,
+                            'reason': scheduler_fold_reason,
+                        },
+                    )
             reconciled += 1
     ledger = router._rebuild_controller_action_ledger(project_root, run_root, run_state)
-    return {'reconciled_receipts': reconciled, 'blocked_receipts': blocked, 'ledger_counts': ledger.get('counts')}
+    return {
+        'reconciled_receipts': reconciled,
+        'blocked_receipts': blocked,
+        'scheduler_folds': scheduler_folds,
+        'deferred_scheduler_folds': deferred_scheduler_folds,
+        'scheduler_fold_owner': scheduler_fold_owner,
+        'scheduler_fold_reason': scheduler_fold_reason,
+        'ledger_counts': ledger.get('counts'),
+    }
 
 __all__ = (
     '_write_controller_action_entry',
     '_write_controller_receipt',
     '_maybe_write_controller_receipt_for_pending',
+    '_controller_receipt_scheduler_fold_allowed',
     '_reconcile_controller_receipts',
 )
 

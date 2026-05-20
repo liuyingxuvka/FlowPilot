@@ -458,7 +458,20 @@ def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = 
                     ) from exc
                 time.sleep(RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
         if verify:
-            read_json(path)
+            try:
+                read_json(path)
+            except OSError as exc:
+                write_lock = _json_write_lock_liveness(path)
+                if isinstance(exc, PermissionError) or write_lock.get("active") or write_lock.get("fresh"):
+                    write_lock["verification_readback_error"] = True
+                    write_lock["verification_error_type"] = type(exc).__name__
+                    write_lock["verification_error_message"] = str(exc)
+                    raise RouterLedgerWriteInProgress(
+                        path,
+                        write_lock,
+                        f"could not verify JSON target after runtime readback error: {exc}",
+                    ) from exc
+                raise
             target_verified = True
         else:
             target_verified = _runtime_json_target_valid(path)

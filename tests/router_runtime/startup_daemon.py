@@ -553,6 +553,27 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(raised.exception.path, path)
         self.assertFalse(router_io._json_write_lock_path(path).exists())
+
+    def test_atomic_verify_permission_error_becomes_runtime_write_wait(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "router_scheduler_ledger.json"
+        original_read_json = router_io.read_json
+
+        def flaky_readback(read_path: Path) -> dict:
+            if read_path == path:
+                raise PermissionError("scanner locked readback")
+            return original_read_json(read_path)
+
+        with mock.patch.object(router_io, "read_json", side_effect=flaky_readback):
+            with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
+                router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
+
+        self.assertEqual(raised.exception.path, path)
+        self.assertTrue(raised.exception.write_lock["verification_readback_error"])
+        self.assertEqual(raised.exception.write_lock["verification_error_type"], "PermissionError")
+        self.assertFalse(router_io._json_write_lock_path(path).exists())
+        self.assertEqual(original_read_json(path)["schema_version"], router.ROUTER_SCHEDULER_LEDGER_SCHEMA)
+
     def test_router_daemon_nested_state_write_lock_wait_does_not_exit(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

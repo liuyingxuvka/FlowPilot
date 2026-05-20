@@ -178,8 +178,94 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(status_summary["next_step"]["fresh_for_controller_decision"])
         self.assertTrue(status_summary["next_step"]["display_only"])
         self.assertFalse(status_summary["next_step"]["controller_stop_authority"])
+        self.assertNotEqual(status_summary["current_work"]["source"], "pending_action")
         self.assertFalse(status_summary["foreground_exit_policy"]["controller_stop_allowed"])
         self.assertFalse(status_summary["foreground_exit_policy"]["final_answer_preflight"]["final_answer_allowed"])
+
+    def test_foreground_receipt_defers_scheduler_fold_to_live_daemon(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        state = read_json(router.run_state_path(run_root))
+        state["daemon_mode_enabled"] = True
+        router.save_run_state(run_root, state)
+        router._acquire_router_daemon_lock(root, run_root, state, replace_stale=True)  # type: ignore[attr-defined]
+        action = router.make_action(
+            action_type="write_display_surface_status",
+            actor="controller",
+            label="test_foreground_receipt_fold_deferral",
+            summary="Write display status.",
+            extra={"postcondition": "startup_display_status_written"},
+        )
+
+        try:
+            entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+            row_id = entry["router_scheduler_row_id"]
+            router._write_controller_receipt(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                state,
+                action_id=entry["action_id"],
+                status="done",
+                payload={"completed_by_test_controller": True},
+            )
+
+            deferred_action = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+            scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+            row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
+            self.assertTrue(deferred_action["router_scheduler_fold_deferred"])
+            self.assertEqual(deferred_action["router_scheduler_fold_deferred_reason"], "live_daemon_owns_scheduler_ledger")
+            self.assertEqual(row["router_state"], "queued")
+
+            result = router._reconcile_controller_receipts(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                state,
+                scheduler_fold_owner="daemon",
+            )
+
+            folded_action = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+            scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+            row = next(item for item in scheduler["rows"] if item["row_id"] == row_id)
+            self.assertGreaterEqual(result["scheduler_folds"], 1)
+            self.assertFalse(folded_action.get("router_scheduler_fold_deferred", False))
+            self.assertEqual(row["router_state"], "receipt_done")
+        finally:
+            router._release_router_daemon_lock(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                reason="test_foreground_receipt_defers_scheduler_fold_to_live_daemon",
+            )
+
+    def test_resolved_scope_wait_is_superseded_and_clears_pending_projection(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="await_current_scope_reconciliation",
+            actor="controller",
+            label="test_resolved_scope_wait",
+            summary="Wait for a scope that is already resolved.",
+            to_role="controller",
+            extra={"scope_kind": "startup", "scope_id": "startup", "blockers": [{"kind": "stale"}]},
+        )
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router.save_run_state(run_root, state)
+
+        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["superseded"], 1)
+        self.assertIsNone(state.get("pending_action"))
+        action_record = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(action_record["status"], "superseded")
+        self.assertEqual(action_record["router_reconciliation_status"], "superseded_by_resolved_current_scope")
+        scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
+        row = next(item for item in scheduler["rows"] if item["row_id"] == entry["router_scheduler_row_id"])
+        self.assertEqual(row["router_state"], "superseded")
+
     def test_reconciled_scheduler_row_is_not_downgraded_by_later_receipt_sync(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

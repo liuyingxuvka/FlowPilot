@@ -882,6 +882,46 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         partial = status["packet"]["active_batch"]["active_partial_batches"][0]
         self.assertEqual(partial["missing_roles"], ["worker_b"])
         self.assertEqual(partial["returned_roles"], ["worker_a"])
+        self.assertEqual(status["current_work"]["source"], "packet_batch_member_status")
+        self.assertEqual(status["current_work"]["owner_key"], "worker_b")
+        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker_b"])
+
+    def test_material_scan_full_batch_wait_current_work_names_all_missing_roles(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            {
+                "packets": [
+                    {
+                        "packet_id": "material-scan-wait-all-a",
+                        "to_role": "worker_a",
+                        "body_text": "Inspect local materials.",
+                    },
+                    {
+                        "packet_id": "material-scan-wait-all-b",
+                        "to_role": "worker_b",
+                        "body_text": "Inspect repository state.",
+                    },
+                ]
+            },
+        )
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        status = read_json(run_root / "display" / "current_status_summary.json")
+        batch = status["packet"]["active_batch"]["batches"][0]
+        self.assertEqual(batch["missing_roles"], ["worker_a", "worker_b"])
+        self.assertEqual(batch["returned_roles"], [])
+        self.assertEqual(status["current_work"]["source"], "packet_batch_member_status")
+        self.assertEqual(status["current_work"]["owner_key"], "worker_a,worker_b")
+        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker_a", "worker_b"])
+
     def test_current_node_result_requires_write_grant(self) -> None:
         root = self.make_project()
         run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
