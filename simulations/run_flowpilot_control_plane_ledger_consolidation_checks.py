@@ -29,6 +29,9 @@ HAZARD_EXPECTED_FAILURES = {
     "pending_action_overrides_controller_ledger": "legacy pending_action overrode Controller action ledger authority",
     "worker_event_collapses_batch_to_worker_a": "batch wait projection did not derive missing roles from member state",
     "stale_passive_wait_left_open": "stale passive wait remained unresolved after prerequisite resolved",
+    "closed_status_vocabulary_blocks_passive_wait": "closed Controller row was counted as pending by a noncanonical blocker scan",
+    "non_controller_closed_row_blocks_wait": "closed non-Controller row was counted as pending by a noncanonical blocker scan",
+    "unknown_closure_classification_clears_wait": "unknown closure classification cleared a wait",
     "signed_envelope_mutated_for_projection": "signed packet or result envelope was mutated after relay",
 }
 
@@ -56,6 +59,14 @@ def _state_id(state: model.State) -> str:
         f"passive={state.passive_wait_open},resolved={state.passive_wait_prerequisite_resolved},"
         f"superseded={state.passive_wait_superseded_or_reconciled},"
         f"open_rows={state.passive_wait_in_open_rows}|"
+        f"controller_row={state.controller_obligation_status},"
+        f"{state.controller_obligation_reconciliation_status},"
+        f"canonical={state.canonical_closed_row_predicate_used},"
+        f"counted_pending={state.closed_controller_row_counted_pending}|"
+        f"closure_surfaces={state.closure_surfaces},"
+        f"kernel={state.closure_kernel_used_for_surfaces},"
+        f"non_controller_counted={state.non_controller_closed_row_counted_pending},"
+        f"unknown_cleared={state.unknown_closure_classification_cleared_wait}|"
         f"signed={state.signed_envelope_relayed},mutated={state.signed_envelope_mutated},"
         f"sidecar={state.sidecar_projection_written}"
     )

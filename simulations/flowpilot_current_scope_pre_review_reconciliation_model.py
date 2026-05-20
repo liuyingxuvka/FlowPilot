@@ -35,7 +35,8 @@ Risk intent brief:
   waits for local reconciliation; carried-forward local items have explicit
   metadata; review-created obligations close before scope exit; no-review
   scopes reconcile before transition; ACK does not imply semantic work done;
-  passive wait status rows are not Controller work; reconciled stateful
+  passive wait status rows are not Controller work; closed Controller rows
+  such as resolved+reconciled are not pending blockers; reconciled stateful
   postconditions imply their Router-owned flags or an explicit repair/blocker.
 - Blindspot: this is a focused control-plane model. Runtime tests must still
   exercise concrete Router actions, ledgers, cards, and install sync.
@@ -58,6 +59,9 @@ NO_REVIEW_SCOPE_CLEAN_TRANSITION = "no_review_scope_clean_transition"
 STARTUP_PASSIVE_RECONCILIATION_WAIT_IGNORED = "startup_passive_reconciliation_wait_ignored"
 STARTUP_DISPLAY_POSTCONDITION_RECONCILED = "startup_display_postcondition_reconciled"
 STATEFUL_POSTCONDITION_RECONCILED_FLAG_MATCH = "stateful_postcondition_reconciled_flag_match"
+RESOLVED_RECONCILED_ROW_CLEARS_SCOPE_WAIT = "resolved_reconciled_row_clears_scope_wait"
+NON_CONTROLLER_CLOSED_OBLIGATION_CLEARS_SCOPE_WAIT = "non_controller_closed_obligation_clears_scope_wait"
+UNKNOWN_CLOSURE_CLASSIFICATION_STAYS_BLOCKING = "unknown_closure_classification_stays_blocking"
 
 REVIEW_STARTED_BEFORE_LOCAL_RECONCILIATION = "review_started_before_local_reconciliation"
 LOCAL_RECONCILIATION_CLEARS_FUTURE_SCOPE = "local_reconciliation_clears_future_scope"
@@ -68,6 +72,10 @@ ACK_USED_AS_SEMANTIC_COMPLETION = "ack_used_as_semantic_completion"
 PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION = "passive_wait_status_counted_as_local_obligation"
 STARTUP_DISPLAY_RECONCILED_FLAG_MISSING = "startup_display_reconciled_flag_missing"
 STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT = "stateful_postcondition_requeued_after_drift"
+RESOLVED_RECONCILED_ROW_COUNTED_PENDING = "resolved_reconciled_row_counted_pending"
+CLOSED_STATUS_VOCABULARY_DRIFT = "closed_status_vocabulary_drift"
+NON_CONTROLLER_CLOSED_OBLIGATION_COUNTED_PENDING = "non_controller_closed_obligation_counted_pending"
+UNKNOWN_CLOSURE_CLASSIFICATION_COUNTED_CLEAN = "unknown_closure_classification_counted_clean"
 
 VALID_SCENARIOS = (
     STARTUP_CLEAN_REVIEW,
@@ -79,6 +87,9 @@ VALID_SCENARIOS = (
     STARTUP_PASSIVE_RECONCILIATION_WAIT_IGNORED,
     STARTUP_DISPLAY_POSTCONDITION_RECONCILED,
     STATEFUL_POSTCONDITION_RECONCILED_FLAG_MATCH,
+    RESOLVED_RECONCILED_ROW_CLEARS_SCOPE_WAIT,
+    NON_CONTROLLER_CLOSED_OBLIGATION_CLEARS_SCOPE_WAIT,
+    UNKNOWN_CLOSURE_CLASSIFICATION_STAYS_BLOCKING,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -91,6 +102,10 @@ NEGATIVE_SCENARIOS = (
     PASSIVE_WAIT_STATUS_COUNTED_AS_LOCAL_OBLIGATION,
     STARTUP_DISPLAY_RECONCILED_FLAG_MISSING,
     STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT,
+    RESOLVED_RECONCILED_ROW_COUNTED_PENDING,
+    CLOSED_STATUS_VOCABULARY_DRIFT,
+    NON_CONTROLLER_CLOSED_OBLIGATION_COUNTED_PENDING,
+    UNKNOWN_CLOSURE_CLASSIFICATION_COUNTED_CLEAN,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -138,6 +153,18 @@ class State:
     stateful_postcondition_reapply_skipped_as_already_reconciled: bool = False
     stateful_postcondition_same_action_requeued: bool = False
     stateful_postcondition_repair_or_blocker_recorded: bool = False
+
+    controller_obligation_status: str = "none"
+    controller_obligation_reconciliation_status: str = "none"
+    controller_obligation_closed_by_canonical_predicate: bool = False
+    controller_obligation_counted_pending_by_blocker_scan: bool = False
+
+    source_obligation_kind: str = "none"
+    source_obligation_status: str = "none"
+    source_obligation_closure_classification: str = "none"
+    source_obligation_closed_by_kernel: bool = False
+    source_obligation_counted_pending_by_local_scan: bool = False
+    source_obligation_unknown_cleared: bool = False
 
     reviewer_work_started: bool = False
     reviewer_passed: bool = False
@@ -304,6 +331,62 @@ def scenario_state(scenario: str) -> State:
             scope_exited=True,
             semantic_work_completed=True,
         )
+    if scenario == RESOLVED_RECONCILED_ROW_CLEARS_SCOPE_WAIT:
+        return _accepted(
+            scenario,
+            active_scope="startup",
+            passive_wait_status_pending=True,
+            passive_wait_action_type="await_current_scope_reconciliation",
+            passive_wait_controller_side_effect_required=False,
+            passive_wait_controller_receipt_required=False,
+            passive_wait_counted_as_local_obligation=False,
+            controller_obligation_status="resolved",
+            controller_obligation_reconciliation_status="reconciled",
+            controller_obligation_closed_by_canonical_predicate=True,
+            controller_obligation_counted_pending_by_blocker_scan=False,
+            local_obligation_pending=False,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=True,
+            reviewer_work_started=True,
+            reviewer_passed=True,
+            review_created_obligation_closed=True,
+            scope_exited=True,
+            ack_returned=True,
+            semantic_work_completed=True,
+        )
+    if scenario == NON_CONTROLLER_CLOSED_OBLIGATION_CLEARS_SCOPE_WAIT:
+        return _accepted(
+            scenario,
+            active_scope="node",
+            source_obligation_kind="pm_role_work",
+            source_obligation_status="pm_absorbed",
+            source_obligation_closure_classification="closed_success",
+            source_obligation_closed_by_kernel=True,
+            source_obligation_counted_pending_by_local_scan=False,
+            local_obligation_pending=False,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=True,
+            reviewer_work_started=True,
+            reviewer_passed=True,
+            review_created_obligation_closed=True,
+            scope_exited=True,
+            semantic_work_completed=True,
+        )
+    if scenario == UNKNOWN_CLOSURE_CLASSIFICATION_STAYS_BLOCKING:
+        return _accepted(
+            scenario,
+            active_scope="node",
+            source_obligation_kind="worker_result",
+            source_obligation_status="closedish_new_status",
+            source_obligation_closure_classification="unknown_needs_recheck",
+            source_obligation_closed_by_kernel=False,
+            source_obligation_counted_pending_by_local_scan=True,
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+            reviewer_work_started=False,
+            semantic_work_completed=False,
+        )
     if scenario == REVIEW_STARTED_BEFORE_LOCAL_RECONCILIATION:
         return _rejected(
             scenario,
@@ -414,6 +497,62 @@ def scenario_state(scenario: str) -> State:
             stateful_postcondition_same_action_requeued=True,
             stateful_postcondition_repair_or_blocker_recorded=False,
         )
+    if scenario == RESOLVED_RECONCILED_ROW_COUNTED_PENDING:
+        return _rejected(
+            scenario,
+            active_scope="startup",
+            passive_wait_status_pending=True,
+            passive_wait_action_type="await_current_scope_reconciliation",
+            controller_obligation_status="resolved",
+            controller_obligation_reconciliation_status="reconciled",
+            controller_obligation_closed_by_canonical_predicate=True,
+            controller_obligation_counted_pending_by_blocker_scan=True,
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+        )
+    if scenario == CLOSED_STATUS_VOCABULARY_DRIFT:
+        return _rejected(
+            scenario,
+            active_scope="startup",
+            passive_wait_status_pending=True,
+            passive_wait_action_type="await_current_scope_reconciliation",
+            controller_obligation_status="superseded",
+            controller_obligation_reconciliation_status="superseded_by_resolved_current_scope",
+            controller_obligation_closed_by_canonical_predicate=True,
+            controller_obligation_counted_pending_by_blocker_scan=True,
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+        )
+    if scenario == NON_CONTROLLER_CLOSED_OBLIGATION_COUNTED_PENDING:
+        return _rejected(
+            scenario,
+            active_scope="node",
+            source_obligation_kind="pm_role_work",
+            source_obligation_status="pm_absorbed",
+            source_obligation_closure_classification="closed_success",
+            source_obligation_closed_by_kernel=True,
+            source_obligation_counted_pending_by_local_scan=True,
+            local_obligation_pending=True,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=False,
+        )
+    if scenario == UNKNOWN_CLOSURE_CLASSIFICATION_COUNTED_CLEAN:
+        return _rejected(
+            scenario,
+            active_scope="node",
+            source_obligation_kind="worker_result",
+            source_obligation_status="closedish_new_status",
+            source_obligation_closure_classification="unknown_needs_recheck",
+            source_obligation_closed_by_kernel=False,
+            source_obligation_counted_pending_by_local_scan=False,
+            source_obligation_unknown_cleared=True,
+            local_obligation_pending=False,
+            local_reconciliation_checked=True,
+            local_reconciliation_clean=True,
+            reviewer_work_started=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -493,6 +632,21 @@ def current_scope_reconciliation_failures(state: State) -> list[str]:
         and state.passive_wait_counted_as_local_obligation
     ):
         failures.append("passive wait status row was counted as current-scope Controller work")
+    if (
+        state.controller_obligation_closed_by_canonical_predicate
+        and state.controller_obligation_counted_pending_by_blocker_scan
+    ):
+        failures.append("closed Controller obligation row was counted as a pending blocker")
+    if (
+        state.source_obligation_closed_by_kernel
+        and state.source_obligation_counted_pending_by_local_scan
+    ):
+        failures.append("closed non-Controller obligation row was counted as a pending blocker")
+    if (
+        state.source_obligation_closure_classification == "unknown_needs_recheck"
+        and state.source_obligation_unknown_cleared
+    ):
+        failures.append("unknown closure classification was treated as clean")
     if (
         state.stateful_postcondition_receipt_done
         and state.stateful_postcondition_router_reconciled

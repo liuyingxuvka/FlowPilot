@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import Any
 
 import card_runtime
+import flowpilot_closure_kernel
 
 def _current_node_pre_review_reconciliation_blockers(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     frontier = router._active_frontier(run_root)
@@ -67,7 +68,8 @@ def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root
                 continue
             if not router._controller_action_is_ordinary_work_row(entry):
                 continue
-            if entry.get('status') in {'done', 'blocked', 'skipped'} and entry.get('router_reconciliation_status') == 'reconciled':
+            closure = flowpilot_closure_kernel.classify_closure('controller_action', entry)
+            if not closure.blocks_progress:
                 continue
             action = entry.get('action') if isinstance(entry.get('action'), dict) else {}
             scope_kind = str(entry.get('scope_kind') or action.get('scope_kind') or '')
@@ -75,10 +77,10 @@ def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root
                 continue
             if entry.get('action_type') in {'await_card_return_event', 'await_card_bundle_return_event'}:
                 continue
-            if entry.get('status') not in {'done', 'blocked', 'skipped'} or entry.get('router_reconciliation_status') != 'reconciled':
-                blockers.append({'kind': 'pending_startup_controller_row', 'action_id': entry.get('action_id'), 'action_type': entry.get('action_type'), 'status': entry.get('status'), 'router_reconciliation_status': entry.get('router_reconciliation_status'), 'reason': 'startup-local Controller row must be done and Router-reconciled before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
+            if closure.blocks_progress:
+                blockers.append({'kind': 'pending_startup_controller_row', 'action_id': entry.get('action_id'), 'action_type': entry.get('action_type'), 'status': entry.get('status'), 'router_reconciliation_status': entry.get('router_reconciliation_status'), 'closure_classification': closure.classification, 'closure_reason': closure.reason, 'reason': 'startup-local Controller row must be closed by the shared closure kernel before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
     active_blocker = run_state.get('active_control_blocker')
-    if isinstance(active_blocker, dict) and active_blocker.get('status') not in {'resolved', 'superseded', 'closed'} and (not router._resume_reentry_gate_pending(run_state)):
+    if isinstance(active_blocker, dict) and flowpilot_closure_kernel.closure_blocks_progress('control_blocker', active_blocker) and (not router._resume_reentry_gate_pending(run_state)):
         blockers.append({'kind': 'active_startup_control_blocker', 'control_blocker_id': active_blocker.get('control_blocker_id'), 'source': active_blocker.get('source'), 'reason': 'active local control blocker must be resolved before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
     return blockers
 

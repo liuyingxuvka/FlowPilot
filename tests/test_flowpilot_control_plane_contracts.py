@@ -9,6 +9,7 @@ sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import flowpilot_router as router  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
+import flowpilot_closure_kernel as closure_kernel  # noqa: E402
 import packet_runtime  # noqa: E402
 from flowpilot_control_plane_contracts import (  # noqa: E402
     control_plane_action_identity_fingerprint,
@@ -93,6 +94,46 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
 
         self.assertTrue(control_plane_pending_wait_same_identity(first, same_wait_with_reminder))
         self.assertFalse(control_plane_pending_wait_same_identity(first, different_wait))
+
+    def test_closure_kernel_normalizes_controller_and_role_rows(self) -> None:
+        controller = closure_kernel.classify_closure(
+            "controller_action",
+            {"status": "resolved", "router_reconciliation_status": "reconciled"},
+        )
+        self.assertFalse(controller.blocks_progress)
+        self.assertEqual(controller.classification, closure_kernel.CLOSURE_CLOSED_SUCCESS)
+
+        incomplete_controller = closure_kernel.classify_closure(
+            "controller_action",
+            {"status": "done"},
+        )
+        self.assertTrue(incomplete_controller.blocks_progress)
+        self.assertEqual(incomplete_controller.classification, closure_kernel.CLOSURE_REPAIR_REQUIRED)
+
+        target_busy = closure_kernel.classify_closure(
+            "pm_role_work_target",
+            {"status": "packet_relayed"},
+        )
+        self.assertTrue(target_busy.blocks_progress)
+
+        target_done_pm_busy = closure_kernel.classify_closure(
+            "pm_role_work_target",
+            {"status": "result_returned"},
+        )
+        self.assertFalse(target_done_pm_busy.blocks_progress)
+
+        pm_busy = closure_kernel.classify_closure(
+            "pm_role_work_pm",
+            {"status": "result_returned"},
+        )
+        self.assertTrue(pm_busy.blocks_progress)
+
+        unknown = closure_kernel.classify_closure(
+            "worker_result",
+            {"status": "new_closed_word"},
+        )
+        self.assertTrue(unknown.blocks_progress)
+        self.assertEqual(unknown.classification, closure_kernel.CLOSURE_UNKNOWN_NEEDS_RECHECK)
 
 
 class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):

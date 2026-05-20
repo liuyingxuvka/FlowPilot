@@ -2048,7 +2048,60 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertNotEqual(action["action_type"], "await_current_scope_reconciliation")
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(any(
-            item.get("label") == "router_rechecks_after_current_scope_reconciliation_cleared"
-            for item in state.get("history", [])
-        ))
+        labels = [item.get("label") for item in state.get("history", []) if isinstance(item, dict)]
+        self.assertTrue(
+            {
+                "router_rechecks_after_current_scope_reconciliation_cleared",
+                "router_superseded_resolved_current_scope_wait",
+            }
+            & set(labels)
+        )
+    def test_startup_pre_review_uses_closure_kernel_for_resolved_rows(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        flags = state.setdefault("flags", {})
+        for flag in (
+            "banner_emitted",
+            "roles_started",
+            "role_core_prompts_injected",
+            "controller_role_confirmed",
+            "startup_mechanical_audit_written",
+            "startup_display_status_written",
+            "continuation_binding_recorded",
+            *router._startup_pre_review_card_flags(),  # type: ignore[attr-defined]
+        ):
+            flags[flag] = True
+        state.pop("active_control_blocker", None)
+        bootstrap = self.bootstrap_state(root)
+        bootstrap.setdefault("flags", {})["banner_emitted"] = True
+        bootstrap.setdefault("flags", {})["roles_started"] = True
+        router.write_json(router.bootstrap_state_path(root), bootstrap)
+        return_ledger_path = run_root / "return_event_ledger.json"
+        if return_ledger_path.exists():
+            return_ledger = read_json(return_ledger_path)
+            return_ledger["pending_returns"] = []
+            router.write_json(return_ledger_path, return_ledger)
+        resolved_action_id = None
+        action_dir = run_root / "runtime" / "controller_actions"
+        if action_dir.exists():
+            for action_path in sorted(action_dir.glob("*.json")):
+                entry = read_json(action_path)
+                if entry.get("schema_version") != router.CONTROLLER_ACTION_SCHEMA:
+                    continue
+                entry["status"] = "done"
+                entry["router_reconciliation_status"] = "reconciled"
+                entry["router_reconciled_at"] = router.utc_now()
+                if resolved_action_id is None and router._controller_action_is_ordinary_work_row(entry):  # type: ignore[attr-defined]
+                    entry["status"] = "resolved"
+                    resolved_action_id = entry.get("action_id")
+                router.write_json(action_path, entry)
+        self.assertIsNotNone(resolved_action_id)
+        router.save_run_state(run_root, state)
+
+        blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
+
+        self.assertEqual(
+            [item for item in blockers if item.get("kind") == "pending_startup_controller_row"],
+            [],
+        )

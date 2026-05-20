@@ -52,6 +52,18 @@ HAZARD_EXPECTED_FAILURES = {
     model.STATEFUL_POSTCONDITION_REQUEUED_AFTER_DRIFT: (
         "same stateful controller action was requeued after reconciled postcondition drift"
     ),
+    model.RESOLVED_RECONCILED_ROW_COUNTED_PENDING: (
+        "closed Controller obligation row was counted as a pending blocker"
+    ),
+    model.CLOSED_STATUS_VOCABULARY_DRIFT: (
+        "closed Controller obligation row was counted as a pending blocker"
+    ),
+    model.NON_CONTROLLER_CLOSED_OBLIGATION_COUNTED_PENDING: (
+        "closed non-Controller obligation row was counted as a pending blocker"
+    ),
+    model.UNKNOWN_CLOSURE_CLASSIFICATION_COUNTED_CLEAN: (
+        "unknown closure classification was treated as clean"
+    ),
 }
 
 
@@ -78,6 +90,16 @@ def _state_id(state: model.State) -> str:
         f"skipped={state.stateful_postcondition_reapply_skipped_as_already_reconciled},"
         f"requeued={state.stateful_postcondition_same_action_requeued},"
         f"repair={state.stateful_postcondition_repair_or_blocker_recorded}|"
+        f"controller_row={state.controller_obligation_status},"
+        f"{state.controller_obligation_reconciliation_status},"
+        f"canonical_closed={state.controller_obligation_closed_by_canonical_predicate},"
+        f"counted_pending={state.controller_obligation_counted_pending_by_blocker_scan}|"
+        f"source_obligation={state.source_obligation_kind},"
+        f"{state.source_obligation_status},"
+        f"class={state.source_obligation_closure_classification},"
+        f"kernel_closed={state.source_obligation_closed_by_kernel},"
+        f"local_pending={state.source_obligation_counted_pending_by_local_scan},"
+        f"unknown_cleared={state.source_obligation_unknown_cleared}|"
         f"review_created={state.review_created_obligation_pending},"
         f"{state.review_created_obligation_closed}|exit={state.scope_exited}|"
         f"ack={state.ack_returned}|semantic={state.semantic_work_completed}|"

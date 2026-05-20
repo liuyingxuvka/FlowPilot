@@ -1,17 +1,68 @@
 {
-  "checked_at": "2026-05-20T10:10:33.496614+00:00",
+  "checked_at": "2026-05-20T11:46:43.916574+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=36",
+    "summary": "sequences=2 initial_states=1 traces=54",
     "violation_count": 0
   },
   "hazard_checks": {
     "failures": [],
     "hazards": {
+      "closed_status_vocabulary_blocks_passive_wait": {
+        "detected": true,
+        "expected_failure": "closed Controller row was counted as pending by a noncanonical blocker scan",
+        "failures": [
+          "stale passive wait remained unresolved after prerequisite resolved",
+          "stale passive wait stayed in open scheduler rows",
+          "closed Controller row was counted as pending by a noncanonical blocker scan",
+          "resolved+reconciled Controller row bypassed the canonical closure predicate"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": false,
+          "closed_controller_row_counted_pending": true,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "reconciled",
+          "controller_obligation_status": "resolved",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
+          "passive_wait_in_open_rows": true,
+          "passive_wait_open": true,
+          "passive_wait_prerequisite_resolved": true,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "closed_status_vocabulary_blocks_passive_wait",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
+        }
+      },
       "foreground_receipt_writes_scheduler_during_daemon": {
         "detected": true,
         "expected_failure": "foreground receipt path mutated Router scheduler ledger while daemon owned folding",
@@ -23,9 +74,15 @@
           "action_local_receipt_metadata_written": false,
           "batch_member_roles": [],
           "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": false,
           "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": true,
           "daemon_critical_json_access_denied": false,
           "daemon_deferred_tick": false,
@@ -38,6 +95,7 @@
           "fresh_runtime_write_activity": false,
           "legacy_pending_action_present": false,
           "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": false,
           "passive_wait_open": false,
           "passive_wait_prerequisite_resolved": false,
@@ -50,7 +108,64 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": false,
           "signed_envelope_relayed": false,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
+        }
+      },
+      "non_controller_closed_row_blocks_wait": {
+        "detected": true,
+        "expected_failure": "closed non-Controller row was counted as pending by a noncanonical blocker scan",
+        "failures": [
+          "stale passive wait remained unresolved after prerequisite resolved",
+          "stale passive wait stayed in open scheduler rows",
+          "closure surface bypassed the canonical closure predicate",
+          "closed non-Controller row was counted as pending by a noncanonical blocker scan"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [
+            "controller_action"
+          ],
+          "closure_surfaces": [
+            "pm_role_work",
+            "packet_lifecycle"
+          ],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": true,
+          "passive_wait_in_open_rows": true,
+          "passive_wait_open": true,
+          "passive_wait_prerequisite_resolved": true,
+          "passive_wait_superseded_or_reconciled": false,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "non_controller_closed_row_blocks_wait",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
         }
       },
       "pending_action_overrides_controller_ledger": {
@@ -64,9 +179,15 @@
           "action_local_receipt_metadata_written": false,
           "batch_member_roles": [],
           "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": true,
           "controller_action_wait_mode": "receipt_only",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": false,
           "daemon_critical_json_access_denied": false,
           "daemon_deferred_tick": false,
@@ -79,6 +200,7 @@
           "fresh_runtime_write_activity": false,
           "legacy_pending_action_present": true,
           "legacy_pending_apply_required": true,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": false,
           "passive_wait_open": false,
           "passive_wait_prerequisite_resolved": false,
@@ -91,7 +213,8 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": false,
           "signed_envelope_relayed": false,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
         }
       },
       "readback_permission_kills_daemon": {
@@ -105,9 +228,15 @@
           "action_local_receipt_metadata_written": false,
           "batch_member_roles": [],
           "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": false,
           "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": false,
           "daemon_critical_json_access_denied": true,
           "daemon_deferred_tick": false,
@@ -120,6 +249,7 @@
           "fresh_runtime_write_activity": true,
           "legacy_pending_action_present": false,
           "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": false,
           "passive_wait_open": false,
           "passive_wait_prerequisite_resolved": false,
@@ -132,7 +262,8 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": false,
           "signed_envelope_relayed": false,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
         }
       },
       "signed_envelope_mutated_for_projection": {
@@ -145,9 +276,15 @@
           "action_local_receipt_metadata_written": false,
           "batch_member_roles": [],
           "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": false,
           "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": false,
           "daemon_critical_json_access_denied": false,
           "daemon_deferred_tick": false,
@@ -160,6 +297,7 @@
           "fresh_runtime_write_activity": false,
           "legacy_pending_action_present": false,
           "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": false,
           "passive_wait_open": false,
           "passive_wait_prerequisite_resolved": false,
@@ -172,7 +310,8 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": true,
           "signed_envelope_relayed": true,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
         }
       },
       "stale_passive_wait_left_open": {
@@ -186,9 +325,15 @@
           "action_local_receipt_metadata_written": false,
           "batch_member_roles": [],
           "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": false,
           "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": false,
           "daemon_critical_json_access_denied": false,
           "daemon_deferred_tick": false,
@@ -201,6 +346,7 @@
           "fresh_runtime_write_activity": false,
           "legacy_pending_action_present": false,
           "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": true,
           "passive_wait_open": true,
           "passive_wait_prerequisite_resolved": true,
@@ -213,7 +359,60 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": false,
           "signed_envelope_relayed": false,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
+        }
+      },
+      "unknown_closure_classification_clears_wait": {
+        "detected": true,
+        "expected_failure": "unknown closure classification cleared a wait",
+        "failures": [
+          "unknown closure classification cleared a wait"
+        ],
+        "state": {
+          "action_local_receipt_metadata_written": false,
+          "batch_member_roles": [],
+          "batch_returned_roles": [],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [
+            "worker_result"
+          ],
+          "closure_surfaces": [
+            "worker_result"
+          ],
+          "controller_action_apply_required": false,
+          "controller_action_ledger_authority": false,
+          "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
+          "controller_receipt_persisted": false,
+          "daemon_critical_json_access_denied": false,
+          "daemon_deferred_tick": false,
+          "daemon_live": true,
+          "daemon_lock_released_error": false,
+          "daemon_mode": true,
+          "decision_used_controller_ledger": false,
+          "event_inferred_role": "",
+          "foreground_mutated_scheduler": false,
+          "fresh_runtime_write_activity": false,
+          "legacy_pending_action_present": false,
+          "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
+          "passive_wait_in_open_rows": false,
+          "passive_wait_open": true,
+          "passive_wait_prerequisite_resolved": false,
+          "passive_wait_superseded_or_reconciled": true,
+          "pending_action_labeled_projection": false,
+          "projected_missing_roles": [],
+          "scenario": "unknown_closure_classification_clears_wait",
+          "scheduler_fold_owner": "daemon",
+          "scheduler_row_folded_from_receipt": false,
+          "sidecar_projection_written": false,
+          "signed_envelope_mutated": false,
+          "signed_envelope_relayed": false,
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": true
         }
       },
       "worker_event_collapses_batch_to_worker_a": {
@@ -231,9 +430,15 @@
           "batch_returned_roles": [
             "worker_a"
           ],
+          "canonical_closed_row_predicate_used": true,
+          "closed_controller_row_counted_pending": false,
+          "closure_kernel_used_for_surfaces": [],
+          "closure_surfaces": [],
           "controller_action_apply_required": false,
           "controller_action_ledger_authority": false,
           "controller_action_wait_mode": "none",
+          "controller_obligation_reconciliation_status": "none",
+          "controller_obligation_status": "none",
           "controller_receipt_persisted": false,
           "daemon_critical_json_access_denied": false,
           "daemon_deferred_tick": false,
@@ -246,6 +451,7 @@
           "fresh_runtime_write_activity": false,
           "legacy_pending_action_present": false,
           "legacy_pending_apply_required": false,
+          "non_controller_closed_row_counted_pending": false,
           "passive_wait_in_open_rows": false,
           "passive_wait_open": false,
           "passive_wait_prerequisite_resolved": false,
@@ -260,7 +466,8 @@
           "sidecar_projection_written": false,
           "signed_envelope_mutated": false,
           "signed_envelope_relayed": false,
-          "status": "rejected"
+          "status": "rejected",
+          "unknown_closure_classification_cleared_wait": false
         }
       }
     },
@@ -277,25 +484,31 @@
   "safe_graph": {
     "accepted_scenarios": [
       "batch_wait_members_project_missing_roles",
+      "closed_status_vocabulary_uses_canonical_predicate",
+      "cross_surface_closure_kernel_uses_canonical_predicate",
       "pending_action_projection_demoted",
       "receipt_append_daemon_folds_scheduler",
       "signed_envelope_projection_sidecar",
       "stale_passive_wait_superseded",
-      "transient_readback_permission_deferred"
+      "transient_readback_permission_deferred",
+      "unknown_closure_classification_remains_blocking"
     ],
-    "edge_count": 24,
+    "edge_count": 36,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
+      "closed_status_vocabulary_blocks_passive_wait",
       "foreground_receipt_writes_scheduler_during_daemon",
+      "non_controller_closed_row_blocks_wait",
       "pending_action_overrides_controller_ledger",
       "readback_permission_kills_daemon",
       "signed_envelope_mutated_for_projection",
       "stale_passive_wait_left_open",
+      "unknown_closure_classification_clears_wait",
       "worker_event_collapses_batch_to_worker_a"
     ],
-    "state_count": 25
+    "state_count": 37
   }
 }

@@ -10,6 +10,9 @@ Risk intent:
   worker event role;
 - close stale passive/current-scope wait rows after their prerequisite is
   already resolved;
+- force all blocker scans to use one canonical closed-row predicate, so
+  resolved+reconciled and other terminal Controller states cannot be counted as
+  pending work by another table;
 - preserve signed packet/result envelope immutability.
 """
 
@@ -27,6 +30,9 @@ VALID_SCENARIOS = (
     "pending_action_projection_demoted",
     "batch_wait_members_project_missing_roles",
     "stale_passive_wait_superseded",
+    "closed_status_vocabulary_uses_canonical_predicate",
+    "cross_surface_closure_kernel_uses_canonical_predicate",
+    "unknown_closure_classification_remains_blocking",
     "signed_envelope_projection_sidecar",
 )
 
@@ -36,6 +42,9 @@ NEGATIVE_SCENARIOS = (
     "pending_action_overrides_controller_ledger",
     "worker_event_collapses_batch_to_worker_a",
     "stale_passive_wait_left_open",
+    "closed_status_vocabulary_blocks_passive_wait",
+    "non_controller_closed_row_blocks_wait",
+    "unknown_closure_classification_clears_wait",
     "signed_envelope_mutated_for_projection",
 )
 
@@ -87,6 +96,16 @@ class State:
     passive_wait_prerequisite_resolved: bool = False
     passive_wait_superseded_or_reconciled: bool = False
     passive_wait_in_open_rows: bool = False
+
+    controller_obligation_status: str = "none"
+    controller_obligation_reconciliation_status: str = "none"
+    canonical_closed_row_predicate_used: bool = True
+    closed_controller_row_counted_pending: bool = False
+
+    closure_surfaces: tuple[str, ...] = ()
+    closure_kernel_used_for_surfaces: tuple[str, ...] = ()
+    non_controller_closed_row_counted_pending: bool = False
+    unknown_closure_classification_cleared_wait: bool = False
 
     signed_envelope_relayed: bool = False
     signed_envelope_mutated: bool = False
@@ -153,6 +172,40 @@ def scenario_state(scenario: str) -> State:
             passive_wait_superseded_or_reconciled=True,
             passive_wait_in_open_rows=False,
         )
+    if scenario == "closed_status_vocabulary_uses_canonical_predicate":
+        return _accepted(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=True,
+            passive_wait_superseded_or_reconciled=True,
+            passive_wait_in_open_rows=False,
+            controller_obligation_status="resolved",
+            controller_obligation_reconciliation_status="reconciled",
+            canonical_closed_row_predicate_used=True,
+            closed_controller_row_counted_pending=False,
+        )
+    if scenario == "cross_surface_closure_kernel_uses_canonical_predicate":
+        return _accepted(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=True,
+            passive_wait_superseded_or_reconciled=True,
+            passive_wait_in_open_rows=False,
+            closure_surfaces=("controller_action", "pm_role_work", "packet_lifecycle", "ack_return"),
+            closure_kernel_used_for_surfaces=("controller_action", "pm_role_work", "packet_lifecycle", "ack_return"),
+            non_controller_closed_row_counted_pending=False,
+        )
+    if scenario == "unknown_closure_classification_remains_blocking":
+        return _accepted(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=False,
+            passive_wait_superseded_or_reconciled=False,
+            passive_wait_in_open_rows=True,
+            closure_surfaces=("worker_result",),
+            closure_kernel_used_for_surfaces=("worker_result",),
+            unknown_closure_classification_cleared_wait=False,
+        )
     if scenario == "signed_envelope_projection_sidecar":
         return _accepted(
             scenario,
@@ -201,6 +254,40 @@ def scenario_state(scenario: str) -> State:
             passive_wait_prerequisite_resolved=True,
             passive_wait_superseded_or_reconciled=False,
             passive_wait_in_open_rows=True,
+        )
+    if scenario == "closed_status_vocabulary_blocks_passive_wait":
+        return _rejected(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=True,
+            passive_wait_superseded_or_reconciled=False,
+            passive_wait_in_open_rows=True,
+            controller_obligation_status="resolved",
+            controller_obligation_reconciliation_status="reconciled",
+            canonical_closed_row_predicate_used=False,
+            closed_controller_row_counted_pending=True,
+        )
+    if scenario == "non_controller_closed_row_blocks_wait":
+        return _rejected(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=True,
+            passive_wait_superseded_or_reconciled=False,
+            passive_wait_in_open_rows=True,
+            closure_surfaces=("pm_role_work", "packet_lifecycle"),
+            closure_kernel_used_for_surfaces=("controller_action",),
+            non_controller_closed_row_counted_pending=True,
+        )
+    if scenario == "unknown_closure_classification_clears_wait":
+        return _rejected(
+            scenario,
+            passive_wait_open=True,
+            passive_wait_prerequisite_resolved=False,
+            passive_wait_superseded_or_reconciled=True,
+            passive_wait_in_open_rows=False,
+            closure_surfaces=("worker_result",),
+            closure_kernel_used_for_surfaces=("worker_result",),
+            unknown_closure_classification_cleared_wait=True,
         )
     if scenario == "signed_envelope_mutated_for_projection":
         return _rejected(
@@ -257,6 +344,26 @@ def consolidation_failures(state: State) -> list[str]:
         failures.append("stale passive wait remained unresolved after prerequisite resolved")
     if state.passive_wait_prerequisite_resolved and state.passive_wait_in_open_rows:
         failures.append("stale passive wait stayed in open scheduler rows")
+    if state.closed_controller_row_counted_pending:
+        failures.append("closed Controller row was counted as pending by a noncanonical blocker scan")
+    if (
+        state.controller_obligation_status == "resolved"
+        and state.controller_obligation_reconciliation_status == "reconciled"
+        and not state.canonical_closed_row_predicate_used
+    ):
+        failures.append("resolved+reconciled Controller row bypassed the canonical closure predicate")
+    if state.closure_surfaces:
+        missing_surfaces = tuple(
+            surface
+            for surface in state.closure_surfaces
+            if surface not in set(state.closure_kernel_used_for_surfaces)
+        )
+        if missing_surfaces:
+            failures.append("closure surface bypassed the canonical closure predicate")
+    if state.non_controller_closed_row_counted_pending:
+        failures.append("closed non-Controller row was counted as pending by a noncanonical blocker scan")
+    if state.unknown_closure_classification_cleared_wait:
+        failures.append("unknown closure classification cleared a wait")
     if state.signed_envelope_relayed and state.signed_envelope_mutated:
         failures.append("signed packet or result envelope was mutated after relay")
     if state.signed_envelope_relayed and not state.sidecar_projection_written and not state.signed_envelope_mutated:

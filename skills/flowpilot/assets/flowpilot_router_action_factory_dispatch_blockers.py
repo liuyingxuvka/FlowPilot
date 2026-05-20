@@ -6,6 +6,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+import flowpilot_closure_kernel
 from flowpilot_router_protocol_catalog import *
 
 _BOUND_ROUTER: ModuleType | None = None
@@ -59,7 +60,7 @@ def _dispatch_gate_packet_blocker(
             continue
         holder = str(record.get("active_packet_holder") or "").strip()
         status = str(record.get("active_packet_status") or record.get("status") or "").strip()
-        if holder not in target_roles or not _packet_status_allows_current_work(status):
+        if holder not in target_roles or not flowpilot_closure_kernel.closure_blocks_progress("packet_holder", record):
             continue
         if _dispatch_gate_same_obligation_instruction(action, record, run_state):
             continue
@@ -175,7 +176,8 @@ def _dispatch_gate_pm_role_work_blocker(
             continue
         status = str(record.get("status") or "").strip()
         to_role = str(record.get("to_role") or "").strip()
-        if to_role in target_roles and status in PM_ROLE_WORK_TARGET_BUSY_STATUSES:
+        target_closure = flowpilot_closure_kernel.classify_closure("pm_role_work_target", record)
+        if to_role in target_roles and target_closure.blocks_progress:
             return {
                 "source": "pm_role_work_index",
                 "source_path": project_relative(project_root, index_path),
@@ -184,11 +186,14 @@ def _dispatch_gate_pm_role_work_blocker(
                 "packet_id": packet_id or None,
                 "request_id": request_id or None,
                 "pm_role_work_status": status,
+                "closure_classification": target_closure.classification,
+                "closure_reason": target_closure.reason,
                 "blocked_work_package_class": _dispatch_gate_action_work_class(action),
                 "blocked_output_events": _dispatch_gate_output_events_for_action(action),
                 "allowed_external_events": [ROLE_WORK_RESULT_RETURNED_EVENT],
             }
-        if "project_manager" in target_roles and status in PM_ROLE_WORK_PM_BUSY_STATUSES:
+        pm_closure = flowpilot_closure_kernel.classify_closure("pm_role_work_pm", record)
+        if "project_manager" in target_roles and pm_closure.blocks_progress:
             return {
                 "source": "pm_role_work_index",
                 "source_path": project_relative(project_root, index_path),
@@ -197,6 +202,8 @@ def _dispatch_gate_pm_role_work_blocker(
                 "packet_id": packet_id or None,
                 "request_id": request_id or None,
                 "pm_role_work_status": status,
+                "closure_classification": pm_closure.classification,
+                "closure_reason": pm_closure.reason,
                 "blocked_work_package_class": _dispatch_gate_action_work_class(action),
                 "blocked_output_events": _dispatch_gate_output_events_for_action(action),
                 "allowed_external_events": [PM_ROLE_WORK_RESULT_DECISION_EVENT],
@@ -223,9 +230,8 @@ def _dispatch_gate_passive_wait_blocker(
     for item in passive_waits:
         if not isinstance(item, dict):
             continue
-        status = str(item.get("status") or "").strip()
-        reconciled = str(item.get("router_reconciliation_status") or "").strip()
-        if status in {"done", "resolved", "skipped", "superseded"} or reconciled == "reconciled":
+        closure = flowpilot_closure_kernel.classify_closure("controller_passive_wait", item)
+        if not closure.blocks_progress:
             continue
         target = str(item.get("waiting_for_role") or item.get("to_role") or item.get("target_role") or "").strip()
         if target not in target_roles:

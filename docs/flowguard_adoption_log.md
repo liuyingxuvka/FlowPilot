@@ -16243,3 +16243,67 @@ Skipped steps:
 - The first parallel local-install audit raced with the install sync and saw the pre-sync digest; final serial audit/check passed and is the counted evidence.
 - Pre-existing peer edits in `autonomous-concept-ui-redesign`, wait-reminder receipt replay files, foreground controller tests, and generated result JSONs were preserved.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-20 - FlowPilot Closed-Row Vocabulary Model Miss
+
+### Evidence Summary
+
+- Investigated live run `run-20260520-105238` and found the repeated stuck point was not a live daemon failure: a startup pre-review passive wait stayed open because a `check_card_bundle_return_event` row with `status=resolved` and `router_reconciliation_status=reconciled` was still counted as pending by one blocker scan.
+- Classified the miss as state too coarse plus invariant too weak: the previous models said "prerequisite resolved" but did not model the concrete closure vocabulary used by production blocker scans.
+- Upgraded `flowpilot_current_scope_pre_review_reconciliation_model.py` with observed and generalized status-vocabulary hazards: `resolved_reconciled_row_counted_pending` and `closed_status_vocabulary_drift`.
+- Upgraded `flowpilot_control_plane_ledger_consolidation_model.py` with a control-plane hazard for noncanonical blocker scans that count closed Controller rows as pending.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m py_compile simulations\flowpilot_current_scope_pre_review_reconciliation_model.py simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py simulations\flowpilot_control_plane_ledger_consolidation_model.py simulations\run_flowpilot_control_plane_ledger_consolidation_checks.py`.
+- OK: `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py --json-out simulations\flowpilot_current_scope_pre_review_reconciliation_results.json`, now detecting both `resolved_reconciled_row_counted_pending` and `closed_status_vocabulary_drift`.
+- OK: `python simulations\run_flowpilot_control_plane_ledger_consolidation_checks.py --json-out simulations\flowpilot_control_plane_ledger_consolidation_results.json`, now detecting `closed_status_vocabulary_blocks_passive_wait`.
+
+### Findings
+
+- The root class is not a new daemon or worker failure. It is closure-vocabulary drift: different tables and scans disagree about whether a row is closed.
+- A row can be semantically closed in the Controller action ledger but still block startup if a blocker scan hand-lists only part of the closed-status set.
+- The minimal root runtime repair should be one shared `is_controller_obligation_closed` predicate used by blocker scans, scheduler open-row projection, passive-wait supersession, and current-status summaries.
+
+### Skipped Or Limited
+
+- No production FlowPilot runtime code was modified in this pass.
+- No install sync, GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-20 - FlowPilot Closure Kernel Runtime Repair
+
+### Evidence Summary
+
+- Added OpenSpec change `unify-flowpilot-closure-kernel` for the narrow root repair: one shared closure classifier for Controller rows, passive waits, PM/Worker role-work rows, packet holder state, ACK returns, and active control blockers.
+- Upgraded the current-scope and control-plane FlowGuard models so the same class of bug is caught outside Controller-only rows: closed non-Controller obligations must not keep waits open, while unknown or incomplete closure evidence must still block.
+- Added `flowpilot_closure_kernel.py` and routed the highest-risk blocker scans through it without weakening signed-artifact immutability, semantic result gates, ACK-vs-work separation, or worker information isolation.
+- Added focused runtime coverage for resolved/reconciled Controller rows, PM role-work closure, packet holder closure, unknown evidence, and startup pre-review blocker classification.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate --changes "unify-flowpilot-closure-kernel"`.
+- OK: `python -m py_compile` for touched runtime, model, runner, and test files.
+- OK: `python simulations\run_flowpilot_current_scope_pre_review_reconciliation_checks.py --json-out simulations\flowpilot_current_scope_pre_review_reconciliation_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_ledger_consolidation_checks.py --json-out simulations\flowpilot_control_plane_ledger_consolidation_results.json`.
+- OK: focused closure-kernel, startup pre-review, ACK return, dispatch gate, Controller runtime, and control-plane contract unittests.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-20 14:05:21`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-20 14:05:21`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: final `python scripts\audit_local_install_sync.py --json`.
+- OK: final `python scripts\install_flowpilot.py --check --json`.
+- OK: final `python scripts\check_install.py --json`, 722 checks passed.
+
+### Findings
+
+- The repeated stuck behavior came from duplicated local "is this done?" lists. Different tables could describe the same practical event differently, so one scanner could reopen something another scanner had already closed.
+- The repair collapses those lists into a single small kernel. Each caller still keeps its own table and role boundary, but it no longer invents its own closure vocabulary.
+- Unknown or incomplete evidence remains conservative: it blocks progress instead of being silently treated as done.
+- This is a structural reduction, not a broad physical table merge. It removes repeated closure logic while preserving Controller foreground monitoring and worker isolation.
+
+### Skipped Or Limited
+
+- The broad combined ACK/router runtime command exceeded a foreground timeout once; the same affected coverage was rerun in smaller suites and passed.
+- Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and `simulations/flowpilot_model_test_alignment_results.json` were preserved and were not staged as part of this repair.
+- No GitHub push, tag, remote release, or public publication was performed.

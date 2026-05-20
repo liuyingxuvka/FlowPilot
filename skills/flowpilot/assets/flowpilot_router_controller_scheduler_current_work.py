@@ -17,6 +17,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable
 
 import card_runtime
+import flowpilot_closure_kernel
 import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
@@ -86,10 +87,7 @@ def _current_work_from_action(router: ModuleType, action: dict[str, Any], *, sou
 
 def _packet_status_allows_current_work(router: ModuleType, status: str) -> bool:
     _bind_router(router)
-    normalized = status.strip().lower()
-    if not normalized:
-        return False
-    return normalized not in {'done', 'complete', 'completed', 'cancelled', 'canceled', 'closed', 'stopped_by_user', 'result-returned', 'result_returned', 'result-absorbed', 'result_absorbed', 'absorbed', 'superseded'}
+    return flowpilot_closure_kernel.closure_blocks_progress('packet_holder', {'status': status})
 
 def _current_work_from_packet_ledger(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any] | None:
     _bind_router(router)
