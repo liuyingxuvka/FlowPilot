@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-FlowPilot is a FlowGuard-based project-control layer for AI coding agents.
+FlowPilot is a FlowGuard-based project-control layer for large AI-agent software and engineering work.
 FlowGuard is the finite-state simulator/checker at the center of the method.
 FlowPilot applies it to both the product/function behavior being built and the
 agent's live development process while the work is running.
@@ -29,8 +29,7 @@ mutation, stale-evidence reset, and final completion ledger review.
 
 ## Hero Tagline
 
-Finite-state project control for AI agents that model and correct development
-work in real time.
+FlowGuard-based project control for large AI-agent software and engineering work.
 
 ## Visual Concept
 
