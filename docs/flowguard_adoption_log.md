@@ -16165,3 +16165,43 @@ Skipped steps:
 - `python simulations\run_meta_checks.py --full` was also attempted and failed because regenerating `flowpilot_persistent_router_daemon_results.json` exceeded the meta thin-parent threshold (`child_result_exceeds_thin_threshold`). That generated failure artifact was not counted as pass evidence.
 - Broad dispatch-gate aggregate tests include several intentionally slow current-node cases; those heavy cases were run individually and passed, while the broad aggregate timeout is not counted as pass evidence.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-20 - FlowPilot Control-Plane Contract Kernel
+
+### Evidence Summary
+
+- Added the `unify-flowpilot-control-plane-contracts` OpenSpec change for artifact authority, Controller action identity, stateful receipt effects, self-check vocabulary, and reviewer formal gate packages.
+- Extended the existing control-plane friction FlowGuard model with known-bad hazards for signed envelope mutation, migration sidecar gaps, control-blocker identity collisions, closed-row reuse, missing delivery postconditions, `status: pass` parser drift, and missing PM formal gate artifacts.
+- Added a narrow runtime contract helper so scheduler identity, action fingerprints, completion class overrides, and signed-envelope immutability decisions use one shared source.
+- Legacy material migration now preserves Controller-relayed envelope bytes and writes sidecar/index projection records.
+- `handle_control_blocker` is now stateful receipt work with a per-blocker delivery postcondition.
+- PM absorbed package dispositions now write reviewer-readable formal gate packages with path/hash/scope and without raw worker result bodies.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate unify-flowpilot-control-plane-contracts --strict`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp\flowguard_control_plane_contract_precheck.json`, 3232 traces, 0 violations.
+- OK: focused compile checks for touched runtime/model/test files.
+- OK: `python -m pytest tests\test_flowpilot_control_plane_contracts.py tests\test_flowpilot_output_contracts.py -q`, 11 passed.
+- OK: `python -m pytest tests\test_flowpilot_full_diagnostic_contracts.py tests\test_flowpilot_asset_surface_contracts.py tests\test_flowpilot_installer_dependencies.py -q`, 14 passed, 366 subtests passed.
+- OK: `python -m pytest tests\test_flowguard_result_proof.py -q`, 3 passed.
+- OK: representative targeted runtime unittests for repeated control blockers, delivered control blocker resolution, and material packet relay/write-target behavior.
+- OK: background `python simulations\run_meta_checks.py` via `tmp\flowguard_background\run_meta_checks.*`, exit code 0, status passed, proof reused false.
+- OK: background `python simulations\run_capability_checks.py` via `tmp\flowguard_background\run_capability_checks.*`, exit code 0, status passed, proof reused false.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- The common root was not five unrelated bugs; it was missing contract authority between immutable signed artifacts, mutable indexes, Controller rows, Router obligations, and reviewer-readable PM gate packages.
+- Identity must include the blocker artifact, not only label/to-role, or Scheduler can put a new blocker inside an old Controller row.
+- Signed envelope repair must choose sidecar/index projection over editing the hash-bound original.
+- A PM formal gate release can hide raw worker bodies only when the replacement package path/hash/scope exists.
+
+### Skipped Or Limited
+
+- Full wrapper unittest modules `tests.test_flowpilot_router_runtime_control_blockers` and `tests.test_flowpilot_router_runtime_packets` timed out at 244 seconds and are not counted as pass evidence. Representative targeted runtime tests passed.
+- Existing peer edits in `autonomous-concept-ui-redesign`, wait-reminder receipt replay files, foreground controller tests, and generated result JSONs were preserved for staging.
+- No GitHub push, tag, remote release, or public publication was performed.

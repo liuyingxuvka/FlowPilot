@@ -25,6 +25,7 @@ import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
+from flowpilot_control_plane_contracts import control_plane_envelope_is_hash_bound
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
@@ -109,6 +110,8 @@ def _repair_legacy_material_packet_contracts(router: ModuleType, project_root: P
         envelope = read_json_if_exists(envelope_path)
         if not isinstance(envelope, dict):
             continue
+        original_envelope = json.loads(json.dumps(envelope))
+        envelope_hash_bound = control_plane_envelope_is_hash_bound(envelope)
         envelope_changed = False
         for key, value in (('result_body_path', result_body_rel), ('expected_result_body_path', result_body_rel), ('write_target_path', result_body_rel), ('result_envelope_path', result_envelope_rel), ('expected_result_envelope_path', result_envelope_rel)):
             if envelope.get(key) != value:
@@ -143,9 +146,15 @@ def _repair_legacy_material_packet_contracts(router: ModuleType, project_root: P
             envelope['supersedes'] = [replacement_for]
             envelope_changed = True
         if envelope_changed:
-            envelope['legacy_material_packet_contract_migration'] = {'schema_version': 'flowpilot.legacy_material_packet_contract_migration.v1', 'sealed_packet_body_not_read': True, 'sealed_packet_body_not_rewritten': True, 'envelope_result_write_target_backfilled': True, 'body_hash_preserved': True, 'migrated_at': repaired_at}
-            write_json(envelope_path, envelope)
-            repaired.append({'packet_id': packet_id, 'packet_envelope_path': project_relative(project_root, envelope_path), 'result_body_path': result_body_rel, 'result_envelope_path': result_envelope_rel, 'sealed_packet_body_not_read': True, 'sealed_packet_body_not_rewritten': True})
+            migration_record = {'packet_id': packet_id, 'packet_envelope_path': project_relative(project_root, envelope_path), 'result_body_path': result_body_rel, 'result_envelope_path': result_envelope_rel, 'sealed_packet_body_not_read': True, 'sealed_packet_body_not_rewritten': True, 'projection_fields_backfilled': ['result_body_path', 'result_envelope_path', 'write_target_path', 'result_write_target'], 'migrated_at': repaired_at}
+            if envelope_hash_bound:
+                relay = original_envelope.get('controller_relay') if isinstance(original_envelope.get('controller_relay'), dict) else {}
+                migration_record.update({'migration_mode': 'sidecar_only_signed_envelope_preserved', 'signed_envelope_preserved': True, 'signed_envelope_rewritten': False, 'controller_relay_envelope_hash': relay.get('envelope_hash')})
+            else:
+                envelope['legacy_material_packet_contract_migration'] = {'schema_version': 'flowpilot.legacy_material_packet_contract_migration.v1', 'sealed_packet_body_not_read': True, 'sealed_packet_body_not_rewritten': True, 'envelope_result_write_target_backfilled': True, 'body_hash_preserved': True, 'migrated_at': repaired_at}
+                write_json(envelope_path, envelope)
+                migration_record.update({'migration_mode': 'unsigned_envelope_backfilled', 'signed_envelope_preserved': False, 'signed_envelope_rewritten': False})
+            repaired.append(migration_record)
         if record:
             for key, value in (('packet_envelope_path', project_relative(project_root, envelope_path)), ('result_body_path', result_body_rel), ('result_envelope_path', result_envelope_rel), ('expected_result_body_path', result_body_rel), ('write_target_path', result_body_rel)):
                 if record.get(key) != value:
@@ -163,13 +172,14 @@ def _repair_legacy_material_packet_contracts(router: ModuleType, project_root: P
             if ledger_record.get('result_write_target') != target:
                 ledger_record['result_write_target'] = target
                 changed_ledger = True
-            packet_envelope = ledger_record.get('packet_envelope') if isinstance(ledger_record.get('packet_envelope'), dict) else {}
-            for key, value in (('result_body_path', result_body_rel), ('result_envelope_path', result_envelope_rel), ('expected_result_body_path', result_body_rel), ('write_target_path', result_body_rel)):
-                if packet_envelope.get(key) != value:
-                    packet_envelope[key] = value
-                    changed_ledger = True
-            if packet_envelope:
-                ledger_record['packet_envelope'] = packet_envelope
+            if not envelope_hash_bound:
+                packet_envelope = ledger_record.get('packet_envelope') if isinstance(ledger_record.get('packet_envelope'), dict) else {}
+                for key, value in (('result_body_path', result_body_rel), ('result_envelope_path', result_envelope_rel), ('expected_result_body_path', result_body_rel), ('write_target_path', result_body_rel)):
+                    if packet_envelope.get(key) != value:
+                        packet_envelope[key] = value
+                        changed_ledger = True
+                if packet_envelope:
+                    ledger_record['packet_envelope'] = packet_envelope
     if changed_index and isinstance(index, dict):
         index['updated_at'] = repaired_at
         write_json(index_path, index)

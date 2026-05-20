@@ -7,6 +7,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_control_plane_contracts import control_plane_completion_class_override
 from flowpilot_router_errors import RouterError, RouterLedgerWriteInProgress
 
 
@@ -35,6 +36,9 @@ def _controller_action_completion_class(router: ModuleType, action: dict[str, An
         return {'kind': 'router_owned_durable_artifact', 'artifact_kind': 'startup_mechanical_audit', 'postcondition': postcondition or 'startup_mechanical_audit_written'}
     if action_type in {'write_display_surface_status', 'sync_display_plan'}:
         return {'kind': 'display_status', 'artifact_kind': '', 'postcondition': postcondition}
+    override = control_plane_completion_class_override(action, postcondition=postcondition)
+    if override is not None:
+        return override
     if action_type in {'deliver_system_card', 'deliver_system_card_bundle'} or action.get('to_role'):
         return {'kind': 'role_delivery_wait', 'artifact_kind': '', 'postcondition': postcondition}
     if postcondition:

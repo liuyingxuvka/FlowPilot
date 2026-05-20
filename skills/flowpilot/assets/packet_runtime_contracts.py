@@ -337,7 +337,7 @@ _CONTRACT_SELF_CHECK_NEXT_HEADING_RE = re.compile(r"(?im)^\s{0,3}#{1,6}\s+\S")
 _CONTRACT_SELF_CHECK_DECISION_RE = re.compile(
     r"""(?im)
     ["']?
-    self[\s_-]*check[\s_-]*decision
+    (?:self[\s_-]*check[\s_-]*decision|status)
     ["']?
     \s*[:=]\s*
     ["']?

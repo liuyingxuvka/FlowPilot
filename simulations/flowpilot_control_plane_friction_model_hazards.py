@@ -31,6 +31,16 @@ def _safe_base(**changes: object) -> State:
             controller_display_work_escalated_to_pm=False,
             external_keepalive_confirmation_required=True,
             external_keepalive_confirmed=True,
+            signed_envelope_relayed=True,
+            signed_envelope_rewritten_after_relay=False,
+            signed_envelope_migration_sidecar_written=True,
+            signed_envelope_mutable_indexes_backfilled=True,
+            control_blocker_action_identity_includes_blocker=True,
+            controller_action_closed_identity_reused=False,
+            control_blocker_receipt_postcondition_declared=True,
+            control_blocker_receipt_effect_applied=True,
+            self_check_template_status_pass_allowed=True,
+            self_check_parser_status_pass_accepted=True,
             pm_research_package_written=True,
             research_package_has_decision_question=True,
             research_package_has_allowed_sources=True,
@@ -61,6 +71,9 @@ def _safe_base(**changes: object) -> State:
             result_body_open_receipt=True,
             pm_result_disposition_recorded=True,
             pm_formal_review_package_released=True,
+            pm_formal_review_package_has_artifact=True,
+            pm_formal_review_package_hash_recorded=True,
+            pm_formal_review_package_scope_declared=True,
             reviewer_report_written=True,
             reviewer_report_accepted=True,
             pm_material_understanding_written=True,
@@ -212,6 +225,34 @@ def hazard_states() -> dict[str, State]:
         "material_dispatch_allowed_without_preflight": _safe_base(
             material_dispatch_reviewed=False,
             material_dispatch_allowed=True,
+        ),
+        "signed_material_envelope_rewritten_after_relay": _safe_base(
+            signed_envelope_relayed=True,
+            signed_envelope_rewritten_after_relay=True,
+        ),
+        "signed_material_migration_sidecar_missing": _safe_base(
+            signed_envelope_relayed=True,
+            signed_envelope_mutable_indexes_backfilled=True,
+            signed_envelope_migration_sidecar_written=False,
+        ),
+        "control_blocker_identity_missing_blocker_id": _safe_base(
+            control_blocker_action_identity_includes_blocker=False,
+            control_blocker_receipt_postcondition_declared=True,
+        ),
+        "closed_controller_action_reused_for_different_identity": _safe_base(
+            controller_action_closed_identity_reused=True,
+        ),
+        "control_blocker_done_receipt_without_delivery_postcondition": _safe_base(
+            control_blocker_receipt_postcondition_declared=True,
+            control_blocker_receipt_effect_applied=False,
+        ),
+        "self_check_status_pass_rejected": _safe_base(
+            self_check_template_status_pass_allowed=True,
+            self_check_parser_status_pass_accepted=False,
+        ),
+        "pm_formal_gate_package_missing_artifact": _safe_base(
+            pm_formal_review_package_released=True,
+            pm_formal_review_package_has_artifact=False,
         ),
         "reviewer_report_without_result_open_receipt": _safe_base(result_body_open_receipt=False),
         "missing_receipt_blocker_escalated_to_pm": _safe_base(

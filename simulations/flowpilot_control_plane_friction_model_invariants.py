@@ -56,6 +56,18 @@ def reviewer_report_requires_open_receipts(state: State, trace) -> InvariantResu
         )
     return InvariantResult.pass_()
 
+def formal_gate_package_release_requires_artifact(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_formal_review_package_released and not (
+        state.pm_formal_review_package_has_artifact
+        and state.pm_formal_review_package_hash_recorded
+        and state.pm_formal_review_package_scope_declared
+    ):
+        return InvariantResult.fail(
+            "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope"
+        )
+    return InvariantResult.pass_()
+
 def missing_receipt_uses_same_role_reissue(state: State, trace) -> InvariantResult:
     del trace
     if state.receipt_missing_blocker and not (
@@ -184,6 +196,53 @@ def external_keepalive_actions_require_light_confirmation(state: State, trace) -
     if state.external_keepalive_confirmation_required and not state.external_keepalive_confirmed:
         return InvariantResult.fail(
             "external keepalive action lacked lightweight completion confirmation"
+        )
+    return InvariantResult.pass_()
+
+def signed_envelopes_are_immutable_after_relay(state: State, trace) -> InvariantResult:
+    del trace
+    if state.signed_envelope_relayed and state.signed_envelope_rewritten_after_relay:
+        return InvariantResult.fail(
+            "signed packet or result envelope was rewritten after Controller relay hash binding"
+        )
+    if (
+        state.signed_envelope_relayed
+        and state.signed_envelope_mutable_indexes_backfilled
+        and not state.signed_envelope_migration_sidecar_written
+    ):
+        return InvariantResult.fail(
+            "signed envelope migration backfilled mutable projections without a sidecar record"
+        )
+    return InvariantResult.pass_()
+
+def controller_action_identity_is_obligation_scoped(state: State, trace) -> InvariantResult:
+    del trace
+    if state.control_blocker_receipt_postcondition_declared and not state.control_blocker_action_identity_includes_blocker:
+        return InvariantResult.fail(
+            "control blocker Controller action identity omitted blocker artifact identity"
+        )
+    if state.controller_action_closed_identity_reused:
+        return InvariantResult.fail(
+            "closed Controller action row was reused for a different Router obligation identity"
+        )
+    return InvariantResult.pass_()
+
+def control_blocker_receipts_apply_delivery_postcondition(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.control_blocker_receipt_postcondition_declared
+        and not state.control_blocker_receipt_effect_applied
+    ):
+        return InvariantResult.fail(
+            "control blocker done receipt did not apply the Router-visible delivery postcondition"
+        )
+    return InvariantResult.pass_()
+
+def self_check_parser_matches_template_vocabulary(state: State, trace) -> InvariantResult:
+    del trace
+    if state.self_check_template_status_pass_allowed and not state.self_check_parser_status_pass_accepted:
+        return InvariantResult.fail(
+            "Contract Self-Check parser rejected status: pass even though templates allow it"
         )
     return InvariantResult.pass_()
 
@@ -823,6 +882,11 @@ INVARIANTS = (
         predicate=reviewer_report_requires_open_receipts,
     ),
     Invariant(
+        name="formal_gate_package_release_requires_artifact",
+        description="PM formal gate package release carries reviewer-readable path, hash, and scope.",
+        predicate=formal_gate_package_release_requires_artifact,
+    ),
+    Invariant(
         name="missing_receipt_uses_same_role_reissue",
         description="Mechanical missing-receipt blockers route to same-role reissue, not PM repair.",
         predicate=missing_receipt_uses_same_role_reissue,
@@ -876,6 +940,26 @@ INVARIANTS = (
         name="external_keepalive_actions_require_light_confirmation",
         description="External keepalive actions use lightweight hard confirmation because missing them can break autonomous continuation.",
         predicate=external_keepalive_actions_require_light_confirmation,
+    ),
+    Invariant(
+        name="signed_envelopes_are_immutable_after_relay",
+        description="Signed packet/result envelopes are not rewritten after Controller relay.",
+        predicate=signed_envelopes_are_immutable_after_relay,
+    ),
+    Invariant(
+        name="controller_action_identity_is_obligation_scoped",
+        description="Controller action rows are scoped to a single Router obligation identity.",
+        predicate=controller_action_identity_is_obligation_scoped,
+    ),
+    Invariant(
+        name="control_blocker_receipts_apply_delivery_postcondition",
+        description="Control-blocker done receipts apply the Router-visible delivery effect.",
+        predicate=control_blocker_receipts_apply_delivery_postcondition,
+    ),
+    Invariant(
+        name="self_check_parser_matches_template_vocabulary",
+        description="Contract Self-Check parser accepts the pass vocabulary templates allow.",
+        predicate=self_check_parser_matches_template_vocabulary,
     ),
     Invariant(
         name="role_output_events_require_file_backed_body",

@@ -126,6 +126,16 @@ class State:
     controller_display_work_escalated_to_pm: bool = False
     external_keepalive_confirmation_required: bool = False
     external_keepalive_confirmed: bool = False
+    signed_envelope_relayed: bool = False
+    signed_envelope_rewritten_after_relay: bool = False
+    signed_envelope_migration_sidecar_written: bool = False
+    signed_envelope_mutable_indexes_backfilled: bool = False
+    control_blocker_action_identity_includes_blocker: bool = False
+    controller_action_closed_identity_reused: bool = False
+    control_blocker_receipt_postcondition_declared: bool = False
+    control_blocker_receipt_effect_applied: bool = False
+    self_check_template_status_pass_allowed: bool = False
+    self_check_parser_status_pass_accepted: bool = False
 
     pm_research_package_written: bool = False
     research_package_has_decision_question: bool = False
@@ -161,6 +171,9 @@ class State:
     result_body_open_receipt: bool = False
     pm_result_disposition_recorded: bool = False
     pm_formal_review_package_released: bool = False
+    pm_formal_review_package_has_artifact: bool = False
+    pm_formal_review_package_hash_recorded: bool = False
+    pm_formal_review_package_scope_declared: bool = False
     reviewer_report_written: bool = False
     reviewer_report_accepted: bool = False
 

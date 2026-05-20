@@ -83,6 +83,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_router_artifact_validation.py",
     "skills/flowpilot/assets/flowpilot_router_child_skill_capability.py",
     "skills/flowpilot/assets/flowpilot_router_cli.py",
+    "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
     "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
     "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
     "skills/flowpilot/assets/flowpilot_router_facade_export_manifest.py",

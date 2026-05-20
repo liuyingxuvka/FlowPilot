@@ -25,6 +25,7 @@ import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
+from flowpilot_control_plane_contracts import control_plane_action_identity_fingerprint
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
@@ -54,8 +55,16 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
     controller_receipt_required = not passive_wait_status and action.get('action_type') not in {'await_card_return_event', 'await_card_bundle_return_event', 'await_role_decision'}
     created = False
     existing = read_json_if_exists(action_path)
+    action_identity = control_plane_action_identity_fingerprint(action)
     now = utc_now()
     if existing.get('schema_version') == CONTROLLER_ACTION_SCHEMA:
+        existing_action = existing.get('action') if isinstance(existing.get('action'), dict) else existing
+        existing_identity = str(existing.get('action_identity') or control_plane_action_identity_fingerprint(existing_action))
+        if existing.get('status') in CONTROLLER_ACTION_CLOSED_STATUSES and existing_identity and existing_identity != action_identity:
+            raise RouterError(
+                f"controller action identity collision for {action_id}: "
+                f"existing={existing_identity} new={action_identity}"
+            )
         entry = existing
         entry['seen_count'] = int(entry.get('seen_count') or 0) + 1
         if entry.get('status') not in CONTROLLER_ACTION_CLOSED_STATUSES:
@@ -65,6 +74,7 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
         entry = {'schema_version': CONTROLLER_ACTION_SCHEMA, 'action_id': action_id, 'run_id': run_state.get('run_id'), 'action_type': action.get('action_type'), 'label': action.get('label'), 'summary': action.get('summary'), 'status': _controller_action_initial_status(action), 'created_at': now, 'seen_count': 1, 'source_action_id': action.get('action_id'), 'to_role': action.get('to_role'), 'allowed_reads': action.get('allowed_reads') or [], 'allowed_writes': action.get('allowed_writes') or [], 'allowed_external_events': action.get('allowed_external_events') or [], 'dependencies': [], 'router_scheduler_row_id': action.get('router_scheduler_row_id'), 'scope_kind': action.get('scope_kind'), 'scope_id': action.get('scope_id'), 'controller_visibility': 'router_action_metadata_only', 'sealed_body_reads_allowed': bool(action.get('sealed_body_reads_allowed', False)), 'action_path': project_relative(project_root, action_path), 'expected_receipt_path': receipt_rel, 'controller_receipt_required': controller_receipt_required, 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not passive_wait_status, 'router_must_not_mark_done_without_controller_receipt': controller_receipt_required, 'action': action}
     entry['updated_at'] = now
     entry['last_seen_at'] = now
+    entry['action_identity'] = action_identity
     required_deliverables = _controller_action_required_deliverables(project_root, run_root, run_state, action)
     deliverable_contract = _controller_deliverable_contract(required_deliverables)
     if required_deliverables:

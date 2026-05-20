@@ -114,7 +114,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 42
+MAX_SEQUENCE_LENGTH = 48
 
 
 __all__ = [

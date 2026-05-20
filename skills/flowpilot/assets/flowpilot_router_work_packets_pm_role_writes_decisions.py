@@ -102,6 +102,66 @@ def _validate_result_bodies_opened_by_pm(router: ModuleType, project_root: Path,
             raise RouterError(f"PM result disposition requires project_manager to open result body after Controller relay: {result.get('packet_id')}")
 
 
+def _write_pm_formal_gate_package(
+    router: ModuleType,
+    project_root: Path,
+    output_path: Path,
+    *,
+    run_state: dict[str, Any],
+    batch: dict[str, Any],
+    records: list[dict[str, Any]],
+    batch_kind: str,
+    package_label: str,
+    gate_kind: str,
+    decision: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    _bind_router(router)
+    package_path = output_path.with_name(f"pm_{router._safe_packet_id_component(package_label)}_formal_gate_package.json")
+    result_envelopes: list[dict[str, Any]] = []
+    for record in records:
+        result_rel = str(record.get('result_envelope_path') or '')
+        result_hash = None
+        if result_rel:
+            result_path = resolve_project_path(project_root, result_rel)
+            if result_path.exists():
+                result_hash = packet_runtime.sha256_file(result_path)
+        result_envelopes.append({'packet_id': str(record.get('packet_id') or ''), 'result_envelope_path': result_rel, 'result_envelope_hash': result_hash})
+    package = {
+        'schema_version': 'flowpilot.pm_formal_gate_package.v1',
+        'run_id': run_state['run_id'],
+        'batch_id': batch.get('batch_id'),
+        'batch_kind': batch_kind,
+        'package_label': package_label,
+        'gate_kind': gate_kind,
+        'decision': decision,
+        'reviewer_readable': True,
+        'reviewer_review_scope': 'pm_formal_gate_package_only',
+        'reviewer_receives_raw_worker_result': False,
+        'raw_worker_result_bodies_included': False,
+        'packet_ids': [str(record.get('packet_id')) for record in records],
+        'result_envelopes': result_envelopes,
+        'source_pm_disposition_path': project_relative(project_root, output_path),
+        'content_boundary': {
+            'includes_pm_disposition_summary': True,
+            'includes_result_envelope_paths_and_hashes': True,
+            'excludes_worker_result_bodies': True,
+            'sealed_body_boundary_preserved': True,
+        },
+        'decision_reason': payload.get('decision_reason') or payload.get('reason') or '',
+        'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [],
+        'created_at': utc_now(),
+    }
+    write_json(package_path, package)
+    return {
+        'formal_gate_package_schema_version': package['schema_version'],
+        'formal_gate_package_path': project_relative(project_root, package_path),
+        'formal_gate_package_hash': packet_runtime.sha256_file(package_path),
+        'formal_gate_package_reviewer_readable': True,
+        'formal_gate_package_content_boundary': package['content_boundary'],
+    }
+
+
 def _write_pm_package_result_disposition(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, batch_kind: str, package_label: str, gate_kind: str, output_path: Path) -> None:
     _bind_router(router)
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
@@ -117,7 +177,10 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
     if not records:
         raise RouterError(f'{package_label} result disposition requires packet records')
     router._validate_result_bodies_opened_by_pm(project_root, run_state, records)
-    disposition = {'schema_version': 'flowpilot.pm_package_result_disposition.v1', 'run_id': run_state['run_id'], 'batch_id': batch.get('batch_id'), 'batch_kind': batch_kind, 'package_label': package_label, 'gate_kind': gate_kind, 'decided_by_role': 'project_manager', 'decision': decision, 'decision_reason': payload.get('decision_reason') or payload.get('reason') or '', 'packet_ids': [str(record.get('packet_id')) for record in records], 'result_envelope_paths': [str(record.get('result_envelope_path')) for record in records], 'formal_gate_package_released': decision == 'absorbed', 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if decision == 'absorbed' else 'none', 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'recorded_at': utc_now(), **_role_output_envelope_record(payload)}
+    formal_package = {}
+    if decision == 'absorbed':
+        formal_package = _write_pm_formal_gate_package(router, project_root, output_path, run_state=run_state, batch=batch, records=records, batch_kind=batch_kind, package_label=package_label, gate_kind=gate_kind, decision=decision, payload=payload)
+    disposition = {'schema_version': 'flowpilot.pm_package_result_disposition.v1', 'run_id': run_state['run_id'], 'batch_id': batch.get('batch_id'), 'batch_kind': batch_kind, 'package_label': package_label, 'gate_kind': gate_kind, 'decided_by_role': 'project_manager', 'decision': decision, 'decision_reason': payload.get('decision_reason') or payload.get('reason') or '', 'packet_ids': [str(record.get('packet_id')) for record in records], 'result_envelope_paths': [str(record.get('result_envelope_path')) for record in records], 'formal_gate_package_released': decision == 'absorbed', 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if decision == 'absorbed' else 'none', 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'recorded_at': utc_now(), **formal_package, **_role_output_envelope_record(payload)}
     write_json(output_path, disposition)
     batch['pm_result_disposition'] = {'decision': decision, 'decision_path': project_relative(project_root, output_path), 'decision_hash': packet_runtime.sha256_file(output_path), 'recorded_at': disposition['recorded_at']}
     if decision == 'absorbed':
@@ -136,6 +199,7 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
 __all__ = (
     '_write_pm_role_work_result_decision',
     '_validate_result_bodies_opened_by_pm',
+    '_write_pm_formal_gate_package',
     '_write_pm_package_result_disposition',
 )
 

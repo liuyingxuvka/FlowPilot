@@ -162,6 +162,52 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.signed_envelope_migration_sidecar_written:
+        yield Transition(
+            "signed_material_migration_preserves_relayed_envelope",
+            _inc(
+                state,
+                signed_envelope_relayed=True,
+                signed_envelope_rewritten_after_relay=False,
+                signed_envelope_migration_sidecar_written=True,
+                signed_envelope_mutable_indexes_backfilled=True,
+            ),
+        )
+        return
+
+    if not state.control_blocker_action_identity_includes_blocker:
+        yield Transition(
+            "control_blocker_action_identity_bound_to_artifact",
+            _inc(
+                state,
+                control_blocker_action_identity_includes_blocker=True,
+                controller_action_closed_identity_reused=False,
+            ),
+        )
+        return
+
+    if not state.control_blocker_receipt_effect_applied:
+        yield Transition(
+            "control_blocker_done_receipt_applies_delivery_postcondition",
+            _inc(
+                state,
+                control_blocker_receipt_postcondition_declared=True,
+                control_blocker_receipt_effect_applied=True,
+            ),
+        )
+        return
+
+    if not state.self_check_parser_status_pass_accepted:
+        yield Transition(
+            "self_check_status_pass_parser_aligned",
+            _inc(
+                state,
+                self_check_template_status_pass_allowed=True,
+                self_check_parser_status_pass_accepted=True,
+            ),
+        )
+        return
+
     if not state.pm_research_package_written:
         yield Transition(
             "pm_writes_research_package_with_scope_fields",
@@ -238,6 +284,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     result_body_open_receipt=True,
                     pm_result_disposition_recorded=True,
                     pm_formal_review_package_released=True,
+                    pm_formal_review_package_has_artifact=True,
+                    pm_formal_review_package_hash_recorded=True,
+                    pm_formal_review_package_scope_declared=True,
                     optimized_relay_transaction=True,
                     optimized_transaction_records_delivery=True,
                     optimized_transaction_records_open_receipts=True,
@@ -306,7 +355,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         if not state.pm_formal_review_package_released:
             yield Transition(
                 "pm_releases_formal_gate_package_to_reviewer",
-                _inc(state, holder="reviewer", pm_formal_review_package_released=True),
+                _inc(
+                    state,
+                    holder="reviewer",
+                    pm_formal_review_package_released=True,
+                    pm_formal_review_package_has_artifact=True,
+                    pm_formal_review_package_hash_recorded=True,
+                    pm_formal_review_package_scope_declared=True,
+                ),
             )
             return
 

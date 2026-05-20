@@ -21,6 +21,10 @@ REQUIRED_LABELS = (
     "router_reclaims_valid_router_owned_artifact_before_blocker",
     "controller_display_work_soft_recorded_without_hard_gate",
     "external_keepalive_action_confirmed_with_light_marker",
+    "signed_material_migration_preserves_relayed_envelope",
+    "control_blocker_action_identity_bound_to_artifact",
+    "control_blocker_done_receipt_applies_delivery_postcondition",
+    "self_check_status_pass_parser_aligned",
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
     "worker_packet_materialized_with_research_scope",
@@ -82,6 +86,13 @@ HAZARD_EXPECTED_FAILURES = {
     "material_dispatch_write_target_missing": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
     "material_dispatch_duplicate_canonical_body": "material scan dispatch request had inconsistent phase, output contract, write-target, or canonical-body state",
     "material_dispatch_allowed_without_preflight": "material scan dispatch was allowed before router direct-dispatch preflight",
+    "signed_material_envelope_rewritten_after_relay": "signed packet or result envelope was rewritten after Controller relay hash binding",
+    "signed_material_migration_sidecar_missing": "signed envelope migration backfilled mutable projections without a sidecar record",
+    "control_blocker_identity_missing_blocker_id": "control blocker Controller action identity omitted blocker artifact identity",
+    "closed_controller_action_reused_for_different_identity": "closed Controller action row was reused for a different Router obligation identity",
+    "control_blocker_done_receipt_without_delivery_postcondition": "control blocker done receipt did not apply the Router-visible delivery postcondition",
+    "self_check_status_pass_rejected": "Contract Self-Check parser rejected status: pass even though templates allow it",
+    "pm_formal_gate_package_missing_artifact": "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
     "stopped_run_with_active_heartbeat": "stopped run left heartbeat, crew, packet loop, or frontier authority active",
@@ -220,6 +231,16 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_display_work_escalated_to_pm}|"
         f"keepalive={state.external_keepalive_confirmation_required},"
         f"{state.external_keepalive_confirmed}|"
+        f"signed_env={state.signed_envelope_relayed},"
+        f"{state.signed_envelope_rewritten_after_relay},"
+        f"{state.signed_envelope_migration_sidecar_written},"
+        f"{state.signed_envelope_mutable_indexes_backfilled}|"
+        f"contract_identity={state.control_blocker_action_identity_includes_blocker},"
+        f"{state.controller_action_closed_identity_reused},"
+        f"{state.control_blocker_receipt_postcondition_declared},"
+        f"{state.control_blocker_receipt_effect_applied}|"
+        f"self_check={state.self_check_template_status_pass_allowed},"
+        f"{state.self_check_parser_status_pass_accepted}|"
         f"packet={state.worker_packet_written},{state.worker_packet_preserves_research_fields},"
         f"material_dispatch={state.material_dispatch_requested},"
         f"{state.material_dispatch_reviewed},{state.material_dispatch_allowed},"
@@ -240,7 +261,10 @@ def _state_id(state: model.State) -> str:
         f"{state.reviewer_recheck_protocol_blocker_routable}|"
         f"{state.packet_delivered},{state.packet_body_open_receipt}|result={state.result_returned},"
         f"{state.result_routed_to_pm},{state.result_body_open_receipt},"
-        f"{state.pm_result_disposition_recorded},{state.pm_formal_review_package_released}|"
+        f"{state.pm_result_disposition_recorded},{state.pm_formal_review_package_released},"
+        f"{state.pm_formal_review_package_has_artifact},"
+        f"{state.pm_formal_review_package_hash_recorded},"
+        f"{state.pm_formal_review_package_scope_declared}|"
         f"review={state.reviewer_report_written},{state.reviewer_report_accepted}|"
         f"material={state.pm_material_understanding_written},{state.pm_material_understanding_source_available}|"
         f"product={state.product_architecture_card_delivered},"

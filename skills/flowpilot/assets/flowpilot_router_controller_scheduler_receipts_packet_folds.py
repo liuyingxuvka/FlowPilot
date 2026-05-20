@@ -12,6 +12,7 @@ from types import ModuleType
 from typing import Any
 
 import packet_runtime
+from flowpilot_control_plane_contracts import control_blocker_delivery_postcondition
 from flowpilot_router_errors import RouterError
 
 
@@ -99,6 +100,12 @@ CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY: dict[str, dict[str, str]] = {
         "record_source": "pm_role_work_request_index",
         "postcondition": "pm_role_work_result_relayed_to_pm",
         "to_role": "project_manager",
+    },
+    "handle_control_blocker": {
+        "kind": "control_blocker_delivery",
+        "family": "control_blocker",
+        "record_source": "control_blocker_artifact",
+        "postcondition": "control_blocker_delivered",
     },
 }
 
@@ -432,6 +439,42 @@ def _apply_pm_role_work_receipt_lifecycle(
     return {"changed": changed, "request_ids": touched_request_ids}
 
 
+def _apply_control_blocker_delivery_receipt_fold(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    _bind_router(router)
+    blocker_id = action.get("blocker_id")
+    postcondition = str(
+        router._pending_action_postcondition(action)
+        or control_blocker_delivery_postcondition(blocker_id)
+    ).strip()
+    try:
+        router._mark_control_blocker_delivered(project_root, run_root, run_state, action)
+    except (RouterError, OSError, ValueError) as exc:
+        return {
+            "applied": False,
+            "reason": "control_blocker_delivery_fold_failed",
+            "action_type": "handle_control_blocker",
+            "postcondition": postcondition,
+            "error": str(exc),
+        }
+    if postcondition:
+        run_state.setdefault("flags", {})[postcondition] = True
+    return {
+        "applied": True,
+        "source": "controller_receipt_control_blocker_delivery_fold",
+        "action_type": "handle_control_blocker",
+        "postcondition": postcondition,
+        "blocker_id": blocker_id,
+        "blocker_artifact_path": action.get("blocker_artifact_path"),
+        "sealed_body_reads": False,
+    }
+
+
 def _apply_registered_controller_receipt_evidence_fold(
     router: ModuleType,
     project_root: Path,
@@ -446,6 +489,8 @@ def _apply_registered_controller_receipt_evidence_fold(
     spec = CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY.get(action_type)
     if not spec:
         return {"applied": False, "reason": "not_registered_controller_receipt_evidence_fold", "action_type": action_type}
+    if spec["kind"] == "control_blocker_delivery":
+        return _apply_control_blocker_delivery_receipt_fold(router, project_root, run_root, run_state, action)
     try:
         records, record_context = _controller_receipt_fold_records(router, project_root, run_root, run_state, spec)
     except (RouterError, OSError, ValueError) as exc:

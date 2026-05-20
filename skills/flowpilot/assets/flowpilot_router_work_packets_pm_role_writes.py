@@ -38,6 +38,7 @@ __all__ = (
     '_write_role_work_result_returned',
     '_write_pm_role_work_result_decision',
     '_validate_result_bodies_opened_by_pm',
+    '_write_pm_formal_gate_package',
     '_write_pm_package_result_disposition',
 )
 

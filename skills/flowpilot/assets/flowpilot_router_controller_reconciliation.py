@@ -6,6 +6,7 @@ import hashlib
 import json
 from typing import Any
 
+from flowpilot_control_plane_contracts import control_plane_scheduler_identity_extras
 from flowpilot_router_controller_boundary import (
     CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
     PASSIVE_WAIT_STATUS_ACTION_TYPES,
@@ -292,6 +293,7 @@ def _router_scheduler_idempotency_key(action: dict[str, Any], scope_kind: str, s
             key_parts[field] = value
     if action_type == "sync_display_plan":
         key_parts["projection_hash"] = action.get("projection_hash")
+    key_parts.update(control_plane_scheduler_identity_extras(action))
     return "router-scheduler:" + hashlib.sha256(json.dumps(key_parts, sort_keys=True).encode("utf-8")).hexdigest()[:24]
 
 
