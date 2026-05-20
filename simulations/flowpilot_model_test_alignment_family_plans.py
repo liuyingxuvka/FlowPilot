@@ -334,6 +334,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
                 required_test_kinds=(HAPPY, EDGE),
             ),
+            _obligation(
+                "daemon.parent_child_mesh",
+                obligation_type="contract",
+                description="Parent hierarchy consumes thin daemon child evidence for startup/lock, Controller actions, waits/liveness, and terminal/projection while retaining the compatibility full daemon model.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -367,6 +373,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
                 test_kind=EDGE,
                 covers=("daemon.lock_status_and_queue_progress",),
+            ),
+            _evidence(
+                "daemon.happy.thin_child_mesh",
+                test_name="test_daemon_child_reports_are_thin_and_green",
+                path="tests/test_flowpilot_daemon_child_mesh.py",
+                command="python -m unittest tests.test_flowpilot_daemon_child_mesh",
+                test_kind=HAPPY,
+                covers=("daemon.parent_child_mesh",),
+            ),
+            _evidence(
+                "daemon.negative.parent_no_longer_consumes_large_compat_model",
+                test_name="test_parent_ledger_consumes_split_daemon_children_not_large_compat_model",
+                path="tests/test_flowpilot_daemon_child_mesh.py",
+                command="python -m unittest tests.test_flowpilot_daemon_child_mesh",
+                test_kind=NEGATIVE,
+                covers=("daemon.parent_child_mesh",),
             ),
         ),
     )
@@ -555,6 +577,10 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             model_checks=(
                 "python simulations/run_flowpilot_router_loop_checks.py",
                 "python simulations/run_flowpilot_persistent_router_daemon_checks.py",
+                "python simulations/run_flowpilot_daemon_startup_lock_checks.py",
+                "python simulations/run_flowpilot_daemon_controller_actions_checks.py",
+                "python simulations/run_flowpilot_daemon_wait_liveness_checks.py",
+                "python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
             ),
             coverage_boundary="Router-loop/daemon alignment covers foreground unit/runtime tests for queue, lock, and packet-loop behavior. It does not run long daemon soak tests.",
         ),

@@ -266,8 +266,8 @@
   },
   "inventory": {
     "child_evidence_tier_counts": {
-      "medium": 3,
-      "small": 30,
+      "medium": 2,
+      "small": 34,
       "unknown": 2
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
@@ -296,7 +296,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-19T08:48:16.421432+00:00",
+            "created_at": "2026-05-20T17:07:16.027924+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -324,7 +324,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-19T08:48:16.421432+00:00",
+          "created_at": "2026-05-20T17:07:16.027924+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -346,7 +346,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-19T08:48:17.826883+00:00",
+            "created_at": "2026-05-20T17:08:33.124769+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -382,7 +382,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-19T08:48:16.404432+00:00",
+            "created_at": "2026-05-20T17:07:15.994942+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -410,7 +410,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-19T08:48:16.404432+00:00",
+          "created_at": "2026-05-20T17:07:15.994942+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -432,7 +432,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-19T08:48:17.755870+00:00",
+            "created_at": "2026-05-20T17:08:33.127317+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -597,8 +597,11 @@
         },
         "router_daemon_resume": {
           "children": [
+            "flowpilot_daemon_controller_actions",
             "flowpilot_daemon_reconciliation",
-            "flowpilot_persistent_router_daemon",
+            "flowpilot_daemon_startup_lock",
+            "flowpilot_daemon_terminal_projection",
+            "flowpilot_daemon_wait_liveness",
             "flowpilot_route_replanning_policy",
             "flowpilot_router_loop"
           ],
@@ -907,7 +910,10 @@
           "router_daemon_resume": {
             "children": [
               "flowpilot_router_loop",
-              "flowpilot_persistent_router_daemon",
+              "flowpilot_daemon_startup_lock",
+              "flowpilot_daemon_controller_actions",
+              "flowpilot_daemon_wait_liveness",
+              "flowpilot_daemon_terminal_projection",
               "flowpilot_daemon_reconciliation",
               "flowpilot_route_replanning_policy"
             ],
@@ -1177,8 +1183,11 @@
       },
       "router_daemon_resume": {
         "children": [
+          "flowpilot_daemon_controller_actions",
           "flowpilot_daemon_reconciliation",
-          "flowpilot_persistent_router_daemon",
+          "flowpilot_daemon_startup_lock",
+          "flowpilot_daemon_terminal_projection",
+          "flowpilot_daemon_wait_liveness",
           "flowpilot_route_replanning_policy",
           "flowpilot_router_loop"
         ],
@@ -1275,7 +1284,7 @@
         ]
       }
     },
-    "registered_child_count": 35,
+    "registered_child_count": 38,
     "registered_children": [
       {
         "edge_count": null,
@@ -1328,6 +1337,16 @@
         "tier": "small"
       },
       {
+        "edge_count": 24,
+        "model_id": "flowpilot_daemon_controller_actions",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_controller_actions_results.json",
+        "role": "child_evidence",
+        "state_count": 25,
+        "tier": "small"
+      },
+      {
         "edge_count": 8,
         "model_id": "flowpilot_daemon_liveness",
         "ok": true,
@@ -1346,6 +1365,36 @@
         "role": "child_evidence",
         "state_count": 1141,
         "tier": "medium"
+      },
+      {
+        "edge_count": 24,
+        "model_id": "flowpilot_daemon_startup_lock",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_startup_lock_results.json",
+        "role": "child_evidence",
+        "state_count": 25,
+        "tier": "small"
+      },
+      {
+        "edge_count": 24,
+        "model_id": "flowpilot_daemon_terminal_projection",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_terminal_projection_results.json",
+        "role": "child_evidence",
+        "state_count": 25,
+        "tier": "small"
+      },
+      {
+        "edge_count": 24,
+        "model_id": "flowpilot_daemon_wait_liveness",
+        "ok": true,
+        "registered_in_partition": true,
+        "result_file": "simulations/flowpilot_daemon_wait_liveness_results.json",
+        "role": "child_evidence",
+        "state_count": 25,
+        "tier": "small"
       },
       {
         "edge_count": 38,
@@ -1428,16 +1477,6 @@
         "tier": "small"
       },
       {
-        "edge_count": 16653,
-        "model_id": "flowpilot_persistent_router_daemon",
-        "ok": true,
-        "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_persistent_router_daemon_results.json",
-        "role": "child_evidence",
-        "state_count": 7962,
-        "tier": "medium"
-      },
-      {
         "edge_count": 80,
         "model_id": "flowpilot_planning_quality",
         "ok": true,
@@ -1448,13 +1487,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 30,
+        "edge_count": 32,
         "model_id": "flowpilot_pm_package_absorption",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_pm_package_absorption_checks_results.json",
+        "result_file": "simulations/flowpilot_pm_package_absorption_results.json",
         "role": "child_evidence",
-        "state_count": 31,
+        "state_count": 33,
         "tier": "small"
       },
       {

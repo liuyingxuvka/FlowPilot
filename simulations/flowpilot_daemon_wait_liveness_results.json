@@ -1,0 +1,124 @@
+{
+  "family": "wait_liveness",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 1,
+    "edge_count": 24,
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 25,
+    "terminal_state_count": 12,
+    "violations": []
+  },
+  "hazard_checks": {
+    "hazards": [
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was stale or foreign"
+        ],
+        "scenario": "wait_liveness_child_evidence_current_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child output contract did not reattach to parent flow"
+        ],
+        "scenario": "wait_liveness_child_outputs_reattached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "matching external-event wait was not closed by Router"
+        ],
+        "scenario": "wait_liveness_external_event_closed_by_router_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "foreground standby did not keep polling daemon status and action ledger"
+        ],
+        "scenario": "wait_liveness_foreground_standby_polls_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "report wait reminder used stale role liveness"
+        ],
+        "scenario": "wait_liveness_fresh_liveness_probe_used_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "mailbox evidence was not consumed exactly once"
+        ],
+        "scenario": "wait_liveness_mailbox_consumed_once_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was not registered"
+        ],
+        "scenario": "wait_liveness_model_registered_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "parent did not consume current daemon child evidence id"
+        ],
+        "scenario": "wait_liveness_parent_consumes_child_evidence_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child did not attach to router_daemon_resume partition"
+        ],
+        "scenario": "wait_liveness_parent_contract_attached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "wait reminder was not handled as executable Controller work"
+        ],
+        "scenario": "wait_liveness_reminders_are_controller_actions_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon-owned role wait lacked role, evidence, or reminder metadata"
+        ],
+        "scenario": "wait_liveness_wait_target_metadata_complete_broken"
+      }
+    ],
+    "ok": true
+  },
+  "model": "flowpilot_daemon_wait_liveness",
+  "ok": true,
+  "parent_partition": "router_daemon_resume",
+  "parent_reattachment": {
+    "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
+    "compatibility_full_model": "flowpilot_persistent_router_daemon",
+    "parent": "meta",
+    "parent_consumes_this_child": true,
+    "partition": "router_daemon_resume"
+  },
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "release_confidence": "current",
+  "result_type": "daemon_child_model",
+  "routine_confidence": "current",
+  "schema_version": "flowpilot.daemon_child_model_result.v1"
+}

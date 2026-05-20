@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-20T15:43:30.762882+00:00",
+  "created_at": "2026-05-20T17:08:33.105906+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": false,
     "status": {
-      "created_at": "2026-05-20T15:23:36.152566+00:00",
+      "created_at": "2026-05-20T17:07:16.027924+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "legacy_monolith_required": false,
@@ -279,17 +279,56 @@
             "state_count": 175
           },
           {
-            "edge_count": 16653,
+            "edge_count": 24,
             "failures": [],
             "missing": false,
-            "model_id": "flowpilot_persistent_router_daemon",
+            "model_id": "flowpilot_daemon_startup_lock",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/flowpilot_persistent_router_daemon_results.json",
-            "result_fingerprint": "a711c0b3a53d6cb2e4a98a7ac5fb9fa8d616ea27b28e938a056276ebb5bfc931",
+            "result_file": "simulations/flowpilot_daemon_startup_lock_results.json",
+            "result_fingerprint": "253d39386938cb9ae7f570228fb77dbeb647ebe7fc1b1c76fd3b72c367abb1da",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 7962
+            "state_count": 25
+          },
+          {
+            "edge_count": 24,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_daemon_controller_actions",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_daemon_controller_actions_results.json",
+            "result_fingerprint": "1c76818c81aa2e8182a81fec692cd1d98bf9bc7efff55d8099e52513d53e905d",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 25
+          },
+          {
+            "edge_count": 24,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_daemon_wait_liveness",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_daemon_wait_liveness_results.json",
+            "result_fingerprint": "6aa187b6cdcf53310c484e61b86115314fa52cc014da648a93c937bd82067030",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 25
+          },
+          {
+            "edge_count": 24,
+            "failures": [],
+            "missing": false,
+            "model_id": "flowpilot_daemon_terminal_projection",
+            "ok": true,
+            "proof_status": "not_present",
+            "result_file": "simulations/flowpilot_daemon_terminal_projection_results.json",
+            "result_fingerprint": "0aa02c50fdbdf6ae91d8ce4847d4b47fc1255c19b89eb47cbc1f806ba74b26db",
+            "skipped_required_checks": [],
+            "skipped_required_checks_visible": true,
+            "state_count": 25
           },
           {
             "edge_count": 1201,
@@ -320,7 +359,10 @@
         ],
         "evidence_ids": [
           "flowpilot_router_loop",
-          "flowpilot_persistent_router_daemon",
+          "flowpilot_daemon_startup_lock",
+          "flowpilot_daemon_controller_actions",
+          "flowpilot_daemon_wait_liveness",
+          "flowpilot_daemon_terminal_projection",
           "flowpilot_daemon_reconciliation",
           "flowpilot_route_replanning_policy"
         ],

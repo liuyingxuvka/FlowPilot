@@ -1,0 +1,124 @@
+{
+  "family": "terminal_projection",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 1,
+    "edge_count": 24,
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 25,
+    "terminal_state_count": 12,
+    "violations": []
+  },
+  "hazard_checks": {
+    "hazards": [
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was stale or foreign"
+        ],
+        "scenario": "terminal_projection_child_evidence_current_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child output contract did not reattach to parent flow"
+        ],
+        "scenario": "terminal_projection_child_outputs_reattached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "terminal cleanup failure blocked the immediate fence"
+        ],
+        "scenario": "terminal_projection_cleanup_failure_does_not_block_fence_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "current-work projection did not name the active role, Controller, or Router owner"
+        ],
+        "scenario": "terminal_projection_current_work_projects_active_owner_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "heartbeat could start a second live daemon"
+        ],
+        "scenario": "terminal_projection_heartbeat_no_second_daemon_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was not registered"
+        ],
+        "scenario": "terminal_projection_model_registered_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "parent did not consume current daemon child evidence id"
+        ],
+        "scenario": "terminal_projection_parent_consumes_child_evidence_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child did not attach to router_daemon_resume partition"
+        ],
+        "scenario": "terminal_projection_parent_contract_attached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "terminal lifecycle did not write an immediate daemon fence"
+        ],
+        "scenario": "terminal_projection_terminal_fence_immediate_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "terminal projection still exposed nonterminal work"
+        ],
+        "scenario": "terminal_projection_terminal_projection_cleared_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active"
+        ],
+        "scenario": "terminal_projection_terminal_stops_runtime_broken"
+      }
+    ],
+    "ok": true
+  },
+  "model": "flowpilot_daemon_terminal_projection",
+  "ok": true,
+  "parent_partition": "router_daemon_resume",
+  "parent_reattachment": {
+    "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
+    "compatibility_full_model": "flowpilot_persistent_router_daemon",
+    "parent": "meta",
+    "parent_consumes_this_child": true,
+    "partition": "router_daemon_resume"
+  },
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "release_confidence": "current",
+  "result_type": "daemon_child_model",
+  "routine_confidence": "current",
+  "schema_version": "flowpilot.daemon_child_model_result.v1"
+}

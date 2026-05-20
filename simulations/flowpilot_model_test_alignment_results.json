@@ -18,6 +18,188 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [
       {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_contract_index",
+        "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_contract_index",
+        "surface_owner": "flowpilot_router_contract_index"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_dispatch_policy",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
+        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_external_event_data",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_external_event_registry",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
+        "surface_owner": "flowpilot_router_protocol_external_event_registry"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_gate_registry",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_gate_registry",
+        "surface_owner": "flowpilot_router_protocol_gate_registry"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
+        "kind": "script_entrypoint",
+        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_maintenance_registry",
+        "path": "scripts/flowpilot_maintenance_registry.py",
+        "priority_score": 20,
+        "release_relevance": "public_cli",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "script:flowpilot_maintenance_registry",
+        "surface_owner": "script:flowpilot_maintenance_registry"
+      },
+      {
+        "code": "missing_test",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 26,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_external_contract_test",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 582 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_scheduled|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_scheduled",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_scheduled",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_scheduled"
+      },
+      {
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
         "kind": "compatibility_facade",
@@ -35,7 +217,7 @@
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
-        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_router_io",
         "path": "skills/flowpilot/assets/flowpilot_router_io.py",
         "priority_score": 29,
@@ -58,9 +240,353 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_lifecycle_requests",
         "surface_owner": "flowpilot_router_lifecycle_requests"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_protocol_external_event_data",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_runtime_state|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_runtime_state has 539 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_runtime_state",
+        "path": "skills/flowpilot/assets/flowpilot_router_runtime_state.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_runtime_state",
+        "surface_owner": "flowpilot_router_runtime_state"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_startup_intake_materialization|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_startup_intake_materialization",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_startup_intake_materialization",
+        "surface_owner": "flowpilot_router_startup_intake_materialization"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel exists as code without a model binding",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
+        "kind": "script_entrypoint",
+        "message": "flowpilot_maintenance_registry exists as code without a model binding",
+        "name": "flowpilot_maintenance_registry",
+        "path": "scripts/flowpilot_maintenance_registry.py",
+        "priority_score": 42,
+        "release_relevance": "public_cli",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "script:flowpilot_maintenance_registry",
+        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
     "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_closure_kernel"
+        ],
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_control_plane_contracts"
+        ],
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_contract_index.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_router_contract_index"
+        ],
+        "surface_owner": "flowpilot_router_contract_index"
+      },
+      {
+        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_dispatch_policy"
+        ],
+        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
+      },
+      {
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_external_event_data"
+        ],
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_external_event_registry"
+        ],
+        "surface_owner": "flowpilot_router_protocol_external_event_registry"
+      },
+      {
+        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_gate_registry"
+        ],
+        "surface_owner": "flowpilot_router_protocol_gate_registry"
+      },
+      {
+        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
+        "finding_count": 1,
+        "gap_codes": [
+          "missing_model"
+        ],
+        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
+        ],
+        "primary_code": "missing_model",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_closure_kernel"
+        ],
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
+        "finding_count": 1,
+        "gap_codes": [
+          "missing_model"
+        ],
+        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
+        ],
+        "primary_code": "missing_model",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_control_plane_contracts"
+        ],
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
+        "finding_count": 1,
+        "gap_codes": [
+          "missing_model"
+        ],
+        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "paths": [
+          "scripts/flowpilot_maintenance_registry.py"
+        ],
+        "primary_code": "missing_model",
+        "priority_score": 20,
+        "release_relevance": "public_cli",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_ids": [
+          "script:flowpilot_maintenance_registry"
+        ],
+        "surface_owner": "script:flowpilot_maintenance_registry"
+      },
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "missing_test"
+        ],
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
+        ],
+        "primary_code": "missing_test",
+        "priority_score": 26,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_external_contract_test",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_receipts_packet_folds"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 582 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_receipts_packet_folds"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_scheduled|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_receipts_scheduled"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_scheduled"
+      },
       {
         "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
         "finding_count": 1,
@@ -87,7 +613,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_router_io.py"
         ],
@@ -120,10 +646,130 @@
           "asset:flowpilot_router_lifecycle_requests"
         ],
         "surface_owner": "flowpilot_router_lifecycle_requests"
+      },
+      {
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_external_event_data"
+        ],
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "dedupe_key": "flowpilot_router_runtime_state|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_runtime_state has 539 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_runtime_state.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_runtime_state"
+        ],
+        "surface_owner": "flowpilot_router_runtime_state"
+      },
+      {
+        "dedupe_key": "flowpilot_router_startup_intake_materialization|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_startup_intake_materialization"
+        ],
+        "surface_owner": "flowpilot_router_startup_intake_materialization"
+      },
+      {
+        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
+        "finding_count": 1,
+        "gap_codes": [
+          "extra_code"
+        ],
+        "message": "flowpilot_closure_kernel exists as code without a model binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
+        ],
+        "primary_code": "extra_code",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_ids": [
+          "asset:flowpilot_closure_kernel"
+        ],
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
+        "finding_count": 1,
+        "gap_codes": [
+          "extra_code"
+        ],
+        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
+        ],
+        "primary_code": "extra_code",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_ids": [
+          "asset:flowpilot_control_plane_contracts"
+        ],
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
+        "finding_count": 1,
+        "gap_codes": [
+          "extra_code"
+        ],
+        "message": "flowpilot_maintenance_registry exists as code without a model binding",
+        "paths": [
+          "scripts/flowpilot_maintenance_registry.py"
+        ],
+        "primary_code": "extra_code",
+        "priority_score": 42,
+        "release_relevance": "public_cli",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_ids": [
+          "script:flowpilot_maintenance_registry"
+        ],
+        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
-    "covered_surface_count": 696,
-    "deferred_structure_split_count": 3,
+    "covered_surface_count": 702,
+    "deferred_structure_split_count": 8,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [
       {
@@ -142,9 +788,163 @@
       },
       {
         "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_startup_intake_materialization|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_startup_intake_materialization",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_startup_intake_materialization",
+        "surface_owner": "flowpilot_router_startup_intake_materialization"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel exists as code without a model binding",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_closure_kernel",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 18,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 40,
+        "release_relevance": "runtime_contract",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_control_plane_contracts",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_contract_index",
+        "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_contract_index",
+        "surface_owner": "flowpilot_router_contract_index"
+      },
+      {
+        "code": "missing_test",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 26,
+        "release_relevance": "runtime_contract",
+        "repair_type": "add_external_contract_test",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 582 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_scheduled|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_scheduled",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_scheduled",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_scheduled"
+      },
+      {
+        "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
-        "message": "flowpilot_router_io has 574 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_router_io",
         "path": "skills/flowpilot/assets/flowpilot_router_io.py",
         "priority_score": 29,
@@ -167,22 +967,145 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_lifecycle_requests",
         "surface_owner": "flowpilot_router_lifecycle_requests"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_dispatch_policy",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
+        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_external_event_data",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_protocol_external_event_data",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
+        "surface_owner": "flowpilot_router_protocol_external_event_data"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_external_event_registry",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
+        "surface_owner": "flowpilot_router_protocol_external_event_registry"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_router_protocol_gate_registry",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_router_protocol_gate_registry",
+        "surface_owner": "flowpilot_router_protocol_gate_registry"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_runtime_state|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_runtime_state has 539 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_runtime_state",
+        "path": "skills/flowpilot/assets/flowpilot_router_runtime_state.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_runtime_state",
+        "surface_owner": "flowpilot_router_runtime_state"
+      },
+      {
+        "code": "missing_model",
+        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
+        "kind": "script_entrypoint",
+        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
+        "name": "flowpilot_maintenance_registry",
+        "path": "scripts/flowpilot_maintenance_registry.py",
+        "priority_score": 20,
+        "release_relevance": "public_cli",
+        "repair_type": "add_model_binding",
+        "severity": "high",
+        "surface_id": "script:flowpilot_maintenance_registry",
+        "surface_owner": "script:flowpilot_maintenance_registry"
+      },
+      {
+        "code": "extra_code",
+        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
+        "kind": "script_entrypoint",
+        "message": "flowpilot_maintenance_registry exists as code without a model binding",
+        "name": "flowpilot_maintenance_registry",
+        "path": "scripts/flowpilot_maintenance_registry.py",
+        "priority_score": 42,
+        "release_relevance": "public_cli",
+        "repair_type": "classify_or_remove_code",
+        "severity": "low",
+        "surface_id": "script:flowpilot_maintenance_registry",
+        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
     "full_coverage_ok": false,
     "gap_counts": {
-      "needs_structure_split": 3
+      "extra_code": 3,
+      "internal_only_test": 7,
+      "missing_model": 3,
+      "missing_test": 1,
+      "needs_structure_split": 8
     },
     "gap_counts_by_release_relevance": {
-      "runtime_contract": 3
+      "public_cli": 2,
+      "runtime_contract": 20
     },
     "gap_counts_by_repair_type": {
-      "defer_structure_split": 3
+      "add_external_contract_test": 1,
+      "add_model_binding": 3,
+      "classify_or_remove_code": 3,
+      "defer_structure_split": 8,
+      "upgrade_to_external_contract_test": 7
     },
     "gap_counts_by_severity": {
-      "medium": 3
+      "high": 10,
+      "low": 3,
+      "medium": 9
     },
-    "gap_surface_count": 3,
+    "gap_surface_count": 15,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -361,15 +1284,15 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": true,
+    "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 699,
+    "surface_count": 717,
     "surface_counts": {
-      "compatibility_facade": 102,
-      "model_check_runner": 83,
+      "compatibility_facade": 107,
+      "model_check_runner": 92,
       "model_check_runner_helper": 18,
-      "owner_module": 223,
-      "script_entrypoint": 18,
+      "owner_module": 226,
+      "script_entrypoint": 19,
       "test_tier": 15,
       "test_tier_command": 240
     },
@@ -410,8 +1333,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 217,
-        "local_import_count": 1,
+        "line_count": 112,
+        "local_import_count": 4,
         "max_severity": "none",
         "model_binding": null,
         "name": "flowpilot_router",
@@ -469,8 +1392,32 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 252,
+        "line_count": 117,
         "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_action_factory_dispatch_cards",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_factory_dispatch_cards.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_action_factory_dispatch_cards",
+        "surface_owner": "flowpilot_router_action_factory_dispatch_cards",
+        "top_level_class_count": 0,
+        "top_level_function_count": 8
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 253,
+        "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_action_factory_reconciliation",
@@ -590,6 +1537,54 @@
         "surface_owner": "flowpilot_router_action_providers",
         "top_level_class_count": 0,
         "top_level_function_count": 0
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 141,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_card_returns_pre_review",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_card_returns_pre_review.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_card_returns_pre_review",
+        "surface_owner": "flowpilot_router_card_returns_pre_review",
+        "top_level_class_count": 0,
+        "top_level_function_count": 6
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 161,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_card_returns_records",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_card_returns_records.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_card_returns_records",
+        "surface_owner": "flowpilot_router_card_returns_records",
+        "top_level_class_count": 0,
+        "top_level_function_count": 12
       },
       {
         "covered": true,
@@ -753,8 +1748,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 191,
-        "local_import_count": 7,
+        "line_count": 274,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_current_work",
@@ -766,7 +1761,7 @@
         "surface_id": "asset:flowpilot_router_controller_scheduler_current_work",
         "surface_owner": "flowpilot_router_controller_scheduler_current_work",
         "top_level_class_count": 0,
-        "top_level_function_count": 9
+        "top_level_function_count": 12
       },
       {
         "completed_split_paths": [
@@ -817,8 +1812,56 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 66,
-        "local_import_count": 4,
+        "line_count": 130,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_scheduler_ledgers_actions",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_ledgers_actions.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_controller_scheduler_ledgers_actions",
+        "surface_owner": "flowpilot_router_controller_scheduler_ledgers_actions",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 259,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_scheduler_ledgers_scheduler",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_ledgers_scheduler.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_controller_scheduler_ledgers_scheduler",
+        "surface_owner": "flowpilot_router_controller_scheduler_ledgers_scheduler",
+        "top_level_class_count": 0,
+        "top_level_function_count": 15
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 72,
+        "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts",
@@ -841,8 +1884,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 302,
-        "local_import_count": 7,
+        "line_count": 310,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_effects",
@@ -933,7 +1976,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 28,
+        "line_count": 31,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -968,8 +2011,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 195,
-        "local_import_count": 7,
+        "line_count": 200,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_events_repair_blocker_actions",
@@ -1660,8 +2703,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 235,
-        "local_import_count": 5,
+        "line_count": 269,
+        "local_import_count": 6,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_work_contracts",
@@ -1673,7 +2716,7 @@
         "surface_id": "asset:flowpilot_router_protocol_work_contracts",
         "surface_owner": "flowpilot_router_protocol_work_contracts",
         "top_level_class_count": 0,
-        "top_level_function_count": 0
+        "top_level_function_count": 2
       },
       {
         "covered": true,
@@ -2017,7 +3060,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 73,
+        "line_count": 78,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2076,7 +3119,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 153,
+        "line_count": 191,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2340,28 +3383,44 @@
         "top_level_function_count": 13
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 220,
+        "line_count": 401,
         "local_import_count": 8,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_startup_intake_materialization",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "compatibility_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_startup_intake_materialization",
         "surface_owner": "flowpilot_router_startup_intake_materialization",
         "top_level_class_count": 0,
-        "top_level_function_count": 12
+        "top_level_function_count": 18
       },
       {
         "covered": true,
@@ -2941,8 +4000,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 151,
-        "local_import_count": 7,
+        "line_count": 152,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_work_packets_pm_role_lifecycle_index",
@@ -2994,7 +4053,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 44,
+        "line_count": 45,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -3221,7 +4280,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 127,
+        "line_count": 129,
         "local_import_count": 13,
         "max_severity": "none",
         "model_binding": null,
@@ -3467,7 +4526,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 541,
+        "line_count": 572,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -3478,6 +4537,50 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_control_plane_friction_checks",
         "surface_owner": "model-check:run_flowpilot_control_plane_friction_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 231,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_control_plane_ledger_consolidation_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_control_plane_ledger_consolidation_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_control_plane_ledger_consolidation_checks",
+        "surface_owner": "model-check:run_flowpilot_control_plane_ledger_consolidation_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 278,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_control_plane_state_consistency_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_control_plane_state_consistency_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_control_plane_state_consistency_checks",
+        "surface_owner": "model-check:run_flowpilot_control_plane_state_consistency_checks"
       },
       {
         "covered": true,
@@ -3555,6 +4658,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 363,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_controller_receipt_evidence_fold_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_controller_receipt_evidence_fold_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_controller_receipt_evidence_fold_checks",
+        "surface_owner": "model-check:run_flowpilot_controller_receipt_evidence_fold_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 312,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -3577,7 +4702,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 255,
+        "line_count": 277,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_current_scope_pre_review_reconciliation_checks",
@@ -3588,6 +4713,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_current_scope_pre_review_reconciliation_checks",
         "surface_owner": "model-check:run_flowpilot_current_scope_pre_review_reconciliation_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 30,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_daemon_controller_actions_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_daemon_controller_actions_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_daemon_controller_actions_checks",
+        "surface_owner": "model-check:run_flowpilot_daemon_controller_actions_checks"
       },
       {
         "covered": true,
@@ -3665,6 +4812,72 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 30,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_daemon_startup_lock_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_daemon_startup_lock_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_daemon_startup_lock_checks",
+        "surface_owner": "model-check:run_flowpilot_daemon_startup_lock_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 30,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_daemon_terminal_projection_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_daemon_terminal_projection_checks",
+        "surface_owner": "model-check:run_flowpilot_daemon_terminal_projection_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 30,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_daemon_wait_liveness_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_daemon_wait_liveness_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_daemon_wait_liveness_checks",
+        "surface_owner": "model-check:run_flowpilot_daemon_wait_liveness_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 561,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -3676,6 +4889,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_decision_liveness_checks",
         "surface_owner": "model-check:run_flowpilot_decision_liveness_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 202,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_derived_view_prompt_boundary_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_derived_view_prompt_boundary_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_derived_view_prompt_boundary_checks",
+        "surface_owner": "model-check:run_flowpilot_derived_view_prompt_boundary_checks"
       },
       {
         "covered": true,
@@ -4017,6 +5252,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 241,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_modeling_coverage_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_modeling_coverage_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_modeling_coverage_checks",
+        "surface_owner": "model-check:run_flowpilot_modeling_coverage_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 253,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -4193,7 +5450,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 215,
+        "line_count": 218,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_pm_package_absorption_checks",
@@ -5728,6 +6985,70 @@
         "top_level_function_count": 9
       },
       {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "missing_model",
+          "extra_code",
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": false,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 289,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": null,
+        "name": "flowpilot_closure_kernel",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "add_model_binding",
+          "classify_or_remove_code",
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_closure_kernel",
+        "surface_owner": "flowpilot_closure_kernel",
+        "top_level_class_count": 1,
+        "top_level_function_count": 16
+      },
+      {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "missing_model",
+          "extra_code",
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": false,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 140,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": null,
+        "name": "flowpilot_control_plane_contracts",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "add_model_binding",
+          "classify_or_remove_code",
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_control_plane_contracts",
+        "surface_owner": "flowpilot_control_plane_contracts",
+        "top_level_class_count": 0,
+        "top_level_function_count": 10
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -5808,7 +7129,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 188,
+        "line_count": 251,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -5821,7 +7142,7 @@
         "surface_id": "asset:flowpilot_prompt_store",
         "surface_owner": "flowpilot_prompt_store",
         "top_level_class_count": 2,
-        "top_level_function_count": 11
+        "top_level_function_count": 13
       },
       {
         "completed_split_paths": [
@@ -5873,8 +7194,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 108,
-        "local_import_count": 1,
+        "line_count": 109,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_action_factory_dispatch_apply",
@@ -5897,8 +7218,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 210,
-        "local_import_count": 1,
+        "line_count": 257,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_action_factory_dispatch_blockers",
@@ -5911,30 +7232,6 @@
         "surface_owner": "flowpilot_router_action_factory_dispatch_blockers",
         "top_level_class_count": 0,
         "top_level_function_count": 6
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 113,
-        "local_import_count": 1,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_action_factory_dispatch_cards",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_action_factory_dispatch_cards.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_action_factory_dispatch_cards",
-        "surface_owner": "flowpilot_router_action_factory_dispatch_cards",
-        "top_level_class_count": 0,
-        "top_level_function_count": 8
       },
       {
         "covered": true,
@@ -6346,7 +7643,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 231,
+        "line_count": 242,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6358,54 +7655,6 @@
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_card_returns_actions",
         "surface_owner": "flowpilot_router_card_returns_actions",
-        "top_level_class_count": 0,
-        "top_level_function_count": 11
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 139,
-        "local_import_count": 1,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_card_returns_pre_review",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_card_returns_pre_review.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_card_returns_pre_review",
-        "surface_owner": "flowpilot_router_card_returns_pre_review",
-        "top_level_class_count": 0,
-        "top_level_function_count": 6
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 157,
-        "local_import_count": 1,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_card_returns_records",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_card_returns_records.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_card_returns_records",
-        "surface_owner": "flowpilot_router_card_returns_records",
         "top_level_class_count": 0,
         "top_level_function_count": 12
       },
@@ -6506,6 +7755,34 @@
         "top_level_function_count": 4
       },
       {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 48,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_contract_index",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_contract_index",
+        "surface_owner": "flowpilot_router_contract_index",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -6514,7 +7791,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 262,
+        "line_count": 304,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6586,8 +7863,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 312,
-        "local_import_count": 1,
+        "line_count": 314,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_reconciliation",
@@ -6658,7 +7935,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 278,
+        "line_count": 320,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6802,30 +8079,6 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 126,
-        "local_import_count": 1,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_controller_scheduler_ledgers_actions",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_ledgers_actions.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_controller_scheduler_ledgers_actions",
-        "surface_owner": "flowpilot_router_controller_scheduler_ledgers_actions",
-        "top_level_class_count": 0,
-        "top_level_function_count": 7
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
         "line_count": 95,
         "local_import_count": 0,
         "max_severity": "none",
@@ -6842,28 +8095,46 @@
         "top_level_function_count": 8
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "missing_test",
+          "needs_structure_split"
+        ],
         "has_code": true,
-        "has_external_contract": true,
+        "has_external_contract": false,
         "has_model": true,
-        "has_test": true,
+        "has_test": false,
         "kind": "owner_module",
-        "line_count": 255,
-        "local_import_count": 1,
-        "max_severity": "none",
+        "line_count": 582,
+        "local_import_count": 3,
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_controller_scheduler_ledgers_scheduler",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_ledgers_scheduler.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "add_external_contract_test",
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_controller_scheduler_ledgers_scheduler",
-        "surface_owner": "flowpilot_router_controller_scheduler_ledgers_scheduler",
+        "structure_split_status": "deferred",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "top_level_class_count": 0,
-        "top_level_function_count": 15
+        "top_level_function_count": 13
       },
       {
         "covered": true,
@@ -6890,24 +8161,40 @@
         "top_level_function_count": 5
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 402,
+        "line_count": 490,
         "local_import_count": 7,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_scheduled",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_scheduled",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_scheduled",
         "top_level_class_count": 0,
@@ -6922,8 +8209,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 183,
-        "local_import_count": 7,
+        "line_count": 259,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_writes",
@@ -6935,7 +8222,7 @@
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_writes",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_writes",
         "top_level_class_count": 0,
-        "top_level_function_count": 5
+        "top_level_function_count": 6
       },
       {
         "covered": true,
@@ -7619,7 +8906,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 286,
+        "line_count": 290,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7742,7 +9029,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 574,
+        "line_count": 587,
         "local_import_count": 2,
         "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
@@ -7955,7 +9242,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 126,
+        "line_count": 135,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8003,7 +9290,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 151,
+        "line_count": 181,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8043,6 +9330,34 @@
         "top_level_function_count": 0
       },
       {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 54,
+        "local_import_count": 1,
+        "max_severity": "high",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_protocol_dispatch_policy",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
+        "surface_owner": "flowpilot_router_protocol_dispatch_policy",
+        "top_level_class_count": 0,
+        "top_level_function_count": 0
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -8067,6 +9382,76 @@
         "top_level_function_count": 0
       },
       {
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test",
+          "needs_structure_split"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 503,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_protocol_external_event_data",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "defer_structure_split",
+          "upgrade_to_external_contract_test"
+        ],
+        "safe_split_class": "declarative_protocol_table",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
+        "split_threshold": 450,
+        "structure_split_status": "deferred",
+        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
+        "surface_owner": "flowpilot_router_protocol_external_event_data",
+        "top_level_class_count": 0,
+        "top_level_function_count": 0
+      },
+      {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 69,
+        "local_import_count": 1,
+        "max_severity": "high",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_protocol_external_event_registry",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
+        "surface_owner": "flowpilot_router_protocol_external_event_registry",
+        "top_level_class_count": 1,
+        "top_level_function_count": 4
+      },
+      {
         "completed_split_paths": [
           "skills/flowpilot/assets/flowpilot_router_protocol_external_events_startup.py",
           "skills/flowpilot/assets/flowpilot_router_protocol_external_events_material.py",
@@ -8081,8 +9466,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 40,
-        "local_import_count": 12,
+        "line_count": 29,
+        "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_events",
@@ -8116,8 +9501,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 262,
-        "local_import_count": 0,
+        "line_count": 9,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_events_material",
@@ -8140,8 +9525,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 169,
-        "local_import_count": 0,
+        "line_count": 9,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_events_route",
@@ -8164,8 +9549,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 60,
-        "local_import_count": 0,
+        "line_count": 9,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_events_startup",
@@ -8188,8 +9573,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 34,
-        "local_import_count": 0,
+        "line_count": 9,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_events_terminal",
@@ -8212,7 +9597,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 137,
+        "line_count": 10,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8236,7 +9621,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 55,
+        "line_count": 16,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8252,6 +9637,34 @@
         "top_level_function_count": 0
       },
       {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 354,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_protocol_gate_registry",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_protocol_gate_registry",
+        "surface_owner": "flowpilot_router_protocol_gate_registry",
+        "top_level_class_count": 0,
+        "top_level_function_count": 1
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -8260,8 +9673,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 162,
-        "local_import_count": 0,
+        "line_count": 25,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_gate_reset_flags",
@@ -8828,28 +10241,44 @@
         "top_level_function_count": 6
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 392,
-        "local_import_count": 7,
-        "max_severity": "none",
+        "line_count": 539,
+        "local_import_count": 8,
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_runtime_state",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_runtime_state.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_runtime_state",
         "surface_owner": "flowpilot_router_runtime_state",
         "top_level_class_count": 0,
-        "top_level_function_count": 28
+        "top_level_function_count": 38
       },
       {
         "completed_split_paths": [
@@ -9014,7 +10443,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 257,
+        "line_count": 260,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9276,7 +10705,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 106,
+        "line_count": 112,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9775,8 +11204,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 241,
-        "local_import_count": 7,
+        "line_count": 251,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_terminal_ledger_recovery",
@@ -9895,7 +11324,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 142,
+        "line_count": 240,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9908,7 +11337,7 @@
         "surface_id": "asset:flowpilot_router_work_packets_pm_role_writes_decisions",
         "surface_owner": "flowpilot_router_work_packets_pm_role_writes_decisions",
         "top_level_class_count": 0,
-        "top_level_function_count": 4
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -9919,7 +11348,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 150,
+        "line_count": 243,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9932,7 +11361,7 @@
         "surface_id": "asset:flowpilot_router_work_packets_pm_role_writes_request",
         "surface_owner": "flowpilot_router_work_packets_pm_role_writes_request",
         "top_level_class_count": 0,
-        "top_level_function_count": 2
+        "top_level_function_count": 4
       },
       {
         "covered": true,
@@ -9991,7 +11420,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 334,
+        "line_count": 342,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -10630,7 +12059,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 341,
+        "line_count": 398,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10643,7 +12072,7 @@
         "surface_id": "asset:packet_runtime_contracts",
         "surface_owner": "packet_runtime_contracts",
         "top_level_class_count": 0,
-        "top_level_function_count": 18
+        "top_level_function_count": 19
       },
       {
         "covered": true,
@@ -10798,7 +12227,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 193,
+        "line_count": 194,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10822,7 +12251,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 381,
+        "line_count": 401,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10835,7 +12264,7 @@
         "surface_id": "asset:packet_runtime_relay_checks",
         "surface_owner": "packet_runtime_relay_checks",
         "top_level_class_count": 0,
-        "top_level_function_count": 9
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -11045,7 +12474,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 95,
+        "line_count": 96,
         "local_import_count": 6,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -11176,7 +12605,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 346,
+        "line_count": 361,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -11189,7 +12618,7 @@
         "surface_id": "asset:role_output_runtime_schema_specs",
         "surface_owner": "role_output_runtime_schema_specs",
         "top_level_class_count": 2,
-        "top_level_function_count": 9
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -11379,7 +12808,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 294,
+        "line_count": 259,
         "max_severity": "none",
         "model_binding": "maintenance_map_cli",
         "name": "flowpilot_maintenance_map",
@@ -11390,6 +12819,34 @@
         "split_threshold": 650,
         "surface_id": "script:flowpilot_maintenance_map",
         "surface_owner": "script:flowpilot_maintenance_map"
+      },
+      {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "missing_model",
+          "extra_code"
+        ],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": false,
+        "has_model": false,
+        "has_test": true,
+        "kind": "script_entrypoint",
+        "line_count": 209,
+        "max_severity": "high",
+        "model_binding": null,
+        "name": "flowpilot_maintenance_registry",
+        "parse_error": "",
+        "path": "scripts/flowpilot_maintenance_registry.py",
+        "release_relevance": "public_cli",
+        "repair_types": [
+          "add_model_binding",
+          "classify_or_remove_code"
+        ],
+        "split_threshold": 650,
+        "surface_id": "script:flowpilot_maintenance_registry",
+        "surface_owner": "script:flowpilot_maintenance_registry"
       },
       {
         "covered": true,
@@ -11467,7 +12924,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 31,
+        "line_count": 36,
         "max_severity": "none",
         "model_binding": null,
         "name": "flowpilot_runtime",
@@ -11599,7 +13056,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 115,
+        "line_count": 143,
         "max_severity": "none",
         "model_binding": "smoke_fast_validation",
         "name": "smoke_autopilot",
@@ -15809,7 +17266,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-19T09:50:21.506386+00:00",
+            "created_at": "2026-05-20T17:07:15.994942+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -15965,7 +17422,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-19T09:50:21.572909+00:00",
+            "created_at": "2026-05-20T17:07:16.027924+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -21766,8 +23223,13 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 0,
-    "unresolved_non_deferred_gap_counts": {}
+    "unresolved_non_deferred_gap_count": 14,
+    "unresolved_non_deferred_gap_counts": {
+      "extra_code": 3,
+      "internal_only_test": 7,
+      "missing_model": 3,
+      "missing_test": 1
+    }
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -23186,7 +24648,11 @@
       "finding_counts": {},
       "model_checks": [
         "python simulations/run_flowpilot_router_loop_checks.py",
-        "python simulations/run_flowpilot_persistent_router_daemon_checks.py"
+        "python simulations/run_flowpilot_persistent_router_daemon_checks.py",
+        "python simulations/run_flowpilot_daemon_startup_lock_checks.py",
+        "python simulations/run_flowpilot_daemon_controller_actions_checks.py",
+        "python simulations/run_flowpilot_daemon_wait_liveness_checks.py",
+        "python simulations/run_flowpilot_daemon_terminal_projection_checks.py"
       ],
       "model_id": "router_loop_daemon",
       "ok": true,
@@ -23230,6 +24696,26 @@
             "required_test_kinds": [
               "happy_path",
               "edge_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Parent hierarchy consumes thin daemon child evidence for startup/lock, Controller actions, waits/liveness, and terminal/projection while retaining the compatibility full daemon model.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "daemon.parent_child_mesh",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
             ],
             "risk_level": "high",
             "side_effects": [],
@@ -23302,6 +24788,38 @@
             "stale_reasons": [],
             "test_kind": "edge_path",
             "test_name": "test_router_daemon_waits_on_fresh_scheduler_write_lock_before_error"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_daemon_child_mesh",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "daemon.parent_child_mesh"
+            ],
+            "evidence_current": true,
+            "evidence_id": "daemon.happy.thin_child_mesh",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_daemon_child_mesh.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_daemon_child_reports_are_thin_and_green"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_daemon_child_mesh",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "daemon.parent_child_mesh"
+            ],
+            "evidence_current": true,
+            "evidence_id": "daemon.negative.parent_no_longer_consumes_large_compat_model",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_daemon_child_mesh.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_parent_ledger_consumes_split_daemon_children_not_large_compat_model"
           }
         ]
       },
@@ -23657,7 +25175,7 @@
     }
   ],
   "plan_count": 8,
-  "release_convergence_ok": true,
+  "release_convergence_ok": false,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
   "source_audit_ok": true,
@@ -33704,7 +35222,7 @@
         },
         {
           "calls": [
-            "dict"
+            "_external_event_contract"
           ],
           "code_contract_id": "protocol_external_events.external_event_contract",
           "found": true,
@@ -33715,13 +35233,13 @@
           "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_events.py",
           "raised_errors": [],
           "return_values": [
-            "dict"
+            "_external_event_contract"
           ],
           "returns_value": true,
           "side_effects": [],
           "state_reads": [
             "Any",
-            "EXTERNAL_EVENTS",
+            "_external_event_contract",
             "dict",
             "event",
             "str"
@@ -34629,10 +36147,14 @@
             "dict",
             "entrypoint",
             "envelope_path",
+            "next_step_source_policy",
             "post_ack_policy",
             "project_root",
             "render_prompt_text",
+            "required_return_policy",
             "role",
+            "role_scope_policy",
+            "runtime_context_policy",
             "str"
           ],
           "state_writes": [
@@ -34640,7 +36162,11 @@
             "command",
             "command_name",
             "entrypoint",
-            "post_ack_policy"
+            "next_step_source_policy",
+            "post_ack_policy",
+            "required_return_policy",
+            "role_scope_policy",
+            "runtime_context_policy"
           ],
           "symbol": "card_checkin_instruction"
         },
@@ -37999,6 +39525,10 @@
             "control_plane_friction_check",
             "control_transaction_registry_check",
             "cross_plane_friction_check",
+            "daemon_controller_actions_check",
+            "daemon_startup_lock_check",
+            "daemon_terminal_projection_check",
+            "daemon_wait_liveness_check",
             "executable",
             "fast",
             "int",
@@ -38025,6 +39555,10 @@
             "control_plane_friction_check",
             "control_transaction_registry_check",
             "cross_plane_friction_check",
+            "daemon_controller_actions_check",
+            "daemon_startup_lock_check",
+            "daemon_terminal_projection_check",
+            "daemon_wait_liveness_check",
             "meta_check",
             "model_hierarchy_check",
             "model_mesh_check",
@@ -38998,7 +40532,7 @@
           "test_name": "test_artifact_validation_and_child_skill_capability_external_contracts"
         },
         {
-          "assert_count": 31,
+          "assert_count": 49,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "control_transactions.registry_issues",
@@ -39010,6 +40544,7 @@
           ],
           "calls": [
             "Path",
+            "contract_index.contract_selection_rules_by_task_family",
             "control_transactions._control_transaction_contract_registry_path",
             "control_transactions._control_transaction_registry_issues",
             "control_transactions._control_transaction_registry_path",
@@ -39021,13 +40556,16 @@
             "receipts_scheduled._backfill_scheduler_row_from_reconciled_controller_action",
             "receipts_scheduled._scheduler_row_reconciliation_for_entry",
             "receipts_writes._maybe_write_controller_receipt_for_pending",
+            "role_output_schema.output_type_spec_source_summary",
             "router_cli.parse_args",
             "run_root.mkdir",
             "self.assertEqual",
             "self.assertIs",
             "self.assertIsNone",
+            "self.assertTrue",
             "set",
-            "tempfile.TemporaryDirectory"
+            "tempfile.TemporaryDirectory",
+            "work_contracts.process_contract_binding_source_summary"
           ],
           "evidence_id": "source.full_diagnostic.controller_control_scheduler",
           "found": true,
@@ -39036,7 +40574,7 @@
           "test_name": "test_controller_control_scheduler_external_contracts"
         },
         {
-          "assert_count": 42,
+          "assert_count": 57,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "event_identity.stable_identity_hash",
@@ -39053,6 +40591,10 @@
             "event_intake.system_card_delivery_flag",
             "events_repair.owner_child_module_names",
             "expected_waits._run_state_has_event",
+            "external_event_registry.external_event_phase",
+            "external_event_registry.external_events_for_phase",
+            "external_event_registry.legacy_external_events",
+            "gate_registry.gate_outcome_pass_clears_events",
             "len",
             "model_gate_state._sync_model_gate_alias_flags",
             "protocol_external_events.external_event_contract",
@@ -39153,7 +40695,7 @@
           "test_name": "test_lifecycle_startup_system_card_external_contracts"
         },
         {
-          "assert_count": 62,
+          "assert_count": 69,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "internal_actions.action_is_router_internal_mechanical",
@@ -39181,6 +40723,8 @@
             "payload_contracts._terminal_summary_payload_contract",
             "pm_role_followup._pm_role_work_channel_open",
             "prompt_delivery.card_checkin_instruction",
+            "prompt_store.card_boundary_policy_report",
+            "prompt_store.load_prompt_text",
             "proof_validation._validate_router_owned_check_proof",
             "role_io_protocol.empty_role_io_protocol_ledger",
             "role_output_bridge._role_output_snapshot_name",
@@ -39189,6 +40733,7 @@
             "run_root.mkdir",
             "self.assertEqual",
             "self.assertFalse",
+            "self.assertGreater",
             "self.assertIn",
             "self.assertIs",
             "self.assertRaisesRegex",

@@ -69,7 +69,10 @@
           "owner_type": "child",
           "evidence_ids": [
             "flowpilot_router_loop",
-            "flowpilot_persistent_router_daemon",
+            "flowpilot_daemon_startup_lock",
+            "flowpilot_daemon_controller_actions",
+            "flowpilot_daemon_wait_liveness",
+            "flowpilot_daemon_terminal_projection",
             "flowpilot_daemon_reconciliation",
             "flowpilot_route_replanning_policy"
           ],

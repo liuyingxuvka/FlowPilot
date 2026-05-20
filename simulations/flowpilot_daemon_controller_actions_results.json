@@ -1,0 +1,124 @@
+{
+  "family": "controller_actions",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 1,
+    "edge_count": 24,
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 25,
+    "terminal_state_count": 12,
+    "violations": []
+  },
+  "hazard_checks": {
+    "hazards": [
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was stale or foreign"
+        ],
+        "scenario": "controller_actions_child_evidence_current_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child output contract did not reattach to parent flow"
+        ],
+        "scenario": "controller_actions_child_outputs_reattached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "Controller action completion was accepted without a receipt"
+        ],
+        "scenario": "controller_actions_controller_receipts_required_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was not registered"
+        ],
+        "scenario": "controller_actions_model_registered_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "parent did not consume current daemon child evidence id"
+        ],
+        "scenario": "controller_actions_parent_consumes_child_evidence_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child did not attach to router_daemon_resume partition"
+        ],
+        "scenario": "controller_actions_parent_contract_attached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "stateful deliverable repair budget was bypassed or overclaimed"
+        ],
+        "scenario": "controller_actions_repair_budget_respected_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "Router-owned internal fact was not updated from Controller receipt"
+        ],
+        "scenario": "controller_actions_router_fact_updated_from_receipt_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "Controller action was reissued after a completed receipt"
+        ],
+        "scenario": "controller_actions_same_action_not_reissued_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "startup receipt did not sync bootstrap flag, pending action, and Router row"
+        ],
+        "scenario": "controller_actions_startup_receipt_syncs_bootstrap_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "stateful Controller receipt lacked Router-visible postcondition evidence"
+        ],
+        "scenario": "controller_actions_stateful_postcondition_visible_broken"
+      }
+    ],
+    "ok": true
+  },
+  "model": "flowpilot_daemon_controller_actions",
+  "ok": true,
+  "parent_partition": "router_daemon_resume",
+  "parent_reattachment": {
+    "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
+    "compatibility_full_model": "flowpilot_persistent_router_daemon",
+    "parent": "meta",
+    "parent_consumes_this_child": true,
+    "partition": "router_daemon_resume"
+  },
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "release_confidence": "current",
+  "result_type": "daemon_child_model",
+  "routine_confidence": "current",
+  "schema_version": "flowpilot.daemon_child_model_result.v1"
+}

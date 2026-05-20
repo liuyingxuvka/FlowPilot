@@ -617,7 +617,9 @@ FlowGuard caught and fixed these design issues:
   facade entrypoints while delegating state, transitions, invariants, hazards,
   and audit helpers to focused modules. This pass covered control-plane
   friction, router-loop, and daemon reconciliation. The persistent router daemon
-  model remains intentionally unsplit until a stable lower-risk seam is found.
+  keeps its compatibility full-scope model, while the parent hierarchy now
+  consumes thin child evidence for daemon startup/locks, Controller actions,
+  waits/liveness, and terminal/projection contracts.
 - A v0.9.7 behavior repair discovered during simplification validates explicit
   event-envelope references against the current Router wait before startup or
   current-scope reconciliation can return a recoverable wait. The event-contract

@@ -44,6 +44,30 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_persistent_router_daemon_results.json",
     ]
+    daemon_startup_lock_check = [
+        sys.executable,
+        "simulations/run_flowpilot_daemon_startup_lock_checks.py",
+        "--json-out",
+        "simulations/flowpilot_daemon_startup_lock_results.json",
+    ]
+    daemon_controller_actions_check = [
+        sys.executable,
+        "simulations/run_flowpilot_daemon_controller_actions_checks.py",
+        "--json-out",
+        "simulations/flowpilot_daemon_controller_actions_results.json",
+    ]
+    daemon_wait_liveness_check = [
+        sys.executable,
+        "simulations/run_flowpilot_daemon_wait_liveness_checks.py",
+        "--json-out",
+        "simulations/flowpilot_daemon_wait_liveness_results.json",
+    ]
+    daemon_terminal_projection_check = [
+        sys.executable,
+        "simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+        "--json-out",
+        "simulations/flowpilot_daemon_terminal_projection_results.json",
+    ]
     model_mesh_check = [
         sys.executable,
         "simulations/run_flowpilot_model_mesh_checks.py",
@@ -95,6 +119,10 @@ def main(argv: list[str] | None = None) -> int:
         control_plane_friction_check,
         cross_plane_friction_check,
         persistent_router_daemon_check,
+        daemon_startup_lock_check,
+        daemon_controller_actions_check,
+        daemon_wait_liveness_check,
+        daemon_terminal_projection_check,
         control_transaction_registry_check,
         model_mesh_check,
         model_hierarchy_check,

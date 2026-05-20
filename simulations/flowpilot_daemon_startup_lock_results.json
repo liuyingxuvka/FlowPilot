@@ -1,0 +1,124 @@
+{
+  "family": "startup_lock",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "graph": {
+    "accepted_state_count": 1,
+    "edge_count": 24,
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 11,
+    "state_count": 25,
+    "terminal_state_count": 12,
+    "violations": []
+  },
+  "hazard_checks": {
+    "hazards": [
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was stale or foreign"
+        ],
+        "scenario": "startup_lock_child_evidence_current_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child output contract did not reattach to parent flow"
+        ],
+        "scenario": "startup_lock_child_outputs_reattached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon status did not match lock and process liveness"
+        ],
+        "scenario": "startup_lock_daemon_status_matches_process_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "runtime ledgers were not proven atomic and parseable"
+        ],
+        "scenario": "startup_lock_ledgers_atomic_and_parseable_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child evidence was not registered"
+        ],
+        "scenario": "startup_lock_model_registered_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "parent did not consume current daemon child evidence id"
+        ],
+        "scenario": "startup_lock_parent_consumes_child_evidence_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon child did not attach to router_daemon_resume partition"
+        ],
+        "scenario": "startup_lock_parent_contract_attached_missing"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "stale or dead-owner lock recovery did not rejoin daemon flow"
+        ],
+        "scenario": "startup_lock_self_or_dead_lock_recovery_rejoins_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "daemon lock allowed more than one Router writer"
+        ],
+        "scenario": "startup_lock_single_writer_lock_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "startup daemon was not proven before Controller core load"
+        ],
+        "scenario": "startup_lock_startup_daemon_before_controller_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
+          "runtime write-lock settlement evidence was missing"
+        ],
+        "scenario": "startup_lock_write_lock_settlement_recorded_broken"
+      }
+    ],
+    "ok": true
+  },
+  "model": "flowpilot_daemon_startup_lock",
+  "ok": true,
+  "parent_partition": "router_daemon_resume",
+  "parent_reattachment": {
+    "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
+    "compatibility_full_model": "flowpilot_persistent_router_daemon",
+    "parent": "meta",
+    "parent_consumes_this_child": true,
+    "partition": "router_daemon_resume"
+  },
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "release_confidence": "current",
+  "result_type": "daemon_child_model",
+  "routine_confidence": "current",
+  "schema_version": "flowpilot.daemon_child_model_result.v1"
+}
