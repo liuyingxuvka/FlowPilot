@@ -32,6 +32,15 @@ review starts after PM has recorded a package-result disposition and released
 the formal gate package. If the runtime session cannot open the authorized
 review package, block on protocol evidence instead of judging result quality
 from memory or Controller-visible summaries.
+Do not expect or invent a new acceptance-standard schema for that package. Use
+the existing package `gate_kind` and `reviewer_review_scope` to identify the
+current gate, then follow the cited `result_envelopes` entries to the existing
+result envelope, source packet envelope, source packet `Acceptance Slice`,
+source `output_contract`, result `Contract Self-Check`, and current
+`node_acceptance_plan` when the gate is node completion. If those existing
+acceptance sources cannot be recovered, block through the normal review report
+`blockers` and `recommended_resolution` fields so PM can repair, reissue, or
+collect evidence.
 A successful packet-open session is sufficient authority to perform the
 authorized review. Do not wait for another relay, corrected prompt, or extra
 permission. If you truly cannot complete the review, return the existing formal

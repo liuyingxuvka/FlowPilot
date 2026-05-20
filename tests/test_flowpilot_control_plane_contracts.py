@@ -279,9 +279,37 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-formal-package")
         output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        packet_envelope = run_root / "packets" / "packet-1" / "packet_envelope.json"
         result_envelope = run_root / "packets" / "packet-1" / "result_envelope.json"
         result_envelope.parent.mkdir(parents=True, exist_ok=True)
-        router.write_json(result_envelope, {"schema_version": "flowpilot.packet_result_envelope.v1", "packet_id": "packet-1"})
+        router.write_json(
+            packet_envelope,
+            {
+                "schema_version": packet_runtime.PACKET_ENVELOPE_SCHEMA,
+                "packet_id": "packet-1",
+                "packet_type": "material_scan",
+                "from_role": "project_manager",
+                "to_role": "worker_a",
+                "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
+                "body_hash": "hash",
+                "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "output_contract": {
+                    "schema_version": "flowpilot.output_contract.v1",
+                    "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                    "recipient_role": "worker_a",
+                    "selected_by_role": "project_manager",
+                },
+            },
+        )
+        router.write_json(
+            result_envelope,
+            {
+                "schema_version": packet_runtime.RESULT_ENVELOPE_SCHEMA,
+                "packet_id": "packet-1",
+                "source_packet_envelope_path": router.project_relative(root, packet_envelope),
+                "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+            },
+        )
 
         package_ref = pm_decisions._write_pm_formal_gate_package(
             router,
@@ -292,6 +320,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             records=[
                 {
                     "packet_id": "packet-1",
+                    "packet_envelope_path": router.project_relative(root, packet_envelope),
                     "result_envelope_path": router.project_relative(root, result_envelope),
                 }
             ],
@@ -309,6 +338,14 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(package["reviewer_review_scope"], "pm_formal_gate_package_only")
         self.assertFalse(package["reviewer_receives_raw_worker_result"])
         self.assertTrue(package["content_boundary"]["excludes_worker_result_bodies"])
+        result_entry = package["result_envelopes"][0]
+        self.assertEqual(result_entry["packet_envelope_path"], router.project_relative(root, packet_envelope))
+        self.assertEqual(result_entry["packet_envelope_hash"], packet_runtime.sha256_file(packet_envelope))
+        self.assertEqual(result_entry["result_envelope_hash"], packet_runtime.sha256_file(result_envelope))
+        self.assertEqual(
+            result_entry["source_output_contract_id"],
+            "flowpilot.output_contract.worker_material_scan_result.v1",
+        )
 
     def test_absorbed_pm_disposition_records_reviewer_release_evidence(self) -> None:
         root = self.make_project()

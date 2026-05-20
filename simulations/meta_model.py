@@ -2492,6 +2492,7 @@ def human_review_judgement_requires_neutral_observation(state: State, trace) -> 
 
 def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantResult:
     del trace
+    formal_package_identity_ready = state.pm_formal_gate_package_identity_recorded
     explicit_pm_release_ready = (
         state.pm_review_release_order_written
         and state.pm_released_reviewer_for_current_gate
@@ -2500,7 +2501,7 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         state.pm_package_result_disposition_recorded
         and state.pm_package_result_disposition_absorbed
         and state.pm_formal_gate_package_released
-        and state.pm_formal_gate_package_identity_recorded
+        and formal_package_identity_ready
     )
     reviewer_started_current_node = (
         state.node_human_review_context_loaded
@@ -2547,10 +2548,10 @@ def pm_review_release_controls_reviewer_start(state: State, trace) -> InvariantR
         state.worker_output_ready_for_review
         and state.pm_package_result_disposition_recorded
         and state.pm_package_result_disposition_absorbed
-        and state.pm_formal_gate_package_identity_recorded
+        and formal_package_identity_ready
     ):
         return InvariantResult.fail(
-            "PM formal gate package release lacks absorbed disposition, worker-output readiness, or package path/hash identity"
+            "PM formal gate package release lacks absorbed disposition, worker-output readiness, or package path/hash plus source packet/output-contract identity"
         )
     return InvariantResult.pass_()
 

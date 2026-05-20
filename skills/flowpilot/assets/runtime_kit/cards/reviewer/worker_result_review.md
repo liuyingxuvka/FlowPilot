@@ -38,6 +38,14 @@ dispositioned the worker result batch. You are not the default recipient for raw
 worker result bodies. Treat worker result envelopes and packet-runtime audits as
 traceability evidence for PM's package; judge whether PM's accepted evidence can
 actually close the current node.
+Do not look for a separate acceptance-standard schema in the PM package. The
+current pass/fail standard comes from the existing artifacts: package
+`gate_kind`, package `reviewer_review_scope`, source packet `Acceptance Slice`,
+source packet `output_contract`, result `Contract Self-Check`, and the current
+`node_acceptance_plan` when this is a node-completion gate. If the package or
+its cited result envelopes cannot lead you to those existing sources, block the
+review with existing `blockers` and `recommended_resolution`; do not guess the
+standard from broad background context.
 
 When Router provides a `router_owned_check_proof`, use it only for mechanical
 packet facts such as envelope identity, target role, body hashes, ledger
@@ -59,6 +67,10 @@ Check:
 - PM opened each result body through the runtime after Controller relayed the
   result to `project_manager`, and PM recorded an absorbed disposition before
   this reviewer gate;
+- the PM formal gate package's `result_envelopes` entries identify the existing
+  result envelope and, when known, the source packet envelope and
+  `source_output_contract_id` needed to recover the source packet acceptance
+  slice and output contract;
 - router or packet-runtime validation has accepted required envelope fields,
   Controller relay signatures, body hashes, result author role, and packet
   target role;
@@ -89,6 +101,9 @@ Check:
   unreviewed PM/officer/reviewer skill use blocks pass when the binding is a
   current-gate obligation;
 - output satisfies packet acceptance slice;
+- missing packet acceptance slice, missing source output contract, missing or
+  failed result `Contract Self-Check`, or missing required node acceptance plan
+  is a hard current-gate blocker;
 - direct evidence proves user-facing quality claims when those claims are made;
   file existence, hashes, report prose, or screenshots alone do not prove the
   result is usable or good enough from the final user's point of view.

@@ -122,11 +122,40 @@ def _write_pm_formal_gate_package(
     for record in records:
         result_rel = str(record.get('result_envelope_path') or '')
         result_hash = None
+        result_envelope: dict[str, Any] = {}
         if result_rel:
             result_path = resolve_project_path(project_root, result_rel)
             if result_path.exists():
                 result_hash = packet_runtime.sha256_file(result_path)
-        result_envelopes.append({'packet_id': str(record.get('packet_id') or ''), 'result_envelope_path': result_rel, 'result_envelope_hash': result_hash})
+                result_envelope = packet_runtime.load_envelope(project_root, result_rel)
+        packet_rel = str(record.get('packet_envelope_path') or result_envelope.get('source_packet_envelope_path') or '')
+        packet_hash = None
+        packet_envelope: dict[str, Any] = {}
+        if packet_rel:
+            packet_path = resolve_project_path(project_root, packet_rel)
+            if packet_path.exists():
+                packet_hash = packet_runtime.sha256_file(packet_path)
+                packet_envelope = packet_runtime.load_envelope(project_root, packet_rel)
+        source_output_contract_id = str(
+            result_envelope.get('source_output_contract_id')
+            or result_envelope.get('output_contract_id')
+            or packet_envelope.get('output_contract_id')
+            or packet_runtime.output_contract_id(
+                packet_envelope.get('output_contract') if isinstance(packet_envelope.get('output_contract'), dict) else None
+            )
+            or ''
+        )
+        result_entry = {
+            'packet_id': str(record.get('packet_id') or ''),
+            'result_envelope_path': result_rel,
+            'result_envelope_hash': result_hash,
+        }
+        if packet_rel:
+            result_entry['packet_envelope_path'] = packet_rel
+            result_entry['packet_envelope_hash'] = packet_hash
+        if source_output_contract_id:
+            result_entry['source_output_contract_id'] = source_output_contract_id
+        result_envelopes.append(result_entry)
     package = {
         'schema_version': 'flowpilot.pm_formal_gate_package.v1',
         'run_id': run_state['run_id'],

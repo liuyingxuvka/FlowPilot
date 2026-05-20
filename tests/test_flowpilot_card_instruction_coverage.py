@@ -268,6 +268,24 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
 
+    def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        reviewer_core = normalized(_card_path_by_id("reviewer.core"))
+        worker_review = normalized(_card_path_by_id("reviewer.worker_result_review"))
+
+        for text in (reviewer_core, worker_review):
+            self.assertIn("acceptance-standard schema", text)
+            self.assertIn("gate_kind", text)
+            self.assertIn("reviewer_review_scope", text)
+            self.assertIn("acceptance slice", text)
+            self.assertIn("output_contract", text)
+            self.assertIn("contract self-check", text)
+            self.assertIn("node_acceptance_plan", text)
+            self.assertIn("blockers", text)
+            self.assertIn("recommended_resolution", text)
+
     def test_packet_open_success_requires_work_or_existing_exit(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

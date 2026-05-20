@@ -95,6 +95,7 @@ class FlowPilotControlGateTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("formal gate package release", result.message)
+        self.assertIn("source packet/output-contract identity", result.message)
 
     def test_meta_reviewer_requires_packet_role_origin_audit(self) -> None:
         state = meta_model.State(
@@ -336,6 +337,7 @@ class FlowPilotControlGateTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertIn("formal gate package release", result.message)
+        self.assertIn("source packet/output-contract identity", result.message)
 
     def test_capability_reviewer_requires_packet_role_origin_audit(self) -> None:
         state = capability_model.State(
