@@ -6,6 +6,10 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_router_protocol_dispatch_policy import (
+    DISPATCH_RECIPIENT_GATE_ACTION_OUTPUT_EVENTS,
+    DISPATCH_RECIPIENT_GATE_CONTEXT_CARD_OUTPUT_EVENTS,
+)
 from flowpilot_router_protocol_catalog import *
 
 _BOUND_ROUTER: ModuleType | None = None

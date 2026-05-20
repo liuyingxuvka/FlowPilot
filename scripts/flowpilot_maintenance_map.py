@@ -8,51 +8,16 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
+from flowpilot_maintenance_registry import (
+    CURRENT_MAINTENANCE_DECISIONS,
+    MODEL_FACADES,
+    RUNTIME_FACADES,
+    SCRIPT_ENTRYPOINTS,
+    THRESHOLDS,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 DIAGNOSTIC_PATH = ROOT / "simulations" / "flowpilot_model_test_alignment_results.json"
-
-THRESHOLDS = {
-    "runtime_owner_module_lines": 450,
-    "runtime_facade_lines": 700,
-    "script_entry_lines": 450,
-    "test_file_watch_lines": 900,
-    "model_file_watch_lines": 1600,
-}
-
-RUNTIME_FACADES = (
-    "skills/flowpilot/assets/flowpilot_router.py",
-    "skills/flowpilot/assets/flowpilot_paths.py",
-    "skills/flowpilot/assets/flowpilot_packets.py",
-    "skills/flowpilot/assets/flowpilot_outputs.py",
-    "skills/flowpilot/assets/flowpilot_runtime.py",
-)
-
-SCRIPT_ENTRYPOINTS = (
-    "scripts/check_install.py",
-    "scripts/install_flowpilot.py",
-    "scripts/run_test_tier.py",
-    "scripts/smoke_autopilot.py",
-    "scripts/audit_local_install_sync.py",
-    "scripts/run_flowguard_coverage_sweep.py",
-    "scripts/flowpilot_maintenance_map.py",
-)
-
-MODEL_FACADES = (
-    "simulations/capability_model.py",
-    "simulations/meta_model.py",
-    "simulations/flowpilot_structure_maintenance_model.py",
-    "simulations/flowpilot_router_facade_split_model.py",
-    "simulations/flowpilot_model_test_alignment_source_contracts.py",
-)
-
-CURRENT_MAINTENANCE_DECISIONS = (
-    "Runtime owner modules are under the StructureMesh line threshold; do not split runtime again without a matching model block and external contract test.",
-    "Test-tier command definitions are split into stable command-group modules while scripts/test_tier/definitions.py remains the compatibility facade.",
-    "Router facade split, structure-maintenance, and source-contract alignment models keep their old import paths while large catalogs move into helper modules.",
-    "Large router-runtime tests stay as watchlist items in this pass; split them only by externally visible contract family and after fixture ownership is clear.",
-    "Remaining large install and defect scripts stay as watchlist items because they are behavior-bearing command surfaces, not pure catalog moves.",
-)
 
 
 def _rel(path: Path, root: Path) -> str:

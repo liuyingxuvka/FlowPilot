@@ -1,153 +1,16 @@
-"""Gate repair reset flag tables for FlowPilot router protocol."""
+"""Compatibility reset flag exports derived from the gate registry."""
 
 from __future__ import annotations
 
-PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS = (
-    "pm_product_architecture_card_delivered",
-    "product_architecture_written_by_pm",
-    "pm_product_behavior_model_decision_card_delivered",
-    "pm_product_behavior_model_accepted",
-    "pm_product_behavior_model_rebuild_requested",
-    "product_architecture_reviewer_passed",
-    "product_behavior_model_submitted",
-    "product_behavior_model_blocked",
-    "product_architecture_modelability_passed",
-    "product_architecture_modelability_blocked",
-    "reviewer_product_architecture_card_delivered",
-    "product_officer_product_architecture_card_delivered",
-    "root_contract_written_by_pm",
-    "root_contract_reviewer_passed",
-    "root_contract_modelability_passed",
-    "root_contract_frozen_by_pm",
-    "pm_child_skill_selection_written",
-    "child_skill_gate_manifest_written",
-    "child_skill_manifest_reviewer_passed",
-    "child_skill_process_officer_passed",
-    "child_skill_product_officer_passed",
-    "child_skill_manifest_pm_approved_for_route",
-    "capability_evidence_synced",
-    "route_draft_written_by_pm",
-    "process_route_model_submitted",
-    "process_route_model_repair_required",
-    "process_route_model_blocked",
-    "process_officer_route_check_passed",
-    "process_officer_route_repair_required",
-    "process_officer_route_check_blocked",
-    "pm_process_route_model_decision_card_delivered",
-    "pm_process_route_model_accepted",
-    "pm_process_route_model_rebuild_requested",
-    "product_officer_route_check_passed",
-    "reviewer_route_check_passed",
-    "route_activated_by_pm",
-)
-
-ROOT_CONTRACT_REPAIR_RESET_FLAGS = (
-    "root_contract_written_by_pm",
-    "root_contract_reviewer_passed",
-    "root_contract_modelability_passed",
-    "root_contract_frozen_by_pm",
-    "reviewer_root_contract_card_delivered",
-    "product_officer_root_contract_card_delivered",
-    "pm_child_skill_selection_written",
-    "child_skill_gate_manifest_written",
-    "child_skill_manifest_reviewer_passed",
-    "child_skill_process_officer_passed",
-    "child_skill_product_officer_passed",
-    "child_skill_manifest_pm_approved_for_route",
-    "capability_evidence_synced",
-    "route_draft_written_by_pm",
-    "process_officer_route_check_passed",
-    "pm_process_route_model_decision_card_delivered",
-    "pm_process_route_model_accepted",
-    "pm_process_route_model_rebuild_requested",
-    "product_officer_route_check_passed",
-    "reviewer_route_check_passed",
-    "route_activated_by_pm",
-)
-
-CHILD_SKILL_GATE_REPAIR_RESET_FLAGS = (
-    "child_skill_gate_manifest_written",
-    "child_skill_manifest_reviewer_passed",
-    "child_skill_process_officer_passed",
-    "child_skill_product_officer_passed",
-    "child_skill_manifest_pm_approved_for_route",
-    "capability_evidence_synced",
-    "reviewer_child_skill_gate_manifest_card_delivered",
-    "process_officer_child_skill_card_delivered",
-    "product_officer_child_skill_card_delivered",
-    "route_draft_written_by_pm",
-    "process_route_model_submitted",
-    "process_route_model_repair_required",
-    "process_route_model_blocked",
-    "process_officer_route_check_passed",
-    "process_officer_route_repair_required",
-    "process_officer_route_check_blocked",
-    "pm_process_route_model_decision_card_delivered",
-    "pm_process_route_model_accepted",
-    "pm_process_route_model_rebuild_requested",
-    "product_officer_route_check_passed",
-    "reviewer_route_check_passed",
-    "route_activated_by_pm",
-)
-
-ROUTE_GATE_REPAIR_RESET_FLAGS = (
-    "route_draft_written_by_pm",
-    "process_route_model_submitted",
-    "process_route_model_repair_required",
-    "process_route_model_blocked",
-    "process_officer_route_check_passed",
-    "process_officer_route_repair_required",
-    "process_officer_route_check_blocked",
-    "pm_process_route_model_decision_card_delivered",
-    "pm_process_route_model_accepted",
-    "pm_process_route_model_rebuild_requested",
-    "product_officer_route_check_passed",
-    "reviewer_route_check_passed",
-    "process_officer_route_check_card_delivered",
-    "product_officer_route_check_card_delivered",
-    "reviewer_route_check_card_delivered",
-    "route_activated_by_pm",
-)
-
-RESEARCH_GATE_REPAIR_RESET_FLAGS = (
-    "research_package_written_by_pm",
-    "research_capability_decision_recorded",
-    "research_packet_relayed",
-    "research_result_relayed_to_pm",
-    "research_result_disposition_recorded",
-    "research_result_absorbed_for_review_by_pm",
-    "worker_research_report_returned",
-    "research_review_passed",
-    "reviewer_research_check_card_delivered",
-    "pm_research_absorb_or_mutate_card_delivered",
-    "research_result_absorbed_by_pm",
-)
-
-PARENT_BACKWARD_REPAIR_RESET_FLAGS = (
-    "parent_backward_targets_built",
-    "parent_backward_replay_passed",
-    "reviewer_parent_backward_replay_card_delivered",
-    "parent_segment_decision_recorded",
-    "pm_parent_segment_decision_card_delivered",
-)
-
-EVIDENCE_QUALITY_REPAIR_RESET_FLAGS = (
-    "evidence_quality_package_written",
-    "evidence_quality_reviewer_passed",
-    "reviewer_evidence_quality_card_delivered",
-    "final_ledger_built_clean",
-    "final_backward_replay_passed",
-    "reviewer_final_backward_replay_card_delivered",
-    "pm_closure_approved",
-    "pm_closure_card_delivered",
-)
-
-FINAL_BACKWARD_REPAIR_RESET_FLAGS = (
-    "final_ledger_built_clean",
-    "final_backward_replay_passed",
-    "reviewer_final_backward_replay_card_delivered",
-    "pm_closure_approved",
-    "pm_closure_card_delivered",
+from flowpilot_router_protocol_gate_registry import (
+    CHILD_SKILL_GATE_REPAIR_RESET_FLAGS,
+    EVIDENCE_QUALITY_REPAIR_RESET_FLAGS,
+    FINAL_BACKWARD_REPAIR_RESET_FLAGS,
+    PARENT_BACKWARD_REPAIR_RESET_FLAGS,
+    PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+    RESEARCH_GATE_REPAIR_RESET_FLAGS,
+    ROOT_CONTRACT_REPAIR_RESET_FLAGS,
+    ROUTE_GATE_REPAIR_RESET_FLAGS,
 )
 
 __all__ = (

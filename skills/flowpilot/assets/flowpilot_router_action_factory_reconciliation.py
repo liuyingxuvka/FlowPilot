@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import Any
 
 import flowpilot_router_card_returns
+from flowpilot_router_protocol_dispatch_policy import FORMAL_WORK_PACKET_RELAY_ACTION_TYPES
 from flowpilot_router_protocol_catalog import *
 
 _BOUND_ROUTER: ModuleType | None = None

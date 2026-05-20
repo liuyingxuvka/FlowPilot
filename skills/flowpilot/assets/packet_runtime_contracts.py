@@ -48,6 +48,12 @@ def mutual_role_reminder(*, source_role: str, target_role: str, envelope_kind: s
 
 
 def packet_open_work_authority(*, role: str, packet_type: str, source: str) -> dict[str, Any]:
+    """Successful open-packet authority: do not wait for another relay.
+
+    PM packets may exit through pm_startup_repair_request,
+    pm_startup_protocol_dead_end, or pm_control_blocker_repair_decision;
+    ordinary role packets return their ordinary blocker back to PM.
+    """
     if role == "project_manager":
         required_exit = "expected_pm_packet_output_or_existing_pm_recovery_decision"
         legal_exits = [

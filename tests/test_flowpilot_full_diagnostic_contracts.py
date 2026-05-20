@@ -19,6 +19,7 @@ import flowpilot_runtime_args as flowpilot_runtime_args  # noqa: E402
 import flowpilot_runtime_commands as flowpilot_runtime_commands  # noqa: E402
 import flowpilot_runtime_role_output_commands as flowpilot_runtime_role_output_commands  # noqa: E402
 import flowpilot_router_cli as router_cli  # noqa: E402
+import flowpilot_router_contract_index as contract_index  # noqa: E402
 import flowpilot_router_control_transactions as control_transactions  # noqa: E402
 import flowpilot_router_controller_repair_schedule as controller_repair_schedule  # noqa: E402
 import flowpilot_router_controller_repair_deliverables as controller_repair_deliverables  # noqa: E402
@@ -110,7 +111,10 @@ import flowpilot_router_payload_contracts_startup as payload_contracts_startup  
 import flowpilot_router_pm_role_followup as pm_role_followup  # noqa: E402
 import flowpilot_router_prompt_delivery as prompt_delivery  # noqa: E402
 import flowpilot_router_proof_validation as proof_validation  # noqa: E402
+import flowpilot_router_protocol_external_event_data as external_event_data  # noqa: E402
+import flowpilot_router_protocol_external_event_registry as external_event_registry  # noqa: E402
 import flowpilot_router_protocol_external_events as protocol_external_events  # noqa: E402
+import flowpilot_router_protocol_dispatch_policy as dispatch_policy  # noqa: E402
 import flowpilot_router_protocol_decision_fields as decision_fields  # noqa: E402
 import flowpilot_router_protocol_decision_tables as decision_tables  # noqa: E402
 import flowpilot_router_protocol_event_capabilities as event_capabilities  # noqa: E402
@@ -121,9 +125,11 @@ import flowpilot_router_protocol_external_events_terminal as external_events_ter
 import flowpilot_router_protocol_gate_block_specs as gate_block_specs  # noqa: E402
 import flowpilot_router_protocol_gate_outcomes as gate_outcomes  # noqa: E402
 import flowpilot_router_protocol_gate_pass_clears as gate_pass_clears  # noqa: E402
+import flowpilot_router_protocol_gate_registry as gate_registry  # noqa: E402
 import flowpilot_router_protocol_gate_reset_flags as gate_reset_flags  # noqa: E402
 import flowpilot_router_protocol_runtime_flags as runtime_flags  # noqa: E402
 import flowpilot_router_protocol_scoped_event_identity as scoped_event_identity  # noqa: E402
+import flowpilot_router_protocol_work_contracts as work_contracts  # noqa: E402
 import flowpilot_router_role_io_protocol as role_io_protocol  # noqa: E402
 import flowpilot_router_role_output_bridge as role_output_bridge  # noqa: E402
 import flowpilot_router_route_artifacts_architecture as route_artifacts_architecture  # noqa: E402
@@ -304,6 +310,35 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(
             control_transactions._control_transaction_contract_registry_path().name,
             "contract_index.json",
+        )
+        rules_by_family = contract_index.contract_selection_rules_by_task_family()
+        self.assertEqual(
+            work_contracts.PROCESS_CONTRACT_BINDINGS["current_node_work"]["contract_id"],
+            rules_by_family["worker.current_node"]["contract_id"],
+        )
+        self.assertEqual(
+            work_contracts.PROCESS_CONTRACT_BINDINGS["pm_role_work_request"]["contract_id"],
+            rules_by_family["pm.role_work_request"]["contract_id"],
+        )
+        self.assertEqual(
+            work_contracts.PROCESS_CONTRACT_BINDINGS["control_blocker_repair"]["contract_id"],
+            "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+        )
+        self.assertEqual(
+            work_contracts.PROCESS_CONTRACT_BINDINGS["current_node_work"]["required_result_next_recipient"],
+            "project_manager",
+        )
+        self.assertIs(
+            router.DISPATCH_RECIPIENT_GATE_ACTION_TYPES,
+            dispatch_policy.DISPATCH_RECIPIENT_GATE_ACTION_TYPES,
+        )
+        self.assertEqual(
+            action_dispatch_apply.DISPATCH_RECIPIENT_GATE_ACTION_TYPES,
+            dispatch_policy.DISPATCH_RECIPIENT_GATE_ACTION_TYPES,
+        )
+        self.assertEqual(
+            action_dispatch_cards.DISPATCH_RECIPIENT_GATE_ACTION_OUTPUT_EVENTS,
+            dispatch_policy.DISPATCH_RECIPIENT_GATE_ACTION_OUTPUT_EVENTS,
         )
         self.assertEqual(control_transactions._control_transaction_registry_issues(), [])
         row = control_transactions._control_transaction_row(None, "packet_dispatch")
@@ -559,6 +594,44 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             **external_events_terminal.EXTERNAL_EVENTS_TERMINAL,
         }
         self.assertEqual(split_events, protocol_external_events.EXTERNAL_EVENTS)
+        self.assertEqual(external_event_registry.EXTERNAL_EVENTS, protocol_external_events.EXTERNAL_EVENTS)
+        self.assertEqual(
+            external_event_registry.external_events_for_phase("startup"),
+            external_events_startup.EXTERNAL_EVENTS_STARTUP,
+        )
+        self.assertEqual(
+            external_event_data.EXTERNAL_EVENT_DATA_BY_PHASE["startup"],
+            external_events_startup.EXTERNAL_EVENTS_STARTUP,
+        )
+        self.assertEqual(
+            external_event_registry.external_events_for_phase("material"),
+            external_events_material.EXTERNAL_EVENTS_MATERIAL,
+        )
+        self.assertEqual(
+            external_event_data.EXTERNAL_EVENT_DATA_BY_PHASE["material"],
+            external_events_material.EXTERNAL_EVENTS_MATERIAL,
+        )
+        self.assertEqual(
+            external_event_registry.external_events_for_phase("route"),
+            external_events_route.EXTERNAL_EVENTS_ROUTE,
+        )
+        self.assertEqual(
+            external_event_data.EXTERNAL_EVENT_DATA_BY_PHASE["route"],
+            external_events_route.EXTERNAL_EVENTS_ROUTE,
+        )
+        self.assertEqual(
+            external_event_registry.external_events_for_phase("terminal"),
+            external_events_terminal.EXTERNAL_EVENTS_TERMINAL,
+        )
+        self.assertEqual(
+            external_event_data.EXTERNAL_EVENT_DATA_BY_PHASE["terminal"],
+            external_events_terminal.EXTERNAL_EVENTS_TERMINAL,
+        )
+        self.assertEqual(
+            external_event_registry.external_event_phase("pm_approves_startup_activation"),
+            "startup",
+        )
+        self.assertIn("product_officer_model_report", external_event_registry.legacy_external_events())
         self.assertIs(
             gate_outcomes.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
             gate_reset_flags.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
@@ -570,6 +643,22 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(
             gate_outcomes.GATE_OUTCOME_PASS_CLEARS_EVENTS,
             gate_pass_clears.GATE_OUTCOME_PASS_CLEARS_EVENTS,
+        )
+        self.assertIs(
+            gate_reset_flags.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+            gate_registry.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
+        )
+        self.assertIs(
+            gate_block_specs.GATE_OUTCOME_BLOCK_EVENT_SPECS,
+            gate_registry.GATE_OUTCOME_BLOCK_EVENT_SPECS,
+        )
+        self.assertIs(
+            gate_pass_clears.GATE_OUTCOME_PASS_CLEAR_FLAGS,
+            gate_registry.GATE_OUTCOME_PASS_CLEAR_FLAGS,
+        )
+        self.assertEqual(
+            gate_pass_clears.GATE_OUTCOME_PASS_CLEARS_EVENTS,
+            gate_registry.gate_outcome_pass_clears_events(protocol_external_events.EXTERNAL_EVENTS),
         )
         self.assertIs(decision_tables.STARTUP_ANSWER_ENUMS, decision_fields.STARTUP_ANSWER_ENUMS)
         self.assertIs(decision_tables.RUNTIME_FLAG_DEFAULTS, runtime_flags.RUNTIME_FLAG_DEFAULTS)

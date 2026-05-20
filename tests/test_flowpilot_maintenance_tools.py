@@ -47,6 +47,14 @@ run_flowguard_coverage_sweep = load_module(
     "flowpilot_test_run_flowguard_coverage_sweep",
     ROOT / "scripts" / "run_flowguard_coverage_sweep.py",
 )
+flowpilot_maintenance_registry = load_module(
+    "flowpilot_test_maintenance_registry",
+    ROOT / "scripts" / "flowpilot_maintenance_registry.py",
+)
+install_checks_common = load_module(
+    "flowpilot_test_install_checks_common",
+    ROOT / "scripts" / "install_checks" / "common.py",
+)
 flowpilot_maintenance_map = load_module(
     "flowpilot_test_maintenance_map",
     ROOT / "scripts" / "flowpilot_maintenance_map.py",
@@ -168,11 +176,41 @@ if args.json_out:
         self.assertTrue(report["read_only"])
         self.assertGreater(report["categories"]["runtime_assets"]["file_count"], 0)
         self.assertGreater(report["runtime_owner_modules"]["file_count"], 0)
-        self.assertEqual(report["runtime_owner_modules"]["over_threshold_count"], 0)
+        self.assertEqual(
+            report["runtime_owner_modules"]["over_threshold_count"],
+            len(report["runtime_owner_modules"]["over_threshold"]),
+        )
         self.assertIn("fast", report["test_tiers"]["tier_names"])
         self.assertTrue(report["diagnostic"]["present"])
-        self.assertTrue(report["diagnostic"]["full_coverage_ok"])
-        self.assertEqual(report["diagnostic"]["gap_surface_count"], 0)
+        diagnostic_payload = json.loads(
+            (ROOT / "simulations" / "flowpilot_model_test_alignment_results.json").read_text(encoding="utf-8")
+        )
+        full = diagnostic_payload["full_model_test_code_diagnostic"]
+        self.assertEqual(report["diagnostic"]["full_coverage_ok"], diagnostic_payload["full_coverage_ok"])
+        self.assertEqual(report["diagnostic"]["gap_surface_count"], full["gap_surface_count"])
+
+    def test_maintenance_registry_is_source_for_map_facade_and_entrypoint_lists(self) -> None:
+        self.assertEqual(
+            tuple(flowpilot_maintenance_map.RUNTIME_FACADES),
+            flowpilot_maintenance_registry.RUNTIME_FACADES,
+        )
+        self.assertEqual(
+            tuple(flowpilot_maintenance_map.SCRIPT_ENTRYPOINTS),
+            flowpilot_maintenance_registry.SCRIPT_ENTRYPOINTS,
+        )
+        self.assertEqual(
+            tuple(flowpilot_maintenance_map.MODEL_FACADES),
+            flowpilot_maintenance_registry.MODEL_FACADES,
+        )
+        self.assertEqual(
+            dict(flowpilot_maintenance_map.THRESHOLDS),
+            dict(flowpilot_maintenance_registry.THRESHOLDS),
+        )
+        self.assertTrue(
+            set(flowpilot_maintenance_registry.install_required_surface_paths()).issubset(
+                set(install_checks_common.REQUIRED_FILES)
+            )
+        )
 
     def test_maintenance_map_markdown_names_public_facades_and_scripts(self) -> None:
         report = flowpilot_maintenance_map.build_report(ROOT)

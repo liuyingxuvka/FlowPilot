@@ -7,6 +7,7 @@ from typing import Any, Iterable
 import flowpilot_runtime_closure
 import packet_runtime
 import role_output_runtime
+from flowpilot_router_contract_index import contract_selection_rules_by_task_family
 
 from flowpilot_router_protocol_schemas import *
 from flowpilot_router_protocol_control_repair import *
@@ -132,52 +133,45 @@ PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES = {
     "route_or_node_mutation_required",
 }
 
-PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
+PROCESS_CONTRACT_POLICIES: dict[str, dict[str, str]] = {
     "current_node_work": {
         "task_family": "worker.current_node",
-        "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
         "packet_type": "work_packet",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "pm_role_work_request": {
         "task_family": "pm.role_work_request",
-        "contract_id": "flowpilot.output_contract.pm_role_work_result.v1",
         "packet_type": "pm_role_work_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "officer_model_report": {
         "task_family": "officer.model_report",
-        "contract_id": "flowpilot.output_contract.officer_model_report.v1",
         "packet_type": "officer_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "officer_model_miss_report": {
         "task_family": "officer.model_miss_report",
-        "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
         "packet_type": "officer_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "reviewer_result_review": {
         "task_family": "reviewer.review",
-        "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
         "packet_type": "review_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "material_scan": {
         "task_family": "worker.material_scan",
-        "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
         "packet_type": "material_scan",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
     "research": {
         "task_family": "worker.research",
-        "contract_id": "flowpilot.output_contract.worker_research_result.v1",
         "packet_type": "research",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
@@ -191,12 +185,33 @@ PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = {
     },
     "resume_decision": {
         "task_family": "pm.resume_decision",
-        "contract_id": "flowpilot.output_contract.pm_resume_decision.v1",
         "packet_type": "role_decision",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
 }
+
+
+def _process_contract_bindings() -> dict[str, dict[str, Any]]:
+    rules_by_family = contract_selection_rules_by_task_family()
+    bindings: dict[str, dict[str, Any]] = {}
+    for process_kind, policy in PROCESS_CONTRACT_POLICIES.items():
+        contract_task_family = policy.get("contract_task_family", policy["task_family"])
+        rule = rules_by_family.get(contract_task_family, {})
+        contract_id = str(rule.get("contract_id") or policy.get("contract_id") or "")
+        if not contract_id:
+            raise KeyError(contract_task_family)
+        bindings[process_kind] = {
+            "task_family": policy["task_family"],
+            "contract_id": contract_id,
+            "packet_type": policy.get("packet_type", rule.get("packet_type", "")),
+            "required_result_next_recipient": policy["required_result_next_recipient"],
+            "absorbing_role": policy["absorbing_role"],
+        }
+    return bindings
+
+
+PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = _process_contract_bindings()
 
 PM_ROLE_WORK_CONTRACT_PROCESS_KINDS = {
     "flowpilot.output_contract.pm_role_work_result.v1": "pm_role_work_request",
@@ -229,6 +244,7 @@ __all__ = (
     'PARALLEL_PACKET_BATCH_OPEN_STATUSES',
     'PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES',
     'PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES',
+    'PROCESS_CONTRACT_POLICIES',
     'PROCESS_CONTRACT_BINDINGS',
     'PM_ROLE_WORK_CONTRACT_PROCESS_KINDS',
     'PM_ROLE_WORK_FOREIGN_CONTRACT_IDS',

@@ -6,6 +6,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_router_protocol_dispatch_policy import DISPATCH_RECIPIENT_GATE_ACTION_TYPES
 from flowpilot_router_protocol_catalog import *
 
 _BOUND_ROUTER: ModuleType | None = None

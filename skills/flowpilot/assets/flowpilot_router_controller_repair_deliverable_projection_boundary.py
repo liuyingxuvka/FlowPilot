@@ -165,6 +165,7 @@ def _reconcile_controller_boundary_confirmation_projection(
         return {"changed": False, "reason": "controller_action_dir_missing"}
 
     flags_were_synced = _controller_boundary_flags_synced(run_state)
+    known_boundary_action_ids: list[str] = []
     reconciled_actions: list[str] = []
     pending_cleared = False
     last_projection: dict[str, Any] | None = None
@@ -186,6 +187,7 @@ def _reconcile_controller_boundary_confirmation_projection(
         action_id = str(entry.get("action_id") or action.get("controller_action_id") or "").strip()
         if not action_id:
             continue
+        known_boundary_action_ids.append(action_id)
         action.setdefault("action_type", "confirm_controller_core_boundary")
         action.setdefault("controller_action_id", action_id)
         action.setdefault("postcondition", "controller_role_confirmed")
@@ -245,6 +247,46 @@ def _reconcile_controller_boundary_confirmation_projection(
 
     changed = bool(reconciled_actions) or flags_were_synced != _controller_boundary_flags_synced(run_state)
     if not changed:
+        history = run_state.get("history") if isinstance(run_state.get("history"), list) else []
+        projection_history_exists = any(
+            isinstance(item, dict) and item.get("label") == "router_reconciled_controller_boundary_projection"
+            for item in history
+        )
+        postcondition_replayed = any(
+            isinstance(item, dict) and item.get("label") == "router_replayed_reconciled_controller_postcondition"
+            for item in history
+        )
+        if (
+            source in {"next_action_reconciliation_barrier", "reconcile_current_run_projection_repair"}
+            and known_boundary_action_ids
+            and postcondition_replayed
+            and not projection_history_exists
+            and _controller_boundary_flags_synced(run_state)
+        ):
+            ledger = _rebuild_controller_action_ledger(project_root, run_root, run_state)
+            append_history(
+                run_state,
+                "router_reconciled_controller_boundary_projection",
+                {
+                    "source": source,
+                    "reconciled_action_ids": [],
+                    "known_boundary_action_ids": known_boundary_action_ids,
+                    "pending_action_cleared": False,
+                    "controller_boundary_flags_synced": True,
+                    "ledger_counts": ledger.get("counts"),
+                    "projection": {
+                        "applied": True,
+                        "source": "already_replayed_reconciled_controller_postcondition",
+                    },
+                },
+            )
+            return {
+                "changed": True,
+                "reconciled_action_ids": [],
+                "pending_action_cleared": False,
+                "controller_boundary_flags_synced": True,
+                "ledger_counts": ledger.get("counts"),
+            }
         return {"changed": False, "reason": "controller_boundary_projection_already_synced"}
     ledger = _rebuild_controller_action_ledger(project_root, run_root, run_state)
     append_history(
