@@ -7,12 +7,16 @@ from types import ModuleType
 from typing import Any
 
 import card_runtime
+import flowpilot_closure_kernel
 
 def _pending_return_records(router: ModuleType, run_root: Path, run_id: str) -> list[dict[str, Any]]:
     ledger = router._read_return_event_ledger(run_root, run_id)
     completed_keys: set[tuple[str, str, str]] = set()
     for item in ledger.get('completed_returns', []):
-        if not isinstance(item, dict) or item.get('status') != 'resolved':
+        if not isinstance(item, dict):
+            continue
+        closure = flowpilot_closure_kernel.classify_closure('ack_return', item)
+        if closure.blocks_progress:
             continue
         return_kind = str(item.get('return_kind') or 'system_card')
         identity = str(item.get('card_bundle_id') or item.get('delivery_attempt_id') or '')
@@ -30,7 +34,7 @@ def _pending_return_records(router: ModuleType, run_root: Path, run_id: str) -> 
             event_name = str(item.get('card_return_event') or '')
             if item.get('resolved_at') or (return_kind, identity, event_name) in completed_keys:
                 continue
-        if status in {None, 'pending', 'awaiting_return', 'reminded', 'returned', 'bundle_ack_incomplete', 'invalid_ack_pending_explicit_check'}:
+        if flowpilot_closure_kernel.closure_blocks_progress('ack_return', item):
             pending.append(item)
     return pending
 
@@ -41,9 +45,9 @@ def _card_return_resolved_for_action(router: ModuleType, run_root: Path, run_id:
     ledger = router._read_return_event_ledger(run_root, run_id)
     if action_type == 'deliver_system_card_bundle':
         bundle_id = str(action.get('card_bundle_id') or '')
-        return bool(bundle_id and any((isinstance(item, dict) and item.get('status') == 'resolved' and (item.get('return_kind') == 'system_card_bundle') and (item.get('card_bundle_id') == bundle_id) for item in ledger.get('completed_returns', []))))
+        return bool(bundle_id and any((isinstance(item, dict) and (not flowpilot_closure_kernel.closure_blocks_progress('ack_return', item)) and (item.get('return_kind') == 'system_card_bundle') and (item.get('card_bundle_id') == bundle_id) for item in ledger.get('completed_returns', []))))
     delivery_attempt_id = str(action.get('delivery_attempt_id') or '')
-    return bool(delivery_attempt_id and any((isinstance(item, dict) and item.get('status') == 'resolved' and (item.get('return_kind', 'system_card') == 'system_card') and (item.get('delivery_attempt_id') == delivery_attempt_id) for item in ledger.get('completed_returns', []))))
+    return bool(delivery_attempt_id and any((isinstance(item, dict) and (not flowpilot_closure_kernel.closure_blocks_progress('ack_return', item)) and (item.get('return_kind', 'system_card') == 'system_card') and (item.get('delivery_attempt_id') == delivery_attempt_id) for item in ledger.get('completed_returns', []))))
 
 def _pending_card_return_ack_exists(router: ModuleType, project_root: Path, pending_action: object) -> bool:
     if not isinstance(pending_action, dict) or pending_action.get('action_type') not in {'await_card_return_event', 'await_card_bundle_return_event', 'check_card_return_event', 'check_card_bundle_return_event', 'deliver_system_card', 'deliver_system_card_bundle'}:

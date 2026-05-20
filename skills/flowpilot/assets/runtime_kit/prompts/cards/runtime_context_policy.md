@@ -1,0 +1,1 @@
+Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node or frontier, user request path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.

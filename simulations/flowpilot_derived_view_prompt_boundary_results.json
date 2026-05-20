@@ -1,0 +1,214 @@
+{
+  "checked_at": "2026-05-20T12:56:11.746284+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=2 initial_states=1 traces=30",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "facade_hand_map_drifts_from_registry": {
+        "detected": true,
+        "expected_failure": "Router facade owned hand-written policy map",
+        "failures": [
+          "registry authority did not own derived view",
+          "Router facade owned hand-written policy map",
+          "derived view drifted from registry"
+        ],
+        "state": {
+          "ack_closure_completed_semantic_work": false,
+          "card_manifest_policy_validated": false,
+          "card_manual_boundary_copy_only": false,
+          "closure_kernel_used_for_blockers": false,
+          "contract_index_runtime_binding_present": false,
+          "derived_view_matches_registry": false,
+          "facade_exports_compat_alias": true,
+          "facade_hand_map_owns_policy": true,
+          "hidden_python_contract_fallback": false,
+          "identity_mismatch_cleared_wait": false,
+          "local_status_predicate_used_for_progress": false,
+          "owner_module_derives_view": false,
+          "physical_ledger_merge": false,
+          "physical_ledgers_separate": true,
+          "prompt_boundary_contradiction": false,
+          "python_fallback_visible_and_bounded": false,
+          "registry_authority_present": true,
+          "role_authority_expanded_by_prompt": false,
+          "scenario": "facade_hand_map_drifts_from_registry",
+          "shared_prompt_policy_assets_present": false,
+          "signed_artifact_rewritten": false,
+          "status": "rejected",
+          "unknown_closure_cleared_wait": false
+        }
+      },
+      "hidden_python_contract_fallback_grows": {
+        "detected": true,
+        "expected_failure": "hidden Python contract fallback grew outside registry visibility",
+        "failures": [
+          "hidden Python contract fallback grew outside registry visibility"
+        ],
+        "state": {
+          "ack_closure_completed_semantic_work": false,
+          "card_manifest_policy_validated": false,
+          "card_manual_boundary_copy_only": false,
+          "closure_kernel_used_for_blockers": false,
+          "contract_index_runtime_binding_present": true,
+          "derived_view_matches_registry": false,
+          "facade_exports_compat_alias": false,
+          "facade_hand_map_owns_policy": false,
+          "hidden_python_contract_fallback": true,
+          "identity_mismatch_cleared_wait": false,
+          "local_status_predicate_used_for_progress": false,
+          "owner_module_derives_view": false,
+          "physical_ledger_merge": false,
+          "physical_ledgers_separate": true,
+          "prompt_boundary_contradiction": false,
+          "python_fallback_visible_and_bounded": false,
+          "registry_authority_present": false,
+          "role_authority_expanded_by_prompt": false,
+          "scenario": "hidden_python_contract_fallback_grows",
+          "shared_prompt_policy_assets_present": false,
+          "signed_artifact_rewritten": false,
+          "status": "rejected",
+          "unknown_closure_cleared_wait": false
+        }
+      },
+      "local_status_list_clears_unknown_wait": {
+        "detected": true,
+        "expected_failure": "progress decision used local status predicate instead of closure kernel",
+        "failures": [
+          "progress decision used local status predicate instead of closure kernel",
+          "unknown closure classification cleared a wait"
+        ],
+        "state": {
+          "ack_closure_completed_semantic_work": false,
+          "card_manifest_policy_validated": false,
+          "card_manual_boundary_copy_only": false,
+          "closure_kernel_used_for_blockers": false,
+          "contract_index_runtime_binding_present": false,
+          "derived_view_matches_registry": false,
+          "facade_exports_compat_alias": false,
+          "facade_hand_map_owns_policy": false,
+          "hidden_python_contract_fallback": false,
+          "identity_mismatch_cleared_wait": false,
+          "local_status_predicate_used_for_progress": true,
+          "owner_module_derives_view": false,
+          "physical_ledger_merge": false,
+          "physical_ledgers_separate": true,
+          "prompt_boundary_contradiction": false,
+          "python_fallback_visible_and_bounded": false,
+          "registry_authority_present": false,
+          "role_authority_expanded_by_prompt": false,
+          "scenario": "local_status_list_clears_unknown_wait",
+          "shared_prompt_policy_assets_present": false,
+          "signed_artifact_rewritten": false,
+          "status": "rejected",
+          "unknown_closure_cleared_wait": true
+        }
+      },
+      "manual_prompt_card_drift_weakens_boundary": {
+        "detected": true,
+        "expected_failure": "card boundary policy relied only on manual copied text",
+        "failures": [
+          "card boundary policy relied only on manual copied text",
+          "prompt boundary contradicted shared policy",
+          "prompt expanded role authority"
+        ],
+        "state": {
+          "ack_closure_completed_semantic_work": false,
+          "card_manifest_policy_validated": false,
+          "card_manual_boundary_copy_only": true,
+          "closure_kernel_used_for_blockers": false,
+          "contract_index_runtime_binding_present": false,
+          "derived_view_matches_registry": false,
+          "facade_exports_compat_alias": false,
+          "facade_hand_map_owns_policy": false,
+          "hidden_python_contract_fallback": false,
+          "identity_mismatch_cleared_wait": false,
+          "local_status_predicate_used_for_progress": false,
+          "owner_module_derives_view": false,
+          "physical_ledger_merge": false,
+          "physical_ledgers_separate": true,
+          "prompt_boundary_contradiction": true,
+          "python_fallback_visible_and_bounded": false,
+          "registry_authority_present": false,
+          "role_authority_expanded_by_prompt": true,
+          "scenario": "manual_prompt_card_drift_weakens_boundary",
+          "shared_prompt_policy_assets_present": false,
+          "signed_artifact_rewritten": false,
+          "status": "rejected",
+          "unknown_closure_cleared_wait": false
+        }
+      },
+      "physical_ledger_merge_blurs_authority": {
+        "detected": true,
+        "expected_failure": "physical ledger merge blurred authority boundaries",
+        "failures": [
+          "physical ledger merge blurred authority boundaries",
+          "signed artifact was rewritten during derived-view folding"
+        ],
+        "state": {
+          "ack_closure_completed_semantic_work": false,
+          "card_manifest_policy_validated": false,
+          "card_manual_boundary_copy_only": false,
+          "closure_kernel_used_for_blockers": false,
+          "contract_index_runtime_binding_present": false,
+          "derived_view_matches_registry": false,
+          "facade_exports_compat_alias": false,
+          "facade_hand_map_owns_policy": false,
+          "hidden_python_contract_fallback": false,
+          "identity_mismatch_cleared_wait": false,
+          "local_status_predicate_used_for_progress": false,
+          "owner_module_derives_view": false,
+          "physical_ledger_merge": true,
+          "physical_ledgers_separate": false,
+          "prompt_boundary_contradiction": false,
+          "python_fallback_visible_and_bounded": false,
+          "registry_authority_present": false,
+          "role_authority_expanded_by_prompt": false,
+          "scenario": "physical_ledger_merge_blurs_authority",
+          "shared_prompt_policy_assets_present": false,
+          "signed_artifact_rewritten": true,
+          "status": "rejected",
+          "unknown_closure_cleared_wait": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused derived-view and prompt-boundary model; runtime tests, prompt manifest checks, background regressions, and install sync remain required for production confidence",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "closure_blockers_use_kernel",
+      "output_bindings_are_registry_first",
+      "physical_ledgers_remain_separate",
+      "prompt_cards_share_boundary_policy",
+      "registry_views_are_owner_derived"
+    ],
+    "edge_count": 20,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "facade_hand_map_drifts_from_registry",
+      "hidden_python_contract_fallback_grows",
+      "local_status_list_clears_unknown_wait",
+      "manual_prompt_card_drift_weakens_boundary",
+      "physical_ledger_merge_blurs_authority"
+    ],
+    "state_count": 21
+  }
+}

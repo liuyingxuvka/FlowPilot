@@ -11,6 +11,13 @@ from typing import Any, Mapping
 
 PROMPT_MANIFEST_SCHEMA = "flowpilot.prompt_store_manifest.v1"
 CARD_MANIFEST_SCHEMA = "flowpilot.prompt_manifest.v1"
+CARD_BOUNDARY_POLICY_PROMPT_IDS = (
+    "cards.post_ack_policy",
+    "cards.required_return_policy",
+    "cards.next_step_source_policy",
+    "cards.runtime_context_policy",
+    "cards.role_scope_policy",
+)
 
 
 class PromptStoreError(RuntimeError):
@@ -186,3 +193,59 @@ def render_prompt_text(
         return Template(load_prompt_text(prompt_id, runtime_kit_root)).substitute(values)
     except KeyError as exc:
         raise PromptStoreError(f"prompt {prompt_id} contains undeclared template variable: {exc.args[0]}") from exc
+
+
+def card_boundary_policy_report(runtime_kit_root: Path | None = None) -> dict[str, Any]:
+    root = Path(runtime_kit_root) if runtime_kit_root is not None else runtime_kit_source()
+    policy_text = {prompt_id: load_prompt_text(prompt_id, root) for prompt_id in CARD_BOUNDARY_POLICY_PROMPT_IDS}
+    card_manifest = load_card_manifest(root)
+    issues: list[dict[str, str]] = []
+    checked = 0
+    required_markers = {
+        "cards.post_ack_policy": "ACK is receipt only; ACK is not completion.",
+        "cards.required_return_policy": "System-card ACKs go directly to Router through the card check-in command",
+        "cards.next_step_source_policy": "Do not infer the next FlowPilot action from this card, chat history, or prior prompts.",
+        "cards.runtime_context_policy": "Treat the router delivery envelope as the live source",
+    }
+    contradiction_markers = (
+        "ACK is completion",
+        "ACK completes the work",
+        "infer the next FlowPilot action from chat history",
+        "Controller may read sealed bodies",
+    )
+    for entry in card_manifest.get("cards", []):
+        if not isinstance(entry, dict):
+            continue
+        card_id = str(entry.get("id") or "")
+        path = root / str(entry.get("path") or "")
+        try:
+            path.resolve().relative_to(root.resolve())
+            text = path.read_text(encoding="utf-8")
+        except (OSError, ValueError) as exc:
+            issues.append({"card_id": card_id, "issue": f"card cannot be read: {exc}"})
+            continue
+        checked += 1
+        for prompt_id, marker in required_markers.items():
+            if marker not in text:
+                issues.append({"card_id": card_id, "issue": f"missing boundary marker from {prompt_id}"})
+        if ("allowed_scope:" in text or "forbidden_scope:" in text) and "Do not treat this card as authority" not in text:
+            issues.append({"card_id": card_id, "issue": "missing role-scope authority boundary"})
+        for marker in contradiction_markers:
+            if marker in text and marker not in policy_text.get("cards.post_ack_policy", ""):
+                issues.append({"card_id": card_id, "issue": f"contradictory boundary marker: {marker}"})
+    return {
+        "schema_version": "flowpilot.card_boundary_policy_report.v1",
+        "ok": not issues,
+        "runtime_kit_root": str(root),
+        "policy_prompt_ids": CARD_BOUNDARY_POLICY_PROMPT_IDS,
+        "checked_card_count": checked,
+        "issue_count": len(issues),
+        "issues": issues,
+    }
+
+
+def validate_card_boundary_policy(runtime_kit_root: Path | None = None) -> None:
+    report = card_boundary_policy_report(runtime_kit_root)
+    if not report["ok"]:
+        samples = "; ".join(f"{item['card_id']}: {item['issue']}" for item in report["issues"][:10])
+        raise PromptStoreError(f"card boundary policy invalid: {samples}")

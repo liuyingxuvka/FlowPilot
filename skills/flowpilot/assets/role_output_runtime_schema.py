@@ -84,6 +84,7 @@ from role_output_runtime_schema_specs import (
     _default_contract_registry_path,
     _load_registry_output_type_specs,
     _output_type_specs,
+    output_type_spec_source_summary,
     _registry_event_name,
     _registry_text,
     _registry_text_list,

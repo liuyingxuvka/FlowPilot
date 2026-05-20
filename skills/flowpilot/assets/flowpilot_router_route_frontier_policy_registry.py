@@ -26,6 +26,39 @@ from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, Ro
 
 _DEFAULT_SENTINEL = object()
 
+ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS = (
+    "router_must_compute_before_pm_decision",
+    "router_must_validate_before_event_acceptance",
+    "router_must_validate_before_commit",
+    "pm_may_choose_only_from_legal_next_actions",
+)
+
+ROUTE_ACTION_POLICY_EVENT_TO_ACTION = {
+    "pm_builds_parent_backward_targets": "build_parent_backward_targets",
+    "reviewer_passes_parent_backward_replay": "review_parent_backward_replay",
+    "reviewer_blocks_parent_backward_replay": "review_parent_backward_replay",
+    "pm_records_parent_segment_decision": "record_parent_segment_decision",
+    "pm_completes_parent_node_from_backward_replay": "complete_parent_node",
+    "pm_mutates_route_after_review_block": "mutate_route",
+    "pm_approves_terminal_closure": "terminal_closure",
+}
+
+ROUTE_ACTION_POLICY_CARD_TO_ACTION = {
+    "pm.parent_backward_targets": "build_parent_backward_targets",
+    "reviewer.parent_backward_replay": "review_parent_backward_replay",
+    "pm.parent_segment_decision": "record_parent_segment_decision",
+    "pm.closure": "terminal_closure",
+}
+
+ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS = {
+    "build_parent_backward_targets",
+    "review_parent_backward_replay",
+    "record_parent_segment_decision",
+    "complete_parent_node",
+}
+
+ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS = set(ROUTE_ACTION_POLICY_EVENT_TO_ACTION.values())
+
 
 def _bind_router(router: ModuleType) -> None:
     current = globals()
@@ -139,6 +172,11 @@ def _route_action_for_card(router: ModuleType, card_id: str) -> str | None:
 
 
 __all__ = (
+    'ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS',
+    'ROUTE_ACTION_POLICY_EVENT_TO_ACTION',
+    'ROUTE_ACTION_POLICY_CARD_TO_ACTION',
+    'ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS',
+    'ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS',
     '_latest_event_payload',
     '_route_action_policy_registry_path',
     '_load_route_action_policy_registry',

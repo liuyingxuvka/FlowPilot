@@ -16307,3 +16307,45 @@ Skipped steps:
 - The broad combined ACK/router runtime command exceeded a foreground timeout once; the same affected coverage was rerun in smaller suites and passed.
 - Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and `simulations/flowpilot_model_test_alignment_results.json` were preserved and were not staged as part of this repair.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-20 - FlowPilot Derived-View And Prompt-Boundary Folding
+
+### Evidence Summary
+
+- Added OpenSpec change `fold-flowpilot-derived-views-and-prompt-boundaries` for the narrow optimization: fold duplicated lifecycle blockers, facade-owned compatibility maps, registry-derived binding visibility, and repeated prompt boundary rules without physically merging authority ledgers.
+- Added focused FlowGuard model `flowpilot_derived_view_prompt_boundary_model.py` and runner for derived-view drift, prompt-boundary drift, hidden fallback growth, local status-list drift, and accidental ledger-merge hazards.
+- Routed card-return, current-work, scheduler-row, and PM role-work blocker checks through the shared closure kernel while keeping unknown or incomplete evidence blocking.
+- Moved control transaction and route action compatibility maps to their owner modules while preserving Router facade compatibility exports.
+- Added shared prompt-store policy assets for required return path, next-step source, runtime context freshness, and role-scope boundaries, plus manifest-wide validation.
+- Fixed the repository `scripts/flowpilot_runtime.py` wrapper so direct subprocess entrypoint use can resolve the asset runtime modules.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations\run_flowpilot_derived_view_prompt_boundary_checks.py --json`.
+- OK: `python -m py_compile` for touched runtime, model, runner, and test files.
+- OK: `python -m pytest tests/test_flowpilot_control_plane_contracts.py -q`, 9 passed.
+- OK: `python -m pytest tests/test_flowpilot_full_diagnostic_contracts.py -q`, 7 passed.
+- OK: `python -m pytest tests/test_flowpilot_role_output_runtime.py -q`, 17 passed.
+- OK: `python -m pytest tests/test_flowpilot_prompt_store.py tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_card_runtime.py -q`, 24 passed, 97 subtests passed.
+- OK: `python -m pytest tests/test_flowpilot_runtime_owner_contracts.py tests/test_flowpilot_router_owner_contracts.py -q`, 10 passed.
+- OK: `python scripts\flowpilot_runtime.py --help`.
+- OK: `python -m pytest tests/test_flowpilot_cli_entrypoints.py -q`, 3 passed.
+- OK: `openspec validate fold-flowpilot-derived-views-and-prompt-boundaries --strict`.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-20 14:05:21 +02:00`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-20 14:05:21 +02:00`.
+- OK: `python scripts\install_flowpilot.py --install-missing --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- The biggest simplification opportunity was not merging physical tables. It was folding repeated "is this still blocking?" and "where did this view come from?" logic into shared owners.
+- Router facade compatibility is still present, but the map ownership now sits with the control transaction and route action policy owners.
+- Prompt boundary rules now have a shared asset and validation path, so future cards should not drift by copy-pasted phrasing.
+- Direct script execution of `scripts/flowpilot_runtime.py` now behaves like the tests expect: it can load the repo asset runtime without an external `PYTHONPATH`.
+
+### Skipped Or Limited
+
+- Broad unittest wrapper modules for ACK/cards/controller/PM role-work exceeded a 244-second foreground timeout and are not counted as pass evidence; focused card/runtime, closure, controller contract, owner contract, and prompt suites passed.
+- Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and `simulations/flowpilot_model_test_alignment_results.json` were preserved and were not staged as part of this repair.
+- No GitHub push, tag, remote release, or public publication was performed.

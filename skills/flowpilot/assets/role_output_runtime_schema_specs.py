@@ -330,6 +330,21 @@ def _output_type_specs() -> dict[str, OutputTypeSpec]:
     return specs
 
 
+def output_type_spec_source_summary(path: Path | None = None) -> dict[str, Any]:
+    registry_path = path or _default_contract_registry_path()
+    registry_specs = _load_registry_output_type_specs(registry_path) if registry_path.exists() else {}
+    builtin_names = set(_BUILTIN_OUTPUT_TYPE_SPECS)
+    registry_names = set(registry_specs)
+    return {
+        "registry_path": str(registry_path),
+        "builtin_output_types": sorted(builtin_names),
+        "registry_output_types": sorted(registry_names),
+        "registry_overrides_builtin": sorted(builtin_names & registry_names),
+        "builtin_only_output_types": sorted(builtin_names - registry_names),
+        "registry_first": not bool(builtin_names - registry_names),
+    }
+
+
 OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = _output_type_specs()
 SUPPORTED_OUTPUT_TYPES = frozenset(OUTPUT_TYPE_SPECS)
 

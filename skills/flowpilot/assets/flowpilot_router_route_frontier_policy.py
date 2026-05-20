@@ -32,6 +32,11 @@ _OWNER_CHILD_MODULES = (
 )
 
 __all__ = (
+    'ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS',
+    'ROUTE_ACTION_POLICY_EVENT_TO_ACTION',
+    'ROUTE_ACTION_POLICY_CARD_TO_ACTION',
+    'ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS',
+    'ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS',
     '_latest_event_payload',
     '_route_action_policy_registry_path',
     '_load_route_action_policy_registry',

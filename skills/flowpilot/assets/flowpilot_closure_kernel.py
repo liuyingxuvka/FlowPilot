@@ -39,6 +39,7 @@ PM_ROLE_CLOSED_STATUSES = frozenset(
         "closed",
     }
 )
+PM_ROLE_OPEN_STATUSES = PM_ROLE_TARGET_BUSY_STATUSES | PM_ROLE_PM_BUSY_STATUSES
 
 PACKET_HOLDER_CLOSED_STATUSES = frozenset(
     {
@@ -77,6 +78,10 @@ ACK_INCOMPLETE_STATUSES = frozenset(
 )
 
 CONTROL_BLOCKER_CLOSED_STATUSES = frozenset({"resolved", "superseded", "closed"})
+ROUTER_SCHEDULER_OPEN_STATES = frozenset({"queued", "waiting", "receipt_done"})
+ROUTER_SCHEDULER_TERMINAL_STATES = frozenset(
+    {"reconciled", "blocked", "skipped", "superseded", "closed", "cancelled", "canceled"}
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,6 +175,17 @@ def classify_pm_role_work_pm(record: dict[str, Any]) -> ClosureDecision:
     return _decision(CLOSURE_UNKNOWN_NEEDS_RECHECK, "pm_role_pm_status_unknown")
 
 
+def classify_pm_role_work_any(record: dict[str, Any]) -> ClosureDecision:
+    status = _normalized(record.get("status"))
+    if status in PM_ROLE_OPEN_STATUSES:
+        return _decision(CLOSURE_OPEN, "pm_role_work_open")
+    if status in PM_ROLE_CLOSED_STATUSES:
+        return _decision(CLOSURE_CLOSED_SUCCESS, "pm_role_work_closed")
+    if not status:
+        return _decision(CLOSURE_INVALID_OR_INCOMPLETE, "pm_role_work_status_missing")
+    return _decision(CLOSURE_UNKNOWN_NEEDS_RECHECK, "pm_role_work_status_unknown")
+
+
 def classify_packet_holder(record: dict[str, Any]) -> ClosureDecision:
     status = _normalized(record.get("active_packet_status") or record.get("status"))
     if not status:
@@ -185,6 +201,8 @@ def classify_ack_return(record: dict[str, Any]) -> ClosureDecision:
         _text(record.get("resolved_at"))
         or _text(record.get("ack_path"))
         or _text(record.get("ack_hash"))
+        or record.get("receipt_ref_count")
+        or record.get("ack_ref_count")
     )
     if status == "resolved":
         if has_resolution_evidence:
@@ -206,6 +224,20 @@ def classify_control_blocker(record: dict[str, Any]) -> ClosureDecision:
     return _decision(CLOSURE_OPEN, "control_blocker_open")
 
 
+def classify_router_scheduler_row(record: dict[str, Any]) -> ClosureDecision:
+    router_state = _normalized(record.get("router_state"))
+    controller_status = _normalized(record.get("controller_status"))
+    if router_state in ROUTER_SCHEDULER_TERMINAL_STATES:
+        return _decision(CLOSURE_CLOSED_SUCCESS, "router_scheduler_row_closed")
+    if controller_status in CONTROLLER_TERMINAL_STATUSES:
+        return _decision(CLOSURE_CLOSED_TERMINAL, "router_scheduler_controller_terminal")
+    if router_state in ROUTER_SCHEDULER_OPEN_STATES:
+        return _decision(CLOSURE_OPEN, "router_scheduler_row_open")
+    if controller_status in CONTROLLER_OPEN_STATUSES:
+        return _decision(CLOSURE_OPEN, "router_scheduler_controller_open")
+    return _decision(CLOSURE_UNKNOWN_NEEDS_RECHECK, "router_scheduler_row_status_unknown")
+
+
 def classify_closure(record_kind: str, record: dict[str, Any] | None) -> ClosureDecision:
     if not isinstance(record, dict):
         return _decision(CLOSURE_INVALID_OR_INCOMPLETE, "record_missing")
@@ -218,12 +250,16 @@ def classify_closure(record_kind: str, record: dict[str, Any] | None) -> Closure
         return classify_pm_role_work_target(record)
     if kind == "pm_role_work_pm":
         return classify_pm_role_work_pm(record)
+    if kind == "pm_role_work_any":
+        return classify_pm_role_work_any(record)
     if kind == "packet_holder":
         return classify_packet_holder(record)
     if kind == "ack_return":
         return classify_ack_return(record)
     if kind == "control_blocker":
         return classify_control_blocker(record)
+    if kind == "router_scheduler_row":
+        return classify_router_scheduler_row(record)
     return _decision(CLOSURE_UNKNOWN_NEEDS_RECHECK, "record_kind_unknown")
 
 
@@ -246,6 +282,8 @@ __all__ = (
     "classify_controller_passive_wait",
     "classify_control_blocker",
     "classify_packet_holder",
+    "classify_pm_role_work_any",
     "classify_pm_role_work_pm",
     "classify_pm_role_work_target",
+    "classify_router_scheduler_row",
 )

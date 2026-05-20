@@ -190,9 +190,7 @@ def _current_work_from_passive_waits(router: ModuleType, project_root: Path, run
         for item in passive_waits:
             if not isinstance(item, dict):
                 continue
-            status = str(item.get('status') or '').strip()
-            reconciled = str(item.get('router_reconciliation_status') or '').strip()
-            if status in {'done', 'resolved', 'skipped', 'superseded'} or reconciled == 'reconciled':
+            if not flowpilot_closure_kernel.closure_blocks_progress('controller_passive_wait', item):
                 continue
             payload = router._current_work_from_action(item, source='controller_action_ledger.passive_waits', source_path=controller_ledger.get('path') if isinstance(controller_ledger.get('path'), str) else None, fallback_owner='controller')
             if payload:
@@ -205,7 +203,7 @@ def _current_work_from_passive_waits(router: ModuleType, project_root: Path, run
             continue
         router_state = str(row.get('router_state') or '').strip()
         controller_status = str(row.get('controller_status') or '').strip()
-        if router_state not in {'queued', 'waiting', 'receipt_done'} and controller_status not in {'pending', 'waiting', 'in_progress'}:
+        if not flowpilot_closure_kernel.closure_blocks_progress('router_scheduler_row', row):
             continue
         action_type = str(row.get('action_type') or '')
         target = str(row.get('to_role') or row.get('waiting_for_role') or '').strip()

@@ -63,6 +63,48 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_control_transactions'
 
+CONTROL_TRANSACTION_EVENT_USAGES = {
+    "recorded_event",
+    "wait",
+    "rerun_target",
+    "repair_outcome",
+    "reconcile",
+}
+CONTROL_TRANSACTION_COMMIT_TARGETS = {
+    "frontier",
+    "run_state",
+    "status_summary",
+    "packet_ledger",
+    "blocker_index",
+    "repair_transaction",
+    "repair_transaction_index",
+    "route",
+    "stale_evidence",
+    "dispatch_index",
+}
+CONTROL_TRANSACTION_OUTCOME_POLICIES = {
+    "single_event",
+    "three_distinct_outcomes",
+    "quarantine_invalid",
+}
+CONTROL_TRANSACTION_LEGACY_POLICIES = {
+    "block_if_invalid",
+    "quarantine_invalid",
+}
+CONTROL_TRANSACTION_PACKET_AUTHORITY_POLICIES = {
+    True,
+    False,
+    "when_reviewing_packet_result",
+    "when_repair_rechecks_packet_result",
+    "audit_existing_only",
+}
+CONTROL_TRANSACTION_REPAIR_POLICIES = {
+    True,
+    False,
+    "when_mutation_resolves_control_blocker",
+    "audit_existing_only",
+}
+
 def _control_transaction_registry_path(run_root: Path | None = None) -> Path:
     if run_root is not None:
         candidate = run_root / "runtime_kit" / "control_transaction_registry.json"

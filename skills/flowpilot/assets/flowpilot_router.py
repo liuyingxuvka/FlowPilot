@@ -12,7 +12,22 @@ decides which system card or packet-delivery gate is currently allowed.
 from __future__ import annotations
 
 from flowpilot_router_facade_imports import *
+from flowpilot_router_control_transactions import (
+    CONTROL_TRANSACTION_COMMIT_TARGETS,
+    CONTROL_TRANSACTION_EVENT_USAGES,
+    CONTROL_TRANSACTION_LEGACY_POLICIES,
+    CONTROL_TRANSACTION_OUTCOME_POLICIES,
+    CONTROL_TRANSACTION_PACKET_AUTHORITY_POLICIES,
+    CONTROL_TRANSACTION_REPAIR_POLICIES,
+)
 from flowpilot_router_protocol_dispatch_policy import *
+from flowpilot_router_route_frontier_policy_registry import (
+    ROUTE_ACTION_POLICY_CARD_TO_ACTION,
+    ROUTE_ACTION_POLICY_EVENT_TO_ACTION,
+    ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS,
+    ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS,
+    ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS,
+)
 
 
 _ROUTER_MODULE = sys.modules.get(__name__)
@@ -88,87 +103,6 @@ PRE_ROUTE_PHASE_ITEMS = (
     ("dependency_policy", "Dependency policy", "pm_dependency_policy_card_delivered"),
     ("child_skill_gate_manifest", "Child-skill gates", "pm_child_skill_gate_manifest_card_delivered"),
 )
-
-
-CONTROL_TRANSACTION_EVENT_USAGES = {
-    "recorded_event",
-    "wait",
-    "rerun_target",
-    "repair_outcome",
-    "reconcile",
-}
-CONTROL_TRANSACTION_COMMIT_TARGETS = {
-    "frontier",
-    "run_state",
-    "status_summary",
-    "packet_ledger",
-    "blocker_index",
-    "repair_transaction",
-    "repair_transaction_index",
-    "route",
-    "stale_evidence",
-    "dispatch_index",
-}
-CONTROL_TRANSACTION_OUTCOME_POLICIES = {
-    "single_event",
-    "three_distinct_outcomes",
-    "quarantine_invalid",
-}
-CONTROL_TRANSACTION_LEGACY_POLICIES = {
-    "block_if_invalid",
-    "quarantine_invalid",
-}
-CONTROL_TRANSACTION_PACKET_AUTHORITY_POLICIES = {
-    True,
-    False,
-    "when_reviewing_packet_result",
-    "when_repair_rechecks_packet_result",
-    "audit_existing_only",
-}
-CONTROL_TRANSACTION_REPAIR_POLICIES = {
-    True,
-    False,
-    "when_mutation_resolves_control_blocker",
-    "audit_existing_only",
-}
-
-
-ROUTE_ACTION_POLICY_REQUIRED_BOOL_FLAGS = (
-    "router_must_compute_before_pm_decision",
-    "router_must_validate_before_event_acceptance",
-    "router_must_validate_before_commit",
-    "pm_may_choose_only_from_legal_next_actions",
-)
-
-
-ROUTE_ACTION_POLICY_EVENT_TO_ACTION = {
-    "pm_builds_parent_backward_targets": "build_parent_backward_targets",
-    "reviewer_passes_parent_backward_replay": "review_parent_backward_replay",
-    "reviewer_blocks_parent_backward_replay": "review_parent_backward_replay",
-    "pm_records_parent_segment_decision": "record_parent_segment_decision",
-    "pm_completes_parent_node_from_backward_replay": "complete_parent_node",
-    "pm_mutates_route_after_review_block": "mutate_route",
-    "pm_approves_terminal_closure": "terminal_closure",
-}
-
-
-ROUTE_ACTION_POLICY_CARD_TO_ACTION = {
-    "pm.parent_backward_targets": "build_parent_backward_targets",
-    "reviewer.parent_backward_replay": "review_parent_backward_replay",
-    "pm.parent_segment_decision": "record_parent_segment_decision",
-    "pm.closure": "terminal_closure",
-}
-
-
-ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS = {
-    "build_parent_backward_targets",
-    "review_parent_backward_replay",
-    "record_parent_segment_decision",
-    "complete_parent_node",
-}
-
-
-ROUTE_ACTION_POLICY_ROUTE_MOVEMENT_ACTIONS = set(ROUTE_ACTION_POLICY_EVENT_TO_ACTION.values())
 
 
 _ROUTER_MODULE.__dict__.update(globals())

@@ -35,6 +35,34 @@
       "template_variables": []
     },
     {
+      "id": "cards.required_return_policy",
+      "path": "prompts/cards/required_return_policy.md",
+      "sha256": "caaf93ac5f900b7b1bed2f71fbfc63552c45c533b795e3de6b8cdab1d2d0ab80",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
+      "id": "cards.next_step_source_policy",
+      "path": "prompts/cards/next_step_source_policy.md",
+      "sha256": "eff84e3ce8f31408f264864f298e41cb4ae0bee80f6074d274c247a089238ab6",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
+      "id": "cards.runtime_context_policy",
+      "path": "prompts/cards/runtime_context_policy.md",
+      "sha256": "70cea544ca93d6c18b11c03f552f9d6951fdefe915093662d1609a7475af63a0",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
+      "id": "cards.role_scope_policy",
+      "path": "prompts/cards/role_scope_policy.md",
+      "sha256": "106965925ceffbf56db6f3e73b10e4a99ca2ae5504c67dd94575add06c928dd4",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
       "sha256": "653f6352fb74eededaa7286b4b01e3e28162556cd53cf3f629758936ed8224ad",

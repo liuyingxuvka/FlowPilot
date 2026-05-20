@@ -211,6 +211,23 @@ def _process_contract_bindings() -> dict[str, dict[str, Any]]:
     return bindings
 
 
+def process_contract_binding_source_summary() -> dict[str, dict[str, Any]]:
+    rules_by_family = contract_selection_rules_by_task_family()
+    summary: dict[str, dict[str, Any]] = {}
+    for process_kind, policy in PROCESS_CONTRACT_POLICIES.items():
+        contract_task_family = policy.get("contract_task_family", policy["task_family"])
+        rule = rules_by_family.get(contract_task_family)
+        summary[process_kind] = {
+            "task_family": policy["task_family"],
+            "contract_task_family": contract_task_family,
+            "process_policy_source": "python_process_policy",
+            "contract_id_source": "contract_index" if rule else "python_process_policy",
+            "contract_id": str((rule or {}).get("contract_id") or policy.get("contract_id") or ""),
+            "registry_backed_contract_id": bool(rule),
+        }
+    return summary
+
+
 PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = _process_contract_bindings()
 
 PM_ROLE_WORK_CONTRACT_PROCESS_KINDS = {
@@ -246,6 +263,7 @@ __all__ = (
     'PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES',
     'PROCESS_CONTRACT_POLICIES',
     'PROCESS_CONTRACT_BINDINGS',
+    'process_contract_binding_source_summary',
     'PM_ROLE_WORK_CONTRACT_PROCESS_KINDS',
     'PM_ROLE_WORK_FOREIGN_CONTRACT_IDS',
 )

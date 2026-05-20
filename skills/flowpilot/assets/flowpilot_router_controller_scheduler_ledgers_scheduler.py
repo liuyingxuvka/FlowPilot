@@ -7,6 +7,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+import flowpilot_closure_kernel
 from flowpilot_router_errors import RouterError
 
 
@@ -65,7 +66,7 @@ def _router_scheduler_ledger_summary(router: ModuleType, run_root: Path) -> dict
     if ledger.get('schema_version') != ROUTER_SCHEDULER_LEDGER_SCHEMA:
         return {'exists': False, 'valid_json': True, 'counts': _router_scheduler_row_counts([]), 'rows': []}
     rows = [row for row in ledger.get('rows') or [] if isinstance(row, dict)]
-    return {'exists': True, 'valid_json': True, 'path': str(_router_scheduler_ledger_path(run_root)), 'updated_at': ledger.get('updated_at'), 'counts': ledger.get('counts') or _router_scheduler_row_counts(rows), 'open_row_ids': [row.get('row_id') for row in rows if row.get('router_state') in {'queued', 'waiting', 'receipt_done'}], 'barrier_row_ids': [row.get('row_id') for row in rows if row.get('barrier_kind') not in {None, '', 'none'} and row.get('router_state') not in {'reconciled', 'blocked', 'skipped', 'superseded'}]}
+    return {'exists': True, 'valid_json': True, 'path': str(_router_scheduler_ledger_path(run_root)), 'updated_at': ledger.get('updated_at'), 'counts': ledger.get('counts') or _router_scheduler_row_counts(rows), 'open_row_ids': [row.get('row_id') for row in rows if flowpilot_closure_kernel.closure_blocks_progress('router_scheduler_row', row)], 'barrier_row_ids': [row.get('row_id') for row in rows if row.get('barrier_kind') not in {None, '', 'none'} and flowpilot_closure_kernel.closure_blocks_progress('router_scheduler_row', row)]}
 
 
 def _router_scheduler_scope_for_action(router: ModuleType, action: dict[str, Any], run_root: Path) -> tuple[str, str]:
@@ -193,7 +194,7 @@ def _controller_action_open_for(router: ModuleType, run_root: Path, *, action_ty
         entry = read_json_if_exists(path)
         if entry.get('schema_version') != CONTROLLER_ACTION_SCHEMA:
             continue
-        if entry.get('status') in CONTROLLER_ACTION_CLOSED_STATUSES:
+        if not flowpilot_closure_kernel.closure_blocks_progress('controller_action', entry):
             continue
         action = entry.get('action') if isinstance(entry.get('action'), dict) else {}
         if action_type and entry.get('action_type') != action_type:
@@ -217,9 +218,12 @@ def _controller_action_reconciled_for(router: ModuleType, run_root: Path, *, act
         entry = read_json_if_exists(path)
         if entry.get('schema_version') != CONTROLLER_ACTION_SCHEMA:
             continue
-        if entry.get('status') not in CONTROLLER_ACTION_CLOSED_STATUSES:
-            continue
+        closure_record = dict(entry)
         reconciliation_status = str(entry.get('router_reconciliation_status') or '')
+        if reconciliation_status in {'retry_pending', 'blocked'} and not closure_record.get('router_reconciliation'):
+            closure_record['router_reconciliation'] = {'status': reconciliation_status}
+        if flowpilot_closure_kernel.closure_blocks_progress('controller_action', closure_record):
+            continue
         if not (reconciliation_status in {'reconciled', 'retry_pending', 'blocked'} or entry.get('router_reconciled_at')):
             continue
         action = entry.get('action') if isinstance(entry.get('action'), dict) else {}

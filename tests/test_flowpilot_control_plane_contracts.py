@@ -110,6 +110,18 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
         self.assertTrue(incomplete_controller.blocks_progress)
         self.assertEqual(incomplete_controller.classification, closure_kernel.CLOSURE_REPAIR_REQUIRED)
 
+        scheduler_open = closure_kernel.classify_closure(
+            "router_scheduler_row",
+            {"router_state": "receipt_done", "controller_status": "done"},
+        )
+        self.assertTrue(scheduler_open.blocks_progress)
+
+        scheduler_closed = closure_kernel.classify_closure(
+            "router_scheduler_row",
+            {"router_state": "reconciled", "controller_status": "done"},
+        )
+        self.assertFalse(scheduler_closed.blocks_progress)
+
         target_busy = closure_kernel.classify_closure(
             "pm_role_work_target",
             {"status": "packet_relayed"},
@@ -127,6 +139,24 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
             {"status": "result_returned"},
         )
         self.assertTrue(pm_busy.blocks_progress)
+
+        pm_any_busy = closure_kernel.classify_closure(
+            "pm_role_work_any",
+            {"status": "result_returned"},
+        )
+        self.assertTrue(pm_any_busy.blocks_progress)
+
+        pm_any_closed = closure_kernel.classify_closure(
+            "pm_role_work_any",
+            {"status": "absorbed"},
+        )
+        self.assertFalse(pm_any_closed.blocks_progress)
+
+        ack_resolved_by_receipt = closure_kernel.classify_closure(
+            "ack_return",
+            {"status": "resolved", "receipt_ref_count": 1},
+        )
+        self.assertFalse(ack_resolved_by_receipt.blocks_progress)
 
         unknown = closure_kernel.classify_closure(
             "worker_result",

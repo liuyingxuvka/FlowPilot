@@ -17,6 +17,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable
 
 import card_runtime
+import flowpilot_closure_kernel
 import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
@@ -83,10 +84,10 @@ def _active_pm_role_work_request(router: ModuleType, index: dict[str, Any]) -> d
     active_id = str(index.get('active_request_id') or '').strip()
     if active_id:
         active = router._pm_role_work_request_record(index, active_id)
-        if isinstance(active, dict) and active.get('status') in PM_ROLE_WORK_OPEN_STATUSES:
+        if isinstance(active, dict) and flowpilot_closure_kernel.closure_blocks_progress('pm_role_work_any', active):
             return active
     for record in reversed(index.get('requests', [])):
-        if isinstance(record, dict) and record.get('status') in PM_ROLE_WORK_OPEN_STATUSES:
+        if isinstance(record, dict) and flowpilot_closure_kernel.closure_blocks_progress('pm_role_work_any', record):
             return record
     return None
 
@@ -97,14 +98,14 @@ def _active_pm_role_work_batch_records(router: ModuleType, index: dict[str, Any]
     if not isinstance(active_ids, list) or not active_ids:
         return []
     wanted = {str(item) for item in active_ids}
-    records = [record for record in index.get('requests', []) if isinstance(record, dict) and str(record.get('request_id')) in wanted and (record.get('status') in PM_ROLE_WORK_OPEN_STATUSES)]
+    records = [record for record in index.get('requests', []) if isinstance(record, dict) and str(record.get('request_id')) in wanted and flowpilot_closure_kernel.closure_blocks_progress('pm_role_work_any', record)]
     return records
 
 
 def _unresolved_pm_role_work_requests(router: ModuleType, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
     index = router._load_pm_role_work_request_index(run_root, run_state)
-    return [record for record in index.get('requests', []) if isinstance(record, dict) and record.get('status') in PM_ROLE_WORK_OPEN_STATUSES]
+    return [record for record in index.get('requests', []) if isinstance(record, dict) and flowpilot_closure_kernel.closure_blocks_progress('pm_role_work_any', record)]
 
 
 def _pm_role_work_record_is_nonblocking(router: ModuleType, record: dict[str, Any]) -> bool:
@@ -130,7 +131,7 @@ def _pm_role_work_records_dependency_class(router: ModuleType, records: list[dic
 def _unresolved_advisory_pm_role_work_records(router: ModuleType, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
     index = router._load_pm_role_work_request_index(run_root, run_state)
-    return [record for record in index.get('requests', []) if isinstance(record, dict) and str(record.get('request_mode') or '') == 'advisory' and (record.get('status') in PM_ROLE_WORK_OPEN_STATUSES)]
+    return [record for record in index.get('requests', []) if isinstance(record, dict) and str(record.get('request_mode') or '') == 'advisory' and flowpilot_closure_kernel.closure_blocks_progress('pm_role_work_any', record)]
 
 
 __all__ = (

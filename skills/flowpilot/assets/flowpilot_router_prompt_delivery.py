@@ -40,6 +40,10 @@ def card_checkin_instruction(
     ]
     post_ack_policy = render_prompt_text("cards.post_ack_policy")
     bundle_post_ack_policy = render_prompt_text("cards.bundle_post_ack_policy")
+    required_return_policy = render_prompt_text("cards.required_return_policy")
+    next_step_source_policy = render_prompt_text("cards.next_step_source_policy")
+    runtime_context_policy = render_prompt_text("cards.runtime_context_policy")
+    role_scope_policy = render_prompt_text("cards.role_scope_policy")
     return {
         "schema_version": "flowpilot.card_checkin_instruction.v1",
         "required": True,
@@ -53,13 +57,18 @@ def card_checkin_instruction(
         "expected_outcome": "runtime writes the read receipt and direct Router ACK envelope",
         "post_ack_policy": post_ack_policy,
         "bundle_post_ack_policy": bundle_post_ack_policy if bundle else None,
+        "required_return_policy": required_return_policy,
+        "next_step_source_policy": next_step_source_policy,
+        "runtime_context_policy": runtime_context_policy,
+        "role_scope_policy": role_scope_policy,
         "do_not_handwrite_ack": True,
         "do_not_record_as_external_event": True,
         "plain_instruction": (
             f"Run {command_name} from the project root to open this card through the runtime and submit "
             f"{card_return_event} directly to Router. Do not hand-write the ACK, do not give the ACK to "
             "Controller, and do not record it as a normal external event. "
-            f"{bundle_post_ack_policy if bundle else post_ack_policy}"
+            f"{bundle_post_ack_policy if bundle else post_ack_policy} "
+            f"{required_return_policy} {next_step_source_policy} {runtime_context_policy} {role_scope_policy}"
         ),
     }
 

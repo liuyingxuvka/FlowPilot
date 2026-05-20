@@ -62,6 +62,7 @@ import flowpilot_router_expected_waits as expected_waits  # noqa: E402
 import flowpilot_router_expected_waits_actions as expected_waits_actions  # noqa: E402
 import flowpilot_router_expected_waits_events as expected_waits_events  # noqa: E402
 import flowpilot_router_expected_waits_reconciliation as expected_waits_reconciliation  # noqa: E402
+import flowpilot_prompt_store as prompt_store  # noqa: E402
 import flowpilot_router_facade_export_manifest_actions as manifest_actions  # noqa: E402
 import flowpilot_router_action_factory_dispatch as action_dispatch  # noqa: E402
 import flowpilot_router_action_factory_dispatch_apply as action_dispatch_apply  # noqa: E402
@@ -327,6 +328,34 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(
             work_contracts.PROCESS_CONTRACT_BINDINGS["current_node_work"]["required_result_next_recipient"],
             "project_manager",
+        )
+        source_summary = work_contracts.process_contract_binding_source_summary()
+        self.assertTrue(source_summary["current_node_work"]["registry_backed_contract_id"])
+        self.assertEqual(source_summary["current_node_work"]["contract_id_source"], "contract_index")
+        output_source_summary = role_output_schema.output_type_spec_source_summary()
+        self.assertTrue(output_source_summary["registry_first"])
+        self.assertEqual(output_source_summary["builtin_only_output_types"], [])
+        self.assertEqual(
+            set(output_source_summary["registry_overrides_builtin"]),
+            set(output_source_summary["builtin_output_types"]),
+        )
+        self.assertIs(router.CONTROL_TRANSACTION_EVENT_USAGES, control_transactions.CONTROL_TRANSACTION_EVENT_USAGES)
+        self.assertIs(router.CONTROL_TRANSACTION_COMMIT_TARGETS, control_transactions.CONTROL_TRANSACTION_COMMIT_TARGETS)
+        self.assertIs(
+            router.CONTROL_TRANSACTION_OUTCOME_POLICIES,
+            control_transactions.CONTROL_TRANSACTION_OUTCOME_POLICIES,
+        )
+        self.assertIs(
+            router.ROUTE_ACTION_POLICY_EVENT_TO_ACTION,
+            route_frontier_policy_registry.ROUTE_ACTION_POLICY_EVENT_TO_ACTION,
+        )
+        self.assertIs(
+            router.ROUTE_ACTION_POLICY_CARD_TO_ACTION,
+            route_frontier_policy_registry.ROUTE_ACTION_POLICY_CARD_TO_ACTION,
+        )
+        self.assertIs(
+            router.ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS,
+            route_frontier_policy_registry.ROUTE_ACTION_POLICY_PARENT_CLOSURE_ACTIONS,
         )
         self.assertIs(
             router.DISPATCH_RECIPIENT_GATE_ACTION_TYPES,
@@ -928,6 +957,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             payload_contracts_pm._role_decision_payload_contract_for_events,
         )
         role_ledger = role_io_protocol.empty_role_io_protocol_ledger("run-test")
+        card_boundary_report = prompt_store.card_boundary_policy_report()
 
         with tempfile.TemporaryDirectory(prefix="flowpilot-role-terminal-contracts-") as tmp:
             project_root = Path(tmp)
@@ -1001,10 +1031,18 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         self.assertTrue(internal_actions._action_is_router_internal_mechanical(action))
         self.assertEqual(len(run_state["router_internal_mechanical_events"]), 1)
+        self.assertTrue(card_boundary_report["ok"], card_boundary_report["issues"][:3])
+        self.assertGreater(card_boundary_report["checked_card_count"], 0)
+        for prompt_id in prompt_store.CARD_BOUNDARY_POLICY_PROMPT_IDS:
+            self.assertTrue(prompt_store.load_prompt_text(prompt_id))
         self.assertEqual(payload_contract["schema_version"], router.PAYLOAD_CONTRACT_SCHEMA)
         self.assertIn("summary_markdown", terminal_contract["required_fields"])
         self.assertFalse(pm_role_followup._pm_role_work_channel_open({"flags": {}, "pm_role_work": {"status": "closed"}}))
         self.assertEqual(prompt["command_name"], "receive-card")
+        self.assertIn(prompt["required_return_policy"], prompt["plain_instruction"])
+        self.assertIn(prompt["next_step_source_policy"], prompt["plain_instruction"])
+        self.assertIn(prompt["runtime_context_policy"], prompt["plain_instruction"])
+        self.assertIn(prompt["role_scope_policy"], prompt["plain_instruction"])
         self.assertEqual(snapshot, "outputs__report.json")
         self.assertFalse(status)
         self.assertEqual(role_ledger["schema_version"], role_io_protocol.ROLE_IO_PROTOCOL_LEDGER_SCHEMA)
