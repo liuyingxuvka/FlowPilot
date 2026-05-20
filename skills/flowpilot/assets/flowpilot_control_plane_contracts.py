@@ -30,6 +30,14 @@ BASE_ACTION_IDENTITY_FIELDS = (
     "projection_hash",
     "next_card_id",
 )
+PENDING_WAIT_IDENTITY_FIELDS = (
+    "action_type",
+    "label",
+    "to_role",
+    "waiting_for_role",
+    "expected_return_path",
+    "controller_action_id",
+)
 
 
 def _nonempty(value: Any) -> bool:
@@ -80,6 +88,19 @@ def control_plane_action_identity_fingerprint(action: dict[str, Any] | None) -> 
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()[:24]
 
 
+def control_plane_pending_wait_identity_parts(wait: dict[str, Any]) -> dict[str, Any]:
+    parts: dict[str, Any] = {}
+    for field in PENDING_WAIT_IDENTITY_FIELDS:
+        value = wait.get(field)
+        if _nonempty(value):
+            parts[field] = value
+    return parts
+
+
+def control_plane_pending_wait_same_identity(first: dict[str, Any], second: dict[str, Any]) -> bool:
+    return control_plane_pending_wait_identity_parts(first) == control_plane_pending_wait_identity_parts(second)
+
+
 def control_plane_completion_class_override(
     action: dict[str, Any],
     *,
@@ -106,11 +127,14 @@ def control_plane_envelope_is_hash_bound(envelope: dict[str, Any]) -> bool:
 __all__ = (
     "CONTROL_BLOCKER_DELIVERY_POSTCONDITION_PREFIX",
     "CONTROL_BLOCKER_IDENTITY_FIELDS",
+    "PENDING_WAIT_IDENTITY_FIELDS",
     "control_blocker_delivery_postcondition",
     "control_plane_action_identity_extra_fields",
     "control_plane_scheduler_identity_extras",
     "control_plane_action_identity_parts",
     "control_plane_action_identity_fingerprint",
+    "control_plane_pending_wait_identity_parts",
+    "control_plane_pending_wait_same_identity",
     "control_plane_completion_class_override",
     "control_plane_envelope_is_hash_bound",
 )

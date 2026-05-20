@@ -197,6 +197,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.stale_run_state_preserved_wait_clear:
+        yield Transition(
+            "stale_run_state_save_preserves_cleared_wait_projection",
+            _inc(
+                state,
+                current_wait_derived_from_obligation=True,
+                stale_run_state_save_seen=True,
+                latest_state_cleared_wait=True,
+                stale_run_state_pending_matches_loaded_wait=True,
+                stale_run_state_preserved_wait_clear=True,
+                stale_run_state_resurrected_closed_wait=False,
+            ),
+        )
+        return
+
     if not state.self_check_parser_status_pass_accepted:
         yield Transition(
             "self_check_status_pass_parser_aligned",

@@ -24,6 +24,7 @@ REQUIRED_LABELS = (
     "signed_material_migration_preserves_relayed_envelope",
     "control_blocker_action_identity_bound_to_artifact",
     "control_blocker_done_receipt_applies_delivery_postcondition",
+    "stale_run_state_save_preserves_cleared_wait_projection",
     "self_check_status_pass_parser_aligned",
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
@@ -91,6 +92,7 @@ HAZARD_EXPECTED_FAILURES = {
     "control_blocker_identity_missing_blocker_id": "control blocker Controller action identity omitted blocker artifact identity",
     "closed_controller_action_reused_for_different_identity": "closed Controller action row was reused for a different Router obligation identity",
     "control_blocker_done_receipt_without_delivery_postcondition": "control blocker done receipt did not apply the Router-visible delivery postcondition",
+    "stale_run_state_resurrects_closed_wait_projection": "stale run-state save resurrected a closed Controller wait projection",
     "self_check_status_pass_rejected": "Contract Self-Check parser rejected status: pass even though templates allow it",
     "pm_formal_gate_package_missing_artifact": "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
@@ -239,6 +241,11 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_action_closed_identity_reused},"
         f"{state.control_blocker_receipt_postcondition_declared},"
         f"{state.control_blocker_receipt_effect_applied}|"
+        f"live_wait={state.current_wait_derived_from_obligation},"
+        f"{state.stale_run_state_save_seen},{state.latest_state_cleared_wait},"
+        f"{state.stale_run_state_pending_matches_loaded_wait},"
+        f"{state.stale_run_state_preserved_wait_clear},"
+        f"{state.stale_run_state_resurrected_closed_wait}|"
         f"self_check={state.self_check_template_status_pass_allowed},"
         f"{state.self_check_parser_status_pass_accepted}|"
         f"packet={state.worker_packet_written},{state.worker_packet_preserves_research_fields},"

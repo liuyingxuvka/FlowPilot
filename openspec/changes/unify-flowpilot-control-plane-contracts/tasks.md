@@ -13,6 +13,7 @@
 - [x] 2.5 Keep signed material packet envelopes immutable during legacy migration and write migration sidecars instead.
 - [x] 2.6 Align self-check parser grammar with existing Worker body vocabulary.
 - [x] 2.7 Require absorbed PM package dispositions to reference a reviewer-readable formal gate package path and hash.
+- [x] 2.8 Prevent stale run-state saves from resurrecting cleared live wait projections.
 
 ## 3. Verification
 
@@ -20,9 +21,10 @@
 - [x] 3.2 Run compile checks for touched runtime/model files.
 - [x] 3.3 Run focused Python tests for contracts, packets, controller scheduler identity, and PM package release.
 - [x] 3.4 Run background meta/capability model regressions and inspect artifact-contract evidence.
+- [x] 3.5 Extend the focused FlowGuard control-plane model and runtime tests for stale pending-action non-resurrection.
 
 ## 4. Sync And Git
 
 - [x] 4.1 Sync repo-owned FlowPilot assets to the local installed skill.
 - [x] 4.2 Run install audit/check and source freshness verification.
-- [ ] 4.3 Preserve unrelated peer edits and create the requested local git version.
+- [x] 4.3 Preserve unrelated peer edits and create the requested local git version.

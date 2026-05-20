@@ -71,7 +71,9 @@ Risk intent brief:
   postcondition evidence; daemon ticks cannot escalate a half-complete
   Controller receipt when valid Router-owned artifacts already exist; and
   role-output events cannot be accepted from a prepared/progress status surface
-  without a file-backed body path plus replayable body hash.
+  without a file-backed body path plus replayable body hash; and stale
+  daemon/run-state saves cannot resurrect a live wait after the authoritative
+  Router obligation state has cleared it.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -134,6 +136,12 @@ class State:
     controller_action_closed_identity_reused: bool = False
     control_blocker_receipt_postcondition_declared: bool = False
     control_blocker_receipt_effect_applied: bool = False
+    current_wait_derived_from_obligation: bool = False
+    stale_run_state_save_seen: bool = False
+    latest_state_cleared_wait: bool = False
+    stale_run_state_pending_matches_loaded_wait: bool = False
+    stale_run_state_preserved_wait_clear: bool = False
+    stale_run_state_resurrected_closed_wait: bool = False
     self_check_template_status_pass_allowed: bool = False
     self_check_parser_status_pass_accepted: bool = False
 

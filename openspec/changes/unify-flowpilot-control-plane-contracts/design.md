@@ -11,7 +11,8 @@ The kernel has four practical rules:
 1. **Artifact authority**: signed envelopes are original records; indexes, scheduler rows, ledgers, and migration sidecars are mutable projections.
 2. **Action identity**: one Controller table row represents one Router obligation. A control blocker is not identified only by label and target role; its `blocker_id` and artifact path are part of identity.
 3. **Receipt effect**: a `done` receipt for stateful Controller work must either apply or reclaim a Router-visible postcondition. Otherwise it remains incomplete and repairable.
-4. **Reviewer package release**: PM may hide raw worker result bodies from Reviewer only if PM writes an equivalent formal gate package with path, hash, scope, and content boundary.
+4. **Live wait projection**: `router_state.pending_action` is a derived projection of the current Router obligation. A stale daemon snapshot may merge reminder metadata, but it may not resurrect a wait that the latest state has already cleared.
+5. **Reviewer package release**: PM may hide raw worker result bodies from Reviewer only if PM writes an equivalent formal gate package with path, hash, scope, and content boundary.
 
 ## Implementation Shape
 
@@ -33,10 +34,11 @@ Legacy material packet repair keeps its current purpose, but changes where it wr
 - Controller remains envelope-only and never gains sealed body reads.
 - Worker results still relay to PM first where PM owns absorption.
 - Reviewer receives PM formal package artifacts, not raw worker body files.
-- Existing pending action compatibility remains, but Controller scheduler rows now carry stronger identity and replayable postcondition metadata.
+- Existing pending action compatibility remains, but Controller scheduler rows now carry stronger identity and replayable postcondition metadata. The pending action field remains a compatibility projection, not an independent authority that can override the latest closed obligation.
 
 ## Risks
 
 - Some legacy fixtures may assert exact old row IDs; focused tests should assert identity separation instead of hardcoded hashes.
 - The receipt path touches active peer work in the same area. The implementation should avoid unrelated wait-reminder replay changes and stage only intentional hunks.
 - Formal package artifacts add files to run directories, so tests must verify hashes rather than rely on directory file counts.
+- Stale daemon state saves can race with foreground role-output events; merge tests must prove an older pending action cannot overwrite a later clear.

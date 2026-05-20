@@ -27,6 +27,7 @@ import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
+from flowpilot_control_plane_contracts import control_plane_pending_wait_same_identity
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
@@ -99,8 +100,14 @@ def _merge_append_only_run_state_list(existing: list[Any], current: list[Any]) -
     return merged
 
 def _same_pending_wait_identity(first: dict[str, Any], second: dict[str, Any]) -> bool:
-    keys = ("action_type", "label", "to_role", "waiting_for_role", "expected_return_path", "controller_action_id")
-    return all(str(first.get(key) or "") == str(second.get(key) or "") for key in keys)
+    return control_plane_pending_wait_same_identity(first, second)
+
+def _same_optional_pending_wait_identity(first: Any, second: Any) -> bool:
+    first_pending = first if isinstance(first, dict) else None
+    second_pending = second if isinstance(second, dict) else None
+    if first_pending is None or second_pending is None:
+        return first_pending is None and second_pending is None
+    return _same_pending_wait_identity(first_pending, second_pending)
 
 def _merge_pending_wait_reminder_state(existing: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(existing, dict) or not isinstance(current, dict):
@@ -118,6 +125,32 @@ def _merge_pending_wait_reminder_state(existing: dict[str, Any], current: dict[s
     elif isinstance(existing_history, list) and "wait_reminder_history" not in merged:
         merged["wait_reminder_history"] = existing_history
     return merged
+
+def _merge_stale_pending_action_projection(existing: Any, current: Any, loaded: Any) -> dict[str, Any] | None:
+    existing_pending = existing if isinstance(existing, dict) else None
+    current_pending = current if isinstance(current, dict) else None
+    loaded_pending = loaded if isinstance(loaded, dict) else None
+    if existing_pending is not None and current_pending is not None:
+        if _same_pending_wait_identity(existing_pending, current_pending):
+            return _merge_pending_wait_reminder_state(existing_pending, current_pending)
+        current_is_unchanged = _same_optional_pending_wait_identity(current_pending, loaded_pending)
+        existing_is_unchanged = _same_optional_pending_wait_identity(existing_pending, loaded_pending)
+        if current_is_unchanged and not existing_is_unchanged:
+            return existing_pending
+        if existing_is_unchanged and not current_is_unchanged:
+            return current_pending
+        return existing_pending
+    if existing_pending is not None and current_pending is None:
+        if loaded_pending is not None and _same_pending_wait_identity(existing_pending, loaded_pending):
+            return None
+        if loaded_pending is None:
+            return existing_pending
+        return existing_pending
+    if existing_pending is None and current_pending is not None:
+        if loaded_pending is not None and _same_pending_wait_identity(current_pending, loaded_pending):
+            return None
+        return current_pending
+    return None
 
 def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     merged = _public_run_state_snapshot(current)
@@ -138,10 +171,11 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
             current_value = merged_flags.get(flag)
             if existing_value is True and loaded_value is not True and current_value is not True:
                 merged_flags[flag] = True
-    existing_pending = existing.get("pending_action")
-    current_pending = merged.get("pending_action")
-    if isinstance(existing_pending, dict) and isinstance(current_pending, dict):
-        merged["pending_action"] = _merge_pending_wait_reminder_state(existing_pending, current_pending)
+    merged["pending_action"] = _merge_stale_pending_action_projection(
+        existing.get("pending_action"),
+        merged.get("pending_action"),
+        current.get(_RUN_STATE_LOAD_META_PENDING),
+    )
     return merged
 
 def new_bootstrap_state(router: ModuleType, run_id: str | None=None, run_root_rel: str | None=None) -> dict[str, Any]:

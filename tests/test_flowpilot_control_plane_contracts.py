@@ -10,7 +10,10 @@ sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 import flowpilot_router as router  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
 import packet_runtime  # noqa: E402
-from flowpilot_control_plane_contracts import control_plane_action_identity_fingerprint  # noqa: E402
+from flowpilot_control_plane_contracts import (  # noqa: E402
+    control_plane_action_identity_fingerprint,
+    control_plane_pending_wait_same_identity,
+)
 from packet_runtime_contracts import contract_self_check_metadata  # noqa: E402
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_json  # noqa: E402
 
@@ -69,6 +72,27 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
         self.assertTrue(metadata["completed"])
         self.assertTrue(metadata["passed"])
         self.assertEqual(metadata["decision"], "pass")
+
+    def test_pending_wait_identity_is_bound_to_controller_action(self) -> None:
+        first = {
+            "action_type": "await_role_decision",
+            "label": "controller_waits_for_pm",
+            "waiting_for_role": "project_manager",
+            "expected_return_path": "mailbox/outbox/events/pm.envelope.json",
+            "controller_action_id": "controller-action-1",
+            "last_wait_reminder_at": "2026-05-20T00:00:00Z",
+        }
+        same_wait_with_reminder = {
+            **first,
+            "last_wait_reminder_at": "2026-05-20T00:01:00Z",
+        }
+        different_wait = {
+            **first,
+            "controller_action_id": "controller-action-2",
+        }
+
+        self.assertTrue(control_plane_pending_wait_same_identity(first, same_wait_with_reminder))
+        self.assertFalse(control_plane_pending_wait_same_identity(first, different_wait))
 
 
 class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -214,6 +238,41 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(package["reviewer_review_scope"], "pm_formal_gate_package_only")
         self.assertFalse(package["reviewer_receives_raw_worker_result"])
         self.assertTrue(package["content_boundary"]["excludes_worker_result_bodies"])
+
+    def test_stale_run_state_save_cannot_resurrect_cleared_pending_wait(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-stale-pending-nonresurrection")
+        path = router.run_state_path(run_root)
+        initial = read_json(path)
+        initial["pending_action"] = {
+            "action_type": "await_role_decision",
+            "label": "controller_waits_for_pm_startup_activation",
+            "waiting_for_role": "project_manager",
+            "expected_return_path": "mailbox/outbox/events/pm_startup_activation.envelope.json",
+            "controller_action_id": "controller-action-stale",
+        }
+        router.write_json(path, initial)
+        stale_state, _ = router.load_run_state_from_run_root(root, run_root)
+        self.assertIsInstance(stale_state, dict)
+
+        foreground = read_json(path)
+        foreground["pending_action"] = None
+        foreground["events"].append({"event": "pm_approves_startup_activation", "payload": {"source": "test"}})
+        router.write_json(path, foreground)
+
+        stale_state["history"].append({"event": "daemon_tick_after_foreground_clear", "payload": {"source": "test"}})
+        router.save_run_state(run_root, stale_state)
+
+        saved = read_json(path)
+        self.assertIsNone(saved["pending_action"])
+        self.assertIn(
+            {"event": "pm_approves_startup_activation", "payload": {"source": "test"}},
+            saved["events"],
+        )
+        self.assertIn(
+            {"event": "daemon_tick_after_foreground_clear", "payload": {"source": "test"}},
+            saved["history"],
+        )
 
 
 if __name__ == "__main__":

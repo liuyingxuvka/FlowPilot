@@ -238,6 +238,27 @@ def control_blocker_receipts_apply_delivery_postcondition(state: State, trace) -
         )
     return InvariantResult.pass_()
 
+def current_wait_projection_does_not_resurrect_closed_obligation(state: State, trace) -> InvariantResult:
+    del trace
+    if state.stale_run_state_resurrected_closed_wait:
+        return InvariantResult.fail(
+            "stale run-state save resurrected a closed Controller wait projection"
+        )
+    if (
+        state.stale_run_state_save_seen
+        and state.latest_state_cleared_wait
+        and state.stale_run_state_pending_matches_loaded_wait
+        and not state.stale_run_state_preserved_wait_clear
+    ):
+        return InvariantResult.fail(
+            "stale run-state save did not preserve the latest cleared pending wait"
+        )
+    if state.stale_run_state_save_seen and not state.current_wait_derived_from_obligation:
+        return InvariantResult.fail(
+            "live pending wait was treated as independent state instead of an obligation projection"
+        )
+    return InvariantResult.pass_()
+
 def self_check_parser_matches_template_vocabulary(state: State, trace) -> InvariantResult:
     del trace
     if state.self_check_template_status_pass_allowed and not state.self_check_parser_status_pass_accepted:
@@ -955,6 +976,11 @@ INVARIANTS = (
         name="control_blocker_receipts_apply_delivery_postcondition",
         description="Control-blocker done receipts apply the Router-visible delivery effect.",
         predicate=control_blocker_receipts_apply_delivery_postcondition,
+    ),
+    Invariant(
+        name="current_wait_projection_does_not_resurrect_closed_obligation",
+        description="Stale daemon saves cannot resurrect a pending wait after the current Router obligation cleared it.",
+        predicate=current_wait_projection_does_not_resurrect_closed_obligation,
     ),
     Invariant(
         name="self_check_parser_matches_template_vocabulary",

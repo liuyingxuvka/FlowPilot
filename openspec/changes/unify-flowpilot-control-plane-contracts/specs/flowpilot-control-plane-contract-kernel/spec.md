@@ -30,3 +30,19 @@ FlowPilot SHALL treat `done` receipts for stateful Controller work as incomplete
 - **AND** Router cannot apply or reclaim the declared postcondition
 - **THEN** Router MUST NOT reconcile the scheduler row as complete
 - **AND** Router MUST schedule repair or emit a control blocker according to the existing receipt-repair policy
+
+### Requirement: Live waits are projections of current Router obligations
+
+FlowPilot SHALL treat the live `pending_action` wait in run state as a projection of the latest Router obligation state, not as an independently authoritative ledger.
+
+#### Scenario: Stale daemon save sees a wait already cleared
+- **WHEN** a daemon loaded a run state while `pending_action` referenced an active Controller wait
+- **AND** a later foreground event or receipt clears that wait in the latest run state
+- **AND** the daemon saves its older snapshot without creating a different wait identity
+- **THEN** the merge MUST preserve the cleared `pending_action`
+- **AND** the older wait MUST NOT be written back into run state
+
+#### Scenario: Same wait reminder metadata merges while wait remains active
+- **WHEN** the latest run state and the daemon snapshot still describe the same pending wait identity
+- **THEN** reminder metadata MAY be merged
+- **AND** the pending wait identity MUST remain unchanged

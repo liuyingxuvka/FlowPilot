@@ -39,6 +39,12 @@ def _safe_base(**changes: object) -> State:
             controller_action_closed_identity_reused=False,
             control_blocker_receipt_postcondition_declared=True,
             control_blocker_receipt_effect_applied=True,
+            current_wait_derived_from_obligation=True,
+            stale_run_state_save_seen=True,
+            latest_state_cleared_wait=True,
+            stale_run_state_pending_matches_loaded_wait=True,
+            stale_run_state_preserved_wait_clear=True,
+            stale_run_state_resurrected_closed_wait=False,
             self_check_template_status_pass_allowed=True,
             self_check_parser_status_pass_accepted=True,
             pm_research_package_written=True,
@@ -245,6 +251,14 @@ def hazard_states() -> dict[str, State]:
         "control_blocker_done_receipt_without_delivery_postcondition": _safe_base(
             control_blocker_receipt_postcondition_declared=True,
             control_blocker_receipt_effect_applied=False,
+        ),
+        "stale_run_state_resurrects_closed_wait_projection": _safe_base(
+            current_wait_derived_from_obligation=True,
+            stale_run_state_save_seen=True,
+            latest_state_cleared_wait=True,
+            stale_run_state_pending_matches_loaded_wait=True,
+            stale_run_state_preserved_wait_clear=False,
+            stale_run_state_resurrected_closed_wait=True,
         ),
         "self_check_status_pass_rejected": _safe_base(
             self_check_template_status_pass_allowed=True,
