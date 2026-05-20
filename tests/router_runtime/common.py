@@ -217,6 +217,32 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             hash_key: hashlib.sha256(output_path.read_bytes()).hexdigest(),
             "controller_visibility": "role_output_envelope_only",
         }
+    def pm_package_result_disposition_envelope(
+        self,
+        root: Path,
+        event_name: str,
+        *,
+        name: str,
+        decision: str = "absorbed",
+        decision_reason: str = "PM absorbed package results for the formal reviewer gate.",
+    ) -> dict:
+        run_root = self.run_root_for(root)
+        safe_name = name.strip("/").replace("\\", "/")
+        return role_output_runtime.submit_output(
+            root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id=run_root.name,
+            event_name=event_name,
+            output_path=run_root / "test_role_outputs" / f"{safe_name}.json",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": decision,
+                "decision_reason": decision_reason,
+                "residual_risks": [],
+            },
+        )
     def write_event_envelope(self, root: Path, name: str, envelope: dict) -> tuple[str, str]:
         run_root = self.run_root_for(root)
         safe_name = name.strip("/").replace("\\", "/")
@@ -550,11 +576,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         router.record_external_event(
             root,
             "pm_records_material_scan_result_disposition",
-            {
-                "decided_by_role": "project_manager",
-                "decision": decision,
-                "decision_reason": "PM absorbed material scan results for formal reviewer gate.",
-            },
+            self.pm_package_result_disposition_envelope(
+                root,
+                "pm_records_material_scan_result_disposition",
+                name="material/pm_material_scan_result_disposition",
+                decision=decision,
+                decision_reason="PM absorbed material scan results for formal reviewer gate.",
+            ),
         )
     def absorb_research_results_with_pm(self, root: Path, index_path: Path, *, decision: str = "absorbed") -> None:
         self.apply_next_packet_action(root, "relay_research_result_to_pm")
@@ -562,11 +590,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         router.record_external_event(
             root,
             "pm_records_research_result_disposition",
-            {
-                "decided_by_role": "project_manager",
-                "decision": decision,
-                "decision_reason": "PM absorbed research results for formal reviewer gate.",
-            },
+            self.pm_package_result_disposition_envelope(
+                root,
+                "pm_records_research_result_disposition",
+                name="research/pm_research_result_disposition",
+                decision=decision,
+                decision_reason="PM absorbed research results for formal reviewer gate.",
+            ),
         )
     def absorb_current_node_results_with_pm(self, root: Path, result_paths: list[str | Path], *, decision: str = "absorbed") -> None:
         self.apply_until_action(root, "relay_current_node_result_to_pm")
@@ -575,11 +605,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         router.record_external_event(
             root,
             "pm_records_current_node_result_disposition",
-            {
-                "decided_by_role": "project_manager",
-                "decision": decision,
-                "decision_reason": "PM absorbed current-node worker result for the formal node-completion gate.",
-            },
+            self.pm_package_result_disposition_envelope(
+                root,
+                "pm_records_current_node_result_disposition",
+                name="current_node/pm_current_node_result_disposition",
+                decision=decision,
+                decision_reason="PM absorbed current-node worker result for the formal node-completion gate.",
+            ),
         )
     def pm_role_work_request_payload(
         self,

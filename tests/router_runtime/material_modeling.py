@@ -277,11 +277,12 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(
             root,
             "pm_records_research_result_disposition",
-            {
-                "decided_by_role": "project_manager",
-                "decision": "absorbed",
-                "decision_reason": "PM absorbed research results for reviewer direct-source gate.",
-            },
+            self.pm_package_result_disposition_envelope(
+                root,
+                "pm_records_research_result_disposition",
+                name="research/pm_research_result_disposition_direct_source",
+                decision_reason="PM absorbed research results for reviewer direct-source gate.",
+            ),
         )
 
         self.apply_next_non_card_action(root)

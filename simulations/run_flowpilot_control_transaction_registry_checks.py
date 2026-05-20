@@ -38,6 +38,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT: "non-success outcome uses a success-only event",
     model.ATOMIC_COMMIT_TARGET_MISSING: "atomic commit target is missing",
     model.CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY: "control-plane reissue lacks delivery authority",
+    model.PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT: "transaction commit targets are incomplete",
 }
 
 

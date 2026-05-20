@@ -38,6 +38,7 @@ REQUIRED_LABELS = (
     "select_valid_gate_decision",
     "select_valid_reviewer_report",
     "select_valid_controller_boundary_confirmation",
+    "select_valid_pm_package_result_disposition",
     "select_missing_registry_runtime_binding",
     "select_registry_contract_id_mismatch",
     "select_registry_allowed_role_mismatch",

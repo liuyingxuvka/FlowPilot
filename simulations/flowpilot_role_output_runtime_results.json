@@ -7,10 +7,10 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 5,
-    "edges": 132,
+    "accepted": 6,
+    "edges": 138,
     "rejected": 17,
-    "states": 133
+    "states": 139
   },
   "ok": true,
   "skipped_checks": {
@@ -21,7 +21,7 @@
       "asset_unified_runtime_path_exists": true,
       "binding_report": {
         "facts": {
-          "bound_contract_count": 17,
+          "bound_contract_count": 18,
           "declared_aliases": [
             "pm_resume_recovery_decision"
           ],
@@ -34,6 +34,7 @@
             "officer_model_report",
             "pm_control_blocker_repair_decision",
             "pm_model_miss_triage_decision",
+            "pm_package_result_disposition",
             "pm_parent_segment_decision",
             "pm_resume_decision",
             "pm_startup_activation_approval",
@@ -53,6 +54,7 @@
         "flowpilot.output_contract.gate_decision.v1",
         "flowpilot.output_contract.officer_model_report.v1",
         "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
+        "flowpilot.output_contract.pm_package_result_disposition.v1",
         "flowpilot.output_contract.pm_resume_decision.v1",
         "flowpilot.output_contract.reviewer_review_report.v1"
       ],
@@ -66,6 +68,7 @@
         "officer_model_report",
         "pm_control_blocker_repair_decision",
         "pm_model_miss_triage_decision",
+        "pm_package_result_disposition",
         "pm_parent_segment_decision",
         "pm_resume_decision",
         "pm_resume_recovery_decision",

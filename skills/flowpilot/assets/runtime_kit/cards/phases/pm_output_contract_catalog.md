@@ -23,6 +23,7 @@ Selection rules:
 - reviewer formal gate review request: `flowpilot.output_contract.reviewer_review_report.v1`;
 - process or product FlowGuard officer request: `flowpilot.output_contract.officer_model_report.v1`;
 - PM, reviewer, process officer, or product officer gate decision: `flowpilot.output_contract.gate_decision.v1`;
+- PM package result disposition after Controller relays worker/material/research/current-node results to PM: `flowpilot.output_contract.pm_package_result_disposition.v1`;
 - PM startup, repair, resume, segment, route, or closure decision: the matching `flowpilot.output_contract.pm_*` contract from the registry.
 
 Every PM-authored dispatch packet must include `output_contract` copied from
@@ -54,6 +55,14 @@ matching registry contract into the task packet and include the same
 task-specific report-writing rules before sending it.
 
 For formal file-backed role outputs that are not packet result envelopes, use `flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output-to-router` with the matching `output_type` and concrete `--agent-id`. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and active-holder work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The available role-output types come from the `role_output_runtime` bindings in `runtime_kit/contracts/contract_index.json`; the binding row owns the output type, body schema, allowed roles, path/hash keys, default file location, and fixed Router event when applicable. The runtime generates the contract skeleton, fills mechanical fixed fields, explicit empty arrays, and generic quality-pack checklist rows when route quality packs are declared, validates exact field names and allowed values, writes the body hash, records a receipt and role-output ledger entry, then submits the compact envelope with `body_ref` and `runtime_receipt_ref` directly to Router. It does not judge semantic sufficiency or pack-specific UI/desktop/localization quality.
+
+When Router waits for `pm_records_material_scan_result_disposition`,
+`pm_records_research_result_disposition`, or
+`pm_records_current_node_result_disposition`, PM must submit
+`output_type=pm_package_result_disposition` through the role-output runtime.
+Do not hand-write the event body. The event envelope must contain only the
+runtime-generated role-output envelope with `body_ref` and
+`runtime_receipt_ref`; the disposition body stays in the referenced file.
 
 `progress_status`: every formal role-output work item has default
 Controller-visible metadata progress. Use `flowpilot_runtime.py

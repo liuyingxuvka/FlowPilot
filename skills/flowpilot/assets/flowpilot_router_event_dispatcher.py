@@ -195,7 +195,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         router._validate_results_exist_for_packets(project_root, run_state, material_index['packets'], next_recipient='project_manager')
         router._mark_parallel_batch_results_joined(project_root, run_root, run_state, 'material_scan')
     elif event == 'pm_records_material_scan_result_disposition':
-        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='material_scan', package_label='material_scan', gate_kind='material_sufficiency', output_path=run_root / 'material' / 'pm_material_scan_result_disposition.json')
+        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='material_scan', package_label='material_scan', gate_kind='material_sufficiency', output_path=run_root / 'material' / 'pm_material_scan_result_disposition.json', router_event=event)
     elif event == 'reviewer_reports_material_sufficient':
         router._write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=True)
         material_batch = router._active_parallel_packet_batch(run_root, 'material_scan')
@@ -220,7 +220,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         router._write_worker_research_report(project_root, run_root, run_state, payload)
         router._mark_parallel_batch_results_joined(project_root, run_root, run_state, 'research')
     elif event == 'pm_records_research_result_disposition':
-        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='research', package_label='research', gate_kind='research_direct_source_check', output_path=run_root / 'research' / 'pm_research_result_disposition.json')
+        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='research', package_label='research', gate_kind='research_direct_source_check', output_path=run_root / 'research' / 'pm_research_result_disposition.json', router_event=event)
     elif event == 'reviewer_passes_research_direct_source_check':
         research_index = router._load_packet_index(router._research_packet_index_path(run_root), label='research')
         raw_agent_map = payload.get('agent_role_map')
@@ -294,7 +294,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         router._validate_current_node_result_event(project_root, run_state, payload)
     elif event == 'pm_records_current_node_result_disposition':
         frontier = router._active_frontier(run_root)
-        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='current_node', package_label='current_node', gate_kind='node_completion', output_path=_active_node_root(run_root, frontier) / 'reviews' / 'pm_current_node_result_disposition.json')
+        router._write_pm_package_result_disposition(project_root, run_root, run_state, payload, batch_kind='current_node', package_label='current_node', gate_kind='node_completion', output_path=_active_node_root(run_root, frontier) / 'reviews' / 'pm_current_node_result_disposition.json', router_event=event)
     elif event == 'current_node_reviewer_passes_result':
         router._validate_current_node_reviewer_pass(project_root, run_state, payload)
     elif event == 'pm_builds_parent_backward_targets':

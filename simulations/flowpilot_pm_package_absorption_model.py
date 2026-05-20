@@ -64,6 +64,8 @@ PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER = "pm_forwarded_raw_package_to_reviewer"
 PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY = (
     "pm_formal_package_release_without_identity"
 )
+PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT = "pm_disposition_without_runtime_contract"
+PM_DISPOSITION_HALF_WRITTEN_ACCEPTED = "pm_disposition_half_written_accepted"
 
 VALID_SCENARIOS = (
     VALID_CURRENT_NODE_PM_GATE,
@@ -85,6 +87,8 @@ NEGATIVE_SCENARIOS = (
     LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE,
     PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER,
     PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY,
+    PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT,
+    PM_DISPOSITION_HALF_WRITTEN_ACCEPTED,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -154,6 +158,10 @@ class State:
     result_relayed_to_pm: bool = False
     pm_disposition: str = DISPOSITION_NONE
     pm_disposition_recorded: bool = False
+    pm_disposition_runtime_contract_bound: bool = False
+    pm_disposition_transaction_committed: bool = False
+    pm_disposition_replay_verified: bool = False
+    pm_disposition_half_written: bool = False
 
     pm_gate_package_written: bool = False
     pm_gate_package_released_by_disposition: bool = False
@@ -238,6 +246,9 @@ def _scenario_base(scenario: str) -> State:
             result_relayed_to_pm=True,
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
+            pm_disposition_runtime_contract_bound=True,
+            pm_disposition_transaction_committed=True,
+            pm_disposition_replay_verified=True,
             pm_gate_package_written=True,
             pm_gate_package_released_by_disposition=True,
             pm_gate_package_identity_recorded=True,
@@ -260,6 +271,9 @@ def _scenario_base(scenario: str) -> State:
             result_relayed_to_pm=True,
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
+            pm_disposition_runtime_contract_bound=True,
+            pm_disposition_transaction_committed=True,
+            pm_disposition_replay_verified=True,
             pm_gate_package_written=True,
             pm_gate_package_released_by_disposition=True,
             pm_gate_package_identity_recorded=True,
@@ -285,6 +299,9 @@ def _scenario_base(scenario: str) -> State:
             result_relayed_to_pm=True,
             pm_disposition=DISPOSITION_ABSORBED,
             pm_disposition_recorded=True,
+            pm_disposition_runtime_contract_bound=True,
+            pm_disposition_transaction_committed=True,
+            pm_disposition_replay_verified=True,
             pm_gate_package_written=True,
             pm_gate_package_released_by_disposition=True,
             pm_gate_package_identity_recorded=True,
@@ -415,6 +432,20 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             pm_gate_package_identity_recorded=False,
         )
+    if scenario == PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT:
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
+            scenario=scenario,
+            pm_disposition_runtime_contract_bound=False,
+        )
+    if scenario == PM_DISPOSITION_HALF_WRITTEN_ACCEPTED:
+        return replace(
+            _scenario_base(VALID_CURRENT_NODE_PM_GATE),
+            scenario=scenario,
+            pm_disposition_transaction_committed=False,
+            pm_disposition_replay_verified=False,
+            pm_disposition_half_written=True,
+        )
     raise KeyError(scenario)
 
 
@@ -472,6 +503,16 @@ def package_absorption_failures(state: State) -> list[str]:
         failures.append("PM disposition forwarded a raw worker package to reviewer")
     if pm_issued_package and state.worker_result_returned and not state.result_relayed_to_pm:
         failures.append("PM-issued worker result did not return to project_manager")
+    if pm_issued_package and state.pm_disposition_recorded and not state.pm_disposition_runtime_contract_bound:
+        failures.append("PM package disposition was not bound to the role-output runtime contract")
+    if pm_issued_package and state.pm_disposition_recorded and not state.pm_disposition_transaction_committed:
+        failures.append("PM package disposition was not committed as one registered control transaction")
+    if (
+        pm_issued_package
+        and state.pm_disposition_half_written
+        and (state.reviewer_gate_started or state.formal_evidence_uses_worker_result or state.route_or_node_decision_recorded)
+    ):
+        failures.append("half-written PM disposition was accepted as current progress")
     if (
         state.formal_evidence_uses_worker_result
         and (not state.pm_disposition_recorded or state.pm_disposition != DISPOSITION_ABSORBED)

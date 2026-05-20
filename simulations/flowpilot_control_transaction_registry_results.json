@@ -22,7 +22,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=144",
+    "summary": "sequences=3 initial_states=1 traces=156",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -178,8 +178,10 @@
           "atomic_commit_declared": true,
           "commit_targets": [
             "packet_ledger",
+            "pm_package_disposition",
             "run_state",
-            "status_summary"
+            "status_summary",
+            "wait_closure"
           ],
           "completed_agent_id_belongs_to_role": false,
           "completed_agent_id_is_role_key": true,
@@ -410,8 +412,10 @@
           "atomic_commit_declared": true,
           "commit_targets": [
             "packet_ledger",
+            "pm_package_disposition",
             "run_state",
-            "status_summary"
+            "status_summary",
+            "wait_closure"
           ],
           "completed_agent_id_belongs_to_role": true,
           "completed_agent_id_is_role_key": false,
@@ -535,6 +539,53 @@
           "status": "selected",
           "terminal_reason": "none",
           "transaction_type": "control_blocker_repair"
+        }
+      },
+      "pm_package_disposition_partial_commit": {
+        "detected": true,
+        "expected_failure": "transaction commit targets are incomplete",
+        "failures": [
+          "transaction commit targets are incomplete",
+          "atomic commit target is missing"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "commit_targets": [
+            "packet_ledger",
+            "run_state",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "legacy_quarantined": false,
+          "legacy_transaction": false,
+          "legacy_transaction_invalid": false,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "none",
+          "packet_authority_required": true,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": true,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": false,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": false,
+          "scenario": "pm_package_disposition_partial_commit",
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "transaction_type": "result_absorption"
         }
       },
       "registry_reference_missing": {
@@ -779,7 +830,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 24
+    "terminal_state_count": 26
   },
   "safe_graph": {
     "accepted_scenarios": [
@@ -787,12 +838,13 @@
       "valid_control_plane_reissue",
       "valid_legacy_quarantine",
       "valid_packet_dispatch",
+      "valid_pm_package_result_absorption",
       "valid_result_absorption",
       "valid_reviewer_gate_result",
       "valid_route_mutation",
       "valid_route_progression"
     ],
-    "edge_count": 48,
+    "edge_count": 52,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -808,12 +860,13 @@
       "packet_authority_missing",
       "parent_repair_leaf_event",
       "partial_commit_targets",
+      "pm_package_disposition_partial_commit",
       "registry_reference_missing",
       "repair_without_transaction",
       "reviewer_non_success_uses_success_event",
       "route_mutation_without_stale_policy",
       "unregistered_transaction_type"
     ],
-    "state_count": 49
+    "state_count": 53
   }
 }

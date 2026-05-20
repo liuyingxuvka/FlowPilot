@@ -81,6 +81,9 @@ CONTROL_TRANSACTION_COMMIT_TARGETS = {
     "route",
     "stale_evidence",
     "dispatch_index",
+    "pm_package_disposition",
+    "wait_closure",
+    "formal_gate_package",
 }
 CONTROL_TRANSACTION_OUTCOME_POLICIES = {
     "single_event",

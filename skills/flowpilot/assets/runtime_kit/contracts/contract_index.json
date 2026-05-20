@@ -106,6 +106,14 @@
       "contract_id": "flowpilot.output_contract.pm_role_work_result.v1"
     },
     {
+      "task_family": "pm.package_result_disposition",
+      "packet_type": "role_decision",
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "contract_id": "flowpilot.output_contract.pm_package_result_disposition.v1"
+    },
+    {
       "task_family": "pm.resume_decision",
       "packet_type": "role_decision",
       "recipient_roles": [
@@ -239,6 +247,54 @@
       "controller_may_read_sealed_bodies": false,
       "controller_may_approve_gate": false,
       "router_must_verify_runtime_receipt_before_reconciliation": true
+    },
+    {
+      "contract_id": "flowpilot.output_contract.pm_package_result_disposition.v1",
+      "schema_version": "flowpilot.output_contract.v1",
+      "task_family": "pm.package_result_disposition",
+      "packet_types": [
+        "role_decision"
+      ],
+      "recipient_roles": [
+        "project_manager"
+      ],
+      "expected_return_envelope": "role_output_envelope",
+      "runtime_channel": "role_output_runtime",
+      "output_type": "pm_package_result_disposition",
+      "body_schema_version": "flowpilot.pm_package_result_disposition.v1",
+      "default_subdir": "pm_dispositions",
+      "default_filename_prefix": "pm_package_result_disposition",
+      "path_key": "decision_path",
+      "hash_key": "decision_hash",
+      "router_event_mode": "router_supplied",
+      "required_body_fields": [
+        "schema_version",
+        "run_id",
+        "decided_by_role",
+        "decision",
+        "decision_reason",
+        "residual_risks",
+        "contract_self_check"
+      ],
+      "required_body_values": {
+        "schema_version": "flowpilot.pm_package_result_disposition.v1",
+        "decided_by_role": "project_manager"
+      },
+      "allowed_decision_values": [
+        "absorbed",
+        "blocked",
+        "canceled",
+        "rework_requested",
+        "route_or_node_mutation_required"
+      ],
+      "explicit_array_fields": [
+        "residual_risks"
+      ],
+      "contract_self_check_required": true,
+      "controller_may_read_sealed_bodies": false,
+      "controller_visibility": "role_output_envelope_only",
+      "pm_must_open_result_bodies_after_controller_relay": true,
+      "pm_disposition_is_control_transaction": true
     },
     {
       "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",

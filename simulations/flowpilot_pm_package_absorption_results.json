@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=96",
+    "summary": "sequences=3 initial_states=1 traces=108",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -59,6 +59,21 @@
         "failures": [
           "critical PM route/node/material/research decision bypassed reviewer gate",
           "PM completed a node without PM disposition and reviewer node-completion gate"
+        ]
+      },
+      "pm_disposition_half_written_accepted": {
+        "detected": true,
+        "expected_failure": "PM package disposition was not committed as one registered control transaction",
+        "failures": [
+          "PM package disposition was not committed as one registered control transaction",
+          "half-written PM disposition was accepted as current progress"
+        ]
+      },
+      "pm_disposition_without_runtime_contract": {
+        "detected": true,
+        "expected_failure": "PM package disposition was not bound to the role-output runtime contract",
+        "failures": [
+          "PM package disposition was not bound to the role-output runtime contract"
         ]
       },
       "pm_formal_package_release_without_identity": {
@@ -132,7 +147,7 @@
       "valid_research_pm_gate",
       "valid_resume_result_to_pm"
     ],
-    "edge_count": 32,
+    "edge_count": 36,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -143,12 +158,14 @@
       "legacy_reviewer_relay_used_as_current_acceptance",
       "material_research_decision_without_gate",
       "node_completion_without_reviewer_gate",
+      "pm_disposition_half_written_accepted",
+      "pm_disposition_without_runtime_contract",
       "pm_formal_package_release_without_identity",
       "pm_forwarded_raw_package_to_reviewer",
       "raw_worker_result_relayed_to_reviewer",
       "resume_result_direct_to_reviewer",
       "reviewer_started_without_pm_gate_package"
     ],
-    "state_count": 33
+    "state_count": 37
   }
 }

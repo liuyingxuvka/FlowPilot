@@ -16308,6 +16308,40 @@ Skipped steps:
 - Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and `simulations/flowpilot_model_test_alignment_results.json` were preserved and were not staged as part of this repair.
 - No GitHub push, tag, remote release, or public publication was performed.
 
+## 2026-05-20 - Role Output Transaction Boundaries
+
+### Trigger
+
+User authorized an OpenSpec plus FlowGuard root-cause repair after PM package disposition letters could be confused with Router event envelopes and partial package absorption could leave waits stuck.
+
+### Models And Checks
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`, schema `1.0`.
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py`.
+- OK: `python simulations\run_flowpilot_pm_package_absorption_checks.py`.
+- OK: `python simulations\run_flowpilot_control_transaction_registry_checks.py`.
+- OK: `python -m pytest tests/test_flowpilot_control_plane_contracts.py -q`, 13 passed.
+- OK: focused router runtime material/current-node package disposition tests passed.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `completed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-20 21:09:29Z`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `completed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-20 21:09:29Z`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- PM package result disposition needed a first-class role-output contract and a Router-supplied wait contract instead of hand-written event bodies.
+- PM package result absorption now commits through the control transaction registry with packet ledger, PM disposition, run state, status summary, and wait closure as required targets.
+- Blocker-related wait identity now includes blocker identity fields so distinct blockers cannot collapse into one stale wait.
+- Producer-aware repair wording avoids misleading reviewer-only status text.
+
+### Skipped Or Limited
+
+- Full `tests/router_runtime/material_modeling.py`, `tests/router_runtime/dispatch_gate.py`, and `tests/router_runtime/packets.py` module commands exceeded a 304-second foreground timeout with no failure output; focused affected tests passed.
+- Thin-parent Meta and Capability checks pass for routine confidence, but their result payloads still report release confidence requires full regression because the legacy monolith proof fingerprint is stale.
+- Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and unrelated simulation result files were preserved and were not staged.
+
 ## 2026-05-20 - FlowPilot Derived-View And Prompt-Boundary Folding
 
 ### Evidence Summary

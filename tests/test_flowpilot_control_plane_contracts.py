@@ -11,6 +11,7 @@ import flowpilot_router as router  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
 import flowpilot_closure_kernel as closure_kernel  # noqa: E402
 import packet_runtime  # noqa: E402
+import role_output_runtime  # noqa: E402
 from flowpilot_control_plane_contracts import (  # noqa: E402
     control_plane_action_identity_fingerprint,
     control_plane_pending_wait_same_identity,
@@ -95,6 +96,23 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
         self.assertTrue(control_plane_pending_wait_same_identity(first, same_wait_with_reminder))
         self.assertFalse(control_plane_pending_wait_same_identity(first, different_wait))
 
+    def test_control_blocker_wait_identity_includes_blocker_artifact(self) -> None:
+        first = {
+            "action_type": "await_role_decision",
+            "label": "controller_waits_for_control_blocker_resolution",
+            "waiting_for_role": "project_manager",
+            "controller_action_id": "controller-action-control-blocker",
+            "blocker_id": "control-blocker-a",
+            "blocker_artifact_path": ".flowpilot/runs/run-1/control_blocks/control-blocker-a.json",
+        }
+        second = {
+            **first,
+            "blocker_id": "control-blocker-b",
+            "blocker_artifact_path": ".flowpilot/runs/run-1/control_blocks/control-blocker-b.json",
+        }
+
+        self.assertFalse(control_plane_pending_wait_same_identity(first, second))
+
     def test_closure_kernel_normalizes_controller_and_role_rows(self) -> None:
         controller = closure_kernel.classify_closure(
             "controller_action",
@@ -167,6 +185,118 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
 
 
 class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def _prepare_material_scan_pm_disposition(
+        self,
+        root: Path,
+        run_id: str,
+    ) -> tuple[Path, dict, dict, Path]:
+        run_root = self.write_minimal_run(root, run_id)
+        run_state = read_json(router.run_state_path(run_root))
+        records: list[dict[str, object]] = []
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="packet-release",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="material scan",
+        )
+        packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        packet = packet_runtime.controller_relay_envelope(
+            root,
+            envelope=packet,
+            envelope_path=packet_path,
+            controller_agent_id="agent-controller",
+            received_from_role="project_manager",
+            relayed_to_role="worker_a",
+        )
+        packet_runtime.read_packet_body_for_role(root, packet, role="worker_a")
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=packet,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a",
+            result_body_text="scan result",
+            next_recipient="project_manager",
+        )
+        result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
+        result = packet_runtime.controller_relay_envelope(
+            root,
+            envelope=result,
+            envelope_path=result_path,
+            controller_agent_id="agent-controller",
+            received_from_role="worker_a",
+            relayed_to_role="project_manager",
+        )
+        packet_runtime.read_result_body_for_role(root, result, role="project_manager")
+        records.append(
+            {
+                "packet_id": "packet-release",
+                "to_role": "worker_a",
+                "packet_envelope_path": router.project_relative(root, packet_path),
+                "result_envelope_path": router.project_relative(root, result_path),
+                "status": "result_relayed_to_pm",
+            }
+        )
+        batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            run_state,
+            batch_id="batch-release",
+            batch_kind="material_scan",
+            phase="material_scan",
+            records=records,
+            node_id="material-intake",
+            join_policy="all_results_before_pm_absorption",
+            review_policy="pm_absorbs_batch_before_material_sufficiency_review",
+            pm_absorption_required=True,
+        )
+        batch["status"] = "results_relayed_to_pm"
+        router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
+        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        payload = role_output_runtime.submit_output(
+            root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id=run_root.name,
+            event_name="pm_records_material_scan_result_disposition",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": "absorbed",
+                "decision_reason": "ready",
+                "residual_risks": [],
+            },
+        )
+        return run_root, run_state, payload, output_path
+
+    def test_pm_package_disposition_rejects_handwritten_body(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        router.record_external_event(root, "worker_scan_results_returned")
+        self.apply_next_packet_action(root, "relay_material_scan_results_to_pm")
+        self.open_results_for_pm(root, material_index_path)
+
+        with self.assertRaises(router.RouterError) as raised:
+            router.record_external_event(
+                root,
+                "pm_records_material_scan_result_disposition",
+                {
+                    "decided_by_role": "project_manager",
+                    "decision": "absorbed",
+                    "decision_reason": "handwritten body should not pass",
+                },
+            )
+
+        self.assertIn("role-output runtime envelope", str(raised.exception))
+
     def test_control_blocker_done_receipt_applies_delivery_postcondition(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-control-blocker-receipt")
@@ -349,91 +479,68 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
     def test_absorbed_pm_disposition_records_reviewer_release_evidence(self) -> None:
         root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-disposition-release")
-        run_state = read_json(router.run_state_path(run_root))
-        records: list[dict[str, object]] = []
-        packet = packet_runtime.create_packet(
+        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
             root,
-            packet_id="packet-release",
-            from_role="project_manager",
-            to_role="worker_a",
-            node_id="node-001",
-            body_text="material scan",
+            "run-disposition-release",
         )
-        packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
-        packet = packet_runtime.controller_relay_envelope(
-            root,
-            envelope=packet,
-            envelope_path=packet_path,
-            controller_agent_id="agent-controller",
-            received_from_role="project_manager",
-            relayed_to_role="worker_a",
-        )
-        packet_runtime.read_packet_body_for_role(root, packet, role="worker_a")
-        result = packet_runtime.write_result(
-            root,
-            packet_envelope=packet,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a",
-            result_body_text="scan result",
-            next_recipient="project_manager",
-        )
-        result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
-        result = packet_runtime.controller_relay_envelope(
-            root,
-            envelope=result,
-            envelope_path=result_path,
-            controller_agent_id="agent-controller",
-            received_from_role="worker_a",
-            relayed_to_role="project_manager",
-        )
-        packet_runtime.read_result_body_for_role(root, result, role="project_manager")
-        records.append(
-            {
-                "packet_id": "packet-release",
-                "to_role": "worker_a",
-                "packet_envelope_path": router.project_relative(root, packet_path),
-                "result_envelope_path": router.project_relative(root, result_path),
-                "status": "result_relayed_to_pm",
-            }
-        )
-        batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
-            root,
-            run_root,
-            run_state,
-            batch_id="batch-release",
-            batch_kind="material_scan",
-            phase="material_scan",
-            records=records,
-            node_id="material-intake",
-            join_policy="all_results_before_pm_absorption",
-            review_policy="pm_absorbs_batch_before_material_sufficiency_review",
-            pm_absorption_required=True,
-        )
-        batch["status"] = "results_relayed_to_pm"
-        router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
-        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
 
         pm_decisions._write_pm_package_result_disposition(
             router,
             root,
             run_root,
             run_state,
-            {"decided_by_role": "project_manager", "decision": "absorbed"},
+            payload,
             batch_kind="material_scan",
             package_label="material_scan",
             gate_kind="material_sufficiency",
             output_path=output_path,
+            router_event="pm_records_material_scan_result_disposition",
         )
 
         disposition = read_json(output_path)
         release = disposition["pm_reviewer_release_evidence"]
+        self.assertEqual(disposition["control_transaction"]["transaction_type"], "result_absorption")
+        self.assertEqual(
+            disposition["control_transaction"]["output_contract_id"],
+            "flowpilot.output_contract.pm_package_result_disposition.v1",
+        )
         self.assertTrue(disposition["formal_gate_package_released"])
         self.assertTrue(release["release_satisfied"])
         self.assertEqual(release["release_kind"], "absorbed_pm_package_result_disposition")
         self.assertTrue(release["formal_gate_package_path"])
         self.assertTrue(release["formal_gate_package_hash"])
         self.assertFalse(release["reviewer_receives_raw_worker_result"])
+
+    def test_pm_disposition_requires_registered_commit_targets(self) -> None:
+        root = self.make_project()
+        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-registry-mismatch",
+        )
+        registry = read_json(ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "control_transaction_registry.json")
+        for row in registry["transaction_types"]:
+            if row.get("transaction_type") == "result_absorption":
+                row["commit_targets"] = [
+                    target for target in row["commit_targets"] if target != "pm_package_disposition"
+                ]
+        registry_path = run_root / "runtime_kit" / "control_transaction_registry.json"
+        router.write_json(registry_path, registry)
+
+        with self.assertRaises(router.RouterError) as raised:  # type: ignore[attr-defined]
+            pm_decisions._write_pm_package_result_disposition(
+                router,
+                root,
+                run_root,
+                run_state,
+                payload,
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                output_path=output_path,
+                router_event="pm_records_material_scan_result_disposition",
+            )
+
+        self.assertIn("commit target pm_package_disposition is not declared", str(raised.exception))
 
     def test_stale_run_state_save_cannot_resurrect_cleared_pending_wait(self) -> None:
         root = self.make_project()

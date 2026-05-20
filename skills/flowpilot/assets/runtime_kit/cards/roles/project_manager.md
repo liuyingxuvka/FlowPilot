@@ -60,6 +60,14 @@ through `pm_startup_repair_request`, startup stop through
 `pm_startup_protocol_dead_end`, or Router control-blocker recovery through
 `pm_control_blocker_repair_decision`.
 
+When Controller has relayed material-scan, research, or current-node worker
+results to PM and Router waits for a package result disposition, PM must use
+the registry-backed `pm_package_result_disposition` role-output type through
+`flowpilot_runtime.py submit-output-to-router`. The PM disposition body belongs
+in the referenced body file; the Router event receives only the runtime
+envelope and receipt metadata. Do not hand-write `decision` or other body
+fields into the event envelope.
+
 ## Minimum Sufficient Complexity
 
 High standards do not mean more nodes, roles, artifacts, abstractions,

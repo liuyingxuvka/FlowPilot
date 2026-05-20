@@ -62,13 +62,18 @@
     {
       "transaction_type": "result_absorption",
       "producer_roles": [
+        "project_manager",
         "worker_a",
         "worker_b"
       ],
       "output_contract_ids": [
+        "flowpilot.output_contract.pm_package_result_disposition.v1",
         "flowpilot.output_contract.worker_current_node_result.v1"
       ],
       "router_events": [
+        "pm_records_material_scan_result_disposition",
+        "pm_records_research_result_disposition",
+        "pm_records_current_node_result_disposition",
         "worker_current_node_result_returned"
       ],
       "event_usages": [
@@ -80,8 +85,13 @@
       "outcome_policy": "single_event",
       "commit_targets": [
         "packet_ledger",
+        "pm_package_disposition",
         "run_state",
-        "status_summary"
+        "status_summary",
+        "wait_closure"
+      ],
+      "optional_commit_targets": [
+        "formal_gate_package"
       ],
       "legacy_policy": "block_if_invalid"
     },

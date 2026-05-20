@@ -491,11 +491,12 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(
             root,
             "pm_records_current_node_result_disposition",
-            {
-                "decided_by_role": "project_manager",
-                "decision": "absorbed",
-                "decision_reason": "PM absorbed parallel worker results for the formal node-completion gate.",
-            },
+            self.pm_package_result_disposition_envelope(
+                root,
+                "pm_records_current_node_result_disposition",
+                name="current_node/pm_parallel_result_disposition",
+                decision_reason="PM absorbed parallel worker results for the formal node-completion gate.",
+            ),
         )
         self.deliver_expected_card(root, "reviewer.worker_result_review")
         router.record_external_event(

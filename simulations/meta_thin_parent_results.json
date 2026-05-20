@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-20T18:00:11.186546+00:00",
+  "created_at": "2026-05-20T21:09:29.124994+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -132,17 +132,17 @@
       {
         "evidence": [
           {
-            "edge_count": 32,
+            "edge_count": 36,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_pm_package_absorption",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_pm_package_absorption_results.json",
-            "result_fingerprint": "c3765921bbcf0ea27f21dcd6357eba61ee0894862b0cfff8ade4524853bef2a5",
+            "result_fingerprint": "595bfd4dc154fe6f7b7bd0a467d31f3155923f131c67afcff6ac02b424615bdf",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 33
+            "state_count": 37
           },
           {
             "edge_count": 40,
@@ -615,17 +615,17 @@
             "state_count": 53
           },
           {
-            "edge_count": 48,
+            "edge_count": 52,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_control_transaction_registry",
             "ok": true,
             "proof_status": "not_present",
-            "result_file": "simulations/flowpilot_control_transaction_registry_checks_results.json",
-            "result_fingerprint": "4791bb7ffe9735dcf48b611128c9a43c4d37004ebbea9acca4cc9309c88a93c2",
+            "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
+            "result_fingerprint": "efb5d358250bb10d45fdf3582fa6b4ffd6256d2fcaab84acf02538f51bdfd025",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 49
+            "state_count": 53
           },
           {
             "edge_count": 38,

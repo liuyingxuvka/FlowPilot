@@ -95,6 +95,11 @@ PM_ROLE_WORK_OPEN_STATUSES = {
 
 PM_ROLE_WORK_TERMINAL_DECISIONS = {"absorbed", "canceled", "superseded"}
 
+PM_PACKAGE_RESULT_DISPOSITION_OUTPUT_TYPE = "pm_package_result_disposition"
+PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID = (
+    "flowpilot.output_contract.pm_package_result_disposition.v1"
+)
+
 PM_PACKAGE_RESULT_DECISIONS = {
     "absorbed",
     "rework_requested",
@@ -102,6 +107,34 @@ PM_PACKAGE_RESULT_DECISIONS = {
     "blocked",
     "route_or_node_mutation_required",
 }
+
+PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS = (
+    "decided_by_role",
+    "decision",
+    "decision_reason",
+    "residual_risks",
+    "contract_self_check",
+)
+
+
+def pm_package_result_disposition_payload_contract(name: str) -> dict[str, Any]:
+    return {
+        "schema_version": PAYLOAD_CONTRACT_SCHEMA,
+        "name": name,
+        "required_object": "role_output_body",
+        "expected_return_envelope": "role_output_envelope",
+        "expected_output_type": PM_PACKAGE_RESULT_DISPOSITION_OUTPUT_TYPE,
+        "expected_output_contract_id": PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID,
+        "runtime_command": "flowpilot_runtime.py submit-output-to-router",
+        "required_fields": list(PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS),
+        "allowed_values": {
+            "decided_by_role": ["project_manager"],
+            "decision": sorted(PM_PACKAGE_RESULT_DECISIONS),
+        },
+        "result_body_open_required_by_role": "project_manager",
+        "controller_visibility": "role_output_envelope_only",
+        "body_must_not_be_in_event_envelope": True,
+    }
 
 PARALLEL_PACKET_BATCH_OPEN_STATUSES = {
     "registered",
@@ -257,7 +290,11 @@ __all__ = (
     'PM_ROLE_WORK_REQUEST_KINDS',
     'PM_ROLE_WORK_OPEN_STATUSES',
     'PM_ROLE_WORK_TERMINAL_DECISIONS',
+    'PM_PACKAGE_RESULT_DISPOSITION_OUTPUT_TYPE',
+    'PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID',
     'PM_PACKAGE_RESULT_DECISIONS',
+    'PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS',
+    'pm_package_result_disposition_payload_contract',
     'PARALLEL_PACKET_BATCH_OPEN_STATUSES',
     'PARALLEL_PACKET_BATCH_RESULT_RETURNED_STATUSES',
     'PARALLEL_PACKET_BATCH_RESULT_FINAL_STATUSES',

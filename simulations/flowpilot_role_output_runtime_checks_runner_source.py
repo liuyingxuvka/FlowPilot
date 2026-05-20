@@ -16,6 +16,7 @@ REQUIRED_OUTPUT_TYPES = {
     "reviewer_review_report",
     "officer_model_report",
     "controller_boundary_confirmation",
+    "pm_package_result_disposition",
 }
 
 
@@ -26,6 +27,7 @@ REQUIRED_CONTRACT_IDS = {
     "flowpilot.output_contract.reviewer_review_report.v1",
     "flowpilot.output_contract.officer_model_report.v1",
     "flowpilot.output_contract.controller_boundary_confirmation.v1",
+    "flowpilot.output_contract.pm_package_result_disposition.v1",
 }
 
 

@@ -149,6 +149,55 @@ def _record_event_from_role_matches(router: ModuleType, event: str, from_role: s
     return False
 
 
+def _pending_event_payload_contract(router: ModuleType, run_state: dict[str, Any], event: str) -> dict[str, Any]:
+    pending_action = run_state.get('pending_action')
+    if not isinstance(pending_action, dict) or pending_action.get('action_type') != 'await_role_decision':
+        return {}
+    allowed = pending_action.get('allowed_external_events')
+    if not isinstance(allowed, list) or event not in allowed:
+        return {}
+    contract = pending_action.get('payload_contract')
+    return contract if isinstance(contract, dict) else {}
+
+
+def _validate_expected_role_output_envelope(router: ModuleType, project_root: Path, run_state: dict[str, Any], *, event: str, envelope: dict[str, Any]) -> None:
+    payload_contract = _pending_event_payload_contract(router, run_state, event)
+    expected_output_type = str(payload_contract.get('expected_output_type') or '').strip()
+    expected_contract_id = str(payload_contract.get('expected_output_contract_id') or '').strip()
+    requires_role_output = (
+        payload_contract.get('required_object') == 'role_output_body'
+        or payload_contract.get('expected_return_envelope') == 'role_output_envelope'
+        or bool(expected_output_type)
+        or bool(expected_contract_id)
+    )
+    if not requires_role_output:
+        return
+    if envelope.get('schema_version') != router.ROLE_OUTPUT_ENVELOPE_SCHEMA:
+        raise router.RouterError('this router wait requires a role-output runtime envelope, not a hand-written event envelope')
+    if envelope.get('router_submission_schema') != router.role_output_runtime.ROLE_OUTPUT_DIRECT_ROUTER_SUBMISSION_SCHEMA:
+        raise router.RouterError('role-output envelope is missing the direct router submission schema')
+    if envelope.get('role_output_runtime_validated') is not True:
+        raise router.RouterError('role-output envelope must be generated and validated by role-output runtime')
+    if expected_output_type and envelope.get('output_type') != expected_output_type:
+        raise router.RouterError(f"role-output envelope output_type mismatch: expected {expected_output_type}, got {envelope.get('output_type')!r}")
+    if expected_contract_id and envelope.get('output_contract_id') != expected_contract_id:
+        raise router.RouterError(f"role-output envelope output_contract_id mismatch: expected {expected_contract_id}, got {envelope.get('output_contract_id')!r}")
+    body_ref = envelope.get('body_ref')
+    receipt_ref = envelope.get('runtime_receipt_ref')
+    if not (isinstance(body_ref, dict) and body_ref.get('path') and body_ref.get('hash')):
+        raise router.RouterError('role-output envelope requires body_ref.path/body_ref.hash')
+    if not (isinstance(receipt_ref, dict) and receipt_ref.get('path') and receipt_ref.get('hash')):
+        raise router.RouterError('role-output envelope requires runtime_receipt_ref.path/runtime_receipt_ref.hash')
+    try:
+        receipt = router.role_output_runtime.validate_envelope_runtime_receipt(project_root, envelope)
+    except router.role_output_runtime.RoleOutputRuntimeError as exc:
+        raise router.RouterError(str(exc)) from exc
+    if expected_output_type and receipt.get('output_type') != expected_output_type:
+        raise router.RouterError(f"role-output runtime receipt output_type mismatch: expected {expected_output_type}")
+    if expected_contract_id and receipt.get('output_contract_id') != expected_contract_id:
+        raise router.RouterError(f"role-output runtime receipt output_contract_id mismatch: expected {expected_contract_id}")
+
+
 def _validate_record_event_envelope(router: ModuleType, project_root: Path, run_state: dict[str, Any], *, event: str, envelope: dict[str, Any]) -> dict[str, Any]:
     schema = envelope.get('schema_version')
     if schema not in router.ALLOWED_RECORD_EVENT_ENVELOPE_SCHEMAS:
@@ -177,6 +226,7 @@ def _validate_record_event_envelope(router: ModuleType, project_root: Path, run_
     leaked_keys = sorted(router.FORBIDDEN_RECORD_EVENT_ENVELOPE_BODY_FIELDS & set(envelope))
     if leaked_keys:
         raise router.RouterError(f"event envelope leaked role body fields to Controller: {', '.join(leaked_keys)}")
+    _validate_expected_role_output_envelope(router, project_root, run_state, event=event, envelope=envelope)
     return envelope
 
 
@@ -219,6 +269,8 @@ __all__ = (
     '_currently_allowed_external_events',
     '_record_event_expected_role',
     '_record_event_from_role_matches',
+    '_pending_event_payload_contract',
+    '_validate_expected_role_output_envelope',
     '_validate_record_event_envelope',
     '_load_record_event_envelope_ref',
     '_normalize_record_event_payload',

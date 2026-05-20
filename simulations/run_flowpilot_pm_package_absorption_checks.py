@@ -35,6 +35,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE: "PM-issued worker result did not return to project_manager",
     model.PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
     model.PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY: "reviewer gate started without PM disposition release and formal gate package identity",
+    model.PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT: "PM package disposition was not bound to the role-output runtime contract",
+    model.PM_DISPOSITION_HALF_WRITTEN_ACCEPTED: "PM package disposition was not committed as one registered control transaction",
 }
 
 
@@ -42,7 +44,11 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|pkg={state.package_kind}|"
         f"gate={state.gate_kind}|pm={state.result_relayed_to_pm},"
-        f"{state.pm_disposition_recorded},{state.pm_disposition}|"
+        f"{state.pm_disposition_recorded},{state.pm_disposition},"
+        f"{state.pm_disposition_runtime_contract_bound},"
+        f"{state.pm_disposition_transaction_committed},"
+        f"{state.pm_disposition_replay_verified},"
+        f"{state.pm_disposition_half_written}|"
         f"pm_gate={state.pm_gate_package_written}|review={state.reviewer_gate_started},"
         f"{state.reviewer_gate_passed}|raw={state.reviewer_received_raw_worker_result}|"
         f"formal_release={state.pm_gate_package_released_by_disposition},"

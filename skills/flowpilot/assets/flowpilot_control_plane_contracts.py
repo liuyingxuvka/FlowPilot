@@ -10,6 +10,7 @@ from typing import Any
 CONTROL_BLOCKER_DELIVERY_POSTCONDITION_PREFIX = "control_blocker_delivered"
 CONTROL_BLOCKER_IDENTITY_FIELDS = (
     "blocker_id",
+    "control_blocker_id",
     "blocker_artifact_path",
     "policy_row_id",
     "handling_lane",
@@ -53,7 +54,9 @@ def control_blocker_delivery_postcondition(blocker_id: Any) -> str:
 
 def control_plane_action_identity_extra_fields(action: dict[str, Any]) -> tuple[str, ...]:
     action_type = str(action.get("action_type") or "")
-    if action_type == "handle_control_blocker":
+    has_blocker_identity = any(_nonempty(action.get(field)) for field in CONTROL_BLOCKER_IDENTITY_FIELDS)
+    label = str(action.get("label") or "")
+    if action_type == "handle_control_blocker" or has_blocker_identity or "control_blocker" in label:
         return CONTROL_BLOCKER_IDENTITY_FIELDS
     return ()
 
@@ -91,6 +94,10 @@ def control_plane_action_identity_fingerprint(action: dict[str, Any] | None) -> 
 def control_plane_pending_wait_identity_parts(wait: dict[str, Any]) -> dict[str, Any]:
     parts: dict[str, Any] = {}
     for field in PENDING_WAIT_IDENTITY_FIELDS:
+        value = wait.get(field)
+        if _nonempty(value):
+            parts[field] = value
+    for field in control_plane_action_identity_extra_fields(wait):
         value = wait.get(field)
         if _nonempty(value):
             parts[field] = value

@@ -26,6 +26,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 VALID_ROUTE_PROGRESSION = "valid_route_progression"
 VALID_PACKET_DISPATCH = "valid_packet_dispatch"
 VALID_RESULT_ABSORPTION = "valid_result_absorption"
+VALID_PM_PACKAGE_RESULT_ABSORPTION = "valid_pm_package_result_absorption"
 VALID_REVIEWER_GATE_RESULT = "valid_reviewer_gate_result"
 VALID_CONTROL_BLOCKER_REPAIR = "valid_control_blocker_repair"
 VALID_CONTROL_PLANE_REISSUE = "valid_control_plane_reissue"
@@ -48,11 +49,13 @@ ROUTE_MUTATION_WITHOUT_STALE_POLICY = "route_mutation_without_stale_policy"
 REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT = "reviewer_non_success_uses_success_event"
 ATOMIC_COMMIT_TARGET_MISSING = "atomic_commit_target_missing"
 CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY = "control_plane_reissue_without_delivery_authority"
+PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT = "pm_package_disposition_partial_commit"
 
 VALID_SCENARIOS = (
     VALID_ROUTE_PROGRESSION,
     VALID_PACKET_DISPATCH,
     VALID_RESULT_ABSORPTION,
+    VALID_PM_PACKAGE_RESULT_ABSORPTION,
     VALID_REVIEWER_GATE_RESULT,
     VALID_CONTROL_BLOCKER_REPAIR,
     VALID_CONTROL_PLANE_REISSUE,
@@ -76,6 +79,7 @@ NEGATIVE_SCENARIOS = (
     REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT,
     ATOMIC_COMMIT_TARGET_MISSING,
     CONTROL_PLANE_REISSUE_WITHOUT_DELIVERY_AUTHORITY,
+    PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -99,11 +103,14 @@ COMMIT_TARGETS = {
     "route",
     "stale_evidence",
     "repair_transaction_index",
+    "pm_package_disposition",
+    "wait_closure",
+    "formal_gate_package",
 }
 REQUIRED_TARGETS_BY_TYPE = {
     "route_progression": frozenset({"frontier", "run_state", "status_summary"}),
     "packet_dispatch": frozenset({"packet_ledger", "run_state", "status_summary"}),
-    "result_absorption": frozenset({"packet_ledger", "run_state", "status_summary"}),
+    "result_absorption": frozenset({"packet_ledger", "pm_package_disposition", "run_state", "status_summary", "wait_closure"}),
     "reviewer_gate_result": frozenset({"run_state", "blocker_index", "status_summary"}),
     "control_blocker_repair": frozenset({"repair_transaction", "blocker_index", "run_state", "status_summary"}),
     "control_plane_reissue": frozenset({"blocker_index", "run_state", "status_summary"}),
@@ -192,7 +199,16 @@ def _scenario_state(scenario: str) -> State:
             transaction_type="result_absorption",
             registry_row_present=True,
             packet_authority_required=True,
-            commit_targets=("packet_ledger", "run_state", "status_summary"),
+            commit_targets=("packet_ledger", "pm_package_disposition", "run_state", "status_summary", "wait_closure"),
+        )
+    if scenario == VALID_PM_PACKAGE_RESULT_ABSORPTION:
+        return State(
+            status="selected",
+            scenario=scenario,
+            transaction_type="result_absorption",
+            registry_row_present=True,
+            packet_authority_required=True,
+            commit_targets=("packet_ledger", "pm_package_disposition", "run_state", "status_summary", "wait_closure"),
         )
     if scenario == VALID_REVIEWER_GATE_RESULT:
         return State(
@@ -309,6 +325,12 @@ def _scenario_state(scenario: str) -> State:
             _scenario_state(VALID_CONTROL_PLANE_REISSUE),
             scenario=scenario,
             reissue_delivery_authority_present=False,
+        )
+    if scenario == PM_PACKAGE_DISPOSITION_PARTIAL_COMMIT:
+        return replace(
+            _scenario_state(VALID_PM_PACKAGE_RESULT_ABSORPTION),
+            scenario=scenario,
+            commit_targets=("packet_ledger", "run_state", "status_summary"),
         )
     raise ValueError(f"unknown scenario: {scenario}")
 

@@ -70,7 +70,14 @@ def _finalize_repair_transaction_outcome(router: ModuleType, project_root: Path,
     if not outcome_kind:
         return None
     now = utc_now()
-    transaction['reviewer_recheck'] = {'outcome': outcome_kind, 'event': event, 'payload_envelope_public_view': router._control_payload_public_view(payload), 'recorded_at': now}
+    producer_role = ''
+    if isinstance(payload, dict):
+        producer_role = str(payload.get('from_role') or payload.get('reviewed_by_role') or payload.get('completed_by_role') or payload.get('decided_by_role') or '').strip()
+    if not producer_role:
+        producer_role = str((EXTERNAL_EVENTS.get(event) or {}).get('role') or '').strip()
+    repair_recheck = {'outcome': outcome_kind, 'event': event, 'producer_role': producer_role or 'event_producer', 'payload_envelope_public_view': router._control_payload_public_view(payload), 'recorded_at': now}
+    transaction['repair_recheck'] = repair_recheck
+    transaction['reviewer_recheck'] = repair_recheck
     if outcome_kind == 'success':
         transaction['status'] = 'complete'
         transaction['completed_at'] = now
@@ -95,7 +102,7 @@ def _finalize_repair_transaction_outcome(router: ModuleType, project_root: Path,
                 blocker_record['resolved_at'] = now
                 blocker_record['repair_transaction_id'] = transaction.get('transaction_id')
                 write_json(artifact_path, blocker_record)
-    followup = router._write_control_blocker(project_root, run_root, run_state, source='repair_transaction_recheck', error_message=f"repair transaction {transaction.get('transaction_id')} ended with reviewer {outcome_kind}; PM repair or routing decision is required before retrying dispatch.", event=event, payload=payload)
+    followup = router._write_control_blocker(project_root, run_root, run_state, source='repair_transaction_recheck', error_message=f"repair transaction {transaction.get('transaction_id')} ended with {repair_recheck['producer_role']} outcome {outcome_kind}; PM repair or routing decision is required before retrying dispatch.", event=event, payload=payload)
     transaction['followup_blocker_id'] = followup.get('blocker_id')
     transaction['followup_blocker_path'] = followup.get('blocker_artifact_path')
     write_json(tx_path, transaction)
