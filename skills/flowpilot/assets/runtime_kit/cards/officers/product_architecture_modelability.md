@@ -21,11 +21,27 @@ architecture. The old modelability name is only a compatibility label; this
 gate's real output is the product behavior model that PM must accept before
 reviewer challenge and route planning use it.
 
+Before modeling, read:
+
+- `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`;
+- `.flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json`;
+- `.flowpilot/runs/<run-id>/product_function_architecture.json`.
+
+Treat FlowGuard as the run foundation, not as an optional ordinary child skill.
+Your output is a product model family. Build separate child models when the PM
+plan names distinct behavior, UI/interaction, data/state, failure/recovery,
+capability, validation, or evidence risk families. If you merge or skip a
+family, record the PM plan row and the reason; if the plan is missing or too
+coarse to model honestly, block for PM repair instead of submitting a single
+over-collapsed model.
+
 Report:
 
 - modelable product states and transitions;
 - user actions, product states, failure/recovery paths, forbidden downgrades,
   and completion evidence that route nodes must cover;
+- `product_model_family_coverage`: every PM-planned product family, model file,
+  covered scenarios/invariants/hazards/contracts, and merge/skip disposition;
 - the smallest useful hierarchy of product behavior segments that PM can later
   map to route parents/modules/leaves without hiding multiple behaviors inside
   one worker leaf;

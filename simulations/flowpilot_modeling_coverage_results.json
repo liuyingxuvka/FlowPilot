@@ -1,0 +1,224 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=90",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "child_skill_before_product_model": {
+        "detected": true,
+        "expected_failure": "ordinary child skills were selected before PM accepted the product model family",
+        "failures": [
+          "ordinary child skills were selected before PM accepted the product model family",
+          "child-skill manifest mapped to a product model family before PM accepted it",
+          "route activated before accepted product and process model families"
+        ]
+      },
+      "final_ledger_unresolved_model_family": {
+        "detected": true,
+        "expected_failure": "terminal completion declared with unresolved model families",
+        "failures": [
+          "terminal completion declared with unresolved model families"
+        ]
+      },
+      "flowguard_optional_child_skill": {
+        "detected": true,
+        "expected_failure": "FlowGuard was treated as an optional ordinary child skill",
+        "failures": [
+          "FlowGuard was treated as an optional ordinary child skill"
+        ]
+      },
+      "manifest_only_model_coverage": {
+        "detected": true,
+        "expected_failure": "child-skill manifest was used as officer model-family coverage",
+        "failures": [
+          "PM accepted product model family before planned product families were covered",
+          "Product Officer report omitted a planned product model family",
+          "child-skill manifest was used as officer model-family coverage",
+          "Process Officer report omitted a planned process model family",
+          "PM accepted process model family before planned process families were covered"
+        ]
+      },
+      "missing_process_modeling_plan": {
+        "detected": true,
+        "expected_failure": "PM process modeling plan is missing before Process Officer modeling",
+        "failures": [
+          "PM process modeling plan is missing before Process Officer modeling",
+          "PM accepted process model family before planned process families were covered"
+        ]
+      },
+      "missing_product_modeling_plan": {
+        "detected": true,
+        "expected_failure": "PM product modeling plan is missing before Product Officer modeling",
+        "failures": [
+          "PM product modeling plan is missing before Product Officer modeling",
+          "Product Officer report referenced a missing product modeling plan",
+          "PM accepted product model family before planned product families were covered"
+        ]
+      },
+      "missing_startup_snapshot": {
+        "detected": true,
+        "expected_failure": "startup FlowGuard capability snapshot is missing",
+        "failures": [
+          "startup FlowGuard capability snapshot is missing"
+        ]
+      },
+      "pm_ignores_snapshot": {
+        "detected": true,
+        "expected_failure": "PM product modeling started without referencing the startup FlowGuard snapshot",
+        "failures": [
+          "PM product modeling started without referencing the startup FlowGuard snapshot",
+          "PM product modeling plan does not reference the startup FlowGuard snapshot"
+        ]
+      },
+      "process_plan_omits_product_or_manifest": {
+        "detected": true,
+        "expected_failure": "process modeling plan does not consume accepted product family and child-skill manifest",
+        "failures": [
+          "process modeling plan does not consume accepted product family and child-skill manifest"
+        ]
+      },
+      "process_report_missing_planned_family": {
+        "detected": true,
+        "expected_failure": "Process Officer report omitted a planned process model family",
+        "failures": [
+          "Process Officer report omitted a planned process model family",
+          "PM accepted process model family before planned process families were covered"
+        ]
+      },
+      "product_report_missing_planned_family": {
+        "detected": true,
+        "expected_failure": "Product Officer report omitted a planned product model family",
+        "failures": [
+          "PM accepted product model family before planned product families were covered",
+          "Product Officer report omitted a planned product model family"
+        ]
+      },
+      "product_single_model_overcollapse": {
+        "detected": true,
+        "expected_failure": "distinct product risk families were collapsed into one model without merge or skip reasons",
+        "failures": [
+          "distinct product risk families were collapsed into one model without merge or skip reasons"
+        ]
+      },
+      "route_activated_before_model_families": {
+        "detected": true,
+        "expected_failure": "route activated before accepted product and process model families",
+        "failures": [
+          "ordinary child skills were selected before PM accepted the product model family",
+          "child-skill manifest mapped to a product model family before PM accepted it",
+          "route activated before accepted product and process model families"
+        ]
+      },
+      "snapshot_not_router_generated": {
+        "detected": true,
+        "expected_failure": "startup FlowGuard capability snapshot was not generated by Router startup script",
+        "failures": [
+          "startup FlowGuard capability snapshot was not generated by Router startup script",
+          "startup FlowGuard capability snapshot does not record portable skill resolution"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "intended_plan": {
+    "failures": [],
+    "ok": true,
+    "scenario": "intended_model_coverage",
+    "state": {
+      "child_skill_manifest_maps_to_product_family": true,
+      "child_skill_manifest_used_as_model_family_coverage": false,
+      "completion_declared": true,
+      "final_ledger_has_unresolved_model_families": false,
+      "final_ledger_references_modeling_coverage": true,
+      "flowguard_treated_as_foundation": true,
+      "ordinary_child_skills_selected_after_product_acceptance": true,
+      "pm_references_snapshot_before_product_modeling": true,
+      "process_merge_or_skip_reasons_written": true,
+      "process_model_families_declared": true,
+      "process_model_family_pm_accepted": true,
+      "process_modeling_plan_written": true,
+      "process_officer_covers_planned_families": true,
+      "process_officer_report_references_plan": true,
+      "process_plan_references_child_manifest": true,
+      "process_plan_references_product_family": true,
+      "process_plan_references_snapshot": true,
+      "product_distinct_risk_families_present": true,
+      "product_merge_or_skip_reasons_written": true,
+      "product_model_families_declared": true,
+      "product_model_family_pm_accepted": true,
+      "product_modeling_plan_written": true,
+      "product_officer_covers_planned_families": true,
+      "product_officer_report_references_plan": true,
+      "product_plan_references_snapshot": true,
+      "route_activated": true,
+      "scenario": "intended_model_coverage",
+      "startup_snapshot_generated_by_router": true,
+      "startup_snapshot_has_portable_resolution": true,
+      "startup_snapshot_has_version_paths_hashes": true,
+      "startup_snapshot_written": true,
+      "status": "accepted",
+      "terminal_reason": "modeling_coverage_contract_ok"
+    }
+  },
+  "model_plan": {
+    "core_order": [
+      "startup FlowGuard capability snapshot",
+      "PM Product Modeling Plan",
+      "Product Officer product model family",
+      "PM accepts product model family",
+      "PM child-skill manifest",
+      "PM Process Modeling Plan",
+      "Process Officer process model family",
+      "PM accepts process model family",
+      "route execution",
+      "final route-wide modeling coverage ledger"
+    ],
+    "mid_run_flowguard_upgrade_policy": "not_tracked; startup snapshot is authoritative for the run",
+    "portable_resolution_required": true,
+    "process_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json",
+    "product_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
+    "schema_version": "flowpilot.modeling_coverage_plan.v1",
+    "startup_snapshot": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+    "startup_snapshot_owner": "router_startup_seed"
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "intended_model_coverage"
+    ],
+    "edge_count": 30,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "child_skill_before_product_model",
+      "final_ledger_unresolved_model_family",
+      "flowguard_optional_child_skill",
+      "manifest_only_model_coverage",
+      "missing_process_modeling_plan",
+      "missing_product_modeling_plan",
+      "missing_startup_snapshot",
+      "pm_ignores_snapshot",
+      "process_plan_omits_product_or_manifest",
+      "process_report_missing_planned_family",
+      "product_report_missing_planned_family",
+      "product_single_model_overcollapse",
+      "route_activated_before_model_families",
+      "snapshot_not_router_generated"
+    ],
+    "state_count": 31
+  }
+}

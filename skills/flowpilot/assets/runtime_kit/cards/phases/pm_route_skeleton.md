@@ -28,6 +28,15 @@ Before drafting, read the latest
 contains no completed or superseded nodes yet. Do not draft from chat history,
 old route files, or Controller summaries.
 
+Before asking Process FlowGuard Officer to model the route, write
+`.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`. The plan must
+reference the startup FlowGuard capability snapshot, the PM-accepted product
+model family, and the child-skill gate manifest. It must name each required
+process model family, including route hierarchy, serial execution order,
+leaf-readiness, repair/mutation return paths, child-skill conformance,
+validation/evidence freshness, terminal closure, and any PM-approved
+merge/skip reasons.
+
 Route requirements:
 
 - fresh current run only;
@@ -72,6 +81,10 @@ Route requirements:
   failure/recovery paths, forbidden downgrades, and completion evidence;
 - use only a PM-accepted product behavior model. If PM has not accepted the
   Product FlowGuard model, return to product-model decision before drafting;
+- use only a PM-authored Process Modeling Plan for Process FlowGuard. If the
+  plan is missing, does not reference the accepted product model family, or
+  treats the child-skill manifest as model coverage, block route activation and
+  return to PM process planning;
 - include a PM user-intent self-check: how the route preserves the user's real
   goal, final-user usefulness, and highest reasonable product standard without
   importing unnecessary nodes or validation surfaces;
@@ -158,15 +171,17 @@ Route requirements:
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;
 - Process FlowGuard must produce a serial route execution model that checks
-  product-behavior coverage, and PM must explicitly accept it before Reviewer
+  product-behavior coverage, child-skill conformance, and all PM-planned
+  process model families, and PM must explicitly accept it before Reviewer
   route challenge can proceed;
 - Product FlowGuard owns the upstream product behavior model; the default route
   draft path does not require a second Product FlowGuard route-product check;
 - Process Officer, PM model-decision, and Reviewer route checks are required
   before activation.
 
-Do not activate a route until Process Officer and Reviewer checks pass after
-the upstream Product Officer product behavior model is available.
+Do not activate a route until Product Officer model-family coverage is accepted,
+ordinary child-skill projection is recorded, Process Officer model-family
+coverage is accepted, and Reviewer checks pass.
 
 Return `prior_path_context_review` with the route-memory source paths and how
 prior completed, superseded, stale, blocked, or experimental work affects this

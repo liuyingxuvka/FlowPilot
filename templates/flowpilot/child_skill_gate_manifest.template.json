@@ -6,11 +6,19 @@
   "created_at": "<iso-8601-timestamp>",
   "updated_at": "<iso-8601-timestamp>",
   "source_paths": {
+    "flowguard_capability_snapshot": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+    "product_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
+    "product_model_family_report": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model_report.json",
+    "product_model_pm_decision": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json",
     "pm_child_skill_selection": ".flowpilot/runs/<run-id>/pm_child_skill_selection.json",
     "capabilities_manifest": ".flowpilot/runs/<run-id>/capabilities.json",
     "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json"
   },
   "raw_inventory_is_authority": false,
+  "flowguard_is_required_foundation": true,
+  "flowguard_is_ordinary_child_skill": false,
+  "product_model_family_pm_accepted_before_selection": false,
+  "manifest_can_close_model_family_coverage": false,
   "controller_self_approval_allowed": false,
   "selected_skills": [
     {
@@ -72,6 +80,17 @@
           "controller_can_approve": false
         }
       ]
+    }
+  ],
+  "model_family_projection": [
+    {
+      "projection_id": "<projection-id>",
+      "selected_skill_name": "<skill-name>",
+      "role_skill_use_binding_ids": [],
+      "accepted_product_model_family_ids": [],
+      "expected_process_model_family_ids": [],
+      "manifest_only_coverage_forbidden": true,
+      "evidence_required": []
     }
   ],
   "approval": {

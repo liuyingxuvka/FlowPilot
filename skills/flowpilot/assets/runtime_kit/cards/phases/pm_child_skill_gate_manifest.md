@@ -21,10 +21,15 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Extract the initial gate manifest for PM-selected child skills.
+Extract the initial gate manifest for PM-selected ordinary child skills only
+after PM has accepted the current product model family. FlowGuard itself is
+already the required run foundation from the startup capability snapshot and
+must not be reclassified here as an optional ordinary child skill.
 
 Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 
+- source paths for the startup FlowGuard capability snapshot, Product Modeling
+  Plan, Product FlowGuard model-family report, and PM product model decision;
 - selected skills and supported capabilities;
 - whether each selected skill supports the deliverable, the FlowPilot process,
   or both;
@@ -48,7 +53,13 @@ Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 - controller self-approval forbidden;
 - skipped child-skill steps with reason;
 - role-skill evidence obligations for PM, reviewer, officer, or worker uses.
+- `model_family_projection`: how each ordinary child skill standard maps to
+  accepted product model families and later process model families.
 
 Do not route from a child skill until the Reviewer check passes.
+Do not use this manifest as a substitute for Product Officer or Process
+Officer model-family coverage. A selected child skill can add standards,
+evidence, gates, and role bindings, but it cannot close a missing product or
+process FlowGuard model family.
 Do not let a role self-attest selected skill use as complete without the
 evidence named in the binding.

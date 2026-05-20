@@ -19,10 +19,12 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If accepting would hide a gap, choose an explicit repair path: route mutation, packet reissue, artifact quarantine, or stop for user input.
 
 Read the PM product-function architecture and the Product FlowGuard Officer's
-product behavior model report.
+product behavior model report. Also read the startup FlowGuard capability
+snapshot and `.flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json`.
 
-Decide whether the model is good enough to become the product basis for
-Reviewer challenge, root contract, and later route planning.
+Decide whether the model family is good enough to become the product basis for
+ordinary child-skill selection, Reviewer challenge, root contract, and later
+route planning.
 
 Accept only when the report gives PM a concrete product model:
 
@@ -42,6 +44,8 @@ Accept only when the report gives PM a concrete product model:
   log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
   update time, completion status, and valid proof reuse;
 - a PM-readable coverage map from the user's real goal to the model.
+- `product_model_family_coverage` that closes every PM-planned product family
+  or gives an explicit PM-owned merge/skip reason.
 
 If the model is acceptable, write
 `.flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json`
@@ -59,7 +63,10 @@ The decision body must include:
 - `decision: "accept_product_behavior_model"` or
   `decision: "request_product_behavior_model_rebuild"`;
 - `source_paths` naming the product architecture and Product FlowGuard model;
+- `flowguard_capability_snapshot_path`;
+- `product_modeling_plan_path`;
 - `pm_model_fit_review` explaining what PM accepted or rejected;
+- `product_model_family_coverage_review`;
 - `product_goal_coverage`;
 - `model_test_alignment_review`;
 - `conformance_boundary`;

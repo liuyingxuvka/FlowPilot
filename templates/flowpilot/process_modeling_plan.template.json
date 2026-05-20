@@ -1,0 +1,66 @@
+{
+  "schema_version": "flowpilot.process_modeling_plan.v1",
+  "plan_id": "<plan-id>",
+  "run_id": "<run-id>",
+  "written_at": "<iso-8601-timestamp>",
+  "written_by_role_key": "project_manager",
+  "source_paths": {
+    "flowguard_capability_snapshot": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+    "accepted_product_model_decision": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json",
+    "product_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
+    "child_skill_gate_manifest": ".flowpilot/runs/<run-id>/child_skill_gate_manifest.json",
+    "route_draft": ".flowpilot/runs/<run-id>/routes/<route-id>/flow.json"
+  },
+  "flowguard_foundation_confirmed": false,
+  "accepted_product_model_family_consumed": false,
+  "ordinary_child_skill_manifest_consumed": false,
+  "process_model_families": [
+    {
+      "family_id": "<process-family-id>",
+      "family_type": "<route_hierarchy|serial_execution|leaf_readiness|child_skill_conformance|validation_evidence|repair_mutation_return|terminal_closure|other>",
+      "reason": "<why this family needs its own process model or explicit disposition>",
+      "source_product_family_ids": [],
+      "source_child_skill_binding_ids": [],
+      "expected_officer_role_key": "process_flowguard_officer",
+      "expected_model_paths": [],
+      "required_obligation_types": [
+        "scenario",
+        "invariant",
+        "hazard",
+        "transition",
+        "contract"
+      ],
+      "acceptance_question": "<what PM must decide after this family is modeled>"
+    }
+  ],
+  "merged_families": [
+    {
+      "family_ids": [],
+      "merged_into_family_id": "<family-id>",
+      "reason": "<why one process model is sufficient without hiding distinct risks>",
+      "approved_by_role_key": "project_manager"
+    }
+  ],
+  "skipped_families": [
+    {
+      "family_id": "<family-id>",
+      "reason": "<why this possible family is out of scope or not relevant>",
+      "revisit_condition": "<condition-or-null>",
+      "approved_by_role_key": "project_manager"
+    }
+  ],
+  "process_officer_role_skill_bindings": [
+    {
+      "binding_id": "<binding-id>",
+      "flowguard_skill_name": "<flowguard-skill-name>",
+      "source_skill_path": "<path-to-SKILL.md>",
+      "family_ids": [],
+      "expected_output_or_gate": "process_model_family_report"
+    }
+  ],
+  "pm_decision": {
+    "status": "<draft|approved_for_process_officer|blocked|superseded>",
+    "reason": "<reason>",
+    "route_activation_blocked_until_process_family_acceptance": true
+  }
+}

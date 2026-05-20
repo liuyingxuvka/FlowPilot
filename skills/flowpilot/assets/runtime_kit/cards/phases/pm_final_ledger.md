@@ -46,6 +46,12 @@ Resolve:
   requirement ids, change status, owner nodes, covering ledger entries, direct
   evidence paths, standard scenarios, stale evidence refs, waiver authority,
   supersession, and unresolved reason;
+- FlowGuard modeling coverage closure: startup capability snapshot, Product
+  Modeling Plan, all accepted product model families, ordinary child-skill
+  model-family projection, Process Modeling Plan, all accepted process model
+  families, merge/skip reasons, and unresolved model-family count. Completion
+  is blocked if any planned product or process family is missing, unresolved,
+  stale, or closed only by child-skill manifest prose;
 - effective and superseded nodes;
 - every major node, parent/module, child subtree, promoted former leaf, repair
   node, and supplemental node in the current route. Before project completion,

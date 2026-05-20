@@ -1,0 +1,63 @@
+{
+  "schema_version": "flowpilot.flowguard_capability_snapshot.v1",
+  "snapshot_id": "<snapshot-id>",
+  "run_id": "<run-id>",
+  "generated_at": "<iso-8601-timestamp>",
+  "generated_by_role_key": "router",
+  "policy": {
+    "flowguard_is_required_foundation": true,
+    "ordinary_child_skill": false,
+    "pm_must_read_before_product_modeling": true,
+    "mid_run_upgrade_policy": "startup_snapshot_is_authoritative_for_this_run"
+  },
+  "portable_resolution": {
+    "hardcoded_user_path_required": false,
+    "generator": "flowpilot_router_startup_seed",
+    "skill_root_source": "<current-flowpilot-skill-root>",
+    "search_roots": [
+      "<installed-codex-skills-root-or-project-skills-root>"
+    ],
+    "resolution_rule": "scan installed Codex skills and project-local skills on the current host at startup"
+  },
+  "flowguard_import": {
+    "importable": false,
+    "schema_version": "<flowguard.SCHEMA_VERSION-or-null>",
+    "module_path": "<flowguard-module-path-or-null>",
+    "package_version": "<version-or-null>",
+    "python_executable": "<path-or-null>"
+  },
+  "capability_menu": [
+    {
+      "capability_id": "<capability-id>",
+      "name": "<capability-name>",
+      "role_fit": [
+        "<project_manager|product_flowguard_officer|process_flowguard_officer|human_like_reviewer|worker_a|worker_b>"
+      ],
+      "model_family_fit": [
+        "<product_behavior|ui_interaction|data_state|failure_recovery|route_process|validation_evidence|terminal_closure>"
+      ],
+      "default_when_relevant": true
+    }
+  ],
+  "skill_routes": [
+    {
+      "skill_name": "<flowguard-skill-name>",
+      "source_path": "<path-to-SKILL.md>",
+      "source_hash_sha256": "<sha256>",
+      "search_root": "<resolved-skill-search-root>",
+      "route_description": "<when PM should select this FlowGuard route>",
+      "role_fit": [
+        "<project_manager|product_flowguard_officer|process_flowguard_officer>"
+      ],
+      "model_family_fit": [
+        "<product_behavior|ui_interaction|data_state|failure_recovery|route_process|validation_evidence|terminal_closure>"
+      ]
+    }
+  ],
+  "pm_summary": {
+    "must_read_before_product_modeling": true,
+    "product_modeling_plan_required": true,
+    "process_modeling_plan_required": true,
+    "ordinary_child_skills_selected_after_product_model_family_acceptance": true
+  }
+}

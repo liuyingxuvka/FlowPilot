@@ -10,6 +10,8 @@
     "material_intake_packet_path": ".flowpilot/runs/<run-id>/material_intake_packet.json",
     "local_skill_inventory_path": ".flowpilot/runs/<run-id>/local_skill_inventory.json",
     "pm_material_understanding_path": ".flowpilot/runs/<run-id>/pm_material_understanding.json",
+    "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+    "product_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
     "draft_floor_source": "<chat|file|user-brief|other>",
     "known_product_context_paths": [],
     "external_spec_import_paths": [],
@@ -189,6 +191,16 @@
     "standard_scenario_pack_selected": false,
     "unresolved_residual_risks_allowed": false,
     "note": "The PM records only root-level hard requirements, high-risk requirements, and proof obligations here. Node-local details are created later in node_acceptance_plan files."
+  },
+  "flowguard_modeling_coverage": {
+    "startup_capability_snapshot_read": false,
+    "flowguard_is_required_foundation": true,
+    "flowguard_is_ordinary_child_skill": false,
+    "product_modeling_plan_written": false,
+    "product_model_families_expected": [
+      "<product_behavior|ui_interaction|data_state|failure_recovery|capability_fit|validation_evidence|other>"
+    ],
+    "single_product_model_requires_pm_reason": true
   },
   "approvals": {
     "project_manager_synthesis_path": "<path-or-null>",

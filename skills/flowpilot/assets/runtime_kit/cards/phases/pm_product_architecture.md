@@ -24,6 +24,20 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 Write `.flowpilot/runs/<run-id>/product_function_architecture.json` from
 reviewed material only.
 
+Before writing the product architecture, read the startup FlowGuard capability
+snapshot at `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`.
+FlowGuard is a required foundation for every FlowPilot run, not an ordinary
+optional child skill. If the snapshot is missing, stale for this run, or lacks
+the current FlowGuard skill routes and source paths, block and request snapshot
+generation instead of selecting ordinary child skills or drafting a route.
+
+Also write `.flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json`
+before asking Product FlowGuard Officer to model the product. The plan is
+PM-owned and must say which product model families are required, merged, or
+skipped with reasons. Do not assume one product model is enough when the
+product has distinct behavior, UI/interaction, data/state,
+failure/recovery, capability, validation, or evidence risks.
+
 Also write or update a `flowpilot.self_interrogation_record.v1` with scope
 `product_architecture`, then register it in
 `.flowpilot/runs/<run-id>/self_interrogation_index.json`. Any hard or
@@ -81,7 +95,9 @@ reason. Hard low-quality risks must later be owned by existing route nodes when
 possible; do not create new route nodes merely because a concern was named.
 
 Do not draft or activate a route from this card. Product FlowGuard Officer must
-turn this architecture into a concrete product behavior model, then PM must
-explicitly accept that model before Reviewer challenge can run. If PM finds
-that the model does not represent the intended product, rewrite the product
-architecture or ask Product FlowGuard to rebuild the model before continuing.
+turn this architecture and the PM Product Modeling Plan into a concrete
+product model family, then PM must explicitly accept that model family before
+ordinary child-skill selection, Reviewer challenge, or route planning can run.
+If PM finds that the model family does not represent the intended product,
+rewrite the product architecture or Product Modeling Plan, or ask Product
+FlowGuard to rebuild the missing family before continuing.

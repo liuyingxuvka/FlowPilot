@@ -7,6 +7,8 @@
   "created_by_role_key": "project_manager",
   "dispatch_mode": "officer_owned_async",
   "officer_output_root": ".flowpilot/runs/<run-id>/officer_runs/<request-id>/",
+  "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+  "pm_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/<product-or-process>_modeling_plan.json",
   "assigned_officer_role_keys": [
     "<process_flowguard_officer|product_flowguard_officer>"
   ],
@@ -28,6 +30,14 @@
   "decision_to_make": "<what PM must decide after the report>",
   "uncertainty": "<what is not known yet>",
   "modeling_scope": "<process|product|object|reference_system|migration_equivalence|experiment_derived_behavior|combined>",
+  "model_family_scope": {
+    "family_ids": [],
+    "family_types": [
+      "<product_behavior|ui_interaction|data_state|failure_recovery|route_hierarchy|serial_execution|child_skill_conformance|validation_evidence|terminal_closure>"
+    ],
+    "single_model_allowed_only_with_pm_merge_reason": true,
+    "manifest_only_model_family_coverage_forbidden": true
+  },
   "reference_system_or_object": {
     "present": false,
     "name": "<source-system-object-or-reference-behavior>",

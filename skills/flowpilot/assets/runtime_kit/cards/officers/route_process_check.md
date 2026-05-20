@@ -22,6 +22,23 @@ Officer. The old route process check name is only a compatibility label; this
 gate's real output is the serial process route model that PM must accept before
 Reviewer route challenge uses it.
 
+Before modeling, read:
+
+- `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`;
+- `.flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json`;
+- `.flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json`;
+- `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json`;
+- `.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`;
+- the PM route draft.
+
+Treat the Process Modeling Plan as the PM-owned scope contract for your model
+family. Build separate child models when the plan names distinct route
+hierarchy, serial execution, child-skill conformance, validation/evidence,
+repair/mutation, or terminal closure risk families. If you merge or skip a
+family, record the PM plan row and reason; if the plan is missing or does not
+consume the accepted product model family and child-skill manifest, block for
+PM repair.
+
 Model only the process shape and route viability against the product behavior
 model:
 
@@ -34,6 +51,9 @@ model:
 - no product-model state, failure/recovery path, or completion evidence is left
   only partially covered by the route;
 - route nodes preserve the frozen root contract and child-skill gate manifest;
+- every ordinary child-skill standard that affects route design, worker
+  execution, officer modeling, review, or validation is represented in the
+  process model family or explicitly deferred/waived by PM;
 - the full route tree may have arbitrary depth when needed, and the visible
   user route projection is explicitly shallow instead of being the execution
   source of truth;
@@ -66,6 +86,10 @@ model:
   product coverage, evidence strength, role authority, or failure isolation;
 - route mutation, stale evidence, frontier rewrite, parent replay, and terminal closure paths remain represented;
 - Controller remains relay-only and never becomes a route decision maker.
+
+Return `process_model_family_coverage`: every PM-planned process family, model
+file, covered scenarios/invariants/hazards/contracts, child-skill conformance
+mapping, and merge/skip disposition. Manifest-only coverage is not enough.
 
 Return pass or block in the private report body. If blocking, name the process
 failure and the route artifact path, but keep the body out of Controller chat.

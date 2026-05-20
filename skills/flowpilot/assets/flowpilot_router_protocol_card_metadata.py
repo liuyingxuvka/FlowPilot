@@ -36,9 +36,12 @@ CARD_REQUIRED_SOURCE_PATHS = {
     "pm.product_architecture": {
         "pm_material_understanding": "pm_material_understanding.json",
         "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
     },
     "product_officer.product_architecture_modelability": {
         "product_function_architecture": "product_function_architecture.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
     },
     "reviewer.product_architecture_challenge": {
         "product_function_architecture": "product_function_architecture.json",
@@ -48,6 +51,8 @@ CARD_REQUIRED_SOURCE_PATHS = {
     },
     "pm.product_behavior_model_decision": {
         "product_function_architecture": "product_function_architecture.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
         "product_behavior_model": "flowguard/product_behavior_model.json",
         "product_architecture_modelability": "flowguard/product_architecture_modelability.json",
     },
@@ -77,6 +82,9 @@ CARD_REQUIRED_SOURCE_PATHS = {
     "pm.child_skill_gate_manifest": {
         "capabilities": "capabilities.json",
         "pm_child_skill_selection": "pm_child_skill_selection.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
         "root_acceptance_contract": "root_acceptance_contract.json",
     },
     "reviewer.child_skill_gate_manifest_review": {
@@ -108,16 +116,35 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "child_skill_manifest_pm_approval": "child_skill_manifest_pm_approval.json",
         "capability_sync": "capabilities/capability_sync.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
         "pm_prior_path_context": "route_memory/pm_prior_path_context.json",
     },
     "process_officer.route_process_check": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "capability_sync": "capabilities/capability_sync.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
+        "process_modeling_plan": "flowguard/process_modeling_plan.json",
+    },
+    "pm.process_route_model_decision": {
+        "root_acceptance_contract": "root_acceptance_contract.json",
+        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "process_modeling_plan": "flowguard/process_modeling_plan.json",
+        "process_route_model": "flowguard/process_route_model.json",
+        "route_process_check": "flowguard/route_process_check.json",
     },
     "product_officer.route_product_check": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "process_modeling_plan": "flowguard/process_modeling_plan.json",
         "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",
@@ -125,6 +152,9 @@ CARD_REQUIRED_SOURCE_PATHS = {
     "reviewer.route_challenge": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
+        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
+        "product_modeling_plan": "flowguard/product_modeling_plan.json",
+        "process_modeling_plan": "flowguard/process_modeling_plan.json",
         "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",

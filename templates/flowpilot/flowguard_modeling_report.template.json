@@ -6,6 +6,8 @@
   "node_id": "<node-id-or-null>",
   "written_at": "<iso-8601-timestamp>",
   "officer_role_key": "<process_flowguard_officer|product_flowguard_officer>",
+  "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+  "pm_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/<product-or-process>_modeling_plan.json",
   "execution_ownership": {
     "model_author_role": "<process_flowguard_officer|product_flowguard_officer>",
     "model_runner_role": "<process_flowguard_officer|product_flowguard_officer>",
@@ -61,6 +63,17 @@
       "<path that can fail or stall>"
     ]
   },
+  "model_family_coverage": [
+    {
+      "family_id": "<pm-planned-family-id>",
+      "family_type": "<product_behavior|ui_interaction|data_state|failure_recovery|route_hierarchy|serial_execution|child_skill_conformance|validation_evidence|terminal_closure|other>",
+      "model_paths": [],
+      "covered_obligation_ids": [],
+      "merge_or_skip_disposition": "<modeled|merged_with_reason|skipped_with_pm_reason|blocked>",
+      "pm_plan_row_ref": "<plan-row-id>",
+      "unresolved_reason": "<reason-or-null>"
+    }
+  ],
   "model_obligations": [
     {
       "id": "<model obligation id>",

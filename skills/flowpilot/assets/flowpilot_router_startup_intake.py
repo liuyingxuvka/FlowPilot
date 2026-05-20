@@ -65,10 +65,16 @@ from flowpilot_router_startup_intake_materialization import (
     _user_request_ref_from_startup_intake,
     _build_user_intake_body_from_ref,
     _deterministic_bootstrap_seed_evidence_path,
+    _flowguard_capability_snapshot_path,
+    _portable_skill_search_roots,
+    _flowguard_route_classification,
+    _discover_flowguard_skill_routes,
+    _flowguard_import_snapshot,
     _write_startup_answers_record,
     _initialize_mailbox_foundation,
     _record_startup_user_request_ref,
     _write_startup_user_intake_scaffold,
+    _write_flowguard_capability_snapshot,
     _run_deterministic_startup_bootstrap_seed,
 )
 

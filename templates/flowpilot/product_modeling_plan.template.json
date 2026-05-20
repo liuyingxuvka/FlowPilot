@@ -1,0 +1,61 @@
+{
+  "schema_version": "flowpilot.product_modeling_plan.v1",
+  "plan_id": "<plan-id>",
+  "run_id": "<run-id>",
+  "written_at": "<iso-8601-timestamp>",
+  "written_by_role_key": "project_manager",
+  "source_paths": {
+    "flowguard_capability_snapshot": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
+    "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json"
+  },
+  "flowguard_foundation_confirmed": false,
+  "product_model_families": [
+    {
+      "family_id": "<product-family-id>",
+      "family_type": "<product_behavior|ui_interaction|data_state|failure_recovery|capability_fit|validation_evidence|other>",
+      "reason": "<why this family needs its own model or explicit disposition>",
+      "source_requirement_ids": [],
+      "expected_officer_role_key": "product_flowguard_officer",
+      "expected_model_paths": [],
+      "required_obligation_types": [
+        "scenario",
+        "invariant",
+        "hazard",
+        "transition",
+        "contract"
+      ],
+      "acceptance_question": "<what PM must decide after this family is modeled>"
+    }
+  ],
+  "merged_families": [
+    {
+      "family_ids": [],
+      "merged_into_family_id": "<family-id>",
+      "reason": "<why one model is sufficient without hiding distinct risks>",
+      "approved_by_role_key": "project_manager"
+    }
+  ],
+  "skipped_families": [
+    {
+      "family_id": "<family-id>",
+      "reason": "<why this possible family is out of scope or not relevant>",
+      "revisit_condition": "<condition-or-null>",
+      "approved_by_role_key": "project_manager"
+    }
+  ],
+  "product_officer_role_skill_bindings": [
+    {
+      "binding_id": "<binding-id>",
+      "flowguard_skill_name": "<flowguard-skill-name>",
+      "source_skill_path": "<path-to-SKILL.md>",
+      "family_ids": [],
+      "expected_output_or_gate": "product_model_family_report"
+    }
+  ],
+  "pm_decision": {
+    "status": "<draft|approved_for_product_officer|blocked|superseded>",
+    "reason": "<reason>",
+    "single_model_is_sufficient": false,
+    "single_model_reason": "<reason-or-null>"
+  }
+}

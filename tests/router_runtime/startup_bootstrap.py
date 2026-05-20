@@ -195,6 +195,55 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             [item["return_id"] for item in refreshed_return_ledger["pending_returns"]],
             ["existing-return"],
         )
+    def test_startup_seed_writes_portable_flowguard_capability_snapshot(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        snapshot_path = run_root / "flowguard" / "capability_snapshot.json"
+        self.assertTrue(snapshot_path.exists())
+        snapshot = read_json(snapshot_path)
+        self.assertEqual(snapshot["generated_by_role_key"], "router")
+        self.assertTrue(snapshot["policy"]["flowguard_is_required_foundation"])
+        self.assertFalse(snapshot["policy"]["ordinary_child_skill"])
+        self.assertFalse(snapshot["portable_resolution"]["hardcoded_user_path_required"])
+        self.assertEqual(snapshot["portable_resolution"]["generator"], "flowpilot_router_startup_seed")
+        self.assertIn("python_executable", snapshot["flowguard_import"])
+        self.assertTrue(snapshot["pm_summary"]["must_read_before_product_modeling"])
+        self.assertTrue(snapshot["pm_summary"]["final_ledger_must_close_all_model_families"])
+
+        proof = read_json(run_root / "bootstrap" / "deterministic_bootstrap_seed_evidence.json")
+        self.assertTrue(proof["required_flags"]["flowguard_capability_snapshot_written"])
+        self.assertIn("flowguard_capability_snapshot", proof["artifacts"])
+        bootstrap = self.bootstrap_state(root)
+        self.assertTrue(bootstrap["flags"]["flowguard_capability_snapshot_written"])
+        self.assertEqual(
+            bootstrap["flowguard_capability_snapshot_path"],
+            self.rel(root, snapshot_path),
+        )
+    def test_flowguard_snapshot_discovers_codex_home_flowguard_skills(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-test")
+        fake_codex = Path(tempfile.mkdtemp(prefix="flowpilot-codex-home-"))
+        fake_skill = fake_codex / "skills" / "flowguard-ui-flow-structure"
+        fake_skill.mkdir(parents=True, exist_ok=True)
+        (fake_skill / "SKILL.md").write_text(
+            "---\nname: flowguard-ui-flow-structure\n---\n\n# FlowGuard UI\n",
+            encoding="utf-8",
+        )
+
+        state = {"run_id": "run-test", "flags": {}}
+        with mock.patch.dict(os.environ, {"CODEX_HOME": str(fake_codex)}):
+            summary = router._write_flowguard_capability_snapshot(root, run_root, state)  # type: ignore[attr-defined]
+
+        snapshot = read_json(root / summary["path"])
+        routes = {item["skill_name"]: item for item in snapshot["skill_routes"]}
+        self.assertIn("flowguard-ui-flow-structure", routes)
+        self.assertIn("ui_interaction", routes["flowguard-ui-flow-structure"]["model_family_fit"])
+        self.assertFalse(snapshot["portable_resolution"]["hardcoded_user_path_required"])
+        self.assertIn(str((fake_codex / "skills").resolve()), snapshot["portable_resolution"]["search_roots"])
+        self.assertEqual(state["flowguard_capability_snapshot_path"], self.rel(root, run_root / "flowguard" / "capability_snapshot.json"))
     def test_startup_daemon_bootloader_completion_uses_receipt_owner(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root)

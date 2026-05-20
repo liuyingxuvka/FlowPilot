@@ -141,6 +141,9 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         if interpretation:
             write_json(interpretation_path, interpretation)
         write_json(run_root / 'startup_answers.json', {'schema_version': 'flowpilot.startup_answers.v1', 'run_id': state['run_id'], 'answers': state.get('startup_answers') or {}, 'startup_answer_interpretation_path': project_relative(project_root, interpretation_path) if interpretation else None, 'recorded_at': utc_now()})
+        snapshot = router._write_flowguard_capability_snapshot(project_root, run_root, state)
+        result_extra['flowguard_capability_snapshot_path'] = snapshot['path']
+        result_extra['flowguard_capability_snapshot_skill_route_count'] = snapshot['skill_route_count']
     elif action_type == 'initialize_mailbox':
         run_root = project_root / str(state['run_root'])
         for rel in ('mailbox/system_cards', 'mailbox/inbox', 'mailbox/outbox', 'mailbox/outbox/card_acks', 'runtime_receipts/card_reads', 'runtime_receipts/role_io_protocol', 'packets'):
