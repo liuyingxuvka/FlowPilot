@@ -15955,6 +15955,51 @@ Skipped steps:
 ### Skipped
 
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-21 - Router Lifecycle Request Boundary Split
+
+### Evidence Summary
+
+- Added OpenSpec change `split-router-lifecycle-request-boundaries` for the narrow architecture reduction: keep the old lifecycle request import path while splitting terminal fencing, terminal authority reconciliation, lifecycle request records, and exception blocker fallback into child owners.
+- Replaced `flowpilot_router_lifecycle_requests.py` with a thin compatibility facade that binds and re-exports child-owned functions.
+- Added child modules `flowpilot_router_lifecycle_requests_fence.py`, `flowpilot_router_lifecycle_requests_reconciliation.py`, `flowpilot_router_lifecycle_requests_records.py`, and `flowpilot_router_lifecycle_requests_blockers.py`.
+- Updated install checks, router facade split evidence, StructureMesh catalogs, model-test alignment contracts, full-diagnostic contract tests, and the maintenance map.
+- Synced the repo-owned FlowPilot skill into the local installed skill location and verified local install freshness.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate split-router-lifecycle-request-boundaries --strict --json`.
+- OK: `python -m py_compile` for touched runtime, model, install, and test files.
+- OK: lifecycle facade import smoke confirmed parent compatibility exports are identical to child-owned functions.
+- OK: `python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_lifecycle_startup_system_card_external_contracts`.
+- OK: focused terminal lifecycle tests, 4 passed.
+- OK: focused closure lifecycle tests, 3 passed.
+- OK: `python -m unittest tests.router_runtime.control_blockers`, 18 passed.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: background router tier with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`, completed `64`; stdout `tmp\flowguard_background\router_background_supervisor.out.txt`, stderr `tmp\flowguard_background\router_background_supervisor.err.txt`, combined `tmp\flowguard_background\router_background_supervisor.combined.txt`, exit `tmp\flowguard_background\router_background_supervisor.exit.txt`, latest update `2026-05-21 14:39:52 +0200`.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-21 13:51:27 +0200`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-21 13:51:27 +0200`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK: predictive KB postflight observation `7747547b-397a-4fbd-98b7-0b6df68657e1`.
+
+### Findings
+
+- The safe reduction was to keep the old facade and move behavior into child owners by side-effect boundary, not to change public imports or terminal lifecycle behavior.
+- FlowGuard caught an initial modeling mistake: terminal reconciliation can clear `active_control_blocker`, but it does not own that state. The ownership map now keeps cleanup authority separate from state ownership.
+- Model-test alignment required direct source-visible calls into the new child contracts; alias-only facade evidence was not enough to prove the split.
+- The maintenance map no longer reports `flowpilot_router_lifecycle_requests.py` as an over-threshold runtime owner; remaining over-threshold findings are unrelated to this lifecycle request split.
+
+### Skipped Or Limited
+
+- A foreground `scripts\smoke_autopilot.py` run exceeded the 244-second foreground timeout and is not counted as pass evidence; focused install checks and the background router/Meta/Capability regressions are the counted evidence.
+- Broader existing maintenance-map findings in unrelated runtime modules remain out of scope for this lifecycle request split.
+- No GitHub push, tag, remote release, or public publication was performed.
 - Unrelated peer edits in `README.md` and `assets/readme-hero/hero_design_note.md` were preserved and intentionally left outside this scoped commit.
 
 ## 2026-05-19 - harden-router-reconciliation-gate

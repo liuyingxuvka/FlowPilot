@@ -106,6 +106,10 @@ import flowpilot_router_facade_export_manifest_terminal_work as manifest_termina
 import flowpilot_router_facade_exports as facade_exports  # noqa: E402
 import flowpilot_router_internal_actions as internal_actions  # noqa: E402
 import flowpilot_router_lifecycle_requests as lifecycle_requests  # noqa: E402
+import flowpilot_router_lifecycle_requests_blockers as lifecycle_request_blockers  # noqa: E402
+import flowpilot_router_lifecycle_requests_fence as lifecycle_request_fence  # noqa: E402
+import flowpilot_router_lifecycle_requests_reconciliation as lifecycle_request_reconciliation  # noqa: E402
+import flowpilot_router_lifecycle_requests_records as lifecycle_request_records  # noqa: E402
 import flowpilot_router_lifecycle_support as lifecycle_support  # noqa: E402
 import flowpilot_router_model_gate_state as model_gate_state  # noqa: E402
 import flowpilot_router_payload_contracts as payload_contracts  # noqa: E402
@@ -272,6 +276,10 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             expected_waits,
             internal_actions,
             lifecycle_requests,
+            lifecycle_request_blockers,
+            lifecycle_request_fence,
+            lifecycle_request_reconciliation,
+            lifecycle_request_records,
             lifecycle_support,
             model_gate_state,
             payload_contracts,
@@ -804,12 +812,78 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(proxy.__module__, router.__name__)
 
     def test_lifecycle_startup_system_card_external_contracts(self) -> None:
+        self.assertEqual(
+            lifecycle_requests.owner_child_module_names(),
+            (
+                "flowpilot_router_lifecycle_requests_fence",
+                "flowpilot_router_lifecycle_requests_reconciliation",
+                "flowpilot_router_lifecycle_requests_records",
+                "flowpilot_router_lifecycle_requests_blockers",
+            ),
+        )
+        self.assertIs(
+            lifecycle_requests._write_terminal_lifecycle_fence,
+            lifecycle_request_fence._write_terminal_lifecycle_fence,
+        )
+        self.assertIs(
+            lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle,
+            lifecycle_request_reconciliation._clear_active_control_blocker_for_terminal_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_requests._write_run_lifecycle_request,
+            lifecycle_request_records._write_run_lifecycle_request,
+        )
+        self.assertIs(
+            lifecycle_requests._try_write_control_blocker_for_exception,
+            lifecycle_request_blockers._try_write_control_blocker_for_exception,
+        )
         with tempfile.TemporaryDirectory(prefix="flowpilot-startup-contracts-") as tmp:
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
             run_root.mkdir(parents=True)
             run_state = {"run_id": "run-test", "flags": {}}
             lifecycle_path = lifecycle_support._lifecycle_record_path(run_root)
+            fence_root = project_root / ".flowpilot" / "runs" / "run-fence"
+            fence_root.mkdir(parents=True)
+            terminal_fence = lifecycle_requests._write_terminal_lifecycle_fence(
+                project_root,
+                fence_root,
+                {"run_id": "run-fence", "flags": {}},
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+            )
+            self.assertEqual(terminal_fence["status"], "stopped_by_user")
+            self.assertTrue((fence_root / "lifecycle" / "terminal_fence.json").exists())
+            record_root = project_root / ".flowpilot" / "runs" / "run-record"
+            record_root.mkdir(parents=True)
+            record_state = {"run_id": "run-record", "flags": {}}
+            lifecycle_requests._write_run_lifecycle_request(
+                project_root,
+                record_root,
+                record_state,
+                event="user_requests_run_stop",
+                payload={"reason": "contract test"},
+            )
+            self.assertEqual(record_state["status"], "stopped_by_user")
+            dead_end_root = project_root / ".flowpilot" / "runs" / "run-dead-end"
+            dead_end_root.mkdir(parents=True)
+            dead_end_state = {"run_id": "run-dead-end", "flags": {}}
+            dead_end_path = dead_end_root / "lifecycle" / "startup_protocol_dead_end.json"
+            lifecycle_requests._write_protocol_dead_end_lifecycle(
+                project_root,
+                dead_end_root,
+                dead_end_state,
+                dead_end_path=dead_end_path,
+                reason="contract test",
+            )
+            self.assertEqual(dead_end_state["status"], "protocol_dead_end")
+            self.assertIsNone(
+                lifecycle_requests._try_write_control_blocker_for_exception(
+                    project_root,
+                    source="contract_test",
+                    error_message="ordinary nonblocking message",
+                )
+            )
             terminal_clearance = lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle(
                 project_root,
                 run_root,

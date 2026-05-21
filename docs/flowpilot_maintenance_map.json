@@ -1,12 +1,8 @@
 {
   "categories": {
     "runtime_assets": {
-      "file_count": 336,
+      "file_count": 340,
       "largest": [
-        {
-          "lines": 653,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py"
-        },
         {
           "lines": 587,
           "path": "skills/flowpilot/assets/flowpilot_router_io.py"
@@ -82,17 +78,21 @@
         {
           "lines": 400,
           "path": "skills/flowpilot/assets/flowpilot_user_flow_mermaid.py"
+        },
+        {
+          "lines": 398,
+          "path": "skills/flowpilot/assets/packet_runtime_contracts.py"
         }
       ],
       "over_threshold": [],
       "over_threshold_count": 0,
-      "total_lines": 59522
+      "total_lines": 59709
     },
     "scripts": {
       "file_count": 36,
       "largest": [
         {
-          "lines": 743,
+          "lines": 747,
           "over_threshold": true,
           "path": "scripts/install_checks/common.py",
           "threshold": 450
@@ -214,7 +214,7 @@
       ],
       "over_threshold": [
         {
-          "lines": 743,
+          "lines": 747,
           "over_threshold": true,
           "path": "scripts/install_checks/common.py",
           "threshold": 450
@@ -245,7 +245,7 @@
         }
       ],
       "over_threshold_count": 5,
-      "total_lines": 7518
+      "total_lines": 7522
     },
     "simulations": {
       "file_count": 259,
@@ -335,9 +335,15 @@
           "threshold": 1600
         },
         {
-          "lines": 1144,
+          "lines": 1178,
           "over_threshold": false,
           "path": "simulations/flowpilot_model_test_alignment_source_code_contracts.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1178,
+          "over_threshold": false,
+          "path": "simulations/flowpilot_router_facade_split_catalog.py",
           "threshold": 1600
         },
         {
@@ -350,12 +356,6 @@
           "lines": 1086,
           "over_threshold": false,
           "path": "simulations/flowpilot_model_mesh_model.py",
-          "threshold": 1600
-        },
-        {
-          "lines": 1082,
-          "over_threshold": false,
-          "path": "simulations/flowpilot_router_facade_split_catalog.py",
           "threshold": 1600
         },
         {
@@ -398,7 +398,7 @@
         }
       ],
       "over_threshold_count": 4,
-      "total_lines": 124018
+      "total_lines": 124275
     },
     "tests": {
       "file_count": 82,
@@ -422,7 +422,7 @@
           "threshold": 900
         },
         {
-          "lines": 1489,
+          "lines": 1563,
           "over_threshold": true,
           "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
           "threshold": 900
@@ -544,7 +544,7 @@
           "threshold": 900
         },
         {
-          "lines": 1489,
+          "lines": 1563,
           "over_threshold": true,
           "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
           "threshold": 900
@@ -575,11 +575,11 @@
         }
       ],
       "over_threshold_count": 8,
-      "total_lines": 29766
+      "total_lines": 29840
     }
   },
   "current_maintenance_decisions": [
-    "Runtime owner modules currently have 8 files over the StructureMesh line threshold; defer further runtime splitting unless a matching model block and external contract test justify it.",
+    "Runtime owner modules currently have 7 files over the StructureMesh line threshold; defer further runtime splitting unless a matching model block and external contract test justify it.",
     "Test-tier command definitions are split into stable command-group modules while scripts/test_tier/definitions.py remains the compatibility facade.",
     "Router facade split, structure-maintenance, and source-contract alignment models keep their old import paths while large catalogs move into helper modules.",
     "Large router-runtime tests stay as watchlist items in this pass; split them only by externally visible contract family and after fixture ownership is clear.",
@@ -587,12 +587,12 @@
   ],
   "diagnostic": {
     "alignment_ok": true,
-    "covered_surface_count": 707,
-    "deferred_structure_split_count": 14,
+    "covered_surface_count": 712,
+    "deferred_structure_split_count": 13,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "full_coverage_ok": false,
     "full_diagnostic_ok": true,
-    "gap_surface_count": 15,
+    "gap_surface_count": 14,
     "known_bad_ok": true,
     "path": "simulations/flowpilot_model_test_alignment_results.json",
     "present": true
@@ -660,14 +660,8 @@
   ],
   "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430",
   "runtime_owner_modules": {
-    "file_count": 259,
+    "file_count": 263,
     "largest": [
-      {
-        "lines": 653,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-        "threshold": 450
-      },
       {
         "lines": 587,
         "over_threshold": true,
@@ -781,15 +775,15 @@
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py",
         "threshold": 450
+      },
+      {
+        "lines": 327,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_terminal_ledger_traceability.py",
+        "threshold": 450
       }
     ],
     "over_threshold": [
-      {
-        "lines": 653,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-        "threshold": 450
-      },
       {
         "lines": 587,
         "over_threshold": true,
@@ -833,8 +827,8 @@
         "threshold": 450
       }
     ],
-    "over_threshold_count": 8,
-    "total_lines": 43971
+    "over_threshold_count": 7,
+    "total_lines": 44158
   },
   "script_entrypoints": [
     {

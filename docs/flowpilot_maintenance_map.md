@@ -4,17 +4,16 @@ This generated map records the current model-code-test maintenance surface for F
 
 ## Summary
 
-- Runtime asset files: 336
-- Runtime owner modules: 259
+- Runtime asset files: 340
+- Runtime owner modules: 263
 - Script files: 36
 - Model files: 259
 - Test files: 82
-- Model-test-code diagnostic: full coverage=False, gaps=15, covered=707
+- Model-test-code diagnostic: full coverage=False, gaps=14, covered=712
 
 ## Runtime Owner Modules
 
 Threshold: 450 lines.
-- `skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py`: 653 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_io.py`: 587 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py`: 582 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_role_output_bridge.py`: 574 lines over-threshold
@@ -25,7 +24,6 @@ Threshold: 450 lines.
 
 Largest runtime owner modules:
 
-- `skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py`: 653 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_io.py`: 587 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py`: 582 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_role_output_bridge.py`: 574 lines over-threshold
@@ -35,6 +33,7 @@ Largest runtime owner modules:
 - `skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py`: 453 lines over-threshold
 - `skills/flowpilot/assets/flowpilot_router_daemon_runtime.py`: 431 lines
 - `skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py`: 428 lines
+- `skills/flowpilot/assets/flowpilot_router_action_handlers_basic.py`: 427 lines
 
 ## Facades
 
@@ -69,7 +68,7 @@ Model facades and parent models:
 - `simulations/flowpilot_resume_model.py`: 1683 lines over-threshold
 
 ### scripts
-- `scripts/install_checks/common.py`: 743 lines over-threshold
+- `scripts/install_checks/common.py`: 747 lines over-threshold
 - `scripts/install_flowpilot.py`: 623 lines over-threshold
 - `scripts/flowpilot_defects.py`: 590 lines over-threshold
 - `scripts/install_checks/runtime.py`: 550 lines over-threshold
@@ -79,7 +78,7 @@ Model facades and parent models:
 - `tests/router_runtime/common.py`: 2442 lines over-threshold
 - `tests/router_runtime/startup_bootstrap.py`: 2274 lines over-threshold
 - `tests/router_runtime/foreground_controller.py`: 1894 lines over-threshold
-- `tests/test_flowpilot_full_diagnostic_contracts.py`: 1489 lines over-threshold
+- `tests/test_flowpilot_full_diagnostic_contracts.py`: 1563 lines over-threshold
 - `tests/test_flowpilot_packet_runtime.py`: 1092 lines over-threshold
 - `tests/router_runtime/quality_gates.py`: 1007 lines over-threshold
 - `tests/router_runtime/packets.py`: 987 lines over-threshold
@@ -106,7 +105,7 @@ Model facades and parent models:
 ## Split Rules
 
 Current decisions:
-- Runtime owner modules currently have 8 files over the StructureMesh line threshold; defer further runtime splitting unless a matching model block and external contract test justify it.
+- Runtime owner modules currently have 7 files over the StructureMesh line threshold; defer further runtime splitting unless a matching model block and external contract test justify it.
 - Test-tier command definitions are split into stable command-group modules while scripts/test_tier/definitions.py remains the compatibility facade.
 - Router facade split, structure-maintenance, and source-contract alignment models keep their old import paths while large catalogs move into helper modules.
 - Large router-runtime tests stay as watchlist items in this pass; split them only by externally visible contract family and after fixture ownership is clear.

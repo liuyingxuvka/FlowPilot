@@ -425,7 +425,11 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=NEGATIVE,
             covers=("runtime_owner.router_owner_external_contracts",),
             code_contracts=(
+                "lifecycle_requests.write_terminal_fence",
                 "lifecycle_requests.clear_terminal_blocker",
+                "lifecycle_requests.write_run_lifecycle",
+                "lifecycle_requests.write_protocol_dead_end",
+                "lifecycle_requests.exception_blocker_fallback",
                 "lifecycle_support.lifecycle_record_path",
                 "startup_bootloader.depends_on_role_slots",
                 "startup_closure.host_heartbeat_binding_ready",

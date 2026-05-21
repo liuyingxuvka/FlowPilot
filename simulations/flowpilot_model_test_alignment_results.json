@@ -145,20 +145,6 @@
       },
       {
         "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_lifecycle_requests",
-        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_lifecycle_requests",
-        "surface_owner": "flowpilot_router_lifecycle_requests"
-      },
-      {
-        "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
         "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
@@ -424,26 +410,6 @@
         "surface_owner": "flowpilot_router_io"
       },
       {
-        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_lifecycle_requests"
-        ],
-        "surface_owner": "flowpilot_router_lifecycle_requests"
-      },
-      {
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "finding_count": 1,
         "gap_codes": [
@@ -564,8 +530,8 @@
         "surface_owner": "role_output_runtime_envelopes"
       }
     ],
-    "covered_surface_count": 707,
-    "deferred_structure_split_count": 14,
+    "covered_surface_count": 712,
+    "deferred_structure_split_count": 13,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [
       {
@@ -724,20 +690,6 @@
       },
       {
         "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_lifecycle_requests|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_lifecycle_requests has 653 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_lifecycle_requests",
-        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_lifecycle_requests",
-        "surface_owner": "flowpilot_router_lifecycle_requests"
-      },
-      {
-        "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
         "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
@@ -797,21 +749,21 @@
     "gap_counts": {
       "internal_only_test": 1,
       "missing_test": 1,
-      "needs_structure_split": 14
+      "needs_structure_split": 13
     },
     "gap_counts_by_release_relevance": {
-      "runtime_contract": 16
+      "runtime_contract": 15
     },
     "gap_counts_by_repair_type": {
       "add_external_contract_test": 1,
-      "defer_structure_split": 14,
+      "defer_structure_split": 13,
       "upgrade_to_external_contract_test": 1
     },
     "gap_counts_by_severity": {
       "high": 1,
-      "medium": 15
+      "medium": 14
     },
-    "gap_surface_count": 15,
+    "gap_surface_count": 14,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -992,12 +944,12 @@
     "ok": true,
     "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 722,
+    "surface_count": 726,
     "surface_counts": {
-      "compatibility_facade": 107,
+      "compatibility_facade": 108,
       "model_check_runner": 94,
       "model_check_runner_helper": 18,
-      "owner_module": 229,
+      "owner_module": 232,
       "script_entrypoint": 19,
       "test_tier": 15,
       "test_tier_command": 240
@@ -2165,6 +2117,30 @@
         "surface_owner": "flowpilot_router_facade_export_manifest",
         "top_level_class_count": 0,
         "top_level_function_count": 0
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 73,
+        "local_import_count": 4,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_lifecycle_requests",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_lifecycle_requests",
+        "surface_owner": "flowpilot_router_lifecycle_requests",
+        "top_level_class_count": 0,
+        "top_level_function_count": 3
       },
       {
         "covered": true,
@@ -8928,44 +8904,100 @@
         "top_level_function_count": 39
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 653,
-        "local_import_count": 8,
-        "max_severity": "medium",
+        "line_count": 96,
+        "local_import_count": 0,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_lifecycle_requests",
+        "name": "flowpilot_router_lifecycle_requests_blockers",
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 450,
-        "structure_split_status": "deferred",
-        "surface_id": "asset:flowpilot_router_lifecycle_requests",
-        "surface_owner": "flowpilot_router_lifecycle_requests",
+        "surface_id": "asset:flowpilot_router_lifecycle_requests_blockers",
+        "surface_owner": "flowpilot_router_lifecycle_requests_blockers",
         "top_level_class_count": 0,
-        "top_level_function_count": 11
+        "top_level_function_count": 3
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 247,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_lifecycle_requests_fence",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_fence.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_lifecycle_requests_fence",
+        "surface_owner": "flowpilot_router_lifecycle_requests_fence",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 227,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_lifecycle_requests_reconciliation",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_reconciliation.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_lifecycle_requests_reconciliation",
+        "surface_owner": "flowpilot_router_lifecycle_requests_reconciliation",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 197,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_lifecycle_requests_records",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_lifecycle_requests_records",
+        "surface_owner": "flowpilot_router_lifecycle_requests_records",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -26977,6 +27009,33 @@
           "symbol": "resolve_facade_export"
         },
         {
+          "code_contract_id": "lifecycle_requests.write_terminal_fence",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "run_root",
+            "run_state",
+            "mode",
+            "event"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_fence.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_write_terminal_lifecycle_fence"
+        },
+        {
           "code_contract_id": "lifecycle_requests.clear_terminal_blocker",
           "error_paths": [],
           "external_inputs": [
@@ -26993,7 +27052,7 @@
           "implements_obligations": [
             "runtime_owner.router_owner_external_contracts"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_reconciliation.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -27003,6 +27062,84 @@
           "state_writes": [],
           "surface_type": "function",
           "symbol": "_clear_active_control_blocker_for_terminal_lifecycle"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.write_run_lifecycle",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "run_root",
+            "run_state",
+            "event",
+            "payload"
+          ],
+          "external_outputs": [],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_write_run_lifecycle_request"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.write_protocol_dead_end",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "run_root",
+            "run_state",
+            "dead_end_path",
+            "reason"
+          ],
+          "external_outputs": [],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_write_protocol_dead_end_lifecycle"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.exception_blocker_fallback",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "source",
+            "error_message",
+            "event",
+            "action_type",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_try_write_control_blocker_for_exception"
         },
         {
           "code_contract_id": "lifecycle_support.lifecycle_record_path",
@@ -29947,7 +30084,11 @@
           "assertion_scope": "external_contract",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_lifecycle_startup_system_card_external_contracts",
           "covered_code_contracts": [
+            "lifecycle_requests.write_terminal_fence",
             "lifecycle_requests.clear_terminal_blocker",
+            "lifecycle_requests.write_run_lifecycle",
+            "lifecycle_requests.write_protocol_dead_end",
+            "lifecycle_requests.exception_blocker_fallback",
             "lifecycle_support.lifecycle_record_path",
             "startup_bootloader.depends_on_role_slots",
             "startup_closure.host_heartbeat_binding_ready",
@@ -35447,6 +35588,84 @@
         },
         {
           "calls": [
+            "_mark_router_daemon_terminal",
+            "_supersede_nonterminal_controller_work_for_terminal",
+            "append_history",
+            "project_relative",
+            "run_state.get",
+            "run_state.setdefault",
+            "sorted",
+            "str",
+            "type",
+            "utc_now",
+            "write_json"
+          ],
+          "code_contract_id": "lifecycle_requests.write_terminal_fence",
+          "found": true,
+          "parameters": [
+            "event",
+            "mode",
+            "project_root",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_fence.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "Exception",
+            "Path",
+            "TERMINAL_CONTROLLER_ACTION_TYPES",
+            "__name__",
+            "_mark_router_daemon_terminal",
+            "_supersede_nonterminal_controller_work_for_terminal",
+            "append_history",
+            "controller_fence",
+            "daemon_status",
+            "dict",
+            "event",
+            "exc",
+            "fence",
+            "fence_path",
+            "fenced_at",
+            "flags",
+            "get",
+            "mode",
+            "project_relative",
+            "project_root",
+            "run_root",
+            "run_state",
+            "setdefault",
+            "sorted",
+            "str",
+            "superseded_count",
+            "type",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "controller_fence",
+            "controller_work_fence",
+            "daemon_mode_enabled",
+            "daemon_status",
+            "fence",
+            "fence_path",
+            "fenced_at",
+            "flags",
+            "terminal_daemon_fence_written",
+            "terminal_next_step_cleared",
+            "terminal_projection_refreshed"
+          ],
+          "symbol": "_write_terminal_lifecycle_fence"
+        },
+        {
+          "calls": [
             "_sync_control_plane_indexes",
             "active.get",
             "any",
@@ -35472,7 +35691,7 @@
             "run_state"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_reconciliation.py",
           "raised_errors": [],
           "return_values": [],
           "returns_value": true,
@@ -35524,6 +35743,261 @@
             "terminal_lifecycle_status"
           ],
           "symbol": "_clear_active_control_blocker_for_terminal_lifecycle"
+        },
+        {
+          "calls": [
+            "_lifecycle_record_path",
+            "_write_route_state_snapshot",
+            "append_history",
+            "current.get",
+            "index.get",
+            "isinstance",
+            "item.get",
+            "lifecycle_fence._write_terminal_lifecycle_fence",
+            "lifecycle_reconciliation._reconcile_terminal_lifecycle_authorities",
+            "payload.get",
+            "project_relative",
+            "read_json_if_exists",
+            "run_state.get",
+            "run_state.setdefault",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "code_contract_id": "lifecycle_requests.write_run_lifecycle",
+          "found": true,
+          "parameters": [
+            "event",
+            "payload",
+            "project_root",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": false,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_lifecycle_record_path",
+            "_reconcile_terminal_lifecycle_authorities",
+            "_write_route_state_snapshot",
+            "_write_terminal_lifecycle_fence",
+            "active_blocker",
+            "append_history",
+            "cleanup_receipts",
+            "current",
+            "current_path",
+            "dict",
+            "event",
+            "flags",
+            "get",
+            "index",
+            "index_path",
+            "isinstance",
+            "item",
+            "lifecycle_fence",
+            "lifecycle_reconciliation",
+            "list",
+            "mode",
+            "payload",
+            "previous_pending",
+            "project_relative",
+            "project_root",
+            "read_json_if_exists",
+            "reconciliation",
+            "record",
+            "run_root",
+            "run_state",
+            "runs",
+            "setdefault",
+            "str",
+            "terminal_fence",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "active_blocker",
+            "cleanup_receipts",
+            "current",
+            "current_path",
+            "flags",
+            "holder",
+            "index",
+            "index_path",
+            "mode",
+            "pending_action",
+            "phase",
+            "previous_pending",
+            "reconciliation",
+            "record",
+            "run_cancelled_by_user",
+            "run_stopped_by_user",
+            "runs",
+            "status",
+            "terminal_fence",
+            "updated_at"
+          ],
+          "symbol": "_write_run_lifecycle_request"
+        },
+        {
+          "calls": [
+            "_lifecycle_record_path",
+            "append_history",
+            "current.get",
+            "index.get",
+            "isinstance",
+            "item.get",
+            "project_relative",
+            "read_json_if_exists",
+            "run_state.get",
+            "utc_now",
+            "write_json"
+          ],
+          "code_contract_id": "lifecycle_requests.write_protocol_dead_end",
+          "found": true,
+          "parameters": [
+            "dead_end_path",
+            "project_root",
+            "reason",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": false,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_lifecycle_record_path",
+            "active_blocker",
+            "append_history",
+            "current",
+            "current_path",
+            "dead_end_path",
+            "dict",
+            "get",
+            "index",
+            "index_path",
+            "isinstance",
+            "item",
+            "list",
+            "mode",
+            "previous_pending",
+            "project_relative",
+            "project_root",
+            "read_json_if_exists",
+            "reason",
+            "run_root",
+            "run_state",
+            "runs",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "active_blocker",
+            "current",
+            "current_path",
+            "holder",
+            "index",
+            "index_path",
+            "mode",
+            "pending_action",
+            "phase",
+            "previous_pending",
+            "runs",
+            "status",
+            "updated_at"
+          ],
+          "symbol": "_write_protocol_dead_end_lifecycle"
+        },
+        {
+          "calls": [
+            "_should_materialize_control_blocker",
+            "_write_control_blocker",
+            "failure_path.open",
+            "failure_path.parent.mkdir",
+            "handle.write",
+            "json.dumps",
+            "load_bootstrap_state",
+            "load_run_state",
+            "project_relative",
+            "utc_now"
+          ],
+          "code_contract_id": "lifecycle_requests.exception_blocker_fallback",
+          "found": true,
+          "parameters": [
+            "action_type",
+            "error_message",
+            "event",
+            "payload",
+            "project_root",
+            "source"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
+          "raised_errors": [],
+          "return_values": [
+            "_write_control_blocker",
+            "fallback"
+          ],
+          "returns_value": true,
+          "side_effects": [
+            "write"
+          ],
+          "state_reads": [
+            "Any",
+            "Exception",
+            "Path",
+            "_should_materialize_control_blocker",
+            "_write_control_blocker",
+            "action_type",
+            "bootstrap",
+            "dict",
+            "dumps",
+            "error_message",
+            "event",
+            "failure_path",
+            "fallback",
+            "flowpilot_root",
+            "handle",
+            "json",
+            "load_bootstrap_state",
+            "load_run_state",
+            "mkdir",
+            "open",
+            "parent",
+            "payload",
+            "project_relative",
+            "project_root",
+            "run_root",
+            "run_state",
+            "source",
+            "str",
+            "utc_now",
+            "write"
+          ],
+          "state_writes": [
+            "bootstrap",
+            "failure_path",
+            "fallback",
+            "fallback_diagnostic_path",
+            "flowpilot_root",
+            "run_root",
+            "run_state"
+          ],
+          "symbol": "_try_write_control_blocker_for_exception"
         },
         {
           "calls": [],
@@ -40692,10 +41166,14 @@
           "test_name": "test_facade_export_manifest_external_contracts"
         },
         {
-          "assert_count": 41,
+          "assert_count": 51,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "lifecycle_requests.clear_terminal_blocker",
+            "lifecycle_requests.exception_blocker_fallback",
+            "lifecycle_requests.write_protocol_dead_end",
+            "lifecycle_requests.write_run_lifecycle",
+            "lifecycle_requests.write_terminal_fence",
             "lifecycle_support.lifecycle_record_path",
             "startup_bootloader.depends_on_role_slots",
             "startup_closure.host_heartbeat_binding_ready",
@@ -40709,10 +41187,19 @@
           ],
           "calls": [
             "Path",
+            "dead_end_root.mkdir",
+            "exists",
+            "fence_root.mkdir",
             "len",
             "lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle",
+            "lifecycle_requests._try_write_control_blocker_for_exception",
+            "lifecycle_requests._write_protocol_dead_end_lifecycle",
+            "lifecycle_requests._write_run_lifecycle_request",
+            "lifecycle_requests._write_terminal_lifecycle_fence",
+            "lifecycle_requests.owner_child_module_names",
             "lifecycle_support._lifecycle_record_path",
             "lifecycle_support._reset_resume_cycle_for_wakeup",
+            "record_root.mkdir",
             "run_root.mkdir",
             "self.assertEqual",
             "self.assertFalse",
@@ -40721,6 +41208,7 @@
             "self.assertIsInstance",
             "self.assertIsNone",
             "self.assertRaisesRegex",
+            "self.assertTrue",
             "set",
             "startup_bootloader._startup_bootloader_action_depends_on_role_slots",
             "startup_closure._host_heartbeat_binding_ready",
