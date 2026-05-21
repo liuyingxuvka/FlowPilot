@@ -127,6 +127,36 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             side_effects=("write_output_progress_status",),
         ),
         _contract(
+            "branch_pruning.next_states",
+            path="simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+            symbol="next_states",
+            implements=(
+                "branch_pruning.result_case_classifier",
+                "branch_pruning.scheduled_receipt_effect_cases",
+                "branch_pruning.role_output_authority_cases",
+                "branch_pruning.runtime_state_resume_cases",
+            ),
+            external_inputs=("state",),
+        ),
+        _contract(
+            "branch_pruning.failures",
+            path="simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+            symbol="branch_pruning_failures",
+            implements=(
+                "branch_pruning.result_case_classifier",
+                "branch_pruning.scheduled_receipt_effect_cases",
+                "branch_pruning.role_output_authority_cases",
+                "branch_pruning.runtime_state_resume_cases",
+            ),
+            external_inputs=("state",),
+        ),
+        _contract(
+            "branch_pruning.ownership_snapshot",
+            path="simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+            symbol="ownership_snapshot",
+            implements=("branch_pruning.runtime_state_resume_cases",),
+        ),
+        _contract(
             "runtime_closure.validate_officer_request_record",
             path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
             symbol="validate_officer_request_record",

@@ -145,6 +145,65 @@ def _clear_pending_controller_action_if_matches(router: ModuleType, run_state: d
     )
     return True
 
+def _commit_controller_action_reconciliation(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action_path: Path,
+    entry: dict[str, Any],
+    *,
+    action: dict[str, Any],
+    reconciliation: dict[str, Any],
+    status: str = 'done',
+    reconciliation_status: str = 'reconciled',
+    scheduler_state: str | None = None,
+    resolve_blockers: bool = False,
+    clear_pending_apply_required: bool = True,
+    preserve_reconciled_at: bool = False,
+    set_status: bool = True,
+    set_completed_at: bool = True,
+    now: str | None = None,
+) -> str:
+    _bind_router(router)
+    applied_at = now or utc_now()
+    if set_status:
+        entry['status'] = status
+    if set_completed_at:
+        entry['completed_at'] = entry.get('completed_at') or applied_at
+    entry['router_reconciliation_status'] = reconciliation_status
+    entry['router_reconciled_at'] = (
+        entry.get('router_reconciled_at') or applied_at
+        if preserve_reconciled_at
+        else applied_at
+    )
+    entry['router_reconciliation'] = reconciliation
+    if clear_pending_apply_required:
+        entry['router_pending_apply_required'] = False
+        if isinstance(entry.get('action'), dict):
+            entry['action']['router_pending_apply_required'] = False
+    write_json(action_path, entry)
+    row_id = str(entry.get('router_scheduler_row_id') or '')
+    if row_id and scheduler_state:
+        router._update_router_scheduler_row(
+            project_root,
+            run_root,
+            run_state,
+            row_id=row_id,
+            router_state=scheduler_state,
+            reconciliation=reconciliation,
+        )
+    if resolve_blockers:
+        router._resolve_control_blockers_for_reconciled_controller_action(
+            project_root,
+            run_root,
+            run_state,
+            action=action or {'action_type': entry.get('action_type')},
+            entry=entry,
+            reconciliation=reconciliation,
+        )
+    return row_id
+
 def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     action_dir = _controller_actions_dir(run_root)
@@ -167,30 +226,35 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
         legacy_startup_canonical = router._canonicalize_legacy_startup_daemon_reconciliation(project_root, run_root, run_state, entry, action, receipt)
         if legacy_startup_canonical.get('applied'):
             now = utc_now()
-            entry['status'] = 'done'
-            entry['completed_at'] = entry.get('completed_at') or now
-            entry['router_reconciliation_status'] = 'reconciled'
-            entry['router_reconciled_at'] = now
-            entry['router_reconciliation'] = legacy_startup_canonical
-            entry['router_pending_apply_required'] = False
-            if isinstance(entry.get('action'), dict):
-                entry['action']['router_pending_apply_required'] = False
-            write_json(action_path, entry)
-            row_id = str(entry.get('router_scheduler_row_id') or '')
-            if row_id:
-                router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=legacy_startup_canonical)
-            router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=legacy_startup_canonical)
+            _commit_controller_action_reconciliation(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                action_path,
+                entry,
+                action=action,
+                reconciliation=legacy_startup_canonical,
+                scheduler_state='reconciled',
+                resolve_blockers=True,
+                now=now,
+            )
             changed = True
             reconciled += 1
             continue
         if row_reconciliation is not None and (not (entry.get('router_reconciliation_status') == 'reconciled' or entry.get('router_reconciled_at'))):
-            entry['status'] = 'done'
-            entry['completed_at'] = entry.get('completed_at') or utc_now()
-            entry['router_reconciliation_status'] = 'reconciled'
-            entry['router_reconciled_at'] = utc_now()
-            entry['router_reconciliation'] = row_reconciliation
-            write_json(action_path, entry)
-            router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action or {'action_type': entry.get('action_type')}, entry=entry, reconciliation=row_reconciliation)
+            _commit_controller_action_reconciliation(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                action_path,
+                entry,
+                action=action or {'action_type': entry.get('action_type')},
+                reconciliation=row_reconciliation,
+                resolve_blockers=True,
+                clear_pending_apply_required=False,
+            )
             changed = True
             reconciled += 1
             continue
@@ -209,18 +273,20 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
                 'scope_id': action.get('scope_id'),
                 'superseded_at': now,
             }
-            entry['status'] = 'superseded'
-            entry['completed_at'] = entry.get('completed_at') or now
-            entry['router_reconciliation_status'] = 'superseded_by_resolved_current_scope'
-            entry['router_reconciled_at'] = now
-            entry['router_reconciliation'] = reconciliation
-            entry['router_pending_apply_required'] = False
-            if isinstance(entry.get('action'), dict):
-                entry['action']['router_pending_apply_required'] = False
-            write_json(action_path, entry)
-            row_id = str(entry.get('router_scheduler_row_id') or '')
-            if row_id:
-                router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='superseded', reconciliation=reconciliation)
+            row_id = _commit_controller_action_reconciliation(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                action_path,
+                entry,
+                action=action,
+                reconciliation=reconciliation,
+                status='superseded',
+                reconciliation_status='superseded_by_resolved_current_scope',
+                scheduler_state='superseded',
+                now=now,
+            )
             router._clear_pending_controller_action_if_matches(run_state, entry, action, action_id=action_id, source='current_scope_wait_no_longer_blocked')
             append_history(
                 run_state,
@@ -237,15 +303,18 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
             continue
         if entry.get('status') not in CONTROLLER_ACTION_CLOSED_STATUSES and _card_return_resolved_for_action(run_root, str(run_state['run_id']), action):
             applied = {'applied': True, 'source': 'role_card_return_resolved_delivery_relay', 'card_id': action.get('card_id'), 'card_bundle_id': action.get('card_bundle_id'), 'delivery_attempt_id': action.get('delivery_attempt_id')}
-            entry['status'] = 'done'
-            entry['completed_at'] = utc_now()
-            entry['router_reconciliation_status'] = 'reconciled'
-            entry['router_reconciled_at'] = utc_now()
-            entry['router_reconciliation'] = applied
-            write_json(action_path, entry)
-            row_id = str(entry.get('router_scheduler_row_id') or '')
-            if row_id:
-                router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=applied)
+            _commit_controller_action_reconciliation(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                action_path,
+                entry,
+                action=action,
+                reconciliation=applied,
+                scheduler_state='reconciled',
+                clear_pending_apply_required=False,
+            )
             changed = True
             reconciled += 1
             continue
@@ -273,17 +342,22 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
                             'state_replay_result': applied,
                         }
                     )
-                    entry['router_reconciliation_status'] = 'reconciled'
-                    entry['router_reconciled_at'] = entry.get('router_reconciled_at') or now
-                    entry['router_reconciliation'] = reconciliation
-                    entry['router_pending_apply_required'] = False
                     entry['wait_target_receipt_state_replayed_at'] = now
-                    if isinstance(entry.get('action'), dict):
-                        entry['action']['router_pending_apply_required'] = False
-                    write_json(action_path, entry)
-                    row_id = str(entry.get('router_scheduler_row_id') or '')
-                    if row_id:
-                        router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=reconciliation)
+                    _commit_controller_action_reconciliation(
+                        router,
+                        project_root,
+                        run_root,
+                        run_state,
+                        action_path,
+                        entry,
+                        action=action,
+                        reconciliation=reconciliation,
+                        scheduler_state='reconciled',
+                        preserve_reconciled_at=True,
+                        set_status=False,
+                        set_completed_at=False,
+                        now=now,
+                    )
                     append_history(
                         run_state,
                         'router_replayed_reconciled_wait_target_reminder_receipt',
@@ -327,20 +401,21 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
                             'postcondition_replay_result': applied,
                         }
                     )
-                    entry['status'] = 'done'
-                    entry['completed_at'] = entry.get('completed_at') or now
-                    entry['router_reconciliation_status'] = 'reconciled'
-                    entry['router_reconciled_at'] = entry.get('router_reconciled_at') or now
-                    entry['router_reconciliation'] = reconciliation
-                    entry['router_pending_apply_required'] = False
                     entry['router_postcondition_drift_reconciled_at'] = now
-                    if isinstance(entry.get('action'), dict):
-                        entry['action']['router_pending_apply_required'] = False
-                    write_json(action_path, entry)
-                    row_id = str(entry.get('router_scheduler_row_id') or '')
-                    if row_id:
-                        router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=reconciliation)
-                    router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=reconciliation)
+                    _commit_controller_action_reconciliation(
+                        router,
+                        project_root,
+                        run_root,
+                        run_state,
+                        action_path,
+                        entry,
+                        action=action,
+                        reconciliation=reconciliation,
+                        scheduler_state='reconciled',
+                        resolve_blockers=True,
+                        preserve_reconciled_at=True,
+                        now=now,
+                    )
                     append_history(
                         run_state,
                         'router_replayed_reconciled_controller_postcondition',
@@ -401,17 +476,21 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
                 applied = router._reclaim_role_recovery_postcondition_from_report(project_root, run_root, run_state, source='blocked_controller_action_role_recovery_report_reclaim')
                 if applied.get('applied') and (not postcondition or _pending_action_postcondition_satisfied(run_state, postcondition)):
                     now = utc_now()
-                    entry['status'] = 'done'
-                    entry['completed_at'] = entry.get('completed_at') or now
-                    entry['router_reconciliation_status'] = 'reconciled'
-                    entry['router_reconciled_at'] = now
-                    entry['router_reconciliation'] = applied
                     entry['router_reconciliation_recovered_from_blocked_state'] = True
-                    write_json(action_path, entry)
-                    row_id = str(entry.get('router_scheduler_row_id') or '')
-                    if row_id:
-                        router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=applied)
-                    router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=applied)
+                    _commit_controller_action_reconciliation(
+                        router,
+                        project_root,
+                        run_root,
+                        run_state,
+                        action_path,
+                        entry,
+                        action=action,
+                        reconciliation=applied,
+                        scheduler_state='reconciled',
+                        resolve_blockers=True,
+                        clear_pending_apply_required=False,
+                        now=now,
+                    )
                     changed = True
                     reconciled += 1
                     continue
@@ -419,11 +498,20 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
         if not action:
             continue
         if row_reconciliation is not None:
-            entry['router_reconciliation_status'] = 'reconciled'
-            entry['router_reconciled_at'] = utc_now()
-            entry['router_reconciliation'] = row_reconciliation
-            write_json(action_path, entry)
-            router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=row_reconciliation)
+            _commit_controller_action_reconciliation(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                action_path,
+                entry,
+                action=action,
+                reconciliation=row_reconciliation,
+                resolve_blockers=True,
+                clear_pending_apply_required=False,
+                set_status=False,
+                set_completed_at=False,
+            )
             changed = True
             reconciled += 1
             continue
@@ -462,14 +550,21 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
             router._write_control_blocker(project_root, run_root, run_state, source=CONTROLLER_POSTCONDITION_MISSING_BLOCKER_SOURCE, error_message=f"Controller action {entry.get('action_type')} was marked done, but Router could not apply its required postcondition before reconciliation.", action_type=str(entry.get('action_type') or ''), payload={'controller_action_id': action_id, 'router_scheduler_row_id': entry.get('router_scheduler_row_id'), 'postcondition': retry.get('postcondition') or applied.get('postcondition'), 'direct_retry_attempts_used': retry.get('direct_retry_attempts_used'), 'direct_retry_budget': retry.get('direct_retry_budget'), 'direct_retry_budget_exhausted': retry_exhausted, 'apply_result': applied})
             changed = True
             continue
-        entry['router_reconciliation_status'] = 'reconciled'
-        entry['router_reconciled_at'] = utc_now()
-        entry['router_reconciliation'] = applied
-        write_json(action_path, entry)
-        row_id = str(entry.get('router_scheduler_row_id') or '')
-        if row_id:
-            router._update_router_scheduler_row(project_root, run_root, run_state, row_id=row_id, router_state='reconciled', reconciliation=applied)
-        router._resolve_control_blockers_for_reconciled_controller_action(project_root, run_root, run_state, action=action, entry=entry, reconciliation=applied)
+        _commit_controller_action_reconciliation(
+            router,
+            project_root,
+            run_root,
+            run_state,
+            action_path,
+            entry,
+            action=action,
+            reconciliation=applied,
+            scheduler_state='reconciled',
+            resolve_blockers=True,
+            clear_pending_apply_required=False,
+            set_status=False,
+            set_completed_at=False,
+        )
         changed = True
         reconciled += 1
     if changed:

@@ -105,7 +105,7 @@
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_controller_scheduler_receipts_scheduled|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 585 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_router_controller_scheduler_receipts_scheduled",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
         "priority_score": 29,
@@ -341,7 +341,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 585 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py"
         ],
@@ -496,7 +496,7 @@
         "surface_owner": "role_output_runtime_envelopes"
       }
     ],
-    "covered_surface_count": 717,
+    "covered_surface_count": 718,
     "deferred_structure_split_count": 12,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [
@@ -630,7 +630,7 @@
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_controller_scheduler_receipts_scheduled|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 490 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_controller_scheduler_receipts_scheduled has 585 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_router_controller_scheduler_receipts_scheduled",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
         "priority_score": 29,
@@ -896,10 +896,10 @@
     "ok": true,
     "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 730,
+    "surface_count": 731,
     "surface_counts": {
       "compatibility_facade": 109,
-      "model_check_runner": 94,
+      "model_check_runner": 95,
       "model_check_runner_helper": 18,
       "owner_module": 235,
       "script_entrypoint": 19,
@@ -5662,6 +5662,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 224,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_router_reconciliation_branch_pruning_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_router_reconciliation_branch_pruning_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_router_reconciliation_branch_pruning_checks",
+        "surface_owner": "model-check:run_flowpilot_router_reconciliation_branch_pruning_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 183,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -7970,7 +7992,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 490,
+        "line_count": 585,
         "local_import_count": 7,
         "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
@@ -7996,7 +8018,7 @@
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_scheduled",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_scheduled",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -25589,6 +25611,73 @@
           "symbol": "prepare_output_session"
         },
         {
+          "code_contract_id": "branch_pruning.next_states",
+          "error_paths": [],
+          "external_inputs": [
+            "state"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "branch_pruning.result_case_classifier",
+            "branch_pruning.scheduled_receipt_effect_cases",
+            "branch_pruning.role_output_authority_cases",
+            "branch_pruning.runtime_state_resume_cases"
+          ],
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "next_states"
+        },
+        {
+          "code_contract_id": "branch_pruning.failures",
+          "error_paths": [],
+          "external_inputs": [
+            "state"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "branch_pruning.result_case_classifier",
+            "branch_pruning.scheduled_receipt_effect_cases",
+            "branch_pruning.role_output_authority_cases",
+            "branch_pruning.runtime_state_resume_cases"
+          ],
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "branch_pruning_failures"
+        },
+        {
+          "code_contract_id": "branch_pruning.ownership_snapshot",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "branch_pruning.runtime_state_resume_cases"
+          ],
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "ownership_snapshot"
+        },
+        {
           "code_contract_id": "runtime_closure.validate_officer_request_record",
           "error_paths": [],
           "external_inputs": [
@@ -29100,6 +29189,86 @@
           "state_writes": []
         },
         {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited Router reconciliation branch-pruning classifier maps target branches into the shared result-case vocabulary.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "branch_pruning.result_case_classifier",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited scheduled Controller receipt branch families declare observable writes and replay gates before contraction.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "branch_pruning.scheduled_receipt_effect_cases",
+          "obligation_type": "scenario",
+          "required": true,
+          "required_test_kinds": [
+            "replay",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited role-output branch pruning keeps not-ready and unauthorized envelopes separate from reconciled events.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "branch_pruning.role_output_authority_cases",
+          "obligation_type": "hazard",
+          "required": true,
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited runtime-state resume pruning remains model-only with a single owner until replay evidence justifies contraction.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "obligation_id": "branch_pruning.runtime_state_resume_cases",
+          "obligation_type": "contract",
+          "required": true,
+          "required_test_kinds": [
+            "edge_path",
+            "negative_path"
+          ],
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
           "allow_shared_evidence": false,
           "allow_shared_implementation": true,
           "description": "Source-audited packet output contract across packet creation, Controller relay, and result writes.",
@@ -29712,6 +29881,101 @@
           "stale_reasons": [],
           "test_kind": "happy_path",
           "test_name": "test_registry_backed_output_types_are_preparable"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
+          "covered_code_contracts": [
+            "branch_pruning.next_states"
+          ],
+          "covered_obligations": [
+            "branch_pruning.result_case_classifier"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.branch_pruning.classifier",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_result_case_classifier_covers_shared_cases"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
+          "covered_code_contracts": [
+            "branch_pruning.next_states",
+            "branch_pruning.failures"
+          ],
+          "covered_obligations": [
+            "branch_pruning.result_case_classifier",
+            "branch_pruning.scheduled_receipt_effect_cases",
+            "branch_pruning.role_output_authority_cases",
+            "branch_pruning.runtime_state_resume_cases"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.branch_pruning.known_bad",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_known_bad_contracts_are_rejected"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
+          "covered_code_contracts": [
+            "branch_pruning.failures"
+          ],
+          "covered_obligations": [
+            "branch_pruning.scheduled_receipt_effect_cases"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.branch_pruning.scheduled_replay",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "replay",
+          "test_name": "test_scheduled_receipt_effect_cases_keep_replay_gate"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
+          "covered_code_contracts": [
+            "branch_pruning.failures"
+          ],
+          "covered_obligations": [
+            "branch_pruning.role_output_authority_cases"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.branch_pruning.role_output_authority",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_role_output_authority_cases_preserve_not_ready_and_unauthorized"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
+          "covered_code_contracts": [
+            "branch_pruning.ownership_snapshot",
+            "branch_pruning.failures"
+          ],
+          "covered_obligations": [
+            "branch_pruning.runtime_state_resume_cases"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.branch_pruning.runtime_state_resume",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_runtime_state_resume_cases_keep_single_owner_model_only"
         },
         {
           "assertion_scope": "external_contract",
@@ -32017,6 +32281,111 @@
             "status_path"
           ],
           "symbol": "prepare_output_session"
+        },
+        {
+          "calls": [
+            "next_safe_states",
+            "tuple"
+          ],
+          "code_contract_id": "branch_pruning.next_states",
+          "found": true,
+          "parameters": [
+            "state"
+          ],
+          "parse_error": "",
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "raised_errors": [],
+          "return_values": [
+            "tuple"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "State",
+            "label",
+            "next_safe_states",
+            "state",
+            "str",
+            "transition",
+            "tuple"
+          ],
+          "state_writes": [],
+          "symbol": "next_states"
+        },
+        {
+          "calls": [
+            "failures.append",
+            "set",
+            "sorted"
+          ],
+          "code_contract_id": "branch_pruning.failures",
+          "found": true,
+          "parameters": [
+            "state"
+          ],
+          "parse_error": "",
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "raised_errors": [],
+          "return_values": [
+            "failures",
+            "sorted"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "RESULT_CASES",
+            "ROLE_OUTPUT_SURFACE",
+            "RUNTIME_STATE_SURFACE",
+            "State",
+            "append",
+            "background_exit_artifact_seen",
+            "background_progress_seen",
+            "branch_equivalence_overclaimed",
+            "contraction_allowed",
+            "event_authority_present",
+            "event_authority_required",
+            "event_recorded",
+            "failures",
+            "list",
+            "observable_state_writes",
+            "replay_or_alignment_evidence",
+            "requires_replay_evidence",
+            "result_case",
+            "runtime_state_owner_count",
+            "set",
+            "sorted",
+            "state",
+            "status",
+            "str",
+            "surface",
+            "validation_claimed_passed"
+          ],
+          "state_writes": [
+            "failures"
+          ],
+          "symbol": "branch_pruning_failures"
+        },
+        {
+          "calls": [],
+          "code_contract_id": "branch_pruning.ownership_snapshot",
+          "found": true,
+          "parameters": [],
+          "parse_error": "",
+          "path": "simulations/flowpilot_router_reconciliation_branch_pruning_model.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "ROLE_OUTPUT_SURFACE",
+            "RUNTIME_STATE_SURFACE",
+            "SCHEDULED_RECEIPT_SURFACE",
+            "dict",
+            "object",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "ownership_snapshot"
         },
         {
           "calls": [
@@ -40785,6 +41154,108 @@
           "parse_error": "",
           "path": "tests/test_flowpilot_role_output_runtime.py",
           "test_name": "test_registry_backed_output_types_are_preparable"
+        },
+        {
+          "assert_count": 3,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "branch_pruning.next_states"
+          ],
+          "calls": [
+            "_selected_state",
+            "accepted.add",
+            "model.next_states",
+            "observed_cases.add",
+            "self.assertEqual",
+            "set"
+          ],
+          "evidence_id": "source.branch_pruning.classifier",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "test_name": "test_result_case_classifier_covers_shared_cases"
+        },
+        {
+          "assert_count": 2,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "branch_pruning.failures",
+            "branch_pruning.next_states"
+          ],
+          "calls": [
+            "EXPECTED_HAZARDS.items",
+            "_selected_state",
+            "model.branch_pruning_failures",
+            "model.next_states",
+            "self.assertEqual",
+            "self.assertIn"
+          ],
+          "evidence_id": "source.branch_pruning.known_bad",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "test_name": "test_known_bad_contracts_are_rejected"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "branch_pruning.failures"
+          ],
+          "calls": [
+            "_selected_state",
+            "model.branch_pruning_failures",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.branch_pruning.scheduled_replay",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "test_name": "test_scheduled_receipt_effect_cases_keep_replay_gate"
+        },
+        {
+          "assert_count": 9,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "branch_pruning.failures"
+          ],
+          "calls": [
+            "_selected_state",
+            "model.branch_pruning_failures",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.branch_pruning.role_output_authority",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "test_name": "test_role_output_authority_cases_preserve_not_ready_and_unauthorized"
+        },
+        {
+          "assert_count": 6,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "branch_pruning.failures",
+            "branch_pruning.ownership_snapshot"
+          ],
+          "calls": [
+            "_selected_state",
+            "model.branch_pruning_failures",
+            "model.ownership_snapshot",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn"
+          ],
+          "evidence_id": "source.branch_pruning.runtime_state_resume",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_reconciliation_branch_pruning_model.py",
+          "test_name": "test_runtime_state_resume_cases_keep_single_owner_model_only"
         },
         {
           "assert_count": 10,

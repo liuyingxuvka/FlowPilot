@@ -1,0 +1,214 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=150",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "duplicate_runtime_state_owner": {
+        "detected": true,
+        "expected_failure": "runtime-state branch pruning introduced duplicate state ownership",
+        "failures": [
+          "runtime-state branch pruning introduced duplicate state ownership"
+        ],
+        "state": {
+          "background_exit_artifact_seen": false,
+          "background_progress_seen": false,
+          "branch_equivalence_overclaimed": false,
+          "contraction_allowed": true,
+          "event_authority_present": false,
+          "event_authority_required": false,
+          "event_recorded": false,
+          "observable_state_writes": [
+            "resume_next_recipient_projection"
+          ],
+          "replay_or_alignment_evidence": false,
+          "requires_replay_evidence": false,
+          "result_case": "reconciled",
+          "result_subcase": "runtime_resume_split_claimed_two_owners",
+          "runtime_state_owner_count": 2,
+          "scenario": "duplicate_runtime_state_owner",
+          "side_effects": [],
+          "source_function": "_derive_resume_next_recipient_from_packet_ledger",
+          "status": "selected",
+          "surface": "runtime_state_resume",
+          "terminal_reason": "none",
+          "validation_claimed_passed": false
+        }
+      },
+      "missing_event_authority": {
+        "detected": true,
+        "expected_failure": "role-output event was recorded without durable Router authority",
+        "failures": [
+          "role-output event was recorded without durable Router authority"
+        ],
+        "state": {
+          "background_exit_artifact_seen": false,
+          "background_progress_seen": false,
+          "branch_equivalence_overclaimed": false,
+          "contraction_allowed": true,
+          "event_authority_present": false,
+          "event_authority_required": true,
+          "event_recorded": true,
+          "observable_state_writes": [
+            "external_event_ledger",
+            "run_flags"
+          ],
+          "replay_or_alignment_evidence": false,
+          "requires_replay_evidence": false,
+          "result_case": "reconciled",
+          "result_subcase": "unauthorized_but_recorded",
+          "runtime_state_owner_count": 1,
+          "scenario": "missing_event_authority",
+          "side_effects": [],
+          "source_function": "_try_reconcile_direct_role_output_event_ledger",
+          "status": "selected",
+          "surface": "role_output_event",
+          "terminal_reason": "none",
+          "validation_claimed_passed": false
+        }
+      },
+      "overclaim_branch_equivalence": {
+        "detected": true,
+        "expected_failure": "branch contraction overclaimed equivalence without replay evidence",
+        "failures": [
+          "branch contraction overclaimed equivalence without replay evidence"
+        ],
+        "state": {
+          "background_exit_artifact_seen": false,
+          "background_progress_seen": false,
+          "branch_equivalence_overclaimed": true,
+          "contraction_allowed": true,
+          "event_authority_present": false,
+          "event_authority_required": false,
+          "event_recorded": false,
+          "observable_state_writes": [
+            "controller_action_row",
+            "run_state",
+            "control_blocker_index"
+          ],
+          "replay_or_alignment_evidence": false,
+          "requires_replay_evidence": true,
+          "result_case": "reconciled",
+          "result_subcase": "unsafe_shared_effect_claim",
+          "runtime_state_owner_count": 1,
+          "scenario": "overclaim_branch_equivalence",
+          "side_effects": [],
+          "source_function": "_reconcile_scheduled_controller_action_receipts",
+          "status": "selected",
+          "surface": "scheduled_controller_receipt",
+          "terminal_reason": "none",
+          "validation_claimed_passed": false
+        }
+      },
+      "progress_only_validation": {
+        "detected": true,
+        "expected_failure": "background progress was claimed as pass without exit artifact",
+        "failures": [
+          "background progress was claimed as pass without exit artifact"
+        ],
+        "state": {
+          "background_exit_artifact_seen": false,
+          "background_progress_seen": true,
+          "branch_equivalence_overclaimed": false,
+          "contraction_allowed": true,
+          "event_authority_present": false,
+          "event_authority_required": false,
+          "event_recorded": false,
+          "observable_state_writes": [],
+          "replay_or_alignment_evidence": false,
+          "requires_replay_evidence": false,
+          "result_case": "reconciled",
+          "result_subcase": "progress_log_claimed_as_pass",
+          "runtime_state_owner_count": 1,
+          "scenario": "progress_only_validation",
+          "side_effects": [],
+          "source_function": "background_regression_artifact_contract",
+          "status": "selected",
+          "surface": "background_validation",
+          "terminal_reason": "none",
+          "validation_claimed_passed": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "model": "flowpilot_router_reconciliation_branch_pruning",
+  "ok": true,
+  "ownership_snapshot": {
+    "branch_owner_functions": {
+      "role_output_event": [
+        "_try_reconcile_startup_fact_role_output_ledger",
+        "_role_output_event_has_durable_authority",
+        "_try_reconcile_direct_role_output_event_ledger"
+      ],
+      "runtime_state_resume": "_derive_resume_next_recipient_from_packet_ledger",
+      "scheduled_controller_receipt": "_reconcile_scheduled_controller_action_receipts"
+    },
+    "decision": "Use the existing Router StructureMesh and model-test alignment parents; add this narrower child model only for branch-pruning evidence.",
+    "parent_boundaries": [
+      "flowpilot_router_facade_split_model",
+      "flowpilot_structure_maintenance_model",
+      "flowpilot_model_test_alignment_source_code_contracts"
+    ],
+    "reuse_decision": "add_child_model"
+  },
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0,
+    "terminal_state_count": 25
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "role_output_already_recorded",
+      "role_output_invalid_envelope",
+      "role_output_not_ready_required_flag",
+      "role_output_unauthorized",
+      "role_output_valid_direct_event",
+      "runtime_packet_no_active",
+      "runtime_packet_nonstandard_status",
+      "runtime_packet_result_needs_pm",
+      "runtime_packet_superseded",
+      "runtime_packet_with_controller",
+      "scheduled_already_reconciled_wait_target_replay",
+      "scheduled_blocked_role_recovery_reclaim",
+      "scheduled_card_return_resolved",
+      "scheduled_current_scope_resolved",
+      "scheduled_invalid_schema",
+      "scheduled_legacy_startup_canonical",
+      "scheduled_no_action_dir",
+      "scheduled_receipt_apply_blocked",
+      "scheduled_reconciled_postcondition_repair_pending",
+      "scheduled_reconciled_postcondition_retry_pending",
+      "scheduled_row_reconciliation"
+    ],
+    "edge_count": 50,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "observed_result_cases": [
+      "blocked",
+      "noop",
+      "reconciled",
+      "repair_pending",
+      "replay_required",
+      "retry_pending",
+      "superseded"
+    ],
+    "ok": true,
+    "rejected_scenarios": [
+      "duplicate_runtime_state_owner",
+      "missing_event_authority",
+      "overclaim_branch_equivalence",
+      "progress_only_validation"
+    ],
+    "state_count": 51
+  }
+}

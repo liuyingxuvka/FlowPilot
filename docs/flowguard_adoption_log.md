@@ -16508,3 +16508,75 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - No GitHub push, tag, remote release, or public publication was performed.
 - Broader existing maintenance-map items in unrelated runtime modules remain out of scope for this IO split.
+
+## 2026-05-21 - Router Reconciliation Branch Pruning
+
+### Evidence Summary
+
+- Added OpenSpec change `prune-router-reconciliation-branch-logic` for
+  FlowGuard-backed branch pruning. The goal is shorter, safer reconciliation
+  logic, not file splitting for its own sake.
+- Added a focused FlowGuard child model for Router reconciliation branch
+  pruning with shared result cases: `noop`, `reconciled`, `superseded`,
+  `replay_required`, `retry_pending`, `repair_pending`, and `blocked`.
+- Contracted repeated scheduled Controller receipt reconciliation effects into
+  one shared helper while keeping behaviorally distinct replay, retry, repair,
+  blocked, superseded, role-output authority, and runtime-state branches
+  explicit.
+- Kept `flowpilot_router_controller_scheduler_receipts_scheduled.py` as the
+  compatible runtime owner. No file split was performed in this pass.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate prune-router-reconciliation-branch-logic --strict --json`.
+- OK: `python simulations\run_flowpilot_router_reconciliation_branch_pruning_checks.py --json-out simulations\flowpilot_router_reconciliation_branch_pruning_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model` (5 tests).
+- OK: focused scheduled receipt, role-output authority, and runtime-state resume tests (6 tests).
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py`.
+- OK: router background tier with log root `tmp\flowguard_background\`, exit
+  code `0`, status `passed`, proof reuse `false`; stdout
+  `tmp\flowguard_background\router_background_supervisor.out.txt`, stderr
+  `tmp\flowguard_background\router_background_supervisor.err.txt`, combined
+  `tmp\flowguard_background\router_background_supervisor.combined.txt`, exit
+  `tmp\flowguard_background\router_background_supervisor.exit.txt`, latest
+  update `2026-05-21 19:54:17 +0200`.
+- OK: background `python simulations\run_meta_checks.py` with log root
+  `tmp\flowguard_background\`, exit code `0`, status `passed`; stdout
+  `tmp\flowguard_background\run_meta_checks.out.txt`, stderr
+  `tmp\flowguard_background\run_meta_checks.err.txt`, combined
+  `tmp\flowguard_background\run_meta_checks.combined.txt`, exit
+  `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update
+  `2026-05-21 19:54:54 +0200`. The output reports a current valid
+  layered-full proof.
+- OK: background `python simulations\run_capability_checks.py` with log root
+  `tmp\flowguard_background\`, exit code `0`, status `passed`; stdout
+  `tmp\flowguard_background\run_capability_checks.out.txt`, stderr
+  `tmp\flowguard_background\run_capability_checks.err.txt`, combined
+  `tmp\flowguard_background\run_capability_checks.combined.txt`, exit
+  `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update
+  `2026-05-21 19:54:54 +0200`. The output reports a current valid
+  layered-full proof.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- The safe first pruning target was shared effect application, not a child
+  owner split.
+- The model rejects the key bad cases: overclaiming branch equivalence, missing
+  event authority, duplicate runtime-state ownership, and claiming background
+  progress as pass evidence.
+- Role-output and runtime-state pruning remain model/evidence candidates only
+  until stronger authority and stale-save replay evidence is available.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, or public publication was performed.
+- No role-output or runtime-state runtime branch contraction was performed in
+  this pass.
+- No file split was performed because the reduced logic did not need a new
+  StructureMesh child owner yet.
