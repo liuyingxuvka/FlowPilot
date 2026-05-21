@@ -124,6 +124,27 @@ def pending_action_provider(
     if not pending_action:
         return None
 
+    durable_resolution = router._clear_pending_action_if_durable_wait_resolved(
+        project_root,
+        run_root,
+        run_state,
+        source="pending_action_provider",
+    )
+    if durable_resolution.get("changed"):
+        router._refresh_route_memory(project_root, run_root, run_state, trigger="after_router_cleared_resolved_pending_action")
+        router._sync_derived_run_views(
+            project_root,
+            run_root,
+            run_state,
+            reason="after_router_cleared_resolved_pending_action",
+            update_display=True,
+        )
+        router.save_run_state(run_root, run_state)
+        return None
+    pending_action = run_state.get("pending_action")
+    if not pending_action:
+        return None
+
     if router._action_is_router_internal_mechanical(pending_action if isinstance(pending_action, dict) else None):
         if router_internal_depth >= router.ROUTER_INTERNAL_MECHANICAL_MAX_HOPS:
             raise router.RouterError("Router-internal mechanical action chain exceeded max hops")

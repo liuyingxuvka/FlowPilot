@@ -42,6 +42,15 @@ HAZARD_EXPECTED_FAILURES = {
     model.RESULT_BODY_SELF_CHECK_NOT_PROJECTED: (
         "result body self-check section was not projected into envelope metadata"
     ),
+    model.MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER: (
+        "direct role-output event stayed in role output ledger without canonical Router event"
+    ),
+    model.DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION: (
+        "pending_action was not validated against resolved Controller or scheduler wait rows"
+    ),
+    model.RECONCILED_WAIT_STILL_GENERATES_REMINDER: (
+        "wait reminder was created for an already reconciled wait row"
+    ),
     model.RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK: (
         "superseding PM role-work request did not terminalize the old request"
     ),
@@ -50,6 +59,9 @@ HAZARD_EXPECTED_FAILURES = {
     ),
     model.CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER: (
         "root fix was claimed without a shared durable reconciliation barrier before next action"
+    ),
+    model.ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER: (
+        "root fix was claimed without generic role-output event reconciliation"
     ),
     model.NO_CAS_FIX_LOSES_FOREGROUND_EVENT: (
         "daemon stale snapshot save erased newer foreground evidence"
@@ -75,6 +87,17 @@ def _state_id(state: model.State) -> str:
         f"{state.reminder_cooldown_enforced},{state.duplicate_reminder_materialized}|"
         f"selfcheck={state.body_self_check_heading_level},"
         f"{state.envelope_self_check_completed},{state.envelope_self_check_passed}|"
+        f"role_output_event={state.direct_role_output_event_submitted},"
+        f"{state.role_output_event_type},{state.generic_role_output_event_reconciler},"
+        f"{state.role_output_event_folded_to_router_state},{state.router_event_flag_synced},"
+        f"{state.material_review_projection_synced},"
+        f"{state.material_insufficient_pm_repair_branch_exposed}|"
+        f"wait_rows={state.controller_wait_row_status},{state.scheduler_wait_row_status},"
+        f"{state.pending_action_references_wait},"
+        f"{state.pending_action_validated_against_wait_ledgers},"
+        f"{state.pending_action_cleared_after_wait_resolution},"
+        f"{state.current_work_from_pending_action},"
+        f"{state.stale_wait_reminder_created}|"
         f"root={state.shared_reconcile_before_next_action},"
         f"{state.next_action_from_reconciled_state},{state.root_fix_claimed}|"
         f"reason={state.terminal_reason}"
@@ -219,7 +242,9 @@ def _repair_candidate_report() -> dict[str, object]:
         if not failures:
             passing.append(name)
     return {
-        "ok": passing == ["unified_reconciler_with_cas_and_true_holder_gate"],
+        "ok": passing == [
+            "unified_reconciler_with_event_fold_pending_authority_cas_and_true_holder_gate"
+        ],
         "passing_candidates": passing,
         "candidates": candidates,
     }

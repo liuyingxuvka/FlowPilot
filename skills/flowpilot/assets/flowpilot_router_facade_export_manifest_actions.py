@@ -144,6 +144,8 @@ OWNER_EXPORTS_ACTIONS: dict[RegistryKey, tuple[ExportSpec, ...]] = {('flowpilot_
                                                          '_startup_fact_canonical_report_is_valid'),
                                                         ('_sync_current_and_index_status',
                                                          '_sync_current_and_index_status'),
+                                                        ('_try_reconcile_direct_role_output_event_ledger',
+                                                         '_try_reconcile_direct_role_output_event_ledger'),
                                                         ('_try_reconcile_startup_fact_role_output_ledger',
                                                          '_try_reconcile_startup_fact_role_output_ledger'),
                                                         ('write_role_output_envelope', 'write_role_output_envelope'))}

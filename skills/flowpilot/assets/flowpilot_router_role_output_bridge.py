@@ -176,6 +176,224 @@ def _try_reconcile_startup_fact_role_output_ledger(
         "skipped_invalid": skipped_invalid,
     }
 
+def _role_output_body_payload_from_record(
+    project_root: Path,
+    record: dict[str, Any],
+    envelope: dict[str, Any],
+) -> dict[str, Any]:
+    body_path = ""
+    body_ref = envelope.get("body_ref")
+    if isinstance(body_ref, dict):
+        body_path = str(body_ref.get("path") or "")
+    if not body_path:
+        for key in ("body_path", "report_path", "decision_path", "result_body_path"):
+            value = envelope.get(key)
+            if isinstance(value, str) and value.strip():
+                body_path = value
+                break
+    if not body_path:
+        body_path = str(record.get("body_path") or "")
+    payload: dict[str, Any] = {}
+    if body_path:
+        resolved = resolve_project_path(project_root, body_path)
+        loaded = read_json_if_exists(resolved)
+        if isinstance(loaded, dict):
+            payload.update(loaded)
+    payload["_role_output_envelope"] = envelope
+    return payload
+
+def _role_output_event_has_durable_authority(run_root: Path, run_state: dict[str, Any], event: str) -> bool:
+    meta = EXTERNAL_EVENTS.get(event)
+    if not isinstance(meta, dict):
+        return False
+    flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if flags.get(meta.get("flag")) or _run_state_has_event(run_state, event):
+        return True
+    pending = run_state.get("pending_action")
+    if isinstance(pending, dict) and pending.get("action_type") == "await_role_decision":
+        allowed = [str(item) for item in (pending.get("allowed_external_events") or []) if isinstance(item, str)]
+        if event in allowed:
+            return True
+    action_dir = _controller_actions_dir(run_root)
+    if action_dir.exists():
+        for action_path in sorted(action_dir.glob("*.json")):
+            entry = _read_json_for_runtime_scan(action_path)
+            if not isinstance(entry, dict) or entry.get("schema_version") != CONTROLLER_ACTION_SCHEMA:
+                continue
+            if str(entry.get("action_type") or "") != "await_role_decision":
+                continue
+            if event in _controller_wait_allowed_external_events(entry):
+                return True
+    try:
+        groups = _pending_expected_external_event_groups(run_state)
+    except (RouterError, TypeError, ValueError):
+        groups = []
+    for group in groups or []:
+        try:
+            allowed_group = _gate_completion_wait_group(group)
+        except (RouterError, TypeError, ValueError):
+            continue
+        if any(event == item_event for item_event, _meta in allowed_group):
+            return True
+    return False
+
+def _sync_material_review_from_role_output_payload(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    event: str,
+    payload: dict[str, Any],
+) -> bool:
+    if event not in {"reviewer_reports_material_sufficient", "reviewer_reports_material_insufficient"}:
+        return False
+    sufficient = event == "reviewer_reports_material_sufficient"
+    review_value = "sufficient" if sufficient else "insufficient"
+    report = read_json_if_exists(run_root / "material" / "material_sufficiency_report.json")
+    report_already_synced = (
+        report.get("schema_version") == "flowpilot.material_sufficiency_report.v1"
+        and report.get("run_id") == run_state.get("run_id")
+        and report.get("reviewed_by_role") == "human_like_reviewer"
+        and report.get("sufficient") is sufficient
+    )
+    if report_already_synced and run_state.get("material_review") == review_value:
+        return False
+    changed = run_state.get("material_review") != review_value
+    try:
+        _write_material_sufficiency_report(project_root, run_root, run_state, payload, sufficient=sufficient)
+        changed = True
+    except (RouterError, role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError, TypeError, ValueError) as exc:
+        if run_state.get("material_review") == review_value:
+            return False
+        run_state["material_review"] = review_value
+        append_history(
+            run_state,
+            "router_synced_material_review_projection_from_role_output_ledger",
+            {
+                "event": event,
+                "material_review": review_value,
+                "canonical_report_written": False,
+                "canonical_report_error": str(exc),
+            },
+        )
+        return True
+    run_state["material_review"] = review_value
+    material_batch = _active_parallel_packet_batch(run_root, "material_scan")
+    if material_batch:
+        try:
+            _mark_parallel_batch_reviewed(
+                run_root,
+                "material_scan",
+                passed=sufficient,
+                reviewed_packet_ids=[
+                    str(item.get("packet_id"))
+                    for item in material_batch.get("packets", [])
+                    if isinstance(item, dict) and item.get("packet_id")
+                ],
+            )
+            changed = True
+        except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
+            pass
+    return changed
+
+def _try_reconcile_direct_role_output_event_ledger(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+) -> dict[str, Any]:
+    flags = run_state.setdefault("flags", {})
+    changed = False
+    reconciled = 0
+    already_recorded = 0
+    skipped_invalid = 0
+    skipped_not_ready = 0
+    skipped_unauthorized = 0
+    events: list[str] = []
+    for record in _role_output_ledger_outputs(run_root):
+        envelope = record.get("envelope")
+        if not isinstance(envelope, dict):
+            continue
+        event = str(envelope.get("event_name") or "")
+        if not event or event not in EXTERNAL_EVENTS:
+            continue
+        if event == "reviewer_reports_startup_facts":
+            continue
+        meta = EXTERNAL_EVENTS[event]
+        flag = str(meta["flag"])
+        required_flag = str(meta.get("requires_flag") or "")
+        if required_flag and not flags.get(required_flag):
+            skipped_not_ready += 1
+            continue
+        if not _role_output_event_has_durable_authority(run_root, run_state, event):
+            skipped_unauthorized += 1
+            continue
+        try:
+            role_output_runtime.validate_envelope_runtime_receipt(project_root, envelope)
+            payload = _role_output_body_payload_from_record(project_root, record, envelope)
+        except (role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError, TypeError, ValueError):
+            skipped_invalid += 1
+            continue
+        _preconsume_pending_card_return_ack_before_external_event(
+            project_root,
+            run_root,
+            run_state,
+            event=event,
+        )
+        if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event, run_state) is not None:
+            skipped_not_ready += 1
+            continue
+        side_effect_changed = _sync_material_review_from_role_output_payload(
+            project_root,
+            run_root,
+            run_state,
+            event,
+            payload,
+        )
+        scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+        if _scoped_event_is_recorded(run_state, scoped_identity) or (flags.get(flag) and event not in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}):
+            wait_closure = _close_waiting_controller_actions_for_external_event(
+                project_root,
+                run_root,
+                run_state,
+                event=event,
+                payload=payload,
+                source="role_output_ledger_event_already_recorded",
+            )
+            if wait_closure.get("changed") or side_effect_changed:
+                changed = True
+                already_recorded += 1
+                events.append(event)
+            continue
+        if _record_router_reconciled_external_event(project_root, run_root, run_state, event, payload):
+            changed = True
+            reconciled += 1
+            events.append(event)
+        elif side_effect_changed:
+            changed = True
+            already_recorded += 1
+            events.append(event)
+    if changed:
+        append_history(
+            run_state,
+            "router_reconciled_direct_role_output_event_ledger",
+            {
+                "reconciled": reconciled,
+                "already_recorded": already_recorded,
+                "events": events,
+                "skipped_invalid": skipped_invalid,
+                "skipped_not_ready": skipped_not_ready,
+                "skipped_unauthorized": skipped_unauthorized,
+            },
+        )
+    return {
+        "changed": changed,
+        "reconciled": reconciled,
+        "already_recorded": already_recorded,
+        "events": events,
+        "skipped_invalid": skipped_invalid,
+        "skipped_not_ready": skipped_not_ready,
+        "skipped_unauthorized": skipped_unauthorized,
+    }
+
 def _role_output_ledger_outputs(run_root: Path) -> list[dict[str, Any]]:
     ledger = read_json_if_exists(run_root / "role_output_ledger.json")
     outputs = ledger.get("outputs") if isinstance(ledger.get("outputs"), list) else []

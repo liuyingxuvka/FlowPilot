@@ -30,6 +30,10 @@ DISPATCH_BUSY_REQUIRES_TRUE_HOLDER = "dispatch_busy_requires_true_holder"
 DAEMON_MERGE_PRESERVES_FOREGROUND_EVENT = "daemon_merge_preserves_foreground_event"
 WAIT_REMINDER_HAS_STABLE_COOLDOWN = "wait_reminder_has_stable_cooldown"
 SELF_CHECK_HEADING_PROJECTS_TO_ENVELOPE = "self_check_heading_projects_to_envelope"
+ROLE_OUTPUT_EVENT_FOLDS_TO_ROUTER_STATE_AND_CLEARS_WAIT = (
+    "role_output_event_folds_to_router_state_and_clears_wait"
+)
+RESOLVED_WAIT_INVALIDATES_PENDING_PROJECTION = "resolved_wait_invalidates_pending_projection"
 UNIFIED_RECONCILER_ROOT_FIX = "unified_reconciler_root_fix"
 
 OBSERVED_RECEIPT_FLAG_WITHOUT_BATCH_LIFECYCLE = "observed_receipt_flag_without_batch_lifecycle"
@@ -38,9 +42,15 @@ OBSERVED_UNRELAYED_OLD_REQUEST_BLOCKS_REPLACEMENT = "observed_unrelayed_old_requ
 DAEMON_STALE_SNAPSHOT_ERASES_FOREGROUND_EVENT = "daemon_stale_snapshot_erases_foreground_event"
 REMINDER_RECREATED_AFTER_PENDING_WAIT_LOSS = "reminder_recreated_after_pending_wait_loss"
 RESULT_BODY_SELF_CHECK_NOT_PROJECTED = "result_body_self_check_not_projected"
+MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER = (
+    "material_review_event_left_only_in_role_output_ledger"
+)
+DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION = "done_wait_row_still_authorizes_pending_action"
+RECONCILED_WAIT_STILL_GENERATES_REMINDER = "reconciled_wait_still_generates_reminder"
 RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK = "receipt_only_fix_leaves_role_work_deadlock"
 SUPERSEDE_ONLY_FIX_LEAVES_PROJECTION_DRIFT = "supersede_only_fix_leaves_projection_drift"
 CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER = "case_patches_claim_root_fix_without_reconciler"
+ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER = "root_fix_without_role_output_event_reconciler"
 NO_CAS_FIX_LOSES_FOREGROUND_EVENT = "no_cas_fix_loses_foreground_event"
 
 VALID_SCENARIOS = (
@@ -50,6 +60,8 @@ VALID_SCENARIOS = (
     DAEMON_MERGE_PRESERVES_FOREGROUND_EVENT,
     WAIT_REMINDER_HAS_STABLE_COOLDOWN,
     SELF_CHECK_HEADING_PROJECTS_TO_ENVELOPE,
+    ROLE_OUTPUT_EVENT_FOLDS_TO_ROUTER_STATE_AND_CLEARS_WAIT,
+    RESOLVED_WAIT_INVALIDATES_PENDING_PROJECTION,
     UNIFIED_RECONCILER_ROOT_FIX,
 )
 
@@ -60,9 +72,13 @@ NEGATIVE_SCENARIOS = (
     DAEMON_STALE_SNAPSHOT_ERASES_FOREGROUND_EVENT,
     REMINDER_RECREATED_AFTER_PENDING_WAIT_LOSS,
     RESULT_BODY_SELF_CHECK_NOT_PROJECTED,
+    MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER,
+    DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION,
+    RECONCILED_WAIT_STILL_GENERATES_REMINDER,
     RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK,
     SUPERSEDE_ONLY_FIX_LEAVES_PROJECTION_DRIFT,
     CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER,
+    ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER,
     NO_CAS_FIX_LOSES_FOREGROUND_EVENT,
 )
 
@@ -119,6 +135,21 @@ class State:
     body_self_check_heading_level: int = 0  # 0 none | 1 h1 | 2 h2
     envelope_self_check_completed: bool = False
     envelope_self_check_passed: bool = False
+
+    direct_role_output_event_submitted: bool = False
+    role_output_event_type: str = "none"  # none | material_review_insufficient | generic
+    generic_role_output_event_reconciler: bool = False
+    role_output_event_folded_to_router_state: bool = False
+    router_event_flag_synced: bool = False
+    material_review_projection_synced: bool = False
+    material_insufficient_pm_repair_branch_exposed: bool = False
+    controller_wait_row_status: str = "none"  # none | waiting | done
+    scheduler_wait_row_status: str = "none"  # none | waiting | reconciled
+    pending_action_references_wait: bool = False
+    pending_action_validated_against_wait_ledgers: bool = False
+    pending_action_cleared_after_wait_resolution: bool = False
+    current_work_from_pending_action: bool = False
+    stale_wait_reminder_created: bool = False
 
     shared_reconcile_before_next_action: bool = False
     next_action_from_reconciled_state: bool = False
@@ -201,6 +232,37 @@ def _self_check_good() -> dict[str, object]:
     }
 
 
+def _role_output_event_good() -> dict[str, object]:
+    return {
+        "direct_role_output_event_submitted": True,
+        "role_output_event_type": "material_review_insufficient",
+        "generic_role_output_event_reconciler": True,
+        "role_output_event_folded_to_router_state": True,
+        "router_event_flag_synced": True,
+        "material_review_projection_synced": True,
+        "material_insufficient_pm_repair_branch_exposed": True,
+        "controller_wait_row_status": "done",
+        "scheduler_wait_row_status": "reconciled",
+        "pending_action_references_wait": True,
+        "pending_action_validated_against_wait_ledgers": True,
+        "pending_action_cleared_after_wait_resolution": True,
+        "current_work_from_pending_action": False,
+        "stale_wait_reminder_created": False,
+    }
+
+
+def _resolved_wait_good() -> dict[str, object]:
+    return {
+        "controller_wait_row_status": "done",
+        "scheduler_wait_row_status": "reconciled",
+        "pending_action_references_wait": True,
+        "pending_action_validated_against_wait_ledgers": True,
+        "pending_action_cleared_after_wait_resolution": True,
+        "current_work_from_pending_action": False,
+        "stale_wait_reminder_created": False,
+    }
+
+
 def _root_fix_good() -> dict[str, object]:
     return {
         "shared_reconcile_before_next_action": True,
@@ -222,9 +284,22 @@ def scenario_state(scenario: str) -> State:
         return _accepted(scenario, **_reminder_good())
     if scenario == SELF_CHECK_HEADING_PROJECTS_TO_ENVELOPE:
         return _accepted(scenario, **_self_check_good())
+    if scenario == ROLE_OUTPUT_EVENT_FOLDS_TO_ROUTER_STATE_AND_CLEARS_WAIT:
+        return _accepted(scenario, **_role_output_event_good())
+    if scenario == RESOLVED_WAIT_INVALIDATES_PENDING_PROJECTION:
+        return _accepted(scenario, **_resolved_wait_good())
     if scenario == UNIFIED_RECONCILER_ROOT_FIX:
         changes: dict[str, object] = {}
-        for fragment in (_receipt_good(), _supersede_good(), _dispatch_good(), _daemon_good(), _reminder_good(), _self_check_good(), _root_fix_good()):
+        for fragment in (
+            _receipt_good(),
+            _supersede_good(),
+            _dispatch_good(),
+            _daemon_good(),
+            _reminder_good(),
+            _self_check_good(),
+            _role_output_event_good(),
+            _root_fix_good(),
+        ):
             changes.update(fragment)
         return _accepted(scenario, **changes)
 
@@ -281,6 +356,51 @@ def scenario_state(scenario: str) -> State:
             envelope_self_check_completed=False,
             envelope_self_check_passed=False,
         )
+    if scenario == MATERIAL_REVIEW_EVENT_LEFT_ONLY_IN_ROLE_OUTPUT_LEDGER:
+        return _rejected(
+            scenario,
+            direct_role_output_event_submitted=True,
+            role_output_event_type="material_review_insufficient",
+            generic_role_output_event_reconciler=False,
+            role_output_event_folded_to_router_state=False,
+            router_event_flag_synced=False,
+            material_review_projection_synced=False,
+            material_insufficient_pm_repair_branch_exposed=False,
+            controller_wait_row_status="done",
+            scheduler_wait_row_status="reconciled",
+            pending_action_references_wait=True,
+            pending_action_validated_against_wait_ledgers=False,
+            pending_action_cleared_after_wait_resolution=False,
+            current_work_from_pending_action=True,
+            stale_wait_reminder_created=True,
+        )
+    if scenario == DONE_WAIT_ROW_STILL_AUTHORIZES_PENDING_ACTION:
+        return _rejected(
+            scenario,
+            role_output_event_folded_to_router_state=True,
+            router_event_flag_synced=True,
+            material_review_projection_synced=True,
+            material_insufficient_pm_repair_branch_exposed=True,
+            controller_wait_row_status="done",
+            scheduler_wait_row_status="reconciled",
+            pending_action_references_wait=True,
+            pending_action_validated_against_wait_ledgers=False,
+            pending_action_cleared_after_wait_resolution=False,
+            current_work_from_pending_action=True,
+        )
+    if scenario == RECONCILED_WAIT_STILL_GENERATES_REMINDER:
+        changes = dict(_role_output_event_good())
+        changes.update(
+            {
+                "pending_action_validated_against_wait_ledgers": False,
+                "pending_action_cleared_after_wait_resolution": False,
+                "stale_wait_reminder_created": True,
+            }
+        )
+        return _rejected(
+            scenario,
+            **changes,
+        )
     if scenario == RECEIPT_ONLY_FIX_LEAVES_ROLE_WORK_DEADLOCK:
         return _rejected(
             scenario,
@@ -312,6 +432,35 @@ def scenario_state(scenario: str) -> State:
                 "shared_reconcile_before_next_action": False,
                 "next_action_from_reconciled_state": False,
                 "root_fix_claimed": True,
+            }
+        )
+        return _rejected(scenario, **changes)
+    if scenario == ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER:
+        changes = {}
+        for fragment in (
+            _receipt_good(),
+            _supersede_good(),
+            _dispatch_good(),
+            _daemon_good(),
+            _reminder_good(),
+            _self_check_good(),
+            _root_fix_good(),
+        ):
+            changes.update(fragment)
+        changes.update(
+            {
+                "direct_role_output_event_submitted": True,
+                "role_output_event_type": "material_review_insufficient",
+                "generic_role_output_event_reconciler": False,
+                "role_output_event_folded_to_router_state": False,
+                "router_event_flag_synced": False,
+                "material_review_projection_synced": False,
+                "material_insufficient_pm_repair_branch_exposed": False,
+                "controller_wait_row_status": "done",
+                "scheduler_wait_row_status": "reconciled",
+                "pending_action_references_wait": True,
+                "pending_action_validated_against_wait_ledgers": True,
+                "pending_action_cleared_after_wait_resolution": True,
             }
         )
         return _rejected(scenario, **changes)
@@ -393,6 +542,10 @@ def _old_request_is_terminal(value: str) -> bool:
     return value in TERMINAL_REQUEST_STATUSES
 
 
+def _wait_row_is_resolved(state: State) -> bool:
+    return state.controller_wait_row_status == "done" or state.scheduler_wait_row_status == "reconciled"
+
+
 def consistency_failures(state: State) -> list[str]:
     failures: list[str] = []
 
@@ -462,11 +615,53 @@ def consistency_failures(state: State) -> list[str]:
     ):
         failures.append("result body self-check section was not projected into envelope metadata")
 
+    if state.direct_role_output_event_submitted and not state.generic_role_output_event_reconciler:
+        failures.append("direct role-output event had no generic durable event reconciler")
+
+    if state.direct_role_output_event_submitted and not state.role_output_event_folded_to_router_state:
+        failures.append("direct role-output event stayed in role output ledger without canonical Router event")
+
+    if state.role_output_event_folded_to_router_state and not state.router_event_flag_synced:
+        failures.append("Router event was recorded without syncing its state flag")
+
+    if (
+        state.role_output_event_type == "material_review_insufficient"
+        and state.role_output_event_folded_to_router_state
+        and not state.material_review_projection_synced
+    ):
+        failures.append("material review role-output event did not update Router material_review projection")
+
+    if (
+        state.role_output_event_type == "material_review_insufficient"
+        and state.role_output_event_folded_to_router_state
+        and state.material_review_projection_synced
+        and not state.material_insufficient_pm_repair_branch_exposed
+    ):
+        failures.append("material-insufficient review did not expose the PM repair or research branch")
+
+    if _wait_row_is_resolved(state) and state.pending_action_references_wait:
+        if not state.pending_action_validated_against_wait_ledgers:
+            failures.append("pending_action was not validated against resolved Controller or scheduler wait rows")
+        if not state.pending_action_cleared_after_wait_resolution:
+            failures.append("resolved Controller or scheduler wait row did not clear pending_action")
+
+    if _wait_row_is_resolved(state) and state.current_work_from_pending_action:
+        failures.append("daemon status/current work was derived from stale pending_action after wait resolution")
+
+    if _wait_row_is_resolved(state) and state.stale_wait_reminder_created:
+        failures.append("wait reminder was created for an already reconciled wait row")
+
     if state.root_fix_claimed and not state.shared_reconcile_before_next_action:
         failures.append("root fix was claimed without a shared durable reconciliation barrier before next action")
 
     if state.root_fix_claimed and not state.next_action_from_reconciled_state:
         failures.append("root fix was claimed while next action still used unreconciled projection state")
+
+    if state.root_fix_claimed and not state.generic_role_output_event_reconciler:
+        failures.append("root fix was claimed without generic role-output event reconciliation")
+
+    if state.root_fix_claimed and not state.pending_action_validated_against_wait_ledgers:
+        failures.append("root fix was claimed without validating pending_action against durable wait ledgers")
 
     return failures
 
@@ -525,13 +720,42 @@ def repair_candidate_states() -> dict[str, State]:
         duplicate_reminder_materialized=True,
         reminder_last_sent_persisted=False,
     )
+    role_output_event_only_changes = dict(_role_output_event_good())
+    role_output_event_only_changes.update(
+        {
+            "pending_action_validated_against_wait_ledgers": False,
+            "pending_action_cleared_after_wait_resolution": False,
+            "current_work_from_pending_action": True,
+        }
+    )
+    role_output_event_only = _rejected(
+        "candidate_role_output_event_reconciler_only",
+        **role_output_event_only_changes,
+    )
+    pending_clear_only = _rejected(
+        "candidate_pending_clear_only",
+        direct_role_output_event_submitted=True,
+        role_output_event_type="material_review_insufficient",
+        generic_role_output_event_reconciler=False,
+        role_output_event_folded_to_router_state=False,
+        router_event_flag_synced=False,
+        material_review_projection_synced=False,
+        material_insufficient_pm_repair_branch_exposed=False,
+        controller_wait_row_status="done",
+        scheduler_wait_row_status="reconciled",
+        pending_action_references_wait=True,
+        pending_action_validated_against_wait_ledgers=True,
+        pending_action_cleared_after_wait_resolution=True,
+    )
     case_patches = scenario_state(CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER)
     unified_root = scenario_state(UNIFIED_RECONCILER_ROOT_FIX)
     return {
         "receipt_only": receipt_only,
         "receipt_and_supersede_only": receipt_and_supersede,
+        "role_output_event_reconciler_only": role_output_event_only,
+        "pending_clear_only": pending_clear_only,
         "case_patches_without_shared_reconciler": case_patches,
-        "unified_reconciler_with_cas_and_true_holder_gate": unified_root,
+        "unified_reconciler_with_event_fold_pending_authority_cas_and_true_holder_gate": unified_root,
     }
 
 
