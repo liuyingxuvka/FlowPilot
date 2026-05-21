@@ -22,5 +22,5 @@
 
 - [x] 4.1 Synchronize the installed local FlowPilot skill and verify freshness.
 - [x] 4.2 Update maintenance/release notes as needed.
-- [ ] 4.3 Run clean local public-release checks after commit if applicable.
-- [ ] 4.4 Commit locally; do not push, tag, or publish a GitHub Release.
+- [x] 4.3 Run clean local public-release checks after commit if applicable.
+- [x] 4.4 Commit locally; do not push, tag, or publish a GitHub Release.

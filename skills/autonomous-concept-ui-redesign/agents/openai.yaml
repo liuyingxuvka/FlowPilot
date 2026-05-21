@@ -1,4 +1,4 @@
 interface:
   display_name: "Autonomous Concept UI Redesign"
-  short_description: "Experimental non-interactive UI redesign pipeline"
-  default_prompt: "Run the autonomous concept UI redesign pipeline for this UI task."
+  short_description: "Concept-first UI redesign with FlowGuard structure and screenshot QA"
+  default_prompt: "Run the autonomous concept UI redesign pipeline for this UI task, using the FlowGuard UI structure gate when behavior, hierarchy, state, or duplicate-information risk exists."

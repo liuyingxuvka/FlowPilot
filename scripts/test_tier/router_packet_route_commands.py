@@ -69,6 +69,7 @@ ROUTER_PACKET_COMMANDS = (
         patterns=(
             "material_scan_existing_results",
             "material_scan_partial_batch",
+            "material_scan_full_batch_wait_current_work_names_all_missing_roles",
             "current_node_result_requires_write_grant",
             "current_node_packet_rejects_unresolved",
         ),

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Literal, NamedTuple
+import json
+from typing import Any, Literal, NamedTuple, Sequence
 
 
 SurfaceKind = Literal["runtime_facade", "script_entrypoint", "model_facade"]
@@ -190,6 +191,25 @@ def install_required_surface_paths() -> tuple[str, ...]:
     return tuple(surface.path for surface in MAINTENANCE_SURFACES if surface.install_required)
 
 
+def check() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "surface_count": len(MAINTENANCE_SURFACES),
+        "install_required_surface_count": len(install_required_surface_paths()),
+        "thresholds": dict(THRESHOLDS),
+        "surface_kinds": {
+            kind: len(maintenance_surfaces(kind))
+            for kind in ("runtime_facade", "script_entrypoint", "model_facade")
+        },
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    _ = argv
+    print(json.dumps(check(), indent=2, sort_keys=True))
+    return 0
+
+
 RUNTIME_FACADES = surface_paths("runtime_facade")
 SCRIPT_ENTRYPOINTS = surface_paths("script_entrypoint")
 MODEL_FACADES = surface_paths("model_facade")
@@ -206,4 +226,10 @@ __all__ = (
     "RUNTIME_FACADES",
     "SCRIPT_ENTRYPOINTS",
     "MODEL_FACADES",
+    "check",
+    "main",
 )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

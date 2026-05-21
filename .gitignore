@@ -6,6 +6,10 @@ tmp/
 simulations/*.proof.json
 simulations/*.background_latest.json
 
+# Local Codex runtime artifacts.
+.codex/tmp/
+.codex/skill_maintenance_log.jsonl
+
 # Private/local knowledge records.
 kb/
 

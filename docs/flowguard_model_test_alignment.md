@@ -82,8 +82,8 @@ above the line threshold, but they are still recorded as actionable
 `defer_structure_split` rows with owner, reason, safety status, and recommended
 next action metadata.
 
-The current diagnostic reports 541 surfaces, 493 covered surfaces, and 48
-remaining gap surfaces. All 48 are explicit `needs_structure_split` deferrals;
+The current diagnostic reports 717 surfaces, 708 covered surfaces, and 9
+remaining gap surfaces. All 9 are explicit `needs_structure_split` deferrals;
 `unresolved_non_deferred_gap_count` is zero and `release_convergence_ok` remains
 true.
 

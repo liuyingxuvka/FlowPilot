@@ -18,158 +18,18 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [
       {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 17,
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_effects|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_controller_scheduler_receipts_effects has 327 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_effects",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py",
+        "priority_score": 29,
         "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_contract_index",
-        "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_contract_index",
-        "surface_owner": "flowpilot_router_contract_index"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_dispatch_policy",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
-        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_external_event_data",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
-        "surface_owner": "flowpilot_router_protocol_external_event_data"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_external_event_registry",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
-        "surface_owner": "flowpilot_router_protocol_external_event_registry"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_gate_registry",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_gate_registry",
-        "surface_owner": "flowpilot_router_protocol_gate_registry"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
-        "kind": "script_entrypoint",
-        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_maintenance_registry",
-        "path": "scripts/flowpilot_maintenance_registry.py",
-        "priority_score": 20,
-        "release_relevance": "public_cli",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "script:flowpilot_maintenance_registry",
-        "surface_owner": "script:flowpilot_maintenance_registry"
-      },
-      {
-        "code": "missing_test",
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
-        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "priority_score": 26,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_external_contract_test",
+        "repair_type": "defer_structure_split",
         "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_effects",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_effects"
       },
       {
         "code": "needs_structure_split",
@@ -273,7 +133,7 @@
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_startup_intake_materialization|defer_structure_split|needs_structure_split",
         "kind": "compatibility_facade",
-        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "message": "flowpilot_router_startup_intake_materialization has 453 lines, above the 320 line diagnostic threshold",
         "name": "flowpilot_router_startup_intake_materialization",
         "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
         "priority_score": 29,
@@ -282,270 +142,28 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_startup_intake_materialization",
         "surface_owner": "flowpilot_router_startup_intake_materialization"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel exists as code without a model binding",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
-        "kind": "script_entrypoint",
-        "message": "flowpilot_maintenance_registry exists as code without a model binding",
-        "name": "flowpilot_maintenance_registry",
-        "path": "scripts/flowpilot_maintenance_registry.py",
-        "priority_score": 42,
-        "release_relevance": "public_cli",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "script:flowpilot_maintenance_registry",
-        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
     "actionable_summary": [
       {
-        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_effects|defer_structure_split|needs_structure_split",
         "finding_count": 1,
         "gap_codes": [
-          "internal_only_test"
+          "needs_structure_split"
         ],
-        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
+        "message": "flowpilot_router_controller_scheduler_receipts_effects has 327 lines, above the 320 line diagnostic threshold",
         "paths": [
-          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py"
         ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
         "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_closure_kernel"
-        ],
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_control_plane_contracts"
-        ],
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_contract_index.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_contract_index"
-        ],
-        "surface_owner": "flowpilot_router_contract_index"
-      },
-      {
-        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_protocol_dispatch_policy"
-        ],
-        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
-      },
-      {
-        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_protocol_external_event_data"
-        ],
-        "surface_owner": "flowpilot_router_protocol_external_event_data"
-      },
-      {
-        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_protocol_external_event_registry"
-        ],
-        "surface_owner": "flowpilot_router_protocol_external_event_registry"
-      },
-      {
-        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_protocol_gate_registry"
-        ],
-        "surface_owner": "flowpilot_router_protocol_gate_registry"
-      },
-      {
-        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
-        "finding_count": 1,
-        "gap_codes": [
-          "missing_model"
-        ],
-        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
-        ],
-        "primary_code": "missing_model",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_closure_kernel"
-        ],
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
-        "finding_count": 1,
-        "gap_codes": [
-          "missing_model"
-        ],
-        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
-        ],
-        "primary_code": "missing_model",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_control_plane_contracts"
-        ],
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
-        "finding_count": 1,
-        "gap_codes": [
-          "missing_model"
-        ],
-        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "paths": [
-          "scripts/flowpilot_maintenance_registry.py"
-        ],
-        "primary_code": "missing_model",
-        "priority_score": 20,
-        "release_relevance": "public_cli",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_ids": [
-          "script:flowpilot_maintenance_registry"
-        ],
-        "surface_owner": "script:flowpilot_maintenance_registry"
-      },
-      {
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "missing_test"
-        ],
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
-        ],
-        "primary_code": "missing_test",
-        "priority_score": 26,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_external_contract_test",
+        "repair_type": "defer_structure_split",
         "severity": "medium",
         "surface_ids": [
-          "asset:flowpilot_router_controller_scheduler_receipts_packet_folds"
+          "asset:flowpilot_router_controller_scheduler_receipts_effects"
         ],
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_effects"
       },
       {
         "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
@@ -693,7 +311,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "message": "flowpilot_router_startup_intake_materialization has 453 lines, above the 320 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py"
         ],
@@ -706,72 +324,26 @@
           "asset:flowpilot_router_startup_intake_materialization"
         ],
         "surface_owner": "flowpilot_router_startup_intake_materialization"
-      },
-      {
-        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
-        "finding_count": 1,
-        "gap_codes": [
-          "extra_code"
-        ],
-        "message": "flowpilot_closure_kernel exists as code without a model binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_closure_kernel.py"
-        ],
-        "primary_code": "extra_code",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_ids": [
-          "asset:flowpilot_closure_kernel"
-        ],
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
-        "finding_count": 1,
-        "gap_codes": [
-          "extra_code"
-        ],
-        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_control_plane_contracts.py"
-        ],
-        "primary_code": "extra_code",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_ids": [
-          "asset:flowpilot_control_plane_contracts"
-        ],
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
-        "finding_count": 1,
-        "gap_codes": [
-          "extra_code"
-        ],
-        "message": "flowpilot_maintenance_registry exists as code without a model binding",
-        "paths": [
-          "scripts/flowpilot_maintenance_registry.py"
-        ],
-        "primary_code": "extra_code",
-        "priority_score": 42,
-        "release_relevance": "public_cli",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_ids": [
-          "script:flowpilot_maintenance_registry"
-        ],
-        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
-    "covered_surface_count": 702,
-    "deferred_structure_split_count": 8,
+    "covered_surface_count": 708,
+    "deferred_structure_split_count": 9,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_effects|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_controller_scheduler_receipts_effects has 327 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_effects",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_effects",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_effects"
+      },
       {
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
@@ -790,7 +362,7 @@
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_startup_intake_materialization|defer_structure_split|needs_structure_split",
         "kind": "compatibility_facade",
-        "message": "flowpilot_router_startup_intake_materialization has 401 lines, above the 320 line diagnostic threshold",
+        "message": "flowpilot_router_startup_intake_materialization has 453 lines, above the 320 line diagnostic threshold",
         "name": "flowpilot_router_startup_intake_materialization",
         "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
         "priority_score": 29,
@@ -799,118 +371,6 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_startup_intake_materialization",
         "surface_owner": "flowpilot_router_startup_intake_materialization"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "flowpilot_closure_kernel|add_model_binding|missing_model",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "flowpilot_closure_kernel|classify_or_remove_code|extra_code",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel exists as code without a model binding",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_closure_kernel|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_closure_kernel has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_closure_kernel",
-        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_closure_kernel",
-        "surface_owner": "flowpilot_closure_kernel"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "flowpilot_control_plane_contracts|add_model_binding|missing_model",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 18,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "flowpilot_control_plane_contracts|classify_or_remove_code|extra_code",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts exists as code without a model binding",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 40,
-        "release_relevance": "runtime_contract",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_control_plane_contracts|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_control_plane_contracts has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_control_plane_contracts",
-        "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_control_plane_contracts",
-        "surface_owner": "flowpilot_control_plane_contracts"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_contract_index|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_contract_index has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_contract_index",
-        "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_contract_index",
-        "surface_owner": "flowpilot_router_contract_index"
-      },
-      {
-        "code": "missing_test",
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|add_external_contract_test|missing_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has no ordinary test evidence in the current diagnostic corpus",
-        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "priority_score": 26,
-        "release_relevance": "runtime_contract",
-        "repair_type": "add_external_contract_test",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
       },
       {
         "code": "needs_structure_split",
@@ -969,34 +429,6 @@
         "surface_owner": "flowpilot_router_lifecycle_requests"
       },
       {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_dispatch_policy|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_dispatch_policy has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_dispatch_policy",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
-        "surface_owner": "flowpilot_router_protocol_dispatch_policy"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_external_event_data|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_external_event_data has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_external_event_data",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_external_event_data",
-        "surface_owner": "flowpilot_router_protocol_external_event_data"
-      },
-      {
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
@@ -1011,34 +443,6 @@
         "surface_owner": "flowpilot_router_protocol_external_event_data"
       },
       {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_external_event_registry|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_external_event_registry has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_external_event_registry",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
-        "surface_owner": "flowpilot_router_protocol_external_event_registry"
-      },
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_protocol_gate_registry|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "message": "flowpilot_router_protocol_gate_registry has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_protocol_gate_registry",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_protocol_gate_registry",
-        "surface_owner": "flowpilot_router_protocol_gate_registry"
-      },
-      {
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_runtime_state|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
@@ -1051,61 +455,22 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_runtime_state",
         "surface_owner": "flowpilot_router_runtime_state"
-      },
-      {
-        "code": "missing_model",
-        "dedupe_key": "script:flowpilot_maintenance_registry|add_model_binding|missing_model",
-        "kind": "script_entrypoint",
-        "message": "flowpilot_maintenance_registry is not bound to an executable FlowGuard/model obligation in the current diagnostic corpus",
-        "name": "flowpilot_maintenance_registry",
-        "path": "scripts/flowpilot_maintenance_registry.py",
-        "priority_score": 20,
-        "release_relevance": "public_cli",
-        "repair_type": "add_model_binding",
-        "severity": "high",
-        "surface_id": "script:flowpilot_maintenance_registry",
-        "surface_owner": "script:flowpilot_maintenance_registry"
-      },
-      {
-        "code": "extra_code",
-        "dedupe_key": "script:flowpilot_maintenance_registry|classify_or_remove_code|extra_code",
-        "kind": "script_entrypoint",
-        "message": "flowpilot_maintenance_registry exists as code without a model binding",
-        "name": "flowpilot_maintenance_registry",
-        "path": "scripts/flowpilot_maintenance_registry.py",
-        "priority_score": 42,
-        "release_relevance": "public_cli",
-        "repair_type": "classify_or_remove_code",
-        "severity": "low",
-        "surface_id": "script:flowpilot_maintenance_registry",
-        "surface_owner": "script:flowpilot_maintenance_registry"
       }
     ],
     "full_coverage_ok": false,
     "gap_counts": {
-      "extra_code": 3,
-      "internal_only_test": 7,
-      "missing_model": 3,
-      "missing_test": 1,
-      "needs_structure_split": 8
+      "needs_structure_split": 9
     },
     "gap_counts_by_release_relevance": {
-      "public_cli": 2,
-      "runtime_contract": 20
+      "runtime_contract": 9
     },
     "gap_counts_by_repair_type": {
-      "add_external_contract_test": 1,
-      "add_model_binding": 3,
-      "classify_or_remove_code": 3,
-      "defer_structure_split": 8,
-      "upgrade_to_external_contract_test": 7
+      "defer_structure_split": 9
     },
     "gap_counts_by_severity": {
-      "high": 10,
-      "low": 3,
       "medium": 9
     },
-    "gap_surface_count": 15,
+    "gap_surface_count": 9,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -1284,7 +649,7 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": false,
+    "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
     "surface_count": 717,
     "surface_counts": {
@@ -1876,24 +1241,40 @@
         "top_level_function_count": 1
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 310,
+        "line_count": 327,
         "local_import_count": 8,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_effects",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_effects.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "compatibility_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_effects",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_effects",
         "top_level_class_count": 0,
@@ -2526,7 +1907,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 219,
+        "line_count": 223,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2703,7 +2084,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 269,
+        "line_count": 306,
         "local_import_count": 6,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2716,7 +2097,7 @@
         "surface_id": "asset:flowpilot_router_protocol_work_contracts",
         "surface_owner": "flowpilot_router_protocol_work_contracts",
         "top_level_class_count": 0,
-        "top_level_function_count": 2
+        "top_level_function_count": 3
       },
       {
         "covered": true,
@@ -3394,7 +2775,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 401,
+        "line_count": 453,
         "local_import_count": 8,
         "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
@@ -3420,7 +2801,7 @@
         "surface_id": "asset:flowpilot_router_startup_intake_materialization",
         "surface_owner": "flowpilot_router_startup_intake_materialization",
         "top_level_class_count": 0,
-        "top_level_function_count": 18
+        "top_level_function_count": 19
       },
       {
         "covered": true,
@@ -4592,7 +3973,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 234,
+        "line_count": 235,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_transaction_registry_checks",
@@ -5450,7 +4831,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 218,
+        "line_count": 224,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_pm_package_absorption_checks",
@@ -6729,7 +6110,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 328,
+        "line_count": 329,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -6753,7 +6134,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 363,
+        "line_count": 365,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -6985,31 +6366,23 @@
         "top_level_function_count": 9
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "missing_model",
-          "extra_code",
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
-        "has_model": false,
+        "has_external_contract": true,
+        "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 289,
         "local_import_count": 0,
-        "max_severity": "high",
-        "model_binding": null,
+        "max_severity": "none",
+        "model_binding": "control_plane_closure_kernel",
         "name": "flowpilot_closure_kernel",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "add_model_binding",
-          "classify_or_remove_code",
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_closure_kernel",
         "surface_owner": "flowpilot_closure_kernel",
@@ -7017,31 +6390,23 @@
         "top_level_function_count": 16
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "missing_model",
-          "extra_code",
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
-        "has_model": false,
+        "has_external_contract": true,
+        "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 140,
+        "line_count": 147,
         "local_import_count": 0,
-        "max_severity": "high",
-        "model_binding": null,
+        "max_severity": "none",
+        "model_binding": "control_plane_contracts",
         "name": "flowpilot_control_plane_contracts",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_control_plane_contracts.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "add_model_binding",
-          "classify_or_remove_code",
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_control_plane_contracts",
         "surface_owner": "flowpilot_control_plane_contracts",
@@ -7755,27 +7120,23 @@
         "top_level_function_count": 4
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 48,
         "local_import_count": 0,
-        "max_severity": "high",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_contract_index",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_contract_index.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_contract_index",
         "surface_owner": "flowpilot_router_contract_index",
@@ -7791,7 +7152,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 304,
+        "line_count": 307,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8099,13 +7460,12 @@
         "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
         "gap_codes": [
-          "missing_test",
           "needs_structure_split"
         ],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
-        "has_test": false,
+        "has_test": true,
         "kind": "owner_module",
         "line_count": 582,
         "local_import_count": 3,
@@ -8123,7 +7483,6 @@
         "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
         "repair_types": [
-          "add_external_contract_test",
           "defer_structure_split"
         ],
         "safe_split_class": "stateful_runtime_flow",
@@ -8369,7 +7728,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 225,
+        "line_count": 277,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8382,7 +7741,7 @@
         "surface_id": "asset:flowpilot_router_event_identity_payload",
         "surface_owner": "flowpilot_router_event_identity_payload",
         "top_level_class_count": 0,
-        "top_level_function_count": 11
+        "top_level_function_count": 13
       },
       {
         "covered": true,
@@ -8561,7 +7920,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 110,
+        "line_count": 117,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8906,7 +8265,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 290,
+        "line_count": 292,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9330,27 +8689,23 @@
         "top_level_function_count": 0
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 54,
         "local_import_count": 1,
-        "max_severity": "high",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_dispatch_policy",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_protocol_dispatch_policy.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_protocol_dispatch_policy",
         "surface_owner": "flowpilot_router_protocol_dispatch_policy",
@@ -9386,17 +8741,16 @@
         "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
         "gap_codes": [
-          "internal_only_test",
           "needs_structure_split"
         ],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 503,
         "local_import_count": 0,
-        "max_severity": "high",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_event_data",
         "parse_error": "",
@@ -9410,8 +8764,7 @@
         "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
         "repair_types": [
-          "defer_structure_split",
-          "upgrade_to_external_contract_test"
+          "defer_structure_split"
         ],
         "safe_split_class": "declarative_protocol_table",
         "split_reason": "line_threshold_exceeded | external_contract_pinned",
@@ -9424,27 +8777,23 @@
         "top_level_function_count": 0
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 69,
         "local_import_count": 1,
-        "max_severity": "high",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_external_event_registry",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_registry.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_protocol_external_event_registry",
         "surface_owner": "flowpilot_router_protocol_external_event_registry",
@@ -9637,27 +8986,23 @@
         "top_level_function_count": 0
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 354,
         "local_import_count": 0,
-        "max_severity": "high",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_protocol_gate_registry",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_protocol_gate_registry.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_protocol_gate_registry",
         "surface_owner": "flowpilot_router_protocol_gate_registry",
@@ -10467,7 +9812,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 165,
+        "line_count": 179,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10705,7 +10050,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 112,
+        "line_count": 113,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11324,7 +10669,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 240,
+        "line_count": 272,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12808,7 +12153,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 259,
+        "line_count": 276,
         "max_severity": "none",
         "model_binding": "maintenance_map_cli",
         "name": "flowpilot_maintenance_map",
@@ -12821,29 +12166,23 @@
         "surface_owner": "script:flowpilot_maintenance_map"
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "missing_model",
-          "extra_code"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
-        "has_main": false,
-        "has_model": false,
+        "has_main": true,
+        "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 209,
-        "max_severity": "high",
-        "model_binding": null,
+        "line_count": 235,
+        "max_severity": "none",
+        "model_binding": "maintenance_registry_cli",
         "name": "flowpilot_maintenance_registry",
         "parse_error": "",
         "path": "scripts/flowpilot_maintenance_registry.py",
         "release_relevance": "public_cli",
-        "repair_types": [
-          "add_model_binding",
-          "classify_or_remove_code"
-        ],
+        "repair_types": [],
         "split_threshold": 650,
         "surface_id": "script:flowpilot_maintenance_registry",
         "surface_owner": "script:flowpilot_maintenance_registry"
@@ -14354,9 +13693,13 @@
           "dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending",
           "-k",
           "dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition",
+          "-k",
+          "dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request",
+          "-k",
+          "dispatch_recipient_gate_still_blocks_relayed_role_work_target",
           "tests.router_runtime.dispatch_gate"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition tests.router_runtime.dispatch_gate",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition -k dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request -k dispatch_recipient_gate_still_blocks_relayed_role_work_target tests.router_runtime.dispatch_gate",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14571,12 +13914,14 @@
           "-k",
           "missing_system_card_ack_wait_confirms",
           "-k",
+          "reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift",
+          "-k",
           "reconciled_controller_action_backfills_receipt_done_scheduler_row",
           "-k",
           "router_daemon_card_ack_reconciles",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14667,12 +14012,16 @@
           "-k",
           "controller_patrol_timer_allows_terminal_return_only_when_stopped",
           "-k",
+          "controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window",
+          "-k",
           "controller_patrol_timer_continue_patrol_restarts_and_waits",
           "-k",
           "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat",
+          "-k",
+          "nonterminal_user_status_return_is_not_controller_stop",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat -k nonterminal_user_status_return_is_not_controller_stop tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14790,9 +14139,13 @@
           "test_material_scan_direct_relay_blocks_missing_output_contract",
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+          "-k",
+          "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14859,12 +14212,14 @@
           "-k",
           "material_scan_partial_batch",
           "-k",
+          "material_scan_full_batch_wait_current_work_names_all_missing_roles",
+          "-k",
           "current_node_result_requires_write_grant",
           "-k",
           "current_node_packet_rejects_unresolved",
           "tests.router_runtime.packets"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k material_scan_full_batch_wait_current_work_names_all_missing_roles -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -15095,10 +14450,12 @@
           "-k",
           "test_pm_role_work_request_rejects_current_node_contract_family",
           "-k",
+          "test_pm_role_work_request_supersedes_unrelayed_old_request",
+          "-k",
           "test_advisory_pm_role_work_wait_is_marked_nonblocking",
           "tests.router_runtime.pm_role_work"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_pm_role_work_request_supersedes_unrelayed_old_request -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -15879,6 +15236,10 @@
           "-k",
           "startup_daemon",
           "-k",
+          "startup_seed",
+          "-k",
+          "flowguard_snapshot",
+          "-k",
           "legacy_startup_daemon",
           "-k",
           "router_daemon_queues_visible_startup_rows_after_internal_audit",
@@ -15890,7 +15251,7 @@
           "partial_startup_role",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k startup_seed -k flowguard_snapshot -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -15927,10 +15288,12 @@
           "-k",
           "heartbeat_startup",
           "-k",
+          "reconciled_startup_display",
+          "-k",
           "cockpit_requested",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k cockpit_requested tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k reconciled_startup_display -k cockpit_requested tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -17174,15 +16537,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -17229,24 +16594,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_capability_checks",
-            "artifact_root": "tmp/flowguard_background",
+            "artifact_name": "capability_legacy_full",
+            "artifact_root": "tmp/test_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\capability_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_capability_checks",
-            "ok": true,
+            "execution_status": "failed",
+            "exit_code": 1,
+            "meta_status": "failed",
+            "name": "capability_legacy_full",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
             "reasons": [],
-            "status": "passed"
+            "status": "failed"
           }
         },
         "background_recommended": true,
@@ -17266,7 +16631,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-20T17:07:15.994942+00:00",
+            "created_at": "2026-05-21T06:08:03.890163+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -17330,15 +16695,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -17385,24 +16752,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_meta_checks",
-            "artifact_root": "tmp/flowguard_background",
+            "artifact_name": "meta_legacy_full",
+            "artifact_root": "tmp/test_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\meta_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\meta_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\meta_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\meta_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\meta_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_meta_checks",
-            "ok": true,
+            "execution_status": "failed",
+            "exit_code": 1,
+            "meta_status": "failed",
+            "name": "meta_legacy_full",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
             "reasons": [],
-            "status": "passed"
+            "status": "failed"
           }
         },
         "background_recommended": true,
@@ -17422,7 +16789,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-20T17:07:16.027924+00:00",
+            "created_at": "2026-05-21T06:08:03.946911+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -17483,15 +16850,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -17621,15 +16990,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -17745,11 +17116,9 @@
               "name": "public_release_check",
               "ok": true,
               "progress_seen": true,
-              "proof_scope": "local_only",
-              "reasons": [
-                "release_url_check_skipped_or_release_only_tier"
-              ],
-              "status": "release_local_only"
+              "proof_scope": "full",
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "public_release_check",
@@ -17774,13 +17143,13 @@
           ],
           "selected": {
             "artifact_name": "public_release_check",
-            "artifact_root": "tmp/test_background",
+            "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.out.txt"
             },
             "execution_status": "passed",
             "exit_code": 0,
@@ -17950,9 +17319,13 @@
           "dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending",
           "-k",
           "dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition",
+          "-k",
+          "dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request",
+          "-k",
+          "dispatch_recipient_gate_still_blocks_relayed_role_work_target",
           "tests.router_runtime.dispatch_gate"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition tests.router_runtime.dispatch_gate",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition -k dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request -k dispatch_recipient_gate_still_blocks_relayed_role_work_target tests.router_runtime.dispatch_gate",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18167,12 +17540,14 @@
           "-k",
           "missing_system_card_ack_wait_confirms",
           "-k",
+          "reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift",
+          "-k",
           "reconciled_controller_action_backfills_receipt_done_scheduler_row",
           "-k",
           "router_daemon_card_ack_reconciles",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18263,12 +17638,16 @@
           "-k",
           "controller_patrol_timer_allows_terminal_return_only_when_stopped",
           "-k",
+          "controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window",
+          "-k",
           "controller_patrol_timer_continue_patrol_restarts_and_waits",
           "-k",
           "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat",
+          "-k",
+          "nonterminal_user_status_return_is_not_controller_stop",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat -k nonterminal_user_status_return_is_not_controller_stop tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18386,9 +17765,13 @@
           "test_material_scan_direct_relay_blocks_missing_output_contract",
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+          "-k",
+          "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18519,12 +17902,14 @@
           "-k",
           "material_scan_partial_batch",
           "-k",
+          "material_scan_full_batch_wait_current_work_names_all_missing_roles",
+          "-k",
           "current_node_result_requires_write_grant",
           "-k",
           "current_node_packet_rejects_unresolved",
           "tests.router_runtime.packets"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k material_scan_full_batch_wait_current_work_names_all_missing_roles -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18755,10 +18140,12 @@
           "-k",
           "test_pm_role_work_request_rejects_current_node_contract_family",
           "-k",
+          "test_pm_role_work_request_supersedes_unrelayed_old_request",
+          "-k",
           "test_advisory_pm_role_work_wait_is_marked_nonblocking",
           "tests.router_runtime.pm_role_work"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_pm_role_work_request_supersedes_unrelayed_old_request -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -19469,6 +18856,10 @@
           "-k",
           "startup_daemon",
           "-k",
+          "startup_seed",
+          "-k",
+          "flowguard_snapshot",
+          "-k",
           "legacy_startup_daemon",
           "-k",
           "router_daemon_queues_visible_startup_rows_after_internal_audit",
@@ -19480,7 +18871,7 @@
           "partial_startup_role",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k startup_seed -k flowguard_snapshot -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -19517,10 +18908,12 @@
           "-k",
           "heartbeat_startup",
           "-k",
+          "reconciled_startup_display",
+          "-k",
           "cockpit_requested",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k cockpit_requested tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k reconciled_startup_display -k cockpit_requested tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20108,9 +19501,13 @@
           "test_material_scan_direct_relay_blocks_missing_output_contract",
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+          "-k",
+          "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20145,10 +19542,12 @@
           "-k",
           "test_pm_role_work_request_rejects_current_node_contract_family",
           "-k",
+          "test_pm_role_work_request_supersedes_unrelayed_old_request",
+          "-k",
           "test_advisory_pm_role_work_wait_is_marked_nonblocking",
           "tests.router_runtime.pm_role_work"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_pm_role_work_request_supersedes_unrelayed_old_request -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21238,9 +20637,13 @@
           "dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending",
           "-k",
           "dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition",
+          "-k",
+          "dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request",
+          "-k",
+          "dispatch_recipient_gate_still_blocks_relayed_role_work_target",
           "tests.router_runtime.dispatch_gate"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition tests.router_runtime.dispatch_gate",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k dispatch_recipient_gate_allows_pm_after_user_intake_first_output -k dispatch_recipient_gate_allows_same_role_system_card_bundle -k dispatch_recipient_gate_allows_system_card_for_active_holder -k dispatch_recipient_gate_blocks_busy_packet_holder -k dispatch_recipient_gate_blocks_followup_when_role_wait_is_active -k dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending -k dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending -k dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition -k dispatch_recipient_gate_allows_role_work_replacement_for_unrelayed_old_request -k dispatch_recipient_gate_still_blocks_relayed_role_work_target tests.router_runtime.dispatch_gate",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21455,12 +20858,14 @@
           "-k",
           "missing_system_card_ack_wait_confirms",
           "-k",
+          "reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift",
+          "-k",
           "reconciled_controller_action_backfills_receipt_done_scheduler_row",
           "-k",
           "router_daemon_card_ack_reconciles",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k completed_pending_controller_action_receipt -k controller_action_ledger_handles_multiple_receipts -k controller_boundary_done_receipt_reclaims_router_postcondition -k controller_boundary_duplicate_old_receipt_does_not_block_while_second_repair_pending -k controller_patrol_timer_wakes_on_controller_action_ledger -k foreground_controller_standby_wakes_on_controller_action_ledger -k missing_system_card_ack_after_controller_delivery_done -k missing_system_card_ack_wait_confirms -k reconcile_replays_reconciled_wait_reminder_receipt_after_state_drift -k reconciled_controller_action_backfills_receipt_done_scheduler_row -k router_daemon_card_ack_reconciles tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21551,12 +20956,16 @@
           "-k",
           "controller_patrol_timer_allows_terminal_return_only_when_stopped",
           "-k",
+          "controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window",
+          "-k",
           "controller_patrol_timer_continue_patrol_restarts_and_waits",
           "-k",
           "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat",
+          "-k",
+          "nonterminal_user_status_return_is_not_controller_stop",
           "tests.router_runtime.foreground_controller"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat tests.router_runtime.foreground_controller",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k foreground_controller_standby_default_waits_past_timeout_until_action -k foreground_controller_standby_does_not_compute_router_next -k foreground_controller_standby_keeps_alive_when_daemon_has_no_ready_action -k foreground_controller_standby_materializes_report_reminder_with_liveness_probe -k foreground_controller_standby_requests_liveness_check_on_stale_or_missing_daemon -k foreground_controller_standby_returns_ack_reminder_and_blocker_due -k foreground_controller_standby_returns_lost_role_blocker_required -k foreground_controller_standby_returns_no_output_reissue_required -k foreground_controller_standby_self_audits_controller_local_wait -k foreground_controller_standby_waits_on_live_daemon_role_wait -k controller_patrol_timer_allows_terminal_return_only_when_stopped -k controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window -k controller_patrol_timer_continue_patrol_restarts_and_waits -k controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat -k nonterminal_user_status_return_is_not_controller_stop tests.router_runtime.foreground_controller",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21674,9 +21083,13 @@
           "test_material_scan_direct_relay_blocks_missing_output_contract",
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+          "-k",
+          "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21743,12 +21156,14 @@
           "-k",
           "material_scan_partial_batch",
           "-k",
+          "material_scan_full_batch_wait_current_work_names_all_missing_roles",
+          "-k",
           "current_node_result_requires_write_grant",
           "-k",
           "current_node_packet_rejects_unresolved",
           "tests.router_runtime.packets"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k material_scan_existing_results -k material_scan_partial_batch -k material_scan_full_batch_wait_current_work_names_all_missing_roles -k current_node_result_requires_write_grant -k current_node_packet_rejects_unresolved tests.router_runtime.packets",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21979,10 +21394,12 @@
           "-k",
           "test_pm_role_work_request_rejects_current_node_contract_family",
           "-k",
+          "test_pm_role_work_request_supersedes_unrelayed_old_request",
+          "-k",
           "test_advisory_pm_role_work_wait_is_marked_nonblocking",
           "tests.router_runtime.pm_role_work"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_role_work_request_requires_valid_recipient_and_contract -k test_pm_role_work_request_rejects_current_node_contract_family -k test_pm_role_work_request_supersedes_unrelayed_old_request -k test_advisory_pm_role_work_wait_is_marked_nonblocking tests.router_runtime.pm_role_work",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -22763,6 +22180,10 @@
           "-k",
           "startup_daemon",
           "-k",
+          "startup_seed",
+          "-k",
+          "flowguard_snapshot",
+          "-k",
           "legacy_startup_daemon",
           "-k",
           "router_daemon_queues_visible_startup_rows_after_internal_audit",
@@ -22774,7 +22195,7 @@
           "partial_startup_role",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k run_until -k scheduled_startup -k manual_startup -k formal_startup -k deterministic -k startup_daemon -k startup_seed -k flowguard_snapshot -k legacy_startup_daemon -k router_daemon_queues_visible_startup_rows_after_internal_audit -k load_controller_core -k daemon_folds -k partial_startup_role tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -22811,10 +22232,12 @@
           "-k",
           "heartbeat_startup",
           "-k",
+          "reconciled_startup_display",
+          "-k",
           "cockpit_requested",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k cockpit_requested tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_fact -k record_event_accepts_runtime_envelope_ref -k heartbeat_startup -k reconciled_startup_display -k cockpit_requested tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -23223,13 +22646,8 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 14,
-    "unresolved_non_deferred_gap_counts": {
-      "extra_code": 3,
-      "internal_only_test": 7,
-      "missing_model": 3,
-      "missing_test": 1
-    }
+    "unresolved_non_deferred_gap_count": 0,
+    "unresolved_non_deferred_gap_counts": {}
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -25175,7 +24593,7 @@
     }
   ],
   "plan_count": 8,
-  "release_convergence_ok": false,
+  "release_convergence_ok": true,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
   "source_audit_ok": true,
@@ -40532,7 +39950,7 @@
           "test_name": "test_artifact_validation_and_child_skill_capability_external_contracts"
         },
         {
-          "assert_count": 49,
+          "assert_count": 51,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "control_transactions.registry_issues",
@@ -40551,6 +39969,7 @@
             "control_transactions._control_transaction_row",
             "control_transactions._validate_control_transaction_requirements",
             "controller_repair_schedule._schedule_controller_deliverable_repair",
+            "receipts_packet_folds._registered_controller_receipt_evidence_fold_actions",
             "receipts_pending._done_controller_receipt_for_entry",
             "receipts_pending._router_scheduler_row_for_controller_entry",
             "receipts_scheduled._backfill_scheduler_row_from_reconciled_controller_action",
@@ -40560,6 +39979,7 @@
             "router_cli.parse_args",
             "run_root.mkdir",
             "self.assertEqual",
+            "self.assertIn",
             "self.assertIs",
             "self.assertIsNone",
             "self.assertTrue",

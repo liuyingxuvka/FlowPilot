@@ -55,6 +55,8 @@ ASSET_FACADE_MODULES = {
 }
 
 FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
+    "asset:flowpilot_closure_kernel",
+    "asset:flowpilot_control_plane_contracts",
     "asset:packet_runtime",
     "asset:flowpilot_runtime",
     "asset:flowpilot_runtime_args",
@@ -62,7 +64,9 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_runtime_role_output_commands",
     "asset:flowpilot_router",
     "asset:flowpilot_router_facade_imports",
+    "asset:flowpilot_router_contract_index",
     "asset:flowpilot_router_controller_scheduler_receipts",
+    "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
     "asset:flowpilot_router_work_packets_pm_role",
     "asset:flowpilot_router_terminal_ledger",
     "asset:flowpilot_router_facade_export_manifest_controller_events",
@@ -75,6 +79,10 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_protocol_external_events_terminal",
     "asset:flowpilot_router_protocol_decision_fields",
     "asset:flowpilot_router_protocol_event_capabilities",
+    "asset:flowpilot_router_protocol_dispatch_policy",
+    "asset:flowpilot_router_protocol_external_event_data",
+    "asset:flowpilot_router_protocol_external_event_registry",
+    "asset:flowpilot_router_protocol_gate_registry",
     "asset:flowpilot_router_protocol_runtime_flags",
     "asset:flowpilot_router_protocol_scoped_event_identity",
     "asset:flowpilot_router_protocol_gate_block_specs",
@@ -244,6 +252,7 @@ SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
     "check_install",
     "check_public_release",
     "flowpilot_lifecycle",
+    "flowpilot_maintenance_registry",
     "flowpilot_outputs",
     "flowpilot_packets",
     "install_flowpilot",
@@ -257,6 +266,8 @@ ASSET_MODEL_BINDING_PREFIXES = {
 }
 
 ASSET_MODEL_BINDING_STEMS = {
+    "flowpilot_closure_kernel": "control_plane_closure_kernel",
+    "flowpilot_control_plane_contracts": "control_plane_contracts",
     "flowpilot_paths": "runtime_path_contracts",
     "run_packet_control_plane_checks": "packet_control_plane_model_checks",
 }
@@ -270,6 +281,7 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "flowpilot_defects": "defect_governance_cli",
     "flowpilot_lifecycle": "lifecycle_cli",
     "flowpilot_maintenance_map": "maintenance_map_cli",
+    "flowpilot_maintenance_registry": "maintenance_registry_cli",
     "flowpilot_outputs": "role_output_cli",
     "flowpilot_packets": "packet_runtime_cli",
     "flowpilot_paths": "runtime_path_cli",

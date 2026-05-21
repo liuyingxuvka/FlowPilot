@@ -2,14 +2,18 @@
 
 Use this when the implemented UI differs from the concept mockup.
 
-Use the functional framing and display element review as the source of truth for what the UI must help the user understand, do, show, hide, or defer. Use the selected concept set as the source of truth for approved visual direction, hierarchy, and intended presentation quality.
+Use the functional framing, display element review, and FlowGuard structure
+contract when present as the source of truth for what the UI must help the user
+understand, do, show, hide, or defer. Use the selected concept set and final
+concept evaluation package as the source of truth for approved visual
+direction, hierarchy, color roles, and intended presentation quality.
 
 ## Review Order
 
 Review divergence in this order:
 
-1. **Visual style alignment first.** Compare palette, typography, surface language, spacing rhythm, icon/asset style, motion, light, shadow, and depth before changing routes, feature inventory, or layout architecture.
-2. **Functional and structural fit second.** After the style pass, compare both the concept and implementation against the functional framing and display element review: real workflows, approved visible/conditional elements, data, actions, states, functional zones, navigation, and interaction model.
+1. **Visual style alignment first.** Compare background surfaces, foreground text, accent/status colors, palette, typography, surface language, spacing rhythm, icon/asset style, motion, light, shadow, and depth before changing routes, feature inventory, or layout architecture.
+2. **Functional and structural fit second.** After the style pass, compare both the concept and implementation against the functional framing, display element review, and FlowGuard structure contract when present: real workflows, approved visible/conditional elements, data, actions, states, functional zones, navigation, interaction model, parent/child topology, region/control/display ownership, overlays, and redundancy decisions.
 3. **Presentation, readability, and interaction clarity third.** After function and structure are settled, compare information hierarchy, grouping, scan path, labels, affordances, state clarity, and retained content composition.
 4. **Implementation constraints fourth.** Accept or revise differences caused by accessibility, responsiveness, performance, data density, local design-system limits, or technical constraints.
 
@@ -24,6 +28,8 @@ Do not polish detailed presentation before functional structure is stable. Once 
 Accept the implementation when it:
 
 - preserves real functionality better than the concept
+- preserves the FlowGuard structure contract better than the concept image
+  when the concept image drifted from the model
 - follows the repo's design system more closely
 - improves accessibility, responsiveness, or interaction clarity
 - avoids fake data or invented controls from the concept
@@ -37,7 +43,12 @@ Accept the implementation when it:
 Fix the implementation when it:
 
 - misses the concept's visual language, mood, material treatment, typography, color, icon/asset style, or depth cues without a product reason
+- forgets the concept's background surfaces, foreground text treatment, accent
+  color role, state colors, or contrast expectations without a product reason
 - loses the concept's primary hierarchy without a product reason
+- violates model-derived hierarchy, stable regions, control/display ownership,
+  overlay boundaries, recovery controls, or duplicate-information/control
+  decisions without a recorded product reason
 - introduces visible overlap, clipping, crowding, or awkward spacing
 - changes the intended surface language into a weaker default look
 - hides important actions
@@ -79,12 +90,16 @@ Regenerate or revise the application icon, not necessarily the full UI concept, 
 
 ```text
 Concept target/version:
+Final concept evaluation package used:
+FlowGuard structure contract used:
 Functional framing used:
 Display element decisions used:
 Screenshot state:
 Key differences:
 Visual style alignment:
+Color/background/foreground findings:
 Functional/structural decisions:
+FlowGuard contract deviations:
 Presentation/readability/interaction findings:
 Accepted differences:
 UI fixes needed:
@@ -101,6 +116,16 @@ Next verification screenshot:
 
 ## Practical Rule
 
-Use the concept to protect direction, hierarchy, visual ambition, and readable presentation. Use the real app to protect functionality, content truth, accessibility, and maintainability.
+Use the concept to protect direction, hierarchy, visual ambition, color intent, background/foreground clarity, and readable presentation. Use the real app to protect functionality, content truth, accessibility, and maintainability.
 
 Run at least one post-implementation divergence review. Continue another loop when material differences remain unresolved. Do not finish with "close enough" if the remaining gap affects workflow, readability, content correctness, interaction, motion, or responsiveness.
+
+Record each accepted difference in the final integrated acceptance ledger as
+`accepted_deviation` with evidence and rationale. A divergence can be accepted
+only when it does not weaken the final user outcome and preserves or improves
+the user outcome for a product,
+accessibility, responsiveness, content-density, real-data, or design-system
+reason. If a difference violates the FlowGuard structure contract, hides a
+required workflow, weakens readability, or lacks current screenshot/interaction
+evidence, it must downgrade final acceptance to `partial` or `blocked` rather
+than being treated as a harmless visual variation.

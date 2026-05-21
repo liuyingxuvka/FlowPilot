@@ -32,6 +32,7 @@ import flowpilot_router_controller_repair_mail_delivery as controller_repair_mai
 import flowpilot_router_controller_repair_mail_pending as controller_repair_mail_pending  # noqa: E402
 import flowpilot_router_controller_repair_mail_postconditions as controller_repair_mail_postconditions  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_pending as receipts_pending  # noqa: E402
+import flowpilot_router_controller_scheduler_receipts_packet_folds as receipts_packet_folds  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_scheduled as receipts_scheduled  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_writes as receipts_writes  # noqa: E402
 import flowpilot_router_event_identity as event_identity  # noqa: E402
@@ -429,6 +430,14 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 status="done",
             )
 
+        self.assertIn(
+            "relay_material_scan_packets",
+            receipts_packet_folds.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
+        )
+        self.assertIn(
+            "relay_material_scan_results_to_pm",
+            receipts_packet_folds._registered_controller_receipt_evidence_fold_actions(),
+        )
         self.assertEqual(repair["reason"], "no_declared_missing_deliverables")
         self.assertIs(scheduler_waits._pending_wait_summary, scheduler_wait_targets._pending_wait_summary)
         self.assertIs(scheduler_waits._derive_current_work, scheduler_current_work._derive_current_work)

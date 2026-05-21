@@ -296,7 +296,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-20T17:07:16.027924+00:00",
+            "created_at": "2026-05-21T06:08:03.946911+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -324,7 +324,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-20T17:07:16.027924+00:00",
+          "created_at": "2026-05-21T06:08:03.946911+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -346,7 +346,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-20T17:08:33.124769+00:00",
+            "created_at": "2026-05-21T06:08:06.546760+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -382,7 +382,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-20T17:07:15.994942+00:00",
+            "created_at": "2026-05-21T06:08:03.890163+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -410,7 +410,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-20T17:07:15.994942+00:00",
+          "created_at": "2026-05-21T06:08:03.890163+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -432,7 +432,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-20T17:08:33.127317+00:00",
+            "created_at": "2026-05-21T06:08:06.464798+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1317,13 +1317,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 48,
+        "edge_count": 52,
         "model_id": "flowpilot_control_transaction_registry",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_control_transaction_registry_checks_results.json",
+        "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
         "role": "child_evidence",
-        "state_count": 49,
+        "state_count": 53,
         "tier": "small"
       },
       {
@@ -1487,13 +1487,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 32,
+        "edge_count": 36,
         "model_id": "flowpilot_pm_package_absorption",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_pm_package_absorption_results.json",
         "role": "child_evidence",
-        "state_count": 33,
+        "state_count": 37,
         "tier": "small"
       },
       {

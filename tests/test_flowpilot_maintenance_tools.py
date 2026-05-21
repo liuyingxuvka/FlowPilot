@@ -188,6 +188,12 @@ if args.json_out:
         full = diagnostic_payload["full_model_test_code_diagnostic"]
         self.assertEqual(report["diagnostic"]["full_coverage_ok"], diagnostic_payload["full_coverage_ok"])
         self.assertEqual(report["diagnostic"]["gap_surface_count"], full["gap_surface_count"])
+        runtime_decision = report["current_maintenance_decisions"][0]
+        if report["runtime_owner_modules"]["over_threshold_count"]:
+            self.assertIn("currently have", runtime_decision)
+            self.assertIn("over the StructureMesh line threshold", runtime_decision)
+        else:
+            self.assertIn("are under the StructureMesh line threshold", runtime_decision)
 
     def test_maintenance_registry_is_source_for_map_facade_and_entrypoint_lists(self) -> None:
         self.assertEqual(

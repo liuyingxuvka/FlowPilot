@@ -110,6 +110,22 @@ def _load_test_tiers() -> dict[str, Any]:
     return {"tier_names": list(tier_names()), "tiers": tiers}
 
 
+def _current_maintenance_decisions(runtime_owner_summary: dict[str, Any]) -> list[str]:
+    over_threshold_count = int(runtime_owner_summary.get("over_threshold_count") or 0)
+    if over_threshold_count:
+        runtime_decision = (
+            f"Runtime owner modules currently have {over_threshold_count} files over the "
+            "StructureMesh line threshold; defer further runtime splitting unless a matching "
+            "model block and external contract test justify it."
+        )
+    else:
+        runtime_decision = (
+            "Runtime owner modules are under the StructureMesh line threshold; do not split "
+            "runtime again without a matching model block and external contract test."
+        )
+    return [runtime_decision, *list(CURRENT_MAINTENANCE_DECISIONS[1:])]
+
+
 def build_report(root: Path = ROOT) -> dict[str, Any]:
     root = root.resolve()
     runtime_files = _py_files(root, "skills/flowpilot/assets")
@@ -125,6 +141,11 @@ def build_report(root: Path = ROOT) -> dict[str, Any]:
     model_files = _py_files(root, "simulations")
     test_files = _py_files(root, "tests")
     model_facade_paths = [root / path for path in MODEL_FACADES if (root / path).exists()]
+    runtime_owner_summary = _summarize_files(
+        runtime_owner_paths,
+        root,
+        threshold=THRESHOLDS["runtime_owner_module_lines"],
+    )
 
     return {
         "read_only": True,
@@ -136,11 +157,7 @@ def build_report(root: Path = ROOT) -> dict[str, Any]:
             "scripts": _summarize_files(script_files, root, threshold=THRESHOLDS["script_entry_lines"]),
             "tests": _summarize_files(test_files, root, threshold=THRESHOLDS["test_file_watch_lines"]),
         },
-        "runtime_owner_modules": _summarize_files(
-            runtime_owner_paths,
-            root,
-            threshold=THRESHOLDS["runtime_owner_module_lines"],
-        ),
+        "runtime_owner_modules": runtime_owner_summary,
         "facades": {
             "runtime": [_file_row(path, root, threshold=THRESHOLDS["runtime_facade_lines"]) for path in runtime_facade_paths],
             "models": [_file_row(path, root, threshold=THRESHOLDS["model_file_watch_lines"]) for path in model_facade_paths],
@@ -150,7 +167,7 @@ def build_report(root: Path = ROOT) -> dict[str, Any]:
         ],
         "test_tiers": _load_test_tiers(),
         "diagnostic": _load_diagnostic(root),
-        "current_maintenance_decisions": list(CURRENT_MAINTENANCE_DECISIONS),
+        "current_maintenance_decisions": _current_maintenance_decisions(runtime_owner_summary),
         "recommended_next_split_rules": [
             "Split runtime only when a model block, public facade, and external contract test already agree.",
             "Prefer catalog/data extraction for oversized model files; keep old model imports as facades.",

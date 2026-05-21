@@ -63,6 +63,11 @@ For each material screen or state:
   visible area or provide a usable overflow strategy;
 - loading, empty, error, hover, focus, active, disabled, and selected states do
   not introduce overlap or clipping when they are relevant.
+- modeled FlowGuard states, stable global regions, contextual regions, local
+  controls, overlays, and display owners are visible, reachable, or
+  intentionally progressive according to the structure contract.
+- duplicate displayed information and duplicate same-level controls that remain
+  visible match the recorded FlowGuard redundancy rationale.
 - app/software icon is not only rendered inside the app content; for applicable
   software artifacts it is bound to the real platform identity surface or the
   gap is recorded as partial/blocked.
@@ -74,8 +79,18 @@ For each material screen or state:
 - Fix geometry failures before visual polish.
 - If the failure is caused by wrong information architecture, return to the
   design contract instead of repeatedly changing spacing values.
+- If the failure is caused by model-derived structure drift, return to the
+  FlowGuard structure contract before changing visual spacing or component
+  styling.
 - If a product intentionally uses two-dimensional layouts, record the exception
   and verify each cell/item still has a usable access path.
+- Geometry QA feeds the final integrated acceptance ledger. Missing, stale, or
+  untrusted geometry evidence, unresolved overlap/clipping, unreachable
+  controls, popup bounds failures, or an app-icon identity surface gap must
+  downgrade final acceptance to `partial` or `blocked`.
+- Any later layout, component, content, control, overlay, responsive, or app
+  icon change stales affected geometry evidence until the impacted state is
+  rechecked or explicitly scoped as unchanged.
 
 ## Report Fields
 
@@ -85,7 +100,9 @@ Record:
 - screenshot pixel size;
 - screenshot capture provenance and trust verdict for native desktop surfaces;
 - checked states;
+- FlowGuard structure contract checked or skipped;
 - app icon identity surfaces checked when applicable;
+- final integrated acceptance ledger row status;
 - geometry failures found;
 - fixes made;
 - unresolved risks.

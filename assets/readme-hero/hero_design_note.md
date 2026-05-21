@@ -29,8 +29,7 @@ mutation, stale-evidence reset, and final completion ledger review.
 
 ## Hero Tagline
 
-Finite-state project control for AI agents that model and correct development
-work in real time.
+A router-driven project-control layer for long AI-agent software work.
 
 ## Visual Concept
 

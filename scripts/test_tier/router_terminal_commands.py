@@ -167,6 +167,7 @@ ROUTER_PM_ROLE_WORK_COMMANDS = (
         patterns=(
             "test_pm_role_work_request_requires_valid_recipient_and_contract",
             "test_pm_role_work_request_rejects_current_node_contract_family",
+            "test_pm_role_work_request_supersedes_unrelayed_old_request",
             "test_advisory_pm_role_work_wait_is_marked_nonblocking",
         ),
         description="PM role-work request validation and advisory wait slice.",
@@ -274,6 +275,8 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
             "test_material_scan_direct_relay_blocks_body_hash_mismatch",
             "test_material_scan_direct_relay_blocks_missing_output_contract",
             "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+            "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+            "test_material_scan_result_receipt_folds_batch_lifecycle",
         ),
         description="Material scan relay, identity, and contract slice.",
     ),

@@ -1,6 +1,6 @@
 # FlowPilot Full Model-Test-Code Diagnostics
 
-Date: 2026-05-18
+Date: 2026-05-21
 
 This report summarizes the full diagnostic layer emitted by:
 
@@ -25,13 +25,14 @@ structure-split repair work.
 
 | Metric | Count |
 | --- | ---: |
-| Total diagnostic surfaces | 541 |
-| Covered surfaces | 493 |
-| Surfaces with one or more gaps | 48 |
-| Compatibility facades | 60 |
-| Owner modules | 118 |
-| Script entrypoints | 17 |
-| Model-check runners | 83 |
+| Total diagnostic surfaces | 717 |
+| Covered surfaces | 708 |
+| Surfaces with one or more gaps | 9 |
+| Compatibility facades | 107 |
+| Owner modules | 226 |
+| Script entrypoints | 19 |
+| Model-check runners | 92 |
+| Model-check runner helpers | 18 |
 | Test tiers | 15 |
 | Test tier commands | 240 |
 
@@ -39,7 +40,7 @@ structure-split repair work.
 
 | Gap code | Count | Meaning |
 | --- | ---: | --- |
-| `needs_structure_split` | 48 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
+| `needs_structure_split` | 9 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
 
 `missing_model`, `missing_code`, `missing_test`, `extra_code`,
 `internal_only_test`, and `stale_evidence` are all zero in the current
@@ -49,36 +50,31 @@ StructureMesh deferrals visible.
 
 Aggregate counts in the JSON include:
 
-- `gap_counts_by_severity`: `medium=48`.
-- `gap_counts_by_repair_type`: `defer_structure_split=48`.
-- `gap_counts_by_release_relevance`: `runtime_contract=42`,
-  `validation_gate=6`.
+- `gap_counts_by_severity`: `medium=9`.
+- `gap_counts_by_repair_type`: `defer_structure_split=9`.
+- `gap_counts_by_release_relevance`: `runtime_contract=9`.
 - `unresolved_non_deferred_gap_count`: `0`.
-- `deferred_structure_split_count`: `48`.
+- `deferred_structure_split_count`: `9`.
 
 ## Top Repair Items
 
 The current actionable summary is intentionally a structure backlog, not a
 missing-test backlog:
 
-1. Six validation runners remain over the script threshold. They are
-   reclassified as deferred validation-entrypoint splits because each needs a
-   dedicated StructureMesh target and CLI parity preservation before code is
-   moved.
-2. Forty-two runtime-contract surfaces remain over the owner/facade
-   threshold. They keep explicit `peer_safety_status`,
+1. Nine runtime-contract surfaces remain over the owner/facade threshold. They
+   keep explicit `peer_safety_status`,
    `deferred_split_reason`, `safe_split_class`, and
    `recommended_next_action` metadata.
-3. `run_flowpilot_model_test_alignment_checks.py` is now a small compatibility
+2. `run_flowpilot_model_test_alignment_checks.py` is now a small compatibility
    runner facade. Its common declarations, family plans, source-contract plan,
    known-bad cases, and full diagnostic surface inventory live in focused
    `flowpilot_model_test_alignment_*` modules.
-4. `run_test_tier.py` has already been split into a small CLI wrapper plus
+3. `run_test_tier.py` has already been split into a small CLI wrapper plus
    focused tier-definition and background-artifact modules.
-5. `public_release_check` now has current URL-probing evidence from
+4. `public_release_check` now has current URL-probing evidence from
    `python scripts\check_public_release.py --json --skip-validation`; it is no
    longer counted as local-only release proof.
-6. `meta_legacy_full` and `capability_legacy_full` are reclassified as
+5. `meta_legacy_full` and `capability_legacy_full` are reclassified as
    historical compatibility oracles. Current release confidence comes from
    reused valid layered full parent proofs. The failed/running legacy artifacts
    stay visible in `background_evidence` but do not block
@@ -159,25 +155,18 @@ release evidence.
 ## Structure-Split Repair Planning
 
 The diagnostic records concrete deferred split metadata for broad surfaces that
-remain above threshold. Stateful surfaces stay deferred until they have a
-claimed StructureMesh target:
+remain above threshold. These surfaces stay deferred until they have a claimed
+StructureMesh target and parity evidence:
 
-- `flowpilot_router_work_packets_current_node.py`
-- `flowpilot_router_card_returns.py`
-- `role_output_runtime_schema.py`
-- route artifact/frontier state shards
-
-Declarative and validation-runner surfaces remain safer follow-up candidates
-after an explicit claim:
-
-- `flowpilot_router_protocol_decision_tables.py`
-- `flowpilot_router_protocol_gate_outcomes.py`
-- `simulations/run_flowpilot_daemon_reconciliation_checks.py`
-- `simulations/run_flowpilot_model_hierarchy_checks.py`
-- `simulations/run_flowpilot_process_liveness_checks.py`
-- `simulations/run_flowpilot_role_output_runtime_checks.py`
-- `simulations/run_meta_checks.py`
-- `simulations/run_capability_checks.py`
+- `flowpilot_router_controller_scheduler_receipts_effects.py`
+- `flowpilot_router_controller_scheduler_receipts_packet_folds.py`
+- `flowpilot_router_controller_scheduler_receipts_scheduled.py`
+- `flowpilot_router_controller_scheduler_standby.py`
+- `flowpilot_router_io.py`
+- `flowpilot_router_lifecycle_requests.py`
+- `flowpilot_router_protocol_external_event_data.py`
+- `flowpilot_router_runtime_state.py`
+- `flowpilot_router_startup_intake_materialization.py`
 
 `flowpilot_router_protocol_boot_cards.py` is no longer a pending split
 candidate. It is recorded as `completed_split` with the startup, planning,
