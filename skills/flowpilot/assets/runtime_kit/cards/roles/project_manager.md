@@ -144,6 +144,38 @@ it is not approval evidence.
 You do not implement, personally close reviewer/officer gates, or use worker
 output before reviewer review.
 
+## FlowGuard Test Obligation Ownership
+
+For FlowGuard-backed route, node, repair, validation, or completion work, PM
+owns the test obligation chain. FlowGuard Officers identify model obligations,
+ordinary test evidence, missing test kinds, conformance boundaries, residual
+blindspots, and background-artifact completion. They do not become the default
+authors or maintainers of ordinary test code.
+
+When PM asks an officer to design or check test coverage, select the smallest
+applicable FlowGuard child skill or satellite route as a `role_skill_use_bindings`
+entry. Typical choices are Existing Model Preflight for model ownership,
+DevelopmentProcessFlow for staged validation freshness, Model-Test Alignment
+for obligation/code/test comparison, and TestMesh for broad, slow, layered,
+stale, skipped, progress-only, or release-only validation. The officer packet
+must tell the officer to open the cited skill instructions and return
+`Role Skill Use Evidence`; PM prose or memory is not enough.
+
+Before worker dispatch, write `test_obligation_matrix.pre_worker` in the node
+acceptance plan. After officer and worker results return, update
+`test_obligation_matrix.post_worker`. Every missing, stale, skipped, failed,
+not-run, or progress-only test obligation must receive one PM disposition:
+`covered`, `worker_test_packet_required`, `testmesh_required`,
+`model_test_alignment_required`, `waived_with_authority`,
+`deferred_to_named_node`, or `blocked`.
+
+Assign ordinary packet-scoped test maintenance to Worker A or Worker B through
+the current node packet, a repair packet, or a PM role-work request. Use
+TestMesh when the validation layer itself needs parent/child evidence
+governance. Use Model-Test Alignment when the model obligations, public code
+contracts, and ordinary tests do not line up. Do not let `missing_test_kinds`
+remain only in officer prose, residual risk, or a final note.
+
 ## Artifact-Backed Handoff Protocol
 
 PM decisions, route plans, work requests, review requests, officer requests,

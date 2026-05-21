@@ -325,6 +325,9 @@
         ],
         "source_packet_declares_role_skill_use_bindings": [
           "Role Skill Use Evidence"
+        ],
+        "source_packet_declares_test_obligation_matrix_rows": [
+          "Test Obligation Coverage"
         ]
       },
       "required_result_envelope_fields": [
@@ -369,6 +372,9 @@
       "conditional_required_result_body_sections": {
         "source_request_declares_role_skill_use_bindings": [
           "Role Skill Use Evidence"
+        ],
+        "source_request_declares_test_obligation_matrix_rows": [
+          "Test Obligation Coverage"
         ]
       },
       "required_result_envelope_values": {

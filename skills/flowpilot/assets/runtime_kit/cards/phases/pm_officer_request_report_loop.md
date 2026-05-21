@@ -58,6 +58,13 @@ For each modeling need, write a request that states:
 - model-test alignment expectations: `model_obligations`,
   `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`,
   `residual_blindspots`, and `background_artifact_completion`;
+- `role_skill_use_bindings` for every FlowGuard child skill or satellite route
+  PM expects the officer to use when deriving test obligations or validation
+  gaps. Use the smallest applicable route: Existing Model Preflight for model
+  ownership, DevelopmentProcessFlow for validation freshness and staged
+  process risk, Model-Test Alignment for model/code/test comparison, and
+  TestMesh for broad, slow, layered, stale, skipped, progress-only, or
+  release-only validation;
 - for product-model-first route design, whether the officer report should
   define product behavior for PM route drafting, validate PM route viability
   against that behavior, or check a repair branch's return to the mainline;
@@ -105,6 +112,13 @@ reused. Progress lines alone are not completion evidence.
 
 The officer report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.
+
+After PM receives an officer report, PM must copy every relevant
+`model_obligations`, `ordinary_test_evidence`, and `missing_test_kinds` row into
+the current `test_obligation_matrix`. Missing, stale, skipped, failed,
+not-run, or progress-only evidence must be dispositioned by PM before the
+dependent node, evidence-quality package, final ledger, or closure gate can
+pass. Officer prose does not close a test gap.
 
 PM must convert the report into a concrete route decision: continue, repair,
 add evidence, split a node, mutate the route, or block. A report that only says

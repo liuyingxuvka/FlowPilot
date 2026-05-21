@@ -25,7 +25,8 @@ work while PM owns a decision.
 
 Use `pm_registers_role_work_request` when PM needs a reviewer, officer, or
 worker to gather evidence, update or run a model, review a candidate, research a
-question, or prepare information before PM decides. PM may submit one request or
+question, maintain or rerun packet-scoped tests, return test obligation
+coverage rows, or prepare information before PM decides. PM may submit one request or
 one `batch_id` with `requests[]`/`packets[]`. A batch means every listed request
 can start now inside the current PM decision boundary. Router records the batch,
 relays each addressed envelope, waits for every result, and then PM records one
@@ -57,6 +58,17 @@ out-of-scope defects. If the request is research, material scan, review, or
 officer modeling, require self-correction of the role's own report/model/review
 output and route target defects through findings, blockers, repair requests, or
 PM Suggestion Items instead of silent target repair.
+
+For `request_kind` values that include test maintenance, test rerun,
+validation-gap closure, or FlowGuard model-test coverage, include the relevant
+`test_obligation_matrix` row ids in the sealed request body. Worker requests
+must require a `Test Obligation Coverage` section with one row per assigned
+obligation, including obligation id, required test kind, changed or inspected
+paths, command or manual replay evidence, freshness status, skipped or failed
+checks, and out-of-scope gaps. Officer requests must use the officer report
+contract fields instead; officers identify obligations and gaps, while workers
+maintain ordinary packet-scoped tests unless PM explicitly grants a different
+bounded authority.
 
 Controller may relay the packet and result envelopes only. Controller may not
 read the request body, result body, or decide from their content.

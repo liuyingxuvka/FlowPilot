@@ -70,6 +70,12 @@ class FlowPilotOutputContractTests(unittest.TestCase):
                 "source_packet_declares_role_skill_use_bindings"
             ],
         )
+        self.assertIn(
+            "Test Obligation Coverage",
+            worker_contract["conditional_required_result_body_sections"][
+                "source_packet_declares_test_obligation_matrix_rows"
+            ],
+        )
         role_work_contract = next(
             item
             for item in registry["contracts"]
@@ -79,6 +85,12 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "Role Skill Use Evidence",
             role_work_contract["conditional_required_result_body_sections"][
                 "source_request_declares_role_skill_use_bindings"
+            ],
+        )
+        self.assertIn(
+            "Test Obligation Coverage",
+            role_work_contract["conditional_required_result_body_sections"][
+                "source_request_declares_test_obligation_matrix_rows"
             ],
         )
         startup_contract = next(

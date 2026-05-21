@@ -36,6 +36,15 @@ route-memory prior path context. The plan must state:
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
+- `test_obligation_matrix.pre_worker`: every FlowGuard-backed product,
+  process, child-skill, acceptance-slice, and validation obligation that needs
+  ordinary test or replay evidence before this node can close. Each row must
+  name `obligation_id`, `source`, `required_test_kind`, `owner_role`,
+  `expected_evidence`, `freshness_rule`, and current PM disposition. For any
+  officer modeling used to derive these rows, include `role_skill_use_bindings`
+  for the exact FlowGuard child skill or satellite route PM selected, such as
+  Existing Model Preflight, DevelopmentProcessFlow, Model-Test Alignment, or
+  TestMesh;
 - the product behavior model segment this node covers, or the reason this node
   is process-only;
 - final-user intent and product usefulness self-check for this node when
@@ -71,8 +80,11 @@ route-memory prior path context. The plan must state:
   allowed source paths, result-matrix rows, and `Child Skill Use Evidence`
   rows the recipient must return. When a packet or role-output request carries
   `role_skill_use_bindings`, also copy the Role Skill Use Evidence rows the
-  recipient must return. Do not issue a work packet if this projection is
-  missing for a selected child skill;
+  recipient must return. When the node declares test obligations, copy the
+  relevant `test_obligation_matrix.pre_worker` rows into the worker or officer
+  packet and require `Test Obligation Coverage` rows in the result for every
+  packet-scoped test obligation. Do not issue a work packet if this projection
+  is missing for a selected child skill or required test obligation;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
 - direct evidence closure rules: report prose, file existence, or a clean
@@ -105,6 +117,16 @@ route-memory prior path context. The plan must state:
   casually;
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
+
+After worker, officer, or reviewer output returns, PM must update
+`test_obligation_matrix.post_worker` before approving node completion. The
+post-worker matrix must absorb changed paths, new or stale evidence, skipped
+checks, failed checks, background tests without complete exit/meta artifacts,
+and officer `missing_test_kinds`. Every row must be dispositioned as
+`covered`, `worker_test_packet_required`, `testmesh_required`,
+`model_test_alignment_required`, `waived_with_authority`,
+`deferred_to_named_node`, or `blocked`. Undispositioned rows block PM
+node-completion approval.
 
 ## Supporting Skill Fidelity
 

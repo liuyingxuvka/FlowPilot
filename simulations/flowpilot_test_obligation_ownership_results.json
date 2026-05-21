@@ -1,0 +1,454 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=14 initial_states=1 traces=474",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "alignment_gap_without_alignment": {
+        "detected": true,
+        "expected_failure": "model/test mismatch was closed without Model-Test Alignment evidence or waiver",
+        "failures": [
+          "PM disposition recorded before required test owner evidence",
+          "model/test mismatch was closed without Model-Test Alignment evidence or waiver"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "alignment_mismatch",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": false,
+          "worker_test_packet_completed": false
+        }
+      },
+      "background_progress_counted": {
+        "detected": true,
+        "expected_failure": "background progress was counted as passing test evidence",
+        "failures": [
+          "background progress was counted as passing test evidence"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": true,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "broad_gap_without_testmesh": {
+        "detected": true,
+        "expected_failure": "broad validation gap was closed without TestMesh evidence or waiver",
+        "failures": [
+          "PM disposition recorded before required test owner evidence",
+          "broad validation gap was closed without TestMesh evidence or waiver"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "broad_validation",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": false,
+          "worker_test_packet_completed": false
+        }
+      },
+      "controller_decides_tests": {
+        "detected": true,
+        "expected_failure": "Controller decided test obligation disposition",
+        "failures": [
+          "Controller decided test obligation disposition"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": true,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "final_ledger_before_evidence_package": {
+        "detected": true,
+        "expected_failure": "final ledger carried test rows before evidence quality package",
+        "failures": [
+          "final ledger carried test rows before evidence quality package"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": false,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "missing_tests_left_as_prose": {
+        "detected": true,
+        "expected_failure": "missing test kinds were left as residual prose",
+        "failures": [
+          "missing test kinds were left as residual prose"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": true,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "node_completion_before_reviewer": {
+        "detected": true,
+        "expected_failure": "node completion approved before reviewer checked test dispositions",
+        "failures": [
+          "node completion approved before reviewer checked test dispositions"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": false,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "officer_writes_ordinary_tests": {
+        "detected": true,
+        "expected_failure": "FlowGuard officer maintained ordinary test code by default",
+        "failures": [
+          "FlowGuard officer maintained ordinary test code by default"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": true,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "ordinary_gap_without_worker_or_waiver": {
+        "detected": true,
+        "expected_failure": "ordinary missing test kind was closed without worker coverage or waiver",
+        "failures": [
+          "PM disposition recorded before required test owner evidence",
+          "ordinary missing test kind was closed without worker coverage or waiver"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": false,
+          "worker_test_packet_completed": false
+        }
+      },
+      "post_matrix_before_worker_result": {
+        "detected": true,
+        "expected_failure": "post-worker test matrix was written before required inputs",
+        "failures": [
+          "post-worker test matrix was written before required inputs",
+          "PM disposition recorded before both test matrix passes"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": false,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "reviewer_before_disposition": {
+        "detected": true,
+        "expected_failure": "reviewer checked package before PM dispositioned test obligations",
+        "failures": [
+          "reviewer checked package before PM dispositioned test obligations",
+          "node completion approved before reviewer checked test dispositions"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": false,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "stale_test_evidence_used": {
+        "detected": true,
+        "expected_failure": "stale ordinary test evidence was used for closure",
+        "failures": [
+          "stale ordinary test evidence was used for closure"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": true,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": true,
+          "worker_test_packet_completed": true
+        }
+      },
+      "worker_packet_no_coverage_rows": {
+        "detected": true,
+        "expected_failure": "worker test packet completed without test obligation coverage rows",
+        "failures": [
+          "worker test packet completed without test obligation coverage rows",
+          "PM disposition recorded before required test owner evidence",
+          "ordinary missing test kind was closed without worker coverage or waiver"
+        ],
+        "state": {
+          "all_test_obligations_dispositioned": true,
+          "background_progress_counted_as_pass": false,
+          "controller_decided_test_disposition": false,
+          "evidence_quality_package_carries_rows": true,
+          "final_ledger_carries_rows": true,
+          "gap_kind": "ordinary_worker",
+          "missing_test_kinds_left_as_residual_prose": false,
+          "model_test_alignment_completed": false,
+          "node_completion_approved": true,
+          "officer_maintained_ordinary_test_code": false,
+          "officer_report_absorbed": true,
+          "post_worker_matrix_written": true,
+          "pre_worker_matrix_written": true,
+          "reviewer_checked_matrix": true,
+          "stale_test_evidence_used": false,
+          "status": "running",
+          "testmesh_completed": false,
+          "waived_with_authority": false,
+          "worker_result_absorbed": true,
+          "worker_test_coverage_rows_returned": false,
+          "worker_test_packet_completed": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "initial_can_reach_success": true,
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "safe_graph": {
+    "complete_gap_kinds": [
+      "alignment_mismatch",
+      "broad_validation",
+      "none",
+      "ordinary_worker"
+    ],
+    "complete_state_count": 7,
+    "edge_count": 62,
+    "invariant_failures": [],
+    "labels": [
+      "evidence_quality_package_carries_test_rows",
+      "final_ledger_carries_test_rows",
+      "flowpilot_test_obligation_flow_started",
+      "model_test_alignment_completed_for_mismatch",
+      "officer_report_absorbed_with_alignment_mismatch_gap",
+      "officer_report_absorbed_with_broad_validation_gap",
+      "officer_report_absorbed_with_no_test_gap",
+      "officer_report_absorbed_with_ordinary_worker_gap",
+      "pm_node_completion_approved_after_test_disposition",
+      "pm_records_test_obligation_disposition",
+      "pm_updates_post_worker_test_obligation_matrix",
+      "pm_waives_test_gap_with_authority",
+      "pm_writes_pre_worker_test_obligation_matrix",
+      "reviewer_checks_test_obligation_matrix",
+      "test_obligation_flow_completed",
+      "testmesh_evidence_completed_for_broad_validation",
+      "worker_result_absorbed_for_test_matrix_refresh",
+      "worker_test_packet_returns_coverage_rows"
+    ],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 63
+  }
+}

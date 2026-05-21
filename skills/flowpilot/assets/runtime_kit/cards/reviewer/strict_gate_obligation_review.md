@@ -48,7 +48,10 @@ Pass requires:
 - FlowGuard-backed gates expose `model_obligations`,
   `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`, and
   `residual_blindspots`; ordinary tests must be bound to the named model
-  obligations before they can support a pass.
+  obligations before they can support a pass, and every missing/stale/skipped
+  test kind must have a PM `test_obligation_matrix` disposition. Treat
+  undispositioned, failed, not-run, or progress-only test rows as gaps, not
+  closure evidence.
 - if the gate cites long/background tests, `background_artifact_completion`
   must include log root, stdout, stderr, combined, exit, and meta paths, exit
   code, latest update time, completion status, and valid proof reuse. Running

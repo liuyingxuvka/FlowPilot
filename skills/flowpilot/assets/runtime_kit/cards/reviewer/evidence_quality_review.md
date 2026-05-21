@@ -52,8 +52,9 @@ Check:
   inspection or executable proof.
 - FlowGuard-backed gates include `model_obligations`,
   `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`, and
-  `residual_blindspots`. Treat missing, stale, skipped, failed, running, or
-  not-run ordinary tests as gaps, not coverage.
+  `residual_blindspots`, plus PM `test_obligation_matrix` dispositions. Treat
+  missing, stale, skipped, failed, running, not-run, progress-only, or
+  undispositioned ordinary tests as gaps, not coverage.
 - any cited long/background test includes `background_artifact_completion` with
   log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
   update time, completion status, and valid proof reuse. Progress output alone

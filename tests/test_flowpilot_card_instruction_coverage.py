@@ -357,6 +357,83 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("formal blocker", text)
                 self.assertIn("pm or router can decide", text)
 
+    def test_flowguard_test_obligation_ownership_guidance_is_role_scoped(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        pm_core = normalized(_card_path_by_id("pm.core"))
+        for term in (
+            "flowguard test obligation ownership",
+            "test_obligation_matrix.pre_worker",
+            "test_obligation_matrix.post_worker",
+            "existing model preflight",
+            "developmentprocessflow",
+            "model-test alignment",
+            "testmesh",
+            "worker_test_packet_required",
+            "missing_test_kinds",
+        ):
+            self.assertIn(term, pm_core)
+        self.assertIn("do not let `missing_test_kinds` remain only", pm_core)
+        self.assertIn("do not become the default authors or maintainers", pm_core)
+
+        pm_node_plan = normalized(_card_path_by_id("pm.node_acceptance_plan"))
+        for term in (
+            "test_obligation_matrix.pre_worker",
+            "test_obligation_matrix.post_worker",
+            "required_test_kind",
+            "freshness_rule",
+            "test obligation coverage",
+            "model_test_alignment_required",
+            "testmesh_required",
+            "undispositioned rows block pm node-completion approval",
+        ):
+            self.assertIn(term, pm_node_plan)
+
+        officer_loop = normalized(_card_path_by_id("pm.officer_request_report_loop"))
+        for term in (
+            "role_skill_use_bindings",
+            "flowguard child skill",
+            "model-test alignment",
+            "testmesh",
+            "officer prose does not close a test gap",
+        ):
+            self.assertIn(term, officer_loop)
+
+        pm_role_work = normalized(_card_path_by_id("pm.role_work_request"))
+        for term in (
+            "test obligation coverage",
+            "test_obligation_matrix",
+            "maintain ordinary packet-scoped tests",
+            "officers identify obligations and gaps",
+        ):
+            self.assertIn(term, pm_role_work)
+
+        worker_cards = _card_paths_by_id("worker_a.core", "worker_b.core")
+        for path in worker_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("test obligation coverage", text)
+                self.assertIn("required test kind", text)
+                self.assertIn("freshness status", text)
+                self.assertIn("testmesh", text)
+                self.assertIn("model-test alignment", text)
+                self.assertIn("silently expanding scope", text)
+
+        reviewer_cards = _card_paths_by_id(
+            "reviewer.worker_result_review",
+            "reviewer.strict_gate_obligation_review",
+            "reviewer.evidence_quality_review",
+        )
+        for path in reviewer_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("test_obligation_matrix", text)
+                self.assertIn("missing", text)
+                self.assertIn("stale", text)
+                self.assertIn("skipped", text)
+                self.assertIn("undispositioned", text)
+
 
 if __name__ == "__main__":
     unittest.main()

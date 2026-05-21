@@ -97,6 +97,18 @@ source paths opened, role context used, affected output or gate, evidence path,
 and whether a stricter skill standard was applied or explicitly waived. Do not
 claim selected skill use from memory or PM prose alone.
 
+If the source packet or role-work request declares `test_obligation_matrix`
+rows, test maintenance, test rerun, validation-gap closure, or FlowGuard
+model-test coverage duties, return a `Test Obligation Coverage` section in the
+sealed result body. Include one row per assigned obligation with obligation id,
+required test kind, changed or inspected paths, command or manual replay
+evidence, freshness status, skipped or failed checks, and remaining
+out-of-scope gaps. Maintain or rerun only tests inside the packet's allowed
+reads, allowed writes, acceptance slice, and role authority. If closing the gap
+needs broader TestMesh, Model-Test Alignment, route mutation, new dependencies,
+or another role's authority, return `blocked`, `needs_pm`, or a PM Suggestion
+Item instead of silently expanding scope.
+
 In the sealed result body, include a soft `PM Note` with exactly these labels:
 `In-scope quality choice` and `PM consideration`. Use `none` when there is no
 useful note. The note is PM decision-support and does not authorize route

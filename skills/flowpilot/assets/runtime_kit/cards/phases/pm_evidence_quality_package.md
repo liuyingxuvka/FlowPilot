@@ -39,9 +39,12 @@ UI or quality gate.
 
 For every FlowGuard-backed gate in scope, include a model-test alignment row:
 `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
-`conformance_boundary`, and `residual_blindspots`. Ordinary test evidence must
-be current, passing, and bound to explicit FlowGuard obligations before it can
-close model coverage. If a report cites long/background tests, record
+`conformance_boundary`, `residual_blindspots`, and PM's
+`test_obligation_matrix` disposition. Ordinary test evidence must be current,
+passing, and bound to explicit FlowGuard obligations before it can close model
+coverage. Missing, stale, skipped, failed, not-run, progress-only, or
+undispositioned test rows are evidence gaps, not residual notes. If a report
+cites long/background tests, record
 `background_artifact_completion` with log root, stdout, stderr, combined, exit,
 and meta paths, exit code, latest update time, completion status, and valid
 proof reuse. Progress lines are liveness evidence only.

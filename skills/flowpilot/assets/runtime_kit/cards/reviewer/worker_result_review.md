@@ -87,6 +87,13 @@ Check:
   status `done`, `not_applicable`, `waived`, or `blocked`, evidence path or
   waiver reason, and the worker's explanation. Missing rows, manifest-only
   evidence, or unapproved waivers block pass;
+- when the source packet, PM package, or node acceptance plan declares
+  `test_obligation_matrix` rows, the PM-built package includes both
+  pre-worker and post-worker matrix refs, and the result body includes
+  `Test Obligation Coverage` rows for every packet-scoped test obligation.
+  Missing, stale, skipped, failed, not-run, progress-only, unsupported, or
+  undispositioned test rows block pass. Officer `missing_test_kinds` must be
+  converted into PM dispositions; residual prose is not closure evidence;
 - when the source packet declares active child-skill bindings, the result body
   includes `Child Skill Use Evidence` rows showing the worker opened the source
   `SKILL.md` or required reference paths, used the current-node slice directly,
