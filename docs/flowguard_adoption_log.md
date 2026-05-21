@@ -16467,3 +16467,44 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - The first `router_background_supervisor` batch under `tmp\flowguard_background\` became stale without an exit artifact and is not counted as pass evidence.
 - Broader existing maintenance-map findings in unrelated runtime modules remain out of scope for this export-manifest contraction.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-21 - Router IO Boundary Split
+
+### Evidence Summary
+
+- Added OpenSpec change `split-router-io-boundaries` for the narrow architecture reduction: keep `flowpilot_router_io.py` as the compatibility facade while moving behavior into focused IO child owners.
+- Split path/time/bootstrap helpers into `flowpilot_router_io_paths.py`, runtime JSON write-lock policy into `flowpilot_router_io_locks.py`, JSON reads/writes into `flowpilot_router_io_json.py`, and hash helpers into `flowpilot_router_io_hashes.py`.
+- Updated StructureMesh catalogs, model-test alignment contracts, install manifests, boundary tests, lock-boundary documentation, and the generated maintenance map.
+- `flowpilot_router_io.py` dropped from 587 lines over threshold to a 103-line compatibility facade; the generated maintenance map no longer lists it as an over-threshold runtime owner.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate split-router-io-boundaries --strict --json`.
+- OK: `python -m py_compile` for touched runtime, model, install, and test files.
+- OK: import smoke confirmed `flowpilot_router` and `flowpilot_router_io` keep compatibility aliases to the new child owners.
+- OK: `python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_json_helpers_round_trip_through_io_owner`.
+- OK: focused runtime JSON write-lock startup daemon tests, 7 tests passed.
+- OK: `python -m unittest tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup`.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: background router child artifacts under `tmp\flowguard_background\`: 64/64 child commands passed with exit code `0`; latest completed child was `router_dispatch_gate_current_node_review` at `2026-05-21T16:01:42Z`.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-21T14:34:53Z`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-21T14:34:53Z`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The safe reduction was to split IO by responsibility, not by arbitrary helper size. Runtime write-lock classification stays together in one child owner.
+- The parent facade remains the old import surface, so existing router imports and tests continue through the same names.
+- Model-test alignment required the boundary test to call the child owner contracts directly, not only assert facade alias identity.
+- The first router background supervisor was interrupted and left no exit artifact; it is not counted as pass evidence. Missing child artifacts were relaunched individually, and the 64 child exit/meta artifacts are the counted router evidence.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, remote release, or public publication was performed.
+- Broader existing maintenance-map items in unrelated runtime modules remain out of scope for this IO split.

@@ -25,6 +25,10 @@ import flowpilot_router_event_dispatcher as event_dispatcher  # noqa: E402
 import flowpilot_router_events as router_events  # noqa: E402
 import flowpilot_router_errors as router_errors  # noqa: E402
 import flowpilot_router_io as router_io  # noqa: E402
+import flowpilot_router_io_hashes as router_io_hashes  # noqa: E402
+import flowpilot_router_io_json as router_io_json  # noqa: E402
+import flowpilot_router_io_locks as router_io_locks  # noqa: E402
+import flowpilot_router_io_paths as router_io_paths  # noqa: E402
 import flowpilot_process_liveness as process_liveness  # noqa: E402
 import flowpilot_router_protocol_card_metadata as card_metadata  # noqa: E402
 import flowpilot_router_protocol_startup_catalog as startup_catalog  # noqa: E402
@@ -70,6 +74,15 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             self.assertTrue(callable(getattr(router, name)), name)
 
     def test_runtime_json_helpers_round_trip_through_io_owner(self) -> None:
+        self.assertIs(router_io.write_json, router_io_json.write_json)
+        self.assertIs(router_io.write_json_atomic, router_io_json.write_json_atomic)
+        self.assertIs(router_io.read_json, router_io_json.read_json)
+        self.assertIs(router_io._json_write_lock_path, router_io_locks._json_write_lock_path)
+        self.assertIs(router_io._json_write_lock_liveness, router_io_locks._json_write_lock_liveness)
+        self.assertIs(router_io.project_relative, router_io_paths.project_relative)
+        self.assertIs(router_io.utc_now, router_io_paths.utc_now)
+        self.assertIs(router_io._json_sha256, router_io_hashes._json_sha256)
+
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "state.json"
             payload = {"schema_version": "test.v1", "value": 1}
@@ -78,6 +91,9 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
 
             self.assertEqual(router_io.read_json(path), payload)
             self.assertFalse(router_io._json_write_lock_path(path).exists())
+            self.assertEqual(router_io_locks._json_write_lock_liveness(path)["classification"], "missing")
+            self.assertEqual(router_io_paths.project_relative(Path(tmp), path), "state.json")
+            self.assertRegex(router_io_hashes._json_sha256(payload), r"^[0-9a-f]{64}$")
             written = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(written, payload)
 

@@ -3,6 +3,8 @@ from __future__ import annotations
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 import flowpilot_router_io as router_io  # noqa: E402
+import flowpilot_router_io_json as router_io_json  # noqa: E402
+import flowpilot_router_io_locks as router_io_locks  # noqa: E402
 
 
 class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -369,7 +371,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             + "\n",
             encoding="utf-8",
         )
-        stale_time = time.time() - router_io.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
+        stale_time = time.time() - router_io_locks.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
         os.utime(write_lock, (stale_time, stale_time))
 
         liveness = router_io._json_write_lock_liveness(path)  # type: ignore[attr-defined]
@@ -406,8 +408,8 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             encoding="utf-8",
         )
 
-        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
-            router_io,
+        with mock.patch.object(router_io_locks, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io_locks,
             "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
             0.001,
         ):
@@ -439,11 +441,11 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         tmp_path = path.parent / ".tmp-test-self-owned-lock.json"
         tmp_path.write_text("partial", encoding="utf-8")
-        stale_time = time.time() - router_io.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
+        stale_time = time.time() - router_io_locks.RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS - 5.0
         os.utime(write_lock, (stale_time, stale_time))
 
-        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
-            router_io,
+        with mock.patch.object(router_io_locks, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io_locks,
             "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
             0.001,
         ):
@@ -459,12 +461,12 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         path = root / "runtime" / "router_scheduler_ledger.json"
 
-        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS", 0.01), mock.patch.object(
-            router_io,
+        with mock.patch.object(router_io_locks, "RUNTIME_JSON_WRITE_LOCK_CLEANUP_RETRY_SECONDS", 0.01), mock.patch.object(
+            router_io_locks,
             "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
             0.001,
         ), mock.patch.object(
-            router_io,
+            router_io_locks,
             "_unlink_runtime_json_write_lock",
             side_effect=PermissionError("scanner still has the lock"),
         ):
@@ -543,11 +545,11 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         path = root / "runtime" / "router_scheduler_ledger.json"
 
-        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
-            router_io,
+        with mock.patch.object(router_io_locks, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.02), mock.patch.object(
+            router_io_locks,
             "RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS",
             0.001,
-        ), mock.patch.object(router_io.os, "replace", side_effect=PermissionError("locked by Windows")):
+        ), mock.patch.object(router_io_json.os, "replace", side_effect=PermissionError("locked by Windows")):
             with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
                 router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
 
@@ -557,14 +559,14 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_atomic_verify_permission_error_becomes_runtime_write_wait(self) -> None:
         root = self.make_project()
         path = root / "runtime" / "router_scheduler_ledger.json"
-        original_read_json = router_io.read_json
+        original_read_json = router_io_json.read_json
 
         def flaky_readback(read_path: Path) -> dict:
             if read_path == path:
                 raise PermissionError("scanner locked readback")
             return original_read_json(read_path)
 
-        with mock.patch.object(router_io, "read_json", side_effect=flaky_readback):
+        with mock.patch.object(router_io_json, "read_json", side_effect=flaky_readback):
             with self.assertRaises(router.RouterLedgerWriteInProgress) as raised:
                 router_io.write_json_atomic(path, {"schema_version": router.ROUTER_SCHEDULER_LEDGER_SCHEMA})
 

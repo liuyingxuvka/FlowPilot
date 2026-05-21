@@ -526,7 +526,12 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command="python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_json_helpers_round_trip_through_io_owner",
             test_kind=HAPPY,
             covers=("runtime_owner.router_boundary_helpers",),
-            code_contracts=("router_io.write_json",),
+            code_contracts=(
+                "router_io.write_json",
+                "router_io_locks.json_write_lock_liveness",
+                "router_io_paths.project_relative",
+                "router_io_hashes.json_sha256",
+            ),
         ),
         _evidence(
             "source.runtime_owner.runtime_state_happy",

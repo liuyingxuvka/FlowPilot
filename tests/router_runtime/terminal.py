@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
-import flowpilot_router_io as router_io  # noqa: E402
+import flowpilot_router_io_locks as router_io_locks  # noqa: E402
 
 
 class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
@@ -115,7 +115,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             encoding="utf-8",
         )
 
-        with mock.patch.object(router_io, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.01):
+        with mock.patch.object(router_io_locks, "RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS", 0.01):
             result = router.record_external_event(root, "user_requests_run_stop", {"reason": "stop while scheduler is locked"})
 
         self.assertTrue(result["ok"])

@@ -131,20 +131,6 @@
       },
       {
         "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_io",
-        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_io",
-        "surface_owner": "flowpilot_router_io"
-      },
-      {
-        "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
         "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
@@ -390,26 +376,6 @@
         "surface_owner": "flowpilot_router_controller_scheduler_standby"
       },
       {
-        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_io.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_io"
-        ],
-        "surface_owner": "flowpilot_router_io"
-      },
-      {
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "finding_count": 1,
         "gap_codes": [
@@ -530,8 +496,8 @@
         "surface_owner": "role_output_runtime_envelopes"
       }
     ],
-    "covered_surface_count": 712,
-    "deferred_structure_split_count": 13,
+    "covered_surface_count": 717,
+    "deferred_structure_split_count": 12,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "findings": [
       {
@@ -676,20 +642,6 @@
       },
       {
         "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_io|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_io has 587 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_io",
-        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_io",
-        "surface_owner": "flowpilot_router_io"
-      },
-      {
-        "code": "needs_structure_split",
         "dedupe_key": "flowpilot_router_protocol_external_event_data|defer_structure_split|needs_structure_split",
         "kind": "owner_module",
         "message": "flowpilot_router_protocol_external_event_data has 503 lines, above the 450 line diagnostic threshold",
@@ -749,21 +701,21 @@
     "gap_counts": {
       "internal_only_test": 1,
       "missing_test": 1,
-      "needs_structure_split": 13
+      "needs_structure_split": 12
     },
     "gap_counts_by_release_relevance": {
-      "runtime_contract": 15
+      "runtime_contract": 14
     },
     "gap_counts_by_repair_type": {
       "add_external_contract_test": 1,
-      "defer_structure_split": 13,
+      "defer_structure_split": 12,
       "upgrade_to_external_contract_test": 1
     },
     "gap_counts_by_severity": {
       "high": 1,
-      "medium": 14
+      "medium": 13
     },
-    "gap_surface_count": 14,
+    "gap_surface_count": 13,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -944,12 +896,12 @@
     "ok": true,
     "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 726,
+    "surface_count": 730,
     "surface_counts": {
-      "compatibility_facade": 108,
+      "compatibility_facade": 109,
       "model_check_runner": 94,
       "model_check_runner_helper": 18,
-      "owner_module": 232,
+      "owner_module": 235,
       "script_entrypoint": 19,
       "test_tier": 15,
       "test_tier_command": 240
@@ -2115,6 +2067,30 @@
         "split_threshold": 320,
         "surface_id": "asset:flowpilot_router_facade_export_manifest",
         "surface_owner": "flowpilot_router_facade_export_manifest",
+        "top_level_class_count": 0,
+        "top_level_function_count": 0
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 103,
+        "local_import_count": 5,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_io",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_io",
+        "surface_owner": "flowpilot_router_io",
         "top_level_class_count": 0,
         "top_level_function_count": 0
       },
@@ -8864,44 +8840,100 @@
         "top_level_function_count": 6
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 587,
-        "local_import_count": 2,
-        "max_severity": "medium",
+        "line_count": 46,
+        "local_import_count": 0,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_io",
+        "name": "flowpilot_router_io_hashes",
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_io.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "path": "skills/flowpilot/assets/flowpilot_router_io_hashes.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 450,
-        "structure_split_status": "deferred",
-        "surface_id": "asset:flowpilot_router_io",
-        "surface_owner": "flowpilot_router_io",
+        "surface_id": "asset:flowpilot_router_io_hashes",
+        "surface_owner": "flowpilot_router_io_hashes",
         "top_level_class_count": 0,
-        "top_level_function_count": 39
+        "top_level_function_count": 5
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 123,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_io_json",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_io_json.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_io_json",
+        "surface_owner": "flowpilot_router_io_json",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 350,
+        "local_import_count": 3,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_io_locks",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_io_locks.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_io_locks",
+        "surface_owner": "flowpilot_router_io_locks",
+        "top_level_class_count": 0,
+        "top_level_function_count": 16
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 98,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_io_paths",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_io_paths.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_io_paths",
+        "surface_owner": "flowpilot_router_io_paths",
+        "top_level_class_count": 0,
+        "top_level_function_count": 11
       },
       {
         "covered": true,
@@ -28044,7 +28076,7 @@
           "implements_obligations": [
             "runtime_owner.router_boundary_helpers"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_io_json.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -28054,6 +28086,70 @@
           "state_writes": [],
           "surface_type": "function",
           "symbol": "write_json"
+        },
+        {
+          "code_contract_id": "router_io_locks.json_write_lock_liveness",
+          "error_paths": [],
+          "external_inputs": [
+            "path"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_boundary_helpers"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_io_locks.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_json_write_lock_liveness"
+        },
+        {
+          "code_contract_id": "router_io_paths.project_relative",
+          "error_paths": [],
+          "external_inputs": [
+            "project_root",
+            "path"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_boundary_helpers"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_io_paths.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "project_relative"
+        },
+        {
+          "code_contract_id": "router_io_hashes.json_sha256",
+          "error_paths": [],
+          "external_inputs": [
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_boundary_helpers"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_io_hashes.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_json_sha256"
         },
         {
           "code_contract_id": "runtime_state.bind_router",
@@ -30231,7 +30327,10 @@
           "assertion_scope": "external_contract",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_json_helpers_round_trip_through_io_owner",
           "covered_code_contracts": [
-            "router_io.write_json"
+            "router_io.write_json",
+            "router_io_locks.json_write_lock_liveness",
+            "router_io_paths.project_relative",
+            "router_io_hashes.json_sha256"
           ],
           "covered_obligations": [
             "runtime_owner.router_boundary_helpers"
@@ -38380,7 +38479,7 @@
             "payload"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_io.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_io_json.py",
           "raised_errors": [],
           "return_values": [],
           "returns_value": false,
@@ -38398,6 +38497,173 @@
           ],
           "state_writes": [],
           "symbol": "write_json"
+        },
+        {
+          "calls": [
+            "_json_write_lock_path",
+            "_process_is_live",
+            "_runtime_json_target_valid",
+            "_runtime_json_tmp_artifact_present",
+            "bool",
+            "int",
+            "isinstance",
+            "json.loads",
+            "lock_path.exists",
+            "lock_path.read_text",
+            "lock_path.stat",
+            "os.getpid",
+            "payload.get",
+            "str",
+            "time.time"
+          ],
+          "code_contract_id": "router_io_locks.json_write_lock_liveness",
+          "found": true,
+          "parameters": [
+            "path"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_io_locks.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "JSONDecodeError",
+            "OSError",
+            "Path",
+            "RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS",
+            "TypeError",
+            "UnicodeDecodeError",
+            "ValueError",
+            "_json_write_lock_path",
+            "_process_is_live",
+            "_runtime_json_target_valid",
+            "_runtime_json_tmp_artifact_present",
+            "active",
+            "age",
+            "bool",
+            "classification",
+            "dict",
+            "exists",
+            "fresh",
+            "get",
+            "getpid",
+            "int",
+            "isinstance",
+            "json",
+            "loads",
+            "lock_path",
+            "os",
+            "owner_is_self",
+            "owner_pid",
+            "owner_pid_present",
+            "owner_process_live",
+            "parsed",
+            "path",
+            "payload",
+            "read_text",
+            "st_mtime",
+            "stale_by_age",
+            "stat",
+            "str",
+            "takeover_allowed",
+            "target_valid_json",
+            "time",
+            "tmp_artifact_present"
+          ],
+          "state_writes": [
+            "active",
+            "age",
+            "classification",
+            "fresh",
+            "lock_path",
+            "owner_is_self",
+            "owner_pid",
+            "owner_pid_present",
+            "owner_process_live",
+            "parsed",
+            "payload",
+            "stale_by_age",
+            "takeover_allowed",
+            "target_valid_json",
+            "tmp_artifact_present"
+          ],
+          "symbol": "_json_write_lock_liveness"
+        },
+        {
+          "calls": [
+            "RouterError",
+            "as_posix",
+            "path.resolve",
+            "project_root.resolve",
+            "relative_to"
+          ],
+          "code_contract_id": "router_io_paths.project_relative",
+          "found": true,
+          "parameters": [
+            "path",
+            "project_root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_io_paths.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "as_posix"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Path",
+            "RouterError",
+            "ValueError",
+            "as_posix",
+            "exc",
+            "path",
+            "project_root",
+            "relative_to",
+            "resolve",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "project_relative"
+        },
+        {
+          "calls": [
+            "encode",
+            "hashlib.sha256",
+            "hexdigest",
+            "json.dumps"
+          ],
+          "code_contract_id": "router_io_hashes.json_sha256",
+          "found": true,
+          "parameters": [
+            "payload"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_io_hashes.py",
+          "raised_errors": [],
+          "return_values": [
+            "hexdigest"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "dict",
+            "dumps",
+            "encode",
+            "hashlib",
+            "hexdigest",
+            "json",
+            "payload",
+            "sha256",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "_json_sha256"
         },
         {
           "calls": [
@@ -41412,10 +41678,13 @@
           "test_name": "test_event_dispatcher_passes_router_facade_to_event_helpers"
         },
         {
-          "assert_count": 3,
+          "assert_count": 14,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
-            "router_io.write_json"
+            "router_io.write_json",
+            "router_io_hashes.json_sha256",
+            "router_io_locks.json_write_lock_liveness",
+            "router_io_paths.project_relative"
           ],
           "calls": [
             "Path",
@@ -41425,8 +41694,13 @@
             "router_io._json_write_lock_path",
             "router_io.read_json",
             "router_io.write_json",
+            "router_io_hashes._json_sha256",
+            "router_io_locks._json_write_lock_liveness",
+            "router_io_paths.project_relative",
             "self.assertEqual",
             "self.assertFalse",
+            "self.assertIs",
+            "self.assertRegex",
             "tempfile.TemporaryDirectory"
           ],
           "evidence_id": "source.runtime_owner.router_io_happy",
