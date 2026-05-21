@@ -64,6 +64,8 @@ import flowpilot_router_expected_waits_actions as expected_waits_actions  # noqa
 import flowpilot_router_expected_waits_events as expected_waits_events  # noqa: E402
 import flowpilot_router_expected_waits_reconciliation as expected_waits_reconciliation  # noqa: E402
 import flowpilot_prompt_store as prompt_store  # noqa: E402
+import flowpilot_router_facade_export_registry as manifest_registry  # noqa: E402
+import flowpilot_router_facade_export_manifest as manifest  # noqa: E402
 import flowpilot_router_facade_export_manifest_actions as manifest_actions  # noqa: E402
 import flowpilot_router_action_factory_dispatch as action_dispatch  # noqa: E402
 import flowpilot_router_action_factory_dispatch_apply as action_dispatch_apply  # noqa: E402
@@ -764,6 +766,14 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             router_facade_imports.flowpilot_router_action_handlers,
         )
         self.assertTrue(any(key[0] == "flowpilot_router_controller_repair" for key in controller_exports))
+        self.assertIs(manifest.OWNER_EXPORTS, manifest_registry.OWNER_EXPORTS)
+        self.assertIs(manifest.PUBLIC_EXPORT_NAMES, manifest_registry.PUBLIC_EXPORT_NAMES)
+        self.assertIs(action_exports, manifest_registry.OWNER_EXPORTS_ACTIONS)
+        self.assertIs(controller_exports, manifest_registry.OWNER_EXPORTS_CONTROLLER)
+        self.assertIs(route_exports, manifest_registry.OWNER_EXPORTS_ROUTE)
+        self.assertIs(startup_exports, manifest_registry.OWNER_EXPORTS_STARTUP)
+        self.assertIs(terminal_exports, manifest_registry.OWNER_EXPORTS_TERMINAL_WORK)
+        self.assertIs(manifest_registry.owner_exports_for_domain("actions"), action_exports)
         split_controller_exports = {
             **manifest_controller_repair.OWNER_EXPORTS_CONTROLLER_REPAIR,
             **manifest_controller_scheduler.OWNER_EXPORTS_CONTROLLER_SCHEDULER,
@@ -771,6 +781,22 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             **manifest_controller_lifecycle.OWNER_EXPORTS_CONTROLLER_LIFECYCLE,
         }
         self.assertEqual(split_controller_exports, controller_exports)
+        self.assertIs(
+            manifest_controller_repair.OWNER_EXPORTS_CONTROLLER_REPAIR,
+            manifest_registry.OWNER_EXPORTS_CONTROLLER_REPAIR,
+        )
+        self.assertIs(
+            manifest_controller_scheduler.OWNER_EXPORTS_CONTROLLER_SCHEDULER,
+            manifest_registry.OWNER_EXPORTS_CONTROLLER_SCHEDULER,
+        )
+        self.assertIs(
+            manifest_controller_events.OWNER_EXPORTS_CONTROLLER_EVENTS,
+            manifest_registry.OWNER_EXPORTS_CONTROLLER_EVENTS,
+        )
+        self.assertIs(
+            manifest_controller_lifecycle.OWNER_EXPORTS_CONTROLLER_LIFECYCLE,
+            manifest_registry.OWNER_EXPORTS_CONTROLLER_LIFECYCLE,
+        )
         self.assertTrue(any(key[0] == "flowpilot_router_model_gate_state" for key in route_exports))
         self.assertTrue(any(key[0] == "flowpilot_router_startup_bootloader" for key in startup_exports))
         self.assertTrue(any(key[0] == "flowpilot_router_pm_role_followup" for key in terminal_exports))

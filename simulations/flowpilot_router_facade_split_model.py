@@ -33,6 +33,12 @@ ROUTER_EXPORTS_PATH = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_rout
 ROUTER_EXPORT_MANIFEST_PATH = (
     ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_facade_export_manifest.py"
 )
+ROUTER_EXPORT_REGISTRY_PATH = (
+    ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_facade_export_registry.py"
+)
+ROUTER_EXPORT_REGISTRY_DATA_PATH = (
+    ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "router_facade_owner_exports.json"
+)
 
 ROUTER_PUBLIC_API_ALLOWLIST = (
     "main",
@@ -649,7 +655,9 @@ def valid_split_evidence() -> RouterFacadeSplitEvidence:
         facade_line_count=router_text.count("\n") + 1,
         facade_top_level_function_count=facade_top_level_function_count,
         owner_export_registry_declared=ROUTER_EXPORTS_PATH.exists()
-        and ROUTER_EXPORT_MANIFEST_PATH.exists(),
+        and ROUTER_EXPORT_MANIFEST_PATH.exists()
+        and ROUTER_EXPORT_REGISTRY_PATH.exists()
+        and ROUTER_EXPORT_REGISTRY_DATA_PATH.exists(),
         prompt_assets=prompt_assets_from_manifest(),
     )
 

@@ -408,6 +408,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             test_kind=HAPPY,
             covers=("runtime_owner.router_owner_external_contracts",),
             code_contracts=(
+                "manifest_registry.owner_exports_for_domain",
                 "manifest_actions.owner_exports_actions",
                 "manifest_controller.owner_exports_controller",
                 "manifest_route.owner_exports_route",

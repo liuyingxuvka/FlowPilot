@@ -4,9 +4,9 @@ Reusable assets for FlowPilot live here or in the repository-level
 `templates/flowpilot/` directory:
 
 - `flowpilot_router.py`, the prompt-isolated startup and Controller router;
-- `flowpilot_router_facade_export_manifest.py`, the router facade export
-  manifest used to keep the public router surface explicit during owner-module
-  maintenance;
+- `flowpilot_router_facade_export_registry.py`, the canonical router facade
+  export registry reader backed by `runtime_kit/router_facade_owner_exports.json`
+  so the public router surface stays explicit during owner-module maintenance;
 - `runtime_kit/manifest.json`, the system-card manifest copied into each run;
 - `runtime_kit/cards/`, role, phase, event, reviewer, and display cards;
 - `runtime_kit/prompts/`, hash-manifested prompt assets loaded by
@@ -32,9 +32,8 @@ Reusable assets for FlowPilot live here or in the repository-level
 - `flowpilot_router_controller_scheduler_receipts.py`, the Controller receipt
   facade backed by write, receipt-effect, pending, and scheduled
   reconciliation helpers;
-- `flowpilot_router_facade_export_manifest.py`, the export-manifest aggregator
-  backed by action, controller, route, startup, and terminal/work-packet
-  manifest shards;
+- `flowpilot_router_facade_export_manifest.py`, the legacy export-manifest
+  compatibility aggregator backed by `flowpilot_router_facade_export_registry.py`;
 - `route_memory/` files generated inside each run by `flowpilot_router.py`:
   `route_history_index.json` and `pm_prior_path_context.json`;
 - `.flowpilot/` template files;

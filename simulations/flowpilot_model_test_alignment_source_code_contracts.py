@@ -541,6 +541,13 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("event",),
         ),
         _contract(
+            "manifest_registry.owner_exports_for_domain",
+            path="skills/flowpilot/assets/flowpilot_router_facade_export_registry.py",
+            symbol="owner_exports_for_domain",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("domain",),
+        ),
+        _contract(
             "manifest_actions.owner_exports_actions",
             path="skills/flowpilot/assets/flowpilot_router_facade_export_manifest_actions.py",
             symbol="owner_exports_actions",

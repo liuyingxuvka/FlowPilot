@@ -1,0 +1,3926 @@
+{
+  "domains": {
+    "actions": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_action_is_startup_async_card_wait",
+            "target": "_action_is_startup_async_card_wait"
+          },
+          {
+            "public": "_action_is_startup_async_delivery",
+            "target": "_action_is_startup_async_delivery"
+          },
+          {
+            "public": "_apply_dispatch_recipient_gate",
+            "target": "_apply_dispatch_recipient_gate"
+          },
+          {
+            "public": "_apply_formal_work_packet_ack_preflight",
+            "target": "_apply_formal_work_packet_ack_preflight"
+          },
+          {
+            "public": "_committed_card_artifact_extra",
+            "target": "_committed_card_artifact_extra"
+          },
+          {
+            "public": "_controller_user_reporting_policy",
+            "target": "_controller_user_reporting_policy"
+          },
+          {
+            "public": "_current_node_scope_exit_reconciliation_blockers",
+            "target": "_current_node_scope_exit_reconciliation_blockers"
+          },
+          {
+            "public": "_current_scope_pre_review_reconciliation_action",
+            "target": "_current_scope_pre_review_reconciliation_action"
+          },
+          {
+            "public": "_current_scope_reconciliation_wait_still_blocked",
+            "target": "_current_scope_reconciliation_wait_still_blocked"
+          },
+          {
+            "public": "_dispatch_gate_action_is_ack_only_prompt",
+            "target": "_dispatch_gate_action_is_ack_only_prompt"
+          },
+          {
+            "public": "_dispatch_gate_action_work_class",
+            "target": "_dispatch_gate_action_work_class"
+          },
+          {
+            "public": "_dispatch_gate_card_entry",
+            "target": "_dispatch_gate_card_entry"
+          },
+          {
+            "public": "_dispatch_gate_output_events_for_action",
+            "target": "_dispatch_gate_output_events_for_action"
+          },
+          {
+            "public": "_dispatch_gate_output_events_for_card_id",
+            "target": "_dispatch_gate_output_events_for_card_id"
+          },
+          {
+            "public": "_dispatch_gate_packet_blocker",
+            "target": "_dispatch_gate_packet_blocker"
+          },
+          {
+            "public": "_dispatch_gate_passive_wait_blocker",
+            "target": "_dispatch_gate_passive_wait_blocker"
+          },
+          {
+            "public": "_dispatch_gate_pending_ack_wait",
+            "target": "_dispatch_gate_pending_ack_wait"
+          },
+          {
+            "public": "_dispatch_gate_pending_expected_output_blocker",
+            "target": "_dispatch_gate_pending_expected_output_blocker"
+          },
+          {
+            "public": "_dispatch_gate_pm_role_work_blocker",
+            "target": "_dispatch_gate_pm_role_work_blocker"
+          },
+          {
+            "public": "_dispatch_gate_same_obligation_instruction_context",
+            "target": "_dispatch_gate_same_obligation_instruction_context"
+          },
+          {
+            "public": "_dispatch_gate_wait_action",
+            "target": "_dispatch_gate_wait_action"
+          },
+          {
+            "public": "_next_local_obligation_before_passive_wait",
+            "target": "_next_local_obligation_before_passive_wait"
+          },
+          {
+            "public": "_next_pending_card_return_action",
+            "target": "_next_pending_card_return_action"
+          },
+          {
+            "public": "_pending_card_return_blocker_for_event",
+            "target": "_pending_card_return_blocker_for_event"
+          },
+          {
+            "public": "_roles_from_action_to_role",
+            "target": "_roles_from_action_to_role"
+          },
+          {
+            "public": "_startup_async_pending_returns",
+            "target": "_startup_async_pending_returns"
+          },
+          {
+            "public": "append_history",
+            "target": "append_history"
+          },
+          {
+            "public": "make_action",
+            "target": "make_action"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_action_factory"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_auto_commit_system_card_bundle_delivery_action",
+            "target": "auto_commit_system_card_bundle_delivery_action"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_action_handlers"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_artifact_issue",
+            "target": "_artifact_issue"
+          },
+          {
+            "public": "_validate_hash_if_present",
+            "target": "_validate_hash_if_present"
+          },
+          {
+            "public": "_validate_role_output_hash_if_present",
+            "target": "_validate_role_output_hash_if_present"
+          },
+          {
+            "public": "validate_artifact",
+            "target": "validate_artifact"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_artifact_validation"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_card_return_resolved_for_action",
+            "target": "_card_return_resolved_for_action"
+          },
+          {
+            "public": "_current_node_pre_review_reconciliation_blockers",
+            "target": "_current_node_pre_review_reconciliation_blockers"
+          },
+          {
+            "public": "_pending_card_return_ack_exists",
+            "target": "_pending_card_return_ack_exists"
+          },
+          {
+            "public": "_pending_return_card_ids",
+            "target": "_pending_return_card_ids"
+          },
+          {
+            "public": "_pending_return_is_outside_active_node_scope",
+            "target": "_pending_return_is_outside_active_node_scope"
+          },
+          {
+            "public": "_pending_return_is_pre_review_startup_scope",
+            "target": "_pending_return_is_pre_review_startup_scope"
+          },
+          {
+            "public": "_pending_return_is_startup_async_scope",
+            "target": "_pending_return_is_startup_async_scope"
+          },
+          {
+            "public": "_pending_return_matches_active_node_scope",
+            "target": "_pending_return_matches_active_node_scope"
+          },
+          {
+            "public": "_pending_return_records",
+            "target": "_pending_return_records"
+          },
+          {
+            "public": "_pre_review_reconciliation_blockers_for_trigger",
+            "target": "_pre_review_reconciliation_blockers_for_trigger"
+          },
+          {
+            "public": "_startup_pre_review_ack_join_clean",
+            "target": "_startup_pre_review_ack_join_clean"
+          },
+          {
+            "public": "_startup_pre_review_card_flags",
+            "target": "_startup_pre_review_card_flags"
+          },
+          {
+            "public": "_startup_pre_review_cards_delivered",
+            "target": "_startup_pre_review_cards_delivered"
+          },
+          {
+            "public": "_startup_pre_review_pending_returns",
+            "target": "_startup_pre_review_pending_returns"
+          },
+          {
+            "public": "_startup_pre_review_reconciliation_blockers",
+            "target": "_startup_pre_review_reconciliation_blockers"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_card_returns"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_approve_child_skill_manifest_for_route",
+            "target": "_approve_child_skill_manifest_for_route"
+          },
+          {
+            "public": "_sync_capability_evidence",
+            "target": "_sync_capability_evidence"
+          },
+          {
+            "public": "_sync_child_skill_manifest_review_approval",
+            "target": "_sync_child_skill_manifest_review_approval"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_child_skill_capability"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "main",
+            "target": "main"
+          },
+          {
+            "public": "parse_args",
+            "target": "parse_args"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_cli"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_control_transaction_contract_registry_path",
+            "target": "_control_transaction_contract_registry_path"
+          },
+          {
+            "public": "_control_transaction_registry_issues",
+            "target": "_control_transaction_registry_issues"
+          },
+          {
+            "public": "_control_transaction_registry_path",
+            "target": "_control_transaction_registry_path"
+          },
+          {
+            "public": "_control_transaction_registry_rows",
+            "target": "_control_transaction_registry_rows"
+          },
+          {
+            "public": "_control_transaction_row",
+            "target": "_control_transaction_row"
+          },
+          {
+            "public": "_load_control_transaction_registry",
+            "target": "_load_control_transaction_registry"
+          },
+          {
+            "public": "_registered_output_contract_ids",
+            "target": "_registered_output_contract_ids"
+          },
+          {
+            "public": "_validate_control_transaction_registry",
+            "target": "_validate_control_transaction_registry"
+          },
+          {
+            "public": "_validate_control_transaction_requirements",
+            "target": "_validate_control_transaction_requirements"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_control_transactions"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_action_is_router_internal_mechanical",
+            "target": "_action_is_router_internal_mechanical"
+          },
+          {
+            "public": "_append_router_internal_mechanical_record",
+            "target": "_append_router_internal_mechanical_record"
+          },
+          {
+            "public": "_consume_router_internal_mechanical_action",
+            "target": "_consume_router_internal_mechanical_action"
+          },
+          {
+            "public": "_router_internal_mechanical_identity",
+            "target": "_router_internal_mechanical_identity"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_internal_actions"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_validate_router_owned_check_proof",
+            "target": "_validate_router_owned_check_proof"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_proof_validation"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_reconciled_card_delivery_context",
+            "target": "_reconciled_card_delivery_context"
+          },
+          {
+            "public": "_repair_prompt_delivery_contexts",
+            "target": "_repair_prompt_delivery_contexts"
+          },
+          {
+            "public": "_repair_role_output_envelope_hashes",
+            "target": "_repair_role_output_envelope_hashes"
+          },
+          {
+            "public": "_role_output_envelope_record",
+            "target": "_role_output_envelope_record"
+          },
+          {
+            "public": "_role_output_envelope_record_for_mutable_artifact",
+            "target": "_role_output_envelope_record_for_mutable_artifact"
+          },
+          {
+            "public": "_role_output_ledger_outputs",
+            "target": "_role_output_ledger_outputs"
+          },
+          {
+            "public": "_role_output_snapshot_name",
+            "target": "_role_output_snapshot_name"
+          },
+          {
+            "public": "_startup_fact_canonical_report_is_valid",
+            "target": "_startup_fact_canonical_report_is_valid"
+          },
+          {
+            "public": "_sync_current_and_index_status",
+            "target": "_sync_current_and_index_status"
+          },
+          {
+            "public": "_try_reconcile_direct_role_output_event_ledger",
+            "target": "_try_reconcile_direct_role_output_event_ledger"
+          },
+          {
+            "public": "_try_reconcile_startup_fact_role_output_ledger",
+            "target": "_try_reconcile_startup_fact_role_output_ledger"
+          },
+          {
+            "public": "write_role_output_envelope",
+            "target": "write_role_output_envelope"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_role_output_bridge"
+      }
+    ],
+    "controller_events": [
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_record_external_event_unchecked",
+            "target": "_record_external_event_unchecked"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_event_dispatcher"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_active_control_blocker_for_identity",
+            "target": "_active_control_blocker_for_identity"
+          },
+          {
+            "public": "_already_recorded_external_event_result",
+            "target": "_already_recorded_external_event_result"
+          },
+          {
+            "public": "_check_scoped_event_retry_budget",
+            "target": "_check_scoped_event_retry_budget"
+          },
+          {
+            "public": "_control_blocker_repair_decision_identity_scope",
+            "target": "_control_blocker_repair_decision_identity_scope"
+          },
+          {
+            "public": "_control_blocker_repair_outcome_identity_scope",
+            "target": "_control_blocker_repair_outcome_identity_scope"
+          },
+          {
+            "public": "_current_node_completion_identity_scope",
+            "target": "_current_node_completion_identity_scope"
+          },
+          {
+            "public": "_current_node_result_identity_scope",
+            "target": "_current_node_result_identity_scope"
+          },
+          {
+            "public": "_currently_allowed_external_events",
+            "target": "_currently_allowed_external_events"
+          },
+          {
+            "public": "_event_identity_ledger",
+            "target": "_event_identity_ledger"
+          },
+          {
+            "public": "_external_event_flag_replay_requires_new_processing",
+            "target": "_external_event_flag_replay_requires_new_processing"
+          },
+          {
+            "public": "_frontier_for_event_identity",
+            "target": "_frontier_for_event_identity"
+          },
+          {
+            "public": "_gate_decision_identity_scope",
+            "target": "_gate_decision_identity_scope"
+          },
+          {
+            "public": "_load_file_backed_role_payload",
+            "target": "_load_file_backed_role_payload"
+          },
+          {
+            "public": "_load_file_backed_role_payload_if_present",
+            "target": "_load_file_backed_role_payload_if_present"
+          },
+          {
+            "public": "_load_record_event_envelope_ref",
+            "target": "_load_record_event_envelope_ref"
+          },
+          {
+            "public": "_looks_like_record_event_envelope",
+            "target": "_looks_like_record_event_envelope"
+          },
+          {
+            "public": "_mark_scoped_event_recorded",
+            "target": "_mark_scoped_event_recorded"
+          },
+          {
+            "public": "_normalize_record_event_payload",
+            "target": "_normalize_record_event_payload"
+          },
+          {
+            "public": "_payload_body_hash",
+            "target": "_payload_body_hash"
+          },
+          {
+            "public": "_payload_requires_record_event_envelope_validation",
+            "target": "_payload_requires_record_event_envelope_validation"
+          },
+          {
+            "public": "_payload_view_for_event_identity",
+            "target": "_payload_view_for_event_identity"
+          },
+          {
+            "public": "_pm_role_work_request_identity_scope",
+            "target": "_pm_role_work_request_identity_scope"
+          },
+          {
+            "public": "_pm_role_work_result_decision_identity_scope",
+            "target": "_pm_role_work_result_decision_identity_scope"
+          },
+          {
+            "public": "_record_event_envelope_ref_from_payload",
+            "target": "_record_event_envelope_ref_from_payload"
+          },
+          {
+            "public": "_record_event_expected_role",
+            "target": "_record_event_expected_role"
+          },
+          {
+            "public": "_record_event_from_role_matches",
+            "target": "_record_event_from_role_matches"
+          },
+          {
+            "public": "_role_work_result_identity_scope",
+            "target": "_role_work_result_identity_scope"
+          },
+          {
+            "public": "_route_draft_identity_scope",
+            "target": "_route_draft_identity_scope"
+          },
+          {
+            "public": "_route_mutation_identity_scope",
+            "target": "_route_mutation_identity_scope"
+          },
+          {
+            "public": "_scoped_event_identity",
+            "target": "_scoped_event_identity"
+          },
+          {
+            "public": "_scoped_event_is_recorded",
+            "target": "_scoped_event_is_recorded"
+          },
+          {
+            "public": "_stable_identity_hash",
+            "target": "_stable_identity_hash"
+          },
+          {
+            "public": "_startup_repair_identity_scope",
+            "target": "_startup_repair_identity_scope"
+          },
+          {
+            "public": "_validate_record_event_envelope",
+            "target": "_validate_record_event_envelope"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_event_identity"
+      }
+    ],
+    "controller_lifecycle": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_clear_active_control_blocker_for_terminal_lifecycle",
+            "target": "_clear_active_control_blocker_for_terminal_lifecycle"
+          },
+          {
+            "public": "_reconcile_terminal_lifecycle_authorities",
+            "target": "_reconcile_terminal_lifecycle_authorities"
+          },
+          {
+            "public": "_run_lifecycle_terminal_action",
+            "target": "_run_lifecycle_terminal_action"
+          },
+          {
+            "public": "_try_write_control_blocker_for_exception",
+            "target": "_try_write_control_blocker_for_exception"
+          },
+          {
+            "public": "_write_protocol_dead_end_lifecycle",
+            "target": "_write_protocol_dead_end_lifecycle"
+          },
+          {
+            "public": "_write_run_lifecycle_request",
+            "target": "_write_run_lifecycle_request"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_lifecycle_requests"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_lifecycle_record_path",
+            "target": "_lifecycle_record_path"
+          },
+          {
+            "public": "_reset_resume_cycle_for_wakeup",
+            "target": "_reset_resume_cycle_for_wakeup"
+          },
+          {
+            "public": "_write_host_heartbeat_binding",
+            "target": "_write_host_heartbeat_binding"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_lifecycle_support"
+      }
+    ],
+    "controller_repair": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_close_waiting_controller_actions_for_external_event",
+            "target": "_close_waiting_controller_actions_for_external_event"
+          },
+          {
+            "public": "_controller_action_required_deliverables",
+            "target": "_controller_action_required_deliverables"
+          },
+          {
+            "public": "_controller_boundary_flags_synced",
+            "target": "_controller_boundary_flags_synced"
+          },
+          {
+            "public": "_controller_boundary_required_deliverable",
+            "target": "_controller_boundary_required_deliverable"
+          },
+          {
+            "public": "_controller_deliverable_contract",
+            "target": "_controller_deliverable_contract"
+          },
+          {
+            "public": "_controller_deliverable_failed_repair_ids",
+            "target": "_controller_deliverable_failed_repair_ids"
+          },
+          {
+            "public": "_controller_repair_action_is_pending",
+            "target": "_controller_repair_action_is_pending"
+          },
+          {
+            "public": "_count_unique_mail_deliveries",
+            "target": "_count_unique_mail_deliveries"
+          },
+          {
+            "public": "_defer_controller_postcondition_reconciliation_retry",
+            "target": "_defer_controller_postcondition_reconciliation_retry"
+          },
+          {
+            "public": "_done_controller_receipt_for_entry",
+            "target": "_done_controller_receipt_for_entry"
+          },
+          {
+            "public": "_ensure_mail_delivery_packet_released",
+            "target": "_ensure_mail_delivery_packet_released"
+          },
+          {
+            "public": "_find_mail_delivery",
+            "target": "_find_mail_delivery"
+          },
+          {
+            "public": "_fold_mail_delivery_postcondition",
+            "target": "_fold_mail_delivery_postcondition"
+          },
+          {
+            "public": "_mail_delivery_action_envelope_path",
+            "target": "_mail_delivery_action_envelope_path"
+          },
+          {
+            "public": "_mail_delivery_matches",
+            "target": "_mail_delivery_matches"
+          },
+          {
+            "public": "_mail_delivery_packet_released",
+            "target": "_mail_delivery_packet_released"
+          },
+          {
+            "public": "_mail_role_obligation_contract",
+            "target": "_mail_role_obligation_contract"
+          },
+          {
+            "public": "_mail_sequence_entry",
+            "target": "_mail_sequence_entry"
+          },
+          {
+            "public": "_mark_controller_deliverable_repair_resolved",
+            "target": "_mark_controller_deliverable_repair_resolved"
+          },
+          {
+            "public": "_missing_deliverables_for_apply_result",
+            "target": "_missing_deliverables_for_apply_result"
+          },
+          {
+            "public": "_packet_record_for_mail_delivery",
+            "target": "_packet_record_for_mail_delivery"
+          },
+          {
+            "public": "_pending_action_postcondition",
+            "target": "_pending_action_postcondition"
+          },
+          {
+            "public": "_pending_action_postcondition_satisfied",
+            "target": "_pending_action_postcondition_satisfied"
+          },
+          {
+            "public": "_pending_controller_action_id",
+            "target": "_pending_controller_action_id"
+          },
+          {
+            "public": "_receipt_for_pending_controller_action",
+            "target": "_receipt_for_pending_controller_action"
+          },
+          {
+            "public": "_reclaim_router_owned_postcondition_from_artifact",
+            "target": "_reclaim_router_owned_postcondition_from_artifact"
+          },
+          {
+            "public": "_reconcile_controller_boundary_confirmation_projection",
+            "target": "_reconcile_controller_boundary_confirmation_projection"
+          },
+          {
+            "public": "_router_scheduler_row_for_controller_entry",
+            "target": "_router_scheduler_row_for_controller_entry"
+          },
+          {
+            "public": "_schedule_controller_deliverable_repair",
+            "target": "_schedule_controller_deliverable_repair"
+          },
+          {
+            "public": "_sync_controller_boundary_confirmation_from_artifact",
+            "target": "_sync_controller_boundary_confirmation_from_artifact"
+          },
+          {
+            "public": "_update_controller_action_entry_fields",
+            "target": "_update_controller_action_entry_fields"
+          },
+          {
+            "public": "_write_controller_deliverable_budget_blocker",
+            "target": "_write_controller_deliverable_budget_blocker"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_controller_repair"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_active_node_kind_for_event_capability",
+            "target": "_active_node_kind_for_event_capability"
+          },
+          {
+            "public": "_active_repair_transaction_for_event",
+            "target": "_active_repair_transaction_for_event"
+          },
+          {
+            "public": "_blocker_repair_policy_rows",
+            "target": "_blocker_repair_policy_rows"
+          },
+          {
+            "public": "_blocker_repair_policy_snapshot_path",
+            "target": "_blocker_repair_policy_snapshot_path"
+          },
+          {
+            "public": "_classify_control_blocker",
+            "target": "_classify_control_blocker"
+          },
+          {
+            "public": "_clear_successful_repair_lane_state",
+            "target": "_clear_successful_repair_lane_state"
+          },
+          {
+            "public": "_commit_material_scan_repair_generation",
+            "target": "_commit_material_scan_repair_generation"
+          },
+          {
+            "public": "_control_blocker_allowed_resolution_events",
+            "target": "_control_blocker_allowed_resolution_events"
+          },
+          {
+            "public": "_control_blocker_allows_resolution_event",
+            "target": "_control_blocker_allows_resolution_event"
+          },
+          {
+            "public": "_control_blocker_attempt_key",
+            "target": "_control_blocker_attempt_key"
+          },
+          {
+            "public": "_control_blocker_direct_attempts_used",
+            "target": "_control_blocker_direct_attempts_used"
+          },
+          {
+            "public": "_control_blocker_error_code",
+            "target": "_control_blocker_error_code"
+          },
+          {
+            "public": "_control_blocker_followup_target_role",
+            "target": "_control_blocker_followup_target_role"
+          },
+          {
+            "public": "_control_blocker_matches_reconciled_action",
+            "target": "_control_blocker_matches_reconciled_action"
+          },
+          {
+            "public": "_control_blocker_policy",
+            "target": "_control_blocker_policy"
+          },
+          {
+            "public": "_control_blocker_policy_row",
+            "target": "_control_blocker_policy_row"
+          },
+          {
+            "public": "_control_blocker_record",
+            "target": "_control_blocker_record"
+          },
+          {
+            "public": "_control_blocker_repair_origin",
+            "target": "_control_blocker_repair_origin"
+          },
+          {
+            "public": "_control_blocker_summary",
+            "target": "_control_blocker_summary"
+          },
+          {
+            "public": "_control_blocker_wait_events",
+            "target": "_control_blocker_wait_events"
+          },
+          {
+            "public": "_control_payload_public_view",
+            "target": "_control_payload_public_view"
+          },
+          {
+            "public": "_control_resolution_event_name",
+            "target": "_control_resolution_event_name"
+          },
+          {
+            "public": "_controller_wait_entries_for_event",
+            "target": "_controller_wait_entries_for_event"
+          },
+          {
+            "public": "_default_pm_recovery_option",
+            "target": "_default_pm_recovery_option"
+          },
+          {
+            "public": "_event_already_recorded",
+            "target": "_event_already_recorded"
+          },
+          {
+            "public": "_event_capability_issue",
+            "target": "_event_capability_issue"
+          },
+          {
+            "public": "_event_producer_roles",
+            "target": "_event_producer_roles"
+          },
+          {
+            "public": "_existing_event_producer_evidence",
+            "target": "_existing_event_producer_evidence"
+          },
+          {
+            "public": "_external_event_validation_issue",
+            "target": "_external_event_validation_issue"
+          },
+          {
+            "public": "_finalize_repair_transaction_outcome",
+            "target": "_finalize_repair_transaction_outcome"
+          },
+          {
+            "public": "_gate_decision_issue",
+            "target": "_gate_decision_issue"
+          },
+          {
+            "public": "_gate_decision_issues",
+            "target": "_gate_decision_issues"
+          },
+          {
+            "public": "_gate_decision_record_path",
+            "target": "_gate_decision_record_path"
+          },
+          {
+            "public": "_gate_decision_safe_id",
+            "target": "_gate_decision_safe_id"
+          },
+          {
+            "public": "_gate_decision_summary",
+            "target": "_gate_decision_summary"
+          },
+          {
+            "public": "_infer_responsible_role",
+            "target": "_infer_responsible_role"
+          },
+          {
+            "public": "_list_field",
+            "target": "_list_field"
+          },
+          {
+            "public": "_make_controller_repair_work_packet_action",
+            "target": "_make_controller_repair_work_packet_action"
+          },
+          {
+            "public": "_make_operation_replay_action",
+            "target": "_make_operation_replay_action"
+          },
+          {
+            "public": "_mark_control_blocker_delivered",
+            "target": "_mark_control_blocker_delivered"
+          },
+          {
+            "public": "_next_control_blocker_action",
+            "target": "_next_control_blocker_action"
+          },
+          {
+            "public": "_next_repair_transaction_executable_action",
+            "target": "_next_repair_transaction_executable_action"
+          },
+          {
+            "public": "_nonnegative_int_or_none",
+            "target": "_nonnegative_int_or_none"
+          },
+          {
+            "public": "_payload_source_paths",
+            "target": "_payload_source_paths"
+          },
+          {
+            "public": "_pm_recovery_options_from_policy",
+            "target": "_pm_recovery_options_from_policy"
+          },
+          {
+            "public": "_policy_first_handler_target",
+            "target": "_policy_first_handler_target"
+          },
+          {
+            "public": "_project_relative_if_possible",
+            "target": "_project_relative_if_possible"
+          },
+          {
+            "public": "_repair_outcome_events",
+            "target": "_repair_outcome_events"
+          },
+          {
+            "public": "_repair_outcome_table",
+            "target": "_repair_outcome_table"
+          },
+          {
+            "public": "_repair_packet_specs_from_decision",
+            "target": "_repair_packet_specs_from_decision"
+          },
+          {
+            "public": "_repair_transaction_execution_plan",
+            "target": "_repair_transaction_execution_plan"
+          },
+          {
+            "public": "_repair_transaction_for_control_blocker",
+            "target": "_repair_transaction_for_control_blocker"
+          },
+          {
+            "public": "_repair_transaction_id",
+            "target": "_repair_transaction_id"
+          },
+          {
+            "public": "_repair_transaction_index_path",
+            "target": "_repair_transaction_index_path"
+          },
+          {
+            "public": "_repair_transaction_normalized_plan_kind",
+            "target": "_repair_transaction_normalized_plan_kind"
+          },
+          {
+            "public": "_repair_transaction_outcome_kind",
+            "target": "_repair_transaction_outcome_kind"
+          },
+          {
+            "public": "_repair_transaction_path",
+            "target": "_repair_transaction_path"
+          },
+          {
+            "public": "_repair_transactions_root",
+            "target": "_repair_transactions_root"
+          },
+          {
+            "public": "_resolve_control_blockers_for_reconciled_controller_action",
+            "target": "_resolve_control_blockers_for_reconciled_controller_action"
+          },
+          {
+            "public": "_resolve_delivered_control_blocker",
+            "target": "_resolve_delivered_control_blocker"
+          },
+          {
+            "public": "_resume_reentry_gate_pending",
+            "target": "_resume_reentry_gate_pending"
+          },
+          {
+            "public": "_role_set",
+            "target": "_role_set"
+          },
+          {
+            "public": "_run_state_with_assumed_flag",
+            "target": "_run_state_with_assumed_flag"
+          },
+          {
+            "public": "_should_materialize_control_blocker",
+            "target": "_should_materialize_control_blocker"
+          },
+          {
+            "public": "_skill_observation_reminder",
+            "target": "_skill_observation_reminder"
+          },
+          {
+            "public": "_supersede_prior_control_blockers",
+            "target": "_supersede_prior_control_blockers"
+          },
+          {
+            "public": "_supersede_queued_control_blocker_actions",
+            "target": "_supersede_queued_control_blocker_actions"
+          },
+          {
+            "public": "_sync_control_plane_indexes",
+            "target": "_sync_control_plane_indexes"
+          },
+          {
+            "public": "_sync_protocol_blocker_index",
+            "target": "_sync_protocol_blocker_index"
+          },
+          {
+            "public": "_validate_gate_decision",
+            "target": "_validate_gate_decision"
+          },
+          {
+            "public": "_validate_model_miss_officer_report_refs",
+            "target": "_validate_model_miss_officer_report_refs"
+          },
+          {
+            "public": "_validate_repair_outcome_table",
+            "target": "_validate_repair_outcome_table"
+          },
+          {
+            "public": "_validate_wait_event_producer_binding",
+            "target": "_validate_wait_event_producer_binding"
+          },
+          {
+            "public": "_validated_event_capability_names",
+            "target": "_validated_event_capability_names"
+          },
+          {
+            "public": "_validated_external_event_names",
+            "target": "_validated_external_event_names"
+          },
+          {
+            "public": "_write_blocker_repair_policy_snapshot",
+            "target": "_write_blocker_repair_policy_snapshot"
+          },
+          {
+            "public": "_write_control_blocker",
+            "target": "_write_control_blocker"
+          },
+          {
+            "public": "_write_control_blocker_repair_decision",
+            "target": "_write_control_blocker_repair_decision"
+          },
+          {
+            "public": "_write_control_blocker_repair_packet",
+            "target": "_write_control_blocker_repair_packet"
+          },
+          {
+            "public": "_write_gate_decision",
+            "target": "_write_gate_decision"
+          },
+          {
+            "public": "_write_model_miss_triage_decision",
+            "target": "_write_model_miss_triage_decision"
+          },
+          {
+            "public": "_write_repair_transaction_index",
+            "target": "_write_repair_transaction_index"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_events_repair"
+      }
+    ],
+    "controller_scheduler": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_next_mail_action",
+            "target": "_next_mail_action"
+          },
+          {
+            "public": "apply_action",
+            "target": "apply_action"
+          },
+          {
+            "public": "apply_controller_action",
+            "target": "apply_controller_action"
+          },
+          {
+            "public": "compute_controller_action",
+            "target": "compute_controller_action"
+          },
+          {
+            "public": "next_action",
+            "target": "next_action"
+          },
+          {
+            "public": "record_controller_action_receipt",
+            "target": "record_controller_action_receipt"
+          },
+          {
+            "public": "record_external_event",
+            "target": "record_external_event"
+          },
+          {
+            "public": "run_until_wait",
+            "target": "run_until_wait"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_controller_runtime"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_action_is_startup_scoped",
+            "target": "_action_is_startup_scoped"
+          },
+          {
+            "public": "_apply_done_controller_receipt_effects",
+            "target": "_apply_done_controller_receipt_effects"
+          },
+          {
+            "public": "_apply_startup_bootloader_receipt_effects",
+            "target": "_apply_startup_bootloader_receipt_effects"
+          },
+          {
+            "public": "_apply_stateful_receipt_postcondition",
+            "target": "_apply_stateful_receipt_postcondition"
+          },
+          {
+            "public": "_apply_wait_target_reminder_receipt",
+            "target": "_apply_wait_target_reminder_receipt"
+          },
+          {
+            "public": "_backfill_scheduler_row_from_reconciled_controller_action",
+            "target": "_backfill_scheduler_row_from_reconciled_controller_action"
+          },
+          {
+            "public": "_boot_action_meta",
+            "target": "_boot_action_meta"
+          },
+          {
+            "public": "_build_foreground_controller_standby_snapshot",
+            "target": "_build_foreground_controller_standby_snapshot"
+          },
+          {
+            "public": "_canonicalize_legacy_startup_daemon_reconciliation",
+            "target": "_canonicalize_legacy_startup_daemon_reconciliation"
+          },
+          {
+            "public": "_clear_pending_after_reconciled_controller_receipt",
+            "target": "_clear_pending_after_reconciled_controller_receipt"
+          },
+          {
+            "public": "_continuous_standby_release_conditions",
+            "target": "_continuous_standby_release_conditions"
+          },
+          {
+            "public": "_continuous_standby_task_payload",
+            "target": "_continuous_standby_task_payload"
+          },
+          {
+            "public": "_continuous_standby_watch_label",
+            "target": "_continuous_standby_watch_label"
+          },
+          {
+            "public": "_controller_action_completion_class",
+            "target": "_controller_action_completion_class"
+          },
+          {
+            "public": "_controller_action_ledger_has_prompt_header",
+            "target": "_controller_action_ledger_has_prompt_header"
+          },
+          {
+            "public": "_controller_action_ledger_summary",
+            "target": "_controller_action_ledger_summary"
+          },
+          {
+            "public": "_controller_action_open_for",
+            "target": "_controller_action_open_for"
+          },
+          {
+            "public": "_controller_action_reconciled_for",
+            "target": "_controller_action_reconciled_for"
+          },
+          {
+            "public": "_current_action_is_ordinary_controller_work",
+            "target": "_current_action_is_ordinary_controller_work"
+          },
+          {
+            "public": "_current_work_from_action",
+            "target": "_current_work_from_action"
+          },
+          {
+            "public": "_current_work_from_packet_ledger",
+            "target": "_current_work_from_packet_ledger"
+          },
+          {
+            "public": "_current_work_from_passive_waits",
+            "target": "_current_work_from_passive_waits"
+          },
+          {
+            "public": "_current_work_owner_kind",
+            "target": "_current_work_owner_kind"
+          },
+          {
+            "public": "_current_work_owner_label",
+            "target": "_current_work_owner_label"
+          },
+          {
+            "public": "_current_work_payload",
+            "target": "_current_work_payload"
+          },
+          {
+            "public": "_derive_current_work",
+            "target": "_derive_current_work"
+          },
+          {
+            "public": "_clear_pending_action_if_durable_wait_resolved",
+            "target": "_clear_pending_action_if_durable_wait_resolved"
+          },
+          {
+            "public": "_elapsed_seconds_since",
+            "target": "_elapsed_seconds_since"
+          },
+          {
+            "public": "_empty_router_ownership_ledger",
+            "target": "_empty_router_ownership_ledger"
+          },
+          {
+            "public": "_empty_router_scheduler_ledger",
+            "target": "_empty_router_scheduler_ledger"
+          },
+          {
+            "public": "_ensure_continuous_standby_controller_action",
+            "target": "_ensure_continuous_standby_controller_action"
+          },
+          {
+            "public": "_ensure_controller_action_ledger",
+            "target": "_ensure_controller_action_ledger"
+          },
+          {
+            "public": "_ensure_router_ownership_ledger",
+            "target": "_ensure_router_ownership_ledger"
+          },
+          {
+            "public": "_ensure_router_scheduler_ledger",
+            "target": "_ensure_router_scheduler_ledger"
+          },
+          {
+            "public": "_ensure_wait_target_reminder_controller_action",
+            "target": "_ensure_wait_target_reminder_controller_action"
+          },
+          {
+            "public": "_foreground_standby_pending_action_ids",
+            "target": "_foreground_standby_pending_action_ids"
+          },
+          {
+            "public": "_foreground_standby_waiting_action_ids",
+            "target": "_foreground_standby_waiting_action_ids"
+          },
+          {
+            "public": "_mark_pending_return_wait_reminded",
+            "target": "_mark_pending_return_wait_reminded"
+          },
+          {
+            "public": "_matching_bootstrap_pending_action",
+            "target": "_matching_bootstrap_pending_action"
+          },
+          {
+            "public": "_maybe_write_controller_receipt_for_pending",
+            "target": "_maybe_write_controller_receipt_for_pending"
+          },
+          {
+            "public": "_next_wait_target_reminder_action",
+            "target": "_next_wait_target_reminder_action"
+          },
+          {
+            "public": "_packet_status_allows_current_work",
+            "target": "_packet_status_allows_current_work"
+          },
+          {
+            "public": "_pending_action_durable_resolution",
+            "target": "_pending_action_durable_resolution"
+          },
+          {
+            "public": "_pending_return_matches_wait_target_reminder",
+            "target": "_pending_return_matches_wait_target_reminder"
+          },
+          {
+            "public": "_pending_wait_class",
+            "target": "_pending_wait_class"
+          },
+          {
+            "public": "_pending_wait_summary",
+            "target": "_pending_wait_summary"
+          },
+          {
+            "public": "_prepare_router_scheduled_action",
+            "target": "_prepare_router_scheduled_action"
+          },
+          {
+            "public": "_read_router_ownership_ledger",
+            "target": "_read_router_ownership_ledger"
+          },
+          {
+            "public": "_read_router_scheduler_ledger",
+            "target": "_read_router_scheduler_ledger"
+          },
+          {
+            "public": "_rebuild_controller_action_ledger",
+            "target": "_rebuild_controller_action_ledger"
+          },
+          {
+            "public": "_clear_pending_controller_action_if_matches",
+            "target": "_clear_pending_controller_action_if_matches"
+          },
+          {
+            "public": "_reconcile_controller_receipts",
+            "target": "_reconcile_controller_receipts"
+          },
+          {
+            "public": "_reconcile_pending_controller_action_receipt",
+            "target": "_reconcile_pending_controller_action_receipt"
+          },
+          {
+            "public": "_reconcile_scheduled_controller_action_receipts",
+            "target": "_reconcile_scheduled_controller_action_receipts"
+          },
+          {
+            "public": "_record_router_ownership_entry",
+            "target": "_record_router_ownership_entry"
+          },
+          {
+            "public": "_record_router_scheduler_row",
+            "target": "_record_router_scheduler_row"
+          },
+          {
+            "public": "_router_ownership_counts",
+            "target": "_router_ownership_counts"
+          },
+          {
+            "public": "_router_ownership_ledger_summary",
+            "target": "_router_ownership_ledger_summary"
+          },
+          {
+            "public": "_router_scheduler_barrier_kind",
+            "target": "_router_scheduler_barrier_kind"
+          },
+          {
+            "public": "_router_scheduler_ledger_summary",
+            "target": "_router_scheduler_ledger_summary"
+          },
+          {
+            "public": "_router_scheduler_progress_class",
+            "target": "_router_scheduler_progress_class"
+          },
+          {
+            "public": "_router_scheduler_scope_for_action",
+            "target": "_router_scheduler_scope_for_action"
+          },
+          {
+            "public": "_scheduler_row_reconciliation_for_entry",
+            "target": "_scheduler_row_reconciliation_for_entry"
+          },
+          {
+            "public": "_scheduler_row_for_pending_action",
+            "target": "_scheduler_row_for_pending_action"
+          },
+          {
+            "public": "_should_refresh_continuous_standby_row",
+            "target": "_should_refresh_continuous_standby_row"
+          },
+          {
+            "public": "_update_router_scheduler_row",
+            "target": "_update_router_scheduler_row"
+          },
+          {
+            "public": "_wait_target_due_state",
+            "target": "_wait_target_due_state"
+          },
+          {
+            "public": "_wait_target_identity",
+            "target": "_wait_target_identity"
+          },
+          {
+            "public": "_wait_target_path_exists",
+            "target": "_wait_target_path_exists"
+          },
+          {
+            "public": "_wait_target_reminder_payload_contract",
+            "target": "_wait_target_reminder_payload_contract"
+          },
+          {
+            "public": "_wait_target_reminder_text",
+            "target": "_wait_target_reminder_text"
+          },
+          {
+            "public": "_wait_target_reminder_text_sha256",
+            "target": "_wait_target_reminder_text_sha256"
+          },
+          {
+            "public": "_write_controller_action_entry",
+            "target": "_write_controller_action_entry"
+          },
+          {
+            "public": "_write_controller_action_ledger",
+            "target": "_write_controller_action_ledger"
+          },
+          {
+            "public": "_write_controller_receipt",
+            "target": "_write_controller_receipt"
+          },
+          {
+            "public": "_write_router_ownership_ledger",
+            "target": "_write_router_ownership_ledger"
+          },
+          {
+            "public": "_write_router_scheduler_ledger",
+            "target": "_write_router_scheduler_ledger"
+          },
+          {
+            "public": "controller_patrol_timer",
+            "target": "controller_patrol_timer"
+          },
+          {
+            "public": "foreground_controller_standby",
+            "target": "foreground_controller_standby"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_controller_scheduler"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_acquire_router_daemon_lock",
+            "target": "_acquire_router_daemon_lock"
+          },
+          {
+            "public": "_append_router_daemon_event",
+            "target": "_append_router_daemon_event"
+          },
+          {
+            "public": "_ensure_daemon_runtime_state",
+            "target": "_ensure_daemon_runtime_state"
+          },
+          {
+            "public": "_formal_router_daemon_ready",
+            "target": "_formal_router_daemon_ready"
+          },
+          {
+            "public": "_mark_router_daemon_terminal",
+            "target": "_mark_router_daemon_terminal"
+          },
+          {
+            "public": "_refresh_router_daemon_lock",
+            "target": "_refresh_router_daemon_lock"
+          },
+          {
+            "public": "_release_router_daemon_lock",
+            "target": "_release_router_daemon_lock"
+          },
+          {
+            "public": "_resolve_run_root_target",
+            "target": "_resolve_run_root_target"
+          },
+          {
+            "public": "_router_daemon_can_continue_after_enqueued_action",
+            "target": "_router_daemon_can_continue_after_enqueued_action"
+          },
+          {
+            "public": "_router_daemon_fill_action_queue",
+            "target": "_router_daemon_fill_action_queue"
+          },
+          {
+            "public": "_router_daemon_resume_recovery_summary",
+            "target": "_router_daemon_resume_recovery_summary"
+          },
+          {
+            "public": "_router_daemon_tick",
+            "target": "_router_daemon_tick"
+          },
+          {
+            "public": "_router_daemon_tick_requests_immediate_next_tick",
+            "target": "_router_daemon_tick_requests_immediate_next_tick"
+          },
+          {
+            "public": "_spawn_startup_router_daemon_process",
+            "target": "_spawn_startup_router_daemon_process"
+          },
+          {
+            "public": "_start_or_attach_formal_router_daemon",
+            "target": "_start_or_attach_formal_router_daemon"
+          },
+          {
+            "public": "_tail_text",
+            "target": "_tail_text"
+          },
+          {
+            "public": "_write_router_daemon_status",
+            "target": "_write_router_daemon_status"
+          },
+          {
+            "public": "run_router_daemon",
+            "target": "run_router_daemon"
+          },
+          {
+            "public": "stop_router_daemon",
+            "target": "stop_router_daemon"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_daemon_runtime"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_active_node_children_status",
+            "target": "_active_node_children_status"
+          },
+          {
+            "public": "_event_applicable_for_active_node",
+            "target": "_event_applicable_for_active_node"
+          },
+          {
+            "public": "_event_wait_role",
+            "target": "_event_wait_role"
+          },
+          {
+            "public": "_expected_role_decision_wait_action",
+            "target": "_expected_role_decision_wait_action"
+          },
+          {
+            "public": "_next_expected_role_decision_wait_action",
+            "target": "_next_expected_role_decision_wait_action"
+          },
+          {
+            "public": "_next_model_miss_controlled_stop_action",
+            "target": "_next_model_miss_controlled_stop_action"
+          },
+          {
+            "public": "_next_model_miss_followup_request_wait_action",
+            "target": "_next_model_miss_followup_request_wait_action"
+          },
+          {
+            "public": "_pending_expected_external_event_groups",
+            "target": "_pending_expected_external_event_groups"
+          },
+          {
+            "public": "_pending_role_decision_staleness",
+            "target": "_pending_role_decision_staleness"
+          },
+          {
+            "public": "_reconcile_pending_role_wait_from_packet_status",
+            "target": "_reconcile_pending_role_wait_from_packet_status"
+          },
+          {
+            "public": "_record_router_reconciled_external_event",
+            "target": "_record_router_reconciled_external_event"
+          },
+          {
+            "public": "_run_state_has_event",
+            "target": "_run_state_has_event"
+          },
+          {
+            "public": "_try_reconcile_current_node_results",
+            "target": "_try_reconcile_current_node_results"
+          },
+          {
+            "public": "_try_reconcile_material_scan_body_delivery",
+            "target": "_try_reconcile_material_scan_body_delivery"
+          },
+          {
+            "public": "_try_reconcile_material_scan_results",
+            "target": "_try_reconcile_material_scan_results"
+          },
+          {
+            "public": "_try_reconcile_pm_role_work_results",
+            "target": "_try_reconcile_pm_role_work_results"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_expected_waits"
+      }
+    ],
+    "route": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_active_model_miss_review_block_flags",
+            "target": "_active_model_miss_review_block_flags"
+          },
+          {
+            "public": "_require_single_active_model_miss_review_block",
+            "target": "_require_single_active_model_miss_review_block"
+          },
+          {
+            "public": "_sync_model_gate_alias_flags",
+            "target": "_sync_model_gate_alias_flags"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_model_gate_state"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_display_surface_receipt_payload_contract",
+            "target": "_display_surface_receipt_payload_contract"
+          },
+          {
+            "public": "_heartbeat_payload_contract",
+            "target": "_heartbeat_payload_contract"
+          },
+          {
+            "public": "_payload_contract",
+            "target": "_payload_contract"
+          },
+          {
+            "public": "_pm_decision_payload_contract_for_card",
+            "target": "_pm_decision_payload_contract_for_card"
+          },
+          {
+            "public": "_pm_model_miss_triage_payload_contract",
+            "target": "_pm_model_miss_triage_payload_contract"
+          },
+          {
+            "public": "_pm_parent_segment_decision_payload_contract",
+            "target": "_pm_parent_segment_decision_payload_contract"
+          },
+          {
+            "public": "_pm_resume_decision_payload_contract",
+            "target": "_pm_resume_decision_payload_contract"
+          },
+          {
+            "public": "_pm_terminal_closure_payload_contract",
+            "target": "_pm_terminal_closure_payload_contract"
+          },
+          {
+            "public": "_resume_role_rehydration_payload_contract",
+            "target": "_resume_role_rehydration_payload_contract"
+          },
+          {
+            "public": "_role_decision_payload_contract_for_events",
+            "target": "_role_decision_payload_contract_for_events"
+          },
+          {
+            "public": "_role_slots_payload_contract",
+            "target": "_role_slots_payload_contract"
+          },
+          {
+            "public": "_startup_answers_payload_contract",
+            "target": "_startup_answers_payload_contract"
+          },
+          {
+            "public": "_terminal_summary_payload_contract",
+            "target": "_terminal_summary_payload_contract"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_payload_contracts"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_append_heartbeat_tick",
+            "target": "append_heartbeat_tick"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_resume"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_clear_active_gate_outcome_block_for_pass",
+            "target": "_clear_active_gate_outcome_block_for_pass"
+          },
+          {
+            "public": "_freeze_root_acceptance_contract",
+            "target": "_freeze_root_acceptance_contract"
+          },
+          {
+            "public": "_gate_outcome_path_from_token",
+            "target": "_gate_outcome_path_from_token"
+          },
+          {
+            "public": "_route_payload_from_reviewed_draft",
+            "target": "_route_payload_from_reviewed_draft"
+          },
+          {
+            "public": "_validate_current_node_packet_envelope",
+            "target": "_validate_current_node_packet_envelope"
+          },
+          {
+            "public": "_validate_current_node_packet_event",
+            "target": "_validate_current_node_packet_event"
+          },
+          {
+            "public": "_validate_current_node_result_event",
+            "target": "_validate_current_node_result_event"
+          },
+          {
+            "public": "_validate_current_node_reviewer_pass",
+            "target": "_validate_current_node_reviewer_pass"
+          },
+          {
+            "public": "_validate_selected_child_skills",
+            "target": "_validate_selected_child_skills"
+          },
+          {
+            "public": "_write_capabilities_manifest",
+            "target": "_write_capabilities_manifest"
+          },
+          {
+            "public": "_write_child_skill_gate_manifest",
+            "target": "_write_child_skill_gate_manifest"
+          },
+          {
+            "public": "_write_child_skill_selection",
+            "target": "_write_child_skill_selection"
+          },
+          {
+            "public": "_write_compatibility_alias_artifact",
+            "target": "_write_compatibility_alias_artifact"
+          },
+          {
+            "public": "_write_dependency_policy",
+            "target": "_write_dependency_policy"
+          },
+          {
+            "public": "_write_evidence_quality_package",
+            "target": "_write_evidence_quality_package"
+          },
+          {
+            "public": "_write_gate_outcome_block_report",
+            "target": "_write_gate_outcome_block_report"
+          },
+          {
+            "public": "_write_material_dispatch_repair",
+            "target": "_write_material_dispatch_repair"
+          },
+          {
+            "public": "_write_node_acceptance_plan",
+            "target": "_write_node_acceptance_plan"
+          },
+          {
+            "public": "_write_parent_backward_replay",
+            "target": "_write_parent_backward_replay"
+          },
+          {
+            "public": "_write_parent_backward_targets",
+            "target": "_write_parent_backward_targets"
+          },
+          {
+            "public": "_write_parent_segment_decision",
+            "target": "_write_parent_segment_decision"
+          },
+          {
+            "public": "_write_pm_model_decision",
+            "target": "_write_pm_model_decision"
+          },
+          {
+            "public": "_write_pm_process_route_model_decision",
+            "target": "_write_pm_process_route_model_decision"
+          },
+          {
+            "public": "_write_pm_product_behavior_model_decision",
+            "target": "_write_pm_product_behavior_model_decision"
+          },
+          {
+            "public": "_write_pm_research_absorption",
+            "target": "_write_pm_research_absorption"
+          },
+          {
+            "public": "_write_pm_resume_decision",
+            "target": "_write_pm_resume_decision"
+          },
+          {
+            "public": "_write_pm_review_block_repair",
+            "target": "_write_pm_review_block_repair"
+          },
+          {
+            "public": "_write_pm_revised_node_acceptance_plan",
+            "target": "_write_pm_revised_node_acceptance_plan"
+          },
+          {
+            "public": "_write_product_behavior_model_report",
+            "target": "_write_product_behavior_model_report"
+          },
+          {
+            "public": "_write_product_function_architecture",
+            "target": "_write_product_function_architecture"
+          },
+          {
+            "public": "_write_role_block_report",
+            "target": "_write_role_block_report"
+          },
+          {
+            "public": "_write_role_gate_report",
+            "target": "_write_role_gate_report"
+          },
+          {
+            "public": "_write_root_acceptance_contract",
+            "target": "_write_root_acceptance_contract"
+          },
+          {
+            "public": "_write_route_activation",
+            "target": "_write_route_activation"
+          },
+          {
+            "public": "_write_route_mutation",
+            "target": "_write_route_mutation"
+          },
+          {
+            "public": "_write_route_process_issue_report",
+            "target": "_write_route_process_issue_report"
+          },
+          {
+            "public": "_write_route_process_pass_report",
+            "target": "_write_route_process_pass_report"
+          },
+          {
+            "public": "_write_route_product_pass_report",
+            "target": "_write_route_product_pass_report"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_route_artifacts"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_active_node_acceptance_plan_path",
+            "target": "_active_node_acceptance_plan_path"
+          },
+          {
+            "public": "_active_node_completion_ledger_path",
+            "target": "_active_node_completion_ledger_path"
+          },
+          {
+            "public": "_active_node_completion_write_missing",
+            "target": "_active_node_completion_write_missing"
+          },
+          {
+            "public": "_active_node_packet_index_path",
+            "target": "_active_node_packet_index_path"
+          },
+          {
+            "public": "_active_node_root",
+            "target": "_active_node_root"
+          },
+          {
+            "public": "_active_node_write_grant_path",
+            "target": "_active_node_write_grant_path"
+          },
+          {
+            "public": "_inline_child_nodes",
+            "target": "_inline_child_nodes"
+          },
+          {
+            "public": "_node_completion_event_advanced_to_next_node",
+            "target": "_node_completion_event_advanced_to_next_node"
+          },
+          {
+            "public": "_node_identifier",
+            "target": "_node_identifier"
+          },
+          {
+            "public": "_raw_route_nodes",
+            "target": "_raw_route_nodes"
+          },
+          {
+            "public": "_reset_flags",
+            "target": "_reset_flags"
+          },
+          {
+            "public": "_resume_decision_path",
+            "target": "_resume_decision_path"
+          },
+          {
+            "public": "_resume_mechanical_replay_completed_without_pm",
+            "target": "_resume_mechanical_replay_completed_without_pm"
+          },
+          {
+            "public": "_resume_waits_for_pm_decision",
+            "target": "_resume_waits_for_pm_decision"
+          },
+          {
+            "public": "_task_completion_projection_path",
+            "target": "_task_completion_projection_path"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_route_completion_support"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_active_frontier",
+            "target": "_active_frontier"
+          },
+          {
+            "public": "_active_node_definition",
+            "target": "_active_node_definition"
+          },
+          {
+            "public": "_active_node_definition_from_route",
+            "target": "_active_node_definition_from_route"
+          },
+          {
+            "public": "_active_node_has_children",
+            "target": "_active_node_has_children"
+          },
+          {
+            "public": "_active_route_flow",
+            "target": "_active_route_flow"
+          },
+          {
+            "public": "_active_route_path",
+            "target": "_active_route_path"
+          },
+          {
+            "public": "_active_route_payload",
+            "target": "_active_route_payload"
+          },
+          {
+            "public": "_active_ui_task_catalog",
+            "target": "_active_ui_task_catalog"
+          },
+          {
+            "public": "_build_current_status_summary",
+            "target": "_build_current_status_summary"
+          },
+          {
+            "public": "_build_progress_summary",
+            "target": "_build_progress_summary"
+          },
+          {
+            "public": "_build_route_state_snapshot",
+            "target": "_build_route_state_snapshot"
+          },
+          {
+            "public": "_card_delivery_phase",
+            "target": "_card_delivery_phase"
+          },
+          {
+            "public": "_card_required_source_paths",
+            "target": "_card_required_source_paths"
+          },
+          {
+            "public": "_controller_delivery_fact_for_pending_return",
+            "target": "_controller_delivery_fact_for_pending_return"
+          },
+          {
+            "public": "_current_display_plan",
+            "target": "_current_display_plan"
+          },
+          {
+            "public": "_current_route_draft_path",
+            "target": "_current_route_draft_path"
+          },
+          {
+            "public": "_current_status_active_batch_summary",
+            "target": "_current_status_active_batch_summary"
+          },
+          {
+            "public": "_current_status_summary_path",
+            "target": "_current_status_summary_path"
+          },
+          {
+            "public": "_display_plan_path",
+            "target": "_display_plan_path"
+          },
+          {
+            "public": "_display_plan_projection",
+            "target": "_display_plan_projection"
+          },
+          {
+            "public": "_display_plan_sync_payload",
+            "target": "_display_plan_sync_payload"
+          },
+          {
+            "public": "_display_route_nodes",
+            "target": "_display_route_nodes"
+          },
+          {
+            "public": "_effective_child_ids",
+            "target": "_effective_child_ids"
+          },
+          {
+            "public": "_effective_route_nodes",
+            "target": "_effective_route_nodes"
+          },
+          {
+            "public": "_enter_next_child_node",
+            "target": "_enter_next_child_node"
+          },
+          {
+            "public": "_event_markers",
+            "target": "_event_markers"
+          },
+          {
+            "public": "_filter_events_by_legal_route_actions",
+            "target": "_filter_events_by_legal_route_actions"
+          },
+          {
+            "public": "_first_incomplete_child_node_id",
+            "target": "_first_incomplete_child_node_id"
+          },
+          {
+            "public": "_flatten_route_nodes",
+            "target": "_flatten_route_nodes"
+          },
+          {
+            "public": "_frontier_completed_node_ids",
+            "target": "_frontier_completed_node_ids"
+          },
+          {
+            "public": "_is_leaf_readiness_passed",
+            "target": "_is_leaf_readiness_passed"
+          },
+          {
+            "public": "_is_route_root_like_node_id",
+            "target": "_is_route_root_like_node_id"
+          },
+          {
+            "public": "_is_route_root_node",
+            "target": "_is_route_root_node"
+          },
+          {
+            "public": "_iter_route_nodes",
+            "target": "_iter_route_nodes"
+          },
+          {
+            "public": "_latest_event_payload",
+            "target": "_latest_event_payload"
+          },
+          {
+            "public": "_latest_pre_route_phase",
+            "target": "_latest_pre_route_phase"
+          },
+          {
+            "public": "_legal_next_action_context",
+            "target": "_legal_next_action_context"
+          },
+          {
+            "public": "_legal_next_action_ids",
+            "target": "_legal_next_action_ids"
+          },
+          {
+            "public": "_legal_route_action_allowed",
+            "target": "_legal_route_action_allowed"
+          },
+          {
+            "public": "_live_card_delivery_context",
+            "target": "_live_card_delivery_context"
+          },
+          {
+            "public": "_load_route_action_policy_registry",
+            "target": "_load_route_action_policy_registry"
+          },
+          {
+            "public": "_mark_current_node_packet_records_completed",
+            "target": "_mark_current_node_packet_records_completed"
+          },
+          {
+            "public": "_mark_display_plan_dirty",
+            "target": "_mark_display_plan_dirty"
+          },
+          {
+            "public": "_mark_frontier_node_completed",
+            "target": "_mark_frontier_node_completed"
+          },
+          {
+            "public": "_matching_controller_delivery_actions",
+            "target": "_matching_controller_delivery_actions"
+          },
+          {
+            "public": "_next_effective_node_id",
+            "target": "_next_effective_node_id"
+          },
+          {
+            "public": "_next_parent_child_entry_action",
+            "target": "_next_parent_child_entry_action"
+          },
+          {
+            "public": "_node_child_ids",
+            "target": "_node_child_ids"
+          },
+          {
+            "public": "_node_completion_ledger_current",
+            "target": "_node_completion_ledger_current"
+          },
+          {
+            "public": "_node_completion_ledger_path_for",
+            "target": "_node_completion_ledger_path_for"
+          },
+          {
+            "public": "_node_kind",
+            "target": "_node_kind"
+          },
+          {
+            "public": "_optional_source_path",
+            "target": "_optional_source_path"
+          },
+          {
+            "public": "_parent_segment_decision_value",
+            "target": "_parent_segment_decision_value"
+          },
+          {
+            "public": "_plan_item_status",
+            "target": "_plan_item_status"
+          },
+          {
+            "public": "_pm_context_action_extra",
+            "target": "_pm_context_action_extra"
+          },
+          {
+            "public": "_pm_prior_path_context_path",
+            "target": "_pm_prior_path_context_path"
+          },
+          {
+            "public": "_process_route_model_report_path",
+            "target": "_process_route_model_report_path"
+          },
+          {
+            "public": "_product_behavior_model_compatibility_report_path",
+            "target": "_product_behavior_model_compatibility_report_path"
+          },
+          {
+            "public": "_product_behavior_model_report_path",
+            "target": "_product_behavior_model_report_path"
+          },
+          {
+            "public": "_ready_parent_scope_after_child_completion",
+            "target": "_ready_parent_scope_after_child_completion"
+          },
+          {
+            "public": "_reconcile_non_current_running_index_entries",
+            "target": "_reconcile_non_current_running_index_entries"
+          },
+          {
+            "public": "_refresh_route_memory",
+            "target": "_refresh_route_memory"
+          },
+          {
+            "public": "_require_legal_route_action",
+            "target": "_require_legal_route_action"
+          },
+          {
+            "public": "_require_pm_prior_path_context",
+            "target": "_require_pm_prior_path_context"
+          },
+          {
+            "public": "_require_process_route_model_report",
+            "target": "_require_process_route_model_report"
+          },
+          {
+            "public": "_require_product_behavior_model_report",
+            "target": "_require_product_behavior_model_report"
+          },
+          {
+            "public": "_require_route_process_pass",
+            "target": "_require_route_process_pass"
+          },
+          {
+            "public": "_require_route_product_pass",
+            "target": "_require_route_product_pass"
+          },
+          {
+            "public": "_reset_route_hard_gate_approvals_for_recheck",
+            "target": "_reset_route_hard_gate_approvals_for_recheck"
+          },
+          {
+            "public": "_reset_route_review_after_route_draft_repair",
+            "target": "_reset_route_review_after_route_draft_repair"
+          },
+          {
+            "public": "_route_action_for_card",
+            "target": "_route_action_for_card"
+          },
+          {
+            "public": "_route_action_for_event",
+            "target": "_route_action_for_event"
+          },
+          {
+            "public": "_route_action_policy_by_id",
+            "target": "_route_action_policy_by_id"
+          },
+          {
+            "public": "_route_action_policy_issues",
+            "target": "_route_action_policy_issues"
+          },
+          {
+            "public": "_route_action_policy_registry_path",
+            "target": "_route_action_policy_registry_path"
+          },
+          {
+            "public": "_route_action_policy_rows",
+            "target": "_route_action_policy_rows"
+          },
+          {
+            "public": "_route_active_path",
+            "target": "_route_active_path"
+          },
+          {
+            "public": "_route_descendant_node_ids",
+            "target": "_route_descendant_node_ids"
+          },
+          {
+            "public": "_route_display_depth",
+            "target": "_route_display_depth"
+          },
+          {
+            "public": "_route_display_refresh_path",
+            "target": "_route_display_refresh_path"
+          },
+          {
+            "public": "_route_hidden_leaf_progress",
+            "target": "_route_hidden_leaf_progress"
+          },
+          {
+            "public": "_route_history_index_path",
+            "target": "_route_history_index_path"
+          },
+          {
+            "public": "_route_item_status",
+            "target": "_route_item_status"
+          },
+          {
+            "public": "_route_memory_ready",
+            "target": "_route_memory_ready"
+          },
+          {
+            "public": "_route_memory_root",
+            "target": "_route_memory_root"
+          },
+          {
+            "public": "_route_mutation_review_lane",
+            "target": "_route_mutation_review_lane"
+          },
+          {
+            "public": "_route_mutation_superseded_nodes",
+            "target": "_route_mutation_superseded_nodes"
+          },
+          {
+            "public": "_route_node_checklist",
+            "target": "_route_node_checklist"
+          },
+          {
+            "public": "_route_node_depth",
+            "target": "_route_node_depth"
+          },
+          {
+            "public": "_route_node_history",
+            "target": "_route_node_history"
+          },
+          {
+            "public": "_route_node_label",
+            "target": "_route_node_label"
+          },
+          {
+            "public": "_route_node_map",
+            "target": "_route_node_map"
+          },
+          {
+            "public": "_route_nodes",
+            "target": "_route_nodes"
+          },
+          {
+            "public": "_route_process_check_path",
+            "target": "_route_process_check_path"
+          },
+          {
+            "public": "_route_product_check_path",
+            "target": "_route_product_check_path"
+          },
+          {
+            "public": "_route_progress_completed_ids",
+            "target": "_route_progress_completed_ids"
+          },
+          {
+            "public": "_route_progress_parent_map",
+            "target": "_route_progress_parent_map"
+          },
+          {
+            "public": "_route_progress_path_nodes",
+            "target": "_route_progress_path_nodes"
+          },
+          {
+            "public": "_route_state_snapshot_path",
+            "target": "_route_state_snapshot_path"
+          },
+          {
+            "public": "_run_elapsed_seconds",
+            "target": "_run_elapsed_seconds"
+          },
+          {
+            "public": "_status_summary_waiting_for",
+            "target": "_status_summary_waiting_for"
+          },
+          {
+            "public": "_supersede_active_current_node_packet_for_route_mutation",
+            "target": "_supersede_active_current_node_packet_for_route_mutation"
+          },
+          {
+            "public": "_sync_derived_run_views",
+            "target": "_sync_derived_run_views"
+          },
+          {
+            "public": "_sync_execution_frontier_phase",
+            "target": "_sync_execution_frontier_phase"
+          },
+          {
+            "public": "_update_display_plan_current_node",
+            "target": "_update_display_plan_current_node"
+          },
+          {
+            "public": "_validate_route_action_policy_registry",
+            "target": "_validate_route_action_policy_registry"
+          },
+          {
+            "public": "_validate_route_mutation_phase_boundary",
+            "target": "_validate_route_mutation_phase_boundary"
+          },
+          {
+            "public": "_waiting_for_pm_display_plan",
+            "target": "_waiting_for_pm_display_plan"
+          },
+          {
+            "public": "_write_current_status_summary",
+            "target": "_write_current_status_summary"
+          },
+          {
+            "public": "_write_display_plan_from_pm_payload",
+            "target": "_write_display_plan_from_pm_payload"
+          },
+          {
+            "public": "_write_display_plan_from_route",
+            "target": "_write_display_plan_from_route"
+          },
+          {
+            "public": "_write_node_completion_ledger",
+            "target": "_write_node_completion_ledger"
+          },
+          {
+            "public": "_write_pre_route_phase_display_plan_if_needed",
+            "target": "_write_pre_route_phase_display_plan_if_needed"
+          },
+          {
+            "public": "_write_route_draft",
+            "target": "_write_route_draft"
+          },
+          {
+            "public": "_write_route_state_snapshot",
+            "target": "_write_route_state_snapshot"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_route_frontier"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_active_packet_ledger_record",
+            "target": "_active_packet_ledger_record"
+          },
+          {
+            "public": "_append_role_memory_delta",
+            "target": "_append_role_memory_delta"
+          },
+          {
+            "public": "_build_continuation_quarantine_record",
+            "target": "_build_continuation_quarantine_record"
+          },
+          {
+            "public": "_continuation_binding_path",
+            "target": "_continuation_binding_path"
+          },
+          {
+            "public": "_continuation_quarantine_path",
+            "target": "_continuation_quarantine_path"
+          },
+          {
+            "public": "_create_empty_execution_frontier",
+            "target": "_create_empty_execution_frontier"
+          },
+          {
+            "public": "_create_empty_packet_ledger",
+            "target": "_create_empty_packet_ledger"
+          },
+          {
+            "public": "_create_empty_role_memory",
+            "target": "_create_empty_role_memory"
+          },
+          {
+            "public": "_create_run_id",
+            "target": "_create_run_id"
+          },
+          {
+            "public": "_create_startup_bootstrap_state",
+            "target": "_create_startup_bootstrap_state"
+          },
+          {
+            "public": "_derive_resume_next_recipient_from_packet_ledger",
+            "target": "_derive_resume_next_recipient_from_packet_ledger"
+          },
+          {
+            "public": "_load_existing_bootstrap_state",
+            "target": "_load_existing_bootstrap_state"
+          },
+          {
+            "public": "_packet_ledger_record_by_id",
+            "target": "_packet_ledger_record_by_id"
+          },
+          {
+            "public": "_role_memory_event_role",
+            "target": "_role_memory_event_role"
+          },
+          {
+            "public": "_scheduled_continuation_requested",
+            "target": "_scheduled_continuation_requested"
+          },
+          {
+            "public": "_set_pre_route_frontier_phase",
+            "target": "_set_pre_route_frontier_phase"
+          },
+          {
+            "public": "_startup_answers_from_run",
+            "target": "_startup_answers_from_run"
+          },
+          {
+            "public": "_write_continuation_quarantine",
+            "target": "_write_continuation_quarantine"
+          },
+          {
+            "public": "active_run_root",
+            "target": "active_run_root"
+          },
+          {
+            "public": "load_bootstrap_state",
+            "target": "load_bootstrap_state"
+          },
+          {
+            "public": "load_run_state",
+            "target": "load_run_state"
+          },
+          {
+            "public": "load_run_state_from_run_root",
+            "target": "load_run_state_from_run_root"
+          },
+          {
+            "public": "new_bootstrap_state",
+            "target": "new_bootstrap_state"
+          },
+          {
+            "public": "new_run_state",
+            "target": "new_run_state"
+          },
+          {
+            "public": "run_state_path",
+            "target": "run_state_path"
+          },
+          {
+            "public": "save_bootstrap_state",
+            "target": "save_bootstrap_state"
+          },
+          {
+            "public": "save_run_state",
+            "target": "save_run_state"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_runtime_state"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_evidence_path_record",
+            "target": "_evidence_path_record"
+          },
+          {
+            "public": "_format_self_interrogation_status_issue",
+            "target": "_format_self_interrogation_status_issue"
+          },
+          {
+            "public": "_pm_suggestion_ledger_path",
+            "target": "_pm_suggestion_ledger_path"
+          },
+          {
+            "public": "_pm_suggestion_ledger_status",
+            "target": "_pm_suggestion_ledger_status"
+          },
+          {
+            "public": "_read_pm_suggestion_ledger",
+            "target": "_read_pm_suggestion_ledger"
+          },
+          {
+            "public": "_require_clean_self_interrogation",
+            "target": "_require_clean_self_interrogation"
+          },
+          {
+            "public": "_router_owned_check_proof_path",
+            "target": "_router_owned_check_proof_path"
+          },
+          {
+            "public": "_self_interrogation_entry_path",
+            "target": "_self_interrogation_entry_path"
+          },
+          {
+            "public": "_self_interrogation_final_status",
+            "target": "_self_interrogation_final_status"
+          },
+          {
+            "public": "_self_interrogation_index_path",
+            "target": "_self_interrogation_index_path"
+          },
+          {
+            "public": "_self_interrogation_issue",
+            "target": "_self_interrogation_issue"
+          },
+          {
+            "public": "_self_interrogation_record_issues",
+            "target": "_self_interrogation_record_issues"
+          },
+          {
+            "public": "_self_interrogation_status",
+            "target": "_self_interrogation_status"
+          },
+          {
+            "public": "_write_router_owned_check_proof",
+            "target": "_write_router_owned_check_proof"
+          },
+          {
+            "public": "resolve_project_path",
+            "target": "resolve_project_path"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_self_interrogation"
+      }
+    ],
+    "startup": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_bootstrap_startup_cancelled",
+            "target": "_bootstrap_startup_cancelled"
+          },
+          {
+            "public": "_complete_startup_daemon_bootloader_row",
+            "target": "_complete_startup_daemon_bootloader_row"
+          },
+          {
+            "public": "_daemon_scheduled_bootloader_action",
+            "target": "_daemon_scheduled_bootloader_action"
+          },
+          {
+            "public": "_ensure_pending",
+            "target": "_ensure_pending"
+          },
+          {
+            "public": "_finish_bootloader_action",
+            "target": "_finish_bootloader_action"
+          },
+          {
+            "public": "_fold_stable_startup_role_flags_from_bootstrap",
+            "target": "_fold_stable_startup_role_flags_from_bootstrap"
+          },
+          {
+            "public": "_next_boot_action",
+            "target": "_next_boot_action"
+          },
+          {
+            "public": "_set_boot_flag",
+            "target": "_set_boot_flag"
+          },
+          {
+            "public": "_startup_bootloader_action_depends_on_role_slots",
+            "target": "_startup_bootloader_action_depends_on_role_slots"
+          },
+          {
+            "public": "_startup_bootloader_entry_is_nonblocking",
+            "target": "_startup_bootloader_entry_is_nonblocking"
+          },
+          {
+            "public": "_startup_bootloader_has_remaining_work",
+            "target": "_startup_bootloader_has_remaining_work"
+          },
+          {
+            "public": "_startup_bootloader_open_entries_by_action_type",
+            "target": "_startup_bootloader_open_entries_by_action_type"
+          },
+          {
+            "public": "_startup_daemon_controls_bootstrap",
+            "target": "_startup_daemon_controls_bootstrap"
+          },
+          {
+            "public": "_startup_daemon_schedule_bootloader_action",
+            "target": "_startup_daemon_schedule_bootloader_action"
+          },
+          {
+            "public": "_startup_open_entry_progress_class",
+            "target": "_startup_open_entry_progress_class"
+          },
+          {
+            "public": "_startup_run_state_if_ready",
+            "target": "_startup_run_state_if_ready"
+          },
+          {
+            "public": "_sync_startup_bootstrap_flags_to_run_state",
+            "target": "_sync_startup_bootstrap_flags_to_run_state"
+          },
+          {
+            "public": "apply_bootloader_action",
+            "target": "apply_bootloader_action"
+          },
+          {
+            "public": "compute_bootloader_action",
+            "target": "compute_bootloader_action"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_bootloader"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_closure_reconciliation_blocker_message",
+            "target": "_closure_reconciliation_blocker_message"
+          },
+          {
+            "public": "_closure_reconciliation_entries",
+            "target": "_closure_reconciliation_entries"
+          },
+          {
+            "public": "_continuation_quarantine_reconciliation_status",
+            "target": "_continuation_quarantine_reconciliation_status"
+          },
+          {
+            "public": "_current_closure_state_clean",
+            "target": "_current_closure_state_clean"
+          },
+          {
+            "public": "_defect_ledger_reconciliation_status",
+            "target": "_defect_ledger_reconciliation_status"
+          },
+          {
+            "public": "_host_heartbeat_binding_ready",
+            "target": "_host_heartbeat_binding_ready"
+          },
+          {
+            "public": "_invalidate_route_completion_if_dirty_before_closure",
+            "target": "_invalidate_route_completion_if_dirty_before_closure"
+          },
+          {
+            "public": "_role_memory_reconciliation_status",
+            "target": "_role_memory_reconciliation_status"
+          },
+          {
+            "public": "_terminal_closure_reconciliation_status",
+            "target": "_terminal_closure_reconciliation_status"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_closure"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_append_user_dialog_display_ledger",
+            "target": "_append_user_dialog_display_ledger"
+          },
+          {
+            "public": "_apply_sync_display_plan_state",
+            "target": "_apply_sync_display_plan_state"
+          },
+          {
+            "public": "_display_confirmation_for_action",
+            "target": "_display_confirmation_for_action"
+          },
+          {
+            "public": "_display_plan_chat_markdown",
+            "target": "_display_plan_chat_markdown"
+          },
+          {
+            "public": "_display_plan_display_kind",
+            "target": "_display_plan_display_kind"
+          },
+          {
+            "public": "_display_plan_sync_action_summary",
+            "target": "_display_plan_sync_action_summary"
+          },
+          {
+            "public": "_display_plan_user_dialog_fields",
+            "target": "_display_plan_user_dialog_fields"
+          },
+          {
+            "public": "_display_route_sign_user_dialog_fields",
+            "target": "_display_route_sign_user_dialog_fields"
+          },
+          {
+            "public": "_display_surface_receipt_from_payload",
+            "target": "_display_surface_receipt_from_payload"
+          },
+          {
+            "public": "_display_text_hash",
+            "target": "_display_text_hash"
+          },
+          {
+            "public": "_next_display_plan_action",
+            "target": "_next_display_plan_action"
+          },
+          {
+            "public": "_next_startup_display_action",
+            "target": "_next_startup_display_action"
+          },
+          {
+            "public": "_route_map_route_sign_payload",
+            "target": "_route_map_route_sign_payload"
+          },
+          {
+            "public": "_route_sign_has_canonical_route",
+            "target": "_route_sign_has_canonical_route"
+          },
+          {
+            "public": "_route_sign_payload",
+            "target": "_route_sign_payload"
+          },
+          {
+            "public": "_startup_banner_display",
+            "target": "_startup_banner_display"
+          },
+          {
+            "public": "_startup_route_sign_payload",
+            "target": "_startup_route_sign_payload"
+          },
+          {
+            "public": "_startup_waiting_internal_display_fields",
+            "target": "_startup_waiting_internal_display_fields"
+          },
+          {
+            "public": "_user_dialog_display_gate",
+            "target": "_user_dialog_display_gate"
+          },
+          {
+            "public": "_validate_display_confirmation",
+            "target": "_validate_display_confirmation"
+          },
+          {
+            "public": "_write_display_surface_status",
+            "target": "_write_display_surface_status"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_display"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_continuation_has_host_bound_automation_receipt",
+            "target": "_continuation_has_host_bound_automation_receipt"
+          },
+          {
+            "public": "_controller_boundary_confirmation_body",
+            "target": "_controller_boundary_confirmation_body"
+          },
+          {
+            "public": "_controller_boundary_confirmation_context",
+            "target": "_controller_boundary_confirmation_context"
+          },
+          {
+            "public": "_controller_boundary_confirmation_path",
+            "target": "_controller_boundary_confirmation_path"
+          },
+          {
+            "public": "_controller_boundary_constraints",
+            "target": "_controller_boundary_constraints"
+          },
+          {
+            "public": "_controller_boundary_runtime_evidence_context",
+            "target": "_controller_boundary_runtime_evidence_context"
+          },
+          {
+            "public": "_controller_boundary_sources",
+            "target": "_controller_boundary_sources"
+          },
+          {
+            "public": "_legacy_pm_reset_boundary_confirmed",
+            "target": "_legacy_pm_reset_boundary_confirmed"
+          },
+          {
+            "public": "_next_controller_boundary_confirmation_action",
+            "target": "_next_controller_boundary_confirmation_action"
+          },
+          {
+            "public": "_next_startup_mechanical_audit_action",
+            "target": "_next_startup_mechanical_audit_action"
+          },
+          {
+            "public": "_record_controller_boundary_confirmation_from_core_load",
+            "target": "_record_controller_boundary_confirmation_from_core_load"
+          },
+          {
+            "public": "_role_slots_have_host_spawn_receipts",
+            "target": "_role_slots_have_host_spawn_receipts"
+          },
+          {
+            "public": "_run_manifest_path",
+            "target": "_run_manifest_path"
+          },
+          {
+            "public": "_startup_external_fact_requirements",
+            "target": "_startup_external_fact_requirements"
+          },
+          {
+            "public": "_startup_fact_checks",
+            "target": "_startup_fact_checks"
+          },
+          {
+            "public": "_startup_fact_review_ownership",
+            "target": "_startup_fact_review_ownership"
+          },
+          {
+            "public": "_startup_intake_record_context",
+            "target": "_startup_intake_record_context"
+          },
+          {
+            "public": "_startup_mechanical_audit_action_extra",
+            "target": "_startup_mechanical_audit_action_extra"
+          },
+          {
+            "public": "_startup_mechanical_audit_context",
+            "target": "_startup_mechanical_audit_context"
+          },
+          {
+            "public": "_validate_startup_external_fact_review",
+            "target": "_validate_startup_external_fact_review"
+          },
+          {
+            "public": "_write_controller_boundary_confirmation",
+            "target": "_write_controller_boundary_confirmation"
+          },
+          {
+            "public": "_write_startup_activation",
+            "target": "_write_startup_activation"
+          },
+          {
+            "public": "_write_startup_fact_report",
+            "target": "_write_startup_fact_report"
+          },
+          {
+            "public": "_write_startup_mechanical_audit",
+            "target": "_write_startup_mechanical_audit"
+          },
+          {
+            "public": "_write_startup_protocol_dead_end",
+            "target": "_write_startup_protocol_dead_end"
+          },
+          {
+            "public": "_write_startup_repair_request",
+            "target": "_write_startup_repair_request"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_fact_boundary"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_apply_startup_intake_result_to_bootstrap",
+            "target": "_apply_startup_intake_result_to_bootstrap"
+          },
+          {
+            "public": "_build_user_intake_body_from_ref",
+            "target": "_build_user_intake_body_from_ref"
+          },
+          {
+            "public": "_confirmed_startup_intake",
+            "target": "_confirmed_startup_intake"
+          },
+          {
+            "public": "_copy_startup_intake_file",
+            "target": "_copy_startup_intake_file"
+          },
+          {
+            "public": "_deterministic_bootstrap_seed_evidence_path",
+            "target": "_deterministic_bootstrap_seed_evidence_path"
+          },
+          {
+            "public": "_flowguard_capability_snapshot_path",
+            "target": "_flowguard_capability_snapshot_path"
+          },
+          {
+            "public": "_forbidden_startup_intake_body_fields",
+            "target": "_forbidden_startup_intake_body_fields"
+          },
+          {
+            "public": "_initialize_mailbox_foundation",
+            "target": "_initialize_mailbox_foundation"
+          },
+          {
+            "public": "_materialize_startup_intake_record",
+            "target": "_materialize_startup_intake_record"
+          },
+          {
+            "public": "_normalize_startup_question_stop_boundary",
+            "target": "_normalize_startup_question_stop_boundary"
+          },
+          {
+            "public": "_record_startup_user_request_ref",
+            "target": "_record_startup_user_request_ref"
+          },
+          {
+            "public": "_require_interactive_startup_intake_artifact",
+            "target": "_require_interactive_startup_intake_artifact"
+          },
+          {
+            "public": "_resolve_existing_project_file",
+            "target": "_resolve_existing_project_file"
+          },
+          {
+            "public": "_run_deterministic_startup_bootstrap_seed",
+            "target": "_run_deterministic_startup_bootstrap_seed"
+          },
+          {
+            "public": "_same_project_file",
+            "target": "_same_project_file"
+          },
+          {
+            "public": "_startup_intake_output_dir_ref",
+            "target": "_startup_intake_output_dir_ref"
+          },
+          {
+            "public": "_startup_intake_result_path_from_payload",
+            "target": "_startup_intake_result_path_from_payload"
+          },
+          {
+            "public": "_startup_intake_result_payload_contract",
+            "target": "_startup_intake_result_payload_contract"
+          },
+          {
+            "public": "_startup_intake_ui_action_extra",
+            "target": "_startup_intake_ui_action_extra"
+          },
+          {
+            "public": "_startup_intake_ui_launcher_ref",
+            "target": "_startup_intake_ui_launcher_ref"
+          },
+          {
+            "public": "_user_request_ref_from_startup_intake",
+            "target": "_user_request_ref_from_startup_intake"
+          },
+          {
+            "public": "_validate_startup_answer_interpretation",
+            "target": "_validate_startup_answer_interpretation"
+          },
+          {
+            "public": "_validate_startup_answers",
+            "target": "_validate_startup_answers"
+          },
+          {
+            "public": "_validate_startup_intake_result_payload",
+            "target": "_validate_startup_intake_result_payload"
+          },
+          {
+            "public": "_validate_user_request",
+            "target": "_validate_user_request"
+          },
+          {
+            "public": "_write_flowguard_capability_snapshot",
+            "target": "_write_flowguard_capability_snapshot"
+          },
+          {
+            "public": "_write_startup_answers_record",
+            "target": "_write_startup_answers_record"
+          },
+          {
+            "public": "_write_startup_user_intake_scaffold",
+            "target": "_write_startup_user_intake_scaffold"
+          },
+          {
+            "public": "_sync_completed_deterministic_startup_seed_to_bootstrap",
+            "target": "_sync_completed_deterministic_startup_seed_to_bootstrap"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_intake"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_controller_action_entry_view",
+            "target": "_controller_action_entry_view"
+          },
+          {
+            "public": "_controller_action_wait_roles",
+            "target": "_controller_action_wait_roles"
+          },
+          {
+            "public": "_current_crew_generation",
+            "target": "_current_crew_generation"
+          },
+          {
+            "public": "_latest_resume_tick_id",
+            "target": "_latest_resume_tick_id"
+          },
+          {
+            "public": "_latest_role_recovery_transaction",
+            "target": "_latest_role_recovery_transaction"
+          },
+          {
+            "public": "_load_role_recovery_state",
+            "target": "_load_role_recovery_state"
+          },
+          {
+            "public": "_mark_controller_action_done_by_role_recovery",
+            "target": "_mark_controller_action_done_by_role_recovery"
+          },
+          {
+            "public": "_next_resume_action",
+            "target": "_next_resume_action"
+          },
+          {
+            "public": "_next_role_recovery_action",
+            "target": "_next_role_recovery_action"
+          },
+          {
+            "public": "_next_startup_heartbeat_binding_action",
+            "target": "_next_startup_heartbeat_binding_action"
+          },
+          {
+            "public": "_normalize_resume_role_agent_records",
+            "target": "_normalize_resume_role_agent_records"
+          },
+          {
+            "public": "_normalize_role_agent_records",
+            "target": "_normalize_role_agent_records"
+          },
+          {
+            "public": "_normalize_role_recovery_agent_records",
+            "target": "_normalize_role_recovery_agent_records"
+          },
+          {
+            "public": "_open_role_recovery_transaction",
+            "target": "_open_role_recovery_transaction"
+          },
+          {
+            "public": "_path_hash",
+            "target": "_path_hash"
+          },
+          {
+            "public": "_payload_indicates_role_no_output",
+            "target": "_payload_indicates_role_no_output"
+          },
+          {
+            "public": "_plan_role_recovery_obligation_replay",
+            "target": "_plan_role_recovery_obligation_replay"
+          },
+          {
+            "public": "_reclaim_role_recovery_postcondition_from_report",
+            "target": "_reclaim_role_recovery_postcondition_from_report"
+          },
+          {
+            "public": "_record_role_no_output_reissue",
+            "target": "_record_role_no_output_reissue"
+          },
+          {
+            "public": "_resume_liveness_probe_batch_id",
+            "target": "_resume_liveness_probe_batch_id"
+          },
+          {
+            "public": "_resume_role_context",
+            "target": "_resume_role_context"
+          },
+          {
+            "public": "_resume_role_contexts",
+            "target": "_resume_role_contexts"
+          },
+          {
+            "public": "_resume_role_rehydration_action_extra",
+            "target": "_resume_role_rehydration_action_extra"
+          },
+          {
+            "public": "_role_core_prompt_delivery_payload",
+            "target": "_role_core_prompt_delivery_payload"
+          },
+          {
+            "public": "_role_core_prompt_path",
+            "target": "_role_core_prompt_path"
+          },
+          {
+            "public": "_role_memory_path",
+            "target": "_role_memory_path"
+          },
+          {
+            "public": "_role_no_output_liveness_result",
+            "target": "_role_no_output_liveness_result"
+          },
+          {
+            "public": "_role_no_output_reissue_attempt",
+            "target": "_role_no_output_reissue_attempt"
+          },
+          {
+            "public": "_role_no_output_replacement_action",
+            "target": "_role_no_output_replacement_action"
+          },
+          {
+            "public": "_role_no_output_target_roles",
+            "target": "_role_no_output_target_roles"
+          },
+          {
+            "public": "_role_no_output_wait_candidate",
+            "target": "_role_no_output_wait_candidate"
+          },
+          {
+            "public": "_role_recovery_action_sort_key",
+            "target": "_role_recovery_action_sort_key"
+          },
+          {
+            "public": "_role_recovery_dir",
+            "target": "_role_recovery_dir"
+          },
+          {
+            "public": "_role_recovery_existing_event_for_wait",
+            "target": "_role_recovery_existing_event_for_wait"
+          },
+          {
+            "public": "_role_recovery_latest_transaction_path",
+            "target": "_role_recovery_latest_transaction_path"
+          },
+          {
+            "public": "_role_recovery_obligation_replay_path",
+            "target": "_role_recovery_obligation_replay_path"
+          },
+          {
+            "public": "_role_recovery_payload_contract",
+            "target": "_role_recovery_payload_contract"
+          },
+          {
+            "public": "_role_recovery_pending_return_for_action",
+            "target": "_role_recovery_pending_return_for_action"
+          },
+          {
+            "public": "_role_recovery_ready_context",
+            "target": "_role_recovery_ready_context"
+          },
+          {
+            "public": "_role_recovery_replacement_action",
+            "target": "_role_recovery_replacement_action"
+          },
+          {
+            "public": "_role_recovery_report_path",
+            "target": "_role_recovery_report_path"
+          },
+          {
+            "public": "_role_recovery_state_path",
+            "target": "_role_recovery_state_path"
+          },
+          {
+            "public": "_role_recovery_target_roles",
+            "target": "_role_recovery_target_roles"
+          },
+          {
+            "public": "_role_recovery_wait_candidates",
+            "target": "_role_recovery_wait_candidates"
+          },
+          {
+            "public": "_role_spawn_action_extra",
+            "target": "_role_spawn_action_extra"
+          },
+          {
+            "public": "_settle_role_recovery_candidate_if_evidence_exists",
+            "target": "_settle_role_recovery_candidate_if_evidence_exists"
+          },
+          {
+            "public": "_stable_resume_launcher_contract",
+            "target": "_stable_resume_launcher_contract"
+          },
+          {
+            "public": "_supersede_role_no_output_original_wait",
+            "target": "_supersede_role_no_output_original_wait"
+          },
+          {
+            "public": "_supersede_role_recovery_original_wait",
+            "target": "_supersede_role_recovery_original_wait"
+          },
+          {
+            "public": "_write_initial_continuation_binding",
+            "target": "_write_initial_continuation_binding"
+          },
+          {
+            "public": "_write_resume_role_rehydration_report",
+            "target": "_write_resume_role_rehydration_report"
+          },
+          {
+            "public": "_write_role_recovery_report",
+            "target": "_write_role_recovery_report"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_startup_role_recovery"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_active_agent_id_for_role",
+            "target": "_active_agent_id_for_role"
+          },
+          {
+            "public": "_controller_wait_allowed_external_events",
+            "target": "_controller_wait_allowed_external_events"
+          },
+          {
+            "public": "_ensure_startup_run_state",
+            "target": "_ensure_startup_run_state"
+          },
+          {
+            "public": "_external_event_payload_digest",
+            "target": "_external_event_payload_digest"
+          },
+          {
+            "public": "_json_safe",
+            "target": "_json_safe"
+          },
+          {
+            "public": "load_manifest_from_run",
+            "target": "load_manifest_from_run"
+          },
+          {
+            "public": "manifest_card",
+            "target": "manifest_card"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_startup_support"
+      }
+    ],
+    "terminal_work": [
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_model_miss_followup_expectation",
+            "target": "_model_miss_followup_expectation"
+          },
+          {
+            "public": "_pm_role_work_channel_open",
+            "target": "_pm_role_work_channel_open"
+          },
+          {
+            "public": "_validate_pm_role_work_request_against_followup",
+            "target": "_validate_pm_role_work_request_against_followup"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_pm_role_followup"
+      },
+      {
+        "bind_router": true,
+        "exports": [
+          {
+            "public": "_apply_card_bundle_return_event_check",
+            "target": "_apply_card_bundle_return_event_check"
+          },
+          {
+            "public": "_apply_card_return_event_check",
+            "target": "_apply_card_return_event_check"
+          },
+          {
+            "public": "_auto_commit_system_card_delivery_action",
+            "target": "_auto_commit_system_card_delivery_action"
+          },
+          {
+            "public": "_clear_stale_role_wait_for_quarantined_report",
+            "target": "_clear_stale_role_wait_for_quarantined_report"
+          },
+          {
+            "public": "_commit_system_card_bundle_delivery_artifact",
+            "target": "_commit_system_card_bundle_delivery_artifact"
+          },
+          {
+            "public": "_commit_system_card_delivery_artifact",
+            "target": "_commit_system_card_delivery_artifact"
+          },
+          {
+            "public": "_committed_card_bundle_artifact_extra",
+            "target": "_committed_card_bundle_artifact_extra"
+          },
+          {
+            "public": "_direct_router_ack_token_for_bundle",
+            "target": "_direct_router_ack_token_for_bundle"
+          },
+          {
+            "public": "_direct_router_ack_token_for_card",
+            "target": "_direct_router_ack_token_for_card"
+          },
+          {
+            "public": "_mark_card_return_pending_explicit_check",
+            "target": "_mark_card_return_pending_explicit_check"
+          },
+          {
+            "public": "_next_quarantined_role_report_path",
+            "target": "_next_quarantined_role_report_path"
+          },
+          {
+            "public": "_next_system_card_action",
+            "target": "_next_system_card_action"
+          },
+          {
+            "public": "_next_system_card_bundle_action",
+            "target": "_next_system_card_bundle_action"
+          },
+          {
+            "public": "_pending_bundle_return_record_for_action",
+            "target": "_pending_bundle_return_record_for_action"
+          },
+          {
+            "public": "_pending_card_return_matches_event_dependency",
+            "target": "_pending_card_return_matches_event_dependency"
+          },
+          {
+            "public": "_pending_return_card_delivery_flags",
+            "target": "_pending_return_card_delivery_flags"
+          },
+          {
+            "public": "_pending_return_record_for_action",
+            "target": "_pending_return_record_for_action"
+          },
+          {
+            "public": "_preconsume_pending_card_return_ack_before_external_event",
+            "target": "_preconsume_pending_card_return_ack_before_external_event"
+          },
+          {
+            "public": "_quarantine_missing_ack_report_before_external_event",
+            "target": "_quarantine_missing_ack_report_before_external_event"
+          },
+          {
+            "public": "_reconcile_card_bundle_wait_rows",
+            "target": "_reconcile_card_bundle_wait_rows"
+          },
+          {
+            "public": "_reconcile_card_wait_rows",
+            "target": "_reconcile_card_wait_rows"
+          },
+          {
+            "public": "_reconcile_durable_wait_evidence",
+            "target": "_reconcile_durable_wait_evidence"
+          },
+          {
+            "public": "_record_card_return_event_from_external_entrypoint",
+            "target": "_record_card_return_event_from_external_entrypoint"
+          },
+          {
+            "public": "_role_list",
+            "target": "_role_list"
+          },
+          {
+            "public": "_router_release_startup_user_intake_to_pm",
+            "target": "_router_release_startup_user_intake_to_pm"
+          },
+          {
+            "public": "_run_router_return_settlement_finalizers",
+            "target": "_run_router_return_settlement_finalizers"
+          },
+          {
+            "public": "_startup_pm_card_bundle_ack_record",
+            "target": "_startup_pm_card_bundle_ack_record"
+          },
+          {
+            "public": "_system_card_bundle_candidate_actions",
+            "target": "_system_card_bundle_candidate_actions"
+          },
+          {
+            "public": "_system_card_delivery_flag",
+            "target": "_system_card_delivery_flag"
+          },
+          {
+            "public": "_system_card_to_role",
+            "target": "_system_card_to_role"
+          },
+          {
+            "public": "_try_auto_consume_pending_card_return_ack",
+            "target": "_try_auto_consume_pending_card_return_ack"
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_system_cards"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_build_source_of_truth_final_entries",
+            "target": "_build_source_of_truth_final_entries"
+          },
+          {
+            "public": "_final_ledger_traceability_issues",
+            "target": "_final_ledger_traceability_issues"
+          },
+          {
+            "public": "_node_acceptance_traceability_issues",
+            "target": "_node_acceptance_traceability_issues"
+          },
+          {
+            "public": "_recover_terminal_status_from_run_authorities",
+            "target": "_recover_terminal_status_from_run_authorities"
+          },
+          {
+            "public": "_repair_legacy_material_packet_contracts",
+            "target": "_repair_legacy_material_packet_contracts"
+          },
+          {
+            "public": "_requirement_trace_closure_from_root_replay",
+            "target": "_requirement_trace_closure_from_root_replay"
+          },
+          {
+            "public": "_root_requirement_ids",
+            "target": "_root_requirement_ids"
+          },
+          {
+            "public": "_route_mutation_completion_issues",
+            "target": "_route_mutation_completion_issues"
+          },
+          {
+            "public": "_route_nodes_with_requirement_trace",
+            "target": "_route_nodes_with_requirement_trace"
+          },
+          {
+            "public": "_string_list",
+            "target": "_string_list"
+          },
+          {
+            "public": "_terminal_closure_suite_is_closed",
+            "target": "_terminal_closure_suite_is_closed"
+          },
+          {
+            "public": "_terminal_summary_action",
+            "target": "_terminal_summary_action"
+          },
+          {
+            "public": "_terminal_summary_index_entry",
+            "target": "_terminal_summary_index_entry"
+          },
+          {
+            "public": "_terminal_summary_written",
+            "target": "_terminal_summary_written"
+          },
+          {
+            "public": "_validate_terminal_summary_payload",
+            "target": "_validate_terminal_summary_payload"
+          },
+          {
+            "public": "_validated_root_replay",
+            "target": "_validated_root_replay"
+          },
+          {
+            "public": "_write_final_route_wide_ledger",
+            "target": "_write_final_route_wide_ledger"
+          },
+          {
+            "public": "_write_task_completion_projection",
+            "target": "_write_task_completion_projection"
+          },
+          {
+            "public": "_write_terminal_backward_replay",
+            "target": "_write_terminal_backward_replay"
+          },
+          {
+            "public": "_write_terminal_closure_suite",
+            "target": "_write_terminal_closure_suite"
+          },
+          {
+            "public": "_write_terminal_summary",
+            "target": "_write_terminal_summary"
+          },
+          {
+            "public": "reconcile_current_run",
+            "target": "reconcile_current_run"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_terminal_ledger"
+      },
+      {
+        "bind_router": false,
+        "exports": [
+          {
+            "public": "_active_child_skill_bindings_from_plan",
+            "target": "_active_child_skill_bindings_from_plan"
+          },
+          {
+            "public": "_active_child_skill_source_paths",
+            "target": "_active_child_skill_source_paths"
+          },
+          {
+            "public": "_active_current_node_packet_records",
+            "target": "_active_current_node_packet_records"
+          },
+          {
+            "public": "_active_holder_frontier_version",
+            "target": "_active_holder_frontier_version"
+          },
+          {
+            "public": "_active_parallel_packet_batch",
+            "target": "_active_parallel_packet_batch"
+          },
+          {
+            "public": "_active_pm_role_work_batch_records",
+            "target": "_active_pm_role_work_batch_records"
+          },
+          {
+            "public": "_active_pm_role_work_request",
+            "target": "_active_pm_role_work_request"
+          },
+          {
+            "public": "_agent_role_map_from_crew_ledger",
+            "target": "_agent_role_map_from_crew_ledger"
+          },
+          {
+            "public": "_apply_pm_role_work_gate_mappings",
+            "target": "_apply_pm_role_work_gate_mappings"
+          },
+          {
+            "public": "_controller_status_packet_path_from_packet_envelope",
+            "target": "_controller_status_packet_path_from_packet_envelope"
+          },
+          {
+            "public": "_current_node_active_holder_lease_plan",
+            "target": "_current_node_active_holder_lease_plan"
+          },
+          {
+            "public": "_current_node_batch_packet_record",
+            "target": "_current_node_batch_packet_record"
+          },
+          {
+            "public": "_current_node_missing_result_roles",
+            "target": "_current_node_missing_result_roles"
+          },
+          {
+            "public": "_current_node_packet_context",
+            "target": "_current_node_packet_context"
+          },
+          {
+            "public": "_current_node_packet_records",
+            "target": "_current_node_packet_records"
+          },
+          {
+            "public": "_current_node_result_context",
+            "target": "_current_node_result_context"
+          },
+          {
+            "public": "_current_node_results_complete",
+            "target": "_current_node_results_complete"
+          },
+          {
+            "public": "_empty_officer_request_lifecycle_index",
+            "target": "_empty_officer_request_lifecycle_index"
+          },
+          {
+            "public": "_empty_pm_role_work_request_index",
+            "target": "_empty_pm_role_work_request_index"
+          },
+          {
+            "public": "_ensure_barrier_bundles_ready",
+            "target": "_ensure_barrier_bundles_ready"
+          },
+          {
+            "public": "_issue_current_node_active_holder_leases",
+            "target": "_issue_current_node_active_holder_leases"
+          },
+          {
+            "public": "_issue_packet_active_holder_leases",
+            "target": "_issue_packet_active_holder_leases"
+          },
+          {
+            "public": "_load_officer_request_lifecycle_index",
+            "target": "_load_officer_request_lifecycle_index"
+          },
+          {
+            "public": "_load_packet_index",
+            "target": "_load_packet_index"
+          },
+          {
+            "public": "_load_parallel_packet_batch",
+            "target": "_load_parallel_packet_batch"
+          },
+          {
+            "public": "_load_pm_role_work_request_index",
+            "target": "_load_pm_role_work_request_index"
+          },
+          {
+            "public": "_mark_parallel_batch_packets_relayed",
+            "target": "_mark_parallel_batch_packets_relayed"
+          },
+          {
+            "public": "_mark_parallel_batch_results_joined",
+            "target": "_mark_parallel_batch_results_joined"
+          },
+          {
+            "public": "_mark_parallel_batch_reviewed",
+            "target": "_mark_parallel_batch_reviewed"
+          },
+          {
+            "public": "_material_packet_body_text_from_spec",
+            "target": "_material_packet_body_text_from_spec"
+          },
+          {
+            "public": "_material_scan_index_path",
+            "target": "_material_scan_index_path"
+          },
+          {
+            "public": "_merge_agent_role_maps",
+            "target": "_merge_agent_role_maps"
+          },
+          {
+            "public": "_metadata_binding_ids",
+            "target": "_metadata_binding_ids"
+          },
+          {
+            "public": "_metadata_string_list",
+            "target": "_metadata_string_list"
+          },
+          {
+            "public": "_next_current_node_packet_action",
+            "target": "_next_current_node_packet_action"
+          },
+          {
+            "public": "_next_material_packet_action",
+            "target": "_next_material_packet_action"
+          },
+          {
+            "public": "_next_pm_role_work_request_action",
+            "target": "_next_pm_role_work_request_action"
+          },
+          {
+            "public": "_next_research_packet_action",
+            "target": "_next_research_packet_action"
+          },
+          {
+            "public": "_normalize_pm_role_work_result_recipient",
+            "target": "_normalize_pm_role_work_result_recipient"
+          },
+          {
+            "public": "_officer_lifecycle_entry",
+            "target": "_officer_lifecycle_entry"
+          },
+          {
+            "public": "_officer_request_lifecycle_index_path",
+            "target": "_officer_request_lifecycle_index_path"
+          },
+          {
+            "public": "_packet_active_holder_lease_plan",
+            "target": "_packet_active_holder_lease_plan"
+          },
+          {
+            "public": "_packet_envelope_path",
+            "target": "_packet_envelope_path"
+          },
+          {
+            "public": "_packet_envelope_path_from_record",
+            "target": "_packet_envelope_path_from_record"
+          },
+          {
+            "public": "_packet_paths",
+            "target": "_packet_paths"
+          },
+          {
+            "public": "_packet_record_from_envelope",
+            "target": "_packet_record_from_envelope"
+          },
+          {
+            "public": "_parallel_batch_record_result_exists",
+            "target": "_parallel_batch_record_result_exists"
+          },
+          {
+            "public": "_parallel_packet_batch_member_summary",
+            "target": "_parallel_packet_batch_member_summary"
+          },
+          {
+            "public": "_parallel_packet_batch_path",
+            "target": "_parallel_packet_batch_path"
+          },
+          {
+            "public": "_parallel_packet_batch_ref_path",
+            "target": "_parallel_packet_batch_ref_path"
+          },
+          {
+            "public": "_parallel_packet_batch_root",
+            "target": "_parallel_packet_batch_root"
+          },
+          {
+            "public": "_pm_role_work_gate_mapping_alias_specs",
+            "target": "_pm_role_work_gate_mapping_alias_specs"
+          },
+          {
+            "public": "_pm_role_work_gate_mapping_artifact_path",
+            "target": "_pm_role_work_gate_mapping_artifact_path"
+          },
+          {
+            "public": "_pm_role_work_gate_mapping_candidates",
+            "target": "_pm_role_work_gate_mapping_candidates"
+          },
+          {
+            "public": "_pm_role_work_gate_mappings_for_decision",
+            "target": "_pm_role_work_gate_mappings_for_decision"
+          },
+          {
+            "public": "_pm_role_work_output_contract",
+            "target": "_pm_role_work_output_contract"
+          },
+          {
+            "public": "_pm_role_work_packet_type_from_contract",
+            "target": "_pm_role_work_packet_type_from_contract"
+          },
+          {
+            "public": "_pm_role_work_record_is_nonblocking",
+            "target": "_pm_role_work_record_is_nonblocking"
+          },
+          {
+            "public": "_pm_role_work_records_are_nonblocking",
+            "target": "_pm_role_work_records_are_nonblocking"
+          },
+          {
+            "public": "_pm_role_work_records_dependency_class",
+            "target": "_pm_role_work_records_dependency_class"
+          },
+          {
+            "public": "_pm_role_work_request_body_text",
+            "target": "_pm_role_work_request_body_text"
+          },
+          {
+            "public": "_pm_role_work_request_index_path",
+            "target": "_pm_role_work_request_index_path"
+          },
+          {
+            "public": "_pm_role_work_request_record",
+            "target": "_pm_role_work_request_record"
+          },
+          {
+            "public": "_pm_role_work_result_decision_payload_contract",
+            "target": "_pm_role_work_result_decision_payload_contract"
+          },
+          {
+            "public": "_pm_role_work_target_gate_contract",
+            "target": "_pm_role_work_target_gate_contract"
+          },
+          {
+            "public": "_record_officer_lifecycle_pm_decision",
+            "target": "_record_officer_lifecycle_pm_decision"
+          },
+          {
+            "public": "_record_officer_lifecycle_request",
+            "target": "_record_officer_lifecycle_request"
+          },
+          {
+            "public": "_record_officer_lifecycle_result_returned",
+            "target": "_record_officer_lifecycle_result_returned"
+          },
+          {
+            "public": "_record_officer_lifecycle_status",
+            "target": "_record_officer_lifecycle_status"
+          },
+          {
+            "public": "_refresh_all_parallel_packet_batches_from_durable_results",
+            "target": "_refresh_all_parallel_packet_batches_from_durable_results"
+          },
+          {
+            "public": "_refresh_parallel_packet_batch_from_durable_results",
+            "target": "_refresh_parallel_packet_batch_from_durable_results"
+          },
+          {
+            "public": "_relay_packet_records",
+            "target": "_relay_packet_records"
+          },
+          {
+            "public": "_relay_result_records",
+            "target": "_relay_result_records"
+          },
+          {
+            "public": "_research_packet_index_path",
+            "target": "_research_packet_index_path"
+          },
+          {
+            "public": "_result_envelope_path",
+            "target": "_result_envelope_path"
+          },
+          {
+            "public": "_result_envelope_path_from_packet_record",
+            "target": "_result_envelope_path_from_packet_record"
+          },
+          {
+            "public": "_role_output_status_packet_path_for_wait",
+            "target": "_role_output_status_packet_path_for_wait"
+          },
+          {
+            "public": "_safe_packet_id_component",
+            "target": "_safe_packet_id_component"
+          },
+          {
+            "public": "_unresolved_advisory_pm_role_work_records",
+            "target": "_unresolved_advisory_pm_role_work_records"
+          },
+          {
+            "public": "_unresolved_pm_role_work_requests",
+            "target": "_unresolved_pm_role_work_requests"
+          },
+          {
+            "public": "_upsert_officer_lifecycle_entry",
+            "target": "_upsert_officer_lifecycle_entry"
+          },
+          {
+            "public": "_validate_packet_bodies_opened_by_targets",
+            "target": "_validate_packet_bodies_opened_by_targets"
+          },
+          {
+            "public": "_validate_packet_group_for_reviewer",
+            "target": "_validate_packet_group_for_reviewer"
+          },
+          {
+            "public": "_validate_pm_role_work_process_contract_binding",
+            "target": "_validate_pm_role_work_process_contract_binding"
+          },
+          {
+            "public": "_validate_result_bodies_opened_by_pm",
+            "target": "_validate_result_bodies_opened_by_pm"
+          },
+          {
+            "public": "_validate_results_exist_for_packets",
+            "target": "_validate_results_exist_for_packets"
+          },
+          {
+            "public": "_validate_role_work_result_process_binding",
+            "target": "_validate_role_work_result_process_binding"
+          },
+          {
+            "public": "_write_material_dispatch_block_report",
+            "target": "_write_material_dispatch_block_report"
+          },
+          {
+            "public": "_write_material_dispatch_recheck_protocol_blocker",
+            "target": "_write_material_dispatch_recheck_protocol_blocker"
+          },
+          {
+            "public": "_write_material_scan_packets",
+            "target": "_write_material_scan_packets"
+          },
+          {
+            "public": "_write_material_sufficiency_report",
+            "target": "_write_material_sufficiency_report"
+          },
+          {
+            "public": "_write_material_understanding",
+            "target": "_write_material_understanding"
+          },
+          {
+            "public": "_write_officer_request_lifecycle_index",
+            "target": "_write_officer_request_lifecycle_index"
+          },
+          {
+            "public": "_write_parallel_packet_batch",
+            "target": "_write_parallel_packet_batch"
+          },
+          {
+            "public": "_write_parallel_packet_batch_state",
+            "target": "_write_parallel_packet_batch_state"
+          },
+          {
+            "public": "_write_pm_package_result_disposition",
+            "target": "_write_pm_package_result_disposition"
+          },
+          {
+            "public": "_write_pm_role_work_request",
+            "target": "_write_pm_role_work_request"
+          },
+          {
+            "public": "_write_pm_role_work_request_index",
+            "target": "_write_pm_role_work_request_index"
+          },
+          {
+            "public": "_write_pm_role_work_result_decision",
+            "target": "_write_pm_role_work_result_decision"
+          },
+          {
+            "public": "_write_research_capability_decision",
+            "target": "_write_research_capability_decision"
+          },
+          {
+            "public": "_write_research_package",
+            "target": "_write_research_package"
+          },
+          {
+            "public": "_write_role_work_result_returned",
+            "target": "_write_role_work_result_returned"
+          },
+          {
+            "public": "_write_worker_research_report",
+            "target": "_write_worker_research_report"
+          }
+        ],
+        "inject_router": true,
+        "module": "flowpilot_router_work_packets"
+      }
+    ]
+  },
+  "schema_version": 1
+}

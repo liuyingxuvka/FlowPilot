@@ -16383,3 +16383,42 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Broad unittest wrapper modules for ACK/cards/controller/PM role-work exceeded a 244-second foreground timeout and are not counted as pass evidence; focused card/runtime, closure, controller contract, owner contract, and prompt suites passed.
 - Pre-existing peer edits in `assets/readme-hero`, `autonomous-concept-ui-redesign`, and `simulations/flowpilot_model_test_alignment_results.json` were preserved and were not staged as part of this repair.
 - No GitHub push, tag, remote release, or public publication was performed.
+
+## 2026-05-21 - Router Facade Export Manifest Contraction
+
+### Evidence Summary
+
+- Added OpenSpec change `collapse-router-export-manifest-shards` for the narrow architecture reduction: keep old import paths while moving duplicated export-manifest data into one canonical owner.
+- Added `flowpilot_router_facade_export_registry.py` as the thin registry reader backed by `runtime_kit/router_facade_owner_exports.json`.
+- Converted the previous export-manifest shard modules into compatibility wrappers over the registry.
+- Updated model catalogs, source-contract evidence, maintenance maps, install checks, and focused full-diagnostic tests to recognize the registry and data-file boundary.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate collapse-router-export-manifest-shards --strict --json`.
+- OK: `python -m py_compile` for touched runtime, model, install, and test files.
+- OK: focused facade import smoke, 39 owner keys and 908 public export names.
+- OK: `python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_facade_export_manifest_external_contracts`.
+- OK: `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py --json-out simulations\flowpilot_structure_maintenance_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: background router tier retry with log root `tmp\flowguard_background\router_retry_20260521_1019\`, exit code `0`, status `passed`, proof reuse `false`, completed `64`; stdout `tmp\flowguard_background\router_retry_20260521_1019\router_background_supervisor.out.txt`, stderr `tmp\flowguard_background\router_retry_20260521_1019\router_background_supervisor.err.txt`, combined `tmp\flowguard_background\router_retry_20260521_1019\router_background_supervisor.combined.txt`, exit `tmp\flowguard_background\router_retry_20260521_1019\router_background_supervisor.exit.txt`, latest update `2026-05-21 12:46:04 +0200`.
+- OK: background `python simulations\run_meta_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_meta_checks.out.txt`, stderr `tmp\flowguard_background\run_meta_checks.err.txt`, combined `tmp\flowguard_background\run_meta_checks.combined.txt`, exit `tmp\flowguard_background\run_meta_checks.exit.txt`, latest update `2026-05-21 09:38:44 +0200`.
+- OK: background `python simulations\run_capability_checks.py` with log root `tmp\flowguard_background\`, exit code `0`, status `passed`, proof reuse `false`; stdout `tmp\flowguard_background\run_capability_checks.out.txt`, stderr `tmp\flowguard_background\run_capability_checks.err.txt`, combined `tmp\flowguard_background\run_capability_checks.combined.txt`, exit `tmp\flowguard_background\run_capability_checks.exit.txt`, latest update `2026-05-21 09:38:43 +0200`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The safe reduction was to collapse duplicate export-manifest data tables, not to change router behavior or remove public compatibility doors.
+- Moving all rows into a Python registry initially created a new large-file structure smell. The final version keeps Python as a small reader and stores the rows as JSON data.
+- Existing manifest shard imports continue to work, but their source of truth is now the registry and JSON data file.
+
+### Skipped Or Limited
+
+- The first `router_background_supervisor` batch under `tmp\flowguard_background\` became stale without an exit artifact and is not counted as pass evidence.
+- Broader existing maintenance-map findings in unrelated runtime modules remain out of scope for this export-manifest contraction.
+- No GitHub push, tag, remote release, or public publication was performed.
