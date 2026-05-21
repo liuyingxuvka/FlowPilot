@@ -120,6 +120,7 @@ def main(argv: list[str] | None = None) -> int:
             session_path=args.session_path,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
         )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
@@ -131,6 +132,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
         )
         print(json.dumps(output, indent=2, sort_keys=True))
         return 0
@@ -142,6 +144,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             progress=args.progress,
             message=args.message,
+            controller_aside=args.controller_aside or None,
         )
         print(json.dumps(status, indent=2, sort_keys=True))
         return 0
@@ -177,6 +180,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             progress=args.progress,
             message=args.message,
+            controller_aside=args.controller_aside or None,
             route_version=args.route_version,
             frontier_version=args.frontier_version,
         )
@@ -190,6 +194,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
             route_version=args.route_version,
             frontier_version=args.frontier_version,
         )
@@ -217,6 +222,7 @@ def main(argv: list[str] | None = None) -> int:
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
             strict_role=not args.allow_wrong_role_for_audit,
+            controller_aside=args.controller_aside or None,
         )
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0

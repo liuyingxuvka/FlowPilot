@@ -40,6 +40,7 @@ def execute_role_output_command(
             event_name=args.event_name or None,
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "submit-output-to-router":
         body = read_body_json(root, args.body_json, args.body_file)
@@ -63,6 +64,7 @@ def execute_role_output_command(
             event_name=args.event_name or None,
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
+            controller_aside=args.controller_aside or None,
         )
         event_name = str(args.event_name or envelope.get("event_name") or "").strip()
         if not event_name:
@@ -88,6 +90,7 @@ def execute_role_output_command(
             event_name=args.event_name or None,
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "submit-controller-boundary-confirmation":
         result = role_output_runtime.submit_controller_boundary_confirmation(

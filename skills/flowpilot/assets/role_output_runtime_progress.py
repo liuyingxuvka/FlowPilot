@@ -6,6 +6,10 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from controller_process_aside import (
+    build_controller_aside,
+    controller_process_aside_contract,
+)
 from role_output_runtime_contracts import build_output_skeleton
 from role_output_runtime_schema import (
     ROLE_OUTPUT_RUNTIME_SCHEMA,
@@ -86,6 +90,18 @@ def _validate_progress_message(message: str) -> str:
     return text
 
 
+def _controller_aside_or_error(
+    text: str | None,
+    *,
+    from_role: str,
+    source: str,
+) -> dict[str, Any] | None:
+    try:
+        return build_controller_aside(text, from_role=from_role, source=source)
+    except ValueError as exc:
+        raise RoleOutputRuntimeError(str(exc)) from exc
+
+
 def write_output_progress_status(
     project_root: Path,
     *,
@@ -99,6 +115,7 @@ def write_output_progress_status(
     event_name: str | None = None,
     controller_status_packet_path: str | Path | None = None,
     session_id: str | None = None,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
@@ -130,17 +147,27 @@ def write_output_progress_status(
         "event_name": event_name or spec.event_name,
         "updated_at": utc_now(),
         "controller_visibility": "role_output_status_metadata_only",
+        "controller_process_aside_contract": controller_process_aside_contract(),
         "controller_allowed_actions": ["read_role_output_status", "wait_for_role_output_envelope"],
         "controller_forbidden_actions": [
             "read_role_output_body",
             "read_role_output_directory",
             "infer_role_decision_from_progress",
+            "infer_role_decision_from_controller_aside",
+            "treat_controller_aside_as_evidence",
             "approve_gate",
         ],
         "controller_may_read_body": False,
         "progress_is_decision_evidence": False,
         "body_text_persisted_in_status": False,
     }
+    aside = _controller_aside_or_error(
+        controller_aside,
+        from_role=role,
+        source="role_output_runtime.progress_status",
+    )
+    if aside is not None:
+        payload["controller_aside"] = aside
     if session_id:
         payload["session_id"] = session_id
     _write_json(status_path, payload)
@@ -167,6 +194,7 @@ def update_output_progress(
     event_name: str | None = None,
     session_path: str | Path | None = None,
     controller_status_packet_path: str | Path | None = None,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     resolved_run_id, run_root = _run_paths(project_root, run_id)
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
@@ -197,6 +225,7 @@ def update_output_progress(
         event_name=event_name,
         controller_status_packet_path=controller_status_packet_path,
         session_id=session_id,
+        controller_aside=controller_aside,
     )
 
 
@@ -253,6 +282,7 @@ def prepare_output_session(
         "default_progress_required": True,
         "controller_status_packet_path": session["controller_status_packet_path"],
         "runtime_command": "flowpilot_runtime.py progress-output",
+        "controller_aside": controller_process_aside_contract(),
         "message_boundary": (
             "Use brief metadata only. Do not include sealed body content, findings, evidence, "
             "recommendations, decisions, or result details."

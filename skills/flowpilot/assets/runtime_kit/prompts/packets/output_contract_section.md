@@ -16,5 +16,6 @@ This task packet is the source of truth for the result, report, or decision body
 - Use the exact field names and exact required values from this contract. Do not rename fields with synonyms.
 - Include every required field even when the value is `[]`, `false`, or `null`.
 - If the work cannot satisfy the contract, return a blocked or needs-PM result body that still includes every required field and a `Contract Self-Check` section.
+- You may add a short `controller_aside` only to the runtime progress/status or returned envelope. It is Controller-only process/status metadata, not formal work content, evidence, findings, recommendations, decisions, approvals, or a Router event source.
 
 ${required_sections_block}${required_envelope_block}${required_values_block}${allowed_decisions_block}${segment_values_block}${body_template_block}Before returning, write a `Contract Self-Check` section in the sealed result, report, or decision body. If any required field, evidence item, or section is missing, return `blocked` or `needs_pm` instead of a pass.

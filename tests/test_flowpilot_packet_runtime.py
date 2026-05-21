@@ -375,6 +375,65 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(packet_record["result_generated_by_runtime_session"])
         self.assertEqual(packet_record["completed_by_agent_id"], "agent-worker-a-1")
 
+    def test_controller_aside_is_process_metadata_on_packet_status_and_result(self) -> None:
+        root = self.make_project()
+        envelope = self.issue_packet(root)
+
+        self.assertTrue(
+            envelope["controller_process_aside_contract"]["authority_boundary"]["does_not_satisfy_wait"]
+        )
+        self.assertFalse(
+            envelope["controller_process_aside_contract"]["authority_boundary"]["router_semantic_inspection_allowed"]
+        )
+
+        status = packet_runtime.update_controller_progress(
+            root,
+            envelope_path=self.packet_envelope_path(root),
+            role="worker_a",
+            agent_id="agent-worker-a-aside",
+            progress=35,
+            message="Working on packet envelope metadata.",
+            controller_aside="I opened the packet and am checking the return shape.",
+        )
+        aside = status["controller_aside"]
+        self.assertEqual(aside["to_role"], "controller")
+        self.assertEqual(aside["text"], "I opened the packet and am checking the return shape.")
+        self.assertTrue(aside["not_formal_evidence"])
+        self.assertTrue(aside["does_not_satisfy_wait"])
+        self.assertFalse(aside["router_semantic_inspection_allowed"])
+
+        result = packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role="worker_a",
+            completed_by_agent_id="agent-worker-a-aside",
+            result_body_text="Packet result body stays sealed from Controller.",
+            next_recipient="human_like_reviewer",
+            strict_role=False,
+            controller_aside="Submitted the result envelope; waiting for Router handling.",
+        )
+        self.assertEqual(
+            result["controller_aside"]["text"],
+            "Submitted the result envelope; waiting for Router handling.",
+        )
+        self.assertTrue(result["controller_aside"]["not_decision_or_approval"])
+        latest_status = self.read_json(root / envelope["controller_status_packet_path"])
+        self.assertEqual(
+            latest_status["controller_aside"]["text"],
+            "Submitted the result envelope; waiting for Router handling.",
+        )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "controller_aside"):
+            packet_runtime.update_controller_progress(
+                root,
+                envelope_path=self.packet_envelope_path(root),
+                role="worker_a",
+                agent_id="agent-worker-a-aside",
+                progress=40,
+                message="Still working.",
+                controller_aside="line1\nline2\nline3\nline4",
+            )
+
     def test_result_review_session_records_reviewer_receipt_without_persisting_body(self) -> None:
         root = self.make_project()
         self.relay_packet(root, self.issue_packet(root))

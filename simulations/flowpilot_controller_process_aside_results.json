@@ -1,0 +1,261 @@
+{
+  "checked_at": "2026-05-21T07:24:35.717335+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=1 initial_states=1 traces=10",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "aside_becomes_evidence": {
+        "detected": true,
+        "expected_failure": "Controller used process aside as formal content",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside was not marked non-evidence",
+          "process aside was not marked non-authority",
+          "Controller used process aside as formal content"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": false,
+          "aside_present": true,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": true,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": true,
+          "formal_output_validated": false,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": true,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": false,
+          "router_semantically_inspected_aside": false,
+          "scenario": "aside_becomes_evidence",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "aside_drives_router_event": {
+        "detected": true,
+        "expected_failure": "Router semantically inspected process aside text",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside was not marked non-evidence",
+          "process aside was not marked non-authority",
+          "Router semantically inspected process aside text",
+          "Router derived a formal event from process aside text"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": false,
+          "aside_present": true,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": false,
+          "formal_output_validated": false,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": true,
+          "router_preserved_aside": true,
+          "router_semantically_inspected_aside": true,
+          "scenario": "aside_drives_router_event",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "aside_replaces_formal_body": {
+        "detected": true,
+        "expected_failure": "process aside replaced the formal output body",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside was not marked non-evidence",
+          "process aside was not marked non-authority",
+          "process aside replaced the formal output body"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": false,
+          "aside_present": true,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": false,
+          "formal_output_validated": true,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": false,
+          "router_semantically_inspected_aside": false,
+          "scenario": "aside_replaces_formal_body",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "aside_satisfies_formal_wait": {
+        "detected": true,
+        "expected_failure": "process aside satisfied a formal wait",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside satisfied a formal wait"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": true,
+          "aside_marked_not_formal_evidence": true,
+          "aside_present": true,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": false,
+          "formal_output_validated": false,
+          "formal_wait_satisfied_by_aside": true,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": true,
+          "router_semantically_inspected_aside": false,
+          "scenario": "aside_satisfies_formal_wait",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "controller_reports_formal_content_from_aside": {
+        "detected": true,
+        "expected_failure": "Controller used process aside as formal content",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside was not marked non-authority",
+          "Controller used process aside as formal content"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": true,
+          "aside_present": true,
+          "controller_reads_aside": true,
+          "controller_uses_aside_for_formal_content": true,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": true,
+          "formal_output_validated": false,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": true,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": false,
+          "router_semantically_inspected_aside": false,
+          "scenario": "controller_reports_formal_content_from_aside",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "missing_aside_blocks_flow": {
+        "detected": true,
+        "expected_failure": "missing optional process aside blocked formal flow",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "missing optional process aside blocked formal flow"
+        ],
+        "state": {
+          "aside_labeled_process_only": false,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": false,
+          "aside_present": false,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": true,
+          "formal_output_validated": true,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": true,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": false,
+          "router_semantically_inspected_aside": false,
+          "scenario": "missing_aside_blocks_flow",
+          "status": "accepted",
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "worker_to_worker_aside": {
+        "detected": true,
+        "expected_failure": "worker process aside became Worker-to-Worker communication",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "process aside was not marked non-evidence",
+          "process aside was not marked non-authority",
+          "worker process aside became Worker-to-Worker communication"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": false,
+          "aside_marked_not_formal_evidence": false,
+          "aside_present": true,
+          "controller_reads_aside": false,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": false,
+          "formal_output_present": false,
+          "formal_output_validated": false,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": false,
+          "router_semantically_inspected_aside": false,
+          "scenario": "worker_to_worker_aside",
+          "status": "accepted",
+          "worker_aside_controller_only": false,
+          "worker_aside_visible_to_sibling_worker": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused Controller process-aside authority model; runtime tests and prompt coverage remain required for production confidence",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "aside_omitted_formal_output_ok",
+      "aside_with_valid_formal_output",
+      "controller_uses_aside_for_operational_status"
+    ],
+    "edge_count": 10,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "aside_becomes_evidence",
+      "aside_drives_router_event",
+      "aside_replaces_formal_body",
+      "aside_satisfies_formal_wait",
+      "controller_reports_formal_content_from_aside",
+      "missing_aside_blocks_flow",
+      "worker_to_worker_aside"
+    ],
+    "state_count": 11
+  }
+}

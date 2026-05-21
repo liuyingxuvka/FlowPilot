@@ -60,6 +60,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit.add_argument("--event-name", default="")
     submit.add_argument("--session-path", default="")
     submit.add_argument("--controller-status-packet-path", default="")
+    submit.add_argument("--controller-aside", default="")
 
     progress = sub.add_parser("progress-output", help="Update Controller-visible formal role-output progress")
     progress.add_argument("--output-type", required=True, choices=sorted(SUPPORTED_OUTPUT_TYPES))
@@ -71,6 +72,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     progress.add_argument("--event-name", default="")
     progress.add_argument("--session-path", default="")
     progress.add_argument("--controller-status-packet-path", default="")
+    progress.add_argument("--controller-aside", default="")
 
     controller_boundary = sub.add_parser(
         "submit-controller-boundary-confirmation",
@@ -138,6 +140,7 @@ def main(argv: list[str] | None = None) -> int:
             event_name=args.event_name or None,
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "progress-output":
         result = update_output_progress(
@@ -151,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             event_name=args.event_name or None,
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "submit-controller-boundary-confirmation":
         result = submit_controller_boundary_confirmation(

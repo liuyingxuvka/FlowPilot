@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any
 
 import barrier_bundle
+from controller_process_aside import (
+    build_controller_aside,
+    controller_process_aside_contract,
+)
 from packet_runtime_active_holder import (
     _load_active_holder_lease,
     _require_concrete_agent_id,
@@ -152,6 +156,18 @@ def _validate_progress_message(message: str) -> str:
             raise PacketRuntimeError("progress message must not include sealed body details")
     return text
 
+
+def _controller_aside_or_error(
+    text: str | None,
+    *,
+    from_role: str,
+    source: str,
+) -> dict[str, Any] | None:
+    try:
+        return build_controller_aside(text, from_role=from_role, source=source)
+    except ValueError as exc:
+        raise PacketRuntimeError(str(exc)) from exc
+
 def write_controller_status_packet(
     project_root: Path,
     envelope: dict[str, Any],
@@ -164,6 +180,7 @@ def write_controller_status_packet(
     progress_updated_by_role: str | None = None,
     progress_updated_by_agent_id: str | None = None,
     work_authority: dict[str, Any] | None = None,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     status_path = resolve_project_path(project_root, envelope["controller_status_packet_path"])
     if progress is not None:
@@ -181,7 +198,15 @@ def write_controller_status_packet(
         "controller_allowed_actions": DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
         "controller_forbidden_actions": DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
         "controller_visibility": "packet_and_result_envelopes_only",
+        "controller_process_aside_contract": controller_process_aside_contract(),
     }
+    aside = _controller_aside_or_error(
+        controller_aside,
+        from_role=progress_updated_by_role or holder,
+        source="packet_runtime.controller_status_packet",
+    )
+    if aside is not None:
+        payload["controller_aside"] = aside
     if progress is not None:
         payload["progress"] = progress
         payload["progress_written_by_runtime"] = True
@@ -202,6 +227,7 @@ def update_controller_progress(
     agent_id: str,
     progress: int,
     message: str,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     envelope = normalize_envelope_aliases(load_envelope(project_root, str(envelope_path)))
@@ -216,4 +242,5 @@ def update_controller_progress(
         progress=_validate_progress_value(progress),
         progress_updated_by_role=role,
         progress_updated_by_agent_id=resolved_agent_id,
+        controller_aside=controller_aside,
     )

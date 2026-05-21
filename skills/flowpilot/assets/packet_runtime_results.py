@@ -10,6 +10,10 @@ from pathlib import Path
 from typing import Any
 
 import barrier_bundle
+from controller_process_aside import (
+    build_controller_aside,
+    controller_process_aside_contract,
+)
 from packet_runtime_active_holder import (
     _load_active_holder_lease,
     _require_concrete_agent_id,
@@ -136,6 +140,13 @@ from packet_runtime_sessions import (
 
 from packet_runtime_progress import write_controller_status_packet
 
+def _controller_aside_or_error(text: str | None, *, from_role: str, source: str) -> dict[str, Any] | None:
+    try:
+        return build_controller_aside(text, from_role=from_role, source=source)
+    except ValueError as exc:
+        raise PacketRuntimeError(str(exc)) from exc
+
+
 def write_result(
     project_root: Path,
     *,
@@ -145,6 +156,7 @@ def write_result(
     result_body_text: str,
     next_recipient: str,
     strict_role: bool = True,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     packet_envelope = normalize_envelope_aliases(packet_envelope)
     if strict_role and completed_by_role != packet_envelope.get("to_role"):
@@ -187,6 +199,7 @@ def write_result(
         "body_visibility": SEALED_BODY_VISIBILITY,
         "controller_allowed_actions": RESULT_CONTROLLER_ALLOWED_ACTIONS,
         "controller_forbidden_actions": RESULT_CONTROLLER_FORBIDDEN_ACTIONS,
+        "controller_process_aside_contract": controller_process_aside_contract(),
         "created_at": utc_now(),
         "body_access": {
             "controller_can_read_body": False,
@@ -204,6 +217,13 @@ def write_result(
     }
     if output_contract is not None:
         result_envelope["output_contract"] = output_contract
+    aside = _controller_aside_or_error(
+        controller_aside,
+        from_role=completed_by_role,
+        source="packet_runtime.result_envelope",
+    )
+    if aside is not None:
+        result_envelope["controller_aside"] = aside
     if isinstance(packet_envelope.get("barrier_bundle"), dict):
         result_envelope["barrier_bundle"] = packet_envelope["barrier_bundle"]
     write_json_atomic(result_envelope_path, result_envelope)
@@ -217,6 +237,7 @@ def write_result(
         progress=999,
         progress_updated_by_role=completed_by_role,
         progress_updated_by_agent_id=completed_by_agent_id,
+        controller_aside=controller_aside,
     )
 
     record = {
@@ -242,8 +263,12 @@ def write_result(
             "controller_relay_signature_required": True,
             "result_body_identity_boundary_required": True,
             "result_body_identity_boundary_marker": RESULT_IDENTITY_MARKER,
+            "controller_process_aside_contract": result_envelope["controller_process_aside_contract"],
         },
     }
+    if aside is not None:
+        record["controller_aside"] = aside
+        record["result_envelope"]["controller_aside"] = aside
     if isinstance(packet_envelope.get("barrier_bundle"), dict):
         record["barrier_bundle"] = packet_envelope["barrier_bundle"]
     if output_contract is not None:

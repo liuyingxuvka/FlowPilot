@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from controller_process_aside import controller_process_aside_contract
 from role_output_runtime_schema import (
     ATTACHED_QUALITY_PACK_REL_PATHS,
     PLACEHOLDER_PREFIXES,
@@ -163,6 +164,7 @@ def build_output_skeleton(
             "default_progress_required": True,
             "runtime_command": "flowpilot_runtime.py progress-output",
             "controller_visibility": "metadata_only",
+            "controller_aside": controller_process_aside_contract(),
             "message_boundary": (
                 "Use brief status metadata only. Do not include sealed body content, findings, "
                 "evidence, recommendations, decisions, or result details."

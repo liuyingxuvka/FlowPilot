@@ -76,6 +76,7 @@ def active_holder_progress(
     agent_id: str,
     progress: int,
     message: str,
+    controller_aside: str | None = None,
     route_version: int | None = None,
     frontier_version: int | None = None,
 ) -> dict[str, Any]:
@@ -96,20 +97,20 @@ def active_holder_progress(
         agent_id=agent_id,
         progress=progress,
         message=message,
+        controller_aside=controller_aside,
     )
-    event = _append_active_holder_event(
-        project_root,
-        envelope,
-        {
-            "event": "active_holder_progress",
-            "lease_id": lease["lease_id"],
-            "packet_id": envelope["packet_id"],
-            "holder_role": role,
-            "holder_agent_id": _require_concrete_agent_id(agent_id, role=role),
-            "progress": _validate_progress_value(progress),
-            "message": status["message"],
-        },
-    )
+    event_payload = {
+        "event": "active_holder_progress",
+        "lease_id": lease["lease_id"],
+        "packet_id": envelope["packet_id"],
+        "holder_role": role,
+        "holder_agent_id": _require_concrete_agent_id(agent_id, role=role),
+        "progress": _validate_progress_value(progress),
+        "message": status["message"],
+    }
+    if "controller_aside" in status:
+        event_payload["controller_aside"] = status["controller_aside"]
+    event = _append_active_holder_event(project_root, envelope, event_payload)
     paths = packet_paths_from_envelope(project_root, envelope)
     _update_packet_record(
         project_root,

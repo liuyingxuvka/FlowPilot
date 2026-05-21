@@ -6,6 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from controller_process_aside import controller_process_aside_contract
 from packet_runtime_active_holder_core import (
     _append_active_holder_event,
     _load_active_holder_lease,
@@ -60,9 +61,12 @@ def _write_controller_next_action_notice(
         "result_body_hash": result_envelope.get("result_body_hash"),
         "controller_visibility": "next_action_metadata_only",
         "controller_may_read_result_body": False,
+        "controller_process_aside_contract": controller_process_aside_contract(),
         "lease_id": lease.get("lease_id"),
         "created_at": utc_now(),
     }
+    if isinstance(result_envelope.get("controller_aside"), dict):
+        notice["controller_aside"] = result_envelope["controller_aside"]
     write_json_atomic(notice_path, notice)
     event = _append_active_holder_event(
         project_root,
@@ -103,6 +107,11 @@ def _write_controller_next_action_notice(
         progress=999,
         progress_updated_by_role=str(result_envelope.get("completed_by_role") or ""),
         progress_updated_by_agent_id=str(result_envelope.get("completed_by_agent_id") or ""),
+        controller_aside=(
+            str(result_envelope["controller_aside"].get("text") or "")
+            if isinstance(result_envelope.get("controller_aside"), dict)
+            else None
+        ),
     )
     return notice
 
@@ -221,6 +230,7 @@ def active_holder_submit_result(
     agent_id: str,
     result_body_text: str,
     next_recipient: str,
+    controller_aside: str | None = None,
     route_version: int | None = None,
     frontier_version: int | None = None,
 ) -> dict[str, Any]:
@@ -242,6 +252,7 @@ def active_holder_submit_result(
         result_body_text=result_body_text,
         next_recipient=next_recipient,
         strict_role=True,
+        controller_aside=controller_aside,
     )
     return active_holder_submit_existing_result(
         project_root,

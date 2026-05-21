@@ -55,12 +55,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     complete_packet.add_argument("--result-body-text", default="")
     complete_packet.add_argument("--result-body-file", default="")
     complete_packet.add_argument("--next-recipient", required=True)
+    complete_packet.add_argument("--controller-aside", default="")
 
     run_packet = sub.add_parser("run-packet", help="Open and complete a packet in one runtime call.")
     _add_card_identity_args(run_packet)
     run_packet.add_argument("--result-body-text", default="")
     run_packet.add_argument("--result-body-file", default="")
     run_packet.add_argument("--next-recipient", required=True)
+    run_packet.add_argument("--controller-aside", default="")
 
     issue_active = sub.add_parser("issue-active-holder-lease", help="Issue a scoped fast-lane lease to the current packet holder.")
     issue_active.add_argument("--envelope-path", required=True)
@@ -83,6 +85,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     active_progress.add_argument("--agent-id", required=True)
     active_progress.add_argument("--progress", required=True, type=int)
     active_progress.add_argument("--message", required=True)
+    active_progress.add_argument("--controller-aside", default="")
     active_progress.add_argument("--route-version", type=int, default=None)
     active_progress.add_argument("--frontier-version", type=int, default=None)
 
@@ -93,6 +96,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     active_submit.add_argument("--result-body-text", default="")
     active_submit.add_argument("--result-body-file", default="")
     active_submit.add_argument("--next-recipient", required=True)
+    active_submit.add_argument("--controller-aside", default="")
     active_submit.add_argument("--route-version", type=int, default=None)
     active_submit.add_argument("--frontier-version", type=int, default=None)
 
@@ -132,6 +136,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit_output.add_argument("--event-name", default="")
     submit_output.add_argument("--session-path", default="")
     submit_output.add_argument("--controller-status-packet-path", default="")
+    submit_output.add_argument("--controller-aside", default="")
 
     submit_output_router = sub.add_parser(
         "submit-output-to-router",
@@ -147,6 +152,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     submit_output_router.add_argument("--event-name", default="")
     submit_output_router.add_argument("--session-path", default="")
     submit_output_router.add_argument("--controller-status-packet-path", default="")
+    submit_output_router.add_argument("--controller-aside", default="")
 
     progress_output = sub.add_parser("progress-output", help="Update Controller-visible formal role-output progress.")
     progress_output.add_argument("--output-type", required=True, choices=sorted(role_output_runtime.SUPPORTED_OUTPUT_TYPES))
@@ -158,6 +164,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     progress_output.add_argument("--event-name", default="")
     progress_output.add_argument("--session-path", default="")
     progress_output.add_argument("--controller-status-packet-path", default="")
+    progress_output.add_argument("--controller-aside", default="")
 
     controller_boundary = sub.add_parser(
         "submit-controller-boundary-confirmation",

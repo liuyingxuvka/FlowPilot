@@ -683,6 +683,11 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             session["body_skeleton"]["_role_output_contract"]["progress_status"]["controller_status_packet_path"],
             session["controller_status_packet_path"],
         )
+        self.assertTrue(
+            session["body_skeleton"]["_role_output_contract"]["progress_status"]["controller_aside"][
+                "authority_boundary"
+            ]["does_not_satisfy_wait"]
+        )
         status = self.read_json(status_path)
         self.assertEqual(status["status"], "prepared")
         self.assertEqual(status["progress"], 0)
@@ -690,6 +695,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertFalse(status["controller_may_read_body"])
         self.assertFalse(status["progress_is_decision_evidence"])
         self.assertFalse(status["body_text_persisted_in_status"])
+        self.assertFalse(
+            status["controller_process_aside_contract"]["authority_boundary"]["router_semantic_inspection_allowed"]
+        )
 
         progress = role_output_runtime.update_output_progress(
             root,
@@ -699,12 +707,23 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             progress=40,
             message="Reviewing current route memory.",
             session_path=session["session_path"],
+            controller_aside="I prepared the output skeleton and am checking required fields.",
         )
         self.assertEqual(progress["controller_status_packet_path"], session["controller_status_packet_path"])
+        self.assertEqual(
+            progress["controller_aside"]["text"],
+            "I prepared the output skeleton and am checking required fields.",
+        )
+        self.assertTrue(progress["controller_aside"]["not_formal_evidence"])
+        self.assertTrue(progress["controller_aside"]["does_not_create_router_event"])
         status = self.read_json(status_path)
         self.assertEqual(status["status"], "working")
         self.assertEqual(status["progress"], 40)
         self.assertEqual(status["session_id"], session["session_id"])
+        self.assertEqual(
+            status["controller_aside"]["text"],
+            "I prepared the output skeleton and am checking required fields.",
+        )
 
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "sealed body details"):
             role_output_runtime.update_output_progress(
@@ -730,11 +749,27 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                     "impact_on_decision": "PM checked current route memory before resuming.",
                 },
             },
+            controller_aside="Submitted the formal envelope; waiting for Router.",
         )
         self.assertEqual(envelope["controller_status_packet_path"], session["controller_status_packet_path"])
+        self.assertEqual(envelope["controller_aside"]["text"], "Submitted the formal envelope; waiting for Router.")
+        self.assertTrue(envelope["controller_aside"]["not_decision_or_approval"])
         status = self.read_json(status_path)
         self.assertEqual(status["status"], "submitted")
         self.assertEqual(status["progress"], 999)
+        self.assertEqual(status["controller_aside"]["text"], "Submitted the formal envelope; waiting for Router.")
+
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "controller_aside"):
+            role_output_runtime.update_output_progress(
+                root,
+                output_type="pm_resume_recovery_decision",
+                role="project_manager",
+                agent_id="agent-pm-progress",
+                progress=60,
+                message="Still working.",
+                session_path=session["session_path"],
+                controller_aside="x" * 241,
+            )
 
 
 if __name__ == "__main__":

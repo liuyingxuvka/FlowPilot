@@ -69,6 +69,25 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertTrue(model.packet_prompt_failures(packet_prompts))
 
+    def test_controller_aside_guidance_is_repeated_on_runtime_surfaces(self) -> None:
+        guidance_paths = [
+            RUNTIME_KIT / "prompts" / "packets" / "packet_identity_boundary.md",
+            RUNTIME_KIT / "prompts" / "packets" / "result_identity_boundary.md",
+            RUNTIME_KIT / "prompts" / "packets" / "output_contract_section.md",
+            RUNTIME_KIT / "prompts" / "cards" / "required_return_policy.md",
+            ROOT / "templates" / "flowpilot" / "packets" / "packet_body.template.md",
+            ROOT / "templates" / "flowpilot" / "packets" / "result_body.template.md",
+        ]
+        for path in guidance_paths:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertIn("controller_aside", text)
+                self.assertIn("process/status", text)
+                self.assertIn("not", text)
+                self.assertIn("evidence", text)
+                self.assertIn("router", text)
+                self.assertIn("event", text)
+
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
             "pm.material_scan",

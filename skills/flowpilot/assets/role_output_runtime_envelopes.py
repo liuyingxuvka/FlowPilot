@@ -6,6 +6,10 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from controller_process_aside import (
+    build_controller_aside,
+    controller_process_aside_contract,
+)
 from role_output_runtime_contracts import (
     _apply_runtime_fixed_values,
     _deep_merge,
@@ -118,6 +122,7 @@ def _build_envelope(
     agent_id: str,
     event_name: str | None,
     controller_status_packet_path: str | None = None,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     envelope = {
         "schema_version": ROLE_OUTPUT_ENVELOPE_SCHEMA,
@@ -146,11 +151,22 @@ def _build_envelope(
         "role_output_runtime_validated": True,
         "runtime_validates_mechanics_only": True,
         "semantic_sufficiency_reviewed_by_runtime": False,
+        "controller_process_aside_contract": controller_process_aside_contract(),
     }
     if event_name:
         envelope["event_name"] = event_name
     if controller_status_packet_path:
         envelope["controller_status_packet_path"] = controller_status_packet_path
+    try:
+        aside = build_controller_aside(
+            controller_aside,
+            from_role=role,
+            source="role_output_runtime.envelope",
+        )
+    except ValueError as exc:
+        raise RoleOutputRuntimeError(str(exc)) from exc
+    if aside is not None:
+        envelope["controller_aside"] = aside
     return envelope
 
 
@@ -167,6 +183,7 @@ def submit_output(
     event_name: str | None = None,
     session_path: str | Path | None = None,
     controller_status_packet_path: str | Path | None = None,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
@@ -272,6 +289,7 @@ def submit_output(
         agent_id=resolved_agent_id,
         event_name=event_name or spec.event_name,
         controller_status_packet_path=_project_relative(project_root, status_path),
+        controller_aside=controller_aside,
     )
     ledger_record = {
         "output_id": receipt_id,
@@ -304,6 +322,7 @@ def submit_output(
         event_name=event_name or spec.event_name,
         controller_status_packet_path=status_path,
         session_id=session_id,
+        controller_aside=controller_aside,
     )
     return envelope
 

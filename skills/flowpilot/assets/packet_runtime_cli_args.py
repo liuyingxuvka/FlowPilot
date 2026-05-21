@@ -67,6 +67,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     complete_packet_session.add_argument("--result-body-text", default="")
     complete_packet_session.add_argument("--result-body-file", default="")
     complete_packet_session.add_argument("--next-recipient", required=True)
+    complete_packet_session.add_argument("--controller-aside", default="")
 
     run_packet_session = subparsers.add_parser(
         "run-packet-session",
@@ -78,6 +79,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     run_packet_session.add_argument("--result-body-text", default="")
     run_packet_session.add_argument("--result-body-file", default="")
     run_packet_session.add_argument("--next-recipient", required=True)
+    run_packet_session.add_argument("--controller-aside", default="")
 
     progress = subparsers.add_parser("progress", help="Target role updates Controller-visible packet progress")
     progress.add_argument("--envelope-path", required=True)
@@ -85,6 +87,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     progress.add_argument("--agent-id", required=True)
     progress.add_argument("--progress", required=True, type=int)
     progress.add_argument("--message", required=True)
+    progress.add_argument("--controller-aside", default="")
 
     issue_active = subparsers.add_parser(
         "issue-active-holder-lease",
@@ -113,6 +116,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     active_progress.add_argument("--agent-id", required=True)
     active_progress.add_argument("--progress", required=True, type=int)
     active_progress.add_argument("--message", required=True)
+    active_progress.add_argument("--controller-aside", default="")
     active_progress.add_argument("--route-version", type=int, default=None)
     active_progress.add_argument("--frontier-version", type=int, default=None)
 
@@ -126,6 +130,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     active_submit.add_argument("--result-body-text", default="")
     active_submit.add_argument("--result-body-file", default="")
     active_submit.add_argument("--next-recipient", required=True)
+    active_submit.add_argument("--controller-aside", default="")
     active_submit.add_argument("--route-version", type=int, default=None)
     active_submit.add_argument("--frontier-version", type=int, default=None)
 
@@ -147,6 +152,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     complete.add_argument("--result-body-text", default="")
     complete.add_argument("--result-body-file", default="")
     complete.add_argument("--next-recipient", required=True)
+    complete.add_argument("--controller-aside", default="")
     complete.add_argument("--allow-wrong-role-for-audit", action="store_true")
 
     review = subparsers.add_parser("review", help="Validate packet/result envelope, hashes, and role origin")

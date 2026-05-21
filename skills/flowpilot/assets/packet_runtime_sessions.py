@@ -171,6 +171,7 @@ def complete_role_packet_session(
     session_path: str | Path,
     result_body_text: str,
     next_recipient: str,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     session = _load_role_packet_session(project_root, session_path)
     role = str(session.get("role") or "")
@@ -187,6 +188,7 @@ def complete_role_packet_session(
         result_body_text=result_body_text,
         next_recipient=next_recipient,
         strict_role=True,
+        controller_aside=controller_aside,
     )
     paths = packet_paths_from_result_envelope(project_root, result)
     result.update(
@@ -220,6 +222,7 @@ def run_role_packet_session(
     agent_id: str,
     result_body_text: str,
     next_recipient: str,
+    controller_aside: str | None = None,
 ) -> dict[str, Any]:
     session = begin_role_packet_session(project_root, envelope_path=envelope_path, role=role, agent_id=agent_id)
     result = complete_role_packet_session(
@@ -227,6 +230,7 @@ def run_role_packet_session(
         session_path=session["session_path"],
         result_body_text=result_body_text,
         next_recipient=next_recipient,
+        controller_aside=controller_aside,
     )
     return {
         "schema_version": "flowpilot.role_packet_runtime_run.v1",

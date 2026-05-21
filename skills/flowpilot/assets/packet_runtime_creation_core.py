@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import barrier_bundle
+from controller_process_aside import controller_process_aside_contract
 from packet_runtime_active_holder import (
     _load_active_holder_lease,
     _require_concrete_agent_id,
@@ -218,6 +219,7 @@ def create_packet(
         "controller_allowed_actions": controller_allowed_actions or DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
         "controller_forbidden_actions": controller_forbidden_actions or DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
         "controller_status_packet_path": project_relative(project_root, controller_status_path),
+        "controller_process_aside_contract": controller_process_aside_contract(),
         "body_access": {
             "controller_can_read_body": False,
             "controller_can_execute_body": False,
@@ -301,6 +303,7 @@ def create_packet(
             },
             "controller_allowed_actions": envelope["controller_allowed_actions"],
             "controller_forbidden_actions": envelope["controller_forbidden_actions"],
+            "controller_process_aside_contract": envelope["controller_process_aside_contract"],
             "output_contract_id": output_contract_id(output_contract),
         },
         "holder_history": [

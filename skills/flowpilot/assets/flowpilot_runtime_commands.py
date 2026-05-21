@@ -183,6 +183,7 @@ def main(argv: list[str] | None = None) -> int:
             session_path=args.session_path,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "run-packet":
         result = packet_runtime.run_role_packet_session(
@@ -192,6 +193,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
         )
     elif args.command == "issue-active-holder-lease":
         envelope = packet_runtime.load_envelope(root, args.envelope_path)
@@ -221,6 +223,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             progress=args.progress,
             message=args.message,
+            controller_aside=args.controller_aside or None,
             route_version=args.route_version,
             frontier_version=args.frontier_version,
         )
@@ -232,6 +235,7 @@ def main(argv: list[str] | None = None) -> int:
             agent_id=args.agent_id,
             result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
             next_recipient=args.next_recipient,
+            controller_aside=args.controller_aside or None,
             route_version=args.route_version,
             frontier_version=args.frontier_version,
         )

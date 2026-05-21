@@ -19,6 +19,7 @@ recipient_identity: I completed this as `<completed_by_role>` for this packet re
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying Controller relay and completed_by_role identity.
 forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Router, hide unresolved issues, or relabel this result.
 required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, officer response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path. Result envelopes land in the Router mailbox; the Router daemon consumes valid evidence on its one-second tick, and result producers do not advance route state directly.
+controller_aside: The result envelope may include an optional `controller_aside` for a short Controller-only process/status note. It is not evidence, not a finding, not a recommendation, not an approval, and not a Router event source.
 ---
 
 # Result Body
@@ -28,6 +29,12 @@ read, summarize, repair, execute, or complete this result body. The controller
 only relays the result envelope to the next recipient after Router tells it to.
 Current active-holder packet completion is submitted to Router first, not to
 Controller.
+
+The result envelope may carry an optional `controller_aside` for brief
+Controller process/status context only. Do not use it for formal work content,
+evidence, findings, recommendations, decisions, approvals, or report details.
+Router preserves the field as metadata and must not use it to satisfy waits or
+derive events.
 
 Before reading this file, reviewer, PM, or officer must verify that
 `result_envelope.json#controller_relay` was delivered by Controller, targets the
