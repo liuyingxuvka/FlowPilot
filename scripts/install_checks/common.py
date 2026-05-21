@@ -153,6 +153,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_router_system_cards_delivery.py",
     "skills/flowpilot/assets/flowpilot_router_system_cards_returns.py",
     "skills/flowpilot/assets/flowpilot_router_system_cards_selection.py",
+    "skills/flowpilot/assets/flowpilot_material_artifact_map.py",
     "skills/flowpilot/assets/flowpilot_router_work_packets_current_node.py",
     "skills/flowpilot/assets/flowpilot_router_work_packets_material.py",
     "skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py",

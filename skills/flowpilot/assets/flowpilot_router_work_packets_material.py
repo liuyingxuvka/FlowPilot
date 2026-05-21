@@ -22,6 +22,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable
 
 import card_runtime
+import flowpilot_material_artifact_map as material_artifact_map
 import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
@@ -80,7 +81,9 @@ def _write_material_scan_packets(router: ModuleType, project_root: Path, run_roo
         envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id=str(spec.get('node_id') or 'material-intake'), body_text=body_text, is_current_node=False, packet_type='material_scan', metadata={'stage': 'material_scan', 'source': 'pm_issues_material_and_capability_scan_packets', **(spec.get('metadata') if isinstance(spec.get('metadata'), dict) else {})}, output_contract=spec.get('output_contract') if isinstance(spec.get('output_contract'), dict) else None)
         records.append(router._packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type='material_scan'))
     router._write_parallel_packet_batch(project_root, run_root, run_state, batch_id=batch_id, batch_kind='material_scan', phase='material_scan', records=records, node_id='material-intake', join_policy='all_results_before_pm_absorption', review_policy='pm_absorbs_batch_before_material_sufficiency_review', pm_absorption_required=True)
-    write_json(router._material_scan_index_path(run_root), {'schema_version': 'flowpilot.material_scan_packets.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'batch_id': batch_id, 'batch_kind': 'material_scan', 'controller_may_read_packet_body': False, 'router_direct_dispatch_required_before_worker': True, 'reviewer_dispatch_required_before_worker': False, 'packets': records, 'written_at': utc_now()})
+    material_index_path = router._material_scan_index_path(run_root)
+    write_json(material_index_path, {'schema_version': 'flowpilot.material_scan_packets.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'batch_id': batch_id, 'batch_kind': 'material_scan', 'controller_may_read_packet_body': False, 'router_direct_dispatch_required_before_worker': True, 'reviewer_dispatch_required_before_worker': False, 'packets': records, 'written_at': utc_now()})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
     router._set_pre_route_frontier_phase(run_root, str(run_state['run_id']), 'material_scan')
 
 def _write_material_dispatch_block_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
@@ -135,9 +138,14 @@ def _write_material_sufficiency_report(router: ModuleType, project_root: Path, r
         raise RouterError('material sufficiency report requires direct_material_sources_checked=true')
     if payload.get('packet_matches_checked_sources') is not True:
         raise RouterError('material sufficiency report requires packet_matches_checked_sources=true')
+    checked_source_paths = payload.get('checked_source_paths') or []
+    runtime_open_receipt_refs = payload.get('runtime_open_receipt_refs') or payload.get('runtime_open_receipts') or []
+    if not checked_source_paths and not runtime_open_receipt_refs:
+        raise RouterError('material sufficiency report requires checked_source_paths or runtime_open_receipt_refs for direct source check')
     if sufficient and payload.get('pm_ready') is not True:
         raise RouterError('sufficient material report requires pm_ready=true')
-    write_json(run_root / 'material' / 'material_sufficiency_report.json', {'schema_version': 'flowpilot.material_sufficiency_report.v1', 'run_id': run_state['run_id'], 'reviewed_by_role': 'human_like_reviewer', 'sufficient': sufficient, 'direct_material_sources_checked': True, 'packet_matches_checked_sources': True, 'pm_ready': bool(payload.get('pm_ready')), 'checked_source_paths': payload.get('checked_source_paths') or [], 'blockers': payload.get('blockers') or [], 'reported_at': utc_now(), **_role_output_envelope_record(payload)})
+    write_json(run_root / 'material' / 'material_sufficiency_report.json', {'schema_version': 'flowpilot.material_sufficiency_report.v1', 'run_id': run_state['run_id'], 'reviewed_by_role': 'human_like_reviewer', 'sufficient': sufficient, 'direct_material_sources_checked': True, 'packet_matches_checked_sources': True, 'pm_ready': bool(payload.get('pm_ready')), 'checked_source_paths': checked_source_paths, 'runtime_open_receipt_refs': runtime_open_receipt_refs, 'blockers': payload.get('blockers') or [], 'reported_at': utc_now(), **_role_output_envelope_record(payload)})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_research_package(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)
@@ -150,6 +158,7 @@ def _write_research_package(router: ModuleType, project_root: Path, run_root: Pa
         raise RouterError('research package packets must be a non-empty list when provided')
     package = {'schema_version': 'flowpilot.research_package.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'decision_question': decision_question, 'allowed_source_types': payload.get('allowed_source_types') or [], 'host_capability_decision': payload.get('host_capability_decision') or 'local_sources_only', 'worker_owner': payload.get('worker_owner') or 'worker_a', 'batch_id': payload.get('batch_id') or 'research-batch-001', 'packets': packet_specs or [], 'reviewer_direct_check_required': True, 'stop_conditions': payload.get('stop_conditions') or [], 'written_at': utc_now(), **_role_output_envelope_record(payload)}
     write_json(run_root / 'research' / 'research_package.json', package)
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_research_capability_decision(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)
@@ -194,6 +203,7 @@ def _write_research_capability_decision(router: ModuleType, project_root: Path, 
     router._write_parallel_packet_batch(project_root, run_root, run_state, batch_id=batch_id, batch_kind='research', phase='research', records=records, node_id='research', join_policy='all_results_before_pm_absorption', review_policy='pm_absorbs_batch_before_research_direct_source_review', pm_absorption_required=True)
     write_json(run_root / 'research' / 'research_capability_decision.json', {'schema_version': 'flowpilot.research_capability_decision.v1', 'run_id': run_state['run_id'], 'recorded_by_role': 'project_manager', 'research_package_path': project_relative(project_root, package_path), 'decision_question': package.get('decision_question'), 'allowed_source_types': allowed_source_types, 'allowed_sources': allowed_sources, 'host_capability_decision': package.get('host_capability_decision'), 'worker_owner': worker_owner, 'batch_id': batch_id, 'reviewer_direct_check_required': bool(package.get('reviewer_direct_check_required')), 'stop_conditions': stop_conditions, 'explicit_user_approval_required': bool(payload.get('explicit_user_approval_required')), 'explicit_user_approval_recorded': bool(payload.get('explicit_user_approval_recorded')), 'worker_packet_id': records[0]['packet_id'], 'packet_ids': [record['packet_id'] for record in records], 'recorded_at': utc_now(), **_role_output_envelope_record(payload)})
     write_json(router._research_packet_index_path(run_root), {'schema_version': 'flowpilot.research_packet.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'batch_id': batch_id, 'packet_id': records[0]['packet_id'], 'worker_owner': worker_owner, 'controller_may_read_packet_body': False, 'packet_envelope_path': records[0]['packet_envelope_path'], 'packet_body_path': records[0].get('packet_body_path'), 'packet_body_hash': records[0].get('packet_body_hash'), 'body_path': records[0].get('packet_body_path'), 'body_hash': records[0].get('packet_body_hash'), 'result_envelope_path': records[0]['result_envelope_path'], 'packets': records, 'written_at': utc_now()})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_worker_research_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)
@@ -206,6 +216,7 @@ def _write_worker_research_report(router: ModuleType, project_root: Path, run_ro
     if not payload.get('answers_decision_question', True):
         raise RouterError('research batch report must state whether it answers the PM decision question')
     write_json(run_root / 'research' / 'worker_research_report.json', {'schema_version': 'flowpilot.research_worker_report.v1', 'run_id': run_state['run_id'], 'batch_id': research_index.get('batch_id'), 'packet_count': len(research_index['packets']), 'completed_by_roles': completed_roles, 'completed_by_role': payload.get('completed_by_role') or ','.join(completed_roles), 'packet_ids': [record.get('packet_id') for record in research_index['packets'] if isinstance(record, dict)], 'raw_evidence_pointers': payload.get('raw_evidence_pointers') or [], 'negative_findings': payload.get('negative_findings') or [], 'contradictions': payload.get('contradictions') or [], 'confidence_boundary': payload.get('confidence_boundary') or 'worker report only; reviewer check required', 'answers_decision_question': bool(payload.get('answers_decision_question', True)), 'reported_at': utc_now()})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_pm_research_absorption(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     _bind_router(router)
@@ -223,6 +234,7 @@ def _write_pm_research_absorption(router: ModuleType, project_root: Path, run_ro
         raise RouterError('PM research absorption requires packet_ledger.json')
     absorption_path = run_root / 'research' / 'pm_research_absorption.json'
     write_json(absorption_path, {'schema_version': 'flowpilot.pm_research_absorption.v1', 'run_id': run_state['run_id'], 'absorbed_by_role': 'project_manager', 'research_reviewer_report_path': project_relative(project_root, reviewer_report_path), 'research_reviewer_report_hash': hashlib.sha256(reviewer_report_path.read_bytes()).hexdigest(), 'packet_group_reviewer_audit_path': project_relative(project_root, audit_path), 'packet_group_reviewer_audit_hash': hashlib.sha256(audit_path.read_bytes()).hexdigest(), 'packet_ledger_path': project_relative(project_root, packet_ledger_path), 'packet_ledger_hash': hashlib.sha256(packet_ledger_path.read_bytes()).hexdigest(), 'packet_group_audit_passed': True, 'absorbed_at': utc_now()})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 def _write_material_understanding(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)
@@ -233,7 +245,10 @@ def _write_material_understanding(router: ModuleType, project_root: Path, run_ro
         raise RouterError('PM material understanding requires reviewed research to be absorbed when research was requested')
     payload_snapshot_path = run_root / 'material' / 'pm_material_understanding_payload.json'
     write_json(payload_snapshot_path, {'schema_version': 'flowpilot.pm_material_understanding_payload.v1', 'run_id': run_state['run_id'], 'payload_body': _without_role_output_envelope(payload), 'source_role_output_envelope': _role_output_envelope_record(payload).get('_role_output_envelope'), 'written_at': utc_now()})
-    write_json(run_root / 'pm_material_understanding.json', {'schema_version': 'flowpilot.pm_material_understanding.v1', 'run_id': run_state['run_id'], 'pm_owned': True, 'source_paths': {'payload_snapshot': project_relative(project_root, payload_snapshot_path)}, 'source_material_review': run_state.get('material_review'), 'research_absorbed': bool(run_state['flags'].get('research_result_absorbed_by_pm')), 'material_summary': payload.get('material_summary') or '', 'contradictions': payload.get('contradictions') or [], 'deferred_sources': payload.get('deferred_sources') or [], 'route_consequences': payload.get('route_consequences') or [], 'shared_skill_maintenance_record': payload.get('shared_skill_maintenance_record') or {}, 'written_at': utc_now(), **_role_output_envelope_record(payload)})
+    map_doc = material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
+    map_ref = material_artifact_map.material_artifact_map_source_ref(project_root, run_root)
+    write_json(run_root / 'pm_material_understanding.json', {'schema_version': 'flowpilot.pm_material_understanding.v1', 'run_id': run_state['run_id'], 'pm_owned': True, 'source_paths': {'payload_snapshot': project_relative(project_root, payload_snapshot_path), 'material_artifact_map': map_ref.get('path') if isinstance(map_ref, dict) else None}, 'source_material_review': run_state.get('material_review'), 'research_absorbed': bool(run_state['flags'].get('research_result_absorbed_by_pm')), 'material_artifact_map_summary': material_artifact_map.material_artifact_map_summary(map_doc), 'material_summary': payload.get('material_summary') or '', 'contradictions': payload.get('contradictions') or [], 'deferred_sources': payload.get('deferred_sources') or [], 'route_consequences': payload.get('route_consequences') or [], 'shared_skill_maintenance_record': payload.get('shared_skill_maintenance_record') or {}, 'written_at': utc_now(), **_role_output_envelope_record(payload)})
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
 __all__ = (
     '_material_packet_body_text_from_spec',

@@ -37,7 +37,7 @@
     {
       "id": "cards.required_return_policy",
       "path": "prompts/cards/required_return_policy.md",
-      "sha256": "caaf93ac5f900b7b1bed2f71fbfc63552c45c533b795e3de6b8cdab1d2d0ab80",
+      "sha256": "8eaa542815c2c75c223d72637689130cfdbde9e73095f9abf337b7590f6f13eb",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -65,7 +65,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "653f6352fb74eededaa7286b4b01e3e28162556cd53cf3f629758936ed8224ad",
+      "sha256": "af6d38dc19d3580ebb3d3925f3fcf58d1a6da6e4d52a16583e5f4c169b7ffaef",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",
@@ -75,7 +75,7 @@
     {
       "id": "packets.result_identity_boundary",
       "path": "prompts/packets/result_identity_boundary.md",
-      "sha256": "1e2e9a3906f83458c0dc3290718ccdd56978885b7985759740462c8331588316",
+      "sha256": "e0f42dc67ace4a90cbe854e6e9db0779ba7d376f451237482c454b4778ea2599",
       "strip_trailing_newline": false,
       "template_variables": [
         "result_identity_marker",
@@ -85,7 +85,7 @@
     {
       "id": "packets.output_contract_section",
       "path": "prompts/packets/output_contract_section.md",
-      "sha256": "48a9ac896640b4cc32543e0b518b1988e11e3a85f5f7e2497dfd488bfe51aad6",
+      "sha256": "2affdb1661c2529dfdebe2617759780a9c8601f97c66a52538082f45f5b94bad",
       "strip_trailing_newline": false,
       "template_variables": [
         "allowed_decisions_block",

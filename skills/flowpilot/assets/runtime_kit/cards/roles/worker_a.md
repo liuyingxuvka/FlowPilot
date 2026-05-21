@@ -40,6 +40,13 @@ envelope instead of continuing from memory. Do not use the full route,
 downstream plan, old screenshots, old assets, or private role context unless
 the packet explicitly includes it.
 
+If the opened packet declares `allowed_material_map_entry_ids`, Worker A may
+inspect those material artifact map entries and their non-sealed source refs as
+packet-authorized context. The map is an index only. If an entry points to a
+sealed packet or result body, ordinary file reads remain forbidden; use only an
+explicit runtime-open authority supplied for this packet or return `needs_pm` /
+a blocker.
+
 Your packet may be one member of a PM-authored parallel batch. Complete only the
 packet addressed to Worker A. Do not wait for sibling packets, infer whether the
 batch is complete, request PM disposition or reviewer review, or decide route

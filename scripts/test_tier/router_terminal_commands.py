@@ -262,6 +262,9 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
         "tests.router_runtime.material_modeling",
         patterns=(
             "test_pm_material_understanding_accepts_file_backed_memo_payload",
+            "test_material_artifact_map_indexes_material_flow_without_body_text",
+            "test_pm_formal_material_package_includes_material_map_review_refs",
+            "test_material_sufficiency_report_requires_checked_source_refs",
             "test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card",
             "test_material_insufficient_event_records_insufficient_state",
             "test_material_scan_results_event_requires_result_ledger_absorption",

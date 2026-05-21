@@ -26,16 +26,19 @@ context:
 
 - `.flowpilot/runs/<run-id>/route_memory/pm_prior_path_context.json`;
 - `.flowpilot/runs/<run-id>/route_memory/route_history_index.json`;
+- `.flowpilot/runs/<run-id>/material/material_artifact_map.json` when present;
 - any source paths cited by those files that are relevant to the decision.
 
 Treat Controller-written route memory as an index of current-run facts and
-source paths only. It is not acceptance evidence and cannot replace reviewer,
-officer, worker, or PM-owned source files.
+source paths only. Treat the material artifact map the same way: it is a
+run-scoped index of material artifacts and safe refs, not acceptance evidence,
+and it cannot replace reviewer, officer, worker, or PM-owned source files.
 
 Every protected PM decision must return `prior_path_context_review` with:
 
 - `reviewed: true`;
 - `source_paths` citing both current route-memory files;
+- whether the material artifact map was present, current, and considered;
 - completed nodes considered;
 - superseded nodes considered;
 - stale evidence considered;

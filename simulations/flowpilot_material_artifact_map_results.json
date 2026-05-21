@@ -1,0 +1,97 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=78",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "controller_summary_used_as_evidence": {
+        "detected": true,
+        "expected_failure": "material artifact map or Controller summary was treated as acceptance evidence",
+        "failures": [
+          "material artifact map or Controller summary was treated as acceptance evidence"
+        ]
+      },
+      "final_ledger_accepts_stale_material": {
+        "detected": true,
+        "expected_failure": "final ledger accepted stale current material as completion evidence",
+        "failures": [
+          "final ledger accepted stale current material as completion evidence"
+        ]
+      },
+      "final_ledger_accepts_unresolved_material": {
+        "detected": true,
+        "expected_failure": "final ledger accepted unresolved current material as completion evidence",
+        "failures": [
+          "final ledger accepted unresolved current material as completion evidence"
+        ]
+      },
+      "map_leaks_sealed_body": {
+        "detected": true,
+        "expected_failure": "material artifact map leaked sealed packet or result body content",
+        "failures": [
+          "material artifact map leaked sealed packet or result body content"
+        ]
+      },
+      "pm_package_lacks_review_refs": {
+        "detected": true,
+        "expected_failure": "PM formal package lacks material-map review refs",
+        "failures": [
+          "PM formal package lacks material-map review refs"
+        ]
+      },
+      "reviewer_passes_without_checked_sources": {
+        "detected": true,
+        "expected_failure": "reviewer material sufficiency passed without checked source refs",
+        "failures": [
+          "reviewer material sufficiency passed without checked source refs",
+          "reviewer passed from material-map or Controller summary alone"
+        ]
+      },
+      "worker_reads_sealed_without_runtime": {
+        "detected": true,
+        "expected_failure": "worker read a sealed body without packet-runtime authority",
+        "failures": [
+          "worker read a sealed body without packet-runtime authority",
+          "sealed material-map reference lacks runtime-open receipt"
+        ]
+      },
+      "worker_reads_unlisted_entry": {
+        "detected": true,
+        "expected_failure": "worker read material-map entries outside the current packet authorization",
+        "failures": [
+          "worker read material-map entries outside the current packet authorization"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_pm_package_review_refs",
+      "valid_refresh_metadata_only",
+      "valid_route_memory_and_final_ledger",
+      "valid_runtime_open_for_sealed_ref",
+      "valid_worker_authorized_read"
+    ],
+    "edge_count": 26,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_state_count": 8,
+    "state_count": 27
+  }
+}

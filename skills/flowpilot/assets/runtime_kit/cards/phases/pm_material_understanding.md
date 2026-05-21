@@ -27,6 +27,8 @@ material and, when required, reviewer-approved research.
 Include:
 
 - material source summary and authority;
+- `source_paths.material_artifact_map` and a compact summary of the run-scoped
+  material artifact map, used only as an index back to checked material;
 - freshness, contradictions, and deferred sources;
 - capability and host facts discovered during scan;
 - PM decision on whether research was not required or has been absorbed;
@@ -53,4 +55,5 @@ separate FlowPilot-private maintenance table for it. It does not replace the
 run's final report or FlowPilot skill-improvement report.
 
 This memo is the only material basis for product architecture. Do not proceed
-from raw worker reports or unchecked research.
+from raw worker reports, unchecked research, or a material-map summary by
+itself. The map points to material; it is not substitute evidence.

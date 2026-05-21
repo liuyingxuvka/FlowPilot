@@ -133,6 +133,38 @@ decisions must include `prior_path_context_review`. That review cites both
 route-memory files and states which completed, superseded, stale, blocked, or
 experimental history affected the decision.
 
+## Material Artifact Map
+
+`runs/<run-id>/material/material_artifact_map.json` is a router-derived,
+run-scoped index for reusable material and decision-support artifacts. It
+records metadata for material scan packets, result envelopes, PM formal gate
+packages, PM material understanding, research packages and reports, reviewer
+reports, self-interrogation indexes, generated-resource ledgers, and related
+material artifacts when present.
+
+The map is not an approval artifact. It must include:
+
+- `generated_by: "router"`;
+- `controller_decision_authority: false`;
+- `controller_may_read_sealed_bodies: false`;
+- `sealed_packet_or_result_bodies_read: false`;
+- `body_text_excluded: true`;
+- `entries` with `entry_id`, `kind`, producer and owner roles, status,
+  authority level, safe summary, source refs, envelope refs, body refs, allowed
+  role reads, and related entries.
+
+Entries that refer to sealed packet or result bodies may cite body paths,
+hashes, visibility, and `requires_runtime_open: true`, but they must not copy
+the body text. Workers may use map entries only when the current PM-authored
+packet names the entry id in `allowed_material_map_entry_ids`. Reviewers may
+use map entries as navigation to concrete source paths or packet-runtime open
+receipts, not as source sufficiency by themselves.
+
+`route_history_index.json`, `pm_prior_path_context.json`, and
+`final_route_wide_gate_ledger.json` cite the material artifact map when it
+exists. They may summarize its counts, but Controller-generated summaries
+remain indexes only and cannot replace PM/reviewer/runtime source evidence.
+
 `startup_activation` is the route-start transaction record. A formal route
 cannot enter child-skill execution, image generation, implementation, or route
 chunks until this block and the matching frontier block show:
@@ -314,6 +346,8 @@ must show direct source inspection, not report-only acceptance:
 
 - `reviewer_fact_check_required: true`;
 - `direct_material_sources_checked` and `direct_material_samples_checked`;
+- non-empty `checked_source_paths` or `runtime_open_receipt_refs` naming what
+  the reviewer actually checked;
 - `packet_matches_checked_sources`: `yes`, `no`, or `partial`;
 - `worker_report_only: false`.
 

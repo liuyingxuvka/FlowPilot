@@ -17,6 +17,7 @@ from types import ModuleType
 from typing import Any, Callable, Iterable
 
 import card_runtime
+import flowpilot_material_artifact_map as material_artifact_map
 import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
@@ -117,6 +118,11 @@ def _write_pm_formal_gate_package(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     _bind_router(router)
+    run_root = project_root / str(run_state['run_root'])
+    map_doc = material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
+    map_ref = material_artifact_map.material_artifact_map_source_ref(project_root, run_root)
+    review_entry_ids = material_artifact_map.review_source_entry_ids(map_doc, batch_kind=batch_kind)
+    review_paths = material_artifact_map.reviewable_source_paths(map_doc, entry_ids=review_entry_ids)
     package_path = output_path.with_name(f"pm_{router._safe_packet_id_component(package_label)}_formal_gate_package.json")
     result_envelopes: list[dict[str, Any]] = []
     for record in records:
@@ -168,12 +174,18 @@ def _write_pm_formal_gate_package(
         'reviewer_review_scope': 'pm_formal_gate_package_only',
         'reviewer_receives_raw_worker_result': False,
         'raw_worker_result_bodies_included': False,
+        'material_artifact_map_path': map_ref.get('path') if isinstance(map_ref, dict) else None,
+        'material_artifact_map_hash': map_ref.get('hash') if isinstance(map_ref, dict) else None,
+        'review_source_entry_ids': review_entry_ids,
+        'reviewable_source_paths': review_paths,
         'packet_ids': [str(record.get('packet_id')) for record in records],
         'result_envelopes': result_envelopes,
         'source_pm_disposition_path': project_relative(project_root, output_path),
         'content_boundary': {
             'includes_pm_disposition_summary': True,
             'includes_result_envelope_paths_and_hashes': True,
+            'includes_material_artifact_map_refs': True,
+            'includes_reviewable_source_paths': True,
             'excludes_worker_result_bodies': True,
             'sealed_body_boundary_preserved': True,
         },
@@ -248,6 +260,7 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
     )
     disposition = {'schema_version': 'flowpilot.pm_package_result_disposition.v1', 'run_id': run_state['run_id'], 'batch_id': batch.get('batch_id'), 'batch_kind': batch_kind, 'package_label': package_label, 'gate_kind': gate_kind, 'decided_by_role': 'project_manager', 'decision': decision, 'decision_reason': payload.get('decision_reason') or payload.get('reason') or '', 'packet_ids': [str(record.get('packet_id')) for record in records], 'result_envelope_paths': [str(record.get('result_envelope_path')) for record in records], 'formal_gate_package_released': release_satisfied, 'control_transaction': control_transaction, 'pm_reviewer_release_evidence': {'schema_version': 'flowpilot.pm_reviewer_release_evidence.v1', 'release_kind': 'absorbed_pm_package_result_disposition' if release_satisfied else 'none', 'release_satisfied': release_satisfied, 'formal_gate_package_required': decision == 'absorbed', 'formal_gate_package_path': formal_package.get('formal_gate_package_path'), 'formal_gate_package_hash': formal_package.get('formal_gate_package_hash'), 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none'}, 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none', 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'recorded_at': utc_now(), **formal_package, **_role_output_envelope_record(payload)}
     write_json(output_path, disposition)
+    material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
     batch['pm_result_disposition'] = {'decision': decision, 'decision_path': project_relative(project_root, output_path), 'decision_hash': packet_runtime.sha256_file(output_path), 'recorded_at': disposition['recorded_at'], 'control_transaction': control_transaction}
     if decision == 'absorbed':
         batch['status'] = 'pm_absorbed'

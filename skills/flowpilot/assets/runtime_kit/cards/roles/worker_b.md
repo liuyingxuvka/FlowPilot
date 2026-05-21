@@ -39,6 +39,13 @@ If the runtime session cannot open the packet, return the runtime blocker
 envelope instead of continuing from memory. Keep scope narrow and disjoint from
 other workers. Do not infer downstream work.
 
+If the opened packet declares `allowed_material_map_entry_ids`, Worker B may
+inspect those material artifact map entries and their non-sealed source refs as
+packet-authorized context. The map is an index only. If an entry points to a
+sealed packet or result body, ordinary file reads remain forbidden; use only an
+explicit runtime-open authority supplied for this packet or return `needs_pm` /
+a blocker.
+
 Your packet may be one member of a PM-authored parallel batch. Complete only the
 packet addressed to Worker B. Do not wait for sibling packets, infer whether the
 batch is complete, request PM disposition or reviewer review, or decide route

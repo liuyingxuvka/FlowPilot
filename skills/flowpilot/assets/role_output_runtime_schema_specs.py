@@ -217,6 +217,7 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
         body_schema_version="flowpilot.material_sufficiency_report.v1",
         explicit_array_fields=(
             "checked_source_paths",
+            "runtime_open_receipt_refs",
             "findings",
             "blockers",
             "residual_risks",

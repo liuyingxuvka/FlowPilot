@@ -29,6 +29,11 @@ Also read `self_interrogation_index.json`. The final ledger must cite that
 index, record `self_interrogation_index_clean: true`, and show zero unresolved
 hard/current self-interrogation findings before terminal replay can become a
 closure path.
+Also read the current run-scoped `material_artifact_map.json`. The final ledger
+must cite it when present and show zero blocked, stale, or unresolved material
+artifact-map counts before terminal replay can become a closure path. The map
+summary is an index only; final closure still depends on direct evidence paths,
+reviewer gates, and PM-owned source files.
 If Router blocks ledger submission through a `control_blocker`, read the
 policy row. Ledger, stale-evidence, and self-interrogation blockers return to
 PM recovery; PM may rebuild the ledger, roll back to the affected node/gate,

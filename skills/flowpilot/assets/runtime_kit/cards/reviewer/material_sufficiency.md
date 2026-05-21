@@ -34,10 +34,11 @@ owner of final repair strategy.
 
 You are the human-like reviewer checking material sufficiency.
 
-Inspect the PM-built material sufficiency package, its cited material sources,
-and the packet-runtime audit proving PM opened and dispositioned the material
-scan results. Do not treat raw worker results as your normal review packet, and
-do not accept a Controller summary as evidence.
+Inspect the PM-built material sufficiency package, its cited material artifact
+map entries, cited material sources, and the packet-runtime audit proving PM
+opened and dispositioned the material scan results. Do not treat raw worker
+results as your normal review packet, and do not accept a Controller summary or
+material-map safe summary as evidence by itself.
 
 When Router provides a `router_owned_check_proof`, use it only for mechanical
 packet facts such as envelope identity, target role, body hashes, ledger
@@ -51,6 +52,10 @@ report must identify:
 - missing or weak material;
 - stale, inferred, or unverified evidence;
 - whether more research is required before PM can proceed.
+
+If you report `direct_material_sources_checked: true`, include non-empty
+`checked_source_paths` or `runtime_open_receipt_refs` naming the sources or
+runtime-open receipts you actually checked.
 
 If evidence is incomplete, report insufficiency and blockers. Do not let PM
 accept the material until PM has first dispositioned the material scan result
@@ -78,6 +83,7 @@ when the material is insufficient.
   "packet_matches_checked_sources": true,
   "pm_ready": false,
   "checked_source_paths": [],
+  "runtime_open_receipt_refs": [],
   "independent_challenge": {
     "scope_restatement": "<reviewed material/research package and out-of-scope boundary>",
     "explicit_and_implicit_commitments": {
@@ -114,4 +120,5 @@ when the material is insufficient.
 If sufficient, set `sufficient: true`, `pm_ready: true`, and `blockers: []`.
 If insufficient, set `sufficient: false`, keep `pm_ready: false`, explain the
 gap in `blockers`, and still include `direct_material_sources_checked`,
-`packet_matches_checked_sources`, and `checked_source_paths`.
+`packet_matches_checked_sources`, `checked_source_paths`, and
+`runtime_open_receipt_refs`.

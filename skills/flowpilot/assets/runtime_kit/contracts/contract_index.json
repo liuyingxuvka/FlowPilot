@@ -879,6 +879,7 @@
         "packet_matches_checked_sources",
         "pm_ready",
         "checked_source_paths",
+        "runtime_open_receipt_refs",
         "independent_challenge",
         "independent_challenge.scope_restatement",
         "independent_challenge.explicit_and_implicit_commitments",
@@ -912,6 +913,7 @@
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
         "checked_source_paths",
+        "runtime_open_receipt_refs",
         "findings",
         "blockers",
         "residual_risks",

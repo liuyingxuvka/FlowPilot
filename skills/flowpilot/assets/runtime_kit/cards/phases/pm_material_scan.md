@@ -78,10 +78,18 @@ ledger disposition and never authorize current-gate blocking by themselves.
 The packet must state:
 
 - the material sources to inspect;
+- any prior material artifact map entries the worker may inspect, using
+  `allowed_material_map_entry_ids` when prior run-scoped material should guide
+  the scan;
 - the questions the worker must answer;
 - what counts as enough material for the next phase;
 - what must be cited as direct evidence;
 - what must be reported as missing instead of guessed.
+
+Material artifact map entries are pointers only. If a referenced entry points
+to a sealed packet or result body, the worker may not ordinary-read that body;
+the worker must use explicit runtime-open authority when supplied or return
+`needs_pm`/a blocker.
 
 Do not accept material, write product understanding, or design the route from
 raw worker output. PM must first disposition the worker material results, then

@@ -1514,6 +1514,12 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             source_path=run_root / "test_role_outputs" / "startup" / "pm_startup_activation.json",
         )
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
+    def material_review_source_paths(self, root: Path) -> list[str]:
+        run_root = self.run_root_for(root)
+        return [
+            self.rel(root, run_root / "material" / "pm_material_scan_formal_gate_package.json"),
+            self.rel(root, run_root / "material" / "material_artifact_map.json"),
+        ]
     def complete_material_flow(self, root: Path, material_understanding_payload: dict | None = None) -> None:
         self.deliver_expected_card(root, "pm.material_scan")
 
@@ -1539,6 +1545,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": True,
+                    "checked_source_paths": self.material_review_source_paths(root),
+                    "runtime_open_receipt_refs": [],
                 },
             ),
         )
@@ -1995,13 +2003,18 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
     def prior_path_context_review(self, root: Path, impact: str = "PM considered current route memory before deciding") -> dict:
         run_root = self.run_root_for(root)
+        source_paths = [
+            self.rel(root, run_root / "route_memory" / "pm_prior_path_context.json"),
+            self.rel(root, run_root / "route_memory" / "route_history_index.json"),
+        ]
+        material_map_path = run_root / "material" / "material_artifact_map.json"
+        if material_map_path.exists():
+            source_paths.append(self.rel(root, material_map_path))
         return {
             "prior_path_context_review": {
                 "reviewed": True,
-                "source_paths": [
-                    self.rel(root, run_root / "route_memory" / "pm_prior_path_context.json"),
-                    self.rel(root, run_root / "route_memory" / "route_history_index.json"),
-                ],
+                "source_paths": source_paths,
+                "material_artifact_map_considered": material_map_path.exists(),
                 "completed_nodes_considered": [],
                 "superseded_nodes_considered": [],
                 "stale_evidence_considered": [],

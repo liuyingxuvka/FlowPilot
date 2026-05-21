@@ -43,6 +43,102 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(memo["shared_skill_maintenance_record"]["not_acceptance_gate"])
         self.assertEqual(memo["_role_output_envelope"]["body_path_key"], "memo_path")
         self.assertTrue((run_root / "material" / "pm_material_understanding_payload.json").exists())
+    def test_material_artifact_map_indexes_material_flow_without_body_text(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.complete_material_flow(root)
+
+        map_path = run_root / "material" / "material_artifact_map.json"
+        artifact_map = read_json(map_path)
+        self.assertEqual(artifact_map["schema_version"], "flowpilot.material_artifact_map.v1")
+        self.assertTrue(artifact_map["body_text_excluded"])
+        self.assertFalse(artifact_map["controller_decision_authority"])
+        self.assertFalse(artifact_map["sealed_packet_or_result_bodies_read"])
+        entry_ids = {entry["entry_id"] for entry in artifact_map["entries"]}
+        self.assertIn("material_scan:packet_index", entry_ids)
+        self.assertIn("material_scan:packet:material-scan-001", entry_ids)
+        self.assertIn("material_scan:result:material-scan-001", entry_ids)
+        self.assertIn("material:pm_formal_gate_package", entry_ids)
+        self.assertIn("material:reviewer_sufficiency", entry_ids)
+        self.assertIn("material:pm_understanding", entry_ids)
+        for entry in artifact_map["entries"]:
+            self.assertFalse(entry["body_text_included"])
+            self.assertNotIn("body_text", entry)
+            self.assertNotIn("result_body_text", entry)
+        result_entry = next(
+            entry for entry in artifact_map["entries"] if entry["entry_id"] == "material_scan:result:material-scan-001"
+        )
+        self.assertTrue(result_entry["requires_runtime_open"])
+        self.assertTrue(result_entry["body_refs"])
+        self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in result_entry["body_refs"]))
+
+        memo = read_json(run_root / "pm_material_understanding.json")
+        self.assertEqual(memo["source_paths"]["material_artifact_map"], self.rel(root, map_path))
+        self.assertTrue(memo["material_artifact_map_summary"]["body_text_excluded"])
+
+        history = read_json(run_root / "route_memory" / "route_history_index.json")
+        context = read_json(run_root / "route_memory" / "pm_prior_path_context.json")
+        self.assertEqual(history["source_paths"]["material_artifact_map"], self.rel(root, map_path))
+        self.assertEqual(history["material_artifact_map"]["path"], self.rel(root, map_path))
+        self.assertTrue(history["material_artifact_map"]["index_only"])
+        self.assertEqual(context["source_paths"]["material_artifact_map"], self.rel(root, map_path))
+        self.assertFalse(context["material_artifact_map_considered"]["controller_summary_used_as_evidence"])
+    def test_pm_formal_material_package_includes_material_map_review_refs(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        router.record_external_event(root, "worker_scan_results_returned")
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
+
+        package = read_json(run_root / "material" / "pm_material_scan_formal_gate_package.json")
+        self.assertEqual(package["material_artifact_map_path"], self.rel(root, run_root / "material" / "material_artifact_map.json"))
+        self.assertTrue(package["material_artifact_map_hash"])
+        self.assertIn("material_scan:packet_index", package["review_source_entry_ids"])
+        self.assertIn("material_scan:result:material-scan-001", package["review_source_entry_ids"])
+        self.assertIn(self.rel(root, material_index_path), package["reviewable_source_paths"])
+        self.assertTrue(package["content_boundary"]["includes_material_artifact_map_refs"])
+        self.assertTrue(package["content_boundary"]["includes_reviewable_source_paths"])
+    def test_material_sufficiency_report_requires_checked_source_refs(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        material_index_path = run_root / "material" / "material_scan_packets.json"
+        self.open_packets_and_write_results(root, material_index_path, result_text="material scan result")
+        router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
+        router.record_external_event(root, "worker_scan_results_returned")
+        self.absorb_material_scan_results_with_pm(root, material_index_path)
+        self.deliver_expected_card(root, "reviewer.material_sufficiency")
+
+        with self.assertRaisesRegex(router.RouterError, "checked_source_paths or runtime_open_receipt_refs"):
+            router.record_external_event(
+                root,
+                "reviewer_reports_material_sufficient",
+                self.role_report_envelope(
+                    root,
+                    "material/reviewer_material_sufficiency",
+                    {
+                        "reviewed_by_role": "human_like_reviewer",
+                        "direct_material_sources_checked": True,
+                        "packet_matches_checked_sources": True,
+                        "pm_ready": True,
+                        "checked_source_paths": [],
+                        "runtime_open_receipt_refs": [],
+                    },
+                ),
+            )
     def test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -89,6 +185,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
+                    "checked_source_paths": self.material_review_source_paths(root),
+                    "runtime_open_receipt_refs": [],
                     "blockers": ["missing authoritative source"],
                 },
             ),
@@ -184,6 +282,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
+                    "checked_source_paths": self.material_review_source_paths(root),
+                    "runtime_open_receipt_refs": [],
                 },
             ),
         )
@@ -825,6 +925,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "direct_material_sources_checked": True,
                     "packet_matches_checked_sources": True,
                     "pm_ready": False,
+                    "checked_source_paths": self.material_review_source_paths(root),
+                    "runtime_open_receipt_refs": [],
                 },
             ),
         )
