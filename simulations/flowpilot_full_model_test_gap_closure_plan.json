@@ -1,0 +1,46 @@
+{
+  "schema_version": "flowpilot.full_model_test_gap_closure_plan.v1",
+  "result_type": "flowpilot_full_model_test_gap_closure_plan",
+  "source_inventory": "simulations/flowpilot_full_model_coverage_inventory_results.json",
+  "ordinary_test_owner": "tests/test_flowpilot_full_model_test_gap_closure.py",
+  "claim_boundary": "This plan closes missing ordinary-test ownership from the coverage inventory and requires every skipped/scoped replay check to be attached to exact runtime or source evidence before it stops blocking the inventory.",
+  "strategies": {
+    "runner_unparsed_or_unavailable": "failure-sentinel",
+    "runner_not_ok": "failure-sentinel",
+    "live_runtime_or_state_findings": "failure-sentinel",
+    "source_or_code_findings": "result-contract",
+    "missing_or_scoped_replay_adapter": "scoped-boundary",
+    "skipped_or_scoped_evidence": "scoped-boundary",
+    "abstract_without_detected_ordinary_test_reference": "runner-exec",
+    "unclassified_model_tier": "result-contract"
+  },
+  "baseline_gap_counts_before_new_tests": {
+    "runner_unparsed_or_unavailable": 1,
+    "runner_not_ok": 5,
+    "live_runtime_or_state_findings": 4,
+    "source_or_code_findings": 1,
+    "missing_or_scoped_replay_adapter": 12,
+    "skipped_or_scoped_evidence": 20,
+    "abstract_without_detected_ordinary_test_reference": 35,
+    "unclassified_model_tier": 64
+  },
+  "current_gap_counts_after_new_tests": {
+  },
+  "covered_scoped_evidence_after_replay_manifest": {
+    "missing_or_scoped_replay_adapter": 12,
+    "skipped_or_scoped_evidence": 20,
+    "supporting_model_owned": 65
+  },
+  "repaired_exposed_issues": {
+    "runner_unparsed_or_unavailable": "flowpilot_process_liveness is now executed with its implementation-backed --json and --no-write-results arguments and is parseable in the refreshed sweep.",
+    "meta_and_model_hierarchy_not_ok": "Meta and model hierarchy now pass after parent evidence classification stopped treating live-run-only findings as release parent proof failures, and fresh layered full parent proofs were regenerated."
+  },
+  "closed_missing_ordinary_test_reference_count": 35,
+  "remaining_problem_boundary": {
+    "runner_not_ok": "The runner still reports a real model/runtime/code issue.",
+    "live_runtime_or_state_findings": "The model still reports live current-run or source-state findings; tests now keep them visible.",
+    "missing_or_scoped_replay_adapter": "Closed only when covered_skipped_checks names exact replay evidence for the skipped runner key.",
+    "skipped_or_scoped_evidence": "Closed only when covered_skipped_checks names exact runtime or source evidence for the skipped runner key.",
+    "unclassified_model_tier": "Closed by splitting unknown-tier from supporting-tier classification; future unknown runners remain blocking."
+  }
+}

@@ -7,6 +7,7 @@ from typing import Any
 from flowguard import (
     audit_python_code_contracts,
     audit_python_test_assertions,
+    review_code_boundary_conformance,
     review_model_test_alignment,
     review_python_contract_source_audit,
 )
@@ -20,6 +21,93 @@ from flowpilot_model_test_alignment_source_obligations import (
 )
 from flowpilot_model_test_alignment_source_test_evidence import source_test_evidence
 
+
+def source_boundary_contracts() -> tuple[CodeBoundaryContract, ...]:
+    """Return runtime-observed code boundaries for finite FlowPilot surfaces."""
+
+    return (
+        CodeBoundaryContract(
+            boundary_id="controller_aside.metadata_only_runtime_boundary",
+            code_contract_id="controller_aside.build",
+            model_obligation_id="controller_aside.metadata_only_boundary",
+            allowed_inputs=("valid_status_text",),
+            rejected_inputs=("blank_text", "too_many_lines", "too_long_text"),
+            allowed_outputs=("metadata_only_controller_aside", "none"),
+            allowed_error_paths=(
+                "ValueError: non-empty lines or fewer",
+                "ValueError: characters or fewer",
+            ),
+            exact=True,
+            input_gate_required=True,
+            required_observation_ids=(
+                "boundary.controller_aside.valid_status",
+                "boundary.controller_aside.blank_text",
+                "boundary.controller_aside.too_many_lines",
+                "boundary.controller_aside.too_long_text",
+            ),
+        ),
+        CodeBoundaryContract(
+            boundary_id="material_artifact_map.index_only_runtime_boundary",
+            code_contract_id="material_artifact_map.refresh",
+            model_obligation_id="material_artifact_map.index_only_boundary",
+            allowed_inputs=("material_scan_packet_and_result_envelopes",),
+            allowed_outputs=("index_only_material_artifact_map",),
+            allowed_side_effects=("write_json_atomic",),
+            exact=True,
+            input_gate_required=False,
+            required_observation_ids=("boundary.material_artifact_map.index_only",),
+        ),
+    )
+
+
+def source_boundary_observations() -> tuple[CodeBoundaryObservation, ...]:
+    """Return runtime observations produced by ordinary boundary tests."""
+
+    return (
+        CodeBoundaryObservation(
+            observation_id="boundary.controller_aside.valid_status",
+            boundary_id="controller_aside.metadata_only_runtime_boundary",
+            input_case="valid_status_text",
+            accepted=True,
+            observed_output="metadata_only_controller_aside",
+            evidence_id="source.controller_aside.boundary",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.controller_aside.blank_text",
+            boundary_id="controller_aside.metadata_only_runtime_boundary",
+            input_case="blank_text",
+            accepted=False,
+            observed_output="none",
+            evidence_id="source.controller_aside.boundary",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.controller_aside.too_many_lines",
+            boundary_id="controller_aside.metadata_only_runtime_boundary",
+            input_case="too_many_lines",
+            accepted=False,
+            observed_error_path="ValueError: non-empty lines or fewer",
+            evidence_id="source.controller_aside.boundary",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.controller_aside.too_long_text",
+            boundary_id="controller_aside.metadata_only_runtime_boundary",
+            input_case="too_long_text",
+            accepted=False,
+            observed_error_path="ValueError: characters or fewer",
+            evidence_id="source.controller_aside.boundary",
+        ),
+        CodeBoundaryObservation(
+            observation_id="boundary.material_artifact_map.index_only",
+            boundary_id="material_artifact_map.index_only_runtime_boundary",
+            input_case="material_scan_packet_and_result_envelopes",
+            accepted=True,
+            observed_output="index_only_material_artifact_map",
+            observed_side_effects=("write_json_atomic",),
+            evidence_id="source.material_artifact_map.boundary",
+        ),
+    )
+
+
 def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
     """Build the AST-audited model/code/test contract subset."""
 
@@ -27,6 +115,8 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         model_id="model_test_code_source_contracts",
         obligations=source_obligations(),
         code_contracts=source_code_contracts(),
+        boundary_contracts=source_boundary_contracts(),
+        boundary_observations=source_boundary_observations(),
         test_evidence=source_test_evidence(),
         require_code_contracts=True,
     )
@@ -50,6 +140,11 @@ def _source_contract_plan_report() -> dict[str, Any]:
         code_evidence,
         test_assertions,
     )
+    boundary_report = review_code_boundary_conformance(
+        plan.boundary_contracts,
+        plan.boundary_observations,
+        plan.code_contracts,
+    )
     findings = [
         {"layer": "model_code_test_alignment", **finding}
         for finding in alignment_report.to_dict()["findings"]
@@ -58,8 +153,12 @@ def _source_contract_plan_report() -> dict[str, Any]:
         {"layer": "python_source_contract_audit", **finding}
         for finding in source_report.to_dict()["findings"]
     )
+    findings.extend(
+        {"layer": "code_boundary_conformance", **finding}
+        for finding in boundary_report.to_dict()["findings"]
+    )
     return {
-        "ok": alignment_report.ok and source_report.ok,
+        "ok": alignment_report.ok and source_report.ok and boundary_report.ok,
         "model_id": plan.model_id,
         "source_audit_boundary": SOURCE_AUDIT_BOUNDARY,
         "finding_count": len(findings),
@@ -68,4 +167,5 @@ def _source_contract_plan_report() -> dict[str, Any]:
         "plan": plan.to_dict(),
         "alignment_report": alignment_report.to_dict(),
         "source_audit_report": source_report.to_dict(),
+        "boundary_report": boundary_report.to_dict(),
     }

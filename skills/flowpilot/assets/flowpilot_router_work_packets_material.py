@@ -85,6 +85,7 @@ def _write_material_scan_packets(router: ModuleType, project_root: Path, run_roo
     write_json(material_index_path, {'schema_version': 'flowpilot.material_scan_packets.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'batch_id': batch_id, 'batch_kind': 'material_scan', 'controller_may_read_packet_body': False, 'router_direct_dispatch_required_before_worker': True, 'reviewer_dispatch_required_before_worker': False, 'packets': records, 'written_at': utc_now()})
     material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
     router._set_pre_route_frontier_phase(run_root, str(run_state['run_id']), 'material_scan')
+    run_state['phase'] = 'material_scan'
 
 def _write_material_dispatch_block_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
     _bind_router(router)

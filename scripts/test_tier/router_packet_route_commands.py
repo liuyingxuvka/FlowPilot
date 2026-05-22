@@ -16,6 +16,7 @@ ROUTER_PACKET_COMMANDS = (
         patterns=(
             "material_work_packet",
             "material_scan_accepts",
+            "reconcile_current_run_recovers_material_scan_phase",
             "record_event_accepts_material",
             "record_event_rejects_manual_material",
             "material_scan_packet_and_result_relays",

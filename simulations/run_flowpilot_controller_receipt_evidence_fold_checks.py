@@ -269,9 +269,18 @@ def _receipt_registered_actions() -> set[str]:
         / "assets"
         / "flowpilot_router_controller_scheduler_receipts_packet_folds.py"
     )
+    receipt_fold_registry_child_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_controller_scheduler_receipts_packet_fold_registry.py"
+    )
     literals = _literal_string_set_from_ast(receipt_effects_path)
     if receipt_fold_registry_path.exists():
         literals |= _literal_string_set_from_ast(receipt_fold_registry_path)
+    if receipt_fold_registry_child_path.exists():
+        literals |= _literal_string_set_from_ast(receipt_fold_registry_child_path)
     # Known literal action names in the receipt effect dispatcher or in the
     # shared receipt evidence-fold registry count as registered folds.
     return {

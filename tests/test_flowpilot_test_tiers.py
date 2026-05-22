@@ -146,6 +146,10 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("flowguard_coverage_sweep", integration_commands)
         self.assertTrue(integration_commands["smoke_autopilot_fast"].background_recommended)
         self.assertTrue(integration_commands["flowguard_coverage_sweep"].background_recommended)
+        self.assertEqual(
+            list(integration_commands["flowguard_coverage_sweep"].command)[-2:],
+            ["--timeout-seconds", "60"],
+        )
 
         release_commands = {
             command.name: command

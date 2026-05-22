@@ -1,0 +1,240 @@
+"""Startup bootloader receipt policy for Controller scheduler receipts.
+
+Receives the router facade explicitly so startup bootstrap/run-state writes
+stay under the existing router-owned compatibility boundary.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from types import ModuleType
+from typing import Any
+
+
+def _bind_router(router: ModuleType) -> None:
+    current = globals()
+    local_names = current.get("_LOCAL_NAMES", set())
+    for name, value in vars(router).items():
+        if name.startswith("__") and name.endswith("__"):
+            continue
+        if name in local_names:
+            continue
+        current[name] = value
+
+
+def _boot_action_meta(router: ModuleType, action_type: str) -> dict[str, Any] | None:
+    _bind_router(router)
+    if action_type == "load_router":
+        return {
+            "action_type": "load_router",
+            "flag": "router_loaded",
+            "label": "bootloader_router_loaded",
+            "actor": "bootloader",
+        }
+    for item in BOOT_ACTIONS:
+        if item.get("action_type") == action_type:
+            return item
+    return None
+
+
+def _matching_bootstrap_pending_action(
+    router: ModuleType,
+    bootstrap_state: dict[str, Any],
+    action: dict[str, Any],
+) -> bool:
+    _bind_router(router)
+    pending = bootstrap_state.get("pending_action")
+    if not isinstance(pending, dict):
+        return False
+    for key in ("controller_action_id", "router_scheduler_row_id", "action_id"):
+        if pending.get(key) and pending.get(key) == action.get(key):
+            return True
+    return bool(pending.get("action_type") and pending.get("action_type") == action.get("action_type"))
+
+
+def _apply_startup_bootloader_receipt_effects(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    action: dict[str, Any],
+    receipt_payload: dict[str, Any],
+) -> dict[str, Any]:
+    _bind_router(router)
+    action_type = str(action.get("action_type") or "")
+    action_meta = router._boot_action_meta(action_type)
+    if action_meta is None:
+        return {"applied": False, "reason": "not_bootloader_action"}
+    if str(action.get("scope_kind") or "") != "startup" and (not router._daemon_scheduled_bootloader_action(action)):
+        return {"applied": False, "reason": "not_startup_bootloader_scheduler_row"}
+    bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
+    flag = str(action_meta.get("flag") or _pending_action_postcondition(action) or "")
+    result: dict[str, Any] = {
+        "applied": True,
+        "source": "startup_bootloader_controller_receipt",
+        "postcondition": flag,
+        "action_type": action_type,
+    }
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    if terminal_mode:
+        append_history(
+            run_state,
+            "startup_bootloader_receipt_ignored_for_terminal_lifecycle",
+            {"action_type": action_type, "terminal_lifecycle_status": terminal_mode},
+        )
+        result.update(
+            {
+                "source": "terminal_lifecycle_skipped_startup_receipt",
+                "terminal_lifecycle_status": terminal_mode,
+            }
+        )
+        return result
+    if action_type == "open_startup_intake_ui" and str(receipt_payload.get("source") or "") != "startup_daemon_bootloader_apply":
+        result.update(router._apply_startup_intake_result_to_bootstrap(project_root, bootstrap, receipt_payload))
+        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+    elif action_type == "record_startup_answers":
+        startup_answers = router._validate_startup_answers(receipt_payload)
+        existing_answers = bootstrap.get("startup_answers") if isinstance(bootstrap.get("startup_answers"), dict) else None
+        if existing_answers is not None and existing_answers != startup_answers:
+            return {
+                "applied": False,
+                "reason": "startup_answers_conflict_with_durable_answers",
+                "action_type": action_type,
+                "postcondition": flag,
+            }
+        interpretation = router._validate_startup_answer_interpretation(receipt_payload, startup_answers)
+        if existing_answers is None:
+            bootstrap["startup_answers"] = startup_answers
+            bootstrap["startup_answer_interpretation"] = interpretation
+            bootstrap["startup_state"] = "answers_complete"
+            result["startup_answers_recorded_from_receipt"] = True
+        else:
+            result["startup_answers_replay_confirmed"] = True
+        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+    elif action_type == "emit_startup_banner":
+        banner = router._startup_banner_display()
+        confirmation = router._display_confirmation_for_action(receipt_payload, action)
+        banner["dialog_display_confirmation"] = confirmation
+        bootstrap["startup_banner_path"] = banner["display_path"]
+        bootstrap["startup_banner_display"] = banner
+        bootstrap["startup_banner_dialog_display_confirmation"] = confirmation
+        run_state.setdefault("flags", {})["banner_emitted"] = True
+        result["display_text_sha256"] = confirmation.get("display_text_sha256")
+    elif action_type == "start_role_slots":
+        role_slots = router._normalize_role_agent_records(bootstrap, receipt_payload)
+        write_json(
+            run_root / "crew_ledger.json",
+            {
+                "schema_version": "flowpilot.crew_ledger.v1",
+                "run_id": run_state["run_id"],
+                "background_agents_mode": (bootstrap.get("startup_answers") or {}).get("background_agents"),
+                "role_slots": role_slots,
+                "created_at": utc_now(),
+            },
+        )
+        crew_memory_root = run_root / "crew_memory"
+        crew_memory_root.mkdir(parents=True, exist_ok=True)
+        for role in CREW_ROLE_KEYS:
+            write_json(crew_memory_root / f"{role}.json", router._create_empty_role_memory(str(run_state["run_id"]), role))
+        _append_role_io_protocol_injections(
+            project_root,
+            run_root,
+            str(run_state["run_id"]),
+            role_slots,
+            default_lifecycle_phase="fresh_spawn",
+            resume_tick_id="manual-resume",
+            source_action="start_role_slots",
+        )
+        write_json(
+            run_root / "role_core_prompt_delivery.json",
+            router._role_core_prompt_delivery_payload(project_root, run_root, str(run_state["run_id"]), source_action="start_role_slots"),
+        )
+        bootstrap.setdefault("flags", {})["role_core_prompts_injected"] = True
+        run_state.setdefault("flags", {})["roles_started"] = True
+        run_state.setdefault("flags", {})["role_core_prompts_injected"] = True
+        result["coalesced_postconditions"] = ["roles_started", "role_core_prompts_injected"]
+    elif action_type == "create_heartbeat_automation":
+        _write_host_heartbeat_binding(project_root, run_root, run_state, receipt_payload)
+        run_state.setdefault("flags", {})["continuation_binding_recorded"] = True
+        run_state.setdefault("events", []).append(
+            {
+                "event": "host_records_heartbeat_binding",
+                "summary": EXTERNAL_EVENTS["host_records_heartbeat_binding"]["summary"],
+                "payload": receipt_payload,
+                "recorded_at": utc_now(),
+                "source_action": action_type,
+                "startup_phase": "bootloader_controller_receipt",
+            }
+        )
+    elif action_type == "load_controller_core":
+        if not _formal_router_daemon_ready(project_root, run_root):
+            return {
+                "applied": False,
+                "reason": "startup_router_daemon_not_ready_for_controller_core",
+                "action_type": action_type,
+                "postcondition": flag,
+            }
+        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+        run_state["status"] = "controller_ready"
+        run_state["holder"] = "controller"
+        run_state.setdefault("flags", {})["controller_core_loaded"] = True
+        boundary_reconciliation = router._record_controller_boundary_confirmation_from_core_load(
+            project_root,
+            run_root,
+            run_state,
+            action,
+            receipt_payload,
+            source="load_controller_core_receipt_reconciliation",
+        )
+        result["controller_boundary_confirmation"] = boundary_reconciliation.get("controller_boundary_confirmation")
+        result["coalesced_postconditions"] = sorted(set(result.get("coalesced_postconditions") or []) | {"controller_role_confirmed"})
+        result["source"] = "startup_bootloader_controller_receipt"
+    elif str(receipt_payload.get("source") or "") == "startup_daemon_bootloader_apply":
+        seed_projection = router._sync_completed_deterministic_startup_seed_to_bootstrap(
+            project_root,
+            bootstrap,
+            source=f"{action_type}_daemon_apply_receipt",
+        )
+        if seed_projection.get("changed"):
+            result["deterministic_seed_projection"] = seed_projection
+        bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
+        if flag and (not (receipt_payload.get("bootstrap_flag_satisfied") or bootstrap_flags.get(flag))):
+            return {
+                "applied": False,
+                "reason": "startup_bootloader_receipt_postcondition_missing",
+                "action_type": action_type,
+                "postcondition": flag,
+            }
+        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
+        result["bootstrap_flag_satisfied"] = bool(flag and bootstrap_flags.get(flag))
+        result["source"] = "startup_bootloader_controller_receipt"
+    else:
+        return {"applied": False, "reason": "unsupported_startup_bootloader_receipt_action", "action_type": action_type}
+    if flag:
+        bootstrap.setdefault("flags", {})[flag] = True
+        run_state.setdefault("flags", {})[flag] = True
+    if router._matching_bootstrap_pending_action(bootstrap, action):
+        bootstrap["pending_action"] = None
+        result["cleared_bootstrap_pending_action"] = True
+    append_history(
+        bootstrap,
+        "router_reconciled_startup_bootloader_receipt",
+        {
+            "action_type": action_type,
+            "postcondition": flag,
+            "controller_action_id": action.get("controller_action_id"),
+            "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+        },
+    )
+    router.save_bootstrap_state(project_root, bootstrap)
+    router.save_run_state(run_root, run_state)
+    return result
+
+
+__all__ = (
+    "_boot_action_meta",
+    "_matching_bootstrap_pending_action",
+    "_apply_startup_bootloader_receipt_effects",
+)
+
+_LOCAL_NAMES = set(globals())

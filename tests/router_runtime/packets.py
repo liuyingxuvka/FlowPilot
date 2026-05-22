@@ -40,6 +40,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         frontier = read_json(run_root / "execution_frontier.json")
         self.assertEqual(frontier["status"], "material_scan")
         self.assertIsNone(frontier["active_node_id"])
+        self.assertEqual(read_json(router.run_state_path(run_root))["phase"], "material_scan")
         material_index = read_json(run_root / "material" / "material_scan_packets.json")
         packet = packet_runtime.load_envelope(root, material_index["packets"][0]["packet_envelope_path"])
         self.assertEqual(packet["packet_type"], "material_scan")
@@ -50,6 +51,25 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(packet["output_contract"]["expected_result_body_path"], material_index["packets"][0]["result_body_path"])
         packet_body = (root / packet["body_path"]).read_text(encoding="utf-8")
         self.assertIn(material_index["packets"][0]["result_body_path"], packet_body)
+    def test_reconcile_current_run_recovers_material_scan_phase(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(
+            root,
+            "pm_issues_material_and_capability_scan_packets",
+            self.material_scan_file_backed_payload(root),
+        )
+        state = read_json(router.run_state_path(run_root))
+        state["phase"] = "startup_intake"
+        router.save_run_state(run_root, state)
+
+        result = router.reconcile_current_run(root)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(read_json(router.run_state_path(run_root))["phase"], "material_scan")
     def test_record_event_accepts_material_scan_envelope_ref_with_packets(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

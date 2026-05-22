@@ -77,6 +77,18 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(HAPPY, NEGATIVE),
         ),
         _source_obligation(
+            "terminal.final_ledger_source_entries",
+            obligation_type="contract",
+            description="Leaf source-audited final-ledger source-entry construction boundary for root replay, route node, superseded node, child-skill, evidence, and generated-resource gate families.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "terminal.requirement_trace_projection",
+            obligation_type="contract",
+            description="Leaf source-audited terminal requirement-trace projection boundary for route-node defaults and root-replay closure rows.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
             "resume.current_run_reentry",
             obligation_type="transition",
             description="Source-audited resume re-entry boundary through Router event intake, next action, and action application.",
@@ -87,6 +99,18 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="contract",
             description="Source-audited role-output session preparation contract.",
             required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
+            "controller_aside.metadata_only_boundary",
+            obligation_type="contract",
+            description="Source-audited Controller process-aside boundary keeps brief status metadata from becoming formal evidence, decisions, progress authority, or Router events.",
+            required_test_kinds=(NEGATIVE,),
+        ),
+        _source_obligation(
+            "material_artifact_map.index_only_boundary",
+            obligation_type="contract",
+            description="Source-audited material artifact map boundary indexes existing material evidence without reading sealed packet or result body text or changing authority.",
+            required_test_kinds=(NEGATIVE,),
         ),
         _source_obligation(
             "branch_pruning.result_case_classifier",
@@ -115,6 +139,18 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             description="Source-audited runtime-state resume pruning remains model-only with a single owner until replay evidence justifies contraction.",
             required_test_kinds=(EDGE, NEGATIVE),
             allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "runtime_state.stale_save_merge_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited runtime-state stale-save merge boundary preserves append-only lists, pending-wait reminder details, foreground clears, and volatile metadata exclusion.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_state.load_save_persistence_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited runtime-state load/save boundary preserves run-root binding, default normalization, facade return shape, and save metadata refresh.",
+            required_test_kinds=(EDGE,),
         ),
         _source_obligation(
             "output_contract.packet_binding",
@@ -172,6 +208,54 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             description="Source-audited router owner modules expose direct external contracts for action envelopes, dispatch gates, action handlers, artifact validation, card delivery, child-skill capability sync, and controller scheduler ledgers.",
             required_test_kinds=(HAPPY, NEGATIVE),
             allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "runtime_owner.receipt_bootloader_policy_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited Controller receipt bootloader policy boundary preserves boot action matching and startup bootloader receipt effects.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.receipt_packet_fold_registry_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited Controller receipt packet-fold registry boundary preserves registered packet/result/control-blocker action metadata and sorted action exposure.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.receipt_packet_fold_lifecycle_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited Controller receipt packet-fold lifecycle boundary maps packet/result receipt specs to only the allowed batch and PM role-work lifecycle writes.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.receipt_scheduled_policy_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited scheduled receipt policy child owns scheduler-row reconciliation lookup, backfill, pending-action clearing, and apply-result classification.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.current_work_pending_policy_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited current-work pending policy boundary preserves controller authority, scheduler lookup, durable wait clearing, and batch projection decisions.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.standby_state_policy_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited foreground Controller standby state-policy boundary maps the full terminal/user/liveness/pending/wait-condition input matrix to the only allowed standby states and foreground modes.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.role_output_bridge_event_policy_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited role-output bridge event policy boundary preserves body payload reading and durable event authority checks.",
+            required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.startup_intake_flowguard_capability_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited startup intake FlowGuard capability boundary owns finite route classification, import snapshot, and portable capability snapshot writes.",
+            required_test_kinds=(EDGE,),
         ),
         _source_obligation(
             "packet_runtime.owner_helper_contracts",

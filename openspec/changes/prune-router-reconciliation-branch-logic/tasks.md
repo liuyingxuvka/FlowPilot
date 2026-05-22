@@ -14,7 +14,7 @@
 
 ## 3. Controller Receipt Branch Pruning
 
-- [ ] 3.1 Refactor scheduled Controller receipt reconciliation around a result-case classifier without changing public imports.
+- [x] 3.1 Refactor scheduled Controller receipt reconciliation around a result-case classifier without changing public imports.
 - [x] 3.2 Replace repeated branch-local write/update/clear/save sequences with shared effect application where replay proves equivalence.
 - [x] 3.3 Preserve separate handlers for branches that remain behaviorally distinct after modeling.
 - [x] 3.4 Keep `flowpilot_router_controller_scheduler_receipts_scheduled.py` compatible until StructureMesh approves any child-owner split.

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from dataclasses import replace
 from pathlib import Path
+from types import ModuleType
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,9 +32,14 @@ import flowpilot_router_controller_repair_mail as controller_repair_mail  # noqa
 import flowpilot_router_controller_repair_mail_delivery as controller_repair_mail_delivery  # noqa: E402
 import flowpilot_router_controller_repair_mail_pending as controller_repair_mail_pending  # noqa: E402
 import flowpilot_router_controller_repair_mail_postconditions as controller_repair_mail_postconditions  # noqa: E402
+import flowpilot_router_controller_scheduler_standby as controller_standby  # noqa: E402
+import flowpilot_router_controller_scheduler_standby_policy as controller_standby_policy  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_pending as receipts_pending  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_packet_folds as receipts_packet_folds  # noqa: E402
+import flowpilot_router_controller_scheduler_receipts_packet_fold_lifecycle as receipt_fold_lifecycle  # noqa: E402
+import flowpilot_router_controller_scheduler_receipts_packet_fold_registry as receipt_fold_registry  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_scheduled as receipts_scheduled  # noqa: E402
+import flowpilot_router_controller_scheduler_receipts_scheduled_policy as receipt_scheduled_policy  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_writes as receipts_writes  # noqa: E402
 import flowpilot_router_event_identity as event_identity  # noqa: E402
 import flowpilot_router_event_identity_payload as event_identity_payload  # noqa: E402
@@ -189,6 +195,7 @@ import flowpilot_router_startup_fact_boundary_controller as startup_fact_boundar
 import flowpilot_router_startup_fact_boundary_reports as startup_fact_boundary_reports  # noqa: E402
 import flowpilot_router_startup_flow as startup_flow  # noqa: E402
 import flowpilot_router_startup_intake as startup_intake  # noqa: E402
+import flowpilot_router_startup_intake_flowguard_capability as startup_intake_flowguard_capability  # noqa: E402
 import flowpilot_router_startup_intake_materialization as startup_intake_materialization  # noqa: E402
 import flowpilot_router_startup_intake_ui as startup_intake_ui  # noqa: E402
 import flowpilot_router_startup_intake_validation as startup_intake_validation  # noqa: E402
@@ -522,6 +529,470 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertIsNone(scheduled_reconciliation)
         self.assertEqual(backfill["reason"], "controller_action_has_no_router_scheduler_row")
         self.assertIsNone(maybe_receipt)
+
+    def test_receipt_packet_fold_registry_child_preserves_registered_actions(self) -> None:
+        self.assertIs(
+            receipts_packet_folds.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
+        )
+        self.assertIs(
+            receipts_packet_folds._registered_controller_receipt_evidence_fold_actions,
+            receipt_fold_registry._registered_controller_receipt_evidence_fold_actions,
+        )
+        self.assertIn(
+            "relay_material_scan_packets",
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
+        )
+        self.assertIn(
+            "relay_material_scan_results_to_pm",
+            receipt_fold_registry._registered_controller_receipt_evidence_fold_actions(),
+        )
+        self.assertEqual(
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY["handle_control_blocker"]["kind"],
+            "control_blocker_delivery",
+        )
+
+    def test_scheduled_controller_receipt_apply_result_classifier(self) -> None:
+        self.assertIs(
+            receipts_scheduled._scheduled_controller_receipt_apply_result_case,
+            receipt_scheduled_policy._scheduled_controller_receipt_apply_result_case,
+        )
+        classify = receipt_scheduled_policy._scheduled_controller_receipt_apply_result_case
+
+        self.assertEqual(classify({"applied": True}), "reconciled")
+        self.assertEqual(classify({"applied": False, "repair_scheduled": True}), "repair_pending")
+        self.assertEqual(classify({"applied": False, "repair_pending": True}), "repair_pending")
+        self.assertEqual(classify({"applied": False, "blocked": True}), "blocked")
+        self.assertEqual(classify({"applied": False}), "retry_pending")
+        self.assertEqual(classify({"applied": False}, {"retry_pending": True}), "retry_pending")
+        self.assertEqual(classify({"applied": False}, {"retry_budget_exhausted": True}), "blocked")
+        self.assertLessEqual(
+            {
+                classify({"applied": True}),
+                classify({"applied": False, "repair_pending": True}),
+                classify({"applied": False}, {"retry_pending": True}),
+                classify({"applied": False}, {"retry_budget_exhausted": True}),
+            },
+            {"reconciled", "retry_pending", "repair_pending", "blocked"},
+        )
+
+    def test_scheduled_receipt_policy_child_preserves_facade_boundary(self) -> None:
+        self.assertIs(
+            receipts_scheduled._scheduler_row_reconciliation_for_entry,
+            receipt_scheduled_policy._scheduler_row_reconciliation_for_entry,
+        )
+        self.assertIs(
+            receipts_scheduled._backfill_scheduler_row_from_reconciled_controller_action,
+            receipt_scheduled_policy._backfill_scheduler_row_from_reconciled_controller_action,
+        )
+        self.assertIs(
+            receipts_scheduled._clear_pending_controller_action_if_matches,
+            receipt_scheduled_policy._clear_pending_controller_action_if_matches,
+        )
+        self.assertEqual(
+            receipt_scheduled_policy._scheduled_controller_receipt_apply_result_case({"applied": True}),
+            "reconciled",
+        )
+
+        with tempfile.TemporaryDirectory(prefix="flowpilot-scheduled-policy-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            (run_root / "runtime").mkdir(parents=True)
+            router.write_json(
+                router._router_scheduler_ledger_path(run_root),  # type: ignore[attr-defined]
+                {
+                    "rows": [
+                        {
+                            "row_id": "row-reconciled",
+                            "router_state": "reconciled",
+                            "reconciliation": {"applied": True, "source": "test"},
+                        },
+                        {
+                            "row_id": "row-open",
+                            "router_state": "waiting",
+                            "reconciliation": {"applied": True, "source": "test"},
+                        },
+                    ]
+                },
+            )
+            self.assertEqual(
+                receipt_scheduled_policy._scheduler_row_reconciliation_for_entry(
+                    router,
+                    run_root,
+                    {"router_scheduler_row_id": "row-reconciled"},
+                ),
+                {"applied": True, "source": "test"},
+            )
+            self.assertIsNone(
+                receipt_scheduled_policy._scheduler_row_reconciliation_for_entry(
+                    router,
+                    run_root,
+                    {"router_scheduler_row_id": "row-open"},
+                )
+            )
+
+        class FakeBackfillRouter:
+            def __init__(self, row: dict[str, object] | None) -> None:
+                self.row = row
+                self.updates: list[dict[str, object]] = []
+
+            def _router_scheduler_row_for_controller_entry(
+                self,
+                run_root: Path,
+                entry: dict[str, object],
+            ) -> dict[str, object] | None:
+                return self.row
+
+            def _update_router_scheduler_row(
+                self,
+                project_root: Path,
+                run_root: Path,
+                run_state: dict[str, object],
+                **kwargs: object,
+            ) -> None:
+                self.updates.append(dict(kwargs))
+
+        fake_backfill = FakeBackfillRouter({"router_state": "waiting"})
+        backfill_result = receipt_scheduled_policy._backfill_scheduler_row_from_reconciled_controller_action(
+            fake_backfill,  # type: ignore[arg-type]
+            Path("project"),
+            Path("run"),
+            {},
+            {
+                "router_scheduler_row_id": "row-1",
+                "router_reconciliation_status": "reconciled",
+                "action_id": "action-1",
+            },
+            source="contract_test",
+        )
+        self.assertTrue(backfill_result["changed"])
+        self.assertEqual(fake_backfill.updates[0]["row_id"], "row-1")
+
+        pending_cases = [
+            ({"controller_action_id": "action-1"}, {}, {"action_id": "action-1"}),
+            ({"router_scheduler_row_id": "row-1"}, {"router_scheduler_row_id": "row-1"}, {"action_id": ""}),
+            ({"idempotency_key": "idem-1"}, {"idempotency_key": "idem-1"}, {"action_id": ""}),
+            (
+                {"action_type": "do_work", "postcondition": "done"},
+                {"action_type": "do_work", "postcondition": "done"},
+                {"action_id": ""},
+            ),
+            ({"action_type": "do_work", "label": "same"}, {"action_type": "do_work", "label": "same"}, {"action_id": ""}),
+        ]
+        for pending, action, entry in pending_cases:
+            run_state = {"pending_action": dict(pending)}
+            self.assertTrue(
+                receipt_scheduled_policy._clear_pending_controller_action_if_matches(
+                    router,
+                    run_state,
+                    entry,
+                    action,
+                    action_id=str(entry.get("action_id") or ""),
+                    source="contract_test",
+                )
+            )
+            self.assertIsNone(run_state["pending_action"])
+            self.assertEqual(run_state["history"][-1]["label"], "router_cleared_resolved_controller_pending_projection")
+
+        run_state = {"pending_action": {"controller_action_id": "other"}}
+        self.assertFalse(
+            receipt_scheduled_policy._clear_pending_controller_action_if_matches(
+                router,
+                run_state,
+                {"action_id": "action-1"},
+                {},
+                action_id="action-1",
+                source="contract_test",
+            )
+        )
+        self.assertEqual(run_state["pending_action"]["controller_action_id"], "other")
+
+    def test_receipt_lifecycle_policy_centralizes_packet_and_result_targets(self) -> None:
+        self.assertIs(receipts_packet_folds._receipt_lifecycle_policy, receipt_fold_lifecycle._receipt_lifecycle_policy)
+        packet_policy = receipt_fold_lifecycle._receipt_lifecycle_policy(
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY["relay_material_scan_packets"],
+        )
+        self.assertEqual(
+            packet_policy,
+            {
+                "record_status": "packet_relayed",
+                "batch_timestamp_field": "relayed_at",
+                "pm_timestamp_field": "packet_relayed_at",
+                "batch_status": "packets_relayed",
+                "count_key": "relayed",
+                "count_status": "packet_relayed",
+                "officer_lifecycle_status": "packet_relayed",
+            },
+        )
+
+        reviewer_result_policy = receipt_fold_lifecycle._receipt_lifecycle_policy(
+            receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
+                "relay_material_scan_results_to_reviewer"
+            ],
+        )
+        self.assertEqual(reviewer_result_policy["record_status"], "result_relayed_to_reviewer")
+        self.assertEqual(reviewer_result_policy["batch_status"], "results_relayed_to_reviewer")
+        self.assertEqual(reviewer_result_policy["batch_timestamp_field"], "result_relayed_to_reviewer_at")
+        self.assertEqual(reviewer_result_policy["pm_timestamp_field"], "result_relayed_to_reviewer_at")
+        self.assertIsNone(receipt_fold_lifecycle._receipt_lifecycle_policy({"kind": "control_blocker_delivery"}))
+
+    def test_pm_role_work_receipt_lifecycle_consumes_shared_policy(self) -> None:
+        self.assertIs(
+            receipts_packet_folds._apply_parallel_batch_receipt_lifecycle,
+            receipt_fold_lifecycle._apply_parallel_batch_receipt_lifecycle,
+        )
+        self.assertIs(
+            receipts_packet_folds._apply_pm_role_work_receipt_lifecycle,
+            receipt_fold_lifecycle._apply_pm_role_work_receipt_lifecycle,
+        )
+        self.assertEqual(
+            receipt_fold_lifecycle._receipt_lifecycle_policy(
+                receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
+                    "relay_pm_role_work_request_packet"
+                ]
+            )["record_status"],
+            "packet_relayed",
+        )
+        fake_router = ModuleType("fake_router")
+        batch = {
+            "batch_id": "batch-1",
+            "status": "open",
+            "packets": [
+                {"packet_id": "packet-1", "status": "created"},
+                {"packet_id": "packet-2", "status": "created"},
+            ],
+            "counts": {},
+        }
+        index = {
+            "active_batch_id": "batch-1",
+            "requests": [{"request_id": "request-1", "status": "open"}],
+        }
+        lifecycle_statuses: list[str] = []
+        writes: list[dict] = []
+        batch_writes: list[dict] = []
+
+        fake_router.utc_now = lambda: "2026-05-21T00:00:00Z"  # type: ignore[attr-defined]
+        fake_router._active_parallel_packet_batch = lambda run_root, family: batch  # type: ignore[attr-defined]
+        fake_router._write_parallel_packet_batch_state = (  # type: ignore[attr-defined]
+            lambda run_root, payload: batch_writes.append({"status": payload.get("status")})
+        )
+        fake_router._load_pm_role_work_request_index = lambda run_root, run_state: index  # type: ignore[attr-defined]
+        fake_router._pm_role_work_request_record = (  # type: ignore[attr-defined]
+            lambda request_index, request_id: next(
+                record for record in request_index["requests"] if record["request_id"] == request_id
+            )
+        )
+        fake_router._write_pm_role_work_request_index = (  # type: ignore[attr-defined]
+            lambda run_root, request_index: writes.append({"active_request_id": request_index.get("active_request_id")})
+        )
+        fake_router._record_officer_lifecycle_status = (  # type: ignore[attr-defined]
+            lambda project_root, run_root, run_state, record, *, lifecycle_status: lifecycle_statuses.append(
+                lifecycle_status
+            )
+        )
+
+        try:
+            batch_result = receipt_fold_lifecycle._apply_parallel_batch_receipt_lifecycle(
+                fake_router,
+                Path(".flowpilot/runs/run-test"),
+                receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
+                    "relay_material_scan_packets"
+                ],
+                [{"packet_id": "packet-1"}],
+            )
+            result = receipt_fold_lifecycle._apply_pm_role_work_receipt_lifecycle(
+                fake_router,
+                Path("."),
+                Path(".flowpilot/runs/run-test"),
+                {"flags": {}},
+                receipt_fold_registry.CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY[
+                    "relay_pm_role_work_request_packet"
+                ],
+                [{"request_id": "request-1"}],
+            )
+        finally:
+            receipt_fold_lifecycle._bind_router(router)
+
+        self.assertTrue(batch_result["changed"])
+        self.assertEqual(batch["status"], "packets_relayed")
+        self.assertEqual(batch["packets"][0]["status"], "packet_relayed")
+        self.assertEqual(batch["counts"], {"relayed": 1})
+        self.assertEqual(batch_writes, [{"status": "packets_relayed"}])
+        self.assertTrue(result["changed"])
+        self.assertEqual(result["request_ids"], ["request-1"])
+        self.assertEqual(index["requests"][0]["status"], "packet_relayed")
+        self.assertEqual(index["requests"][0]["packet_relayed_at"], "2026-05-21T00:00:00Z")
+        self.assertEqual(index["active_request_id"], "request-1")
+        self.assertEqual(lifecycle_statuses, ["packet_relayed"])
+        self.assertEqual(writes, [{"active_request_id": "request-1"}])
+
+    def test_foreground_controller_standby_state_policy_classifier(self) -> None:
+        self.assertIs(
+            controller_standby._foreground_standby_state,
+            controller_standby_policy._foreground_standby_state,
+        )
+        self.assertIs(
+            controller_standby._foreground_standby_policy,
+            controller_standby_policy._foreground_standby_policy,
+        )
+
+        wait_cases = [
+            ("blocker", {"blocker": {"required": True}}, "wait_target_blocker_required"),
+            ("reissue", {"reissue": {"required": True}}, "wait_target_reissue_required"),
+            ("reminder", {"reminder": {"due": True}}, "wait_target_check_due"),
+            ("liveness_probe", {"liveness_probe": {"due": True}}, "wait_target_check_due"),
+            (
+                "controller_local_self_audit",
+                {"controller_local_self_audit": {"required": True}},
+                "wait_target_check_due",
+            ),
+            ("waiting_for_role", {"waiting_for_role": "human_like_reviewer"}, "waiting_for_role"),
+            ("await_role_decision", {"action_type": "await_role_decision"}, "waiting_for_role"),
+            ("none", {}, "daemon_alive_no_controller_action"),
+        ]
+        allowed_states = {
+            "terminal",
+            "user_input_required",
+            "daemon_liveness_check_required",
+            "controller_action_ready",
+            "wait_target_blocker_required",
+            "wait_target_reissue_required",
+            "wait_target_check_due",
+            "waiting_for_role",
+            "daemon_alive_no_controller_action",
+        }
+
+        for terminal in (False, True):
+            for user_required in (False, True):
+                for daemon_liveness_check_required in (False, True):
+                    for has_pending in (False, True):
+                        for case_name, current_wait, wait_expected in wait_cases:
+                            with self.subTest(
+                                terminal=terminal,
+                                user_required=user_required,
+                                daemon_liveness_check_required=daemon_liveness_check_required,
+                                has_pending=has_pending,
+                                wait_case=case_name,
+                            ):
+                                observed = controller_standby_policy._foreground_standby_state(
+                                    terminal=terminal,
+                                    user_required=user_required,
+                                    daemon_liveness_check_required=daemon_liveness_check_required,
+                                    pending_action_ids=["action-1"] if has_pending else [],
+                                    current_wait=current_wait,
+                                )
+                                if terminal:
+                                    expected = "terminal"
+                                elif user_required:
+                                    expected = "user_input_required"
+                                elif daemon_liveness_check_required:
+                                    expected = "daemon_liveness_check_required"
+                                elif has_pending:
+                                    expected = "controller_action_ready"
+                                else:
+                                    expected = wait_expected
+                                self.assertIn(observed, allowed_states)
+                                self.assertEqual(observed, expected)
+
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=True,
+                user_required=True,
+                daemon_liveness_check_required=True,
+                pending_action_ids=["action-1"],
+                current_wait={"blocker": {"required": True}},
+            ),
+            "terminal",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=True,
+                daemon_liveness_check_required=True,
+                pending_action_ids=["action-1"],
+                current_wait={"blocker": {"required": True}},
+            ),
+            "user_input_required",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=True,
+                pending_action_ids=["action-1"],
+                current_wait={"blocker": {"required": True}},
+            ),
+            "daemon_liveness_check_required",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=False,
+                pending_action_ids=["action-1"],
+                current_wait={"blocker": {"required": True}},
+            ),
+            "controller_action_ready",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=False,
+                pending_action_ids=[],
+                current_wait={"reissue": {"required": True}},
+            ),
+            "wait_target_reissue_required",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=False,
+                pending_action_ids=[],
+                current_wait={"liveness_probe": {"due": True}},
+            ),
+            "wait_target_check_due",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=False,
+                pending_action_ids=[],
+                current_wait={"waiting_for_role": "human_like_reviewer"},
+            ),
+            "waiting_for_role",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_policy("wait_target_blocker_required")[
+                "foreground_required_mode"
+            ],
+            "record_wait_target_blocker",
+        )
+        self.assertEqual(
+            controller_standby_policy._foreground_standby_state(
+                terminal=False,
+                user_required=False,
+                daemon_liveness_check_required=False,
+                pending_action_ids=[],
+                current_wait={"blocker": {"required": True}},
+            ),
+            "wait_target_blocker_required",
+        )
+        self.assertTrue(
+            controller_standby_policy._foreground_standby_policy("waiting_for_role")[
+                "controller_patrol_required"
+            ]
+        )
+        self.assertFalse(
+            controller_standby_policy._foreground_standby_policy("controller_action_ready")[
+                "foreground_turn_return_allowed"
+            ]
+        )
+        self.assertTrue(
+            controller_standby_policy._foreground_standby_policy("terminal")["controller_stop_allowed"]
+        )
 
     def test_event_wait_repair_external_contracts(self) -> None:
         first_hash = event_identity._stable_identity_hash(router, {"event": "pm_approves_startup_activation"})
@@ -1034,6 +1505,56 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             | set(system_cards_selection_bundle.__all__)
             | set(system_cards_selection_reconcile.__all__),
         )
+
+    def test_startup_intake_flowguard_capability_child_preserves_boundary(self) -> None:
+        self.assertIs(
+            startup_intake_materialization._flowguard_capability_snapshot_path,
+            startup_intake_flowguard_capability._flowguard_capability_snapshot_path,
+        )
+        self.assertIs(
+            startup_intake_materialization._flowguard_route_classification,
+            startup_intake_flowguard_capability._flowguard_route_classification,
+        )
+        self.assertIs(
+            startup_intake_materialization._write_flowguard_capability_snapshot,
+            startup_intake_flowguard_capability._write_flowguard_capability_snapshot,
+        )
+
+        expected_families = {
+            "model-first-function-flow": "cross_route_coordination",
+            "flowguard-ui-flow-structure": "ui_interaction",
+            "flowguard-development-process-flow": "route_process",
+            "flowguard-code-structure-recommendation": "architecture",
+            "flowguard-model-test-alignment": "model_test_alignment",
+            "flowguard-test-mesh": "test_hierarchy",
+            "flowguard-model-mesh": "model_family_governance",
+            "flowguard-model-miss-review": "failure_recovery",
+            "flowguard-unknown": "product_behavior",
+        }
+        for skill_name, expected_family in expected_families.items():
+            classification = startup_intake_flowguard_capability._flowguard_route_classification(skill_name)
+            self.assertIn(expected_family, classification["model_family_fit"])
+
+        import_snapshot = startup_intake_flowguard_capability._flowguard_import_snapshot()
+        self.assertTrue(import_snapshot["importable"])
+        self.assertEqual(import_snapshot["schema_version"], "1.0")
+
+        with tempfile.TemporaryDirectory(prefix="flowpilot-startup-flowguard-capability-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            state = {"run_id": "run-test", "flags": {}}
+            result = startup_intake_flowguard_capability._write_flowguard_capability_snapshot(
+                router,
+                project_root,
+                run_root,
+                state,
+            )
+            snapshot_path = project_root / result["path"]
+            snapshot = router.read_json(snapshot_path)  # type: ignore[attr-defined]
+            self.assertEqual(snapshot["schema_version"], "flowpilot.flowguard_capability_snapshot.v1")
+            self.assertFalse(snapshot["portable_resolution"]["hardcoded_user_path_required"])
+            self.assertTrue(state["flags"]["flowguard_capability_snapshot_written"])
 
     def test_role_prompt_proof_terminal_work_packet_external_contracts(self) -> None:
         action = {"action_type": "check_packet_ledger", "label": "ledger-check"}

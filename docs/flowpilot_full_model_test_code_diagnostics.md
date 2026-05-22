@@ -25,13 +25,13 @@ structure-split repair work.
 
 | Metric | Count |
 | --- | ---: |
-| Total diagnostic surfaces | 717 |
-| Covered surfaces | 708 |
-| Surfaces with one or more gaps | 9 |
-| Compatibility facades | 107 |
-| Owner modules | 226 |
+| Total diagnostic surfaces | 732 |
+| Covered surfaces | 720 |
+| Surfaces with one or more gaps | 12 |
+| Compatibility facades | 109 |
+| Owner modules | 235 |
 | Script entrypoints | 19 |
-| Model-check runners | 92 |
+| Model-check runners | 96 |
 | Model-check runner helpers | 18 |
 | Test tiers | 15 |
 | Test tier commands | 240 |
@@ -40,7 +40,7 @@ structure-split repair work.
 
 | Gap code | Count | Meaning |
 | --- | ---: | --- |
-| `needs_structure_split` | 9 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
+| `needs_structure_split` | 12 | Module or script is above the diagnostic split threshold and is explicitly deferred under StructureMesh. |
 
 `missing_model`, `missing_code`, `missing_test`, `extra_code`,
 `internal_only_test`, and `stale_evidence` are all zero in the current
@@ -50,18 +50,18 @@ StructureMesh deferrals visible.
 
 Aggregate counts in the JSON include:
 
-- `gap_counts_by_severity`: `medium=9`.
-- `gap_counts_by_repair_type`: `defer_structure_split=9`.
-- `gap_counts_by_release_relevance`: `runtime_contract=9`.
+- `gap_counts_by_severity`: `medium=12`.
+- `gap_counts_by_repair_type`: `defer_structure_split=12`.
+- `gap_counts_by_release_relevance`: `runtime_contract=12`.
 - `unresolved_non_deferred_gap_count`: `0`.
-- `deferred_structure_split_count`: `9`.
+- `deferred_structure_split_count`: `12`.
 
 ## Top Repair Items
 
 The current actionable summary is intentionally a structure backlog, not a
 missing-test backlog:
 
-1. Nine runtime-contract surfaces remain over the owner/facade threshold. They
+1. Twelve runtime-contract surfaces remain over the owner/facade threshold. They
    keep explicit `peer_safety_status`,
    `deferred_split_reason`, `safe_split_class`, and
    `recommended_next_action` metadata.
@@ -158,15 +158,15 @@ The diagnostic records concrete deferred split metadata for broad surfaces that
 remain above threshold. These surfaces stay deferred until they have a claimed
 StructureMesh target and parity evidence:
 
-- `flowpilot_router_controller_scheduler_receipts_effects.py`
 - `flowpilot_router_controller_scheduler_receipts_packet_folds.py`
 - `flowpilot_router_controller_scheduler_receipts_scheduled.py`
-- `flowpilot_router_controller_scheduler_standby.py`
-- `flowpilot_router_io.py`
-- `flowpilot_router_lifecycle_requests.py`
-- `flowpilot_router_protocol_external_event_data.py`
-- `flowpilot_router_runtime_state.py`
 - `flowpilot_router_startup_intake_materialization.py`
+
+`flowpilot_router_protocol_external_event_data.py` is now separately recorded
+as `skipped_split` / `explicitly_skipped` because it is a table-only declarative
+contract: no functions, no classes, no state writes, and no duplicated effect
+path to prune. Its phase-table parity remains covered by the external-event
+contract test.
 
 `flowpilot_router_protocol_boot_cards.py` is no longer a pending split
 candidate. It is recorded as `completed_split` with the startup, planning,

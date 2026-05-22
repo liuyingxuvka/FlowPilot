@@ -860,7 +860,15 @@ def _audit_router_source(project_root: Path) -> list[dict[str, object]]:
     router_path = project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
     if not router_path.exists():
         return []
-    text = router_path.read_text(encoding="utf-8")
+    owner_paths = [
+        router_path,
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_route_completion_support.py",
+    ]
+    text = "\n".join(path.read_text(encoding="utf-8") for path in owner_paths if path.exists())
     findings: list[dict[str, object]] = []
     if "_active_node_completion_write_missing" not in text:
         findings.append(

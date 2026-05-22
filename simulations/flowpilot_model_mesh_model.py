@@ -732,17 +732,110 @@ def _legal_next_action_conformant(router_state: Any, frontier: Any, policy: Any)
     return True
 
 
-def _packet_authority_unchecked(packet_ledger: Any) -> bool:
+def _sha256_file(path: Path) -> str | None:
+    try:
+        import hashlib
+
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+    except OSError:
+        return None
+
+
+def _audit_path_from_proof(run_root: Path, proof: Mapping[str, Any]) -> Path | None:
+    raw_path = proof.get("audit_path")
+    if not isinstance(raw_path, str) or not raw_path.strip():
+        return None
+    path = Path(raw_path)
+    if path.is_absolute():
+        return path
+    parts = path.parts
+    try:
+        runs_index = parts.index("runs")
+    except ValueError:
+        return run_root / path
+    if len(parts) >= runs_index + 2 and parts[runs_index + 1] == run_root.name:
+        suffix = Path(*parts[runs_index + 2 :])
+        return run_root / suffix
+    return run_root / path
+
+
+def _router_owned_packet_audit_proof_valid(run_root: Path, audit_path: Path, audit: Mapping[str, Any]) -> bool:
+    proof_path = audit_path.with_name(audit_path.name + ".proof.json")
+    proof = _read_json(proof_path)
+    if not isinstance(proof, Mapping):
+        return False
+    proof_audit_path = _audit_path_from_proof(run_root, proof)
+    if proof_audit_path is not None and proof_audit_path.resolve() != audit_path.resolve():
+        return False
+    return (
+        proof.get("schema_version") == "flowpilot.router_owned_check_proof.v1"
+        and proof.get("check_name") == "packet_group_reviewer_audit"
+        and proof.get("check_owner") == "flowpilot_router"
+        and proof.get("source_kind") == "packet_runtime_hash"
+        and proof.get("self_attested_ai_claims_accepted_as_proof") is False
+        and proof.get("audit_sha256") == _sha256_file(audit_path)
+        and (
+            not audit.get("run_id")
+            or not proof.get("run_id")
+            or str(audit.get("run_id")) == str(proof.get("run_id"))
+        )
+    )
+
+
+def _trusted_packet_authority_audit_ids(run_root: Path) -> set[str]:
+    trusted: set[str] = set()
+    candidates = {
+        run_root / "material" / "material_packet_review_audit.json",
+        run_root / "research" / "research_packet_review_audit.json",
+        *run_root.rglob("current_node_packet_runtime_audit.json"),
+    }
+    for audit_path in sorted(candidates):
+        audit = _read_json(audit_path)
+        if not isinstance(audit, Mapping):
+            continue
+        if audit.get("schema_version") != "flowpilot.packet_group_reviewer_audit.v1":
+            continue
+        if audit.get("passed") is not True or audit.get("overall_passed") is not True:
+            continue
+        if audit.get("self_attested_ai_claims_accepted_as_proof") is not False:
+            continue
+        if audit.get("blockers") not in ([], None):
+            continue
+        if not _router_owned_packet_audit_proof_valid(run_root, audit_path, audit):
+            continue
+        for row in _iter_dicts(audit.get("audits") or []):
+            packet_id = str(row.get("packet_id") or "").strip()
+            if (
+                packet_id
+                and row.get("passed") is True
+                and row.get("blockers") in ([], None)
+                and row.get("packet_ledger_record_found") is True
+                and row.get("result_envelope_checked") is True
+                and row.get("result_envelope_completed_by_role_checked") is True
+                and row.get("completed_agent_id_belongs_to_role") is True
+            ):
+                trusted.add(packet_id)
+    return trusted
+
+
+def _packet_has_result_or_decision_evidence(packet: Mapping[str, Any]) -> bool:
+    return bool(
+        _dict_get(packet, ["result_body_hash"])
+        or _dict_get(packet, ["result_envelope", "body_hash"])
+        or _dict_get(packet, ["result_envelope", "result_body_hash"])
+        or _dict_get(packet, ["decision_body_hash"])
+        or _dict_get(packet, ["decision_envelope", "body_hash"])
+        or _dict_get(packet, ["decision_envelope", "decision_body_hash"])
+    )
+
+
+def _packet_authority_unchecked(packet_ledger: Any, *, trusted_packet_ids: set[str] | None = None) -> bool:
     packets = _dict_get(packet_ledger, ["packets"], {})
     for packet in _iter_dicts(packets.values() if isinstance(packets, Mapping) else packets):
-        has_body = bool(
-            _dict_get(packet, ["body_hash"])
-            or _dict_get(packet, ["packet_body_hash"])
-            or _dict_get(packet, ["result_body_hash"])
-            or _dict_get(packet, ["result_envelope", "body_hash"])
-            or _dict_get(packet, ["decision_body_hash"])
-        )
-        if not has_body:
+        if not _packet_has_result_or_decision_evidence(packet):
+            continue
+        packet_id = str(packet.get("packet_id") or "").strip()
+        if trusted_packet_ids is not None and packet_id in trusted_packet_ids:
             continue
         if _dict_get(packet, ["result_envelope", "completed_agent_id_belongs_to_role"], True) is False:
             return True
@@ -911,7 +1004,11 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
     collapsed_repair = _collapsed_repair_events(repair_index)
     parent_leaf_event = _parent_repair_uses_leaf_event(repair_index, frontier)
     parent_child_conformant = _parent_child_lifecycle_conformant(active_route, frontier, router_state)
-    packet_authority_unchecked = _packet_authority_unchecked(packet_ledger)
+    trusted_packet_ids = _trusted_packet_authority_audit_ids(run_root)
+    packet_authority_unchecked = _packet_authority_unchecked(
+        packet_ledger,
+        trusted_packet_ids=trusted_packet_ids,
+    )
     authorities_agree = _authorities_agree(frontier, packet_ledger, status_summary)
     control_registry_registered = isinstance(control_transaction_registry, Mapping)
     control_registry_rows = (

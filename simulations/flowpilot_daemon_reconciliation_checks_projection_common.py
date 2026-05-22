@@ -246,6 +246,7 @@ def _user_intake_router_released(packet: dict[str, Any] | None, packet_ledger: d
     released_statuses = {
         "envelope-relayed",
         "packet-body-opened-by-recipient",
+        "result-body-opened-by-recipient",
         "result-returned",
         "result-returned-to-router",
         "stopped_by_user",

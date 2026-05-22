@@ -18,6 +18,7 @@ import flowpilot_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 import role_output_runtime_cli  # noqa: E402
 import role_output_runtime_contracts  # noqa: E402
+import role_output_runtime_controller_boundary  # noqa: E402
 import role_output_runtime_envelopes  # noqa: E402
 import role_output_runtime_schema  # noqa: E402
 
@@ -516,6 +517,27 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 ],
             },
         )
+
+        body = role_output_runtime_controller_boundary.build_controller_boundary_confirmation_body(
+            root,
+            action_id="controller-action-1",
+            source_action_id="router-action-1",
+        )
+        self.assertEqual(body["controller_action_id"], "controller-action-1")
+        self.assertEqual(body["source_action_id"], "router-action-1")
+        self.assertEqual(body["boundary_constraints"], role_output_runtime.controller_boundary_constraints())
+
+        direct_envelope = role_output_runtime_controller_boundary.submit_controller_boundary_confirmation(
+            root,
+            agent_id="agent-controller-boundary-child",
+            submit_output=role_output_runtime_envelopes.submit_output,
+            action_id="controller-action-child",
+            source_action_id="router-action-child",
+            output_path=".flowpilot/runs/run-test/startup/controller_boundary_confirmation_child.json",
+        )
+        direct_body = self.read_json(root / direct_envelope["body_ref"]["path"])
+        self.assertEqual(direct_body["controller_action_id"], "controller-action-child")
+        self.assertEqual(direct_body["source_action_id"], "router-action-child")
 
         envelope = role_output_runtime.submit_controller_boundary_confirmation(
             root,

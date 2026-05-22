@@ -38,6 +38,30 @@ run_meta_checks = load_module(
 
 
 class FlowPilotThinParentChecksTests(unittest.TestCase):
+    def test_live_projection_failure_does_not_block_static_parent_evidence(self) -> None:
+        payload = {
+            "ok": False,
+            "safe_graph": {"ok": True, "state_count": 3, "edge_count": 2},
+            "progress": {"ok": True},
+            "hazard_checks": {"ok": True},
+            "live_run_projection": {"ok": False, "findings": [{"id": "active_run"}]},
+        }
+        counts = thin_parent_checks._walk_counts(payload)
+
+        self.assertFalse(counts["ok"])
+        self.assertTrue(thin_parent_checks._parent_evidence_ok(payload, counts))
+
+    def test_non_live_child_failure_still_blocks_parent_evidence(self) -> None:
+        payload = {
+            "ok": False,
+            "safe_graph": {"ok": False, "state_count": 3, "edge_count": 2},
+            "progress": {"ok": True},
+            "live_run_projection": {"ok": False, "findings": [{"id": "active_run"}]},
+        }
+        counts = thin_parent_checks._walk_counts(payload)
+
+        self.assertFalse(thin_parent_checks._parent_evidence_ok(payload, counts))
+
     def test_meta_thin_parent_result_is_small_and_release_bounded(self) -> None:
         result = thin_parent_checks.build_thin_parent_result("meta")
 

@@ -1,0 +1,32 @@
+{
+  "accounting_decision": "layered_boundary_proof_green",
+  "accounting_report": {
+    "decision": "layered_boundary_proof_green",
+    "findings": [],
+    "ok": true,
+    "parent_model_id": "flowpilot-full-flowguard-coverage",
+    "proof_id": "flowpilot-layered-boundary-accounting",
+    "summary": "OK: layered_boundary_proof parent=flowpilot-full-flowguard-coverage decision=layered_boundary_proof_green findings=0"
+  },
+  "claim_boundary": "layered_accounting_ok means FlowPilot has current parent/child coverage accounting and leaf matrix proof for the inventory boundary. full_leaf_cartesian_ok is stricter and remains false while scoped replay, skipped evidence, hard runner findings, deferred StructureMesh split, or alignment full_coverage_ok=false remain.",
+  "full_leaf_cartesian_ok": true,
+  "layered_accounting_ok": true,
+  "ok": true,
+  "requirement_blockers": {
+    "alignment_full_coverage_ok": true,
+    "blocking_gap_counts": {},
+    "deferred_structure_split_count": 0,
+    "deferred_structure_split_surfaces": []
+  },
+  "requirement_decision": "layered_boundary_proof_green",
+  "requirement_report": {
+    "decision": "layered_boundary_proof_green",
+    "findings": [],
+    "ok": true,
+    "parent_model_id": "flowpilot-full-flowguard-coverage",
+    "proof_id": "flowpilot-full-leaf-cartesian-requirement",
+    "summary": "OK: layered_boundary_proof parent=flowpilot-full-flowguard-coverage decision=layered_boundary_proof_green findings=0"
+  },
+  "result_type": "flowpilot_layered_boundary_proof",
+  "schema_version": "flowpilot.layered_boundary_proof.v1"
+}

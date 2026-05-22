@@ -56,6 +56,73 @@ SPECIALIZED = {
     "startup_pm_review",
     "user_flow_diagram",
 }
+SUPPORTING_COVERAGE = {
+    "barrier_equivalence",
+    "command_refinement",
+    "flowpilot_card_envelope",
+    "flowpilot_control_plane_ledger_consolidation",
+    "flowpilot_control_plane_state_consistency",
+    "flowpilot_controller_break_glass",
+    "flowpilot_controller_patrol",
+    "flowpilot_controller_process_aside",
+    "flowpilot_controller_receipt_evidence_fold",
+    "flowpilot_current_scope_pre_review_reconciliation",
+    "flowpilot_daemon_controller_actions",
+    "flowpilot_daemon_liveness",
+    "flowpilot_daemon_microstep_lifecycle",
+    "flowpilot_daemon_reconciliation",
+    "flowpilot_daemon_startup_lock",
+    "flowpilot_daemon_terminal_projection",
+    "flowpilot_daemon_wait_liveness",
+    "flowpilot_decision_liveness",
+    "flowpilot_derived_view_prompt_boundary",
+    "flowpilot_deterministic_startup_bootstrap",
+    "flowpilot_dispatch_recipient_gate",
+    "flowpilot_dynamic_return_path",
+    "flowpilot_event_contract",
+    "flowpilot_event_envelope_transfer",
+    "flowpilot_event_idempotency",
+    "flowpilot_handoff_artifact_protocol",
+    "flowpilot_material_artifact_map",
+    "flowpilot_model_driven_recursive_route",
+    "flowpilot_modeling_coverage",
+    "flowpilot_optimization_proposal",
+    "flowpilot_packet_open_authority",
+    "flowpilot_parallel_packet_batch",
+    "flowpilot_parallel_run_isolation",
+    "flowpilot_parent_child_lifecycle",
+    "flowpilot_pm_package_absorption",
+    "flowpilot_pm_suggestion_disposition",
+    "flowpilot_process_liveness",
+    "flowpilot_prompt_boundary",
+    "flowpilot_recursive_closure_reconciliation",
+    "flowpilot_recursive_decomposition",
+    "flowpilot_requirement_traceability",
+    "flowpilot_reviewer_only_gate",
+    "flowpilot_role_output_runtime",
+    "flowpilot_role_recovery",
+    "flowpilot_route_display",
+    "flowpilot_route_hard_gate",
+    "flowpilot_route_mutation_activation",
+    "flowpilot_router_error_recovery",
+    "flowpilot_router_internal_mechanics",
+    "flowpilot_router_reconciliation_branch_pruning",
+    "flowpilot_runtime_closure",
+    "flowpilot_shared_maintenance_log",
+    "flowpilot_slow_test_contract",
+    "flowpilot_startup_intake_ui",
+    "flowpilot_startup_optimization",
+    "flowpilot_structural_refactor",
+    "flowpilot_terminal_state_monotonicity",
+    "flowpilot_terminal_summary",
+    "flowpilot_test_obligation_ownership",
+    "flowpilot_test_tiering",
+    "flowpilot_two_table_async_scheduler",
+    "long_check_observability",
+    "proof_carrying",
+    "router_action_contract",
+    "router_next_recipient",
+}
 
 
 def _runner_key(path: Path) -> str:
@@ -74,7 +141,9 @@ def _coverage_tier(key: str) -> str:
         return "abstract_strong_live_mapping_weaker"
     if key in SPECIALIZED:
         return "specialized_assertion_or_local_hazard"
-    return "unclassified_or_supporting_model"
+    if key in SUPPORTING_COVERAGE:
+        return "supporting_model_owned"
+    return "unclassified_model_tier"
 
 
 def _script_text(path: Path) -> str:
@@ -116,6 +185,28 @@ def _read_only_runnable(text: str) -> bool:
     if "default=RESULTS_PATH" in text or "default=str(RESULTS_PATH)" in text:
         return False
     return "if args.json_out" in text
+
+
+def _delegated_impl_text(path: Path, text: str) -> str:
+    match = re.search(r"import\s+([A-Za-z0-9_]+_runner_impl)\s+as\s+_impl", text)
+    if not match:
+        return ""
+    impl_path = path.with_name(match.group(1) + ".py")
+    try:
+        return impl_path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return ""
+
+
+def _supports_argument(path: Path, text: str, argument: str) -> bool:
+    quoted = re.escape(argument)
+    direct = re.search(rf"add_argument\(\s*['\"]{quoted}['\"]", text)
+    if direct:
+        return True
+    impl_text = _delegated_impl_text(path, text)
+    if not impl_text:
+        return False
+    return bool(re.search(rf"add_argument\(\s*['\"]{quoted}['\"]", impl_text))
 
 
 def _parse_json_text(text: str) -> tuple[dict[str, Any] | None, str | None]:
@@ -224,7 +315,10 @@ def _collect_findings(
 
 def _classify_finding(finding: dict[str, Any]) -> str:
     section = str(finding.get("section") or "")
+    section_path = str(finding.get("section_path") or "")
     severity = str(finding.get("severity") or "").lower()
+    if "known_bad_sanity_checks" in section_path:
+        return "boundary_expected_or_informational"
     if section == "live":
         return "modeled_current_live_hit_fix_runtime_or_current_state"
     if section == "source":
@@ -236,8 +330,10 @@ def _classify_finding(finding: dict[str, Any]) -> str:
 
 def _run_runner(path: Path, text: str, timeout_seconds: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     command = [sys.executable, str(path.relative_to(ROOT))]
-    if 'add_argument("--json"' in text:
+    if _supports_argument(path, text, "--json"):
         command.append("--json")
+    if _supports_argument(path, text, "--no-write-results"):
+        command.append("--no-write-results")
     try:
         completed = subprocess.run(
             command,

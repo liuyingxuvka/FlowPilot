@@ -220,9 +220,19 @@ def _diagnostic_gap_codes(surface: dict[str, Any]) -> list[str]:
         codes.append("internal_only_test")
     if surface.get("evidence_status") in STALE_EVIDENCE_STATUSES:
         codes.append("stale_evidence")
-    if surface.get("line_count", 0) > int(surface.get("split_threshold", 10**9)):
+    if _needs_structure_split_gap(surface):
         codes.append("needs_structure_split")
     return [code for code in DIAGNOSTIC_GAP_CODES if code in codes]
+
+
+def _needs_structure_split_gap(surface: dict[str, Any]) -> bool:
+    if surface.get("line_count", 0) <= int(surface.get("split_threshold", 10**9)):
+        return False
+    return str(surface.get("structure_split_status") or "") != "explicitly_skipped"
+
+
+def _is_explicit_structure_split_skip(surface: dict[str, Any]) -> bool:
+    return str(surface.get("structure_split_status") or "") == "explicitly_skipped"
 
 
 def _diagnostic_surface_owner(surface: dict[str, Any]) -> str:
@@ -1012,6 +1022,9 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
     deferred_structure_findings = [
         finding for finding in findings if _is_deferred_structure_finding(finding)
     ]
+    explicitly_skipped_structure_surfaces = [
+        surface for surface in surfaces if _is_explicit_structure_split_skip(surface)
+    ]
     actionable_summary = _actionable_summary(findings)
     return {
         "ok": all(item["ok"] for item in known_bad),
@@ -1029,6 +1042,21 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
             unresolved_non_deferred_findings
         ),
         "deferred_structure_split_count": len(deferred_structure_findings),
+        "explicitly_skipped_structure_split_count": len(
+            explicitly_skipped_structure_surfaces
+        ),
+        "explicitly_skipped_structure_split_surfaces": [
+            {
+                "surface_id": str(surface.get("surface_id") or ""),
+                "path": str(surface.get("path") or ""),
+                "safe_split_class": str(surface.get("safe_split_class") or ""),
+                "split_reason": str(surface.get("split_reason") or ""),
+                "structure_split_skip_reason": str(
+                    surface.get("structure_split_skip_reason") or ""
+                ),
+            }
+            for surface in explicitly_skipped_structure_surfaces
+        ],
         "gap_counts_by_severity": _finding_counts_by_field(findings, "severity"),
         "gap_counts_by_repair_type": _finding_counts_by_field(findings, "repair_type"),
         "gap_counts_by_release_relevance": _finding_counts_by_field(findings, "release_relevance"),

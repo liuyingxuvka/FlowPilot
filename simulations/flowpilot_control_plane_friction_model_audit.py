@@ -158,6 +158,21 @@ def _material_packet_envelope_paths(run_root: Path, material_scan_packets: objec
                 paths.add(".flowpilot/runs/" + run_root.name + "/" + envelope_path.relative_to(run_root).as_posix())
     return sorted(paths)
 
+def _background_running_projection_ids(snapshot: object) -> list[str]:
+    if not isinstance(snapshot, dict):
+        return []
+    raw_entries = snapshot.get("background_running_index_entries")
+    if raw_entries is None and isinstance(snapshot.get("authority"), dict):
+        raw_entries = snapshot["authority"].get("background_running_index_entries")
+    background_running_entries: list[str] = []
+    if isinstance(raw_entries, list):
+        for item in raw_entries:
+            if isinstance(item, dict) and item.get("run_id"):
+                background_running_entries.append(str(item.get("run_id")))
+            elif isinstance(item, str):
+                background_running_entries.append(item)
+    return background_running_entries
+
 def _audit_material_scan_dispatch_integrity(
     project_root: Path,
     run_root: Path,
@@ -271,7 +286,23 @@ def _audit_material_scan_dispatch_integrity(
         spec_body_path = str(spec.get("body_path") or "").replace("\\", "/")
         spec_body_hash = str(spec.get("body_hash") or "")
         envelope_body_hash = str(envelope.get("body_hash") or "")
-        packet_canonical_ok = not spec or (
+        spec_body_text = ""
+        spec_body_hash_valid = False
+        if spec_body_path and spec_body_hash:
+            spec_body_text, _spec_body_error = _read_text(project_root / spec_body_path)
+            spec_body_hash_valid = (
+                bool(spec_body_text)
+                and hashlib.sha256(spec_body_text.encode("utf-8")).hexdigest() == spec_body_hash
+            )
+        spec_body_materialized = (
+            spec_body_hash_valid
+            and bool(envelope_body_hash)
+            and spec_body_path != body_rel
+            and spec_body_text.strip() in body_text
+            and packet_contract_ok
+            and packet_write_target_ok
+        )
+        packet_canonical_ok = not spec or spec_body_materialized or (
             spec_body_path == body_rel and spec_body_hash == envelope_body_hash
         )
         canonical_body_ok = canonical_body_ok and packet_canonical_ok
@@ -293,6 +324,8 @@ def _audit_material_scan_dispatch_integrity(
                 "pm_spec_body_path": spec_body_path or None,
                 "pm_spec_body_hash": spec_body_hash or None,
                 "envelope_body_hash": envelope_body_hash or None,
+                "pm_spec_body_hash_valid": spec_body_hash_valid,
+                "pm_spec_body_materialized": spec_body_materialized,
                 "single_canonical_body": packet_canonical_ok,
             }
         )
@@ -757,21 +790,28 @@ def _audit_stale_repair_lane(router_state: object, frontier: object) -> dict[str
         "main_flow_advanced": main_flow_advanced,
     }
 
-def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
-    source_path = project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+def _external_event_contracts_from_source(source_path: Path) -> tuple[dict[str, dict[str, str]], str | None]:
     try:
         source = source_path.read_text(encoding="utf-8")
         tree = ast.parse(source)
     except OSError as exc:
-        return {}, f"router source unreadable: {exc}"
+        return {}, f"external event source unreadable: {exc}"
     except SyntaxError as exc:
-        return {}, f"router source unparsable: {exc}"
+        return {}, f"external event source unparsable: {exc}"
     for node in tree.body:
         value: ast.AST | None = None
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "EXTERNAL_EVENTS":
             value = node.value
+        elif (
+            isinstance(node, ast.AnnAssign)
+            and isinstance(node.target, ast.Name)
+            and node.target.id == "EXTERNAL_EVENT_DATA_BY_PHASE"
+        ):
+            value = node.value
         elif isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "EXTERNAL_EVENTS" for target in node.targets
+            isinstance(target, ast.Name)
+            and target.id in {"EXTERNAL_EVENTS", "EXTERNAL_EVENT_DATA_BY_PHASE"}
+            for target in node.targets
         ):
             value = node.value
         if value is None:
@@ -781,13 +821,37 @@ def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict
         except (ValueError, SyntaxError) as exc:
             return {}, f"EXTERNAL_EVENTS is not literal-evaluable: {exc}"
         if not isinstance(parsed, dict):
-            return {}, "EXTERNAL_EVENTS was not a dict"
+            return {}, "external event definition was not a dict"
+        if parsed and all(isinstance(item, dict) for item in parsed.values()):
+            first_value = next(iter(parsed.values()))
+            if isinstance(first_value, dict) and all(isinstance(item, dict) for item in first_value.values()):
+                flattened: dict[str, Any] = {}
+                for phase_events in parsed.values():
+                    if isinstance(phase_events, dict):
+                        flattened.update(phase_events)
+                parsed = flattened
         contracts: dict[str, dict[str, str]] = {}
         for event, meta in parsed.items():
             if isinstance(event, str) and isinstance(meta, dict):
                 contracts[event] = {str(key): str(item) for key, item in meta.items() if isinstance(item, str)}
         return contracts, None
-    return {}, "EXTERNAL_EVENTS definition not found"
+    return {}, "external event definition not found"
+
+
+def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
+    asset_root = project_root / "skills" / "flowpilot" / "assets"
+    for source_path in (
+        asset_root / "flowpilot_router.py",
+        asset_root / "flowpilot_router_protocol_external_events.py",
+        asset_root / "flowpilot_router_protocol_external_event_registry.py",
+        asset_root / "flowpilot_router_protocol_external_event_data.py",
+    ):
+        contracts, error = _external_event_contracts_from_source(source_path)
+        if contracts:
+            return contracts, None
+        if error and source_path.name == "flowpilot_router.py":
+            router_error = error
+    return {}, router_error if "router_error" in locals() else "EXTERNAL_EVENTS definition not found"
 
 def _audit_expected_role_decision_event_prereqs(router_state: object, project_root: Path) -> dict[str, object]:
     if not isinstance(router_state, dict):
@@ -1746,13 +1810,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         for item in index.get("runs", []):
             if isinstance(item, dict) and item.get("status") == "running" and item.get("run_id") != run_id:
                 non_current_running_entries.append(str(item.get("run_id")))
-    background_running_entries: list[str] = []
-    if isinstance(snapshot, dict):
-        for item in snapshot.get("background_running_index_entries", []):
-            if isinstance(item, dict) and item.get("run_id"):
-                background_running_entries.append(str(item.get("run_id")))
-            elif isinstance(item, str):
-                background_running_entries.append(item)
+    background_running_entries = _background_running_projection_ids(snapshot)
     missing_background_projection = sorted(
         set(non_current_running_entries) - set(background_running_entries)
     )

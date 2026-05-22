@@ -1,0 +1,459 @@
+{
+  "schema_version": "flowpilot.full_model_replay_evidence.v1",
+  "result_type": "flowpilot_full_model_replay_evidence",
+  "claim_boundary": "This manifest closes replay/scoped-evidence inventory gaps only when a skipped model-runner check is covered by named ordinary runtime or source-audited evidence. It does not hide runner failures, live findings, or source findings.",
+  "entries": [
+    {
+      "runner": "flowpilot_control_plane_friction",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["control_plane.contracts"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "control_plane.contracts",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
+          "scope": "control-plane read/write boundaries and blocker delivery are covered by ordinary contract tests"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_controller_patrol",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_foreground.controller_patrol"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_foreground.controller_patrol",
+          "path": "tests/test_flowpilot_router_runtime_foreground.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_foreground",
+          "scope": "foreground Controller patrol timers and standby transitions replay the concrete runtime command surface"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_cross_plane_friction",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["control_plane.contracts", "role_output.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "control_plane.contracts",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
+          "scope": "control-plane envelope, receipt, and blocker contracts"
+        },
+        {
+          "evidence_id": "role_output.runtime",
+          "path": "tests/test_flowpilot_role_output_runtime.py",
+          "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+          "scope": "role-output submission boundaries across role and router planes"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_decision_liveness",
+      "covered_skipped_checks": {
+        "production_conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_foreground.controller_decisions"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_foreground.controller_decisions",
+          "path": "tests/test_flowpilot_router_runtime_foreground.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_foreground",
+          "scope": "foreground Controller decision waits, liveness probes, and no-output reissue branches"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_deterministic_startup_bootstrap",
+      "covered_skipped_checks": {
+        "meta_capability_models": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["meta.thin_parent", "capability.thin_parent", "startup_daemon.bootstrap"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "meta.thin_parent",
+          "path": "simulations/run_meta_checks.py",
+          "command": "python simulations/run_meta_checks.py",
+          "scope": "Meta parent model evidence for startup process boundaries"
+        },
+        {
+          "evidence_id": "capability.thin_parent",
+          "path": "simulations/run_capability_checks.py",
+          "command": "python simulations/run_capability_checks.py",
+          "scope": "Capability parent model evidence for FlowGuard route capability boundaries"
+        },
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "deterministic startup bootstrap and capability snapshot runtime evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_gate_policy_audit",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["startup_daemon.bootstrap", "control_plane.contracts"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "startup gate runtime boundaries"
+        },
+        {
+          "evidence_id": "control_plane.contracts",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
+          "scope": "control-plane gate and blocker contracts"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_persistent_router_daemon",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["startup_daemon.bootstrap", "router_foreground.controller_patrol"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "daemon startup, lock, and scheduler runtime evidence"
+        },
+        {
+          "evidence_id": "router_foreground.controller_patrol",
+          "path": "tests/test_flowpilot_router_runtime_foreground.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_foreground",
+          "scope": "foreground daemon heartbeat and patrol evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_resume",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_resume.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_resume.runtime",
+          "path": "tests/router_runtime/resume.py",
+          "command": "python -m unittest tests.router_runtime.resume",
+          "scope": "resume state, role recovery, and blocked recovery receipt replay"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_role_output_runtime",
+      "covered_skipped_checks": {
+        "semantic_sufficiency": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["role_output.runtime", "output_contract.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "role_output.runtime",
+          "path": "tests/test_flowpilot_role_output_runtime.py",
+          "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+          "scope": "mechanical role-output runtime authority and rejection evidence"
+        },
+        {
+          "evidence_id": "output_contract.runtime",
+          "path": "tests/test_flowpilot_output_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_output_contracts",
+          "scope": "semantic packet/output contract binding and wrong-recipient rejection"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_role_recovery",
+      "covered_skipped_checks": {
+        "production_conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_resume.runtime", "startup_daemon.bootstrap"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_resume.runtime",
+          "path": "tests/router_runtime/resume.py",
+          "command": "python -m unittest tests.router_runtime.resume",
+          "scope": "role recovery resume replay and recovery receipt reclaim"
+        },
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "startup role recovery scheduling evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_route_mutation_activation",
+      "covered_skipped_checks": {
+        "production_conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["route_mutation.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "route_mutation.runtime",
+          "path": "tests/test_flowpilot_router_runtime_route_mutation.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
+          "scope": "route mutation topology, stale evidence, and final-ledger precondition runtime evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_router_internal_mechanics",
+      "covered_skipped_checks": {
+        "meta_capability_models": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["meta.thin_parent", "capability.thin_parent", "router_foreground.controller_decisions"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "meta.thin_parent",
+          "path": "simulations/run_meta_checks.py",
+          "command": "python simulations/run_meta_checks.py",
+          "scope": "Meta parent evidence for internal router mechanics"
+        },
+        {
+          "evidence_id": "capability.thin_parent",
+          "path": "simulations/run_capability_checks.py",
+          "command": "python simulations/run_capability_checks.py",
+          "scope": "Capability parent evidence for internal router mechanics"
+        },
+        {
+          "evidence_id": "router_foreground.controller_decisions",
+          "path": "tests/test_flowpilot_router_runtime_foreground.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_foreground",
+          "scope": "foreground mechanical action and standby evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_router_loop",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_packets.runtime", "route_mutation.runtime", "router_terminal.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_packets.runtime",
+          "path": "tests/test_flowpilot_router_runtime_packets.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
+          "scope": "packet/result loop runtime evidence"
+        },
+        {
+          "evidence_id": "route_mutation.runtime",
+          "path": "tests/test_flowpilot_router_runtime_route_mutation.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
+          "scope": "route mutation loop replay evidence"
+        },
+        {
+          "evidence_id": "router_terminal.runtime",
+          "path": "tests/test_flowpilot_router_runtime_terminal.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+          "scope": "terminal closure loop runtime evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_startup_control",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["startup_daemon.bootstrap", "startup_runtime.ui"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "startup controller and deterministic bootstrap runtime evidence"
+        },
+        {
+          "evidence_id": "startup_runtime.ui",
+          "path": "tests/test_flowpilot_router_startup_runtime.py",
+          "command": "python -m unittest tests.test_flowpilot_router_startup_runtime",
+          "scope": "startup intake UI/runtime smoke evidence where supported"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_terminal_state_monotonicity",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_terminal.runtime", "terminal_ledger.source_entries"]
+        },
+        "sealed_body_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["terminal_ledger.source_entries"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_terminal.runtime",
+          "path": "tests/test_flowpilot_router_runtime_terminal.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
+          "scope": "terminal state and closure runtime evidence"
+        },
+        {
+          "evidence_id": "terminal_ledger.source_entries",
+          "path": "tests/test_flowpilot_terminal_ledger_source_entries.py",
+          "command": "python -m unittest tests.test_flowpilot_terminal_ledger_source_entries",
+          "scope": "terminal ledger source-entry evidence without sealed body reads"
+        }
+      ]
+    },
+    {
+      "runner": "output_contract",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["output_contract.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "output_contract.runtime",
+          "path": "tests/test_flowpilot_output_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_output_contracts",
+          "scope": "output contract packet, envelope, body, ledger, and rejection evidence"
+        }
+      ]
+    },
+    {
+      "runner": "protocol_contract_conformance",
+      "covered_skipped_checks": {
+        "production_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["control_plane.contracts", "output_contract.runtime"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "control_plane.contracts",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_control_plane_contracts",
+          "scope": "protocol conformance over control-plane contracts"
+        },
+        {
+          "evidence_id": "output_contract.runtime",
+          "path": "tests/test_flowpilot_output_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_output_contracts",
+          "scope": "protocol conformance over output contracts"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_repair_transaction",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_control_blockers.repair_transactions", "full_diagnostic.repair_transaction_facade"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_control_blockers.repair_transactions",
+          "path": "tests/test_flowpilot_router_runtime_control_blockers.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
+          "scope": "repair transaction creation, follow-up blockers, PM repair decisions, and registered rerun runtime evidence"
+        },
+        {
+          "evidence_id": "full_diagnostic.repair_transaction_facade",
+          "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_event_wait_repair_external_contracts",
+          "scope": "repair transaction child/facade ownership boundary evidence"
+        }
+      ]
+    },
+    {
+      "runner": "flowpilot_route_display",
+      "covered_skipped_checks": {
+        "production_mutation": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_foreground.route_display", "router_cards.display_surface", "meta_route_sign.display_contract"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_foreground.route_display",
+          "path": "tests/test_flowpilot_router_runtime_foreground.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_foreground",
+          "scope": "display-plan synchronization, current status summary, and route-display refresh runtime evidence"
+        },
+        {
+          "evidence_id": "router_cards.display_surface",
+          "path": "tests/test_flowpilot_router_runtime_cards.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_cards",
+          "scope": "user-dialog display status and reviewer display-evidence runtime evidence"
+        },
+        {
+          "evidence_id": "meta_route_sign.display_contract",
+          "path": "tests/test_flowpilot_meta_route_sign.py",
+          "command": "python -m unittest tests.test_flowpilot_meta_route_sign",
+          "scope": "route-sign display contract evidence"
+        }
+      ]
+    },
+    {
+      "runner": "router_action_contract",
+      "covered_skipped_checks": {
+        "conformance_replay": {
+          "status": "covered_elsewhere",
+          "evidence_ids": ["router_owner.contracts", "startup_daemon.bootstrap"]
+        }
+      },
+      "evidence": [
+        {
+          "evidence_id": "router_owner.contracts",
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "command": "python -m unittest tests.test_flowpilot_router_owner_contracts",
+          "scope": "router action construction and ownership contract evidence"
+        },
+        {
+          "evidence_id": "startup_daemon.bootstrap",
+          "path": "tests/test_flowpilot_router_runtime_startup_daemon.py",
+          "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
+          "scope": "startup action payload and receipt runtime evidence"
+        }
+      ]
+    }
+  ]
+}

@@ -7,27 +7,13 @@ dependency so shared state writers and public entrypoints remain compatible.
 
 from __future__ import annotations
 
-import argparse
-import ast
-import hashlib
-import json
-import os
-import shutil
-import subprocess
-import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 from types import ModuleType
-from typing import Any, Callable, Iterable
+from typing import Any
 
-import card_runtime
-import flowpilot_runtime_closure
-import flowpilot_user_flow_diagram
-import packet_runtime
-import role_output_runtime
-from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
-from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
+from flowpilot_router_errors import RouterError
+from flowpilot_router_controller_scheduler_standby_policy import *
 
 _DEFAULT_SENTINEL = object()
 
@@ -135,47 +121,22 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
     run_lifecycle = str(run_state.get('status') or '')
     terminal = daemon_status.get('lifecycle_status') == 'terminal_stopped' or bool(daemon_status.get('run_lifecycle_status')) or run_lifecycle in RUN_TERMINAL_STATUSES
     user_required = bool(pending_action.get('requires_user') or pending_action.get('requires_user_dialog_display_confirmation'))
-    if terminal:
-        standby_state = 'terminal'
-    elif user_required:
-        standby_state = 'user_input_required'
-    elif daemon_liveness_check_required:
-        standby_state = 'daemon_liveness_check_required'
-    elif pending_action_ids:
-        standby_state = 'controller_action_ready'
-    elif (current_wait.get('blocker') or {}).get('required'):
-        standby_state = 'wait_target_blocker_required'
-    elif (current_wait.get('reissue') or {}).get('required'):
-        standby_state = 'wait_target_reissue_required'
-    elif (current_wait.get('reminder') or {}).get('due') or (current_wait.get('liveness_probe') or {}).get('due') or (current_wait.get('controller_local_self_audit') or {}).get('required'):
-        standby_state = 'wait_target_check_due'
-    elif current_wait.get('waiting_for_role') or current_wait.get('action_type') == 'await_role_decision':
-        standby_state = 'waiting_for_role'
-    else:
-        standby_state = 'daemon_alive_no_controller_action'
-    controller_must_continue_standby = standby_state in {'waiting_for_role', 'daemon_alive_no_controller_action'}
-    controller_must_process_pending_action = standby_state == 'controller_action_ready'
-    controller_stop_allowed = standby_state == 'terminal'
-    wait_target_action_ready = standby_state in {'wait_target_check_due', 'wait_target_blocker_required', 'wait_target_reissue_required'}
-    foreground_turn_return_allowed = standby_state in {'terminal', 'user_input_required', 'daemon_liveness_check_required', 'wait_target_check_due', 'wait_target_blocker_required', 'wait_target_reissue_required'}
+    standby_state = _foreground_standby_state(
+        terminal=terminal,
+        user_required=user_required,
+        daemon_liveness_check_required=daemon_liveness_check_required,
+        pending_action_ids=pending_action_ids,
+        current_wait=current_wait,
+    )
+    standby_policy = _foreground_standby_policy(standby_state)
+    controller_must_continue_standby = bool(standby_policy['controller_must_continue_standby'])
+    controller_must_process_pending_action = bool(standby_policy['controller_must_process_pending_action'])
+    controller_stop_allowed = bool(standby_policy['controller_stop_allowed'])
+    wait_target_action_ready = bool(standby_policy['wait_target_action_ready'])
+    foreground_turn_return_allowed = bool(standby_policy['foreground_turn_return_allowed'])
     user_status_update_allowed = foreground_turn_return_allowed
-    controller_patrol_required = controller_must_continue_standby
-    if controller_must_process_pending_action:
-        foreground_required_mode = 'process_controller_action'
-    elif standby_state == 'wait_target_check_due':
-        foreground_required_mode = 'process_wait_target_check'
-    elif standby_state == 'wait_target_blocker_required':
-        foreground_required_mode = 'record_wait_target_blocker'
-    elif standby_state == 'wait_target_reissue_required':
-        foreground_required_mode = 'record_wait_target_no_output_reissue'
-    elif controller_must_continue_standby:
-        foreground_required_mode = 'watch_router_daemon'
-    elif standby_state == 'user_input_required':
-        foreground_required_mode = 'return_for_user_input'
-    elif standby_state == 'daemon_liveness_check_required':
-        foreground_required_mode = 'check_liveness'
-    else:
-        foreground_required_mode = 'terminal_return'
+    controller_patrol_required = bool(standby_policy['controller_patrol_required'])
+    foreground_required_mode = str(standby_policy['foreground_required_mode'])
     elapsed = max(0.0, time.monotonic() - start_monotonic)
     no_pending_controller_actions = not (pending_action_ids or waiting_action_ids)
     final_answer_allowed = bool(controller_stop_allowed and no_pending_controller_actions and (not controller_must_continue_standby) and (not controller_must_process_pending_action) and (not wait_target_action_ready))
@@ -336,6 +297,8 @@ __all__ = (
     '_ensure_continuous_standby_controller_action',
     '_foreground_standby_pending_action_ids',
     '_foreground_standby_waiting_action_ids',
+    '_foreground_standby_state',
+    '_foreground_standby_policy',
     '_build_foreground_controller_standby_snapshot',
     'foreground_controller_standby',
     'controller_patrol_timer',

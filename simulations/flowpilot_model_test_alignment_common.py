@@ -5,7 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Sequence
 
-from flowguard import CodeContract, ModelObligation, ModelTestAlignmentPlan, TestEvidence
+from flowguard import (
+    CodeBoundaryContract,
+    CodeBoundaryObservation,
+    CodeContract,
+    ModelObligation,
+    ModelTestAlignmentPlan,
+    TestEvidence,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -581,6 +588,19 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "peer_safety_status": "claimed_by_continue_flowpilot_structure_maintenance",
         "safe_split_class": "declarative_protocol_table",
         "recommended_next_action": "monitor_external_event_shard_contracts",
+    },
+    "flowpilot_router_protocol_external_event_data": {
+        "split_status": "skipped_split",
+        "split_reason": (
+            "phase_indexed_external_event_table_is_already_a_leaf_declarative_contract"
+        ),
+        "structure_split_status": "explicitly_skipped",
+        "structure_split_skip_reason": (
+            "table_only_no_functions_classes_state_writes_or_duplicate_effect_paths"
+        ),
+        "peer_safety_status": "skip_confirmed_by_structuremesh_review",
+        "safe_split_class": "declarative_protocol_table",
+        "recommended_next_action": "monitor_external_event_phase_table_contracts",
     },
     "flowpilot_router_payload_contracts": {
         "split_status": "completed_split",

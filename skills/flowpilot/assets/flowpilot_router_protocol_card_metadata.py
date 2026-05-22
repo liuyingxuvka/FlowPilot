@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 CARD_PHASE_BY_ID = {
+    "pm.material_scan": "material_scan",
+    "reviewer.material_sufficiency": "material_scan",
     "pm.product_architecture": "product_architecture",
     "product_officer.product_architecture_modelability": "product_architecture",
     "pm.product_behavior_model_decision": "product_architecture",

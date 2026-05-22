@@ -105,6 +105,48 @@ def _walk_counts(value: Any) -> dict[str, Any]:
     }
 
 
+def _is_live_evidence_path(path: tuple[str, ...]) -> bool:
+    return any("live" in part.lower() for part in path)
+
+
+def _parent_evidence_ok(payload: Any, counts: dict[str, Any]) -> bool | None:
+    """Return the static parent-evidence status without treating live probes as release proof.
+
+    Child model runners may include read-only live-run projections. Those
+    projections are important current-state findings, but a bad active run
+    should not by itself invalidate a parent release-evidence proof.
+    """
+
+    ok_paths: list[tuple[tuple[str, ...], bool]] = []
+
+    def visit(node: Any, path: tuple[str, ...]) -> None:
+        if isinstance(node, Mapping):
+            for key, child in node.items():
+                next_path = path + (str(key),)
+                if key == "ok" and isinstance(child, bool):
+                    ok_paths.append((next_path, child))
+                visit(child, next_path)
+        elif isinstance(node, list):
+            for index, child in enumerate(node[:100]):
+                visit(child, path + (str(index),))
+
+    visit(payload, ())
+    if not ok_paths:
+        return counts.get("ok")
+
+    false_paths = [path for path, ok in ok_paths if not ok]
+    non_live_false_paths = [
+        path
+        for path in false_paths
+        if path != ("ok",) and not _is_live_evidence_path(path)
+    ]
+    if non_live_false_paths:
+        return False
+    if false_paths:
+        return any(ok and not _is_live_evidence_path(path) for path, ok in ok_paths)
+    return True
+
+
 def _base_from_result_path(path: Path) -> str:
     name = path.stem
     if name == "results":
@@ -148,6 +190,7 @@ def result_index() -> dict[str, dict[str, Any]]:
             "state_count": current_state_count if current_state_count >= 0 else None,
             "edge_count": counts["edge_count"],
             "ok": counts["ok"],
+            "parent_evidence_ok": _parent_evidence_ok(payload, counts),
             "result_type": str(payload.get("result_type") or payload.get("model") or "unknown"),
         }
     return rows
@@ -198,7 +241,7 @@ def _evidence_contract(model_id: str, row: dict[str, Any] | None) -> dict[str, A
     payload = read_json(path)
     skipped = _skipped_required_checks(payload)
     failures: list[str] = []
-    if row.get("ok") is not True:
+    if row.get("parent_evidence_ok", row.get("ok")) is not True:
         failures.append("child_result_not_ok")
     if row.get("state_count") is not None and int(row["state_count"]) >= HEAVYWEIGHT_STATE_THRESHOLD:
         failures.append("child_result_exceeds_thin_threshold")

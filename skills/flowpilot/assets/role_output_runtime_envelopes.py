@@ -25,6 +25,7 @@ from role_output_runtime_progress import (
     default_role_output_status_packet_path,
     write_output_progress_status,
 )
+import role_output_runtime_controller_boundary as controller_boundary
 from role_output_runtime_schema import (
     CONTROLLER_BOUNDARY_CONFIRMATION_EVENT,
     CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE,
@@ -334,29 +335,12 @@ def build_controller_boundary_confirmation_body(
     action_id: str | None = None,
     source_action_id: str | None = None,
 ) -> dict[str, Any]:
-    resolved_run_id, run_root = _run_paths(project_root, run_id)
-    sources = _controller_boundary_sources(project_root, run_root)
-    body = {
-        "schema_version": CONTROLLER_BOUNDARY_CONFIRMATION_SCHEMA,
-        "run_id": resolved_run_id,
-        "event": CONTROLLER_BOUNDARY_CONFIRMATION_EVENT,
-        "confirmed_by_role": "controller",
-        "confirmation_source": "router_delivered_controller_core",
-        "controller_action_id": str(action_id or ""),
-        "source_action_id": str(source_action_id or ""),
-        "controller_core_card_id": "controller.core",
-        "controller_core_path": _project_relative(project_root, sources["controller_core_path"]),
-        "controller_core_sha256": sources["controller_core_hash"],
-        "manifest_path": _project_relative(project_root, sources["manifest_path"]),
-        "manifest_sha256": sources["manifest_hash"],
-        "controller_policy": sources["controller_policy"],
-        "controller_policy_sha256": sources["controller_policy_hash"],
-        "boundary_constraints": controller_boundary_constraints(),
-        "sealed_body_reads_allowed": False,
-        "router_owned_confirmation": True,
-        "confirmed_at": utc_now(),
-    }
-    return body
+    return controller_boundary.build_controller_boundary_confirmation_body(
+        project_root,
+        run_id=run_id,
+        action_id=action_id,
+        source_action_id=source_action_id,
+    )
 
 
 def submit_controller_boundary_confirmation(
@@ -369,21 +353,14 @@ def submit_controller_boundary_confirmation(
     output_path: str | Path | None = None,
     controller_status_packet_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    resolved_run_id, run_root = _run_paths(project_root, run_id)
-    body = build_controller_boundary_confirmation_body(
+    return controller_boundary.submit_controller_boundary_confirmation(
         project_root,
-        run_id=resolved_run_id,
+        agent_id=agent_id,
+        submit_output=submit_output,
+        run_id=run_id,
         action_id=action_id,
         source_action_id=source_action_id,
-    )
-    return submit_output(
-        project_root,
-        output_type=CONTROLLER_BOUNDARY_CONFIRMATION_OUTPUT_TYPE,
-        role="controller",
-        agent_id=agent_id,
-        body=body,
-        output_path=output_path or (run_root / "startup" / "controller_boundary_confirmation.json"),
-        run_id=resolved_run_id,
+        output_path=output_path,
         controller_status_packet_path=controller_status_packet_path,
     )
 

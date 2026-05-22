@@ -257,6 +257,27 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(surface["has_external_contract"], surface)
                 self.assertEqual(surface["gap_codes"], [])
 
+        skipped_table = surfaces["asset:flowpilot_router_protocol_external_event_data"]
+        self.assertEqual(skipped_table["split_status"], "skipped_split")
+        self.assertEqual(
+            skipped_table["structure_split_status"],
+            "explicitly_skipped",
+        )
+        self.assertEqual(skipped_table["safe_split_class"], "declarative_protocol_table")
+        self.assertGreater(skipped_table["line_count"], skipped_table["split_threshold"])
+        self.assertEqual(skipped_table["top_level_function_count"], 0)
+        self.assertEqual(skipped_table["top_level_class_count"], 0)
+        self.assertNotIn("needs_structure_split", skipped_table["gap_codes"])
+        self.assertTrue(skipped_table["has_external_contract"], skipped_table)
+        skipped_surface_ids = {
+            item["surface_id"]
+            for item in diagnostic["explicitly_skipped_structure_split_surfaces"]
+        }
+        self.assertIn(
+            "asset:flowpilot_router_protocol_external_event_data",
+            skipped_surface_ids,
+        )
+
     def test_full_diagnostic_uses_background_artifact_classification(self) -> None:
         diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
         surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}

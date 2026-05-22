@@ -109,9 +109,9 @@
   "ok": true,
   "prompt_split": {
     "asset_count": 11,
-    "child_module_count": 268,
+    "child_module_count": 278,
     "coarse_owner_count": 36,
-    "facade_line_count": 113,
+    "facade_line_count": 114,
     "facade_top_level_function_count": 0,
     "findings": [],
     "micro_module_count": 0,

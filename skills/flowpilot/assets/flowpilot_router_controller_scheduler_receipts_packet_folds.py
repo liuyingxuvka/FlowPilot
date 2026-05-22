@@ -14,6 +14,9 @@ from typing import Any
 import packet_runtime
 from flowpilot_control_plane_contracts import control_blocker_delivery_postcondition
 from flowpilot_router_errors import RouterError
+import flowpilot_router_controller_scheduler_receipts_packet_fold_lifecycle as _packet_fold_lifecycle
+from flowpilot_router_controller_scheduler_receipts_packet_fold_lifecycle import *
+from flowpilot_router_controller_scheduler_receipts_packet_fold_registry import *
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -25,93 +28,7 @@ def _bind_router(router: ModuleType) -> None:
         if name in local_names:
             continue
         current[name] = value
-
-
-CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY: dict[str, dict[str, str]] = {
-    "relay_material_scan_packets": {
-        "kind": "packet_dispatch",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_packets_relayed",
-    },
-    "relay_research_packet": {
-        "kind": "packet_dispatch",
-        "family": "research",
-        "record_source": "research_packet_index",
-        "postcondition": "research_packet_relayed",
-    },
-    "relay_current_node_packet": {
-        "kind": "packet_dispatch",
-        "family": "current_node",
-        "record_source": "current_node_records",
-        "postcondition": "current_node_packet_relayed",
-    },
-    "relay_pm_role_work_request_packet": {
-        "kind": "packet_dispatch",
-        "family": "pm_role_work",
-        "record_source": "pm_role_work_request_index",
-        "postcondition": "pm_role_work_request_packet_relayed",
-    },
-    "relay_material_scan_results_to_pm": {
-        "kind": "result_relay",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_results_relayed_to_pm",
-        "to_role": "project_manager",
-    },
-    "relay_material_scan_results_to_reviewer": {
-        "kind": "result_relay",
-        "family": "material_scan",
-        "record_source": "material_scan_index",
-        "postcondition": "material_scan_results_relayed_to_reviewer",
-        "to_role": "human_like_reviewer",
-    },
-    "relay_research_result_to_pm": {
-        "kind": "result_relay",
-        "family": "research",
-        "record_source": "research_packet_index",
-        "postcondition": "research_result_relayed_to_pm",
-        "to_role": "project_manager",
-    },
-    "relay_research_result_to_reviewer": {
-        "kind": "result_relay",
-        "family": "research",
-        "record_source": "research_packet_index",
-        "postcondition": "research_result_relayed_to_reviewer",
-        "to_role": "human_like_reviewer",
-    },
-    "relay_current_node_result_to_pm": {
-        "kind": "result_relay",
-        "family": "current_node",
-        "record_source": "current_node_records",
-        "postcondition": "current_node_result_relayed_to_pm",
-        "to_role": "project_manager",
-    },
-    "relay_current_node_result_to_reviewer": {
-        "kind": "result_relay",
-        "family": "current_node",
-        "record_source": "current_node_records",
-        "postcondition": "current_node_result_relayed_to_reviewer",
-        "to_role": "human_like_reviewer",
-    },
-    "relay_pm_role_work_result_to_pm": {
-        "kind": "result_relay",
-        "family": "pm_role_work",
-        "record_source": "pm_role_work_request_index",
-        "postcondition": "pm_role_work_result_relayed_to_pm",
-        "to_role": "project_manager",
-    },
-    "handle_control_blocker": {
-        "kind": "control_blocker_delivery",
-        "family": "control_blocker",
-        "record_source": "control_blocker_artifact",
-        "postcondition": "control_blocker_delivered",
-    },
-}
-
-
-def _registered_controller_receipt_evidence_fold_actions() -> tuple[str, ...]:
-    return tuple(sorted(CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY))
+    _packet_fold_lifecycle._bind_router(router)
 
 
 def _controller_receipt_fold_records(
@@ -323,120 +240,6 @@ def _sync_pm_role_work_request_summary(
         "active_to_role": ",".join(sorted({str(record.get("to_role")) for record in records if record.get("to_role")})),
         "active_request_mode": records[0].get("request_mode"),
     }
-
-
-def _result_relay_record_status(spec: dict[str, str]) -> str:
-    to_role = str(spec.get("to_role") or "").strip()
-    if to_role == "human_like_reviewer":
-        return "result_relayed_to_reviewer"
-    return "result_relayed_to_pm"
-
-
-def _result_relay_batch_status(spec: dict[str, str]) -> str:
-    to_role = str(spec.get("to_role") or "").strip()
-    if to_role == "human_like_reviewer":
-        return "results_relayed_to_reviewer"
-    return "results_relayed_to_pm"
-
-
-def _apply_parallel_batch_receipt_lifecycle(
-    router: ModuleType,
-    run_root: Path,
-    spec: dict[str, str],
-    records: list[dict[str, Any]],
-) -> dict[str, Any]:
-    _bind_router(router)
-    family = spec["family"]
-    batch = router._active_parallel_packet_batch(run_root, family)
-    if not isinstance(batch, dict):
-        return {"changed": False, "reason": "no_active_parallel_batch"}
-    packet_ids = {str(record.get("packet_id") or "").strip() for record in records if record.get("packet_id")}
-    if not packet_ids:
-        return {"changed": False, "reason": "no_packet_ids"}
-    changed = False
-    now = utc_now()
-    if spec["kind"] == "packet_dispatch":
-        for record in batch.get("packets") or []:
-            if isinstance(record, dict) and str(record.get("packet_id") or "") in packet_ids:
-                if record.get("status") != "packet_relayed":
-                    record["status"] = "packet_relayed"
-                    changed = True
-                record.setdefault("relayed_at", now)
-        if batch.get("status") != "packets_relayed":
-            batch["status"] = "packets_relayed"
-            changed = True
-        counts = batch.setdefault("counts", {})
-        relayed = len([item for item in batch.get("packets") or [] if isinstance(item, dict) and item.get("status") == "packet_relayed"])
-        if counts.get("relayed") != relayed:
-            counts["relayed"] = relayed
-            changed = True
-    elif spec["kind"] == "result_relay":
-        record_status = _result_relay_record_status(spec)
-        timestamp_field = f"{record_status}_at"
-        for record in batch.get("packets") or []:
-            if isinstance(record, dict) and str(record.get("packet_id") or "") in packet_ids:
-                if record.get("status") != record_status:
-                    record["status"] = record_status
-                    changed = True
-                record.setdefault(timestamp_field, now)
-        batch_status = _result_relay_batch_status(spec)
-        if batch.get("status") != batch_status:
-            batch["status"] = batch_status
-            changed = True
-    if changed:
-        router._write_parallel_packet_batch_state(run_root, batch)
-    return {"changed": changed, "batch_id": batch.get("batch_id"), "batch_status": batch.get("status")}
-
-
-def _apply_pm_role_work_receipt_lifecycle(
-    router: ModuleType,
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    spec: dict[str, str],
-    records: list[dict[str, Any]],
-) -> dict[str, Any]:
-    _bind_router(router)
-    if spec["family"] != "pm_role_work":
-        return {"changed": False, "reason": "not_pm_role_work"}
-    index = router._load_pm_role_work_request_index(run_root, run_state)
-    changed = False
-    now = utc_now()
-    touched_request_ids: list[str] = []
-    for source in records:
-        request_id = str(source.get("request_id") or "").strip()
-        if not request_id:
-            continue
-        record = router._pm_role_work_request_record(index, request_id)
-        if not isinstance(record, dict):
-            continue
-        if spec["kind"] == "packet_dispatch":
-            target_status = "packet_relayed"
-            timestamp_field = "packet_relayed_at"
-            lifecycle_status = "packet_relayed"
-        elif spec["kind"] == "result_relay":
-            target_status = _result_relay_record_status(spec)
-            timestamp_field = f"{target_status}_at"
-            lifecycle_status = target_status
-        else:
-            continue
-        if record.get("status") != target_status:
-            record["status"] = target_status
-            changed = True
-        record.setdefault(timestamp_field, now)
-        router._record_officer_lifecycle_status(
-            project_root,
-            run_root,
-            run_state,
-            record,
-            lifecycle_status=lifecycle_status,
-        )
-        touched_request_ids.append(request_id)
-    if touched_request_ids:
-        index["active_request_id"] = touched_request_ids[0]
-    if changed:
-        router._write_pm_role_work_request_index(run_root, index)
-    return {"changed": changed, "request_ids": touched_request_ids}
 
 
 def _apply_control_blocker_delivery_receipt_fold(

@@ -1,31 +1,15 @@
 {
   "current_run_projection": {
-    "daemon_lifecycle": "terminal_stopped",
+    "daemon_lifecycle": "released",
     "evidence_paths": [
       ".flowpilot\\current.json",
-      ".flowpilot\\runs\\run-20260516-201229\\execution_frontier.json",
-      ".flowpilot\\runs\\run-20260516-201229\\router_state.json",
-      ".flowpilot\\runs\\run-20260516-201229\\runtime\\router_daemon_status.json",
-      ".flowpilot\\runs\\run-20260516-201229\\packet_ledger.json",
-      ".flowpilot\\runs\\run-20260516-201229\\route_memory\\route_history_index.json"
+      ".flowpilot\\runs\\run-20260521-053456\\execution_frontier.json",
+      ".flowpilot\\runs\\run-20260521-053456\\router_state.json",
+      ".flowpilot\\runs\\run-20260521-053456\\runtime\\router_daemon_status.json",
+      ".flowpilot\\runs\\run-20260521-053456\\packet_ledger.json",
+      ".flowpilot\\runs\\run-20260521-053456\\route_memory\\route_history_index.json"
     ],
     "findings": [
-      {
-        "frontier_status": "stopped_by_user",
-        "id": "current_run_is_controlled_user_stop",
-        "severity": "info",
-        "status": "stopped_by_user",
-        "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
-        "terminal_event": "reconcile_current_run"
-      },
-      {
-        "controller_open_rows": 2,
-        "daemon_lifecycle": "terminal_stopped",
-        "id": "terminal_run_retains_open_work_rows",
-        "scheduler_open_rows": 3,
-        "severity": "warning",
-        "summary": "terminal run still has open Controller or scheduler rows; safe only as stopped-run history"
-      },
       {
         "completed_node_count": 0,
         "id": "route_nodes_never_activated",
@@ -38,23 +22,16 @@
         "id": "normal_completion_not_claimed",
         "severity": "info",
         "summary": "normal route-wide completion was not claimed for the current run"
-      },
-      {
-        "id": "packet_loop_stopped_by_user",
-        "previous_active_packet_status": "stopped_by_user",
-        "severity": "info",
-        "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
       }
     ],
-    "frontier_status": "stopped_by_user",
-    "frontier_terminal": true,
+    "frontier_status": "material_scan",
+    "frontier_terminal": false,
     "ok": true,
-    "run_root": ".flowpilot\\runs\\run-20260516-201229",
+    "run_root": ".flowpilot\\runs\\run-20260521-053456",
     "severity_counts": {
-      "info": 4,
-      "warning": 1
+      "info": 2
     },
-    "status": "stopped_by_user"
+    "status": "running"
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,
