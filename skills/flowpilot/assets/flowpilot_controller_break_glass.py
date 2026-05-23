@@ -240,15 +240,64 @@ def record_patch(
     return {"ok": True, "patch": patch, "patch_path": str(patch_path)}
 
 
+def finalize_patch(project_root: Path, run_root: Path, *, patch_id: str, disposition: str) -> dict[str, Any]:
+    patch_id = safe_id(patch_id, "patch")
+    patch_path = break_glass_root(run_root) / "patches" / f"{patch_id}.json"
+    patch = read_json(patch_path)
+    if patch.get("schema_version") != PATCH_SCHEMA:
+        raise SystemExit(f"Patch not found: {patch_id}")
+    finalized_at = utc_now()
+    patch["final_disposition"] = disposition
+    patch["finalized_at"] = finalized_at
+    patch["temporary"] = disposition not in {
+        "permanent_fix_applied",
+        "superseded_by_permanent_fix",
+        "rolled_back",
+        "diagnostic_only_no_patch",
+    }
+    patch["permanent_fix_needed"] = disposition not in {
+        "permanent_fix_applied",
+        "superseded_by_permanent_fix",
+        "rolled_back",
+        "diagnostic_only_no_patch",
+    }
+    write_json(patch_path, patch)
+    index = load_index(run_root)
+    for item in index.get("patches", []):
+        if item.get("patch_id") == patch_id:
+            item["final_disposition"] = disposition
+            item["finalized_at"] = finalized_at
+    save_index(run_root, index)
+    return {"ok": True, "patch": patch, "patch_path": str(patch_path.relative_to(project_root))}
+
+
 def close_incident(project_root: Path, run_root: Path, *, incident_id: str, disposition: str) -> dict[str, Any]:
     incident_id = safe_id(incident_id, "incident")
     incident_path = break_glass_root(run_root) / "incidents" / f"{incident_id}.json"
     incident = read_json(incident_path)
     if incident.get("schema_version") != INCIDENT_SCHEMA:
         raise SystemExit(f"Incident not found: {incident_id}")
+    finalized_patches: list[dict[str, Any]] = []
+    patch_errors: list[dict[str, str]] = []
+    for patch_id in incident.get("related_patch_ids") or []:
+        patch_path = break_glass_root(run_root) / "patches" / f"{safe_id(str(patch_id), 'patch')}.json"
+        patch = read_json(patch_path)
+        if patch.get("schema_version") != PATCH_SCHEMA:
+            patch_errors.append({"patch_id": str(patch_id), "error": "missing_patch_record"})
+            continue
+        if patch.get("final_disposition"):
+            finalized_patches.append({"patch_id": str(patch_id), "final_disposition": patch.get("final_disposition"), "already_finalized": True})
+            continue
+        finalized = finalize_patch(project_root, run_root, patch_id=str(patch_id), disposition=disposition)
+        finalized_patches.append({"patch_id": str(patch_id), "final_disposition": finalized["patch"].get("final_disposition"), "already_finalized": False})
     incident["status"] = "closed"
     incident["closed_at"] = utc_now()
     incident["final_disposition"] = disposition
+    incident["patch_finalization"] = {
+        "finalized_patch_count": len(finalized_patches),
+        "finalized_patches": finalized_patches,
+        "errors": patch_errors,
+    }
     write_json(incident_path, incident)
     index = load_index(run_root)
     for item in index.get("incidents", []):
@@ -277,6 +326,10 @@ def build_parser() -> argparse.ArgumentParser:
     patch_cmd.add_argument("--reason", required=True)
     patch_cmd.add_argument("--touched-path", action="append", default=[])
     patch_cmd.add_argument("--validation", action="append", default=[])
+
+    finalize_patch_cmd = sub.add_parser("finalize-patch")
+    finalize_patch_cmd.add_argument("--patch-id", required=True)
+    finalize_patch_cmd.add_argument("--disposition", required=True)
 
     close_cmd = sub.add_parser("close-incident")
     close_cmd.add_argument("--incident-id", required=True)
@@ -309,6 +362,8 @@ def main(argv: list[str] | None = None) -> int:
             touched_paths=args.touched_path,
             validation=args.validation,
         )
+    elif args.command == "finalize-patch":
+        result = finalize_patch(project_root, run_root, patch_id=args.patch_id, disposition=args.disposition)
     elif args.command == "close-incident":
         result = close_incident(project_root, run_root, incident_id=args.incident_id, disposition=args.disposition)
     else:  # pragma: no cover

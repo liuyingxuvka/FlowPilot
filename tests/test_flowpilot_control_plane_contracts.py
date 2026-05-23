@@ -267,6 +267,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "packet_id": "packet-release",
                 "to_role": "worker_a",
+                "packet_generation_id": "material-generation-release",
                 "packet_envelope_path": router.project_relative(root, packet_path),
                 "result_envelope_path": router.project_relative(root, result_path),
                 "status": "result_relayed_to_pm",
@@ -287,6 +288,22 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         batch["status"] = "results_relayed_to_pm"
         router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
+        router.write_json(
+            run_root / "material" / "material_scan_packets.json",
+            {
+                "schema_version": "flowpilot.material_scan_packets.v2",
+                "run_id": run_state["run_id"],
+                "written_by_role": "project_manager",
+                "batch_id": "batch-release",
+                "batch_kind": "material_scan",
+                "current_generation_id": "material-generation-release",
+                "controller_may_read_packet_body": False,
+                "router_direct_dispatch_required_before_worker": True,
+                "reviewer_dispatch_required_before_worker": False,
+                "packets": records,
+                "written_at": router.utc_now(),
+            },
+        )
         output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
         payload = role_output_runtime.submit_output(
             root,
@@ -613,6 +630,45 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(release["formal_gate_package_path"])
         self.assertTrue(release["formal_gate_package_hash"])
         self.assertFalse(release["reviewer_receives_raw_worker_result"])
+
+    def test_material_disposition_rejects_stale_active_batch(self) -> None:
+        root = self.make_project()
+        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-stale-generation",
+        )
+        stale_batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        stale_batch["batch_id"] = "batch-release-stale"
+        stale_batch["status"] = "results_relayed_to_pm"
+        for record in stale_batch["packets"]:
+            record["batch_id"] = "batch-release-stale"
+            record["packet_generation_id"] = "material-generation-stale"
+        router.write_json(router._parallel_packet_batch_path(run_root, "batch-release-stale"), stale_batch)  # type: ignore[attr-defined]
+        router.write_json(
+            router._parallel_packet_batch_ref_path(run_root, "material_scan"),  # type: ignore[attr-defined]
+            {
+                "schema_version": router.PARALLEL_PACKET_BATCH_REF_SCHEMA,  # type: ignore[attr-defined]
+                "run_id": run_state["run_id"],
+                "batch_kind": "material_scan",
+                "active_batch_id": "batch-release-stale",
+                "batch_path": router.project_relative(root, router._parallel_packet_batch_path(run_root, "batch-release-stale")),  # type: ignore[attr-defined]
+                "updated_at": router.utc_now(),
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "batch does not match current material generation"):  # type: ignore[attr-defined]
+            pm_decisions._write_pm_package_result_disposition(
+                router,
+                root,
+                run_root,
+                run_state,
+                payload,
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                output_path=output_path,
+                router_event="pm_records_material_scan_result_disposition",
+            )
 
     def test_pm_disposition_requires_registered_commit_targets(self) -> None:
         root = self.make_project()

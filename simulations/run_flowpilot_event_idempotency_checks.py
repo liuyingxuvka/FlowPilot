@@ -6,6 +6,7 @@ import argparse
 import ast
 import json
 import re
+import sys
 from collections import deque
 from pathlib import Path
 from typing import Any
@@ -17,8 +18,13 @@ import flowpilot_event_idempotency_model as model
 
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
+ASSETS_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets"
+if str(ASSETS_PATH) not in sys.path:
+    sys.path.insert(0, str(ASSETS_PATH))
 RESULTS_PATH = ROOT / "flowpilot_event_idempotency_results.json"
 ROUTER_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
+EVENT_REPLAY_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_event_identity_replay.py"
+SCOPED_POLICY_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_protocol_scoped_event_identity.py"
 
 REQUIRED_LABELS = (
     "select_one_shot_same_key_replay",
@@ -86,6 +92,24 @@ REQUIRED_SCOPED_EVENT_POLICIES = {
         "dedupe_fields": ("node_id", "packet_id", "result_hash"),
         "severity": "low",
         "why": "completion retry is currently guarded by missing-write detection, but it still belongs to scoped idempotency",
+    },
+    "pm_records_material_scan_result_disposition": {
+        "family": "pm_package_disposition",
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "severity": "high",
+        "why": "material result disposition can recur after repair generations and must not be keyed only by the run-wide disposition flag",
+    },
+    "pm_records_research_result_disposition": {
+        "family": "pm_package_disposition",
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "severity": "medium",
+        "why": "research result disposition is a batch package decision and should dedupe by package identity",
+    },
+    "pm_records_current_node_result_disposition": {
+        "family": "pm_package_disposition",
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "severity": "medium",
+        "why": "current-node result disposition is a batch package decision and should dedupe by package identity",
     },
 }
 
@@ -221,11 +245,9 @@ def _hazard_report() -> dict[str, object]:
 
 
 def _extract_router_events() -> dict[str, dict[str, str]]:
-    module = ast.parse(ROUTER_PATH.read_text(encoding="utf-8"))
-    for node in module.body:
-        if isinstance(node, ast.AnnAssign) and getattr(node.target, "id", None) == "EXTERNAL_EVENTS":
-            return ast.literal_eval(node.value)
-    raise RuntimeError("EXTERNAL_EVENTS not found")
+    from flowpilot_router_protocol_external_events import EXTERNAL_EVENTS
+
+    return {str(event): dict(meta) for event, meta in EXTERNAL_EVENTS.items()}
 
 
 def _extract_constant_strings(source: str) -> dict[str, str]:
@@ -275,36 +297,14 @@ def _extract_repeatable_exceptions(source: str) -> dict[str, dict[str, str]]:
 
 
 def _extract_scoped_event_policies(source: str) -> dict[str, dict[str, object]]:
-    constants = _extract_constant_strings(source)
-    module = ast.parse(source)
-    for node in module.body:
-        target_name = None
-        value_node = None
-        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            target_name = node.targets[0].id
-            value_node = node.value
-        elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
-            target_name = node.target.id
-            value_node = node.value
-        if target_name != "SCOPED_EVENT_IDENTITY_POLICIES" or not isinstance(value_node, ast.Dict):
-            continue
-        policies: dict[str, dict[str, object]] = {}
-        for key_node, item_node in zip(value_node.keys, value_node.values):
-            if isinstance(key_node, ast.Constant) and isinstance(key_node.value, str):
-                event = key_node.value
-            elif isinstance(key_node, ast.Name):
-                event = constants.get(key_node.id, key_node.id)
-            else:
-                continue
-            value = ast.literal_eval(item_node)
-            if isinstance(value, dict):
-                policies[event] = value
-        return policies
-    return {}
+    del source
+    from flowpilot_router_protocol_scoped_event_identity import SCOPED_EVENT_IDENTITY_POLICIES
+
+    return {str(event): dict(policy) for event, policy in SCOPED_EVENT_IDENTITY_POLICIES.items()}
 
 
 def _source_audit_report() -> dict[str, object]:
-    source = ROUTER_PATH.read_text(encoding="utf-8")
+    source = ROUTER_PATH.read_text(encoding="utf-8") + "\n" + EVENT_REPLAY_PATH.read_text(encoding="utf-8") + "\n" + SCOPED_POLICY_PATH.read_text(encoding="utf-8")
     events = _extract_router_events()
     repeatable = _extract_repeatable_exceptions(source)
     scoped_policies = _extract_scoped_event_policies(source)

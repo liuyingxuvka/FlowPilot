@@ -21,6 +21,7 @@ TEST_NAMES = (
     "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
     "test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer",
     "test_operation_replay_repair_transaction_queues_replay_action",
+    "test_material_operation_replay_uses_current_generation_action",
     "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
     "test_pm_repair_decision_can_repeat_for_new_control_blocker",
     "test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue",

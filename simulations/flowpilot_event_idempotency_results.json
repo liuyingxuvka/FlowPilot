@@ -130,7 +130,7 @@
         "source_excerpt": "handled before generic duplicate check"
       }
     },
-    "required_scoped_event_count": 6,
+    "required_scoped_event_count": 9,
     "router_path": "skills\\flowpilot\\assets\\flowpilot_router.py",
     "scoped_policies": {
       "pm_completes_current_node_from_reviewed_result": {
@@ -171,6 +171,32 @@
           "model_miss_block"
         ]
       },
+      "pm_records_control_blocker_followup_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
+      "pm_records_control_blocker_protocol_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
       "pm_records_control_blocker_repair_decision": {
         "dedupe_fields": [
           "control_blocker_id",
@@ -180,6 +206,61 @@
         "retry_group_fields": [
           "event",
           "control_blocker_id"
+        ]
+      },
+      "pm_records_current_node_result_disposition": {
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id",
+          "body_hash"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
+        ]
+      },
+      "pm_records_material_scan_result_disposition": {
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id",
+          "body_hash"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
+        ]
+      },
+      "pm_records_parent_protocol_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
+      "pm_records_research_result_disposition": {
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id",
+          "body_hash"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
         ]
       },
       "pm_records_role_work_result_decision": {
@@ -262,6 +343,6 @@
         ]
       }
     },
-    "scoped_policy_count": 11
+    "scoped_policy_count": 17
   }
 }

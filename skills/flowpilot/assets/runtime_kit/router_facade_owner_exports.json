@@ -496,6 +496,10 @@
             "target": "_pm_role_work_result_decision_identity_scope"
           },
           {
+            "public": "_pm_package_disposition_identity_scope",
+            "target": "_pm_package_disposition_identity_scope"
+          },
+          {
             "public": "_record_event_envelope_ref_from_payload",
             "target": "_record_event_envelope_ref_from_payload"
           },
@@ -1150,6 +1154,10 @@
           {
             "public": "_clear_pending_after_reconciled_controller_receipt",
             "target": "_clear_pending_after_reconciled_controller_receipt"
+          },
+          {
+            "public": "_apply_controller_repair_work_packet_receipt",
+            "target": "_apply_controller_repair_work_packet_receipt"
           },
           {
             "public": "_continuous_standby_release_conditions",

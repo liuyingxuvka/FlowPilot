@@ -79,6 +79,41 @@ def _clear_pending_after_reconciled_controller_receipt(router: ModuleType, proje
     router.save_run_state(run_root, run_state)
     return {'changed': True, 'cleared_pending': True, 'receipt_status': receipt.get('status')}
 
+def _apply_controller_repair_work_packet_receipt(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, pending_action: dict[str, Any], receipt: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
+    _bind_router(router)
+    if pending_action.get('controller_may_approve_gate') or pending_action.get('controller_may_mutate_route') or pending_action.get('controller_may_read_sealed_bodies'):
+        raise RouterError('controller_repair_work_packet receipt cannot grant gate approval, route mutation, or sealed body access')
+    transaction_id = str(pending_action.get('repair_transaction_id') or '')
+    if not transaction_id:
+        raise RouterError('controller_repair_work_packet receipt requires repair_transaction_id')
+    transaction_path = router._repair_transaction_path(run_root, transaction_id)
+    transaction = read_json_if_exists(transaction_path)
+    if transaction.get('schema_version') != REPAIR_TRANSACTION_SCHEMA:
+        raise RouterError('controller_repair_work_packet transaction is missing')
+    recorded_at = utc_now()
+    repair_result = {
+        'schema_version': 'flowpilot.controller_repair_work_packet_result.v1',
+        'status': str(payload.get('status') or receipt.get('status') or 'done'),
+        'evidence': payload.get('evidence'),
+        'recorded_at': recorded_at,
+        'controller_action_id': receipt.get('action_id') or pending_action.get('controller_action_id'),
+        'controller_receipt_path': project_relative(project_root, _controller_receipt_path(run_root, str(receipt.get('action_id') or ''))),
+        'controller_receipt_payload_keys': sorted(str(key) for key in payload),
+    }
+    transaction['controller_repair_work_packet_result'] = repair_result
+    transaction['status'] = 'awaiting_recheck'
+    transaction['updated_at'] = recorded_at
+    write_json(transaction_path, transaction)
+    router._write_repair_transaction_index(project_root, run_root, run_state)
+    return {
+        'applied': True,
+        'source': 'router_owned_controller_repair_work_packet_receipt',
+        'repair_transaction_id': transaction_id,
+        'repair_transaction_path': project_relative(project_root, transaction_path),
+        'transaction_status': 'awaiting_recheck',
+        'controller_action_id': repair_result['controller_action_id'],
+    }
+
 def _reconcile_pending_controller_action_receipt(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     pending_action = run_state.get('pending_action')
@@ -101,6 +136,13 @@ def _reconcile_pending_controller_action_receipt(router: ModuleType, project_roo
         return {'changed': False, 'unsupported_receipt_status': status}
     action_class = router._controller_action_completion_class(pending_action)
     router._record_router_ownership_entry(project_root, run_root, run_state, action_id=str(receipt.get('action_id') or ''), action_type=action_type, router_state='controller_receipt_done', workflow_owner='router', postcondition=str(action_class.get('postcondition') or _pending_action_postcondition(pending_action) or ''), source='controller_receipt_reconciliation', receipt_path=project_relative(project_root, _controller_receipt_path(run_root, str(receipt.get('action_id') or ''))), details={'action_class': action_class, 'controller_receipt_is_local_evidence_only': True, 'controller_receipt_payload': payload})
+    if action_type == 'controller_repair_work_packet':
+        try:
+            applied = router._apply_controller_repair_work_packet_receipt(project_root, run_root, run_state, pending_action=pending_action, receipt=receipt, payload=payload)
+        except (RouterError, ValueError, OSError, json.JSONDecodeError) as exc:
+            router._write_control_blocker(project_root, run_root, run_state, source='controller_action_receipt_incomplete_for_repair_work_packet', error_message=f'Controller receipt for {action_type} was marked done, but Router could not update repair transaction state: {exc}', action_type=action_type, payload={'controller_action_id': receipt.get('action_id'), 'controller_receipt_payload': payload, 'pending_action_label': pending_action.get('label')})
+            return {'changed': True, 'blocked': True, 'receipt_status': status, 'repair_transaction_update_failed': True}
+        return router._clear_pending_after_reconciled_controller_receipt(project_root, run_root, run_state, pending_action=pending_action, receipt=receipt, applied_postcondition=applied)
     if action_class.get('kind') == 'display_status' and action_type == 'sync_display_plan':
         try:
             sync_payload = router._apply_sync_display_plan_state(project_root, run_root, run_state, pending_action, payload)
@@ -152,6 +194,7 @@ __all__ = (
     '_router_scheduler_row_for_controller_entry',
     '_done_controller_receipt_for_entry',
     '_clear_pending_after_reconciled_controller_receipt',
+    '_apply_controller_repair_work_packet_receipt',
     '_reconcile_pending_controller_action_receipt',
 )
 

@@ -275,6 +275,29 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.material_repair_generation_protocol_checked:
+        yield Transition(
+            "material_repair_generation_protocol_checked",
+            _inc(
+                state,
+                material_repair_generation_protocol_checked=True,
+                operation_replay_fresh_controller_action_id=True,
+                operation_replay_targets_current_generation=True,
+                operation_replay_ledger_io_authorized=True,
+                controller_repair_work_packet_receipt_folded=True,
+                controller_repair_work_packet_facade_exported=True,
+                pm_material_disposition_generation_scoped=True,
+                pm_material_disposition_matches_current_generation=True,
+                stale_pm_material_disposition_restored=False,
+                role_output_event_deduped_by_body_ref=True,
+                duplicate_role_event_side_effect_written=False,
+                packet_result_author_identity_replayable=True,
+                packet_result_author_matches_current_role=True,
+                break_glass_patch_validation_finalized=True,
+            ),
+        )
+        return
+
     if not state.pm_research_package_written:
         yield Transition(
             "pm_writes_research_package_with_scope_fields",

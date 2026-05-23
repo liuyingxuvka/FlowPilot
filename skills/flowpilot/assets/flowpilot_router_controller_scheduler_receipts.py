@@ -61,6 +61,7 @@ __all__ = (
     '_router_scheduler_row_for_controller_entry',
     '_done_controller_receipt_for_entry',
     '_clear_pending_after_reconciled_controller_receipt',
+    '_apply_controller_repair_work_packet_receipt',
     '_reconcile_pending_controller_action_receipt',
     '_scheduler_row_reconciliation_for_entry',
     '_backfill_scheduler_row_from_reconciled_controller_action',

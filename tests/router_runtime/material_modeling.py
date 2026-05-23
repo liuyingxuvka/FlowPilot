@@ -736,7 +736,15 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(transaction["generation_commit"]["packet_count"], 1)
         material_index = read_json(run_root / "material" / "material_scan_packets.json")
         self.assertEqual(material_index["current_generation_id"], transaction["packet_generation_id"])
+        self.assertEqual(material_index["batch_id"], transaction["generation_commit"]["batch_id"])
         self.assertEqual(material_index["packets"][0]["packet_id"], "material-scan-001-r1")
+        active_batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        self.assertEqual(active_batch["batch_id"], material_index["batch_id"])
+        self.assertEqual(active_batch["parent_batch_id"], "material-scan-batch-001")
+        self.assertEqual(active_batch["packets"][0]["packet_generation_id"], transaction["packet_generation_id"])
+        previous_batch = read_json(router._parallel_packet_batch_path(run_root, "material-scan-batch-001"))  # type: ignore[attr-defined]
+        self.assertEqual(previous_batch["status"], "superseded")
+        self.assertEqual(previous_batch["superseded_by_generation_id"], transaction["packet_generation_id"])
         self.assertIn("result_body_path", material_index["packets"][0])
         self.assertEqual(
             material_index["packets"][0]["result_write_target"]["result_body_path"],

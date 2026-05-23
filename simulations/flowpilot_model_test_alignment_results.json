@@ -12,14 +12,167 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": true,
+  "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [],
-    "actionable_summary": [],
-    "covered_surface_count": 744,
-    "deferred_structure_split_count": 0,
+    "actionable_findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_work_packets_current_node_relay",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
+        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_runtime_commands",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_runtime_commands",
+        "surface_owner": "flowpilot_runtime_commands"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "message": "capability_legacy_full has non-final background evidence status: running",
+        "name": "capability_legacy_full",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 33,
+        "release_relevance": "legacy_validation",
+        "repair_type": "complete_background_evidence",
+        "severity": "medium",
+        "surface_id": "tier-command:legacy-full:capability_legacy_full",
+        "surface_owner": "test-tier:legacy-full"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "message": "meta_legacy_full has non-final background evidence status: running",
+        "name": "meta_legacy_full",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 33,
+        "release_relevance": "legacy_validation",
+        "repair_type": "complete_background_evidence",
+        "severity": "medium",
+        "surface_id": "tier-command:legacy-full:meta_legacy_full",
+        "surface_owner": "test-tier:legacy-full"
+      }
+    ],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_receipts_packet_folds"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_work_packets_current_node_relay"
+        ],
+        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
+      },
+      {
+        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_runtime_commands.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_runtime_commands"
+        ],
+        "surface_owner": "flowpilot_runtime_commands"
+      },
+      {
+        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
+        "finding_count": 2,
+        "gap_codes": [
+          "stale_evidence"
+        ],
+        "message": "capability_legacy_full has non-final background evidence status: running",
+        "paths": [
+          "scripts/run_test_tier.py"
+        ],
+        "primary_code": "stale_evidence",
+        "priority_score": 33,
+        "release_relevance": "legacy_validation",
+        "repair_type": "complete_background_evidence",
+        "severity": "medium",
+        "surface_ids": [
+          "tier-command:legacy-full:capability_legacy_full",
+          "tier-command:legacy-full:meta_legacy_full"
+        ],
+        "surface_owner": "test-tier:legacy-full"
+      }
+    ],
+    "covered_surface_count": 739,
+    "deferred_structure_split_count": 3,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 1,
     "explicitly_skipped_structure_split_surfaces": [
@@ -31,13 +184,95 @@
         "surface_id": "asset:flowpilot_router_protocol_external_event_data"
       }
     ],
-    "findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
-    "gap_counts_by_release_relevance": {},
-    "gap_counts_by_repair_type": {},
-    "gap_counts_by_severity": {},
-    "gap_surface_count": 0,
+    "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_work_packets_current_node_relay",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
+        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
+        "kind": "compatibility_facade",
+        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_runtime_commands",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_runtime_commands",
+        "surface_owner": "flowpilot_runtime_commands"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "message": "capability_legacy_full has non-final background evidence status: running",
+        "name": "capability_legacy_full",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 33,
+        "release_relevance": "legacy_validation",
+        "repair_type": "complete_background_evidence",
+        "severity": "medium",
+        "surface_id": "tier-command:legacy-full:capability_legacy_full",
+        "surface_owner": "test-tier:legacy-full"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "message": "meta_legacy_full has non-final background evidence status: running",
+        "name": "meta_legacy_full",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 33,
+        "release_relevance": "legacy_validation",
+        "repair_type": "complete_background_evidence",
+        "severity": "medium",
+        "surface_id": "tier-command:legacy-full:meta_legacy_full",
+        "surface_owner": "test-tier:legacy-full"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 3,
+      "stale_evidence": 2
+    },
+    "gap_counts_by_release_relevance": {
+      "legacy_validation": 2,
+      "runtime_contract": 3
+    },
+    "gap_counts_by_repair_type": {
+      "complete_background_evidence": 2,
+      "defer_structure_split": 3
+    },
+    "gap_counts_by_severity": {
+      "medium": 5
+    },
+    "gap_surface_count": 5,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -216,7 +451,7 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": true,
+    "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
     "surface_count": 744,
     "surface_counts": {
@@ -262,7 +497,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 228,
+        "line_count": 241,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": null,
@@ -816,7 +1051,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 72,
+        "line_count": 73,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -840,8 +1075,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 233,
-        "local_import_count": 9,
+        "line_count": 276,
+        "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_effects",
@@ -951,7 +1186,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 200,
+        "line_count": 222,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1305,7 +1540,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 194,
+        "line_count": 211,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1318,7 +1553,7 @@
         "surface_id": "asset:flowpilot_router_expected_waits_events",
         "surface_owner": "flowpilot_router_expected_waits_events",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -2604,7 +2839,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 192,
+        "line_count": 196,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2753,7 +2988,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 134,
+        "line_count": 138,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2804,28 +3039,44 @@
         "top_level_function_count": 21
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 277,
+        "line_count": 428,
         "local_import_count": 7,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_work_packets_current_node_relay",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "compatibility_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
         "surface_owner": "flowpilot_router_work_packets_current_node_relay",
         "top_level_class_count": 0,
-        "top_level_function_count": 13
+        "top_level_function_count": 17
       },
       {
         "covered": true,
@@ -2836,7 +3087,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 263,
+        "line_count": 265,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -3116,28 +3367,44 @@
         "top_level_function_count": 1
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 289,
+        "line_count": 377,
         "local_import_count": 6,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": null,
         "name": "flowpilot_runtime_commands",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "compatibility_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_runtime_commands",
         "surface_owner": "flowpilot_runtime_commands",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 8
       },
       {
         "completed_split_paths": [
@@ -3276,7 +3543,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 129,
+        "line_count": 130,
         "local_import_count": 13,
         "max_severity": "none",
         "model_binding": null,
@@ -3522,7 +3789,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 572,
+        "line_count": 628,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -3676,7 +3943,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 372,
+        "line_count": 430,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_controller_receipt_evidence_fold_checks",
@@ -4358,7 +4625,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 194,
+        "line_count": 196,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_packet_open_authority_checks",
@@ -6125,7 +6392,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 147,
+        "line_count": 174,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "control_plane_contracts",
@@ -6138,7 +6405,7 @@
         "surface_id": "asset:flowpilot_control_plane_contracts",
         "surface_owner": "flowpilot_control_plane_contracts",
         "top_level_class_count": 0,
-        "top_level_function_count": 10
+        "top_level_function_count": 11
       },
       {
         "covered": true,
@@ -6149,7 +6416,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 321,
+        "line_count": 376,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -6162,7 +6429,7 @@
         "surface_id": "asset:flowpilot_controller_break_glass",
         "surface_owner": "flowpilot_controller_break_glass",
         "top_level_class_count": 0,
-        "top_level_function_count": 15
+        "top_level_function_count": 16
       },
       {
         "covered": true,
@@ -6622,7 +6889,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 90,
+        "line_count": 92,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6975,7 +7242,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 314,
+        "line_count": 327,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7071,7 +7338,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 237,
+        "line_count": 243,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7143,7 +7410,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 428,
+        "line_count": 441,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7303,28 +7570,44 @@
         "top_level_function_count": 1
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 385,
+        "line_count": 601,
         "local_import_count": 5,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 12
       },
       {
         "covered": true,
@@ -7335,7 +7618,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 158,
+        "line_count": 201,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7348,7 +7631,7 @@
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_pending",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_pending",
         "top_level_class_count": 0,
-        "top_level_function_count": 5
+        "top_level_function_count": 6
       },
       {
         "covered": true,
@@ -7407,7 +7690,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 259,
+        "line_count": 303,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7420,7 +7703,7 @@
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_writes",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_writes",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 8
       },
       {
         "covered": true,
@@ -7639,7 +7922,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 190,
+        "line_count": 224,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7652,7 +7935,7 @@
         "surface_id": "asset:flowpilot_router_event_identity_scopes",
         "surface_owner": "flowpilot_router_event_identity_scopes",
         "top_level_class_count": 0,
-        "top_level_function_count": 18
+        "top_level_function_count": 19
       },
       {
         "covered": true,
@@ -7807,8 +8090,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 84,
-        "local_import_count": 7,
+        "line_count": 110,
+        "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_events_repair_transaction_material",
@@ -7884,7 +8167,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 94,
+        "line_count": 96,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7919,7 +8202,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 264,
+        "line_count": 431,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7932,7 +8215,7 @@
         "surface_id": "asset:flowpilot_router_expected_waits_actions",
         "surface_owner": "flowpilot_router_expected_waits_actions",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 12
       },
       {
         "covered": true,
@@ -8296,7 +8579,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 123,
+        "line_count": 124,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8320,7 +8603,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 350,
+        "line_count": 354,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8744,7 +9027,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 503,
+        "line_count": 505,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9109,7 +9392,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 76,
+        "line_count": 91,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10280,7 +10563,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 150,
+        "line_count": 166,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10648,7 +10931,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 130,
+        "line_count": 134,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10672,7 +10955,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 131,
+        "line_count": 135,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10720,7 +11003,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 285,
+        "line_count": 377,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10733,7 +11016,7 @@
         "surface_id": "asset:flowpilot_router_work_packets_pm_role_writes_decisions",
         "surface_owner": "flowpilot_router_work_packets_pm_role_writes_decisions",
         "top_level_class_count": 0,
-        "top_level_function_count": 5
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -10792,7 +11075,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 188,
+        "line_count": 206,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": null,
@@ -11296,7 +11579,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 119,
+        "line_count": 186,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -11309,7 +11592,7 @@
         "surface_id": "asset:packet_runtime_active_holder_lease",
         "surface_owner": "packet_runtime_active_holder_lease",
         "top_level_class_count": 0,
-        "top_level_function_count": 1
+        "top_level_function_count": 2
       },
       {
         "covered": true,
@@ -11551,7 +11834,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 176,
+        "line_count": 251,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -11564,7 +11847,7 @@
         "surface_id": "asset:packet_runtime_ledger",
         "surface_owner": "packet_runtime_ledger",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -11647,7 +11930,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 401,
+        "line_count": 400,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -11719,7 +12002,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 257,
+        "line_count": 324,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -11732,7 +12015,7 @@
         "surface_id": "asset:packet_runtime_schema",
         "surface_owner": "packet_runtime_schema",
         "top_level_class_count": 1,
-        "top_level_function_count": 8
+        "top_level_function_count": 12
       },
       {
         "covered": true,
@@ -16619,17 +16902,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
+              "execution_status": "failed",
+              "exit_code": 1,
               "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -16705,9 +16986,11 @@
           "--legacy-full"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_capability_checks.py --legacy-full",
-        "covered": true,
-        "evidence_status": "legacy_full_reclassified",
-        "gap_codes": [],
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -16718,26 +17001,28 @@
             "created_at": "2026-05-22T08:39:13.323143+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
-            "reason": "valid proof",
+            "reason": "input fingerprint changed",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
             "state_count": 10,
-            "valid": true
+            "valid": false
           },
-          "legacy_monolith_required_for_release": false,
-          "ok": true,
-          "reason": "legacy monolithic full graph is retained as a historical compatibility oracle; current release confidence comes from the layered full parent proof"
+          "legacy_monolith_required_for_release": true,
+          "ok": false,
+          "reason": "input fingerprint changed"
         },
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "test_tiering_model",
         "name": "capability_legacy_full",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": true,
         "release_relevance": "legacy_validation",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
         "surface_id": "tier-command:legacy-full:capability_legacy_full",
         "surface_owner": "test-tier:legacy-full",
@@ -16778,17 +17063,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
+              "execution_status": "failed",
+              "exit_code": 1,
               "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -16864,9 +17147,11 @@
           "--legacy-full"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_meta_checks.py --legacy-full",
-        "covered": true,
-        "evidence_status": "legacy_full_reclassified",
-        "gap_codes": [],
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -16877,26 +17162,28 @@
             "created_at": "2026-05-22T08:39:09.436065+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
-            "reason": "valid proof",
+            "reason": "input fingerprint changed",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
-            "valid": true
+            "valid": false
           },
-          "legacy_monolith_required_for_release": false,
-          "ok": true,
-          "reason": "legacy monolithic full graph is retained as a historical compatibility oracle; current release confidence comes from the layered full parent proof"
+          "legacy_monolith_required_for_release": true,
+          "ok": false,
+          "reason": "input fingerprint changed"
         },
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "test_tiering_model",
         "name": "meta_legacy_full",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": true,
         "release_relevance": "legacy_validation",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
         "surface_id": "tier-command:legacy-full:meta_legacy_full",
         "surface_owner": "test-tier:legacy-full",
@@ -16935,17 +17222,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
+              "execution_status": "failed",
+              "exit_code": 1,
               "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -17075,17 +17360,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
+              "execution_status": "failed",
+              "exit_code": 1,
               "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
@@ -22753,8 +23036,10 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 0,
-    "unresolved_non_deferred_gap_counts": {}
+    "unresolved_non_deferred_gap_count": 2,
+    "unresolved_non_deferred_gap_counts": {
+      "stale_evidence": 2
+    }
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -24828,7 +25113,7 @@
     }
   ],
   "plan_count": 8,
-  "release_convergence_ok": true,
+  "release_convergence_ok": false,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
   "source_audit_ok": true,
@@ -36221,11 +36506,17 @@
           "calls": [
             "SystemExit",
             "break_glass_root",
+            "finalize_patch",
+            "finalized_patches.append",
+            "get",
             "incident.get",
             "incident_path.relative_to",
             "index.get",
             "item.get",
+            "len",
             "load_index",
+            "patch.get",
+            "patch_errors.append",
             "read_json",
             "safe_id",
             "save_index",
@@ -36255,18 +36546,29 @@
           "state_reads": [
             "Any",
             "INCIDENT_SCHEMA",
+            "PATCH_SCHEMA",
             "Path",
             "SystemExit",
+            "append",
             "break_glass_root",
             "dict",
             "disposition",
+            "finalize_patch",
+            "finalized",
+            "finalized_patches",
             "get",
             "incident",
             "incident_id",
             "incident_path",
             "index",
             "item",
+            "len",
+            "list",
             "load_index",
+            "patch",
+            "patch_errors",
+            "patch_id",
+            "patch_path",
             "project_root",
             "read_json",
             "relative_to",
@@ -36280,10 +36582,16 @@
           "state_writes": [
             "closed_at",
             "final_disposition",
+            "finalized",
+            "finalized_patches",
             "incident",
             "incident_id",
             "incident_path",
             "index",
+            "patch",
+            "patch_errors",
+            "patch_finalization",
+            "patch_path",
             "status"
           ],
           "symbol": "close_incident"
@@ -37671,9 +37979,11 @@
             "item.get",
             "len",
             "make_action",
+            "operation.get",
             "original_action.get",
             "original_entry.get",
             "original_fields.get",
+            "path.strip",
             "pending_action.get",
             "project_relative",
             "read_json_if_exists",
@@ -37741,6 +38051,7 @@
             "missing_deliverables",
             "next_attempt",
             "now",
+            "operation",
             "original_action",
             "original_entry",
             "original_fields",
@@ -37762,6 +38073,8 @@
             "run_root",
             "run_state",
             "run_state_path",
+            "runtime_expected_writes",
+            "runtime_relay_operations",
             "source",
             "str",
             "strip",
@@ -37790,7 +38103,9 @@
             "repair_action",
             "repair_entry",
             "repair_ids",
-            "repair_target_action_type"
+            "repair_target_action_type",
+            "runtime_expected_writes",
+            "runtime_relay_operations"
           ],
           "symbol": "_schedule_controller_deliverable_repair"
         },
@@ -44093,9 +44408,12 @@
         },
         {
           "calls": [
-            "_packet_ledger_record",
+            "_read_packet_ledger_or_recover",
             "envelope.get",
+            "isinstance",
+            "ledger.get",
             "packet_paths_from_any_envelope",
+            "record.get",
             "str"
           ],
           "code_contract_id": "packet_ledger.packet_ledger_record_for_envelope",
@@ -44108,24 +44426,35 @@
           "path": "skills/flowpilot/assets/packet_runtime_ledger.py",
           "raised_errors": [],
           "return_values": [
-            "_packet_ledger_record"
+            "record"
           ],
           "returns_value": true,
           "side_effects": [],
           "state_reads": [
             "Any",
             "Path",
-            "_packet_ledger_record",
+            "_read_packet_ledger_or_recover",
             "dict",
             "envelope",
             "get",
+            "isinstance",
+            "ledger",
+            "list",
+            "packet_id",
             "packet_ledger",
             "packet_paths_from_any_envelope",
+            "packets",
             "paths",
             "project_root",
+            "record",
+            "run_id",
+            "run_root",
             "str"
           ],
           "state_writes": [
+            "ledger",
+            "packet_id",
+            "packets",
             "paths"
           ],
           "symbol": "packet_ledger_record_for_envelope"

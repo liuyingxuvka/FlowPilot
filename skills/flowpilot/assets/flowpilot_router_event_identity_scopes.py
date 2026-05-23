@@ -131,6 +131,37 @@ def _pm_role_work_result_decision_identity_scope(router: ModuleType, payload_vie
     return {'event': router.PM_ROLE_WORK_RESULT_DECISION_EVENT, 'request_id': str(payload_view.get('request_id') or 'missing-request-id'), 'decision': str(payload_view.get('decision') or 'missing-decision')}
 
 
+def _pm_package_disposition_identity_scope(router: ModuleType, run_root: Path, payload_view: dict[str, Any], event: str) -> dict[str, str]:
+    batch_kind = {
+        'pm_records_material_scan_result_disposition': 'material_scan',
+        'pm_records_research_result_disposition': 'research',
+        'pm_records_current_node_result_disposition': 'current_node',
+    }.get(event, 'unknown')
+    batch = router._active_parallel_packet_batch(run_root, batch_kind) if batch_kind != 'unknown' else None
+    batch = batch if isinstance(batch, dict) else {}
+    records = [record for record in batch.get('packets') or [] if isinstance(record, dict)]
+    raw_packet_ids = payload_view.get('packet_ids')
+    if isinstance(raw_packet_ids, list) and raw_packet_ids:
+        packet_ids = sorted(str(packet_id) for packet_id in raw_packet_ids if packet_id)
+    else:
+        packet_ids = sorted(str(record.get('packet_id') or '') for record in records if record.get('packet_id'))
+    packet_generation_id = str(payload_view.get('packet_generation_id') or payload_view.get('current_generation_id') or '')
+    if not packet_generation_id and batch_kind == 'material_scan':
+        material_index = router.read_json_if_exists(router._material_scan_index_path(run_root))
+        packet_generation_id = str(material_index.get('current_generation_id') or '')
+    if not packet_generation_id:
+        generation_ids = sorted({str(record.get('packet_generation_id') or '') for record in records if record.get('packet_generation_id')})
+        packet_generation_id = ','.join(generation_ids) if generation_ids else 'no-generation'
+    return {
+        'event': event,
+        'batch_kind': batch_kind,
+        'batch_id': str(payload_view.get('batch_id') or batch.get('batch_id') or 'missing-batch'),
+        'packet_ids': ','.join(packet_ids) if packet_ids else 'missing-packets',
+        'packet_generation_id': packet_generation_id,
+        'body_hash': router._payload_body_hash(payload_view),
+    }
+
+
 def _scoped_event_identity(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], event: str, payload: dict[str, Any]) -> dict[str, Any] | None:
     policy = router.SCOPED_EVENT_IDENTITY_POLICIES.get(event)
     if not isinstance(policy, dict):
@@ -158,6 +189,8 @@ def _scoped_event_identity(router: ModuleType, project_root: Path, run_root: Pat
         scope = router._current_node_result_identity_scope(payload_view)
     elif event == router.PM_ROLE_WORK_RESULT_DECISION_EVENT:
         scope = router._pm_role_work_result_decision_identity_scope(payload_view)
+    elif event in {'pm_records_material_scan_result_disposition', 'pm_records_research_result_disposition', 'pm_records_current_node_result_disposition'}:
+        scope = router._pm_package_disposition_identity_scope(run_root, payload_view, event)
     else:
         return None
     key_fields = tuple((str(field) for field in policy.get('dedupe_fields', ())))
@@ -186,5 +219,6 @@ __all__ = (
     '_role_work_result_identity_scope',
     '_current_node_result_identity_scope',
     '_pm_role_work_result_decision_identity_scope',
+    '_pm_package_disposition_identity_scope',
     '_scoped_event_identity',
 )

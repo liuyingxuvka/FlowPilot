@@ -629,6 +629,47 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "deliver_mail")
         self.assertEqual(action["repair_transaction_id"], read_json(router.run_state_path(run_root))["active_control_blocker"]["repair_transaction_id"])
         self.assertEqual(action["repair_execution_plan"]["mode"], "operation_replay")
+    def test_material_operation_replay_uses_current_generation_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        material_index = read_json(run_root / "material" / "material_scan_packets.json")
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Material packet relay operation needs safe replay",
+            action_type="relay_material_scan_packets",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "operation_replay",
+            "operation_ref": {
+                "operation_kind": "controller_action",
+                "action_type": "relay_material_scan_packets",
+            },
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "control_blocks/material_operation_replay_pm_repair_decision", decision),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+        self.assertEqual(action["operation_replay_source"], "current_material_generation_next_action")
+        self.assertEqual(action["packet_ids"], [record["packet_id"] for record in material_index["packets"]])
+        self.assertNotIn("controller_action_id", action)
+        self.assertEqual(action["repair_execution_plan"]["mode"], "operation_replay")
     def test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

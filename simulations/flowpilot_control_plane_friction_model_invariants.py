@@ -413,6 +413,75 @@ def role_output_events_require_file_backed_body(state: State, trace) -> Invarian
         )
     return InvariantResult.pass_()
 
+def material_repair_generation_protocol_is_current(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.material_repair_generation_protocol_checked:
+        return InvariantResult.pass_()
+    if not state.operation_replay_fresh_controller_action_id:
+        return InvariantResult.fail(
+            "operation replay reused a closed Controller action identity"
+        )
+    if not state.operation_replay_targets_current_generation:
+        return InvariantResult.fail(
+            "operation replay targeted a superseded material packet generation"
+        )
+    if not state.operation_replay_ledger_io_authorized:
+        return InvariantResult.fail(
+            "material result relay replay lacked current packet-ledger and material-index authority"
+        )
+    if not state.controller_repair_work_packet_receipt_folded:
+        return InvariantResult.fail(
+            "controller_repair_work_packet receipt did not fold the repair transaction"
+        )
+    if not state.controller_repair_work_packet_facade_exported:
+        return InvariantResult.fail(
+            "controller_repair_work_packet receipt helper was not exported through the Router facade"
+        )
+    if not (
+        state.pm_material_disposition_generation_scoped
+        and state.pm_material_disposition_matches_current_generation
+    ):
+        return InvariantResult.fail(
+            "PM material result disposition was not scoped to the current packet generation"
+        )
+    if state.stale_pm_material_disposition_restored:
+        return InvariantResult.fail(
+            "stale PM material disposition was restored as current-generation success"
+        )
+    return InvariantResult.pass_()
+
+def role_event_identity_and_audit_records_are_closed(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.material_repair_generation_protocol_checked:
+        return InvariantResult.pass_()
+    if not state.role_output_event_deduped_by_body_ref:
+        return InvariantResult.fail(
+            "role-output events were not deduped by event type and body reference"
+        )
+    if state.duplicate_role_event_side_effect_written:
+        return InvariantResult.fail(
+            "duplicate role-output event wrote a duplicate side effect"
+        )
+    if not state.break_glass_patch_validation_finalized:
+        return InvariantResult.fail(
+            "break-glass patch record remained pending validation after validation evidence existed"
+        )
+    return InvariantResult.pass_()
+
+def packet_result_authority_is_ledger_replayable(state: State, trace) -> InvariantResult:
+    del trace
+    if not state.material_repair_generation_protocol_checked:
+        return InvariantResult.pass_()
+    if not state.packet_result_author_identity_replayable:
+        return InvariantResult.fail(
+            "packet result author identity was not replayable from the packet ledger"
+        )
+    if not state.packet_result_author_matches_current_role:
+        return InvariantResult.fail(
+            "packet result author identity did not match the current crew role binding"
+        )
+    return InvariantResult.pass_()
+
 def pm_repair_followup_events_are_matchable(state: State, trace) -> InvariantResult:
     del trace
     if (
@@ -1143,6 +1212,21 @@ INVARIANTS = (
         name="role_output_events_require_file_backed_body",
         description="Role-output events require file-backed bodies and verified hashes; status/progress packets are never decision evidence.",
         predicate=role_output_events_require_file_backed_body,
+    ),
+    Invariant(
+        name="material_repair_generation_protocol_is_current",
+        description="Material repair replay, Controller receipts, and PM dispositions stay scoped to the current packet generation.",
+        predicate=material_repair_generation_protocol_is_current,
+    ),
+    Invariant(
+        name="role_event_identity_and_audit_records_are_closed",
+        description="Role-output events are idempotent by body reference and break-glass patch records close after validation.",
+        predicate=role_event_identity_and_audit_records_are_closed,
+    ),
+    Invariant(
+        name="packet_result_authority_is_ledger_replayable",
+        description="Packet result authorship remains replayable from the packet ledger and matches the current crew role.",
+        predicate=packet_result_authority_is_ledger_replayable,
     ),
     Invariant(
         name="pm_repair_followup_events_are_matchable",

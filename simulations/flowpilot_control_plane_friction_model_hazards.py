@@ -226,6 +226,20 @@ def _safe_base(**changes: object) -> State:
             role_output_event_accepted=True,
             role_output_file_backed_body_path_present=True,
             role_output_body_hash_verified=True,
+            material_repair_generation_protocol_checked=True,
+            operation_replay_fresh_controller_action_id=True,
+            operation_replay_targets_current_generation=True,
+            operation_replay_ledger_io_authorized=True,
+            controller_repair_work_packet_receipt_folded=True,
+            controller_repair_work_packet_facade_exported=True,
+            pm_material_disposition_generation_scoped=True,
+            pm_material_disposition_matches_current_generation=True,
+            stale_pm_material_disposition_restored=False,
+            role_output_event_deduped_by_body_ref=True,
+            duplicate_role_event_side_effect_written=False,
+            packet_result_author_identity_replayable=True,
+            packet_result_author_matches_current_role=True,
+            break_glass_patch_validation_finalized=True,
         ),
         **changes,
     )
@@ -1009,6 +1023,38 @@ def hazard_states() -> dict[str, State]:
         "role_memory_used_as_completion_authority": _safe_base(
             role_memory_delta_written=True,
             role_memory_used_for_authority=True,
+        ),
+        "operation_replay_reuses_controller_action_id": _safe_base(
+            operation_replay_fresh_controller_action_id=False,
+        ),
+        "operation_replay_targets_superseded_generation": _safe_base(
+            operation_replay_targets_current_generation=False,
+        ),
+        "material_result_relay_replay_without_ledger_authority": _safe_base(
+            operation_replay_ledger_io_authorized=False,
+        ),
+        "controller_repair_work_packet_receipt_not_folded": _safe_base(
+            controller_repair_work_packet_receipt_folded=False,
+        ),
+        "controller_repair_work_packet_facade_export_missing": _safe_base(
+            controller_repair_work_packet_facade_exported=False,
+        ),
+        "pm_material_disposition_generation_blind": _safe_base(
+            pm_material_disposition_generation_scoped=False,
+        ),
+        "stale_pm_material_disposition_restored": _safe_base(
+            stale_pm_material_disposition_restored=True,
+        ),
+        "role_output_duplicate_not_deduped": _safe_base(
+            role_output_event_deduped_by_body_ref=False,
+            duplicate_role_event_side_effect_written=True,
+        ),
+        "packet_result_author_identity_not_replayable": _safe_base(
+            packet_result_author_identity_replayable=False,
+            packet_result_author_matches_current_role=False,
+        ),
+        "break_glass_patch_validation_pending": _safe_base(
+            break_glass_patch_validation_finalized=False,
         ),
         "controller_reads_sealed_body": _safe_base(controller_read_sealed_body=True),
     }

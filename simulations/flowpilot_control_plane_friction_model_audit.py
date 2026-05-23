@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -386,6 +387,168 @@ def _add_finding(
             "evidence": evidence,
         }
     )
+
+def _run_text_contains(run_root: Path, *needles: str) -> bool:
+    for path in run_root.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".json", ".jsonl", ".txt", ".md"}:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if all(needle in text for needle in needles):
+            return True
+    return False
+
+def _audit_role_output_event_dedup(router_state: object) -> dict[str, object]:
+    if not isinstance(router_state, dict):
+        return {
+            "deduped_by_body_ref": True,
+            "duplicate_side_effect_written": False,
+            "duplicates": [],
+        }
+    keys: list[tuple[str, str, str]] = []
+    for event in router_state.get("events", []):
+        if not isinstance(event, dict):
+            continue
+        payload = event.get("payload")
+        body_ref = payload.get("body_ref") if isinstance(payload, dict) else None
+        if not isinstance(body_ref, dict):
+            continue
+        path = str(body_ref.get("path") or "")
+        digest = str(body_ref.get("hash") or body_ref.get("report_hash") or "")
+        if path and digest:
+            keys.append((str(event.get("event") or ""), path, digest))
+    counts = Counter(keys)
+    duplicates = [
+        {"event": event, "path": path, "hash": digest, "count": count}
+        for (event, path, digest), count in counts.items()
+        if count > 1
+    ]
+    return {
+        "deduped_by_body_ref": not duplicates,
+        "duplicate_side_effect_written": bool(duplicates),
+        "duplicates": duplicates[:12],
+    }
+
+def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
+    packet_ledger, packet_error = _read_json(run_root / "packet_ledger.json")
+    crew_ledger, crew_error = _read_json(run_root / "crew_ledger.json")
+    role_keys = {
+        str(slot.get("role_key"))
+        for slot in (crew_ledger.get("role_slots") if isinstance(crew_ledger, dict) else []) or []
+        if isinstance(slot, dict) and slot.get("role_key")
+    }
+    issues: list[dict[str, object]] = []
+    for packet in (packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []) or []:
+        if not isinstance(packet, dict):
+            continue
+        result = packet.get("result_envelope")
+        if not isinstance(result, dict):
+            continue
+        completed_by_role = str(result.get("completed_by_role") or "")
+        if result.get("completed_agent_id_belongs_to_role") is False or not result.get("completed_agent_id"):
+            issues.append(
+                {
+                    "packet_id": packet.get("packet_id"),
+                    "completed_by_role": completed_by_role,
+                    "completed_agent_id": result.get("completed_agent_id"),
+                    "completed_agent_id_belongs_to_role": result.get("completed_agent_id_belongs_to_role"),
+                    "role_exists_in_crew_ledger": completed_by_role in role_keys,
+                }
+            )
+    return {
+        "packet_ledger_error": packet_error,
+        "crew_ledger_error": crew_error,
+        "result_author_identity_replayable": not issues,
+        "result_author_matches_current_role": all(issue.get("role_exists_in_crew_ledger") for issue in issues),
+        "issues": issues[:12],
+    }
+
+def _audit_material_repair_generation_protocol(
+    project_root: Path,
+    run_root: Path,
+    router_state: object,
+) -> dict[str, object]:
+    del project_root
+    action_samples: list[dict[str, object]] = []
+    for action_path in sorted((run_root / "runtime" / "controller_actions").glob("*.json")):
+        action_record, error = _read_json(action_path)
+        if error or not isinstance(action_record, dict):
+            continue
+        action = action_record.get("action")
+        if not isinstance(action, dict):
+            action = action_record
+        plan = action.get("repair_execution_plan")
+        if not isinstance(plan, dict) or plan.get("mode") != "operation_replay":
+            continue
+        if action.get("action_type") != "relay_material_scan_results_to_pm":
+            continue
+        allowed = " ".join(str(item) for item in action.get("allowed_reads") or ())
+        if "packet_ledger.json" not in allowed or "material_scan_packets" not in allowed:
+            action_samples.append(
+                {
+                    "action_path": ".flowpilot/runs/" + run_root.name + "/" + action_path.relative_to(run_root).as_posix(),
+                    "action_type": action.get("action_type"),
+                    "allowed_reads": action.get("allowed_reads"),
+                }
+            )
+    patch_pending: list[str] = []
+    for patch_path in sorted((run_root / "controller_break_glass" / "patches").glob("*.json")):
+        patch_record, error = _read_json(patch_path)
+        if error or not isinstance(patch_record, dict):
+            continue
+        if patch_record.get("final_disposition") == "pending_validation":
+            patch_pending.append(
+                ".flowpilot/runs/" + run_root.name + "/" + patch_path.relative_to(run_root).as_posix()
+            )
+    event_dedup = _audit_role_output_event_dedup(router_state)
+    packet_authority = _audit_packet_result_authority(run_root)
+    return {
+        "operation_replay_fresh_controller_action_id": not (
+            (run_root / "controller_break_glass" / "incidents" / "incident-20260523T185400Z-controller-action-id-collision.json").exists()
+            or _run_text_contains(run_root, "identity collision")
+        ),
+        "operation_replay_targets_current_generation": not _run_text_contains(
+            run_root,
+            "operation_replay_targets_superseded_packets",
+        ),
+        "operation_replay_ledger_io_authorized": not action_samples
+        and not _run_text_contains(run_root, "material_scan_result_relay_requires_a_current_packet_ledger_check"),
+        "controller_repair_work_packet_receipt_folded": not (
+            (run_root / "controller_break_glass" / "incidents" / "incident-20260523T191900Z-controller-repair-work-packet-repeat.json").exists()
+        ),
+        "controller_repair_work_packet_facade_exported": not _run_text_contains(
+            run_root,
+            "_apply_controller_repair_work_packet_receipt",
+            "no attribute",
+        ),
+        "pm_material_disposition_generation_scoped": not _run_text_contains(
+            run_root,
+            "existing material disposition was recorded for the superseded original material scan packet IDs",
+        ),
+        "pm_material_disposition_matches_current_generation": not _run_text_contains(
+            run_root,
+            "mix superseded original packet evidence with the current reissue generation",
+        ),
+        "stale_pm_material_disposition_restored": _run_text_contains(
+            run_root,
+            "router_state_material_scan_result_disposition_recorded_restored_from_old_pm_disposition",
+        ),
+        "role_output_event_deduped_by_body_ref": bool(event_dedup.get("deduped_by_body_ref")),
+        "duplicate_role_event_side_effect_written": bool(event_dedup.get("duplicate_side_effect_written")),
+        "packet_result_author_identity_replayable": bool(
+            packet_authority.get("result_author_identity_replayable")
+        ),
+        "packet_result_author_matches_current_role": bool(
+            packet_authority.get("result_author_matches_current_role")
+        ),
+        "break_glass_patch_validation_finalized": not patch_pending,
+        "operation_replay_actions_missing_ledger_io": action_samples,
+        "pending_break_glass_patch_records": patch_pending,
+        "event_dedup": event_dedup,
+        "packet_result_authority": packet_authority,
+    }
 
 def _router_control_blocker_status_matches(router_state: object, project_root: Path) -> tuple[bool, list[dict[str, object]]]:
     if not isinstance(router_state, dict):
@@ -2335,6 +2498,101 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             },
         )
 
+    material_repair_protocol = _audit_material_repair_generation_protocol(root, run_root, router_state)
+    if not material_repair_protocol.get("operation_replay_fresh_controller_action_id"):
+        _add_finding(
+            findings,
+            code="operation_replay_reuses_controller_action_id",
+            severity="error",
+            summary="operation replay reused a closed Controller action identity",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("operation_replay_targets_current_generation"):
+        _add_finding(
+            findings,
+            code="operation_replay_targets_superseded_generation",
+            severity="error",
+            summary="operation replay targeted a superseded material packet generation",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("operation_replay_ledger_io_authorized"):
+        _add_finding(
+            findings,
+            code="material_result_relay_replay_without_ledger_authority",
+            severity="error",
+            summary="material result relay replay lacked current packet-ledger and material-index authority",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("controller_repair_work_packet_receipt_folded"):
+        _add_finding(
+            findings,
+            code="controller_repair_work_packet_receipt_not_folded",
+            severity="error",
+            summary="controller_repair_work_packet receipt did not fold the repair transaction",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("controller_repair_work_packet_facade_exported"):
+        _add_finding(
+            findings,
+            code="controller_repair_work_packet_facade_export_missing",
+            severity="error",
+            summary="controller_repair_work_packet receipt helper was not exported through the Router facade",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not (
+        material_repair_protocol.get("pm_material_disposition_generation_scoped")
+        and material_repair_protocol.get("pm_material_disposition_matches_current_generation")
+    ):
+        _add_finding(
+            findings,
+            code="pm_material_disposition_generation_blind",
+            severity="error",
+            summary="PM material result disposition was not scoped to the current packet generation",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if material_repair_protocol.get("stale_pm_material_disposition_restored"):
+        _add_finding(
+            findings,
+            code="stale_pm_material_disposition_restored",
+            severity="error",
+            summary="stale PM material disposition was restored as current-generation success",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("role_output_event_deduped_by_body_ref"):
+        _add_finding(
+            findings,
+            code="role_output_duplicate_not_deduped",
+            severity="error",
+            summary="role-output events were not deduped by event type and body reference",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("packet_result_author_identity_replayable"):
+        _add_finding(
+            findings,
+            code="packet_result_author_identity_not_replayable",
+            severity="error",
+            summary="packet result author identity was not replayable from the packet ledger",
+            invariant="packet_result_authority_is_ledger_replayable",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("break_glass_patch_validation_finalized"):
+        _add_finding(
+            findings,
+            code="break_glass_patch_validation_pending",
+            severity="error",
+            summary="break-glass patch record remained pending validation after validation evidence existed",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
+
     non_current_running_entries: list[str] = []
     if isinstance(index, dict):
         for item in index.get("runs", []):
@@ -2489,6 +2747,46 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         role_output_event_accepted=bool(pm_repair_recorded),
         role_output_file_backed_body_path_present=not bool(role_output_body_gaps),
         role_output_body_hash_verified=not bool(role_output_body_gaps),
+        material_repair_generation_protocol_checked=True,
+        operation_replay_fresh_controller_action_id=bool(
+            material_repair_protocol.get("operation_replay_fresh_controller_action_id")
+        ),
+        operation_replay_targets_current_generation=bool(
+            material_repair_protocol.get("operation_replay_targets_current_generation")
+        ),
+        operation_replay_ledger_io_authorized=bool(
+            material_repair_protocol.get("operation_replay_ledger_io_authorized")
+        ),
+        controller_repair_work_packet_receipt_folded=bool(
+            material_repair_protocol.get("controller_repair_work_packet_receipt_folded")
+        ),
+        controller_repair_work_packet_facade_exported=bool(
+            material_repair_protocol.get("controller_repair_work_packet_facade_exported")
+        ),
+        pm_material_disposition_generation_scoped=bool(
+            material_repair_protocol.get("pm_material_disposition_generation_scoped")
+        ),
+        pm_material_disposition_matches_current_generation=bool(
+            material_repair_protocol.get("pm_material_disposition_matches_current_generation")
+        ),
+        stale_pm_material_disposition_restored=bool(
+            material_repair_protocol.get("stale_pm_material_disposition_restored")
+        ),
+        role_output_event_deduped_by_body_ref=bool(
+            material_repair_protocol.get("role_output_event_deduped_by_body_ref")
+        ),
+        duplicate_role_event_side_effect_written=bool(
+            material_repair_protocol.get("duplicate_role_event_side_effect_written")
+        ),
+        packet_result_author_identity_replayable=bool(
+            material_repair_protocol.get("packet_result_author_identity_replayable")
+        ),
+        packet_result_author_matches_current_role=bool(
+            material_repair_protocol.get("packet_result_author_matches_current_role")
+        ),
+        break_glass_patch_validation_finalized=bool(
+            material_repair_protocol.get("break_glass_patch_validation_finalized")
+        ),
         control_blocker_followup_event_matchable=pm_repair_followup_matchable,
         pm_repair_reissue_spec_written=bool(
             pm_repair_liveness.get("reissue_spec_written")

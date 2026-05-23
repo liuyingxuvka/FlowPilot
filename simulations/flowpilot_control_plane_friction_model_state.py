@@ -401,6 +401,21 @@ class State:
     role_output_file_backed_body_path_present: bool = True
     role_output_body_hash_verified: bool = True
 
+    material_repair_generation_protocol_checked: bool = False
+    operation_replay_fresh_controller_action_id: bool = True
+    operation_replay_targets_current_generation: bool = True
+    operation_replay_ledger_io_authorized: bool = True
+    controller_repair_work_packet_receipt_folded: bool = True
+    controller_repair_work_packet_facade_exported: bool = True
+    pm_material_disposition_generation_scoped: bool = True
+    pm_material_disposition_matches_current_generation: bool = True
+    stale_pm_material_disposition_restored: bool = False
+    role_output_event_deduped_by_body_ref: bool = True
+    duplicate_role_event_side_effect_written: bool = False
+    packet_result_author_identity_replayable: bool = True
+    packet_result_author_matches_current_role: bool = True
+    break_glass_patch_validation_finalized: bool = True
+
 class Transition(NamedTuple):
     label: str
     state: State

@@ -17851,3 +17851,129 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - The StructureMesh pruning loop remains at the current safe stop condition: no useful and safe deferred split candidate remains.
 - Future FlowPilot behavior changes should rerun model-test alignment, coverage sweep, coverage inventory, layered proof, focused runtime tests, and install freshness checks before claiming done.
+
+## FlowPilot Control-Plane Model Miss: Generation Protocol
+
+- Project: FlowPilot
+- Trigger reason: User requested a FlowGuard model upgrade that catches all audited control-plane friction and derives a minimal root-cause repair plan before runtime code changes.
+- Status: model upgraded; current live run now fails the audit with expected findings
+- Skill decision: predictive KB preflight, FlowGuard existing-model preflight, and FlowGuard model-miss review
+- Started: 2026-05-23T22:00:00+02:00
+- Ended: 2026-05-23T22:59:24.4319041+02:00
+- Commands OK: True for abstract/model checks; live audit intentionally reports the current run as failing
+
+### Model Files
+
+- `simulations/flowpilot_control_plane_friction_model_state.py`
+- `simulations/flowpilot_control_plane_friction_model_transitions.py`
+- `simulations/flowpilot_control_plane_friction_model_invariants.py`
+- `simulations/flowpilot_control_plane_friction_model_hazards.py`
+- `simulations/flowpilot_control_plane_friction_model_audit.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+- `simulations/meta_thin_parent_results.json`
+- `tmp/flowguard_background/control_plane_live_audit.json`
+
+### Scope
+
+- Added first-class model state, hazards, invariants, and live-audit checks for generation-scoped material repair, current-generation operation replay, Controller repair packet receipt folding, PM disposition generation matching, role-output event dedupe, packet-result author replayability, and break-glass validation closure.
+- No production runtime root fix was implemented in this pass.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m py_compile` for the control-plane friction model state, transitions, invariants, hazards, audit, and runner files.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit`.
+- Expected failure: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out tmp\flowguard_background\control_plane_live_audit.json` catches 10 current-run findings while the abstract graph and hazard checks remain green.
+- OK: `python simulations\run_meta_checks.py`.
+
+### Findings
+
+- The model now rejects old Controller action replay as a current-generation repair.
+- The model now rejects PM material dispositions that do not prove they belong to the current material generation.
+- The model now rejects Controller repair packet receipts that close only an action row without folding the repair transaction.
+- The model now rejects duplicate role-output event side effects and unresolved break-glass patch validation records.
+- The root issue is a split-brain control plane: multiple ledgers can each look locally valid while no single generation-scoped transaction owns replay, result relay, receipt folding, and disposition closure.
+
+### Skipped Or Limited
+
+- No runtime repair was implemented in this model-upgrade turn.
+- No install sync, commit, GitHub push, tag, release, deploy, or public publication was performed.
+- No full legacy regression was claimed; `run_meta_checks.py` still reports the existing release-confidence boundary requiring full regression.
+
+### Next Actions
+
+- Implement one generation-scoped `MaterialRepairTransaction` commit helper for material scan repair replay, result relay, PM disposition, and Controller receipt folding.
+- Make operation replay synthesize fresh current-generation Controller actions from operation intent and ledger/index state instead of cloning old action rows.
+- Gate PM disposition, packet result authority, role-output side effects, and break-glass patch closure on replayable current-generation evidence.
+- Add focused runtime tests for the 10 live-audit codes, rerun live audit until zero findings, then run meta and scoped runtime checks before install sync or publication.
+
+## FlowPilot Control-Plane Root Fix: Generation-Scoped Repair Transactions
+
+- Project: FlowPilot
+- Trigger reason: User approved OpenSpec plus FlowGuard repair of the audited control-plane friction while preserving the existing flows.
+- Status: runtime fix implemented, validated, installed locally, and heavy model regressions completed in background artifacts
+- Skill decision: predictive KB preflight, OpenSpec propose/apply, FlowGuard development-process flow, model-test alignment, and model-miss review
+- Started: 2026-05-23T23:00:00+02:00
+- Ended: 2026-05-23T23:34:27.3277687+02:00
+- Commands OK: True
+
+### Model And Runtime Files
+
+- `openspec/changes/harden-material-repair-generation-contract/`
+- `skills/flowpilot/assets/flowpilot_router_events_repair_transaction_material.py`
+- `skills/flowpilot/assets/flowpilot_router_events_repair_blocker_actions.py`
+- `skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_scoped_event_identity.py`
+- `skills/flowpilot/assets/flowpilot_router_event_identity_scopes.py`
+- `skills/flowpilot/assets/flowpilot_controller_break_glass.py`
+- `simulations/run_flowpilot_event_idempotency_checks.py`
+- `tmp/flowguard_background/run_meta_checks.*`
+- `tmp/flowguard_background/run_capability_checks.*`
+
+### Scope
+
+- Upgraded the existing repair transaction and result absorption flow; no parallel replacement workflow was introduced.
+- Material packet reissue now publishes a new active material-scan parallel batch, marks the old batch superseded, and stores current generation metadata in the material index.
+- Material operation replay now synthesizes from the current legal material next action instead of cloning old Controller action identity or old read/write scopes.
+- PM material-scan result disposition now requires the active batch, material index, packet ids, and current generation id to agree before the existing `result_absorption` transaction writes.
+- PM package disposition events now participate in the existing scoped event idempotency ledger with batch, packet, generation, and body-hash identity.
+- Controller break-glass patch records now receive final disposition when the incident closes.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate harden-material-repair-generation-contract --strict`.
+- OK: `python -m py_compile` for changed runtime, simulation, and test files.
+- OK: focused runtime tests for material repair generation, material operation replay, PM disposition stale-batch rejection, break-glass patch closure, and facade export contract.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit`.
+- OK: `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`.
+- OK: `python simulations/run_flowpilot_pm_package_absorption_checks.py --json-out simulations/flowpilot_pm_package_absorption_results.json`.
+- OK: `python simulations/run_flowpilot_event_idempotency_checks.py --json-out simulations/flowpilot_event_idempotency_results.json`.
+- OK: `python simulations/run_flowpilot_control_transaction_registry_checks.py --json-out simulations/flowpilot_control_transaction_registry_results.json`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations/run_flowpilot_role_output_runtime_checks.py --json-out simulations/flowpilot_role_output_runtime_results.json`.
+- OK: `python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json`.
+- OK in background: `python simulations/run_meta_checks.py`, exit artifact `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, proof reuse false.
+- OK in background: `python simulations/run_capability_checks.py`, exit artifact `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, proof reuse false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The root bug was split authority around material repair generation: repair commit, Controller replay, PM absorption, role-output idempotency, and break-glass closure each had local checks but did not share one current-generation authority.
+- The minimal root fix was to make existing transactions generation-scoped and evidence-replayable, not to add a new control loop.
+- The event-idempotency source audit now requires PM package disposition events to have scoped policies, so this regression is model-visible.
+- The model-test alignment runner still reports separate existing medium findings for deferred structure splits and background evidence status; they are not introduced by this fix.
+
+### Skipped Or Limited
+
+- The two full wrapper runtime modules were not claimed as pass evidence because a parallel run exceeded 240 seconds; the exact touched runtime tests were rerun directly and passed.
+- The live audit against the historical current run remains historical evidence and was not used as a success gate for the fixed code path.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
+### Next Actions
+
+- Inspect peer-agent dirty files before creating a local commit.
+- If this change is promoted, keep the OpenSpec change open until the team decides whether to archive it with the implementation evidence.

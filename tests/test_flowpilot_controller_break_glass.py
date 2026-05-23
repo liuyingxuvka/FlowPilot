@@ -105,6 +105,18 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
             self.assertEqual(index["schema_version"], break_glass.INDEX_SCHEMA)
             self.assertEqual(index["incidents"][0]["incident_id"], "incident-test")
             self.assertEqual(index["patches"][0]["patch_id"], "patch-test")
+            closed = break_glass.close_incident(
+                root,
+                run_root,
+                incident_id="incident-test",
+                disposition="permanent_fix_applied",
+            )
+            self.assertTrue(closed["ok"])
+            finalized_patch = read_json(run_root / "controller_break_glass" / "patches" / "patch-test.json")
+            self.assertEqual(finalized_patch["final_disposition"], "permanent_fix_applied")
+            self.assertFalse(finalized_patch["temporary"])
+            self.assertFalse(finalized_patch["permanent_fix_needed"])
+            self.assertEqual(closed["incident"]["patch_finalization"]["finalized_patch_count"], 1)
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
