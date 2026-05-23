@@ -17,6 +17,13 @@
           "ordinary role ended without result or formal blocker"
         ]
       },
+      "path_only_handoff_authorized_open": {
+        "detected": true,
+        "expected": "path-only handoff authorized packet open without controller relay signature",
+        "failures": [
+          "path-only handoff authorized packet open without controller relay signature"
+        ]
+      },
       "pm_custom_repair_flow": {
         "detected": true,
         "expected": "PM invented a custom recovery flow",

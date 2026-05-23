@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,66 @@ from packet_runtime_schema import (
     utc_now,
     write_json_atomic,
 )
+
+
+def _packet_ledger_corrupt_backup_path(ledger_path: Path) -> Path:
+    stamp = utc_now().replace(":", "").replace("-", "").replace("Z", "Z")
+    return ledger_path.with_name(f"{ledger_path.stem}.corrupt-backup-{stamp}{ledger_path.suffix}")
+
+
+def _salvage_packet_ledger_payload(ledger_path: Path) -> tuple[dict[str, Any] | None, str]:
+    try:
+        text = ledger_path.read_text(encoding="utf-8-sig")
+    except OSError as exc:
+        return None, f"unreadable:{type(exc).__name__}"
+    try:
+        payload, end = json.JSONDecoder().raw_decode(text)
+    except json.JSONDecodeError as exc:
+        return None, f"unsalvageable:{exc.msg}"
+    if not isinstance(payload, dict):
+        return None, "unsalvageable:root_not_object"
+    trailing = text[end:].strip()
+    reason = "salvaged_full_object" if not trailing else "salvaged_first_json_object_with_trailing_bytes"
+    return payload, reason
+
+
+def _read_packet_ledger_or_recover(
+    project_root: Path,
+    ledger_path: Path,
+    run_id: str,
+    run_root: Path,
+) -> dict[str, Any]:
+    if not ledger_path.exists():
+        return _empty_packet_ledger(project_root, run_id, run_root)
+    try:
+        return read_json(ledger_path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, PacketRuntimeError) as exc:
+        backup_path = _packet_ledger_corrupt_backup_path(ledger_path)
+        salvaged, reason = _salvage_packet_ledger_payload(ledger_path)
+        backup_rel: str | None = None
+        try:
+            ledger_path.replace(backup_path)
+            backup_rel = project_relative(project_root, backup_path)
+        except OSError:
+            backup_rel = None
+        ledger = salvaged if isinstance(salvaged, dict) else _empty_packet_ledger(project_root, run_id, run_root)
+        recovery = {
+            "recovered_at": utc_now(),
+            "reason": reason,
+            "error": str(exc),
+            "corrupt_backup_path": backup_rel,
+        }
+        ledger["schema_version"] = PACKET_LEDGER_SCHEMA
+        ledger["run_id"] = run_id
+        ledger["run_root"] = project_relative(project_root, run_root)
+        ledger["packet_root"] = project_relative(project_root, run_root / "packets")
+        ledger["updated_at"] = utc_now()
+        history = ledger.get("recovery_history") if isinstance(ledger.get("recovery_history"), list) else []
+        history.append(recovery)
+        ledger["recovery_history"] = history
+        ledger["last_recovery"] = recovery
+        write_json_atomic(ledger_path, ledger)
+        return ledger
 
 
 def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dict[str, Any]:
@@ -95,10 +156,7 @@ def _upsert_barrier_bundle_record(ledger: dict[str, Any], bundle: dict[str, Any]
 
 
 def _upsert_packet_record(project_root: Path, ledger_path: Path, run_id: str, run_root: Path, record: dict[str, Any]) -> None:
-    if ledger_path.exists():
-        ledger = read_json(ledger_path)
-    else:
-        ledger = _empty_packet_ledger(project_root, run_id, run_root)
+    ledger = _read_packet_ledger_or_recover(project_root, ledger_path, run_id, run_root)
 
     packets = ledger.setdefault("packets", [])
     if not isinstance(packets, list):
@@ -133,7 +191,8 @@ def _upsert_packet_record(project_root: Path, ledger_path: Path, run_id: str, ru
 def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str, updates: dict[str, Any]) -> None:
     if not ledger_path.exists():
         return
-    ledger = read_json(ledger_path)
+    run_root = ledger_path.parent
+    ledger = _read_packet_ledger_or_recover(project_root, ledger_path, run_root.name, run_root)
     packets = ledger.get("packets")
     if not isinstance(packets, list):
         return
@@ -161,7 +220,10 @@ def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str,
 def _packet_ledger_record(ledger_path: Path, packet_id: str) -> dict[str, Any] | None:
     if not ledger_path.exists():
         return None
-    ledger = read_json(ledger_path)
+    try:
+        ledger = read_json(ledger_path)
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError, PacketRuntimeError):
+        return None
     packets = ledger.get("packets")
     if not isinstance(packets, list):
         return None
@@ -173,4 +235,17 @@ def _packet_ledger_record(ledger_path: Path, packet_id: str) -> dict[str, Any] |
 
 def packet_ledger_record_for_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any] | None:
     paths = packet_paths_from_any_envelope(project_root, envelope)
-    return _packet_ledger_record(paths["packet_ledger"], str(envelope.get("packet_id") or ""))
+    ledger = _read_packet_ledger_or_recover(
+        project_root,
+        paths["packet_ledger"],
+        str(paths["run_id"]),
+        paths["run_root"],
+    )
+    packets = ledger.get("packets")
+    if not isinstance(packets, list):
+        return None
+    packet_id = str(envelope.get("packet_id") or "")
+    for record in packets:
+        if isinstance(record, dict) and record.get("packet_id") == packet_id:
+            return record
+    return None

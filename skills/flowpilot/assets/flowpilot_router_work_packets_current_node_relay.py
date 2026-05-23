@@ -155,6 +155,155 @@ def _issue_packet_active_holder_leases(router: ModuleType, project_root: Path, r
     run_state.setdefault('packet_active_holder_fast_lanes', {})[packet_family] = summary
     return summary
 
+def _active_holder_plan_by_packet(active_holder_plan: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    if not isinstance(active_holder_plan, dict):
+        return {}
+    planned = active_holder_plan.get('packets')
+    if not isinstance(planned, list):
+        return {}
+    return {
+        str(item.get('packet_id') or ''): item
+        for item in planned
+        if isinstance(item, dict) and str(item.get('packet_id') or '').strip()
+    }
+
+def _flowpilot_runtime_relay_operation(
+    router: ModuleType,
+    project_root: Path,
+    *,
+    packet_id: str,
+    envelope_path: Path,
+    envelope_kind: str,
+    source_role: str,
+    target_role: str,
+    packet_family: str,
+    postcondition: str,
+    active_holder_item: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    _bind_router(router)
+    envelope_rel = project_relative(project_root, envelope_path)
+    args = [
+        'relay-envelope',
+        '--envelope-path',
+        envelope_rel,
+        '--controller-agent-id',
+        'controller',
+        '--received-from-role',
+        source_role,
+        '--relayed-to-role',
+        target_role,
+    ]
+    holder_agent_id = ''
+    if isinstance(active_holder_item, dict):
+        holder_agent_id = str(active_holder_item.get('target_agent_id') or '').strip()
+    if holder_agent_id:
+        args.extend(
+            [
+                '--holder-agent-id',
+                holder_agent_id,
+                '--route-version',
+                str(int(active_holder_item.get('route_version') or 0)),
+                '--frontier-version',
+                str(int(active_holder_item.get('frontier_version') or 0)),
+            ]
+        )
+    packet_dir = envelope_path.parent
+    expected_writes = [
+        envelope_rel,
+        project_relative(project_root, packet_dir.parent.parent / 'packet_ledger.json'),
+    ]
+    if isinstance(active_holder_item, dict) and holder_agent_id:
+        for key in ('active_holder_lease_path', 'active_holder_events_path'):
+            value = str(active_holder_item.get(key) or '').strip()
+            if value:
+                expected_writes.append(value)
+    expected_writes = [item for item in expected_writes if item]
+    return {
+        'schema_version': 'flowpilot.runtime_relay_operation.v1',
+        'operation_type': 'controller_runtime_relay_envelope',
+        'runtime_entrypoint': 'flowpilot_runtime.py relay-envelope',
+        'runtime_args': args,
+        'packet_id': packet_id,
+        'packet_family': packet_family,
+        'envelope_kind': envelope_kind,
+        'envelope_path': envelope_rel,
+        'received_from_role': source_role,
+        'relayed_to_role': target_role,
+        'postcondition': postcondition,
+        'expected_relay_kind': 'packet_controller_relay' if envelope_kind == 'packet_envelope' else 'result_controller_relay',
+        'expected_writes': sorted(dict.fromkeys(expected_writes)),
+        'active_holder_lease_required': bool(holder_agent_id),
+        'active_holder_lease_path': str(active_holder_item.get('active_holder_lease_path') or '') if isinstance(active_holder_item, dict) else '',
+        'target_agent_id': holder_agent_id,
+        'sealed_body_reads_allowed': False,
+        'path_only_handoff_is_not_completion': True,
+    }
+
+def _packet_runtime_relay_operations(
+    router: ModuleType,
+    project_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    packet_family: str,
+    postcondition: str,
+    active_holder_plan: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    _bind_router(router)
+    holder_plan = _active_holder_plan_by_packet(active_holder_plan)
+    operations: list[dict[str, Any]] = []
+    for record in records:
+        envelope_path = router._packet_envelope_path_from_record(project_root, run_state, record)
+        envelope = packet_runtime.load_envelope(project_root, envelope_path)
+        packet_id = str(envelope.get('packet_id') or record.get('packet_id') or '')
+        target_role = str(envelope.get('to_role') or record.get('to_role') or '')
+        operations.append(
+            _flowpilot_runtime_relay_operation(
+                router,
+                project_root,
+                packet_id=packet_id,
+                envelope_path=envelope_path,
+                envelope_kind='packet_envelope',
+                source_role=str(envelope.get('from_role') or record.get('from_role') or 'project_manager'),
+                target_role=target_role,
+                packet_family=packet_family,
+                postcondition=postcondition,
+                active_holder_item=holder_plan.get(packet_id),
+            )
+        )
+    return operations
+
+def _result_runtime_relay_operations(
+    router: ModuleType,
+    project_root: Path,
+    run_state: dict[str, Any],
+    records: list[dict[str, Any]],
+    *,
+    packet_family: str,
+    postcondition: str,
+    to_role: str,
+) -> list[dict[str, Any]]:
+    _bind_router(router)
+    operations: list[dict[str, Any]] = []
+    for record in records:
+        result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
+        result = packet_runtime.load_envelope(project_root, result_path)
+        packet_id = str(result.get('packet_id') or record.get('packet_id') or '')
+        operations.append(
+            _flowpilot_runtime_relay_operation(
+                router,
+                project_root,
+                packet_id=packet_id,
+                envelope_path=result_path,
+                envelope_kind='result_envelope',
+                source_role=str(result.get('completed_by_role') or record.get('to_role') or 'unknown'),
+                target_role=to_role,
+                packet_family=packet_family,
+                postcondition=postcondition,
+            )
+        )
+    return operations
+
 def _relay_result_records(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, to_role: str, controller_agent_id: str) -> list[str]:
     _bind_router(router)
     relayed_ids: list[str] = []
@@ -266,6 +415,8 @@ __all__ = (
     '_issue_current_node_active_holder_leases',
     '_packet_active_holder_lease_plan',
     '_issue_packet_active_holder_leases',
+    '_packet_runtime_relay_operations',
+    '_result_runtime_relay_operations',
     '_relay_result_records',
     '_agent_role_map_from_crew_ledger',
     '_merge_agent_role_maps',

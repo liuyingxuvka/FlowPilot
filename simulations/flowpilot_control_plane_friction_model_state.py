@@ -71,7 +71,14 @@ Risk intent brief:
   postcondition evidence; daemon ticks cannot escalate a half-complete
   Controller receipt when valid Router-owned artifacts already exist; and
   role-output events cannot be accepted from a prepared/progress status surface
-  without a file-backed body path plus replayable body hash; and stale
+  without a file-backed body path plus replayable body hash; PM role-work
+  obligations are keyed by batch/request/packet/role, host delivery success and
+  active-holder liveness are separate gates, packet-ledger IO is atomic and
+  corruption-recoverable, result self-checks are machine-parseable, runtime
+  authority backs every advertised reader; Router-owned internal postconditions
+  with ready inputs materialize evidence or emit a router-visible blocker
+  instead of becoming passive Controller/role waits; resolved obligations clear
+  passive wait and reminder projections; and stale
   daemon/run-state saves cannot resurrect a live wait after the authoritative
   Router obligation state has cleared it.
 - Blindspot: this is still a focused control-plane model. The live-run audit
@@ -115,14 +122,39 @@ class State:
     stateful_controller_postcondition_evidence_written: bool = False
     stateful_controller_advanced_from_receipt: bool = False
     controller_delivery_receipt_done: bool = False
+    controller_delivery_host_status: str = "none"  # none | delivered | failed_agent_not_found
     controller_delivery_target_role_wait_started: bool = False
     controller_delivery_used_as_role_completion: bool = False
     controller_delivery_missing_role_output_blocker: bool = False
+    pm_role_work_identity_includes_batch_request_packet_role: bool = False
+    pm_role_work_closed_identity_reused_for_distinct_request: bool = False
+    pm_role_work_request_postcondition_scoped: bool = False
+    pm_role_work_open_request_masked_by_global_flag: bool = False
+    active_holder_lease_issued: bool = False
+    active_holder_agent_identity_recorded: bool = False
+    active_holder_agent_host_live: bool = False
+    active_holder_packet_role_matches: bool = False
+    packet_ledger_write_atomic: bool = False
+    packet_ledger_write_locked_or_cas: bool = False
+    packet_ledger_readback_validated: bool = False
+    packet_ledger_corruption_recoverable: bool = False
+    packet_ledger_corrupt_read_crashed_daemon: bool = False
     router_owned_artifact_exists: bool = False
     router_owned_artifact_proof_valid: bool = False
     router_owned_postcondition_reclaimed_from_artifact: bool = False
     router_tick_saw_receipt_before_flag: bool = False
     router_tick_escalated_before_reclaim: bool = False
+    router_internal_postcondition_due: bool = False
+    router_internal_postcondition_inputs_ready: bool = False
+    router_internal_postcondition_materialized: bool = False
+    router_internal_postcondition_blocker_materialized: bool = False
+    router_internal_postcondition_exposed_as_role_wait: bool = False
+    router_internal_postcondition_expected_evidence_exists: bool = False
+    router_internal_postcondition_executable_action_pending: bool = False
+    resolved_obligation_evidence_exists: bool = False
+    resolved_obligation_live_passive_wait: bool = False
+    resolved_obligation_live_blocked_reminder: bool = False
+    resolved_obligation_projection_reconciled: bool = True
     controller_display_work_soft_recorded: bool = False
     controller_display_work_hard_postcondition: bool = False
     controller_display_work_escalated_to_pm: bool = False
@@ -144,6 +176,9 @@ class State:
     stale_run_state_resurrected_closed_wait: bool = False
     self_check_template_status_pass_allowed: bool = False
     self_check_parser_status_pass_accepted: bool = False
+    material_gate_depends_on_result_body: bool = False
+    result_self_check_machine_parseable: bool = True
+    result_reader_authority_matches_runtime: bool = True
 
     pm_research_package_written: bool = False
     research_package_has_decision_question: bool = False

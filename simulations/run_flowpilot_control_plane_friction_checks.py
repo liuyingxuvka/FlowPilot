@@ -18,7 +18,10 @@ REQUIRED_LABELS = (
     "select_optimized_transaction_flow",
     "controller_applies_stateful_postcondition_before_done_receipt",
     "controller_delivery_done_starts_target_role_wait",
+    "active_holder_lease_confirms_live_agent_and_role",
+    "packet_ledger_io_guard_uses_atomic_lock_and_recovery",
     "router_reclaims_valid_router_owned_artifact_before_blocker",
+    "router_materializes_ready_internal_postcondition_evidence",
     "controller_display_work_soft_recorded_without_hard_gate",
     "external_keepalive_action_confirmed_with_light_marker",
     "signed_material_migration_preserves_relayed_envelope",
@@ -26,6 +29,7 @@ REQUIRED_LABELS = (
     "control_blocker_done_receipt_applies_delivery_postcondition",
     "stale_run_state_save_preserves_cleared_wait_projection",
     "self_check_status_pass_parser_aligned",
+    "material_gate_result_evidence_machine_and_authority_backed",
     "pm_writes_research_package_with_scope_fields",
     "pm_records_research_capability_decision_preserving_package_scope",
     "worker_packet_materialized_with_research_scope",
@@ -91,9 +95,14 @@ HAZARD_EXPECTED_FAILURES = {
     "signed_material_migration_sidecar_missing": "signed envelope migration backfilled mutable projections without a sidecar record",
     "control_blocker_identity_missing_blocker_id": "control blocker Controller action identity omitted blocker artifact identity",
     "closed_controller_action_reused_for_different_identity": "closed Controller action row was reused for a different Router obligation identity",
+    "pm_role_work_closed_identity_reused_for_distinct_batch": "PM role-work action identity omitted batch, request, packet, or target role",
+    "pm_role_work_wait_identity_missing_request_packet_role": "PM role-work wait or result used an identity that was not scoped to batch, request, packet, and target role",
+    "pm_role_work_global_postcondition_masks_open_request": "PM role-work global postcondition masked an open request-specific obligation",
     "control_blocker_done_receipt_without_delivery_postcondition": "control blocker done receipt did not apply the Router-visible delivery postcondition",
     "stale_run_state_resurrects_closed_wait_projection": "stale run-state save resurrected a closed Controller wait projection",
     "self_check_status_pass_rejected": "Contract Self-Check parser rejected status: pass even though templates allow it",
+    "material_gate_result_self_check_unparseable": "material gate depended on a result body whose Contract Self-Check was not machine-parseable",
+    "material_gate_result_reader_not_runtime_backed": "artifact map advertised result-body reader access that runtime relay authority did not grant",
     "pm_formal_gate_package_missing_artifact": "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
@@ -111,8 +120,16 @@ HAZARD_EXPECTED_FAILURES = {
     "stateful_receipt_advanced_without_postcondition_evidence": "stateful controller receipt was marked done before Router-visible postcondition evidence existed",
     "controller_delivery_receipt_treated_as_role_completion": "Controller delivery receipt was treated as target-role completion",
     "controller_delivery_receipt_missing_role_output_blocker": "Router created a missing role-output blocker from a Controller delivery receipt",
+    "controller_delivery_failed_marked_done": "Controller delivery receipt was marked done without host delivery success",
+    "active_holder_lease_without_host_liveness": "active holder lease was issued without concrete agent identity, host liveness, and packet-role match",
+    "active_holder_lease_to_wrong_packet_role": "active holder lease was issued without concrete agent identity, host liveness, and packet-role match",
+    "packet_ledger_write_without_atomic_lock": "packet ledger write path lacked atomic unique-temp, lock/CAS, or readback validation",
+    "packet_ledger_corrupt_read_crashes_daemon": "packet ledger corrupt read crashed the daemon instead of producing a recoverable control blocker",
     "valid_router_owned_artifact_not_reclaimed_before_blocker": "valid Router-owned artifact/proof existed but Router did not reclaim the postcondition",
     "daemon_tick_semicomplete_receipt_escalates_before_reclaim": "valid Router-owned artifact/proof existed but Router did not reclaim the postcondition",
+    "router_internal_postcondition_role_wait_dead_end": "router-owned internal postcondition was exposed as a Controller/role wait instead of materializing or blocking",
+    "router_internal_postcondition_unmaterialized_after_ready_inputs": "router-owned internal postcondition had ready inputs but no materialized evidence or router-visible blocker",
+    "resolved_obligation_projection_still_live": "resolved Router obligation still had a live passive wait or blocked reminder projection",
     "role_output_event_missing_file_backed_body": "role output event was accepted without a file-backed body path and verified body hash",
     "role_output_status_prepared_used_as_decision": "role output status/progress was used as role event evidence",
     "pm_repair_followup_event_unmatchable": "PM repair follow-up event could not be matched by normalized router resolution logic",
@@ -220,14 +237,39 @@ def _state_id(state: model.State) -> str:
         f"{state.stateful_controller_postcondition_evidence_written},"
         f"{state.stateful_controller_advanced_from_receipt}|"
         f"controller_delivery={state.controller_delivery_receipt_done},"
+        f"{state.controller_delivery_host_status},"
         f"{state.controller_delivery_target_role_wait_started},"
         f"{state.controller_delivery_used_as_role_completion},"
         f"{state.controller_delivery_missing_role_output_blocker}|"
+        f"pm_role_work_identity={state.pm_role_work_identity_includes_batch_request_packet_role},"
+        f"{state.pm_role_work_closed_identity_reused_for_distinct_request},"
+        f"{state.pm_role_work_request_postcondition_scoped},"
+        f"{state.pm_role_work_open_request_masked_by_global_flag}|"
+        f"active_holder={state.active_holder_lease_issued},"
+        f"{state.active_holder_agent_identity_recorded},"
+        f"{state.active_holder_agent_host_live},"
+        f"{state.active_holder_packet_role_matches}|"
+        f"packet_ledger_io={state.packet_ledger_write_atomic},"
+        f"{state.packet_ledger_write_locked_or_cas},"
+        f"{state.packet_ledger_readback_validated},"
+        f"{state.packet_ledger_corruption_recoverable},"
+        f"{state.packet_ledger_corrupt_read_crashed_daemon}|"
         f"router_owned_reclaim={state.router_owned_artifact_exists},"
         f"{state.router_owned_artifact_proof_valid},"
         f"{state.router_owned_postcondition_reclaimed_from_artifact},"
         f"{state.router_tick_saw_receipt_before_flag},"
         f"{state.router_tick_escalated_before_reclaim}|"
+        f"internal_postcondition={state.router_internal_postcondition_due},"
+        f"{state.router_internal_postcondition_inputs_ready},"
+        f"{state.router_internal_postcondition_materialized},"
+        f"{state.router_internal_postcondition_blocker_materialized},"
+        f"{state.router_internal_postcondition_exposed_as_role_wait},"
+        f"{state.router_internal_postcondition_expected_evidence_exists},"
+        f"{state.router_internal_postcondition_executable_action_pending}|"
+        f"resolved_projection={state.resolved_obligation_evidence_exists},"
+        f"{state.resolved_obligation_live_passive_wait},"
+        f"{state.resolved_obligation_live_blocked_reminder},"
+        f"{state.resolved_obligation_projection_reconciled}|"
         f"display_work={state.controller_display_work_soft_recorded},"
         f"{state.controller_display_work_hard_postcondition},"
         f"{state.controller_display_work_escalated_to_pm}|"
@@ -247,7 +289,10 @@ def _state_id(state: model.State) -> str:
         f"{state.stale_run_state_preserved_wait_clear},"
         f"{state.stale_run_state_resurrected_closed_wait}|"
         f"self_check={state.self_check_template_status_pass_allowed},"
-        f"{state.self_check_parser_status_pass_accepted}|"
+        f"{state.self_check_parser_status_pass_accepted},"
+        f"material_gate={state.material_gate_depends_on_result_body},"
+        f"{state.result_self_check_machine_parseable},"
+        f"{state.result_reader_authority_matches_runtime}|"
         f"packet={state.worker_packet_written},{state.worker_packet_preserves_research_fields},"
         f"material_dispatch={state.material_dispatch_requested},"
         f"{state.material_dispatch_reviewed},{state.material_dispatch_allowed},"

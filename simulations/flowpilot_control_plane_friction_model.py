@@ -71,7 +71,14 @@ Risk intent brief:
   postcondition evidence; daemon ticks cannot escalate a half-complete
   Controller receipt when valid Router-owned artifacts already exist; and
   role-output events cannot be accepted from a prepared/progress status surface
-  without a file-backed body path plus replayable body hash; and stale
+  without a file-backed body path plus replayable body hash; PM role-work
+  obligations are keyed by batch/request/packet/role, host delivery success and
+  active-holder liveness are separate gates, packet-ledger IO is atomic and
+  corruption-recoverable, result self-checks are machine-parseable, runtime
+  authority backs every advertised reader; Router-owned internal postconditions
+  with ready inputs materialize evidence or emit a router-visible blocker
+  instead of becoming passive Controller/role waits; resolved obligations clear
+  passive wait and reminder projections; and stale
   daemon/run-state saves cannot resurrect a live wait after the authoritative
   Router obligation state has cleared it.
 - Blindspot: this is still a focused control-plane model. The live-run audit
@@ -116,7 +123,7 @@ def is_success(state: State) -> bool:
 
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 49
+MAX_SEQUENCE_LENGTH = 56
 
 
 __all__ = [

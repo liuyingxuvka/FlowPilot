@@ -51,6 +51,40 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
             control_plane_action_identity_fingerprint(second),
         )
 
+    def test_pm_role_work_identity_includes_batch_packet_request_and_target(self) -> None:
+        base = {
+            "action_type": "relay_pm_role_work_request_packet",
+            "scope_kind": "run",
+            "scope_id": "run-1",
+            "label": "pm_role_work_request_batch_relayed",
+            "postcondition": "pm_role_work_request_packet_relayed",
+        }
+        first = {
+            **base,
+            "batch_id": "batch-a",
+            "request_id": "request-a",
+            "packet_id": "packet-a",
+            "packet_ids": ["packet-a"],
+            "to_role": "process_flowguard_officer",
+        }
+        second = {
+            **base,
+            "batch_id": "batch-b",
+            "request_id": "request-b",
+            "packet_id": "packet-b",
+            "packet_ids": ["packet-b"],
+            "to_role": "product_flowguard_officer",
+        }
+
+        self.assertNotEqual(
+            router._router_scheduler_idempotency_key(first, "run", "run-1"),  # type: ignore[attr-defined]
+            router._router_scheduler_idempotency_key(second, "run", "run-1"),  # type: ignore[attr-defined]
+        )
+        self.assertNotEqual(
+            control_plane_action_identity_fingerprint(first),
+            control_plane_action_identity_fingerprint(second),
+        )
+
     def test_handle_control_blocker_is_stateful_postcondition_work(self) -> None:
         action = {
             "action_type": "handle_control_blocker",
@@ -216,7 +250,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             packet_envelope=packet,
             completed_by_role="worker_a",
             completed_by_agent_id="agent-worker-a",
-            result_body_text="scan result",
+            result_body_text="scan result\n\nContract Self-Check\n\nstatus: pass\n",
             next_recipient="project_manager",
         )
         result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
@@ -438,6 +472,15 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packet_id": "packet-1",
                 "source_packet_envelope_path": router.project_relative(root, packet_envelope),
                 "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "contract_self_check": {
+                    "required": True,
+                    "completed": True,
+                    "passed": True,
+                    "decision": "pass",
+                    "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                    "declared_source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                    "source_output_contract_id_matches": True,
+                },
             },
         )
 
@@ -445,7 +488,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router,
             root,
             output_path,
-            run_state={"run_id": run_root.name},
+            run_state={"run_id": run_root.name, "run_root": router.project_relative(root, run_root)},
             batch={"batch_id": "batch-1"},
             records=[
                 {
@@ -476,6 +519,66 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             result_entry["source_output_contract_id"],
             "flowpilot.output_contract.worker_material_scan_result.v1",
         )
+        self.assertTrue(result_entry["contract_self_check"]["ok"])
+        self.assertTrue(package["all_source_result_contract_self_checks_passed"])
+
+    def test_pm_formal_gate_package_blocks_failed_source_self_check(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-formal-package-bad-self-check")
+        output_path = run_root / "material" / "pm_material_scan_result_disposition.json"
+        packet_envelope = run_root / "packets" / "packet-1" / "packet_envelope.json"
+        result_envelope = run_root / "packets" / "packet-1" / "result_envelope.json"
+        result_envelope.parent.mkdir(parents=True, exist_ok=True)
+        router.write_json(
+            packet_envelope,
+            {
+                "schema_version": packet_runtime.PACKET_ENVELOPE_SCHEMA,
+                "packet_id": "packet-1",
+                "packet_type": "material_scan",
+                "from_role": "project_manager",
+                "to_role": "worker_a",
+                "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
+                "body_hash": "hash",
+                "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+            },
+        )
+        router.write_json(
+            result_envelope,
+            {
+                "schema_version": packet_runtime.RESULT_ENVELOPE_SCHEMA,
+                "packet_id": "packet-1",
+                "source_packet_envelope_path": router.project_relative(root, packet_envelope),
+                "source_output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+                "contract_self_check": {
+                    "required": True,
+                    "completed": False,
+                    "passed": False,
+                    "decision": None,
+                    "source_output_contract_id_matches": True,
+                },
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "contract self-checks"):
+            pm_decisions._write_pm_formal_gate_package(
+                router,
+                root,
+                output_path,
+                run_state={"run_id": run_root.name, "run_root": router.project_relative(root, run_root)},
+                batch={"batch_id": "batch-1"},
+                records=[
+                    {
+                        "packet_id": "packet-1",
+                        "packet_envelope_path": router.project_relative(root, packet_envelope),
+                        "result_envelope_path": router.project_relative(root, result_envelope),
+                    }
+                ],
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                decision="absorbed",
+                payload={"decision_reason": "ready"},
+            )
 
     def test_absorbed_pm_disposition_records_reviewer_release_evidence(self) -> None:
         root = self.make_project()

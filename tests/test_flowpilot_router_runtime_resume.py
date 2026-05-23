@@ -11,6 +11,7 @@ TEST_NAMES = (
     "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
     "test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check",
     "test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision",
+    "test_load_resume_state_controller_receipt_replays_router_state_handler",
     "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
     "test_blocked_role_recovery_receipt_reclaims_existing_report",
     "test_load_resume_state_does_not_downgrade_existing_role_recovery_report",

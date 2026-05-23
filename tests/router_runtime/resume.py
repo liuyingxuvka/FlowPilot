@@ -138,6 +138,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         with self.assertRaisesRegex(router.RouterError, "active host liveness must use live_agent_continuity_confirmed"):
             router.apply_action(root, "rehydrate_role_agents", payload)
+
         action = router.next_action(root)
         payload = self.resume_role_agent_payload(root, action)
         replaced_role = payload["rehydrated_role_agents"][0]["role_key"]
@@ -192,6 +193,40 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertNotEqual(action.get("card_id"), "pm.resume_decision")
         self.assertNotEqual(action.get("label"), "controller_waits_for_pm_resume_decision")
         self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
+
+    def test_load_resume_state_controller_receipt_replays_router_state_handler(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={},
+        )
+
+        self.assertTrue(result["ok"])
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["resume_state_loaded"])
+        resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
+        self.assertTrue(resume_evidence["wake_recorded_to_router"])
+        refreshed = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(refreshed["router_reconciliation_status"], "reconciled")
+        self.assertEqual(
+            refreshed["router_reconciliation"]["source"],
+            "router_owned_state_replay_receipt",
+        )
+        self.assertEqual(refreshed["router_reconciliation"]["action_type"], "load_resume_state")
+
     def test_resume_reentry_attaches_to_live_router_daemon_and_ledger(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

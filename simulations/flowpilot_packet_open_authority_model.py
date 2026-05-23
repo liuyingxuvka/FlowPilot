@@ -36,6 +36,8 @@ class State:
     pm_context: str = "none"  # none | startup | control_blocker
     open_verified: bool = False
     authority_recorded: bool = False
+    controller_relay_signature_recorded: bool = False
+    path_only_handoff_reported: bool = False
     formal_exit: str = "none"  # none | result | ordinary_blocker | pm_startup_repair | pm_protocol_dead_end | pm_control_repair | wait_for_relay | pm_self_blocker | custom_pm_exit
 
 
@@ -78,6 +80,7 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
                     pm_context="startup",
                     open_verified=True,
                     authority_recorded=True,
+                    controller_relay_signature_recorded=True,
                 ),
             ),
             (
@@ -89,6 +92,7 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
                     pm_context="control_blocker",
                     open_verified=True,
                     authority_recorded=True,
+                    controller_relay_signature_recorded=True,
                 ),
             ),
             (
@@ -99,6 +103,7 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
                     role_kind="ordinary",
                     open_verified=True,
                     authority_recorded=True,
+                    controller_relay_signature_recorded=True,
                 ),
             ),
         )
@@ -147,6 +152,8 @@ def invariant_failures(state: State) -> list[str]:
 
     if verified_open and not state.authority_recorded:
         failures.append("verified open did not record work authority")
+    if verified_open and state.path_only_handoff_reported and not state.controller_relay_signature_recorded:
+        failures.append("path-only handoff authorized packet open without controller relay signature")
     if verified_open and state.formal_exit == "wait_for_relay":
         failures.append("verified open waited for additional relay")
     if state.role_kind == "pm" and state.formal_exit == "ordinary_blocker":
@@ -174,6 +181,7 @@ def _invariant(name: str, expected: str) -> Invariant:
 
 INVARIANTS = (
     _invariant("verified_open_records_authority", "verified open did not record work authority"),
+    _invariant("path_only_handoff_does_not_authorize_open", "path-only handoff authorized packet open without controller relay signature"),
     _invariant("verified_open_does_not_wait_for_extra_relay", "verified open waited for additional relay"),
     _invariant("pm_does_not_use_ordinary_blocker", "PM routed inability through an ordinary blocker"),
     _invariant("pm_does_not_self_block", "PM routed a blocker back to PM"),
@@ -190,6 +198,16 @@ HAZARD_STATES = {
         pm_context="startup",
         open_verified=True,
         authority_recorded=False,
+        controller_relay_signature_recorded=False,
+    ),
+    "path_only_handoff_authorized_open": replace(
+        initial_state(),
+        lifecycle="opened",
+        role_kind="ordinary",
+        open_verified=True,
+        authority_recorded=True,
+        controller_relay_signature_recorded=False,
+        path_only_handoff_reported=True,
     ),
     "pm_waits_for_extra_relay_after_verified_open": replace(
         initial_state(),
@@ -198,6 +216,7 @@ HAZARD_STATES = {
         pm_context="startup",
         open_verified=True,
         authority_recorded=True,
+        controller_relay_signature_recorded=True,
         formal_exit="wait_for_relay",
     ),
     "pm_self_blocker_loop": replace(
@@ -207,6 +226,7 @@ HAZARD_STATES = {
         pm_context="startup",
         open_verified=True,
         authority_recorded=True,
+        controller_relay_signature_recorded=True,
         formal_exit="pm_self_blocker",
     ),
     "pm_custom_repair_flow": replace(
@@ -216,6 +236,7 @@ HAZARD_STATES = {
         pm_context="control_blocker",
         open_verified=True,
         authority_recorded=True,
+        controller_relay_signature_recorded=True,
         formal_exit="custom_pm_exit",
     ),
     "ordinary_role_silent_terminal_wait": replace(
@@ -224,6 +245,7 @@ HAZARD_STATES = {
         role_kind="ordinary",
         open_verified=True,
         authority_recorded=True,
+        controller_relay_signature_recorded=True,
         formal_exit="none",
     ),
 }

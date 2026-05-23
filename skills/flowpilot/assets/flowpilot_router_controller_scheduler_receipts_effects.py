@@ -25,10 +25,15 @@ import flowpilot_runtime_closure
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
+import flowpilot_router_action_handlers
 import flowpilot_router_controller_scheduler_receipts_bootloader as bootloader_receipts
+from flowpilot_control_plane_contracts import ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
-from flowpilot_router_controller_scheduler_receipts_packet_folds import _apply_registered_controller_receipt_evidence_fold
+from flowpilot_router_controller_scheduler_receipts_packet_folds import (
+    CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY,
+    _apply_registered_controller_receipt_evidence_fold,
+)
 
 _DEFAULT_SENTINEL = object()
 
@@ -56,12 +61,50 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
     durable_reclaim = _reclaim_router_owned_postcondition_from_artifact(project_root, run_root, run_state, pending_action, receipt_payload)
     if durable_reclaim.get('applied') or durable_reclaim.get('action_class', {}).get('kind') == 'router_owned_durable_artifact':
         return durable_reclaim
+    if action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE:
+        repair_target_action_type = str(pending_action.get('repair_target_action_type') or '').strip()
+        if repair_target_action_type in CONTROLLER_RECEIPT_EVIDENCE_FOLD_REGISTRY:
+            original_id = str(pending_action.get('repair_of_controller_action_id') or '').strip()
+            original_entry = read_json_if_exists(_controller_action_path(run_root, original_id)) if original_id else {}
+            original_action = original_entry.get('action') if isinstance(original_entry.get('action'), dict) else {}
+            if not original_action:
+                return {'applied': False, 'reason': 'controller_relay_repair_missing_original_action', 'repair_target_action_type': repair_target_action_type, 'repair_of_controller_action_id': original_id}
+            relay_repair_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, original_action, receipt_payload)
+            if relay_repair_fold.get('applied'):
+                relay_repair_fold = dict(relay_repair_fold)
+                relay_repair_fold['source'] = 'controller_relay_deliverable_repair_fold'
+                relay_repair_fold['repair_action_type'] = action_type
+                relay_repair_fold['repair_target_action_type'] = repair_target_action_type
+                relay_repair_fold['repair_of_controller_action_id'] = original_id
+            return relay_repair_fold
     relay_evidence_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, pending_action, receipt_payload)
     if relay_evidence_fold.get('applied') or relay_evidence_fold.get('reason') != 'not_registered_controller_receipt_evidence_fold':
         return relay_evidence_fold
-    if action_type == 'load_role_recovery_state':
-        router._load_role_recovery_state(project_root, run_root, run_state)
-        return {'applied': True, 'postcondition': 'role_recovery_state_loaded'}
+    if action_type in ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES:
+        outcome = flowpilot_router_action_handlers.apply_registered_action(
+            router,
+            project_root,
+            run_root,
+            run_state,
+            pending_action,
+            action_type,
+            receipt_payload,
+        )
+        if outcome is None:
+            return {
+                'applied': False,
+                'reason': 'router_owned_state_replay_handler_missing',
+                'action_type': action_type,
+            }
+        if outcome.early_return is not None:
+            result = dict(outcome.early_return)
+            result.setdefault('applied', True)
+        else:
+            result = {'applied': True, **outcome.result_extra}
+        result.setdefault('postcondition', _pending_action_postcondition(pending_action))
+        result['source'] = 'router_owned_state_replay_receipt'
+        result['action_type'] = action_type
+        return result
     if action_type == 'recover_role_agents':
         if 'recovered_role_agents' in receipt_payload or 'role_agents' in receipt_payload:
             router._write_role_recovery_report(project_root, run_root, run_state, receipt_payload)

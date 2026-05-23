@@ -55,6 +55,33 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.assertNotIn(action_type, ordinary_types)
             self.assertIn(action_type, passive_types)
         self.assertEqual(ledger["passive_wait_count"], len(router.PASSIVE_WAIT_STATUS_ACTION_TYPES))
+
+    def test_done_receipt_rejects_failed_delivery_payload(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="send_wait_target_reminder",
+            actor="controller",
+            label="controller_sends_wait_target_reminder",
+            summary="Send reminder to waiting role.",
+            to_role="worker_a",
+            extra={"postcondition": "wait_target_reminder_sent"},
+        )
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        with self.assertRaisesRegex(router.RouterError, "cannot report failed delivery"):
+            router.record_controller_action_receipt(
+                root,
+                action_id=entry["action_id"],
+                status="done",
+                payload={
+                    "message_delivery_status": "failed_agent_not_found",
+                    "message_delivery_error": "target not found",
+                },
+            )
+
     def test_current_work_uses_packet_holder_when_pending_wait_is_empty(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-current-work-packet")

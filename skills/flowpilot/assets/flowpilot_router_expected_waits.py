@@ -70,10 +70,12 @@ from flowpilot_router_expected_waits_actions import (
     _next_model_miss_followup_request_wait_action,
     _next_model_miss_controlled_stop_action,
     _expected_role_decision_wait_action,
+    _reconcile_router_internal_postconditions,
     _next_expected_role_decision_wait_action,
 )
 
 from flowpilot_router_expected_waits_events import (
+    _event_is_router_internal_postcondition,
     _event_wait_role,
     _active_node_children_status,
     _event_applicable_for_active_node,

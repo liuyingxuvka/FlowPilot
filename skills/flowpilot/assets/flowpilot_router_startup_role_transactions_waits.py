@@ -74,9 +74,13 @@ def _controller_action_wait_roles(router: ModuleType, entry: dict[str, Any]) -> 
                     roles.add(role)
     return roles
 
-def _role_recovery_action_sort_key(router: ModuleType, entry: dict[str, Any]) -> tuple[str, str, str]:
+def _role_recovery_action_sort_key(router: ModuleType, entry: dict[str, Any]) -> tuple[str, str, str, str]:
     _bind_router(router)
-    return (str(entry.get('created_at') or ''), str(entry.get('router_scheduler_row_id') or ''), str(entry.get('action_id') or ''))
+    try:
+        created_sequence = f"{int(entry.get('created_sequence') or 0):020d}"
+    except (TypeError, ValueError):
+        created_sequence = "00000000000000000000"
+    return (str(entry.get('created_at') or ''), created_sequence, str(entry.get('router_scheduler_row_id') or ''), str(entry.get('action_id') or ''))
 
 def _role_recovery_pending_return_for_action(router: ModuleType, run_root: Path, run_id: str, action: dict[str, Any]) -> dict[str, Any] | None:
     _bind_router(router)

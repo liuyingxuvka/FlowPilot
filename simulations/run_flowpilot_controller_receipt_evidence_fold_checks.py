@@ -34,6 +34,12 @@ HAZARD_EXPECTED_FAILURES = {
     model.DIRECT_APPLY_ONLY_NO_RECEIPT_FOLD: (
         "direct apply writes a Router flag but Controller receipt has no registered evidence fold"
     ),
+    model.RECEIPT_DONE_WITHOUT_CONTROLLER_RELAY_SIGNATURE: (
+        "receipt done without controller relay signature"
+    ),
+    model.ROUTER_OWNED_STATE_PROJECTED_WITHOUT_REPLAY: (
+        "Router-owned state action was projected to Controller receipt without registered state replay"
+    ),
     model.FALSE_BLOCKER_WITH_EVIDENCE_AVAILABLE: (
         "control blocker was recorded even though Router-visible evidence could satisfy the postcondition"
     ),
@@ -62,6 +68,8 @@ EVIDENCE_BACKED_RELAY_ACTIONS = {
     "relay_research_result_to_reviewer",
 }
 
+STATE_LOAD_ACTION_PATTERN = re.compile(r"^load_[a-z0-9_]*_state$")
+
 
 def _state_id(state: model.State) -> str:
     return (
@@ -69,7 +77,10 @@ def _state_id(state: model.State) -> str:
         f"action={state.action_type}|postcondition={state.postcondition_name}|"
         f"receipt_possible={state.controller_receipt_possible}|receipt_done={state.controller_receipt_done}|"
         f"direct_flag={state.direct_apply_sets_flag}|fold={state.receipt_fold_registered}|"
+        f"state_replay={state.router_owned_state_replay_registered}|"
         f"unsupported={state.unsupported_receipt_result}|evidence={state.router_visible_evidence_available}|"
+        f"relay_sig={state.controller_relay_signature_recorded}|ledger_relay={state.packet_ledger_relay_recorded}|"
+        f"path_only={state.path_only_handoff_reported}|"
         f"batch={state.packet_batch_relayed}|leases={state.active_holder_leases_issued}|"
         f"worker_open={state.worker_packet_opened_or_acknowledged}|pending={state.worker_result_still_pending}|"
         f"flag={state.router_postcondition_flag_satisfied}|reconciled={state.router_marked_receipt_reconciled}|"
@@ -222,6 +233,22 @@ def _literal_string_set_from_ast(path: Path) -> set[str]:
     return values
 
 
+def _literal_tuple_assignment_from_ast(path: Path, name: str) -> set[str]:
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    values: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
+            continue
+        if not isinstance(node.value, (ast.Tuple, ast.List, ast.Set)):
+            continue
+        for item in node.value.elts:
+            if isinstance(item, ast.Constant) and isinstance(item.value, str):
+                values.add(item.value)
+    return values
+
+
 def _direct_flag_writing_actions() -> dict[str, dict[str, object]]:
     handler_map_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_action_handlers.py"
     assets_root = handler_map_path.parent
@@ -299,29 +326,60 @@ def _receipt_registered_actions() -> set[str]:
     }
 
 
+def _router_owned_state_replay_actions() -> set[str]:
+    contract_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_control_plane_contracts.py"
+    )
+    return _literal_tuple_assignment_from_ast(
+        contract_path,
+        "ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES",
+    )
+
+
 def _source_contract_report() -> dict[str, object]:
     direct_flag_actions = _direct_flag_writing_actions()
     receipt_registered = _receipt_registered_actions()
+    router_owned_state_replay = _router_owned_state_replay_actions()
     evidence_backed_flag_actions = {
         action_type: details
         for action_type, details in sorted(direct_flag_actions.items())
         if action_type in EVIDENCE_BACKED_RELAY_ACTIONS
+    }
+    router_owned_state_flag_actions = {
+        action_type: details
+        for action_type, details in sorted(direct_flag_actions.items())
+        if STATE_LOAD_ACTION_PATTERN.match(action_type)
     }
     missing = {
         action_type: details
         for action_type, details in sorted(evidence_backed_flag_actions.items())
         if action_type not in receipt_registered
     }
+    missing_router_owned_state_replay = {
+        action_type: details
+        for action_type, details in sorted(router_owned_state_flag_actions.items())
+        if action_type not in router_owned_state_replay
+    }
     return {
-        "ok": not missing,
+        "ok": not missing and not missing_router_owned_state_replay,
         "direct_flag_actions": direct_flag_actions,
         "evidence_backed_relay_actions": sorted(EVIDENCE_BACKED_RELAY_ACTIONS),
         "evidence_backed_relay_flag_actions": evidence_backed_flag_actions,
+        "router_owned_state_flag_actions": router_owned_state_flag_actions,
         "receipt_registered_actions": sorted(receipt_registered),
+        "router_owned_state_replay_actions": sorted(router_owned_state_replay),
         "missing_receipt_fold_for_evidence_backed_relay_actions": missing,
+        "missing_router_owned_state_replay_actions": missing_router_owned_state_replay,
         "rule": (
             "Any evidence-backed packet/result relay action whose direct apply handler sets "
-            "a Router-owned flag must have an idempotent receipt evidence-fold path."
+            "a Router-owned flag must have an idempotent receipt evidence-fold path. "
+            "Any load_*_state action whose direct apply handler sets a Router-owned flag "
+            "must be registered as Router-owned state replay, so a Controller receipt can "
+            "only trigger the Router action handler instead of acting as standalone proof."
         ),
     }
 

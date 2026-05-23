@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import packet_runtime  # noqa: E402
+import flowpilot_runtime  # noqa: E402
 import packet_control_plane_model_state  # noqa: E402
 import packet_runtime_active_holder  # noqa: E402
 import packet_runtime_cli  # noqa: E402
@@ -41,6 +42,27 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         )
         return root
 
+    def write_live_crew_slot(self, root: Path, *, role: str = "worker_a", agent_id: str = "agent-worker-a-1") -> None:
+        _write_json(
+            root / ".flowpilot" / "runs" / "run-test" / "crew_ledger.json",
+            {
+                "schema_version": "flowpilot.crew_ledger.v1",
+                "run_id": "run-test",
+                "role_slots": [
+                    {
+                        "role_key": role,
+                        "status": "live_agent_started",
+                        "agent_id": agent_id,
+                        "spawn_result": "spawned_fresh_for_task",
+                        "spawned_for_run_id": "run-test",
+                        "spawned_after_startup_answers": True,
+                        "crew_generation": 1,
+                        "role_binding_epoch": 1,
+                    }
+                ],
+            },
+        )
+
     def packet_dir(self, root: Path, packet_id: str = "packet-001") -> Path:
         return root / ".flowpilot" / "runs" / "run-test" / "packets" / packet_id
 
@@ -57,6 +79,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
             rc = packet_runtime.main(["--root", str(root), *args])
+        self.assertEqual(rc, expected_rc)
+        return json.loads(output.getvalue())
+
+    def run_flowpilot_runtime(self, root: Path, args: list[str], *, expected_rc: int = 0) -> dict:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            rc = flowpilot_runtime.main(["--root", str(root), *args])
         self.assertEqual(rc, expected_rc)
         return json.loads(output.getvalue())
 
@@ -89,6 +118,50 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             received_from_role=result.get("completed_by_role"),
             relayed_to_role=to_role,
         )
+
+    def test_flowpilot_runtime_relay_envelope_records_signature_ledger_and_lease(self) -> None:
+        root = self.make_project()
+        self.issue_packet(root)
+        self.write_live_crew_slot(root, agent_id="agent-worker-a-runtime")
+
+        result = self.run_flowpilot_runtime(
+            root,
+            [
+                "relay-envelope",
+                "--envelope-path",
+                ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+                "--controller-agent-id",
+                "agent-controller-1",
+                "--received-from-role",
+                "project_manager",
+                "--relayed-to-role",
+                "worker_a",
+                "--holder-agent-id",
+                "agent-worker-a-runtime",
+                "--route-version",
+                "1",
+                "--frontier-version",
+                "1",
+            ],
+        )
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["controller_relay_signature_recorded"])
+        self.assertEqual(result["relayed_to_role"], "worker_a")
+        self.assertEqual(result["ledger_record"]["active_packet_holder"], "worker_a")
+        self.assertEqual(result["ledger_record"]["active_packet_status"], "active-holder-lease-issued")
+        self.assertTrue(result["ledger_record"]["packet_controller_relay_recorded"])
+        self.assertTrue(result["ledger_record"]["active_holder_lease_issued"])
+        self.assertTrue(result["ledger_record"]["active_holder_liveness_proven"])
+        self.assertIn("active_holder_lease", result)
+        self.assertTrue(result["active_holder_lease"]["holder_liveness"]["host_liveness_proven"])
+
+        envelope = self.read_json(self.packet_envelope_path(root))
+        self.assertIn("controller_relay", envelope)
+        ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json")
+        record = ledger["packets"][0]
+        self.assertIn("packet_controller_relay", record)
+        self.assertEqual(record["packet_controller_relay"]["relayed_to_role"], "worker_a")
 
     def test_pm_issue_writes_physical_envelope_body_and_ledger(self) -> None:
         root = self.make_project()
@@ -123,6 +196,23 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger["controller_boundary"]["role_output_body_must_be_file_backed"])
         self.assertTrue(ledger["controller_boundary"]["role_chat_response_must_be_envelope_only"])
         self.assertTrue(ledger["controller_boundary"]["role_chat_body_content_contaminates_mail"])
+
+    def test_packet_ledger_corrupt_tail_is_backed_up_and_recovered(self) -> None:
+        root = self.make_project()
+        envelope = self.issue_packet(root)
+        ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
+        ledger_path.write_text(
+            ledger_path.read_text(encoding="utf-8") + "\n{\"duplicate_tail\": true}\n",
+            encoding="utf-8",
+        )
+
+        self.relay_packet(root, envelope)
+
+        ledger = self.read_json(ledger_path)
+        self.assertEqual(ledger["schema_version"], packet_runtime.PACKET_LEDGER_SCHEMA)
+        self.assertTrue(ledger["last_recovery"]["corrupt_backup_path"])
+        self.assertTrue((root / ledger["last_recovery"]["corrupt_backup_path"]).exists())
+        self.assertEqual(ledger["packets"][0]["active_packet_holder"], "worker_a")
 
     def test_packet_runtime_owner_modules_expose_direct_external_contracts(self) -> None:
         root = self.make_project()
@@ -836,6 +926,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_fast_lane_closes_with_controller_notice(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
+        self.write_live_crew_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,
@@ -918,9 +1009,24 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         )
         self.assertTrue(audit["passed"])
 
+    def test_active_holder_lease_requires_live_crew_slot(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires current live role slot"):
+            packet_runtime.issue_active_holder_lease(
+                root,
+                packet_envelope=envelope,
+                holder_role="worker_a",
+                holder_agent_id="agent-worker-a-1",
+                route_version=1,
+                frontier_version=1,
+            )
+
     def test_active_holder_cli_round_trip_writes_controller_notice(self) -> None:
         root = self.make_project()
         self.relay_packet(root, self.issue_packet(root))
+        self.write_live_crew_slot(root)
         packet_path = ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json"
 
         lease = self.run_packet_cli(
@@ -1000,6 +1106,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_fast_lane_rejects_wrong_or_stale_contact(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
+        self.write_live_crew_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,
@@ -1042,6 +1149,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_mechanical_reject_keeps_current_holder(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
+        self.write_live_crew_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,

@@ -137,6 +137,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         packet_id: str,
         result_body_text: str = "reviewable result",
     ) -> tuple[str, str]:
+        if "Contract Self-Check" not in result_body_text:
+            result_body_text = result_body_text.rstrip() + "\n\nContract Self-Check\n\nstatus: pass\n"
         lease = self.active_holder_lease_for_packet(root, packet_id)
         packet_runtime.active_holder_ack(
             root,
@@ -549,6 +551,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         next_recipient: str = "project_manager",
     ) -> None:
         index = read_json(index_path)
+        if "Contract Self-Check" not in result_text:
+            result_text = result_text.rstrip() + "\n\nContract Self-Check\n\nstatus: pass\n"
         for record in index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
             packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
@@ -1707,7 +1711,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         )
 
         router.record_external_event(root, "pm_approves_child_skill_manifest_for_route")
-        router.record_external_event(root, "capability_evidence_synced")
+        self.next_after_display_sync(root)
     def complete_pre_route_gates(self, root: Path) -> None:
         self.complete_startup_activation(root)
         self.complete_material_flow(root)

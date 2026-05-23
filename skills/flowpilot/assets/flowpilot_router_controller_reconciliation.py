@@ -6,7 +6,10 @@ import hashlib
 import json
 from typing import Any
 
-from flowpilot_control_plane_contracts import control_plane_scheduler_identity_extras
+from flowpilot_control_plane_contracts import (
+    CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS,
+    control_plane_scheduler_identity_extras,
+)
 from flowpilot_router_controller_boundary import (
     CONTINUOUS_CONTROLLER_STANDBY_ACTION_TYPE,
     PASSIVE_WAIT_STATUS_ACTION_TYPES,
@@ -23,6 +26,10 @@ def _controller_action_id_for_action(action: dict[str, Any]) -> str:
             "scope_kind": action.get("scope_kind"),
             "scope_id": action.get("scope_id"),
         }
+        for field in CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS:
+            value = action.get(field)
+            if value not in (None, "", []):
+                identity[field] = value
         digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
         return f"controller-action-{digest}"
     identity = {
@@ -36,6 +43,10 @@ def _controller_action_id_for_action(action: dict[str, Any]) -> str:
         "allowed_external_events": action.get("allowed_external_events"),
         "created_at": action.get("created_at"),
     }
+    for field in CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS:
+        value = action.get(field)
+        if value not in (None, "", []):
+            identity[field] = value
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode("utf-8")).hexdigest()[:20]
     return f"controller-action-{digest}"
 
@@ -135,6 +146,7 @@ def _controller_action_summary(entry: dict[str, Any]) -> dict[str, Any]:
         "resolved_by_controller_action_id": entry.get("resolved_by_controller_action_id"),
         "action_path": entry.get("action_path"),
         "expected_receipt_path": entry.get("expected_receipt_path"),
+        "created_sequence": entry.get("created_sequence"),
         "updated_at": entry.get("updated_at"),
     }
 
@@ -287,6 +299,7 @@ def _router_scheduler_idempotency_key(action: dict[str, Any], scope_kind: str, s
         "postcondition",
         "projection_hash",
         "next_card_id",
+        *CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS,
     ):
         value = action.get(field)
         if value not in (None, "", []):

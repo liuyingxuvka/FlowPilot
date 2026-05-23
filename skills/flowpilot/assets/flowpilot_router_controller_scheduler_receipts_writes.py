@@ -43,6 +43,22 @@ def _bind_router(router: ModuleType) -> None:
         current[name] = value
 
 
+def _next_controller_action_created_sequence(run_root: Path, run_state: dict[str, Any]) -> int:
+    current = int(run_state.get('controller_action_created_sequence') or 0)
+    if current <= 0:
+        action_dir = _controller_actions_dir(run_root)
+        if action_dir.exists():
+            for path in action_dir.glob('*.json'):
+                entry = read_json_if_exists(path)
+                try:
+                    current = max(current, int(entry.get('created_sequence') or 0))
+                except (TypeError, ValueError):
+                    continue
+    current += 1
+    run_state['controller_action_created_sequence'] = current
+    return current
+
+
 def _write_controller_action_entry(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], action: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     action = router._prepare_router_scheduled_action(project_root, run_root, run_state, action)
@@ -71,7 +87,7 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
             entry['status'] = entry.get('status') or _controller_action_initial_status(action)
     else:
         created = True
-        entry = {'schema_version': CONTROLLER_ACTION_SCHEMA, 'action_id': action_id, 'run_id': run_state.get('run_id'), 'action_type': action.get('action_type'), 'label': action.get('label'), 'summary': action.get('summary'), 'status': _controller_action_initial_status(action), 'created_at': now, 'seen_count': 1, 'source_action_id': action.get('action_id'), 'to_role': action.get('to_role'), 'allowed_reads': action.get('allowed_reads') or [], 'allowed_writes': action.get('allowed_writes') or [], 'allowed_external_events': action.get('allowed_external_events') or [], 'dependencies': [], 'router_scheduler_row_id': action.get('router_scheduler_row_id'), 'scope_kind': action.get('scope_kind'), 'scope_id': action.get('scope_id'), 'controller_visibility': 'router_action_metadata_only', 'sealed_body_reads_allowed': bool(action.get('sealed_body_reads_allowed', False)), 'action_path': project_relative(project_root, action_path), 'expected_receipt_path': receipt_rel, 'controller_receipt_required': controller_receipt_required, 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not passive_wait_status, 'router_must_not_mark_done_without_controller_receipt': controller_receipt_required, 'action': action}
+        entry = {'schema_version': CONTROLLER_ACTION_SCHEMA, 'action_id': action_id, 'run_id': run_state.get('run_id'), 'action_type': action.get('action_type'), 'label': action.get('label'), 'summary': action.get('summary'), 'status': _controller_action_initial_status(action), 'created_at': now, 'created_sequence': _next_controller_action_created_sequence(run_root, run_state), 'seen_count': 1, 'source_action_id': action.get('action_id'), 'to_role': action.get('to_role'), 'allowed_reads': action.get('allowed_reads') or [], 'allowed_writes': action.get('allowed_writes') or [], 'allowed_external_events': action.get('allowed_external_events') or [], 'dependencies': [], 'router_scheduler_row_id': action.get('router_scheduler_row_id'), 'scope_kind': action.get('scope_kind'), 'scope_id': action.get('scope_id'), 'controller_visibility': 'router_action_metadata_only', 'sealed_body_reads_allowed': bool(action.get('sealed_body_reads_allowed', False)), 'action_path': project_relative(project_root, action_path), 'expected_receipt_path': receipt_rel, 'controller_receipt_required': controller_receipt_required, 'controller_projection_kind': projection_kind, 'ordinary_controller_work_row': not passive_wait_status, 'router_must_not_mark_done_without_controller_receipt': controller_receipt_required, 'action': action}
     entry['updated_at'] = now
     entry['last_seen_at'] = now
     entry['action_identity'] = action_identity
@@ -120,6 +136,28 @@ def _write_controller_action_entry(router: ModuleType, project_root: Path, run_r
         append_history(run_state, 'router_recorded_controller_action_entry', {'controller_action_id': action_id, 'action_type': action.get('action_type'), 'status': entry.get('status')})
     return entry
 
+def _done_receipt_payload_delivery_failure(payload: dict[str, Any] | None) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    failed_statuses = {
+        "failed",
+        "failed_agent_not_found",
+        "failed_target_not_found",
+        "failed_thread_limit",
+        "send_failed",
+        "resume_agent_failed",
+        "target_not_found",
+        "not_delivered",
+    }
+    for key in ("message_delivery_status", "delivery_result", "host_delivery_status"):
+        value = str(payload.get(key) or "").strip().lower()
+        if value in failed_statuses or value.startswith("failed"):
+            return f"{key}={value}"
+    error = str(payload.get("message_delivery_error") or payload.get("delivery_error") or "").strip()
+    if error and str(payload.get("message_delivery_status") or "").strip().lower() not in {"delivered", "sent", "accepted", "message_submission_accepted"}:
+        return "delivery_error_present"
+    return ""
+
 def _write_controller_receipt(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, action_id: str, status: str, payload: dict[str, Any] | None=None) -> dict[str, Any]:
     _bind_router(router)
     if status not in CONTROLLER_RECEIPT_STATUSES:
@@ -128,6 +166,12 @@ def _write_controller_receipt(router: ModuleType, project_root: Path, run_root: 
     action = read_json_if_exists(action_path)
     if action.get('schema_version') != CONTROLLER_ACTION_SCHEMA:
         raise RouterError(f'controller action is missing: {action_id}')
+    delivery_failure = _done_receipt_payload_delivery_failure(payload)
+    if status == 'done' and delivery_failure:
+        raise RouterError(
+            "controller receipt status=done cannot report failed delivery; "
+            f"use status=blocked or recover the target first ({delivery_failure})"
+        )
     receipt = {'schema_version': CONTROLLER_RECEIPT_SCHEMA, 'run_id': run_state.get('run_id'), 'action_id': action_id, 'action_type': action.get('action_type'), 'status': status, 'recorded_by': 'controller', 'recorded_at': utc_now(), 'controller_visibility': 'receipt_metadata_only', 'payload': payload or {}}
     write_json(_controller_receipt_path(run_root, action_id), receipt)
     _append_router_daemon_event(run_root, 'controller_receipt_recorded', {'action_id': action_id, 'status': status, 'receipt_path': project_relative(project_root, _controller_receipt_path(run_root, action_id))})

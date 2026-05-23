@@ -90,6 +90,16 @@ def _add_packet_index_entries(
             visibility=str(result.get("body_visibility") or "sealed_target_role_only"),
         )
         if result_ref is not None:
+            runtime_open_roles = sorted(
+                role
+                for role in {
+                    str(result.get("next_recipient") or ""),
+                    str((result.get("controller_relay") or {}).get("relayed_to_role") or "")
+                    if isinstance(result.get("controller_relay"), dict)
+                    else "",
+                }
+                if role
+            )
             entries.append(
                 entry_policy.make_entry(
                     entry_id=f"{batch_kind}:result:{packet_id}",
@@ -102,11 +112,14 @@ def _add_packet_index_entries(
                     source_refs=[index_ref] if index_ref else [],
                     envelope_refs=[result_ref],
                     body_refs=[body_ref] if body_ref else [],
-                    allowed_role_reads=["project_manager", "human_like_reviewer"],
+                    allowed_role_reads=runtime_open_roles,
                     related_entries=[f"{batch_kind}:packet:{packet_id}"],
                     metadata={
                         "packet_id": packet_id,
                         "contract_self_check": result.get("contract_self_check") if isinstance(result.get("contract_self_check"), dict) else {},
+                        "runtime_open_roles": runtime_open_roles,
+                        "reviewer_raw_body_access_runtime_backed": "human_like_reviewer" in runtime_open_roles,
+                        "pm_formal_gate_package_is_reviewer_evidence_surface": True,
                     },
                 )
             )

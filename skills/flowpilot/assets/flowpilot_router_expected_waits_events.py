@@ -51,6 +51,10 @@ def _bound_router() -> ModuleType:
         raise RuntimeError("router facade is not bound")
     return _BOUND_ROUTER
 OWNER_MODULE = "flowpilot_router_expected_waits"
+def _event_is_router_internal_postcondition(event: str, meta: dict[str, Any] | None = None) -> bool:
+    event_meta = meta if isinstance(meta, dict) else EXTERNAL_EVENTS.get(event, {})
+    return bool(event_meta.get("router_internal_postcondition"))
+
 def _event_wait_role(event: str, meta: dict[str, str]) -> str:
     del meta
     if event.startswith("pm_"):
@@ -95,6 +99,8 @@ def _pending_expected_external_event_groups(
     ordered_requires: list[str] = []
     active_node_has_children = _active_node_children_status(run_root)
     for event, meta in EXTERNAL_EVENTS.items():
+        if _event_is_router_internal_postcondition(event, meta):
+            continue
         required_flag = meta.get("requires_flag")
         if not required_flag:
             continue
@@ -159,6 +165,16 @@ def _pending_role_decision_staleness(run_state: dict[str, Any], pending_action: 
         if not isinstance(meta, dict):
             invalid_events.append({"issue": "unknown_external_event", "event": item})
             continue
+        if _event_is_router_internal_postcondition(item, meta):
+            invalid_events.append(
+                {
+                    "issue": "router_internal_postcondition_not_role_wait",
+                    "event": item,
+                    "flag": meta.get("flag"),
+                    "requires_flag": meta.get("requires_flag"),
+                }
+            )
+            continue
         required_flag = meta.get("requires_flag")
         if required_flag and not flags.get(required_flag):
             invalid_events.append(
@@ -184,6 +200,7 @@ def _run_state_has_event(run_state: dict[str, Any], event: str) -> bool:
         for item in (run_state.get("events") or [])
     )
 __all__ = (
+    "_event_is_router_internal_postcondition",
     "_event_wait_role",
     "_active_node_children_status",
     "_event_applicable_for_active_node",

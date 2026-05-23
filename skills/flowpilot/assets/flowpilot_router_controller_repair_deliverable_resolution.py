@@ -84,6 +84,12 @@ def _mark_controller_deliverable_repair_resolved(
         "pending_deliverable_repair_action_id": None,
         "pending_deliverable_repair_attempt": 0,
         "last_repair_result": applied_postcondition or {},
+        "router_reconciliation_status": "reconciled",
+        "router_reconciled_at": now,
+        "router_reconciliation": applied_postcondition or {
+            "applied": True,
+            "source": "controller_deliverable_repair_resolved",
+        },
     }
     original = _update_controller_action_entry_fields(
         project_root,

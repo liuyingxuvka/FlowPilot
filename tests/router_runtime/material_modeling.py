@@ -3,8 +3,17 @@ from __future__ import annotations
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
+import flowpilot_runtime  # noqa: E402
+
 
 class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def run_flowpilot_runtime_operation(self, root: Path, operation: dict) -> dict:
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            rc = flowpilot_runtime.main(["--root", str(root), *operation["runtime_args"]])
+        self.assertEqual(rc, 0)
+        return json.loads(output.getvalue())
+
     def test_pm_material_understanding_accepts_file_backed_memo_payload(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -73,6 +82,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result_entry["requires_runtime_open"])
         self.assertTrue(result_entry["body_refs"])
         self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in result_entry["body_refs"]))
+        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager"])
+        self.assertFalse(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
 
         memo = read_json(run_root / "pm_material_understanding.json")
         self.assertEqual(memo["source_paths"]["material_artifact_map"], self.rel(root, map_path))
@@ -856,6 +867,93 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(refreshed_entry["router_reconciliation"]["source"], "controller_receipt_evidence_fold")
         self.assertFalse(refreshed_entry["router_reconciliation"]["sealed_body_reads"])
         self.assertNotEqual(router.next_action(root)["action_type"], "relay_material_scan_packets")
+    def test_material_scan_path_only_done_receipt_schedules_controller_relay_repair(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        relay_action = self.next_after_display_sync(root)
+        self.assertEqual(relay_action["action_type"], "relay_material_scan_packets")
+        self.assertTrue(relay_action["runtime_relay_operations"])
+
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, relay_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        receipt_result = router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={
+                "sealed_body_reads": False,
+                "path_only_handoff": True,
+                "packet_envelope_paths": [item["envelope_path"] for item in relay_action["runtime_relay_operations"]],
+            },
+        )
+        self.assertTrue(receipt_result["ok"])
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"].get("material_scan_packets_relayed", False))
+        self.assertIsNone(state.get("active_control_blocker"))
+        repair_action = state["pending_action"]
+        self.assertEqual(repair_action["action_type"], "complete_missing_controller_deliverable")
+        self.assertEqual(repair_action["repair_target_action_type"], "relay_material_scan_packets")
+        self.assertEqual(repair_action["repair_of_controller_action_id"], entry["action_id"])
+        self.assertEqual(len(repair_action["runtime_relay_operations"]), len(relay_action["runtime_relay_operations"]))
+        self.assertTrue(repair_action["missing_deliverables"])
+        self.assertIn("flowpilot_runtime.py relay-envelope", repair_action["runtime_output_contracts"][0]["runtime_channel"])
+
+        original_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(original_entry["router_reconciliation_status"], "repair_pending")
+        self.assertEqual(original_entry["last_apply_result"]["reason"], "controller_receipt_evidence_fold_not_satisfied")
+    def test_material_scan_relay_repair_receipt_folds_after_runtime_relay(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        relay_action = self.next_after_display_sync(root)
+        state = read_json(router.run_state_path(run_root))
+        entry = router._write_controller_action_entry(root, run_root, state, relay_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"sealed_body_reads": False, "path_only_handoff": True},
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        repair_action = state["pending_action"]
+        self.assertEqual(repair_action["action_type"], "complete_missing_controller_deliverable")
+        relay_results = []
+        for operation in repair_action["runtime_relay_operations"]:
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                rc = flowpilot_runtime.main(["--root", str(root), *operation["runtime_args"]])
+            self.assertEqual(rc, 0)
+            relay_results.append(json.loads(output.getvalue()))
+        self.assertTrue(all(item["controller_relay_signature_recorded"] for item in relay_results))
+
+        receipt_result = router.record_controller_action_receipt(
+            root,
+            action_id=repair_action["controller_action_id"],
+            status="done",
+            payload={"sealed_body_reads": False, "runtime_relay_operation_count": len(relay_results)},
+        )
+        self.assertTrue(receipt_result["ok"])
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["material_scan_packets_relayed"])
+        original_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(original_entry["deliverable_status"], "resolved")
+        self.assertEqual(original_entry["router_reconciliation_status"], "reconciled")
+        repair_entry = read_json(run_root / "runtime" / "controller_actions" / f"{repair_action['controller_action_id']}.json")
+        self.assertEqual(repair_entry["router_reconciliation_status"], "reconciled")
+        self.assertEqual(repair_entry["router_reconciliation"]["source"], "controller_relay_deliverable_repair_fold")
     def test_material_scan_result_receipt_folds_batch_lifecycle(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

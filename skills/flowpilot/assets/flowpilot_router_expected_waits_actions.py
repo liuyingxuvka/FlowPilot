@@ -29,8 +29,10 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 from flowpilot_router_protocol_catalog import *
 from flowpilot_router_expected_waits_events import (
+    _event_is_router_internal_postcondition,
     _event_wait_role,
     _pending_expected_external_event_groups,
+    _run_state_has_event,
 )
 
 _DEFAULT_SENTINEL = object()
@@ -222,7 +224,171 @@ def _expected_role_decision_wait_action(
         to_role=to_role,
         extra=extra,
     )
+
+def _capability_sync_artifact_path(run_root: Path) -> Path:
+    return run_root / "capabilities" / "capability_sync.json"
+
+def _capability_sync_artifact_valid(run_root: Path, run_state: dict[str, Any]) -> bool:
+    artifact = read_json_if_exists(_capability_sync_artifact_path(run_root))
+    if artifact.get("schema_version") != "flowpilot.capability_evidence_sync.v1":
+        return False
+    if str(artifact.get("run_id") or "") != str(run_state.get("run_id") or ""):
+        return False
+    return artifact.get("pm_approved_manifest") is True
+
+def _capability_sync_event_payload(project_root: Path, run_root: Path) -> dict[str, Any]:
+    artifact_path = _capability_sync_artifact_path(run_root)
+    artifact = read_json_if_exists(artifact_path)
+    return {
+        "synced_by": "router",
+        "router_internal_postcondition": True,
+        "capability_sync_path": project_relative(project_root, artifact_path),
+        "capability_sync_sha256": hashlib.sha256(artifact_path.read_bytes()).hexdigest() if artifact_path.exists() else "",
+        "source_paths": artifact.get("source_paths") if isinstance(artifact.get("source_paths"), list) else [],
+    }
+
+def _record_router_internal_postcondition_event(
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    event: str,
+    payload: dict[str, Any],
+    source: str,
+) -> dict[str, Any]:
+    meta = EXTERNAL_EVENTS[event]
+    flag = str(meta["flag"])
+    changed = False
+    if not run_state.setdefault("flags", {}).get(flag):
+        run_state["flags"][flag] = True
+        changed = True
+    if not _run_state_has_event(run_state, event):
+        run_state.setdefault("events", []).append(
+            {
+                "event": event,
+                "summary": meta["summary"],
+                "payload": payload,
+                "recorded_at": utc_now(),
+                "reconciled_by_router": True,
+                "router_internal_postcondition": True,
+            }
+        )
+        changed = True
+    wait_closure = _close_waiting_controller_actions_for_external_event(
+        project_root,
+        run_root,
+        run_state,
+        event=event,
+        payload=payload,
+        source=source,
+    )
+    changed = changed or bool(wait_closure.get("changed"))
+    if changed:
+        append_history(
+            run_state,
+            "router_reconciled_internal_postcondition_event",
+            {
+                "event": event,
+                "flag": flag,
+                "source": source,
+                "wait_closure": wait_closure,
+                "controller_visibility": "metadata_only",
+            },
+        )
+    return {"changed": changed, "wait_closure": wait_closure}
+
+def _reconcile_capability_evidence_internal_postcondition(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+) -> dict[str, Any]:
+    event = "capability_evidence_synced"
+    meta = EXTERNAL_EVENTS.get(event, {})
+    if not _event_is_router_internal_postcondition(event, meta):
+        return {"changed": False}
+    required_flag = str(meta.get("requires_flag") or "")
+    if required_flag and not run_state.get("flags", {}).get(required_flag):
+        return {"changed": False, "reason": "prerequisite_flag_false", "requires_flag": required_flag}
+    if not _capability_sync_artifact_valid(run_root, run_state):
+        payload = {
+            "synced_by": "router",
+            "router_internal_postcondition": True,
+            "internal_materializer": meta.get("internal_materializer"),
+        }
+        try:
+            _sync_capability_evidence(project_root, run_root, run_state, payload)
+        except RouterError as exc:
+            required_paths = [
+                run_root / "child_skill_gate_manifest.json",
+                run_root / "capabilities.json",
+                run_root / "child_skill_manifest_pm_approval.json",
+            ]
+            blocker = _write_control_blocker(
+                project_root,
+                run_root,
+                run_state,
+                source="router_internal_postcondition_materialization",
+                error_message=str(exc),
+                event=event,
+                payload={
+                    "internal_postcondition": event,
+                    "requires_flag": required_flag,
+                    "required_paths": [project_relative(project_root, path) for path in required_paths],
+                    "missing_paths": [
+                        project_relative(project_root, path)
+                        for path in required_paths
+                        if not path.exists()
+                    ],
+                },
+            )
+            return {
+                "changed": True,
+                "blocked": True,
+                "event": event,
+                "blocker_id": blocker.get("blocker_id"),
+            }
+    payload = _capability_sync_event_payload(project_root, run_root)
+    result = _record_router_internal_postcondition_event(
+        project_root,
+        run_root,
+        run_state,
+        event=event,
+        payload=payload,
+        source="router_internal_postcondition_materialized",
+    )
+    if result.get("changed"):
+        result["event"] = event
+    return result
+
+def _reconcile_router_internal_postconditions(
+    project_root: Path,
+    run_state: dict[str, Any],
+    run_root: Path,
+) -> dict[str, Any]:
+    changed = False
+    blocked = False
+    reconciled: list[str] = []
+    for event, meta in EXTERNAL_EVENTS.items():
+        if not _event_is_router_internal_postcondition(event, meta):
+            continue
+        materializer = str(meta.get("internal_materializer") or "")
+        if materializer != "capability_evidence_sync":
+            continue
+        result = _reconcile_capability_evidence_internal_postcondition(project_root, run_state, run_root)
+        changed = changed or bool(result.get("changed"))
+        blocked = blocked or bool(result.get("blocked"))
+        if result.get("event"):
+            reconciled.append(str(result["event"]))
+    if changed:
+        save_run_state(run_root, run_state)
+    return {"changed": changed, "blocked": blocked, "events": reconciled}
+
 def _next_expected_role_decision_wait_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
+    internal_reconciliation = _reconcile_router_internal_postconditions(project_root, run_state, run_root)
+    if internal_reconciliation.get("blocked"):
+        blocker_action = _next_control_blocker_action(project_root, run_state, run_root)
+        if blocker_action is not None:
+            return blocker_action
     pending_groups = _pending_expected_external_event_groups(run_state, run_root)
     if not pending_groups:
         return None
@@ -259,6 +425,7 @@ __all__ = (
     "_next_model_miss_followup_request_wait_action",
     "_next_model_miss_controlled_stop_action",
     "_expected_role_decision_wait_action",
+    "_reconcile_router_internal_postconditions",
     "_next_expected_role_decision_wait_action",
 )
 _LOCAL_NAMES = set(globals())

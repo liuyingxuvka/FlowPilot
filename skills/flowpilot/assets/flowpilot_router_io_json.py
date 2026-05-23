@@ -105,6 +105,7 @@ def read_json_if_exists(path: Path) -> dict[str, Any]:
 def read_daemon_critical_json_if_exists(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
+    io_locks._raise_if_runtime_write_active(path)
     try:
         return read_json(path)
     except (OSError, json.JSONDecodeError, UnicodeDecodeError, RouterError) as exc:

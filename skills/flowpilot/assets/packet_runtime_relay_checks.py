@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from packet_runtime_contracts import normalize_output_contract
-from packet_runtime_ledger import _packet_ledger_record
+from packet_runtime_ledger import packet_ledger_record_for_envelope
 from packet_runtime_paths import (
     normalize_envelope_aliases,
     packet_paths_from_envelope,
@@ -48,8 +48,7 @@ def verify_packet_open_receipt(project_root: Path, packet_envelope: dict[str, An
         or opened.get("body_hash_verified") is not True
     ):
         raise PacketRuntimeError("packet envelope missing verified packet body open receipt")
-    paths = packet_paths_from_envelope(project_root, packet_envelope)
-    record = _packet_ledger_record(paths["packet_ledger"], str(packet_envelope.get("packet_id") or ""))
+    record = packet_ledger_record_for_envelope(project_root, packet_envelope)
     if not isinstance(record, dict):
         raise PacketRuntimeError("packet ledger record missing for packet body open receipt")
     if record.get("packet_body_opened_by_role") != role or record.get("packet_body_opened_after_controller_relay_check") is not True:
@@ -163,7 +162,7 @@ def validate_packet_ready_for_direct_relay(
         if not result_paths_run_scoped:
             blockers.append("result_path_escape")
 
-        ledger_record = _packet_ledger_record(paths["packet_ledger"], packet_id)
+        ledger_record = packet_ledger_record_for_envelope(project_root, envelope)
         ledger_record_found = isinstance(ledger_record, dict)
         if not ledger_record_found:
             blockers.append("packet_ledger_record_missing")
@@ -261,7 +260,7 @@ def validate_result_ready_for_recipient_relay(
         blockers.append("missing_or_invalid_packet_controller_relay")
 
     result_paths = packet_paths_from_result_envelope(project_root, result_envelope)
-    ledger_record = _packet_ledger_record(result_paths["packet_ledger"], str(result_envelope.get("packet_id") or ""))
+    ledger_record = packet_ledger_record_for_envelope(project_root, result_envelope)
     ledger_record_found = isinstance(ledger_record, dict)
     ledger_packet_opened = False
     result_ledger_absorbed = False

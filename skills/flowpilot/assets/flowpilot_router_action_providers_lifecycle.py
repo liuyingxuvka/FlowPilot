@@ -42,6 +42,7 @@ def run_reconciliation_barrier(
         source="next_action_reconciliation_barrier",
     )
     durable_reconciliation = router._reconcile_durable_wait_evidence(project_root, run_root, run_state)
+    internal_postconditions = router._reconcile_router_internal_postconditions(project_root, run_state, run_root)
     return_settlement = router._run_router_return_settlement_finalizers(
         project_root,
         run_root,
@@ -74,6 +75,7 @@ def run_reconciliation_barrier(
         router.save_run_state(run_root, run_state)
     elif (
         durable_reconciliation.get("changed")
+        or internal_postconditions.get("changed")
         or receipt_reconciliation.get("changed")
         or scheduled_reconciliation.get("changed")
         or boundary_projection.get("changed")

@@ -1562,6 +1562,10 @@
             "target": "_record_router_reconciled_external_event"
           },
           {
+            "public": "_reconcile_router_internal_postconditions",
+            "target": "_reconcile_router_internal_postconditions"
+          },
+          {
             "public": "_run_state_has_event",
             "target": "_run_state_has_event"
           },
@@ -3673,6 +3677,10 @@
             "target": "_packet_active_holder_lease_plan"
           },
           {
+            "public": "_packet_runtime_relay_operations",
+            "target": "_packet_runtime_relay_operations"
+          },
+          {
             "public": "_packet_envelope_path",
             "target": "_packet_envelope_path"
           },
@@ -3807,6 +3815,10 @@
           {
             "public": "_result_envelope_path_from_packet_record",
             "target": "_result_envelope_path_from_packet_record"
+          },
+          {
+            "public": "_result_runtime_relay_operations",
+            "target": "_result_runtime_relay_operations"
           },
           {
             "public": "_role_output_status_packet_path_for_wait",

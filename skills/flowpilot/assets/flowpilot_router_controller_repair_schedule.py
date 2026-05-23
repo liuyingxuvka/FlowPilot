@@ -198,6 +198,17 @@ def _schedule_controller_deliverable_repair(
         for item in missing_deliverables
         if isinstance(item, dict) and str(item.get("path") or "").strip()
     ]
+    runtime_relay_operations = [
+        item.get("runtime_relay_operation")
+        for item in missing_deliverables
+        if isinstance(item, dict) and isinstance(item.get("runtime_relay_operation"), dict)
+    ]
+    runtime_expected_writes = [
+        str(path)
+        for operation in runtime_relay_operations
+        for path in (operation.get("expected_writes") or [])
+        if isinstance(path, str) and path.strip()
+    ]
     original_action = original_entry.get("action") if isinstance(original_entry.get("action"), dict) else pending_action
     allowed_reads = [
         str(original_entry.get("action_path") or ""),
@@ -213,7 +224,7 @@ def _schedule_controller_deliverable_repair(
             "Router will reconcile the original action only after the declared artifact validates."
         ),
         allowed_reads=[item for item in dict.fromkeys(allowed_reads) if item],
-        allowed_writes=[item for item in dict.fromkeys(deliverable_paths + [project_relative(project_root, run_state_path(run_root))]) if item],
+        allowed_writes=[item for item in dict.fromkeys(deliverable_paths + runtime_expected_writes + [project_relative(project_root, run_state_path(run_root))]) if item],
         extra={
             "postcondition": _pending_action_postcondition(original_action),
             "repair_of_controller_action_id": original_id,
@@ -223,6 +234,8 @@ def _schedule_controller_deliverable_repair(
             "missing_deliverables": missing_deliverables,
             "required_deliverables": missing_deliverables,
             "runtime_output_contracts": _controller_deliverable_contract(missing_deliverables).get("runtime_contracts", []),
+            "runtime_relay_operations": runtime_relay_operations,
+            "runtime_relay_operation_count": len(runtime_relay_operations),
             "source_receipt_action_id": pending_action_id,
             "source_receipt_path": project_relative(project_root, _controller_receipt_path(run_root, pending_action_id)) if pending_action_id else "",
             "idempotency_key": f"controller-deliverable-repair:{original_id}:{next_attempt}",

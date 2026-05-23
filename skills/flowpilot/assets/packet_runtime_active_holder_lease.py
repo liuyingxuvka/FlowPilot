@@ -16,11 +16,68 @@ from packet_runtime_paths import (
     normalize_envelope_aliases,
     packet_paths_from_envelope,
     project_relative,
+    read_json_if_exists,
 )
 from packet_runtime_relay import (
     validate_packet_ready_for_direct_relay,
     verify_controller_relay,
 )
+
+
+LIVE_CREW_SLOT_STATUSES = {
+    "live_agent_started",
+    "live_agent_rehydrated",
+    "live_agent_recovered",
+    "live_agent_recycled",
+}
+
+
+def _active_holder_liveness_evidence(
+    project_root: Path,
+    *,
+    packet_envelope: dict[str, Any],
+    holder_role: str,
+    holder_agent_id: str,
+) -> dict[str, Any]:
+    paths = packet_paths_from_envelope(project_root, packet_envelope)
+    crew_path = paths["run_root"] / "crew_ledger.json"
+    crew = read_json_if_exists(crew_path)
+    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    for slot in slots:
+        if not isinstance(slot, dict):
+            continue
+        if str(slot.get("role_key") or "") != holder_role:
+            continue
+        if str(slot.get("agent_id") or "") != holder_agent_id:
+            raise PacketRuntimeError("active-holder lease agent does not match current live role slot")
+        status = str(slot.get("status") or "")
+        if status not in LIVE_CREW_SLOT_STATUSES:
+            raise PacketRuntimeError(f"active-holder lease requires live host liveness proof for {holder_role}")
+        if status == "live_agent_rehydrated":
+            liveness_status = str(slot.get("host_liveness_status") or "")
+            liveness_decision = str(slot.get("liveness_decision") or "")
+            if not (
+                liveness_status == "active"
+                or liveness_decision == "spawned_replacement_from_current_run_memory"
+            ):
+                raise PacketRuntimeError(f"active-holder lease requires active or replaced host liveness for {holder_role}")
+        return {
+            "schema_version": "flowpilot.active_holder_liveness_evidence.v1",
+            "source": "crew_ledger",
+            "crew_ledger_path": project_relative(project_root, crew_path),
+            "run_id": paths["run_id"],
+            "role_key": holder_role,
+            "agent_id": holder_agent_id,
+            "role_slot_status": status,
+            "host_liveness_status": slot.get("host_liveness_status"),
+            "liveness_decision": slot.get("liveness_decision"),
+            "spawn_result": slot.get("spawn_result"),
+            "recovery_result": slot.get("last_role_recovery_result") or slot.get("recovery_result"),
+            "crew_generation": slot.get("crew_generation"),
+            "role_binding_epoch": slot.get("role_binding_epoch"),
+            "host_liveness_proven": True,
+        }
+    raise PacketRuntimeError(f"active-holder lease requires current live role slot for {holder_role}")
 from packet_runtime_schema import (
     ACTIVE_HOLDER_LEASE_SCHEMA,
     PacketRuntimeError,
@@ -45,6 +102,12 @@ def issue_active_holder_lease(
     resolved_agent_id = _require_concrete_agent_id(holder_agent_id, role=holder_role)
     if holder_role != packet_envelope.get("to_role"):
         raise PacketRuntimeError("active-holder lease may only be issued to the packet to_role")
+    holder_liveness = _active_holder_liveness_evidence(
+        project_root,
+        packet_envelope=packet_envelope,
+        holder_role=holder_role,
+        holder_agent_id=resolved_agent_id,
+    )
     verify_controller_relay(packet_envelope, recipient_role=holder_role)
     audit = validate_packet_ready_for_direct_relay(
         project_root,
@@ -65,6 +128,8 @@ def issue_active_holder_lease(
         "node_id": packet_envelope.get("node_id"),
         "holder_role": holder_role,
         "holder_agent_id": resolved_agent_id,
+        "holder_liveness": holder_liveness,
+        "host_liveness_proof_required": True,
         "route_version": int(route_version),
         "frontier_version": int(frontier_version),
         "allowed_actions": allowed_actions
@@ -103,6 +168,8 @@ def issue_active_holder_lease(
             "active_holder_lease_id": lease["lease_id"],
             "active_holder_role": holder_role,
             "active_holder_agent_id": resolved_agent_id,
+            "active_holder_liveness": holder_liveness,
+            "active_holder_liveness_proven": True,
             "active_holder_route_version": int(route_version),
             "active_holder_frontier_version": int(frontier_version),
             "active_packet_status": "active-holder-lease-issued",

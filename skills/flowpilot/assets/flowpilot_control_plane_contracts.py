@@ -17,6 +17,25 @@ CONTROL_BLOCKER_IDENTITY_FIELDS = (
     "repair_transaction_id",
     "sealed_repair_packet_hash",
 )
+CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS = (
+    "batch_id",
+    "active_batch_id",
+    "request_id",
+    "request_ids",
+    "packet_id",
+    "packet_ids",
+    "packet_envelope_path",
+    "packet_envelope_paths",
+    "result_envelope_path",
+    "result_envelope_paths",
+    "to_role",
+    "target_role",
+    "waiting_for_role",
+)
+ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES = (
+    "load_resume_state",
+    "load_role_recovery_state",
+)
 BASE_ACTION_IDENTITY_FIELDS = (
     "action_type",
     "scope_kind",
@@ -30,6 +49,7 @@ BASE_ACTION_IDENTITY_FIELDS = (
     "postcondition",
     "projection_hash",
     "next_card_id",
+    *CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS,
 )
 PENDING_WAIT_IDENTITY_FIELDS = (
     "action_type",
@@ -123,6 +143,10 @@ def control_plane_completion_class_override(
     }
 
 
+def control_plane_router_owned_state_replay_action(action_type: Any) -> bool:
+    return str(action_type or "") in ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES
+
+
 def control_plane_envelope_is_hash_bound(envelope: dict[str, Any]) -> bool:
     relay = envelope.get("controller_relay")
     if isinstance(relay, dict) and relay.get("envelope_hash"):
@@ -134,6 +158,8 @@ def control_plane_envelope_is_hash_bound(envelope: dict[str, Any]) -> bool:
 __all__ = (
     "CONTROL_BLOCKER_DELIVERY_POSTCONDITION_PREFIX",
     "CONTROL_BLOCKER_IDENTITY_FIELDS",
+    "CONTROL_ACTION_CONTEXT_IDENTITY_FIELDS",
+    "ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES",
     "PENDING_WAIT_IDENTITY_FIELDS",
     "control_blocker_delivery_postcondition",
     "control_plane_action_identity_extra_fields",
@@ -143,5 +169,6 @@ __all__ = (
     "control_plane_pending_wait_identity_parts",
     "control_plane_pending_wait_same_identity",
     "control_plane_completion_class_override",
+    "control_plane_router_owned_state_replay_action",
     "control_plane_envelope_is_hash_bound",
 )

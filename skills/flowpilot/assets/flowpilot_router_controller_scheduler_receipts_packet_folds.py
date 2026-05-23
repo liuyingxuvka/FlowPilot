@@ -104,12 +104,165 @@ def _parallel_batch_packet_evidence(
     }
 
 
+def _packet_ledger_record_for_envelope(
+    project_root: Path,
+    envelope: dict[str, Any],
+) -> tuple[dict[str, Any] | None, Path]:
+    paths = packet_runtime.packet_paths_from_any_envelope(project_root, envelope)
+    return packet_runtime.packet_ledger_record_for_envelope(project_root, envelope), paths["packet_ledger"]
+
+
+def _active_holder_fast_lane_item(action: dict[str, Any], packet_id: str) -> dict[str, Any] | None:
+    plan = action.get("active_holder_fast_lane")
+    if not isinstance(plan, dict):
+        return None
+    for item in plan.get("packets") or []:
+        if isinstance(item, dict) and str(item.get("packet_id") or "") == packet_id:
+            return item
+    return None
+
+
+def _active_holder_lease_evidence(
+    project_root: Path,
+    packet_id: str,
+    expected_role: str,
+    action: dict[str, Any],
+) -> dict[str, Any]:
+    item = _active_holder_fast_lane_item(action, packet_id)
+    if not isinstance(item, dict) or not str(item.get("target_agent_id") or "").strip():
+        return {"required": False}
+    lease_path = str(item.get("active_holder_lease_path") or "").strip()
+    if not lease_path:
+        return {"required": True, "ok": False, "reason": "active_holder_lease_path_missing"}
+    try:
+        lease = packet_runtime._load_active_holder_lease(project_root, lease_path)  # type: ignore[attr-defined]
+    except (OSError, ValueError, packet_runtime.PacketRuntimeError) as exc:
+        return {
+            "required": True,
+            "ok": False,
+            "reason": "active_holder_lease_missing_or_unreadable",
+            "active_holder_lease_path": lease_path,
+            "error": str(exc),
+        }
+    if str(lease.get("packet_id") or "") != packet_id:
+        return {"required": True, "ok": False, "reason": "active_holder_lease_packet_mismatch", "active_holder_lease_path": lease_path}
+    if str(lease.get("holder_role") or "") != expected_role:
+        return {
+            "required": True,
+            "ok": False,
+            "reason": "active_holder_lease_role_mismatch",
+            "active_holder_lease_path": lease_path,
+            "expected_role": expected_role,
+            "actual_role": lease.get("holder_role"),
+        }
+    if str(lease.get("holder_agent_id") or "") != str(item.get("target_agent_id") or ""):
+        return {
+            "required": True,
+            "ok": False,
+            "reason": "active_holder_lease_agent_mismatch",
+            "active_holder_lease_path": lease_path,
+            "expected_agent_id": item.get("target_agent_id"),
+            "actual_agent_id": lease.get("holder_agent_id"),
+        }
+    if str(lease.get("status") or "") not in {"active", "closed"}:
+        return {
+            "required": True,
+            "ok": False,
+            "reason": "active_holder_lease_not_active",
+            "active_holder_lease_path": lease_path,
+            "status": lease.get("status"),
+        }
+    liveness = lease.get("holder_liveness") if isinstance(lease.get("holder_liveness"), dict) else {}
+    if liveness.get("host_liveness_proven") is not True:
+        return {
+            "required": True,
+            "ok": False,
+            "reason": "active_holder_lease_liveness_missing",
+            "active_holder_lease_path": lease_path,
+        }
+    return {
+        "required": True,
+        "ok": True,
+        "source": "active_holder_lease",
+        "active_holder_lease_path": lease_path,
+        "lease_id": lease.get("lease_id"),
+        "holder_role": lease.get("holder_role"),
+        "holder_agent_id": lease.get("holder_agent_id"),
+        "holder_liveness": liveness,
+    }
+
+
+def _runtime_relay_missing_deliverables(
+    action: dict[str, Any],
+    spec: dict[str, str],
+    failures: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    repairable_reasons = {
+        "packet_runtime_relay_evidence_missing",
+        "packet_ledger_controller_relay_missing",
+        "packet_ledger_record_missing",
+        "packet_ledger_relay_holder_mismatch",
+        "packet_ledger_relay_status_mismatch",
+        "active_holder_lease_path_missing",
+        "active_holder_lease_missing_or_unreadable",
+        "active_holder_lease_packet_mismatch",
+        "active_holder_lease_role_mismatch",
+        "active_holder_lease_agent_mismatch",
+        "active_holder_lease_not_active",
+        "active_holder_lease_liveness_missing",
+        "result_relay_evidence_missing",
+        "result_ledger_controller_relay_missing",
+        "result_ledger_record_missing",
+        "result_ledger_relay_holder_mismatch",
+    }
+    failed_packet_ids = {
+        str(item.get("packet_id") or "")
+        for item in failures
+        if isinstance(item, dict) and str(item.get("reason") or "") in repairable_reasons
+    }
+    if not failed_packet_ids:
+        return []
+    operations = [
+        item
+        for item in action.get("runtime_relay_operations") or []
+        if isinstance(item, dict) and str(item.get("packet_id") or "") in failed_packet_ids
+    ]
+    deliverables: list[dict[str, Any]] = []
+    for operation in operations:
+        packet_id = str(operation.get("packet_id") or "")
+        envelope_kind = str(operation.get("envelope_kind") or "")
+        path = str(operation.get("envelope_path") or "").strip()
+        if not packet_id or not path:
+            continue
+        deliverables.append(
+            {
+                "deliverable_id": f"runtime_relay:{spec['postcondition']}:{packet_id}:{envelope_kind}",
+                "artifact_kind": str(operation.get("expected_relay_kind") or "controller_relay"),
+                "path": path,
+                "postcondition": spec["postcondition"],
+                "runtime_channel": "flowpilot_runtime.py relay-envelope",
+                "output_type": "runtime_relay_evidence",
+                "output_contract_id": "flowpilot.runtime_relay_operation.v1",
+                "path_key": "envelope_path",
+                "hash_key": "controller_relay_envelope_hash",
+                "required_role": "controller",
+                "controller_may_read_sealed_bodies": False,
+                "required_before_router_reconciles_done_receipt": True,
+                "runtime_relay_operation": operation,
+                "expected_writes": operation.get("expected_writes") or [],
+                "path_only_handoff_is_not_completion": True,
+            }
+        )
+    return deliverables
+
+
 def _packet_dispatch_record_evidence(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
     run_state: dict[str, Any],
     spec: dict[str, str],
+    action: dict[str, Any],
     record: dict[str, Any],
 ) -> dict[str, Any]:
     _bind_router(router)
@@ -124,48 +277,69 @@ def _packet_dispatch_record_evidence(
     expected_role = str(envelope.get("to_role") or record.get("to_role") or "").strip()
     if not expected_role:
         return {"ok": False, "packet_id": packet_id, "reason": "packet_record_missing_target_role"}
-    evidence: list[dict[str, Any]] = []
     try:
         relay = packet_runtime.verify_controller_relay(envelope, recipient_role=expected_role)
-        evidence.append({"source": "packet_controller_relay", "relayed_at": relay.get("relayed_at")})
     except packet_runtime.PacketRuntimeError as exc:
-        relay_error = str(exc)
-    else:
-        relay_error = ""
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "packet_runtime_relay_evidence_missing",
+            "controller_relay_error": str(exc),
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+        }
+    try:
+        ledger_record, ledger_path = _packet_ledger_record_for_envelope(project_root, envelope)
+    except (OSError, ValueError, packet_runtime.PacketRuntimeError) as exc:
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "packet_ledger_record_missing",
+            "error": str(exc),
+            "packet_envelope_path": project_relative(project_root, envelope_path),
+        }
+    if not isinstance(ledger_record, dict):
+        return {"ok": False, "packet_id": packet_id, "reason": "packet_ledger_record_missing"}
+    if not isinstance(ledger_record.get("packet_controller_relay"), dict):
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "packet_ledger_controller_relay_missing",
+            "packet_ledger_path": project_relative(project_root, ledger_path),
+        }
+    holder_matches = str(ledger_record.get("active_packet_holder") or "") == expected_role
+    opened_by_expected = str(ledger_record.get("packet_body_opened_by_role") or "") == expected_role
+    result_recorded = bool(ledger_record.get("result_envelope_path") or ledger_record.get("result_body_path"))
+    if not (holder_matches or opened_by_expected or result_recorded):
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "packet_ledger_relay_holder_mismatch",
+            "expected_holder": expected_role,
+            "actual_holder": ledger_record.get("active_packet_holder"),
+            "packet_ledger_path": project_relative(project_root, ledger_path),
+        }
+    lease_evidence = _active_holder_lease_evidence(project_root, packet_id, expected_role, action)
+    if lease_evidence.get("required") and not lease_evidence.get("ok"):
+        return {"ok": False, "packet_id": packet_id, **lease_evidence}
+    evidence: list[dict[str, Any]] = [
+        {"source": "packet_controller_relay", "relayed_at": relay.get("relayed_at")},
+        {
+            "source": "packet_ledger_controller_relay",
+            "active_packet_holder": ledger_record.get("active_packet_holder"),
+            "active_packet_status": ledger_record.get("active_packet_status"),
+            "packet_ledger_path": project_relative(project_root, ledger_path),
+        },
+    ]
+    if lease_evidence.get("ok"):
+        evidence.append({key: value for key, value in lease_evidence.items() if key not in {"required", "ok"}})
     try:
         open_record = packet_runtime.verify_packet_open_receipt(project_root, envelope, role=expected_role)
         evidence.append({"source": "packet_open_receipt", "opened_by_role": open_record.get("packet_body_opened_by_role")})
     except packet_runtime.PacketRuntimeError:
         pass
-    try:
-        lease_path = packet_runtime.packet_paths_from_envelope(project_root, envelope)["packet_dir"] / "active_holder_lease.json"
-        if lease_path.exists():
-            lease = packet_runtime._load_active_holder_lease(project_root, lease_path)  # type: ignore[attr-defined]
-            if (
-                lease.get("status") == "active"
-                and lease.get("packet_id") == packet_id
-                and lease.get("holder_role") == expected_role
-                and lease.get("packet_body_hash") == envelope.get("body_hash")
-            ):
-                evidence.append(
-                    {
-                        "source": "active_holder_lease",
-                        "lease_id": lease.get("lease_id"),
-                        "holder_role": lease.get("holder_role"),
-                    }
-                )
-    except (OSError, ValueError, packet_runtime.PacketRuntimeError):
-        pass
     batch_evidence = _parallel_batch_packet_evidence(router, run_root, spec, packet_id)
     if batch_evidence:
         evidence.append(batch_evidence)
-    if not evidence:
-        return {
-            "ok": False,
-            "packet_id": packet_id,
-            "reason": "packet_dispatch_evidence_missing",
-            "controller_relay_error": relay_error,
-        }
     return {
         "ok": True,
         "packet_id": packet_id,
@@ -212,12 +386,50 @@ def _result_relay_record_evidence(
             "reason": "result_relay_evidence_missing",
             "controller_relay_error": str(exc),
         }
+    try:
+        ledger_record, ledger_path = _packet_ledger_record_for_envelope(project_root, result)
+    except (OSError, ValueError, packet_runtime.PacketRuntimeError) as exc:
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "result_ledger_record_missing",
+            "error": str(exc),
+            "result_envelope_path": project_relative(project_root, result_path),
+        }
+    if not isinstance(ledger_record, dict):
+        return {"ok": False, "packet_id": packet_id, "reason": "result_ledger_record_missing"}
+    if not isinstance(ledger_record.get("result_controller_relay"), dict):
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "result_ledger_controller_relay_missing",
+            "packet_ledger_path": project_relative(project_root, ledger_path),
+        }
+    holder_matches = str(ledger_record.get("active_packet_holder") or "") == expected_role
+    opened_by_expected = str(ledger_record.get("result_body_opened_by_role") or "") == expected_role
+    if not (holder_matches or opened_by_expected):
+        return {
+            "ok": False,
+            "packet_id": packet_id,
+            "reason": "result_ledger_relay_holder_mismatch",
+            "expected_holder": expected_role,
+            "actual_holder": ledger_record.get("active_packet_holder"),
+            "packet_ledger_path": project_relative(project_root, ledger_path),
+        }
     return {
         "ok": True,
         "packet_id": packet_id,
         "target_role": expected_role,
         "result_envelope_path": project_relative(project_root, result_path),
-        "evidence": [{"source": "result_controller_relay", "relayed_at": relay.get("relayed_at")}],
+        "evidence": [
+            {"source": "result_controller_relay", "relayed_at": relay.get("relayed_at")},
+            {
+                "source": "packet_ledger_result_controller_relay",
+                "active_packet_holder": ledger_record.get("active_packet_holder"),
+                "active_packet_status": ledger_record.get("active_packet_status"),
+                "packet_ledger_path": project_relative(project_root, ledger_path),
+            },
+        ],
     }
 
 
@@ -314,7 +526,7 @@ def _apply_registered_controller_receipt_evidence_fold(
         }
     if spec["kind"] == "packet_dispatch":
         record_results = [
-            _packet_dispatch_record_evidence(router, project_root, run_root, run_state, spec, record)
+            _packet_dispatch_record_evidence(router, project_root, run_root, run_state, spec, action, record)
             for record in records
         ]
     else:
@@ -324,6 +536,7 @@ def _apply_registered_controller_receipt_evidence_fold(
         ]
     failures = [item for item in record_results if not item.get("ok")]
     if failures:
+        missing_deliverables = _runtime_relay_missing_deliverables(action, spec, failures)
         return {
             "applied": False,
             "reason": "controller_receipt_evidence_fold_not_satisfied",
@@ -332,6 +545,9 @@ def _apply_registered_controller_receipt_evidence_fold(
             "fold_kind": spec["kind"],
             "record_context": record_context,
             "failures": failures,
+            "repairable": bool(missing_deliverables),
+            "relay_repair_required": bool(missing_deliverables),
+            "missing_deliverables": missing_deliverables,
         }
     flag = spec["postcondition"]
     run_state.setdefault("flags", {})[flag] = True

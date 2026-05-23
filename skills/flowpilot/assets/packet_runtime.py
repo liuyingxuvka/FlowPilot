@@ -21,7 +21,7 @@ from packet_runtime_creation import (
     read_packet_body_for_role,
     router_release_startup_user_intake,
 )
-from packet_runtime_ledger import _update_packet_record
+from packet_runtime_ledger import _update_packet_record, packet_ledger_record_for_envelope
 from packet_runtime_contracts import (
     contract_self_check_metadata,
     default_output_contract,
@@ -122,6 +122,7 @@ __all__ = [
     "active_holder_submit_result",
     "active_holder_submit_existing_result",
     "_update_packet_record",
+    "packet_ledger_record_for_envelope",
 ]
 
 

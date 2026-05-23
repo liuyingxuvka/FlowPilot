@@ -1608,8 +1608,30 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(manifest_after_approval["approval"]["product_officer_default_gate_removed"])
         self.assertFalse((run_root / "flowguard" / "child_skill_conformance_model.json").exists())
         self.assertFalse((run_root / "flowguard" / "child_skill_product_fit.json").exists())
-        router.record_external_event(root, "capability_evidence_synced")
+        self.assertFalse((run_root / "capabilities" / "capability_sync.json").exists())
+        stale_state = read_json(router.run_state_path(run_root))
+        stale_state["pending_action"] = {
+            "action_type": "await_role_decision",
+            "actor": "controller",
+            "label": "controller_waits_for_expected_event_capability_evidence_synced",
+            "summary": "Legacy stale wait for Router-owned capability evidence sync.",
+            "allowed_external_events": ["capability_evidence_synced"],
+            "to_role": "controller",
+        }
+        router.write_json(router.run_state_path(run_root), stale_state)
+
+        action = self.next_after_display_sync(root)
+
         self.assertTrue((run_root / "capabilities" / "capability_sync.json").exists())
+        state_after_sync = read_json(router.run_state_path(run_root))
+        self.assertTrue(state_after_sync["flags"]["capability_evidence_synced"])
+        pending_after_sync = state_after_sync.get("pending_action")
+        if isinstance(pending_after_sync, dict):
+            self.assertNotIn("capability_evidence_synced", pending_after_sync.get("allowed_external_events") or [])
+        self.assertFalse(
+            action["action_type"] == "await_role_decision"
+            and "capability_evidence_synced" in (action.get("allowed_external_events") or [])
+        )
     def test_controller_repair_work_packet_queues_bounded_controller_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

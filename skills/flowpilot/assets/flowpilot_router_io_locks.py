@@ -100,6 +100,10 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
         classification = "active_live_owner"
         active = True
         takeover_allowed = False
+    elif owner_pid_present and fresh and (not target_valid_json or tmp_artifact_present):
+        classification = "active_dead_owner_fresh_unverified"
+        active = True
+        takeover_allowed = False
     elif owner_pid_present:
         classification = "dead_owner_takeover"
         active = False

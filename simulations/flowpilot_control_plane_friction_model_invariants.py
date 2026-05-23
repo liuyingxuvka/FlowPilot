@@ -148,6 +148,10 @@ def stateful_controller_receipts_require_postcondition_evidence(
 
 def controller_delivery_receipts_do_not_complete_target_work(state: State, trace) -> InvariantResult:
     del trace
+    if state.controller_delivery_receipt_done and state.controller_delivery_host_status != "delivered":
+        return InvariantResult.fail(
+            "Controller delivery receipt was marked done without host delivery success"
+        )
     if state.controller_delivery_used_as_role_completion:
         return InvariantResult.fail(
             "Controller delivery receipt was treated as target-role completion"
@@ -159,6 +163,82 @@ def controller_delivery_receipts_do_not_complete_target_work(state: State, trace
     if state.controller_delivery_receipt_done and not state.controller_delivery_target_role_wait_started:
         return InvariantResult.fail(
             "Controller delivery receipt did not transition to a target-role wait"
+        )
+    return InvariantResult.pass_()
+
+def pm_role_work_identity_is_work_unit_scoped(state: State, trace) -> InvariantResult:
+    del trace
+    if state.pm_role_work_closed_identity_reused_for_distinct_request:
+        return InvariantResult.fail(
+            "PM role-work action identity omitted batch, request, packet, or target role"
+        )
+    if (
+        (state.pm_role_work_result_normalized or state.role_work_wait_pending)
+        and not state.pm_role_work_identity_includes_batch_request_packet_role
+    ):
+        return InvariantResult.fail(
+            "PM role-work wait or result used an identity that was not scoped to batch, request, packet, and target role"
+        )
+    if state.pm_role_work_open_request_masked_by_global_flag and not state.pm_role_work_request_postcondition_scoped:
+        return InvariantResult.fail(
+            "PM role-work global postcondition masked an open request-specific obligation"
+        )
+    return InvariantResult.pass_()
+
+def active_holder_leases_require_host_liveness(state: State, trace) -> InvariantResult:
+    del trace
+    if state.active_holder_lease_issued and not (
+        state.active_holder_agent_identity_recorded
+        and state.active_holder_agent_host_live
+        and state.active_holder_packet_role_matches
+    ):
+        return InvariantResult.fail(
+            "active holder lease was issued without concrete agent identity, host liveness, and packet-role match"
+        )
+    return InvariantResult.pass_()
+
+def packet_ledger_io_is_atomic_and_recoverable(state: State, trace) -> InvariantResult:
+    del trace
+    ledger_activity = (
+        state.packet_delivered
+        or state.result_returned
+        or state.pending_wait_reconciled
+        or (
+            state.pm_repair_reissue_spec_written
+            and state.pm_repair_reissue_packets_registered_in_ledger
+        )
+    )
+    if ledger_activity and not (
+        state.packet_ledger_write_atomic
+        and state.packet_ledger_write_locked_or_cas
+        and state.packet_ledger_readback_validated
+    ):
+        return InvariantResult.fail(
+            "packet ledger write path lacked atomic unique-temp, lock/CAS, or readback validation"
+        )
+    if state.packet_ledger_corrupt_read_crashed_daemon:
+        return InvariantResult.fail(
+            "packet ledger corrupt read crashed the daemon instead of producing a recoverable control blocker"
+        )
+    if state.packet_ledger_corrupt_read_crashed_daemon is False and state.packet_ledger_corruption_recoverable is False:
+        return InvariantResult.pass_()
+    if not state.packet_ledger_corruption_recoverable:
+        return InvariantResult.fail(
+            "packet ledger corruption was not modeled as recoverable before daemon continuation"
+        )
+    return InvariantResult.pass_()
+
+def material_gate_result_evidence_is_machine_and_authority_backed(
+    state: State, trace
+) -> InvariantResult:
+    del trace
+    if state.material_gate_depends_on_result_body and not state.result_self_check_machine_parseable:
+        return InvariantResult.fail(
+            "material gate depended on a result body whose Contract Self-Check was not machine-parseable"
+        )
+    if state.material_gate_depends_on_result_body and not state.result_reader_authority_matches_runtime:
+        return InvariantResult.fail(
+            "artifact map advertised result-body reader access that runtime relay authority did not grant"
         )
     return InvariantResult.pass_()
 
@@ -176,6 +256,48 @@ def router_owned_artifacts_are_reclaimed_before_blocker(state: State, trace) -> 
     if durable_artifact_valid and state.router_tick_escalated_before_reclaim:
         return InvariantResult.fail(
             "daemon tick escalated a half-complete Controller receipt before durable artifact reclaim"
+        )
+    return InvariantResult.pass_()
+
+def router_internal_postconditions_materialize_or_block(state: State, trace) -> InvariantResult:
+    del trace
+    ready_internal_postcondition = (
+        state.router_internal_postcondition_due
+        and state.router_internal_postcondition_inputs_ready
+    )
+    if ready_internal_postcondition and state.router_internal_postcondition_exposed_as_role_wait:
+        return InvariantResult.fail(
+            "router-owned internal postcondition was exposed as a Controller/role wait instead of materializing or blocking"
+        )
+    if ready_internal_postcondition and not (
+        state.router_internal_postcondition_materialized
+        or state.router_internal_postcondition_blocker_materialized
+    ):
+        return InvariantResult.fail(
+            "router-owned internal postcondition had ready inputs but no materialized evidence or router-visible blocker"
+        )
+    if (
+        state.router_internal_postcondition_exposed_as_role_wait
+        and not state.router_internal_postcondition_expected_evidence_exists
+        and not state.router_internal_postcondition_executable_action_pending
+    ):
+        return InvariantResult.fail(
+            "passive wait advertised missing router-owned internal evidence without an executable owner action"
+        )
+    return InvariantResult.pass_()
+
+def resolved_obligation_projections_are_cleared(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.resolved_obligation_evidence_exists
+        and (
+            state.resolved_obligation_live_passive_wait
+            or state.resolved_obligation_live_blocked_reminder
+        )
+        and not state.resolved_obligation_projection_reconciled
+    ):
+        return InvariantResult.fail(
+            "resolved Router obligation still had a live passive wait or blocked reminder projection"
         )
     return InvariantResult.pass_()
 
@@ -948,9 +1070,39 @@ INVARIANTS = (
         predicate=controller_delivery_receipts_do_not_complete_target_work,
     ),
     Invariant(
+        name="pm_role_work_identity_is_work_unit_scoped",
+        description="PM role-work obligations use batch, request, packet, and target-role scoped identity and postconditions.",
+        predicate=pm_role_work_identity_is_work_unit_scoped,
+    ),
+    Invariant(
+        name="active_holder_leases_require_host_liveness",
+        description="Packet active-holder leases require concrete agent identity, host liveness, and packet-role match.",
+        predicate=active_holder_leases_require_host_liveness,
+    ),
+    Invariant(
+        name="packet_ledger_io_is_atomic_and_recoverable",
+        description="Packet ledger writes are atomic/locked/readback-validated and corrupt reads become recoverable blockers.",
+        predicate=packet_ledger_io_is_atomic_and_recoverable,
+    ),
+    Invariant(
+        name="material_gate_result_evidence_is_machine_and_authority_backed",
+        description="Material gates depend only on machine-parseable result self-checks and runtime-backed reader authority.",
+        predicate=material_gate_result_evidence_is_machine_and_authority_backed,
+    ),
+    Invariant(
         name="router_owned_artifacts_are_reclaimed_before_blocker",
         description="Valid Router-owned artifacts and proofs are reclaimed before daemon ticks escalate a missing postcondition blocker.",
         predicate=router_owned_artifacts_are_reclaimed_before_blocker,
+    ),
+    Invariant(
+        name="router_internal_postconditions_materialize_or_block",
+        description="Router-owned internal postconditions materialize evidence or emit router-visible blockers instead of passive role waits.",
+        predicate=router_internal_postconditions_materialize_or_block,
+    ),
+    Invariant(
+        name="resolved_obligation_projections_are_cleared",
+        description="Resolved Router obligations do not leave live passive waits or blocked reminder projections.",
+        predicate=resolved_obligation_projections_are_cleared,
     ),
     Invariant(
         name="controller_display_work_remains_nonblocking",

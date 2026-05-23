@@ -33,10 +33,14 @@ MAIL_DELIVERY_REGISTERED_FOLD = "mail_delivery_registered_fold"
 PACKET_RELAY_REGISTERED_FOLD = "packet_relay_registered_fold"
 PACKET_RELAY_IN_PROGRESS_WAITS = "packet_relay_in_progress_waits"
 MISSING_EVIDENCE_RETRY_OR_BLOCK = "missing_evidence_retry_or_block"
+PATH_ONLY_RECEIPT_SCHEDULES_RELAY_REPAIR = "path_only_receipt_schedules_relay_repair"
+ROUTER_OWNED_STATE_REPLAY_REGISTERED = "router_owned_state_replay_registered"
 LOCAL_RECEIPT_WITHOUT_ROUTER_FLAG = "local_receipt_without_router_flag"
 
 UNSUPPORTED_RECEIPT_WITH_PACKET_EVIDENCE = "unsupported_receipt_with_packet_evidence"
 DIRECT_APPLY_ONLY_NO_RECEIPT_FOLD = "direct_apply_only_no_receipt_fold"
+RECEIPT_DONE_WITHOUT_CONTROLLER_RELAY_SIGNATURE = "receipt_done_without_controller_relay_signature"
+ROUTER_OWNED_STATE_PROJECTED_WITHOUT_REPLAY = "router_owned_state_projected_without_replay"
 FALSE_BLOCKER_WITH_EVIDENCE_AVAILABLE = "false_blocker_with_evidence_available"
 DUPLICATE_REQUEUE_WHILE_RECEIPT_DONE = "duplicate_requeue_while_receipt_done"
 DOWNSTREAM_WAIT_GATED_BY_UNFOLDED_DISPATCH = "downstream_wait_gated_by_unfolded_dispatch"
@@ -48,12 +52,16 @@ VALID_SCENARIOS = (
     PACKET_RELAY_REGISTERED_FOLD,
     PACKET_RELAY_IN_PROGRESS_WAITS,
     MISSING_EVIDENCE_RETRY_OR_BLOCK,
+    PATH_ONLY_RECEIPT_SCHEDULES_RELAY_REPAIR,
+    ROUTER_OWNED_STATE_REPLAY_REGISTERED,
     LOCAL_RECEIPT_WITHOUT_ROUTER_FLAG,
 )
 
 NEGATIVE_SCENARIOS = (
     UNSUPPORTED_RECEIPT_WITH_PACKET_EVIDENCE,
     DIRECT_APPLY_ONLY_NO_RECEIPT_FOLD,
+    RECEIPT_DONE_WITHOUT_CONTROLLER_RELAY_SIGNATURE,
+    ROUTER_OWNED_STATE_PROJECTED_WITHOUT_REPLAY,
     FALSE_BLOCKER_WITH_EVIDENCE_AVAILABLE,
     DUPLICATE_REQUEUE_WHILE_RECEIPT_DONE,
     DOWNSTREAM_WAIT_GATED_BY_UNFOLDED_DISPATCH,
@@ -77,7 +85,7 @@ class Action:
 class State:
     status: str = "new"  # new | accepted | rejected
     scenario: str = "unset"
-    action_family: str = "none"  # display | mail | packet_relay | local
+    action_family: str = "none"  # display | mail | packet_relay | router_owned_state | local
     action_type: str = "none"
     postcondition_name: str = "none"
 
@@ -85,9 +93,13 @@ class State:
     controller_receipt_done: bool = False
     direct_apply_sets_flag: bool = False
     receipt_fold_registered: bool = False
+    router_owned_state_replay_registered: bool = False
     unsupported_receipt_result: bool = False
 
     router_visible_evidence_available: bool = False
+    controller_relay_signature_recorded: bool = False
+    packet_ledger_relay_recorded: bool = False
+    path_only_handoff_reported: bool = False
     packet_batch_relayed: bool = False
     active_holder_leases_issued: bool = False
     worker_packet_opened_or_acknowledged: bool = False
@@ -159,6 +171,8 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=True,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             worker_packet_opened_or_acknowledged=True,
@@ -177,6 +191,8 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=True,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             worker_packet_opened_or_acknowledged=True,
@@ -198,6 +214,37 @@ def scenario_state(scenario: str) -> State:
             router_visible_evidence_available=False,
             router_postcondition_flag_satisfied=False,
             repair_or_blocker_recorded=True,
+        )
+    if scenario == PATH_ONLY_RECEIPT_SCHEDULES_RELAY_REPAIR:
+        return _accepted(
+            scenario,
+            action_family="packet_relay",
+            action_type="relay_material_scan_packets",
+            postcondition_name="material_scan_packets_relayed",
+            controller_receipt_possible=True,
+            controller_receipt_done=True,
+            direct_apply_sets_flag=True,
+            receipt_fold_registered=True,
+            router_visible_evidence_available=False,
+            controller_relay_signature_recorded=False,
+            packet_ledger_relay_recorded=False,
+            path_only_handoff_reported=True,
+            router_postcondition_flag_satisfied=False,
+            repair_or_blocker_recorded=True,
+        )
+    if scenario == ROUTER_OWNED_STATE_REPLAY_REGISTERED:
+        return _accepted(
+            scenario,
+            action_family="router_owned_state",
+            action_type="load_resume_state",
+            postcondition_name="resume_state_loaded",
+            controller_receipt_possible=True,
+            controller_receipt_done=True,
+            direct_apply_sets_flag=True,
+            receipt_fold_registered=True,
+            router_owned_state_replay_registered=True,
+            router_postcondition_flag_satisfied=True,
+            router_marked_receipt_reconciled=True,
         )
     if scenario == LOCAL_RECEIPT_WITHOUT_ROUTER_FLAG:
         return _accepted(
@@ -225,6 +272,8 @@ def scenario_state(scenario: str) -> State:
             receipt_fold_registered=False,
             unsupported_receipt_result=True,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             worker_packet_opened_or_acknowledged=True,
@@ -240,8 +289,40 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=False,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
+        )
+    if scenario == RECEIPT_DONE_WITHOUT_CONTROLLER_RELAY_SIGNATURE:
+        return _rejected(
+            scenario,
+            action_family="packet_relay",
+            action_type="relay_material_scan_packets",
+            postcondition_name="material_scan_packets_relayed",
+            controller_receipt_possible=True,
+            controller_receipt_done=True,
+            direct_apply_sets_flag=True,
+            receipt_fold_registered=True,
+            router_visible_evidence_available=True,
+            controller_relay_signature_recorded=False,
+            packet_ledger_relay_recorded=False,
+            path_only_handoff_reported=True,
+            router_postcondition_flag_satisfied=True,
+            router_marked_receipt_reconciled=True,
+        )
+    if scenario == ROUTER_OWNED_STATE_PROJECTED_WITHOUT_REPLAY:
+        return _rejected(
+            scenario,
+            action_family="router_owned_state",
+            action_type="load_resume_state",
+            postcondition_name="resume_state_loaded",
+            controller_receipt_possible=True,
+            controller_receipt_done=True,
+            direct_apply_sets_flag=True,
+            receipt_fold_registered=False,
+            router_owned_state_replay_registered=False,
+            unsupported_receipt_result=True,
         )
     if scenario == FALSE_BLOCKER_WITH_EVIDENCE_AVAILABLE:
         return _rejected(
@@ -255,6 +336,8 @@ def scenario_state(scenario: str) -> State:
             receipt_fold_registered=False,
             unsupported_receipt_result=True,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             false_control_blocker_recorded=True,
@@ -270,6 +353,8 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=False,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             same_action_requeued=True,
@@ -285,6 +370,8 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=False,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             worker_packet_opened_or_acknowledged=True,
@@ -303,6 +390,8 @@ def scenario_state(scenario: str) -> State:
             direct_apply_sets_flag=True,
             receipt_fold_registered=True,
             router_visible_evidence_available=True,
+            controller_relay_signature_recorded=True,
+            packet_ledger_relay_recorded=True,
             packet_batch_relayed=True,
             active_holder_leases_issued=True,
             router_marked_receipt_reconciled=True,
@@ -366,6 +455,13 @@ def receipt_evidence_fold_failures(state: State) -> list[str]:
     failures: list[str] = []
     has_router_postcondition = state.postcondition_name != "none"
     if (
+        state.action_family == "router_owned_state"
+        and state.controller_receipt_possible
+        and state.direct_apply_sets_flag
+        and not state.router_owned_state_replay_registered
+    ):
+        failures.append("Router-owned state action was projected to Controller receipt without registered state replay")
+    if (
         state.controller_receipt_possible
         and has_router_postcondition
         and state.direct_apply_sets_flag
@@ -385,6 +481,14 @@ def receipt_evidence_fold_failures(state: State) -> list[str]:
         and state.unsupported_receipt_result
     ):
         failures.append("evidence-backed Controller receipt returned unsupported_stateful_controller_receipt")
+    if (
+        state.action_family == "router_owned_state"
+        and state.controller_receipt_done
+        and state.router_owned_state_replay_registered
+        and not state.router_postcondition_flag_satisfied
+        and not state.repair_or_blocker_recorded
+    ):
+        failures.append("registered Router-owned state replay did not satisfy the Router-owned postcondition flag")
     if (
         state.false_control_blocker_recorded
         and state.router_visible_evidence_available
@@ -407,6 +511,25 @@ def receipt_evidence_fold_failures(state: State) -> list[str]:
         and not state.downstream_wait_selected
     ):
         failures.append("worker wait was gated by an unfurled dispatch flag instead of evidence-backed packet relay")
+    if (
+        state.action_family == "packet_relay"
+        and state.controller_receipt_done
+        and state.receipt_fold_registered
+        and state.path_only_handoff_reported
+        and not state.controller_relay_signature_recorded
+        and (state.router_postcondition_flag_satisfied or state.router_marked_receipt_reconciled)
+    ):
+        failures.append("receipt done without controller relay signature")
+    if (
+        state.controller_receipt_done
+        and state.receipt_fold_registered
+        and state.router_visible_evidence_available
+        and has_router_postcondition
+        and state.action_family == "packet_relay"
+        and not (state.controller_relay_signature_recorded and state.packet_ledger_relay_recorded)
+        and not state.repair_or_blocker_recorded
+    ):
+        failures.append("registered receipt fold accepted relay without controller signature and packet ledger evidence")
     if (
         state.controller_receipt_done
         and state.receipt_fold_registered

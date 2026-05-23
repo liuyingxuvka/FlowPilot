@@ -104,7 +104,23 @@ def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
     for slot in slots:
         if isinstance(slot, dict) and slot.get("role_key") == role:
             agent_id = slot.get("agent_id")
-            if isinstance(agent_id, str) and agent_id.strip():
+            status = str(slot.get("status") or "")
+            live_status = status in {
+                "live_agent_started",
+                "live_agent_rehydrated",
+                "live_agent_recovered",
+                "live_agent_recycled",
+            }
+            host_liveness = str(slot.get("host_liveness_status") or "")
+            liveness_decision = str(slot.get("liveness_decision") or "")
+            stale_or_unknown = host_liveness in {"missing", "cancelled", "unknown", "timeout_unknown", "completed"}
+            replacement_proven = liveness_decision == "spawned_replacement_from_current_run_memory"
+            if (
+                isinstance(agent_id, str)
+                and agent_id.strip()
+                and live_status
+                and (not stale_or_unknown or replacement_proven or status in {"live_agent_started", "live_agent_recovered", "live_agent_recycled"})
+            ):
                 return agent_id.strip()
     return None
 

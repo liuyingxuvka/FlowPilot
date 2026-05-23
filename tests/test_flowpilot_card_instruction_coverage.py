@@ -88,6 +88,18 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("router", text)
                 self.assertIn("event", text)
 
+    def test_controller_relay_rows_require_runtime_relay_evidence(self) -> None:
+        action_table = (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower()
+        controller_card = _card_path_by_id("controller.core").read_text(encoding="utf-8").lower()
+        for text in (action_table, controller_card):
+            self.assertIn("flowpilot_runtime.py relay-envelope", text)
+            self.assertIn("runtime_relay_operations", text)
+            self.assertIn("path-only", text)
+            self.assertIn("controller_relay", text)
+            self.assertIn("packet_controller_relay", text)
+            self.assertIn("result_controller_relay", text)
+            self.assertIn("active_holder_fast_lane", text)
+
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
             "pm.material_scan",

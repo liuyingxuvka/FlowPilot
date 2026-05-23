@@ -135,6 +135,16 @@ Allowed actions:
   mail id, packet id, target role, and delivery confirmation metadata. Router
   will accept the receipt only after the packet ledger proves the packet was
   released to the addressed role with a controller relay signature;
+- for any `relay_*packet*` or `relay_*result*` Controller row, run every
+  `flowpilot_runtime.py relay-envelope` operation listed in
+  `runtime_relay_operations` before writing the done receipt. A path-only
+  handoff, chatting the path to a role, or saying the envelope was relayed is
+  not completion. Valid relay evidence means the envelope contains
+  `controller_relay`, the packet ledger records the matching
+  `packet_controller_relay` or `result_controller_relay`, holder/status moved
+  to the target role, and any declared `active_holder_fast_lane` lease was
+  issued. Send only the envelope path and Controller-safe metadata to the role
+  after that runtime relay; never open sealed packet or result bodies;
 - relay envelopes only, update holder/status ledgers, and request role
   decisions;
 - when returning a role/event envelope to the router, pass the envelope file

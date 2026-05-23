@@ -899,6 +899,155 @@ def _audit_expected_role_decision_event_prereqs(router_state: object, project_ro
         "allowed_external_events": events,
     }
 
+def _audit_router_internal_postconditions(
+    project_root: Path, run_root: Path, router_state: object
+) -> dict[str, object]:
+    flags = _router_flags(router_state)
+    daemon_status, daemon_error = _read_json(run_root / "runtime" / "router_daemon_status.json")
+    controller_ledger, ledger_error = _read_json(run_root / "runtime" / "controller_action_ledger.json")
+    pending = router_state.get("pending_action") if isinstance(router_state, dict) else None
+    current_wait = daemon_status.get("current_wait") if isinstance(daemon_status, dict) else None
+    current_wait = current_wait if isinstance(current_wait, dict) else {}
+    active_blocker = router_state.get("active_control_blocker") if isinstance(router_state, dict) else None
+    active_blocker_text = json.dumps(active_blocker, ensure_ascii=False, sort_keys=True) if active_blocker else ""
+    actions = controller_ledger.get("actions") if isinstance(controller_ledger, dict) else []
+    actions = actions if isinstance(actions, list) else []
+
+    run_prefix = f".flowpilot/runs/{run_root.name}"
+    specs = (
+        {
+            "event": "capability_evidence_synced",
+            "requires_flag": "child_skill_manifest_pm_approved_for_route",
+            "event_flag": "capability_evidence_synced",
+            "input_paths": (
+                f"{run_prefix}/child_skill_gate_manifest.json",
+                f"{run_prefix}/child_skill_manifest_pm_approval.json",
+                f"{run_prefix}/capabilities.json",
+            ),
+            "evidence_paths": (f"{run_prefix}/capabilities/capability_sync.json",),
+        },
+    )
+    samples: list[dict[str, object]] = []
+    for spec in specs:
+        event = str(spec["event"])
+        input_paths = tuple(str(path) for path in spec["input_paths"])
+        evidence_paths = tuple(str(path) for path in spec["evidence_paths"])
+        inputs_ready = bool(flags.get(spec["requires_flag"])) and all(
+            (project_root / path).exists() for path in input_paths
+        )
+        evidence_exists = any((project_root / path).exists() for path in evidence_paths)
+        materialized = bool(flags.get(spec["event_flag"])) and evidence_exists
+        pending_events = (
+            pending.get("allowed_external_events", [])
+            if isinstance(pending, dict)
+            and pending.get("action_type") == "await_role_decision"
+            else []
+        )
+        wait_events = current_wait.get("allowed_external_events", [])
+        exposed_as_role_wait = event in pending_events or event in wait_events
+        current_wait_expected = current_wait.get("expected_evidence")
+        current_wait_expected = current_wait_expected if isinstance(current_wait_expected, dict) else {}
+        expected_evidence_exists = bool(current_wait_expected.get("exists") or evidence_exists)
+        executable_action_pending = any(
+            isinstance(action, dict)
+            and action.get("status") in {"pending", "in_progress"}
+            and action.get("ordinary_controller_work_row") is True
+            and event in json.dumps(action, ensure_ascii=False, sort_keys=True)
+            for action in actions
+        )
+        blocker_materialized = bool(active_blocker and event in active_blocker_text)
+        due = inputs_ready and not materialized
+        if due or exposed_as_role_wait:
+            samples.append(
+                {
+                    "event": event,
+                    "requires_flag": spec["requires_flag"],
+                    "event_flag": spec["event_flag"],
+                    "due": due,
+                    "inputs_ready": inputs_ready,
+                    "input_paths": input_paths,
+                    "evidence_paths": evidence_paths,
+                    "materialized": materialized,
+                    "blocker_materialized": blocker_materialized,
+                    "exposed_as_role_wait": exposed_as_role_wait,
+                    "expected_evidence_exists": expected_evidence_exists,
+                    "executable_action_pending": executable_action_pending,
+                    "pending_action_id": pending.get("action_id") if isinstance(pending, dict) else None,
+                    "current_wait_label": current_wait.get("label"),
+                }
+            )
+    return {
+        "due": any(bool(item.get("due")) for item in samples),
+        "inputs_ready": any(bool(item.get("inputs_ready")) for item in samples),
+        "materialized": any(bool(item.get("materialized")) for item in samples),
+        "blocker_materialized": any(bool(item.get("blocker_materialized")) for item in samples),
+        "exposed_as_role_wait": any(bool(item.get("exposed_as_role_wait")) for item in samples),
+        "expected_evidence_exists": any(bool(item.get("expected_evidence_exists")) for item in samples),
+        "executable_action_pending": any(bool(item.get("executable_action_pending")) for item in samples),
+        "samples": samples,
+        "daemon_status_error": daemon_error,
+        "controller_ledger_error": ledger_error,
+    }
+
+def _audit_resolved_obligation_projection_reconciliation(
+    run_root: Path, router_state: object
+) -> dict[str, object]:
+    controller_ledger, ledger_error = _read_json(run_root / "runtime" / "controller_action_ledger.json")
+    actions = controller_ledger.get("actions") if isinstance(controller_ledger, dict) else []
+    actions = actions if isinstance(actions, list) else []
+    active_blocker = router_state.get("active_control_blocker") if isinstance(router_state, dict) else None
+    control_blockers = router_state.get("control_blockers") if isinstance(router_state, dict) else []
+    control_blockers = control_blockers if isinstance(control_blockers, list) else []
+    unresolved = {"open", "registered", "pending", "delivered", "waiting", "active"}
+    resolved_control_blocker_exists = active_blocker is None and any(
+        isinstance(blocker, dict)
+        and (
+            bool(blocker.get("resolved_at"))
+            or str(blocker.get("resolution_status") or "") not in unresolved
+        )
+        for blocker in control_blockers
+    )
+    live_passive_waits = [
+        {
+            "action_id": action.get("action_id"),
+            "label": action.get("label"),
+            "status": action.get("status"),
+            "updated_at": action.get("updated_at"),
+        }
+        for action in actions
+        if isinstance(action, dict)
+        and action.get("status") in {"waiting", "pending", "in_progress"}
+        and action.get("controller_projection_kind") == "passive_wait_status"
+        and action.get("label") == "controller_waits_for_control_blocker_resolution"
+    ]
+    ack_files = sorted((run_root / "mailbox" / "outbox" / "card_acks").glob("*.ack.json"))
+    blocked_ack_reminders = [
+        {
+            "action_id": action.get("action_id"),
+            "label": action.get("label"),
+            "status": action.get("status"),
+            "updated_at": action.get("updated_at"),
+        }
+        for action in actions
+        if isinstance(action, dict)
+        and action.get("status") == "blocked"
+        and action.get("action_type") == "send_wait_target_reminder"
+        and "ack" in str(action.get("label") or "").lower()
+        and ack_files
+    ]
+    evidence_exists = bool(resolved_control_blocker_exists or ack_files)
+    return {
+        "evidence_exists": evidence_exists,
+        "resolved_control_blocker_exists": resolved_control_blocker_exists,
+        "ack_file_count": len(ack_files),
+        "live_passive_wait": bool(live_passive_waits),
+        "live_blocked_reminder": bool(blocked_ack_reminders),
+        "projection_reconciled": not live_passive_waits and not blocked_ack_reminders,
+        "live_passive_wait_samples": live_passive_waits,
+        "blocked_reminder_samples": blocked_ack_reminders,
+        "controller_ledger_error": ledger_error,
+    }
+
 def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
     run_prefix = f".flowpilot/runs/{run_id}"
     return {
@@ -1320,6 +1469,260 @@ def _audit_evidence_closure_blockers(
             role_output_gaps.append(item)
     return display_gaps, durable_reclaim_gaps, stateful_gaps, role_output_gaps
 
+def _audit_pm_role_work_unit_identity(
+    run_root: Path, router_state: object
+) -> dict[str, object]:
+    reused_samples: list[dict[str, object]] = []
+    missing_scope_samples: list[dict[str, object]] = []
+    actions_root = run_root / "runtime" / "controller_actions"
+    if actions_root.exists():
+        for action_path in sorted(actions_root.glob("*.json")):
+            record, error = _read_json(action_path)
+            if not isinstance(record, dict):
+                continue
+            nested = record.get("action")
+            action = nested if isinstance(nested, dict) else record
+            if action.get("action_type") != "relay_pm_role_work_request_packet":
+                continue
+            rel_path = ".flowpilot/runs/" + run_root.name + "/" + action_path.relative_to(run_root).as_posix()
+            required = {
+                "batch_id": action.get("batch_id"),
+                "request_id": action.get("request_id"),
+                "packet_id": action.get("packet_id") or action.get("packet_ids"),
+                "to_role": action.get("to_role"),
+            }
+            missing = [key for key, value in required.items() if not value]
+            if missing:
+                missing_scope_samples.append(
+                    {
+                        "path": rel_path,
+                        "action_id": record.get("action_id"),
+                        "missing_fields": missing,
+                        "read_error": error,
+                    }
+                )
+
+            reconciliation = record.get("router_reconciliation")
+            reconciliation = reconciliation if isinstance(reconciliation, dict) else {}
+            lifecycle = reconciliation.get("batch_lifecycle")
+            lifecycle = lifecycle if isinstance(lifecycle, dict) else {}
+            old_batch_id = lifecycle.get("batch_id")
+            old_roles = str(record.get("to_role") or "")
+            new_role = str(action.get("to_role") or "")
+            top_completed = _parse_time(record.get("completed_at"))
+            nested_created = _parse_time(action.get("created_at"))
+            nested_after_done = bool(top_completed and nested_created and nested_created > top_completed)
+            batch_changed = bool(old_batch_id and action.get("batch_id") and old_batch_id != action.get("batch_id"))
+            role_changed = bool(old_roles and new_role and old_roles != new_role)
+            if record.get("status") == "done" and isinstance(nested, dict) and (
+                nested_after_done or batch_changed or role_changed
+            ):
+                reused_samples.append(
+                    {
+                        "path": rel_path,
+                        "controller_action_id": record.get("action_id"),
+                        "top_status": record.get("status"),
+                        "top_created_at": record.get("created_at"),
+                        "top_completed_at": record.get("completed_at"),
+                        "nested_created_at": action.get("created_at"),
+                        "old_batch_id": old_batch_id,
+                        "new_batch_id": action.get("batch_id"),
+                        "old_to_role": old_roles,
+                        "new_to_role": new_role,
+                    }
+                )
+
+    pm_index, pm_index_error = _read_json(run_root / "pm_work_requests" / "index.json")
+    flags = _router_flags(router_state)
+    unresolved_statuses = {"open", "registered", "packet_relayed", "active", "waiting", "in_progress"}
+    unresolved_requests: list[dict[str, object]] = []
+    if isinstance(pm_index, dict):
+        active_request_ids = {
+            str(item)
+            for item in pm_index.get("active_request_ids", [])
+            if isinstance(item, str)
+        }
+        active_request = pm_index.get("active_request_id")
+        if isinstance(active_request, str):
+            active_request_ids.add(active_request)
+        for request in pm_index.get("requests", []):
+            if not isinstance(request, dict):
+                continue
+            request_id = str(request.get("request_id") or "")
+            status = str(request.get("status") or "")
+            if request_id in active_request_ids and status in unresolved_statuses:
+                unresolved_requests.append(
+                    {
+                        "request_id": request_id,
+                        "batch_id": request.get("batch_id"),
+                        "packet_id": request.get("packet_id"),
+                        "to_role": request.get("to_role"),
+                        "status": status,
+                    }
+                )
+    global_postcondition_masks_open_request = bool(
+        flags.get("pm_role_work_request_packet_relayed") and unresolved_requests
+    )
+    return {
+        "identity_scoped": not missing_scope_samples,
+        "closed_identity_reused": bool(reused_samples),
+        "missing_scope_samples": missing_scope_samples,
+        "reused_samples": reused_samples,
+        "request_postcondition_scoped": not global_postcondition_masks_open_request,
+        "global_postcondition_masks_open_request": global_postcondition_masks_open_request,
+        "global_postcondition_flag": flags.get("pm_role_work_request_packet_relayed"),
+        "unresolved_active_requests": unresolved_requests,
+        "pm_index_error": pm_index_error,
+    }
+
+def _audit_controller_delivery_success(run_root: Path) -> dict[str, object]:
+    failures: list[dict[str, object]] = []
+    receipts_root = run_root / "runtime" / "controller_receipts"
+    if not receipts_root.exists():
+        return {"ok": True, "failures": failures}
+    for receipt_path in sorted(receipts_root.glob("*.json")):
+        receipt, error = _read_json(receipt_path)
+        if not isinstance(receipt, dict):
+            continue
+        if receipt.get("status") != "done":
+            continue
+        payload = receipt.get("payload")
+        packets = payload.get("packets") if isinstance(payload, dict) else []
+        if not isinstance(packets, list):
+            continue
+        for packet in packets:
+            if not isinstance(packet, dict):
+                continue
+            delivery_status = str(packet.get("message_delivery_status") or "")
+            if delivery_status and delivery_status != "delivered":
+                failures.append(
+                    {
+                        "path": ".flowpilot/runs/" + run_root.name + "/" + receipt_path.relative_to(run_root).as_posix(),
+                        "action_id": receipt.get("action_id"),
+                        "packet_id": packet.get("packet_id"),
+                        "target_role": packet.get("target_role"),
+                        "target_agent_id": packet.get("target_agent_id"),
+                        "message_delivery_status": delivery_status,
+                        "message_delivery_error": packet.get("message_delivery_error"),
+                        "read_error": error,
+                    }
+                )
+    return {"ok": not failures, "failures": failures}
+
+def _audit_active_holder_liveness(run_root: Path) -> dict[str, object]:
+    role_recovery, _role_recovery_error = _read_json(
+        run_root / "continuation" / "role_recovery" / "latest_transaction.json"
+    )
+    missing_agent_ids: set[str] = set()
+    if isinstance(role_recovery, dict):
+        fault_payload = role_recovery.get("fault_payload")
+        fault_payload = fault_payload if isinstance(fault_payload, dict) else {}
+        probe = fault_payload.get("liveness_probe")
+        probe = probe if isinstance(probe, dict) else {}
+        if probe.get("result") == "missing":
+            detail = str(probe.get("detail") or "")
+            for token in detail.replace(";", " ").split():
+                if token.startswith("019"):
+                    missing_agent_ids.add(token)
+
+    delivery_audit = _audit_controller_delivery_success(run_root)
+    for failure in delivery_audit.get("failures", []):
+        target_agent_id = failure.get("target_agent_id")
+        if isinstance(target_agent_id, str) and target_agent_id:
+            missing_agent_ids.add(target_agent_id)
+
+    lease_issues: list[dict[str, object]] = []
+    lease_count = 0
+    for lease_path in sorted(run_root.glob("packets/*/active_holder_lease.json")):
+        lease, error = _read_json(lease_path)
+        if not isinstance(lease, dict):
+            continue
+        lease_count += 1
+        holder_agent_id = str(lease.get("holder_agent_id") or "")
+        holder_role = str(lease.get("holder_role") or "")
+        packet_id = str(lease.get("packet_id") or "")
+        packet_role_matches = True
+        envelope, _envelope_error = _read_json(lease_path.parent / "packet_envelope.json")
+        if isinstance(envelope, dict):
+            packet_role_matches = str(envelope.get("to_role") or "") == holder_role
+        host_live = holder_agent_id not in missing_agent_ids
+        if not holder_agent_id or not holder_role or not packet_role_matches or not host_live:
+            lease_issues.append(
+                {
+                    "path": ".flowpilot/runs/" + run_root.name + "/" + lease_path.relative_to(run_root).as_posix(),
+                    "packet_id": packet_id,
+                    "holder_role": holder_role or None,
+                    "holder_agent_id": holder_agent_id or None,
+                    "agent_identity_recorded": bool(holder_agent_id),
+                    "host_live": host_live,
+                    "packet_role_matches": packet_role_matches,
+                    "read_error": error,
+                }
+            )
+    return {
+        "lease_count": lease_count,
+        "lease_issues": lease_issues,
+        "agent_identity_recorded": not any(not item["agent_identity_recorded"] for item in lease_issues),
+        "host_live": not any(not item["host_live"] for item in lease_issues),
+        "packet_role_matches": not any(not item["packet_role_matches"] for item in lease_issues),
+    }
+
+def _audit_packet_ledger_corruption(run_root: Path) -> dict[str, object]:
+    corrupt_backups: list[dict[str, object]] = []
+    for backup_path in sorted(run_root.glob("packet_ledger.corrupt-backup-*.json")):
+        _payload, error = _read_json(backup_path)
+        if error:
+            corrupt_backups.append(
+                {
+                    "path": ".flowpilot/runs/" + run_root.name + "/" + backup_path.relative_to(run_root).as_posix(),
+                    "read_error": error,
+                }
+            )
+    events_text, events_error = _read_text(run_root / "runtime" / "router_daemon_events.jsonl")
+    daemon_crashed = "router_daemon_error" in events_text and (
+        "JSONDecodeError" in events_text or "Extra data" in events_text
+    )
+    return {
+        "corrupt_backup_count": len(corrupt_backups),
+        "corrupt_backups": corrupt_backups,
+        "daemon_crashed_on_corrupt_read": bool(corrupt_backups and daemon_crashed),
+        "events_read_error": events_error,
+    }
+
+def _audit_material_gate_evidence_contract(run_root: Path) -> dict[str, object]:
+    reports = sorted((run_root / "reviews").glob("material_sufficiency_report-*.json"))
+    self_check_samples: list[dict[str, object]] = []
+    authority_samples: list[dict[str, object]] = []
+    for report_path in reports:
+        report, error = _read_json(report_path)
+        if not isinstance(report, dict):
+            continue
+        blockers = report.get("blockers")
+        if not isinstance(blockers, list):
+            blockers = []
+        for blocker in blockers:
+            if not isinstance(blocker, dict):
+                continue
+            blocker_id = str(blocker.get("blocker_id") or "")
+            item = {
+                "path": ".flowpilot/runs/" + run_root.name + "/" + report_path.relative_to(run_root).as_posix(),
+                "blocker_id": blocker_id,
+                "description": blocker.get("description"),
+                "read_error": error,
+            }
+            if "contract-self-check" in blocker_id:
+                self_check_samples.append(item)
+            if "review-access-mismatch" in blocker_id:
+                authority_samples.append(item)
+    depends_on_result_body = bool(self_check_samples or authority_samples)
+    return {
+        "depends_on_result_body": depends_on_result_body,
+        "result_self_check_machine_parseable": not self_check_samples,
+        "result_reader_authority_matches_runtime": not authority_samples,
+        "self_check_samples": self_check_samples,
+        "authority_samples": authority_samples,
+    }
+
 def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     """Project the current .flowpilot run into this model's invariants.
 
@@ -1642,6 +2045,88 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             evidence={"blockers": role_output_body_gaps},
         )
 
+    pm_role_work_identity = _audit_pm_role_work_unit_identity(run_root, router_state)
+    if pm_role_work_identity.get("closed_identity_reused"):
+        _add_finding(
+            findings,
+            code="pm_role_work_closed_identity_reused_for_distinct_batch",
+            severity="error",
+            summary="a closed PM role-work Controller action row was reused for a distinct batch/request/packet/role obligation",
+            invariant="pm_role_work_identity_is_work_unit_scoped",
+            evidence=pm_role_work_identity,
+        )
+    if not pm_role_work_identity.get("identity_scoped"):
+        _add_finding(
+            findings,
+            code="pm_role_work_wait_identity_missing_request_packet_role",
+            severity="error",
+            summary="PM role-work identity omitted batch, request, packet, or target-role fields",
+            invariant="pm_role_work_identity_is_work_unit_scoped",
+            evidence=pm_role_work_identity,
+        )
+    if pm_role_work_identity.get("global_postcondition_masks_open_request"):
+        _add_finding(
+            findings,
+            code="pm_role_work_global_postcondition_masks_open_request",
+            severity="error",
+            summary="global PM role-work relay flag was true while an active request-specific obligation was still unresolved",
+            invariant="pm_role_work_identity_is_work_unit_scoped",
+            evidence=pm_role_work_identity,
+        )
+
+    controller_delivery = _audit_controller_delivery_success(run_root)
+    if not controller_delivery.get("ok"):
+        _add_finding(
+            findings,
+            code="controller_delivery_failed_marked_done",
+            severity="error",
+            summary="Controller receipt was marked done even though host message delivery failed",
+            invariant="controller_delivery_receipts_do_not_complete_target_work",
+            evidence=controller_delivery,
+        )
+
+    active_holder_liveness = _audit_active_holder_liveness(run_root)
+    if active_holder_liveness.get("lease_issues"):
+        _add_finding(
+            findings,
+            code="active_holder_lease_without_host_liveness",
+            severity="error",
+            summary="active-holder lease existed without host-liveness proof for the target agent",
+            invariant="active_holder_leases_require_host_liveness",
+            evidence=active_holder_liveness,
+        )
+
+    packet_ledger_io = _audit_packet_ledger_corruption(run_root)
+    if packet_ledger_io.get("daemon_crashed_on_corrupt_read"):
+        _add_finding(
+            findings,
+            code="packet_ledger_corrupt_read_crashes_daemon",
+            severity="error",
+            summary="packet ledger corruption crashed the daemon instead of being quarantined as a recoverable control blocker",
+            invariant="packet_ledger_io_is_atomic_and_recoverable",
+            evidence=packet_ledger_io,
+        )
+
+    material_gate_evidence = _audit_material_gate_evidence_contract(run_root)
+    if not material_gate_evidence.get("result_self_check_machine_parseable"):
+        _add_finding(
+            findings,
+            code="material_gate_result_self_check_unparseable",
+            severity="error",
+            summary="material gate depended on result-body self-check evidence that was not machine clean",
+            invariant="material_gate_result_evidence_is_machine_and_authority_backed",
+            evidence=material_gate_evidence,
+        )
+    if not material_gate_evidence.get("result_reader_authority_matches_runtime"):
+        _add_finding(
+            findings,
+            code="material_gate_result_reader_not_runtime_backed",
+            severity="error",
+            summary="material artifact map advertised reviewer access that packet runtime authority did not grant",
+            invariant="material_gate_result_evidence_is_machine_and_authority_backed",
+            evidence=material_gate_evidence,
+        )
+
     pre_event_ack = _audit_valid_ack_file_blocked_role_event(root, run_root)
     if pre_event_ack.get("valid_ack_file_blocked_role_event"):
         _add_finding(
@@ -1738,6 +2223,51 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             summary="await_role_decision exposed an external event whose requires_flag is false in current router state",
             invariant="expected_role_decisions_require_satisfied_flags",
             evidence=stale_expected_wait,
+        )
+
+    internal_postcondition = _audit_router_internal_postconditions(root, run_root, router_state)
+    if (
+        internal_postcondition.get("due")
+        and internal_postcondition.get("inputs_ready")
+        and internal_postcondition.get("exposed_as_role_wait")
+    ):
+        _add_finding(
+            findings,
+            code="router_internal_postcondition_role_wait_dead_end",
+            severity="error",
+            summary="router-owned internal evidence sync was exposed as a Controller wait instead of being materialized or blocked by Router",
+            invariant="router_internal_postconditions_materialize_or_block",
+            evidence=internal_postcondition,
+        )
+    elif internal_postcondition.get("due") and internal_postcondition.get("inputs_ready") and not (
+        internal_postcondition.get("materialized")
+        or internal_postcondition.get("blocker_materialized")
+    ):
+        _add_finding(
+            findings,
+            code="router_internal_postcondition_unmaterialized_after_ready_inputs",
+            severity="error",
+            summary="router-owned internal evidence sync had ready inputs but no materialized evidence or router-visible blocker",
+            invariant="router_internal_postconditions_materialize_or_block",
+            evidence=internal_postcondition,
+        )
+
+    resolved_projection = _audit_resolved_obligation_projection_reconciliation(run_root, router_state)
+    if (
+        resolved_projection.get("evidence_exists")
+        and (
+            resolved_projection.get("live_passive_wait")
+            or resolved_projection.get("live_blocked_reminder")
+        )
+        and not resolved_projection.get("projection_reconciled")
+    ):
+        _add_finding(
+            findings,
+            code="resolved_obligation_projection_still_live",
+            severity="error",
+            summary="resolved router obligation still has a live passive wait or blocked reminder projection",
+            invariant="resolved_obligation_projections_are_cleared",
+            evidence=resolved_projection,
         )
 
     child_skill_gate_synced, child_skill_gate_evidence = _audit_child_skill_gate_sync(run_root)
@@ -1875,14 +2405,83 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         stateful_controller_postcondition_evidence_written=not bool(stateful_receipt_gaps or durable_reclaim_gaps),
         stateful_controller_advanced_from_receipt=not bool(stateful_receipt_gaps or durable_reclaim_gaps),
         controller_delivery_receipt_done=True,
+        controller_delivery_host_status=(
+            "delivered" if controller_delivery.get("ok") else "failed_agent_not_found"
+        ),
         controller_delivery_target_role_wait_started=True,
         controller_delivery_used_as_role_completion=False,
         controller_delivery_missing_role_output_blocker=False,
+        pm_role_work_identity_includes_batch_request_packet_role=bool(
+            pm_role_work_identity.get("identity_scoped")
+        ),
+        pm_role_work_closed_identity_reused_for_distinct_request=bool(
+            pm_role_work_identity.get("closed_identity_reused")
+        ),
+        pm_role_work_request_postcondition_scoped=bool(
+            pm_role_work_identity.get("request_postcondition_scoped")
+        ),
+        pm_role_work_open_request_masked_by_global_flag=bool(
+            pm_role_work_identity.get("global_postcondition_masks_open_request")
+        ),
+        active_holder_lease_issued=bool(active_holder_liveness.get("lease_count")),
+        active_holder_agent_identity_recorded=bool(
+            active_holder_liveness.get("agent_identity_recorded")
+        ),
+        active_holder_agent_host_live=bool(active_holder_liveness.get("host_live")),
+        active_holder_packet_role_matches=bool(
+            active_holder_liveness.get("packet_role_matches")
+        ),
+        packet_ledger_write_atomic=not bool(
+            packet_ledger_io.get("corrupt_backup_count")
+        ),
+        packet_ledger_write_locked_or_cas=not bool(
+            packet_ledger_io.get("corrupt_backup_count")
+        ),
+        packet_ledger_readback_validated=not bool(
+            packet_ledger_io.get("corrupt_backup_count")
+        ),
+        packet_ledger_corruption_recoverable=not bool(
+            packet_ledger_io.get("daemon_crashed_on_corrupt_read")
+        ),
+        packet_ledger_corrupt_read_crashed_daemon=bool(
+            packet_ledger_io.get("daemon_crashed_on_corrupt_read")
+        ),
         router_owned_artifact_exists=bool(durable_reclaim_gaps),
         router_owned_artifact_proof_valid=bool(durable_reclaim_gaps),
         router_owned_postcondition_reclaimed_from_artifact=not bool(durable_reclaim_gaps),
         router_tick_saw_receipt_before_flag=bool(durable_reclaim_gaps),
         router_tick_escalated_before_reclaim=bool(durable_reclaim_gaps),
+        router_internal_postcondition_due=bool(internal_postcondition.get("due")),
+        router_internal_postcondition_inputs_ready=bool(
+            internal_postcondition.get("inputs_ready")
+        ),
+        router_internal_postcondition_materialized=bool(
+            internal_postcondition.get("materialized")
+        ),
+        router_internal_postcondition_blocker_materialized=bool(
+            internal_postcondition.get("blocker_materialized")
+        ),
+        router_internal_postcondition_exposed_as_role_wait=bool(
+            internal_postcondition.get("exposed_as_role_wait")
+        ),
+        router_internal_postcondition_expected_evidence_exists=bool(
+            internal_postcondition.get("expected_evidence_exists")
+        ),
+        router_internal_postcondition_executable_action_pending=bool(
+            internal_postcondition.get("executable_action_pending")
+        ),
+        resolved_obligation_evidence_exists=bool(
+            resolved_projection.get("evidence_exists")
+        ),
+        resolved_obligation_live_passive_wait=bool(
+            resolved_projection.get("live_passive_wait")
+        ),
+        resolved_obligation_live_blocked_reminder=bool(
+            resolved_projection.get("live_blocked_reminder")
+        ),
+        resolved_obligation_projection_reconciled=bool(
+            resolved_projection.get("projection_reconciled")
+        ),
         control_blocker_lane=active_blocker_lane if pm_repair_recorded else "none",
         control_blocker_target_role="project_manager" if pm_repair_recorded else "none",
         pm_repair_decision_recorded=pm_repair_recorded,
@@ -1923,6 +2522,15 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         reviewer_recheck_protocol_blocker_routable=bool(
             pm_repair_liveness.get("reviewer_recheck_protocol_blocker_routable")
+        ),
+        material_gate_depends_on_result_body=bool(
+            material_gate_evidence.get("depends_on_result_body")
+        ),
+        result_self_check_machine_parseable=bool(
+            material_gate_evidence.get("result_self_check_machine_parseable")
+        ),
+        result_reader_authority_matches_runtime=bool(
+            material_gate_evidence.get("result_reader_authority_matches_runtime")
         ),
         phase_dependency_cards_delivered=phase_dependency_cards_delivered,
         phase_required_sources_complete=not bool(phase_missing_sources),

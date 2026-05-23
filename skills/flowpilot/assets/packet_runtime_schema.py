@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -207,6 +209,9 @@ ROLE_KEYS = {
     "controller",
 }
 
+PACKET_RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS = 5.0
+PACKET_RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS = 0.05
+
 
 class PacketRuntimeError(ValueError):
     """Raised when a physical packet operation violates the control plane."""
@@ -243,15 +248,77 @@ def envelope_hash(envelope: dict[str, Any]) -> str:
     return stable_json_hash(stable_payload)
 
 
-def write_text_atomic(path: Path, text: str) -> None:
+def _json_write_lock_path(path: Path) -> Path:
+    return path.with_name(f".{path.name}.lock")
+
+
+def _acquire_json_write_lock(path: Path) -> Path:
+    lock_path = _json_write_lock_path(path)
+    deadline = time.monotonic() + PACKET_RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(
+                        {
+                            "pid": os.getpid(),
+                            "target": str(path),
+                            "created_at": utc_now(),
+                        },
+                        sort_keys=True,
+                    )
+                )
+            return lock_path
+        except FileExistsError:
+            try:
+                stale = (time.time() - lock_path.stat().st_mtime) > PACKET_RUNTIME_JSON_WRITE_LOCK_TIMEOUT_SECONDS
+                if stale:
+                    lock_path.unlink()
+                    continue
+            except OSError:
+                pass
+            if time.monotonic() >= deadline:
+                raise PacketRuntimeError(f"packet runtime JSON write lock is busy: {path}")
+            time.sleep(PACKET_RUNTIME_JSON_WRITE_LOCK_POLL_SECONDS)
+
+
+def _release_json_write_lock(lock_path: Path) -> None:
+    try:
+        lock_path.unlink()
+    except FileNotFoundError:
+        return
+    except OSError:
+        return
+
+
+def _write_bytes_atomic(path: Path, payload: bytes, *, verify_json: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = path.with_name(f".{path.name}.tmp")
-    tmp_path.write_text(text, encoding="utf-8")
-    tmp_path.replace(path)
+    lock_path = _acquire_json_write_lock(path)
+    tmp_path = path.with_name(f".tmp-{path.name}-{os.getpid()}-{time.time_ns():x}")
+    try:
+        with tmp_path.open("wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_path, path)
+        if verify_json:
+            decoded = json.loads(path.read_text(encoding="utf-8-sig"))
+            if not isinstance(decoded, dict):
+                raise PacketRuntimeError(f"expected JSON object after write: {path}")
+    finally:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        except OSError:
+            pass
+        _release_json_write_lock(lock_path)
+
+
+def write_text_atomic(path: Path, text: str) -> None:
+    _write_bytes_atomic(path, text.encode("utf-8"), verify_json=False)
 
 
 def write_json_atomic(path: Path, payload: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = path.with_name(f".{path.name}.tmp")
-    tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    tmp_path.replace(path)
+    body = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    _write_bytes_atomic(path, body, verify_json=True)

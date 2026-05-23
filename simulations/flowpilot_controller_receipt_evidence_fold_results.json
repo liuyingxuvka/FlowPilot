@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-05-22T06:49:14.964823+00:00",
+  "checked_at": "2026-05-23T16:56:41.023707+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=2 initial_states=1 traces=36",
+    "summary": "sequences=2 initial_states=1 traces=48",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -24,14 +24,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": false,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": false,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": false,
@@ -57,14 +61,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": false,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": false,
@@ -90,14 +98,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": false,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": true,
@@ -124,14 +136,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": true,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": false,
@@ -139,6 +155,42 @@
           "status": "rejected",
           "terminal_reason": "invalid",
           "unsupported_receipt_result": true,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "receipt_done_without_controller_relay_signature": {
+        "detected": true,
+        "expected_failure": "receipt done without controller relay signature",
+        "failures": [
+          "receipt done without controller relay signature",
+          "registered receipt fold accepted relay without controller signature and packet ledger evidence"
+        ],
+        "state": {
+          "action_family": "packet_relay",
+          "action_type": "relay_material_scan_packets",
+          "active_holder_leases_issued": false,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": false,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": false,
+          "packet_ledger_relay_recorded": false,
+          "path_only_handoff_reported": true,
+          "postcondition_name": "material_scan_packets_relayed",
+          "receipt_fold_registered": true,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": true,
+          "router_owned_state_replay_registered": false,
+          "router_postcondition_flag_satisfied": true,
+          "router_visible_evidence_available": true,
+          "same_action_requeued": false,
+          "scenario": "receipt_done_without_controller_relay_signature",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": false,
           "worker_packet_opened_or_acknowledged": false,
           "worker_result_still_pending": false
         }
@@ -156,14 +208,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": false,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": true,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": true,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": false,
@@ -171,6 +227,42 @@
           "status": "rejected",
           "terminal_reason": "invalid",
           "unsupported_receipt_result": false,
+          "worker_packet_opened_or_acknowledged": false,
+          "worker_result_still_pending": false
+        }
+      },
+      "router_owned_state_projected_without_replay": {
+        "detected": true,
+        "expected_failure": "Router-owned state action was projected to Controller receipt without registered state replay",
+        "failures": [
+          "Router-owned state action was projected to Controller receipt without registered state replay",
+          "direct apply writes a Router flag but Controller receipt has no registered evidence fold"
+        ],
+        "state": {
+          "action_family": "router_owned_state",
+          "action_type": "load_resume_state",
+          "active_holder_leases_issued": false,
+          "controller_receipt_done": true,
+          "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": false,
+          "direct_apply_sets_flag": true,
+          "downstream_wait_selected": false,
+          "false_control_blocker_recorded": false,
+          "packet_batch_relayed": false,
+          "packet_ledger_relay_recorded": false,
+          "path_only_handoff_reported": false,
+          "postcondition_name": "resume_state_loaded",
+          "receipt_fold_registered": false,
+          "repair_or_blocker_recorded": false,
+          "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
+          "router_postcondition_flag_satisfied": false,
+          "router_visible_evidence_available": false,
+          "same_action_requeued": false,
+          "scenario": "router_owned_state_projected_without_replay",
+          "status": "rejected",
+          "terminal_reason": "invalid",
+          "unsupported_receipt_result": true,
           "worker_packet_opened_or_acknowledged": false,
           "worker_result_still_pending": false
         }
@@ -189,14 +281,18 @@
           "active_holder_leases_issued": true,
           "controller_receipt_done": true,
           "controller_receipt_possible": true,
+          "controller_relay_signature_recorded": true,
           "direct_apply_sets_flag": true,
           "downstream_wait_selected": false,
           "false_control_blocker_recorded": false,
           "packet_batch_relayed": true,
+          "packet_ledger_relay_recorded": true,
+          "path_only_handoff_reported": false,
           "postcondition_name": "material_scan_packets_relayed",
           "receipt_fold_registered": false,
           "repair_or_blocker_recorded": false,
           "router_marked_receipt_reconciled": false,
+          "router_owned_state_replay_registered": false,
           "router_postcondition_flag_satisfied": false,
           "router_visible_evidence_available": true,
           "same_action_requeued": false,
@@ -226,9 +322,11 @@
       "mail_delivery_registered_fold",
       "missing_evidence_retry_or_block",
       "packet_relay_in_progress_waits",
-      "packet_relay_registered_fold"
+      "packet_relay_registered_fold",
+      "path_only_receipt_schedules_relay_repair",
+      "router_owned_state_replay_registered"
     ],
-    "edge_count": 24,
+    "edge_count": 32,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -237,10 +335,12 @@
       "downstream_wait_gated_by_unfolded_dispatch",
       "duplicate_requeue_while_receipt_done",
       "false_blocker_with_evidence_available",
+      "receipt_done_without_controller_relay_signature",
       "reconciled_receipt_without_flag",
+      "router_owned_state_projected_without_replay",
       "unsupported_receipt_with_packet_evidence"
     ],
-    "state_count": 25
+    "state_count": 33
   },
   "source_contract": {
     "direct_flag_actions": {
@@ -426,11 +526,11 @@
       }
     },
     "missing_receipt_fold_for_evidence_backed_relay_actions": {},
+    "missing_router_owned_state_replay_actions": {},
     "ok": true,
     "receipt_registered_actions": [
       "confirm_controller_core_boundary",
       "deliver_mail",
-      "load_role_recovery_state",
       "recover_role_agents",
       "rehydrate_role_agents",
       "relay_current_node_packet",
@@ -446,6 +546,19 @@
       "relay_research_result_to_reviewer",
       "write_display_surface_status"
     ],
-    "rule": "Any evidence-backed packet/result relay action whose direct apply handler sets a Router-owned flag must have an idempotent receipt evidence-fold path."
+    "router_owned_state_flag_actions": {
+      "load_resume_state": {
+        "flags": [
+          "resume_state_loaded",
+          "role_recovery_state_loaded"
+        ],
+        "handler": "_apply_load_resume_state"
+      }
+    },
+    "router_owned_state_replay_actions": [
+      "load_resume_state",
+      "load_role_recovery_state"
+    ],
+    "rule": "Any evidence-backed packet/result relay action whose direct apply handler sets a Router-owned flag must have an idempotent receipt evidence-fold path. Any load_*_state action whose direct apply handler sets a Router-owned flag must be registered as Router-owned state replay, so a Controller receipt can only trigger the Router action handler instead of acting as standalone proof."
   }
 }

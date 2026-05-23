@@ -309,6 +309,8 @@ EXTERNAL_EVENT_DATA_BY_PHASE: dict[str, dict[str, dict[str, Any]]] = {
                                                                'for route use.'},
      'capability_evidence_synced': {'flag': 'capability_evidence_synced',
                                     'requires_flag': 'child_skill_manifest_pm_approved_for_route',
+                                    'router_internal_postcondition': True,
+                                    'internal_materializer': 'capability_evidence_sync',
                                     'summary': 'Capability evidence was synced after PM child-skill '
                                                'approval.'}},
     'route':     {'pm_writes_route_draft': {'flag': 'route_draft_written_by_pm',

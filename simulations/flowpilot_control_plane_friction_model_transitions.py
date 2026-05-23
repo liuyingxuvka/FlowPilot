@@ -34,8 +34,10 @@ class ControlPlaneStep:
         "controller_boundary",
         "research_package",
         "packet_receipts",
+        "packet_ledger_io",
         "control_blocker_lane",
         "lifecycle_authorities",
+        "host_liveness",
         "active_snapshot",
         "status_summary",
         "role_memory",
@@ -43,6 +45,7 @@ class ControlPlaneStep:
     writes = (
         "package_materialization",
         "packet_transaction_receipt",
+        "active_holder_lease",
         "ack_transaction_receipt",
         "pending_wait_reconciliation",
         "status_summary",
@@ -113,9 +116,39 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 holder="controller",
                 controller_delivery_receipt_done=True,
+                controller_delivery_host_status="delivered",
                 controller_delivery_target_role_wait_started=True,
                 controller_delivery_used_as_role_completion=False,
                 controller_delivery_missing_role_output_blocker=False,
+            ),
+        )
+        return
+
+    if not state.active_holder_lease_issued:
+        yield Transition(
+            "active_holder_lease_confirms_live_agent_and_role",
+            _inc(
+                state,
+                holder="controller",
+                active_holder_lease_issued=True,
+                active_holder_agent_identity_recorded=True,
+                active_holder_agent_host_live=True,
+                active_holder_packet_role_matches=True,
+            ),
+        )
+        return
+
+    if not state.packet_ledger_write_atomic:
+        yield Transition(
+            "packet_ledger_io_guard_uses_atomic_lock_and_recovery",
+            _inc(
+                state,
+                holder="router",
+                packet_ledger_write_atomic=True,
+                packet_ledger_write_locked_or_cas=True,
+                packet_ledger_readback_validated=True,
+                packet_ledger_corruption_recoverable=True,
+                packet_ledger_corrupt_read_crashed_daemon=False,
             ),
         )
         return
@@ -175,13 +208,20 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.control_blocker_action_identity_includes_blocker:
+    if (
+        not state.control_blocker_action_identity_includes_blocker
+        or not state.pm_role_work_identity_includes_batch_request_packet_role
+    ):
         yield Transition(
             "control_blocker_action_identity_bound_to_artifact",
             _inc(
                 state,
                 control_blocker_action_identity_includes_blocker=True,
                 controller_action_closed_identity_reused=False,
+                pm_role_work_identity_includes_batch_request_packet_role=True,
+                pm_role_work_closed_identity_reused_for_distinct_request=False,
+                pm_role_work_request_postcondition_scoped=True,
+                pm_role_work_open_request_masked_by_global_flag=False,
             ),
         )
         return
@@ -219,6 +259,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 self_check_template_status_pass_allowed=True,
                 self_check_parser_status_pass_accepted=True,
+            ),
+        )
+        return
+
+    if not state.material_gate_depends_on_result_body:
+        yield Transition(
+            "material_gate_result_evidence_machine_and_authority_backed",
+            _inc(
+                state,
+                material_gate_depends_on_result_body=True,
+                result_self_check_machine_parseable=True,
+                result_reader_authority_matches_runtime=True,
             ),
         )
         return
@@ -338,7 +390,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             return
     else:
         if not state.packet_delivered:
-            yield Transition("packet_delivered_by_controller", _inc(state, holder="worker", packet_delivered=True))
+            yield Transition(
+                "packet_delivered_by_controller",
+                _inc(
+                    state,
+                    holder="worker",
+                    packet_delivered=True,
+                    packet_ledger_write_atomic=True,
+                    packet_ledger_write_locked_or_cas=True,
+                    packet_ledger_readback_validated=True,
+                    packet_ledger_corruption_recoverable=True,
+                ),
+            )
             return
         if not state.packet_body_open_receipt:
             yield Transition(
@@ -711,6 +774,27 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 gate_outcome_clear_target_matches_pass_gate=True,
                 followup_event_expected_role="human_like_reviewer",
                 followup_event_from_role="human_like_reviewer",
+            ),
+        )
+        return
+
+    if state.gate_outcome_pass_recorded and not state.router_internal_postcondition_materialized:
+        yield Transition(
+            "router_materializes_ready_internal_postcondition_evidence",
+            _inc(
+                state,
+                holder="router",
+                router_internal_postcondition_due=True,
+                router_internal_postcondition_inputs_ready=True,
+                router_internal_postcondition_materialized=True,
+                router_internal_postcondition_blocker_materialized=False,
+                router_internal_postcondition_exposed_as_role_wait=False,
+                router_internal_postcondition_expected_evidence_exists=True,
+                router_internal_postcondition_executable_action_pending=False,
+                resolved_obligation_evidence_exists=True,
+                resolved_obligation_live_passive_wait=False,
+                resolved_obligation_live_blocked_reminder=False,
+                resolved_obligation_projection_reconciled=True,
             ),
         )
         return
