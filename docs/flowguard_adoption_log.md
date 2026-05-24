@@ -18030,3 +18030,51 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Implement the minimal runtime root fix by making material progress read from the active batch/generation projection, not directly from run-wide flags.
 - Add a generation-aware stale-save exception so cleared material progress flags are not resurrected for a new active generation.
 - Require material role-output disposition closure to use scoped current-generation identity before any run-wide flag shortcut.
+
+## FlowPilot Synthetic Agent Trace Replay Test Harness
+
+- Project: FlowPilot
+- Trigger reason: User requested OpenSpec plus FlowGuard implementation of synthetic AI-agent action traces so fake role work can drive real runtime flows during tests.
+- Status: completed, validated, installed skill checked fresh
+- Skill decision: predictive KB preflight, OpenSpec propose/apply, FlowGuard development-process flow, FlowGuard model-test alignment, FlowGuard test tiering
+- Recorded: 2026-05-24T23:18:09+02:00
+- Commands OK: True
+
+### Scope
+
+- Added a test-only synthetic trace replay helper for fake worker and PM actions.
+- The helper drives real packet, role-output, body-open, lease, ACK, and result APIs instead of mutating route completion directly.
+- Added trace packs for happy path worker result, ACK-only non-completion, sealed-body isolation, wrong identity, stale hash, PM disposition, raw-result rejection, fixture evidence disclosure, and background progress-only evidence.
+- Registered the synthetic replay suite in the fast tier.
+- Repaired existing router child shard registrations that the tier coverage check exposed while validating this work.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -q` -> 6 passed.
+- OK: `python -m pytest tests/test_flowpilot_packet_runtime.py -q` -> 28 passed.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py -q` -> 23 passed, 255 subtests passed.
+- OK: `python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py tests/test_flowpilot_packet_runtime.py tests/test_flowpilot_test_tiers.py -q` -> 57 passed, 255 subtests passed.
+- OK: `python simulations/run_flowpilot_test_tiering_checks.py`.
+- OK: `python -m pytest tests/test_flowpilot_model_test_alignment.py -q` -> 14 passed, 276 subtests passed.
+- OK: `python scripts/run_test_tier.py --tier fast`.
+- OK in background contract: `python simulations/run_meta_checks.py --full`, `tmp/flowguard_background/meta_full.exit.txt` = `0`, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py --full`, `tmp/flowguard_background/capability_full.exit.txt` = `0`, proof reuse false.
+- OK: `openspec validate add-synthetic-agent-trace-replay --strict`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The synthetic traces exercise real runtime boundaries and catch false confidence cases: ACK-only is not semantic completion, fixture evidence is not live completion evidence, and background progress is not pass evidence.
+- Test-tier validation surfaced existing unregistered router shard tests in resume, control-blocker operation replay, and material scan relay/repair paths; those were registered without changing runtime behavior.
+- Initial model-test alignment was blocked by stale layered full parent proof status for meta/capability legacy full commands. Rerunning the layered full parent regressions refreshed the proof status and allowed legacy full surfaces to reclassify correctly.
+- Current full model-test-code diagnostics still intentionally report three medium deferred structure-split findings: `flowpilot_router_controller_scheduler_receipts_packet_folds`, `flowpilot_router_work_packets_current_node_relay`, and `flowpilot_runtime_commands`.
+
+### Skipped Or Limited
+
+- No production FlowPilot runtime behavior was changed by the synthetic trace harness.
+- No legacy monolithic full graph was rerun; current release confidence came from refreshed layered full parent proof.
+- No GitHub push, tag, release, deploy, archive, or local commit was performed.

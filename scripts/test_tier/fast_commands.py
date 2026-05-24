@@ -47,6 +47,11 @@ FAST_COMMANDS = (
         description="Focused tests for tier command planning and background artifact contracts.",
     ),
     _pytest(
+        "synthetic_agent_trace_replay_tests",
+        "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        description="Synthetic agent trace replay tests for fake role actions through real packet/runtime APIs.",
+    ),
+    _pytest(
         "model_test_alignment_tests",
         "tests/test_flowpilot_model_test_alignment.py",
         description="Focused tests for FlowGuard Model-Test Alignment evidence and known-bad cases.",

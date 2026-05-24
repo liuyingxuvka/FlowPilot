@@ -63,6 +63,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.resume",
         patterns=(
             "test_heartbeat_alive_status_still_enters_router_resume_path",
+            "test_load_resume_state_controller_receipt_replays_router_state_handler",
             "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
             "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
             "test_resume_reentry_loads_state_before_resume_cards",
@@ -142,6 +143,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_control_blockers_protocol_transactions",
         "tests.router_runtime.control_blockers",
         patterns=(
+            "test_material_operation_replay_uses_current_generation_action",
             "test_operation_replay_repair_transaction_queues_replay_action",
             "test_repair_transaction_protocol_blocker_registers_followup_blocker",
             "test_repair_transaction_recheck_blocker_registers_followup_blocker",
@@ -278,7 +280,11 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
             "test_material_scan_direct_relay_blocks_body_hash_mismatch",
             "test_material_scan_direct_relay_blocks_missing_output_contract",
             "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
+            "test_material_repair_active_batch_blocks_stale_result_relay_flag",
+            "test_material_repair_active_batch_overrides_stale_global_progress_flags",
+            "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
             "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+            "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
             "test_material_scan_result_receipt_folds_batch_lifecycle",
         ),
         description="Material scan relay, identity, and contract slice.",

@@ -58,34 +58,6 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_runtime_commands",
         "surface_owner": "flowpilot_runtime_commands"
-      },
-      {
-        "code": "stale_evidence",
-        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
-        "kind": "test_tier_command",
-        "message": "capability_legacy_full has non-final background evidence status: running",
-        "name": "capability_legacy_full",
-        "path": "scripts/run_test_tier.py",
-        "priority_score": 33,
-        "release_relevance": "legacy_validation",
-        "repair_type": "complete_background_evidence",
-        "severity": "medium",
-        "surface_id": "tier-command:legacy-full:capability_legacy_full",
-        "surface_owner": "test-tier:legacy-full"
-      },
-      {
-        "code": "stale_evidence",
-        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
-        "kind": "test_tier_command",
-        "message": "meta_legacy_full has non-final background evidence status: running",
-        "name": "meta_legacy_full",
-        "path": "scripts/run_test_tier.py",
-        "priority_score": 33,
-        "release_relevance": "legacy_validation",
-        "repair_type": "complete_background_evidence",
-        "severity": "medium",
-        "surface_id": "tier-command:legacy-full:meta_legacy_full",
-        "surface_owner": "test-tier:legacy-full"
       }
     ],
     "actionable_summary": [
@@ -148,30 +120,9 @@
           "asset:flowpilot_runtime_commands"
         ],
         "surface_owner": "flowpilot_runtime_commands"
-      },
-      {
-        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
-        "finding_count": 2,
-        "gap_codes": [
-          "stale_evidence"
-        ],
-        "message": "capability_legacy_full has non-final background evidence status: running",
-        "paths": [
-          "scripts/run_test_tier.py"
-        ],
-        "primary_code": "stale_evidence",
-        "priority_score": 33,
-        "release_relevance": "legacy_validation",
-        "repair_type": "complete_background_evidence",
-        "severity": "medium",
-        "surface_ids": [
-          "tier-command:legacy-full:capability_legacy_full",
-          "tier-command:legacy-full:meta_legacy_full"
-        ],
-        "surface_owner": "test-tier:legacy-full"
       }
     ],
-    "covered_surface_count": 739,
+    "covered_surface_count": 743,
     "deferred_structure_split_count": 3,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 1,
@@ -226,53 +177,22 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
-      },
-      {
-        "code": "stale_evidence",
-        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
-        "kind": "test_tier_command",
-        "message": "capability_legacy_full has non-final background evidence status: running",
-        "name": "capability_legacy_full",
-        "path": "scripts/run_test_tier.py",
-        "priority_score": 33,
-        "release_relevance": "legacy_validation",
-        "repair_type": "complete_background_evidence",
-        "severity": "medium",
-        "surface_id": "tier-command:legacy-full:capability_legacy_full",
-        "surface_owner": "test-tier:legacy-full"
-      },
-      {
-        "code": "stale_evidence",
-        "dedupe_key": "test-tier:legacy-full|complete_background_evidence|stale_evidence",
-        "kind": "test_tier_command",
-        "message": "meta_legacy_full has non-final background evidence status: running",
-        "name": "meta_legacy_full",
-        "path": "scripts/run_test_tier.py",
-        "priority_score": 33,
-        "release_relevance": "legacy_validation",
-        "repair_type": "complete_background_evidence",
-        "severity": "medium",
-        "surface_id": "tier-command:legacy-full:meta_legacy_full",
-        "surface_owner": "test-tier:legacy-full"
       }
     ],
     "full_coverage_ok": false,
     "gap_counts": {
-      "needs_structure_split": 3,
-      "stale_evidence": 2
+      "needs_structure_split": 3
     },
     "gap_counts_by_release_relevance": {
-      "legacy_validation": 2,
       "runtime_contract": 3
     },
     "gap_counts_by_repair_type": {
-      "complete_background_evidence": 2,
       "defer_structure_split": 3
     },
     "gap_counts_by_severity": {
-      "medium": 5
+      "medium": 3
     },
-    "gap_surface_count": 5,
+    "gap_surface_count": 3,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -451,9 +371,9 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": false,
+    "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 744,
+    "surface_count": 746,
     "surface_counts": {
       "compatibility_facade": 111,
       "model_check_runner": 96,
@@ -461,7 +381,7 @@
       "owner_module": 245,
       "script_entrypoint": 19,
       "test_tier": 15,
-      "test_tier_command": 240
+      "test_tier_command": 242
     },
     "surfaces": [
       {
@@ -1564,7 +1484,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 222,
+        "line_count": 226,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2518,7 +2438,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 268,
+        "line_count": 301,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2531,7 +2451,7 @@
         "surface_id": "asset:flowpilot_router_runtime_state_persistence",
         "surface_owner": "flowpilot_router_runtime_state_persistence",
         "top_level_class_count": 0,
-        "top_level_function_count": 15
+        "top_level_function_count": 16
       },
       {
         "covered": true,
@@ -3111,7 +3031,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 267,
+        "line_count": 273,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -3789,7 +3709,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 628,
+        "line_count": 641,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -8090,7 +8010,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 110,
+        "line_count": 119,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9536,7 +9456,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 358,
+        "line_count": 374,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9549,7 +9469,7 @@
         "surface_id": "asset:flowpilot_router_role_output_bridge_events",
         "surface_owner": "flowpilot_router_role_output_bridge_events",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -10931,7 +10851,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 134,
+        "line_count": 241,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10944,7 +10864,7 @@
         "surface_id": "asset:flowpilot_router_work_packets_next_actions",
         "surface_owner": "flowpilot_router_work_packets_next_actions",
         "top_level_class_count": 0,
-        "top_level_function_count": 5
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -12766,7 +12686,7 @@
         "surface_owner": "script:smoke_autopilot"
       },
       {
-        "command_count": 80,
+        "command_count": 81,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12775,7 +12695,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 80,
+        "line_count": 81,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "all",
@@ -12808,7 +12728,7 @@
         "surface_owner": "test-tier"
       },
       {
-        "command_count": 11,
+        "command_count": 12,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12817,7 +12737,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 11,
+        "line_count": 12,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "fast",
@@ -13846,6 +13766,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_material_operation_replay_uses_current_generation_action",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -13853,7 +13775,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14504,12 +14426,20 @@
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
           "-k",
+          "test_material_repair_active_batch_blocks_stale_result_relay_flag",
+          "-k",
+          "test_material_repair_active_batch_overrides_stale_global_progress_flags",
+          "-k",
+          "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
+          "-k",
           "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
           "-k",
           "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_repair_active_batch_blocks_stale_result_relay_flag -k test_material_repair_active_batch_overrides_stale_global_progress_flags -k test_material_scan_path_only_done_receipt_schedules_controller_relay_repair -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_relay_repair_receipt_folds_after_runtime_relay -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -15180,6 +15110,8 @@
           "-k",
           "test_heartbeat_alive_status_still_enters_router_resume_path",
           "-k",
+          "test_load_resume_state_controller_receipt_replays_router_state_handler",
+          "-k",
           "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
           "-k",
           "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
@@ -15191,7 +15123,7 @@
           "test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_load_resume_state_controller_receipt_replays_router_state_handler -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -16171,6 +16103,38 @@
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
+          "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "synthetic_agent_trace_replay_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:synthetic_agent_trace_replay_tests",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
           "tests/test_flowpilot_test_tiers.py",
           "-q"
         ],
@@ -16552,6 +16516,38 @@
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
+          "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "synthetic_agent_trace_replay_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:synthetic_agent_trace_replay_tests",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
           "tests/test_flowpilot_test_tiers.py",
           "-q"
         ],
@@ -16902,15 +16898,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -16986,11 +16984,9 @@
           "--legacy-full"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_capability_checks.py --legacy-full",
-        "covered": false,
-        "evidence_status": "running",
-        "gap_codes": [
-          "stale_evidence"
-        ],
+        "covered": true,
+        "evidence_status": "legacy_full_reclassified",
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -16998,31 +16994,29 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-22T08:39:13.323143+00:00",
+            "created_at": "2026-05-24T20:10:03.691311+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
-            "reason": "input fingerprint changed",
+            "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
             "state_count": 10,
-            "valid": false
+            "valid": true
           },
-          "legacy_monolith_required_for_release": true,
-          "ok": false,
-          "reason": "input fingerprint changed"
+          "legacy_monolith_required_for_release": false,
+          "ok": true,
+          "reason": "legacy monolithic full graph is retained as a historical compatibility oracle; current release confidence comes from the layered full parent proof"
         },
         "line_count": 1,
         "long_running": true,
-        "max_severity": "medium",
+        "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "capability_legacy_full",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": true,
         "release_relevance": "legacy_validation",
-        "repair_types": [
-          "complete_background_evidence"
-        ],
+        "repair_types": [],
         "split_threshold": 999,
         "surface_id": "tier-command:legacy-full:capability_legacy_full",
         "surface_owner": "test-tier:legacy-full",
@@ -17063,15 +17057,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -17147,11 +17143,9 @@
           "--legacy-full"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_meta_checks.py --legacy-full",
-        "covered": false,
-        "evidence_status": "running",
-        "gap_codes": [
-          "stale_evidence"
-        ],
+        "covered": true,
+        "evidence_status": "legacy_full_reclassified",
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -17159,31 +17153,29 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-22T08:39:09.436065+00:00",
+            "created_at": "2026-05-24T20:10:03.361719+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
-            "reason": "input fingerprint changed",
+            "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
-            "valid": false
+            "valid": true
           },
-          "legacy_monolith_required_for_release": true,
-          "ok": false,
-          "reason": "input fingerprint changed"
+          "legacy_monolith_required_for_release": false,
+          "ok": true,
+          "reason": "legacy monolithic full graph is retained as a historical compatibility oracle; current release confidence comes from the layered full parent proof"
         },
         "line_count": 1,
         "long_running": true,
-        "max_severity": "medium",
+        "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "meta_legacy_full",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": true,
         "release_relevance": "legacy_validation",
-        "repair_types": [
-          "complete_background_evidence"
-        ],
+        "repair_types": [],
         "split_threshold": 999,
         "surface_id": "tier-command:legacy-full:meta_legacy_full",
         "surface_owner": "test-tier:legacy-full",
@@ -17222,15 +17214,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -17360,15 +17354,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -18140,12 +18136,20 @@
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
           "-k",
+          "test_material_repair_active_batch_blocks_stale_result_relay_flag",
+          "-k",
+          "test_material_repair_active_batch_overrides_stale_global_progress_flags",
+          "-k",
+          "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
+          "-k",
           "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
           "-k",
           "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_repair_active_batch_blocks_stale_result_relay_flag -k test_material_repair_active_batch_overrides_stale_global_progress_flags -k test_material_scan_path_only_done_receipt_schedules_controller_relay_repair -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_relay_repair_receipt_folds_after_runtime_relay -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -19674,6 +19678,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_material_operation_replay_uses_current_generation_action",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -19681,7 +19687,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -19884,12 +19890,20 @@
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
           "-k",
+          "test_material_repair_active_batch_blocks_stale_result_relay_flag",
+          "-k",
+          "test_material_repair_active_batch_overrides_stale_global_progress_flags",
+          "-k",
+          "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
+          "-k",
           "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
           "-k",
           "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_repair_active_batch_blocks_stale_result_relay_flag -k test_material_repair_active_batch_overrides_stale_global_progress_flags -k test_material_scan_path_only_done_receipt_schedules_controller_relay_repair -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_relay_repair_receipt_folds_after_runtime_relay -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20288,6 +20302,8 @@
           "-k",
           "test_heartbeat_alive_status_still_enters_router_resume_path",
           "-k",
+          "test_load_resume_state_controller_receipt_replays_router_state_handler",
+          "-k",
           "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
           "-k",
           "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
@@ -20299,7 +20315,7 @@
           "test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_load_resume_state_controller_receipt_replays_router_state_handler -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20814,6 +20830,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_material_operation_replay_uses_current_generation_action",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -20821,7 +20839,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21472,12 +21490,20 @@
           "-k",
           "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
           "-k",
+          "test_material_repair_active_batch_blocks_stale_result_relay_flag",
+          "-k",
+          "test_material_repair_active_batch_overrides_stale_global_progress_flags",
+          "-k",
+          "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
+          "-k",
           "test_material_scan_relay_receipt_folds_existing_packet_evidence",
+          "-k",
+          "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
           "-k",
           "test_material_scan_result_receipt_folds_batch_lifecycle",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_scan_direct_relay_blocks_body_hash_mismatch -k test_material_scan_direct_relay_blocks_missing_output_contract -k test_material_scan_mechanical_agent_id_gap_reissues_to_worker -k test_material_repair_active_batch_blocks_stale_result_relay_flag -k test_material_repair_active_batch_overrides_stale_global_progress_flags -k test_material_scan_path_only_done_receipt_schedules_controller_relay_repair -k test_material_scan_relay_receipt_folds_existing_packet_evidence -k test_material_scan_relay_repair_receipt_folds_after_runtime_relay -k test_material_scan_result_receipt_folds_batch_lifecycle tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -22148,6 +22174,8 @@
           "-k",
           "test_heartbeat_alive_status_still_enters_router_resume_path",
           "-k",
+          "test_load_resume_state_controller_receipt_replays_router_state_handler",
+          "-k",
           "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
           "-k",
           "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
@@ -22159,7 +22187,7 @@
           "test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_heartbeat_alive_status_still_enters_router_resume_path -k test_load_resume_state_controller_receipt_replays_router_state_handler -k test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat -k test_resume_reentry_attaches_to_live_router_daemon_and_ledger -k test_resume_reentry_loads_state_before_resume_cards -k test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check -k test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -23036,10 +23064,8 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 2,
-    "unresolved_non_deferred_gap_counts": {
-      "stale_evidence": 2
-    }
+    "unresolved_non_deferred_gap_count": 0,
+    "unresolved_non_deferred_gap_counts": {}
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -25113,7 +25139,7 @@
     }
   ],
   "plan_count": 8,
-  "release_convergence_ok": false,
+  "release_convergence_ok": true,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
   "source_audit_ok": true,
@@ -41413,11 +41439,13 @@
             "action_dir.exists",
             "action_dir.glob",
             "any",
+            "batch.get",
             "entry.get",
             "flags.get",
             "isinstance",
             "meta.get",
             "pending.get",
+            "router._active_parallel_packet_batch",
             "run_state.get",
             "sorted",
             "str"
@@ -41433,18 +41461,23 @@
           "parse_error": "",
           "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py",
           "raised_errors": [],
-          "return_values": [],
+          "return_values": [
+            "_run_state_has_event"
+          ],
           "returns_value": true,
           "side_effects": [],
           "state_reads": [
             "Any",
             "CONTROLLER_ACTION_SCHEMA",
             "EXTERNAL_EVENTS",
+            "JSONDecodeError",
             "ModuleType",
+            "OSError",
             "Path",
             "RouterError",
             "TypeError",
             "ValueError",
+            "_active_parallel_packet_batch",
             "_bind_router",
             "_controller_actions_dir",
             "_controller_wait_allowed_external_events",
@@ -41457,6 +41490,7 @@
             "allowed",
             "allowed_group",
             "any",
+            "batch",
             "bool",
             "dict",
             "entry",
@@ -41470,6 +41504,7 @@
             "isinstance",
             "item",
             "item_event",
+            "json",
             "meta",
             "pending",
             "router",
@@ -41482,6 +41517,7 @@
             "action_dir",
             "allowed",
             "allowed_group",
+            "batch",
             "entry",
             "flags",
             "groups",
@@ -43293,9 +43329,12 @@
         },
         {
           "calls": [
+            "_json_clone",
+            "_material_generation_key",
             "_merge_append_only_run_state_list",
             "_merge_stale_pending_action_projection",
             "_public_run_state_snapshot",
+            "bool",
             "current.get",
             "existing.get",
             "existing_flags.items",
@@ -43321,19 +43360,26 @@
           "side_effects": [],
           "state_reads": [
             "Any",
+            "_MATERIAL_GENERATION_PROGRESS_FLAGS",
             "_RUN_STATE_APPEND_ONLY_LIST_FIELDS",
             "_RUN_STATE_LOAD_META_FLAGS",
             "_RUN_STATE_LOAD_META_PENDING",
+            "_json_clone",
+            "_material_generation_key",
             "_merge_append_only_run_state_list",
             "_merge_stale_pending_action_projection",
             "_public_run_state_snapshot",
+            "bool",
             "current",
             "current_items",
+            "current_material_generation_key",
             "current_value",
             "dict",
             "existing",
             "existing_flags",
+            "existing_has_newer_material_generation",
             "existing_items",
+            "existing_material_generation_key",
             "existing_value",
             "field",
             "flag",
@@ -43349,10 +43395,14 @@
             "str"
           ],
           "state_writes": [
+            "active_material_generation",
             "current_items",
+            "current_material_generation_key",
             "current_value",
             "existing_flags",
+            "existing_has_newer_material_generation",
             "existing_items",
+            "existing_material_generation_key",
             "loaded_flags",
             "loaded_value",
             "merged",
