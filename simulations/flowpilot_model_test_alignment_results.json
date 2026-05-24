@@ -12,118 +12,14 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": false,
+  "full_coverage_ok": true,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
-        "kind": "compatibility_facade",
-        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_work_packets_current_node_relay",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
-        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
-        "kind": "compatibility_facade",
-        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_runtime_commands",
-        "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_runtime_commands",
-        "surface_owner": "flowpilot_runtime_commands"
-      }
-    ],
-    "actionable_summary": [
-      {
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_controller_scheduler_receipts_packet_folds"
-        ],
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
-      },
-      {
-        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_work_packets_current_node_relay"
-        ],
-        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
-      },
-      {
-        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_runtime_commands.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_runtime_commands"
-        ],
-        "surface_owner": "flowpilot_runtime_commands"
-      }
-    ],
-    "covered_surface_count": 743,
-    "deferred_structure_split_count": 3,
+    "actionable_findings": [],
+    "actionable_summary": [],
+    "covered_surface_count": 753,
+    "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 1,
     "explicitly_skipped_structure_split_surfaces": [
@@ -135,64 +31,13 @@
         "surface_id": "asset:flowpilot_router_protocol_external_event_data"
       }
     ],
-    "findings": [
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_work_packets_current_node_relay|defer_structure_split|needs_structure_split",
-        "kind": "compatibility_facade",
-        "message": "flowpilot_router_work_packets_current_node_relay has 428 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_work_packets_current_node_relay",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
-        "surface_owner": "flowpilot_router_work_packets_current_node_relay"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_runtime_commands|defer_structure_split|needs_structure_split",
-        "kind": "compatibility_facade",
-        "message": "flowpilot_runtime_commands has 377 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_runtime_commands",
-        "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_runtime_commands",
-        "surface_owner": "flowpilot_runtime_commands"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_scheduler_receipts_packet_folds|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "message": "flowpilot_router_controller_scheduler_receipts_packet_folds has 601 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
-        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds"
-      }
-    ],
-    "full_coverage_ok": false,
-    "gap_counts": {
-      "needs_structure_split": 3
-    },
-    "gap_counts_by_release_relevance": {
-      "runtime_contract": 3
-    },
-    "gap_counts_by_repair_type": {
-      "defer_structure_split": 3
-    },
-    "gap_counts_by_severity": {
-      "medium": 3
-    },
-    "gap_surface_count": 3,
+    "findings": [],
+    "full_coverage_ok": true,
+    "gap_counts": {},
+    "gap_counts_by_release_relevance": {},
+    "gap_counts_by_repair_type": {},
+    "gap_counts_by_severity": {},
+    "gap_surface_count": 0,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -373,15 +218,15 @@
     "ok": true,
     "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 746,
+    "surface_count": 753,
     "surface_counts": {
-      "compatibility_facade": 111,
+      "compatibility_facade": 113,
       "model_check_runner": 96,
       "model_check_runner_helper": 18,
-      "owner_module": 245,
+      "owner_module": 248,
       "script_entrypoint": 19,
       "test_tier": 15,
-      "test_tier_command": 242
+      "test_tier_command": 244
     },
     "surfaces": [
       {
@@ -1009,6 +854,30 @@
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_effects",
         "top_level_class_count": 0,
         "top_level_function_count": 9
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 252,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_fold_evidence",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_fold_evidence",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_fold_evidence",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -2898,6 +2767,8 @@
         "completed_split_paths": [
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_paths.py",
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
+          "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_leases.py",
+          "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_runtime_ops.py",
           "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py"
         ],
         "covered": true,
@@ -2925,7 +2796,7 @@
         "release_relevance": "runtime_contract",
         "repair_types": [],
         "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "current_node_path_relay_and_validation_helpers_extracted",
+        "split_reason": "current_node_path_relay_lease_runtime_operation_and_validation_helpers_extracted",
         "split_status": "completed_split",
         "split_threshold": 320,
         "structure_split_status": "deferred",
@@ -2959,44 +2830,52 @@
         "top_level_function_count": 21
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 428,
-        "local_import_count": 7,
-        "max_severity": "medium",
+        "line_count": 188,
+        "local_import_count": 9,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_work_packets_current_node_relay",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "compatibility_facade",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 320,
-        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_work_packets_current_node_relay",
         "surface_owner": "flowpilot_router_work_packets_current_node_relay",
         "top_level_class_count": 0,
-        "top_level_function_count": 17
+        "top_level_function_count": 8
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "compatibility_facade",
+        "line_count": 142,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_work_packets_current_node_relay_leases",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_leases.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay_leases",
+        "surface_owner": "flowpilot_router_work_packets_current_node_relay_leases",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -3249,6 +3128,7 @@
       {
         "completed_split_paths": [
           "skills/flowpilot/assets/flowpilot_runtime_args.py",
+          "skills/flowpilot/assets/flowpilot_runtime_command_dispatch.py",
           "skills/flowpilot/assets/flowpilot_runtime_commands.py",
           "skills/flowpilot/assets/flowpilot_runtime_role_output_commands.py"
         ],
@@ -3277,7 +3157,7 @@
         "release_relevance": "runtime_contract",
         "repair_types": [],
         "safe_split_class": "runtime_cli_facade",
-        "split_reason": "unified_runtime_cli_argument_parsing_and_command_execution_extracted",
+        "split_reason": "unified_runtime_cli_argument_parsing_command_execution_and_dispatch_extracted",
         "split_status": "completed_split",
         "split_threshold": 320,
         "structure_split_status": "deferred",
@@ -3287,40 +3167,24 @@
         "top_level_function_count": 1
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 377,
-        "local_import_count": 6,
-        "max_severity": "medium",
-        "model_binding": null,
+        "line_count": 252,
+        "local_import_count": 7,
+        "max_severity": "none",
+        "model_binding": "runtime_cli_architecture",
         "name": "flowpilot_runtime_commands",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "compatibility_facade",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 320,
-        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_runtime_commands",
         "surface_owner": "flowpilot_runtime_commands",
         "top_level_class_count": 0,
@@ -7474,6 +7338,30 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
+        "line_count": 211,
+        "local_import_count": 3,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence",
+        "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence",
+        "top_level_class_count": 0,
+        "top_level_function_count": 3
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
         "line_count": 96,
         "local_import_count": 0,
         "max_severity": "none",
@@ -7490,44 +7378,44 @@
         "top_level_function_count": 1
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
-        "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py",
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence.py",
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
         ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 601,
-        "local_import_count": 5,
-        "max_severity": "medium",
+        "line_count": 205,
+        "local_import_count": 7,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_complete_synthetic_agent_coverage_matrix",
         "recent_owner_context": [
           "bd83ae52",
           "435292eb",
           "c874e8b3"
         ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "recommended_next_action": "monitor_controller_receipt_packet_fold_child_contracts",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
+        "repair_types": [],
         "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "split_reason": "packet_result_receipt_fold_evidence_and_record_checks_extracted",
+        "split_status": "completed_split",
         "split_threshold": 450,
         "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
         "surface_owner": "flowpilot_router_controller_scheduler_receipts_packet_folds",
         "top_level_class_count": 0,
-        "top_level_function_count": 12
+        "top_level_function_count": 4
       },
       {
         "covered": true,
@@ -10851,6 +10739,30 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
+        "line_count": 167,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_work_packets_current_node_relay_runtime_ops",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_runtime_ops.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_work_packets_current_node_relay_runtime_ops",
+        "surface_owner": "flowpilot_router_work_packets_current_node_relay_runtime_ops",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
         "line_count": 241,
         "local_import_count": 7,
         "max_severity": "none",
@@ -10998,7 +10910,7 @@
         "line_count": 206,
         "local_import_count": 1,
         "max_severity": "none",
-        "model_binding": null,
+        "model_binding": "runtime_cli_architecture",
         "name": "flowpilot_runtime_args",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_runtime_args.py",
@@ -11022,7 +10934,7 @@
         "line_count": 342,
         "local_import_count": 0,
         "max_severity": "none",
-        "model_binding": null,
+        "model_binding": "runtime_cli_architecture",
         "name": "flowpilot_runtime_closure",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_runtime_closure.py",
@@ -11043,10 +10955,34 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
+        "line_count": 170,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "runtime_cli_architecture",
+        "name": "flowpilot_runtime_command_dispatch",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_command_dispatch.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_runtime_command_dispatch",
+        "surface_owner": "flowpilot_runtime_command_dispatch",
+        "top_level_class_count": 0,
+        "top_level_function_count": 1
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
         "line_count": 116,
         "local_import_count": 0,
         "max_severity": "none",
-        "model_binding": null,
+        "model_binding": "runtime_cli_architecture",
         "name": "flowpilot_runtime_role_output_commands",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_runtime_role_output_commands.py",
@@ -12686,7 +12622,7 @@
         "surface_owner": "script:smoke_autopilot"
       },
       {
-        "command_count": 81,
+        "command_count": 82,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12695,7 +12631,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 81,
+        "line_count": 82,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "all",
@@ -12728,7 +12664,7 @@
         "surface_owner": "test-tier"
       },
       {
-        "command_count": 12,
+        "command_count": 13,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12737,7 +12673,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 12,
+        "line_count": 13,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "fast",
@@ -16101,6 +16037,37 @@
         "background_recommended": false,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+          "--json-out",
+          "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "synthetic_agent_coverage_matrix",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:synthetic_agent_coverage_matrix",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
           "tests/test_flowpilot_synthetic_agent_trace_replay.py",
@@ -16507,6 +16474,37 @@
         "repair_types": [],
         "split_threshold": 999,
         "surface_id": "tier-command:fast:model_test_alignment_tests",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+          "--json-out",
+          "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "synthetic_agent_coverage_matrix",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:synthetic_agent_coverage_matrix",
         "surface_owner": "test-tier:fast",
         "tier": "fast"
       },

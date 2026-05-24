@@ -1,0 +1,476 @@
+"""Synthetic-agent coverage matrix for current FlowPilot AI/action branches."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import defaultdict
+from pathlib import Path
+from typing import Any, Sequence
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "simulations"))
+
+from flowpilot_model_test_alignment_diagnostics import (  # noqa: E402
+    build_full_model_test_code_diagnostic,
+)
+from flowpilot_model_test_alignment_family_plans import (  # noqa: E402
+    build_alignment_plan_entries,
+)
+
+
+PASS_STATUSES = {"passed"}
+BACKGROUND_INCOMPLETE_STATUSES = {"progress_only", "running", "missing", "stale", "failed"}
+SYNTHETIC_NON_LIVE_KINDS = {"synthetic_trace", "fixture_trace"}
+REQUIRED_ROW_FIELDS = (
+    "family",
+    "model_id",
+    "obligation_id",
+    "branch_kind",
+    "coverage_kind",
+    "evidence_owner",
+    "evidence_id",
+    "evidence_status",
+    "evidence_current",
+    "live_completion_allowed",
+    "coverage_boundary",
+)
+
+
+SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
+    {
+        "family": "packet/card/ack",
+        "model_id": "packet_card_ack",
+        "obligation_id": "packet.physical_body_boundary",
+        "branch_kind": "happy_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.packet.happy.worker_result",
+        "test_name": "test_happy_path_worker_trace_reaches_pm_disposition",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+    },
+    {
+        "family": "packet/card/ack",
+        "model_id": "packet_card_ack",
+        "obligation_id": "ack.return_wait_preconsumption",
+        "branch_kind": "failure_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.packet.failure.ack_only_not_completion",
+        "test_name": "test_ack_only_trace_keeps_semantic_work_open",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+    },
+    {
+        "family": "packet/card/ack",
+        "model_id": "packet_card_ack",
+        "obligation_id": "packet.physical_body_boundary",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.packet.negative.sealed_body_identity_hash",
+        "test_name": "test_trace_rejects_sealed_body_wrong_identity_and_stale_hash",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+    },
+    {
+        "family": "router loop/daemon",
+        "model_id": "router_loop_daemon",
+        "obligation_id": "router_loop.packet_result_review_loop",
+        "branch_kind": "failure_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.router.failure.raw_result_reviewer_blocked",
+        "test_name": "test_raw_worker_result_cannot_skip_pm_disposition_to_reviewer_pass",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "terminal_closure_resume",
+        "obligation_id": "terminal.final_ledger_and_backward_replay",
+        "branch_kind": "negative_path",
+        "coverage_kind": "fixture_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.evidence_boundary.fixture_not_live_completion",
+        "test_name": "test_fixture_evidence_is_disclosed_but_not_live_completion_evidence",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "non_live_evidence_disclosure_only",
+    },
+    {
+        "family": "test tiering/slow-test contracts",
+        "model_id": "test_tiering_slow_contracts",
+        "obligation_id": "test_tiering.background_artifact_contract",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_trace_replay",
+        "evidence_id": "synthetic.background.negative.progress_only_not_pass",
+        "test_name": "test_background_progress_only_trace_is_not_pass_evidence",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "background_final_artifact_contract",
+    },
+    {
+        "family": "route mutation",
+        "model_id": "route_mutation",
+        "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "router_runtime_route_mutation",
+        "evidence_id": "runtime.route_mutation.negative.old_sibling_proof",
+        "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
+        "path": "tests/router_runtime/route_mutation_sibling_replacement.py",
+        "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "terminal_closure_resume",
+        "obligation_id": "resume.current_run_reentry",
+        "branch_kind": "failure_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "router_runtime_resume",
+        "evidence_id": "runtime.resume.failure.ambiguous_state",
+        "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence",
+        "path": "tests/router_runtime/resume.py",
+        "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+    },
+    {
+        "family": "role/output contracts",
+        "model_id": "role_output_contracts",
+        "obligation_id": "role_output.registry_authority",
+        "branch_kind": "negative_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "role_output_runtime",
+        "evidence_id": "runtime.role_output.negative.wrong_role",
+        "test_name": "test_runtime_rejects_wrong_role_and_role_key_agent_id",
+        "path": "tests/test_flowpilot_role_output_runtime.py",
+        "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+    },
+)
+
+
+def _coverage_kind_for_evidence(evidence: dict[str, Any], obligation_id: str) -> str:
+    text = " ".join(
+        str(evidence.get(field, ""))
+        for field in ("evidence_id", "test_name", "path", "command")
+    )
+    if "background" in text or "background" in obligation_id:
+        return "background_artifact"
+    if "model_test_alignment" in text:
+        return "model_alignment_gate"
+    return "ordinary_runtime"
+
+
+def _alignment_required_cells() -> list[dict[str, str]]:
+    cells: list[dict[str, str]] = []
+    for entry in build_alignment_plan_entries():
+        plan = entry["plan"].to_dict()
+        obligations = plan["obligations"]
+        for obligation in obligations:
+            for branch_kind in obligation["required_test_kinds"]:
+                cells.append(
+                    {
+                        "family": str(entry["family"]),
+                        "model_id": str(plan["model_id"]),
+                        "obligation_id": str(obligation["obligation_id"]),
+                        "branch_kind": str(branch_kind),
+                    }
+                )
+    return cells
+
+
+def _alignment_rows() -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for entry in build_alignment_plan_entries():
+        plan = entry["plan"].to_dict()
+        obligations = {item["obligation_id"]: item for item in plan["obligations"]}
+        for evidence in plan["test_evidence"]:
+            for obligation_id in evidence["covered_obligations"]:
+                obligation = obligations[obligation_id]
+                rows.append(
+                    {
+                        "family": str(entry["family"]),
+                        "model_id": str(plan["model_id"]),
+                        "obligation_id": str(obligation_id),
+                        "obligation_type": str(obligation["obligation_type"]),
+                        "branch_kind": str(evidence["test_kind"]),
+                        "coverage_kind": _coverage_kind_for_evidence(evidence, obligation_id),
+                        "evidence_owner": str(Path(evidence["path"]).stem),
+                        "evidence_id": str(evidence["evidence_id"]),
+                        "test_name": str(evidence["test_name"]),
+                        "path": str(evidence["path"]),
+                        "command": str(evidence["command"]),
+                        "evidence_status": str(evidence["result_status"]),
+                        "evidence_current": bool(evidence["evidence_current"]),
+                        "evidence_role": str(evidence["evidence_role"]),
+                        "live_completion_allowed": False,
+                        "coverage_boundary": "ordinary_test_evidence",
+                        "source": "flowguard_model_test_alignment_plan",
+                    }
+                )
+    return rows
+
+
+def build_coverage_rows() -> list[dict[str, Any]]:
+    rows = _alignment_rows()
+    for row in SYNTHETIC_TRACE_ROWS:
+        rows.append({**row, "evidence_role": "primary", "source": "explicit_trace_branch_row"})
+    return rows
+
+
+def _cell_key(row: dict[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(row.get("family", "")),
+        str(row.get("model_id", "")),
+        str(row.get("obligation_id", "")),
+        str(row.get("branch_kind", "")),
+    )
+
+
+def validate_coverage_rows(
+    rows: Sequence[dict[str, Any]],
+    required_cells: Sequence[dict[str, str]] | None = None,
+) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
+    required_cells = required_cells or []
+
+    passing_cells = {
+        _cell_key(row)
+        for row in rows
+        if row.get("evidence_role", "primary") == "primary"
+        and row.get("evidence_status") in PASS_STATUSES
+        and row.get("evidence_current") is True
+    }
+    for cell in required_cells:
+        key = _cell_key(cell)
+        if key not in passing_cells:
+            findings.append(
+                {
+                    "code": "missing_branch_owner",
+                    "message": "required model branch has no current passing primary evidence owner",
+                    **cell,
+                }
+            )
+
+    for row in rows:
+        missing_fields = [
+            field
+            for field in REQUIRED_ROW_FIELDS
+            if field not in row or row[field] in ("", None)
+        ]
+        if missing_fields:
+            findings.append(
+                {
+                    "code": "missing_row_fields",
+                    "message": "coverage row is missing required fields",
+                    "missing_fields": missing_fields,
+                    "evidence_id": str(row.get("evidence_id", "")),
+                }
+            )
+        if row.get("evidence_role", "primary") == "primary" and row.get("evidence_status") not in PASS_STATUSES:
+            findings.append(
+                {
+                    "code": "invalid_primary_evidence_status",
+                    "message": "primary coverage evidence is not passed",
+                    "evidence_id": str(row.get("evidence_id", "")),
+                    "evidence_status": str(row.get("evidence_status", "")),
+                }
+            )
+        if row.get("coverage_kind") == "background_artifact" and row.get("evidence_status") in BACKGROUND_INCOMPLETE_STATUSES:
+            findings.append(
+                {
+                    "code": "progress_only_background_evidence",
+                    "message": "background coverage requires final artifact evidence, not progress-only status",
+                    "evidence_id": str(row.get("evidence_id", "")),
+                    "evidence_status": str(row.get("evidence_status", "")),
+                }
+            )
+        if row.get("coverage_kind") in SYNTHETIC_NON_LIVE_KINDS and row.get("live_completion_allowed") is not False:
+            findings.append(
+                {
+                    "code": "synthetic_overclaims_live_completion",
+                    "message": "synthetic or fixture trace row cannot support live completion",
+                    "evidence_id": str(row.get("evidence_id", "")),
+                }
+            )
+        boundary = str(row.get("coverage_boundary", "")).lower()
+        if (
+            row.get("coverage_kind") in SYNTHETIC_NON_LIVE_KINDS
+            and "live_completion" in boundary
+            and "non_live" not in boundary
+        ):
+            findings.append(
+                {
+                    "code": "synthetic_boundary_mentions_live_completion",
+                    "message": "synthetic coverage boundary must not be expressed as live completion",
+                    "evidence_id": str(row.get("evidence_id", "")),
+                }
+            )
+    return findings
+
+
+def known_bad_cases() -> list[dict[str, Any]]:
+    base = {
+        "family": "known bad",
+        "model_id": "known_bad",
+        "obligation_id": "known_bad.obligation",
+        "branch_kind": "happy_path",
+        "coverage_kind": "ordinary_runtime",
+        "evidence_owner": "known_bad",
+        "evidence_id": "known_bad.row",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "ordinary_runtime_contract",
+    }
+    return [
+        {
+            "name": "missing_owner",
+            "rows": [],
+            "required_cells": [
+                {
+                    "family": "known bad",
+                    "model_id": "known_bad",
+                    "obligation_id": "known_bad.obligation",
+                    "branch_kind": "happy_path",
+                }
+            ],
+            "expected_codes": ["missing_branch_owner"],
+        },
+        {
+            "name": "synthetic_overclaims_live_completion",
+            "rows": [
+                {
+                    **base,
+                    "coverage_kind": "synthetic_trace",
+                    "live_completion_allowed": True,
+                    "coverage_boundary": "control_flow_only",
+                }
+            ],
+            "required_cells": [],
+            "expected_codes": ["synthetic_overclaims_live_completion"],
+        },
+        {
+            "name": "progress_only_background",
+            "rows": [
+                {
+                    **base,
+                    "coverage_kind": "background_artifact",
+                    "evidence_status": "progress_only",
+                    "coverage_boundary": "background_final_artifact_contract",
+                }
+            ],
+            "required_cells": [],
+            "expected_codes": [
+                "invalid_primary_evidence_status",
+                "progress_only_background_evidence",
+            ],
+        },
+    ]
+
+
+def build_report() -> dict[str, Any]:
+    required_cells = _alignment_required_cells()
+    rows = build_coverage_rows()
+    findings = validate_coverage_rows(rows, required_cells)
+    full_diagnostic = build_full_model_test_code_diagnostic()
+    for finding in full_diagnostic["actionable_findings"]:
+        findings.append(
+            {
+                "code": "full_diagnostic_actionable_finding",
+                "message": finding["message"],
+                "source_code": finding["code"],
+                "surface_id": finding["surface_id"],
+                "path": finding["path"],
+                "repair_type": finding["repair_type"],
+            }
+        )
+
+    rows_by_family: dict[str, int] = defaultdict(int)
+    rows_by_coverage_kind: dict[str, int] = defaultdict(int)
+    for row in rows:
+        rows_by_family[str(row["family"])] += 1
+        rows_by_coverage_kind[str(row["coverage_kind"])] += 1
+
+    return {
+        "ok": not findings,
+        "result_type": "flowpilot_synthetic_agent_coverage_matrix",
+        "coverage_boundary": (
+            "Matrix rows prove declared control-flow, runtime, model-test, and "
+            "background-artifact coverage ownership. Synthetic or fixture rows "
+            "do not prove live AI semantic quality or live completion."
+        ),
+        "required_cell_count": len(required_cells),
+        "row_count": len(rows),
+        "rows_by_family": dict(sorted(rows_by_family.items())),
+        "rows_by_coverage_kind": dict(sorted(rows_by_coverage_kind.items())),
+        "synthetic_trace_row_count": sum(
+            1 for row in rows if row["coverage_kind"] in SYNTHETIC_NON_LIVE_KINDS
+        ),
+        "findings": findings,
+        "required_cells": required_cells,
+        "rows": rows,
+        "full_diagnostic": {
+            "ok": full_diagnostic["ok"],
+            "full_coverage_ok": full_diagnostic["full_coverage_ok"],
+            "release_convergence_ok": full_diagnostic["release_convergence_ok"],
+            "gap_counts": full_diagnostic["gap_counts"],
+            "actionable_summary": full_diagnostic["actionable_summary"],
+        },
+    }
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--json-out", type=Path, default=None)
+    args = parser.parse_args(argv)
+
+    report = build_report()
+    output = json.dumps(report, indent=2, sort_keys=True) + "\n"
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(output, encoding="utf-8")
+    print(output, end="")
+    return 0 if report["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -17,6 +17,7 @@ import flowpilot_router  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
 from flowpilot_runtime_args import parse_args  # noqa: E402
+from flowpilot_runtime_command_dispatch import execute_runtime_command  # noqa: E402
 from flowpilot_runtime_role_output_commands import execute_role_output_command  # noqa: E402
 
 def _read_text_arg(text_value: str, file_value: str) -> str:
@@ -218,148 +219,22 @@ def _receive_card_bundle(root: Path, args: argparse.Namespace) -> dict[str, Any]
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv or sys.argv[1:])
     root = Path(args.root).resolve()
-    if args.command == "open-packet":
-        result = packet_runtime.begin_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-    elif args.command == "open-card":
-        result = card_runtime.open_card(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-    elif args.command == "ack-card":
-        result = card_runtime.submit_card_ack(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            receipt_paths=args.receipt_path or None,
-            status=args.status,
-        )
-    elif args.command == "receive-card":
-        result = _receive_card(root, args)
-    elif args.command == "open-card-bundle":
-        result = card_runtime.open_card_bundle(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-    elif args.command == "ack-card-bundle":
-        result = card_runtime.submit_card_bundle_ack(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            receipt_paths=args.receipt_path or None,
-            status=args.status,
-        )
-    elif args.command == "receive-card-bundle":
-        result = _receive_card_bundle(root, args)
-    elif args.command == "complete-packet":
-        result = packet_runtime.complete_role_packet_session(
-            root,
-            session_path=args.session_path,
-            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-        )
-    elif args.command == "run-packet":
-        result = packet_runtime.run_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-        )
-    elif args.command == "relay-envelope":
-        result = _relay_envelope(root, args)
-    elif args.command == "issue-active-holder-lease":
-        envelope = packet_runtime.load_envelope(root, args.envelope_path)
-        result = packet_runtime.issue_active_holder_lease(
-            root,
-            packet_envelope=envelope,
-            holder_role=args.holder_role,
-            holder_agent_id=args.holder_agent_id,
-            route_version=args.route_version,
-            frontier_version=args.frontier_version,
-            allowed_actions=args.allowed_action or None,
-        )
-    elif args.command == "active-holder-ack":
-        result = packet_runtime.active_holder_ack(
-            root,
-            lease_path=args.lease_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            route_version=args.route_version,
-            frontier_version=args.frontier_version,
-        )
-    elif args.command == "active-holder-progress":
-        result = packet_runtime.active_holder_progress(
-            root,
-            lease_path=args.lease_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            progress=args.progress,
-            message=args.message,
-            controller_aside=args.controller_aside or None,
-            route_version=args.route_version,
-            frontier_version=args.frontier_version,
-        )
-    elif args.command == "active-holder-submit-result":
-        result = packet_runtime.active_holder_submit_result(
-            root,
-            lease_path=args.lease_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-            route_version=args.route_version,
-            frontier_version=args.frontier_version,
-        )
-    elif args.command == "active-holder-submit-existing-result":
-        result = packet_runtime.active_holder_submit_existing_result(
-            root,
-            lease_path=args.lease_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            result_envelope_path=args.result_envelope_path,
-            route_version=args.route_version,
-            frontier_version=args.frontier_version,
-        )
-    elif args.command == "open-result":
-        result = packet_runtime.begin_result_review_session(
-            root,
-            result_envelope_path=args.result_envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-    elif args.command in {
-        "prepare-output",
-        "submit-output",
-        "submit-output-to-router",
-        "progress-output",
-        "submit-controller-boundary-confirmation",
-        "verify-output-envelope",
-    }:
-        result = execute_role_output_command(
-            root,
-            args,
-            role_output_runtime=role_output_runtime,
-            flowpilot_router=flowpilot_router,
-            read_body_json=_read_body_json,
-            record_router_event_or_blocked_next_action=_record_router_event_or_blocked_next_action,
-        )
-    else:  # pragma: no cover - argparse enforces command choices
-        raise RuntimeError(f"unknown command: {args.command}")
+
+    result = execute_runtime_command(
+        root,
+        args,
+        packet_runtime=packet_runtime,
+        card_runtime=card_runtime,
+        flowpilot_router=flowpilot_router,
+        role_output_runtime=role_output_runtime,
+        execute_role_output_command=execute_role_output_command,
+        read_text_arg=_read_text_arg,
+        read_body_json=_read_body_json,
+        relay_envelope=_relay_envelope,
+        record_router_event_or_blocked_next_action=_record_router_event_or_blocked_next_action,
+        receive_card=_receive_card,
+        receive_card_bundle=_receive_card_bundle,
+    )
     print(json.dumps(result, indent=2, sort_keys=True))
     if args.command in {"active-holder-submit-result", "active-holder-submit-existing-result"} and result.get("passed") is False:
         return 2

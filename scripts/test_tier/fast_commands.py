@@ -33,6 +33,15 @@ FAST_COMMANDS = (
         description="FlowGuard Model-Test Alignment checks for model obligations and ordinary test evidence.",
     ),
     TierCommand(
+        name="synthetic_agent_coverage_matrix",
+        command=_py(
+            "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json",
+        ),
+        description="Coverage matrix gate for synthetic AI traces, ordinary branch evidence, and full diagnostic blockers.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",

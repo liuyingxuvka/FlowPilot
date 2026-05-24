@@ -67,12 +67,15 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:packet_runtime",
     "asset:flowpilot_runtime",
     "asset:flowpilot_runtime_args",
+    "asset:flowpilot_runtime_command_dispatch",
     "asset:flowpilot_runtime_commands",
     "asset:flowpilot_runtime_role_output_commands",
     "asset:flowpilot_router",
     "asset:flowpilot_router_facade_imports",
     "asset:flowpilot_router_contract_index",
     "asset:flowpilot_router_controller_scheduler_receipts",
+    "asset:flowpilot_router_controller_scheduler_receipts_packet_fold_evidence",
+    "asset:flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence",
     "asset:flowpilot_router_controller_scheduler_receipts_packet_folds",
     "asset:flowpilot_router_work_packets_pm_role",
     "asset:flowpilot_router_terminal_ledger",
@@ -225,6 +228,8 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_current_node",
     "asset:flowpilot_router_work_packets_current_node_paths",
     "asset:flowpilot_router_work_packets_current_node_relay",
+    "asset:flowpilot_router_work_packets_current_node_relay_leases",
+    "asset:flowpilot_router_work_packets_current_node_relay_runtime_ops",
     "asset:flowpilot_router_work_packets_current_node_validation",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_contracts",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_index",
@@ -267,6 +272,7 @@ SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
 }
 
 ASSET_MODEL_BINDING_PREFIXES = {
+    "flowpilot_runtime_": "runtime_cli_architecture",
     "flowpilot_router_": "router_runtime_architecture",
     "packet_runtime_": "packet_runtime_architecture",
     "role_output_runtime_": "role_output_runtime_architecture",
@@ -324,12 +330,26 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "safe_split_class": "compatibility_facade_import_surface",
         "recommended_next_action": "monitor_router_facade_import_surface_contracts",
     },
+    "flowpilot_router_controller_scheduler_receipts_packet_folds": {
+        "split_status": "completed_split",
+        "split_reason": "packet_result_receipt_fold_evidence_and_record_checks_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py",
+            "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_record_evidence.py",
+            "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
+        ),
+        "peer_safety_status": "claimed_by_complete_synthetic_agent_coverage_matrix",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "monitor_controller_receipt_packet_fold_child_contracts",
+    },
     "flowpilot_router_work_packets_current_node": {
         "split_status": "completed_split",
-        "split_reason": "current_node_path_relay_and_validation_helpers_extracted",
+        "split_reason": "current_node_path_relay_lease_runtime_operation_and_validation_helpers_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_paths.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_leases.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_runtime_ops.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
@@ -772,9 +792,10 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
     },
     "flowpilot_runtime": {
         "split_status": "completed_split",
-        "split_reason": "unified_runtime_cli_argument_parsing_and_command_execution_extracted",
+        "split_reason": "unified_runtime_cli_argument_parsing_command_execution_and_dispatch_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_runtime_args.py",
+            "skills/flowpilot/assets/flowpilot_runtime_command_dispatch.py",
             "skills/flowpilot/assets/flowpilot_runtime_commands.py",
             "skills/flowpilot/assets/flowpilot_runtime_role_output_commands.py",
         ),
