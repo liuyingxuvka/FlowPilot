@@ -235,7 +235,14 @@ def _safe_base(**changes: object) -> State:
             pm_material_disposition_generation_scoped=True,
             pm_material_disposition_matches_current_generation=True,
             stale_pm_material_disposition_restored=False,
+            material_progress_projection_generation_scoped=True,
+            material_global_progress_flags_match_active_generation=True,
+            material_next_action_derived_from_active_batch=True,
+            material_reissue_clears_or_quarantines_stale_progress_flags=True,
+            stale_run_state_save_preserves_material_generation_flag_clear=True,
+            material_dispatch_block_matches_active_generation=True,
             role_output_event_deduped_by_body_ref=True,
+            role_output_current_generation_not_short_circuited_by_global_flag=True,
             duplicate_role_event_side_effect_written=False,
             packet_result_author_identity_replayable=True,
             packet_result_author_matches_current_role=True,
@@ -1045,9 +1052,28 @@ def hazard_states() -> dict[str, State]:
         "stale_pm_material_disposition_restored": _safe_base(
             stale_pm_material_disposition_restored=True,
         ),
+        "material_progress_flags_not_generation_scoped": _safe_base(
+            material_progress_projection_generation_scoped=False,
+            material_global_progress_flags_match_active_generation=False,
+        ),
+        "material_next_action_uses_stale_global_flags": _safe_base(
+            material_next_action_derived_from_active_batch=False,
+        ),
+        "material_reissue_keeps_stale_progress_flags": _safe_base(
+            material_reissue_clears_or_quarantines_stale_progress_flags=False,
+        ),
+        "stale_material_progress_flags_resurrected_by_save": _safe_base(
+            stale_run_state_save_preserves_material_generation_flag_clear=False,
+        ),
+        "material_dispatch_block_stale_generation": _safe_base(
+            material_dispatch_block_matches_active_generation=False,
+        ),
         "role_output_duplicate_not_deduped": _safe_base(
             role_output_event_deduped_by_body_ref=False,
             duplicate_role_event_side_effect_written=True,
+        ),
+        "role_output_current_generation_short_circuited_by_global_flag": _safe_base(
+            role_output_current_generation_not_short_circuited_by_global_flag=False,
         ),
         "packet_result_author_identity_not_replayable": _safe_base(
             packet_result_author_identity_replayable=False,

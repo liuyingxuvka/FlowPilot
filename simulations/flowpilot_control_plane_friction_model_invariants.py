@@ -448,6 +448,29 @@ def material_repair_generation_protocol_is_current(state: State, trace) -> Invar
         return InvariantResult.fail(
             "stale PM material disposition was restored as current-generation success"
         )
+    if not (
+        state.material_progress_projection_generation_scoped
+        and state.material_global_progress_flags_match_active_generation
+    ):
+        return InvariantResult.fail(
+            "material progress flags were not scoped to the active material generation"
+        )
+    if not state.material_next_action_derived_from_active_batch:
+        return InvariantResult.fail(
+            "material next action was derived from stale run-wide material flags instead of active batch state"
+        )
+    if not state.material_reissue_clears_or_quarantines_stale_progress_flags:
+        return InvariantResult.fail(
+            "material packet reissue left superseded progress flags visible for the current generation"
+        )
+    if not state.stale_run_state_save_preserves_material_generation_flag_clear:
+        return InvariantResult.fail(
+            "stale run-state save restored superseded material progress flags after current generation reset"
+        )
+    if not state.material_dispatch_block_matches_active_generation:
+        return InvariantResult.fail(
+            "material dispatch protocol block referenced a superseded repair generation"
+        )
     return InvariantResult.pass_()
 
 def role_event_identity_and_audit_records_are_closed(state: State, trace) -> InvariantResult:
@@ -457,6 +480,10 @@ def role_event_identity_and_audit_records_are_closed(state: State, trace) -> Inv
     if not state.role_output_event_deduped_by_body_ref:
         return InvariantResult.fail(
             "role-output events were not deduped by event type and body reference"
+        )
+    if not state.role_output_current_generation_not_short_circuited_by_global_flag:
+        return InvariantResult.fail(
+            "role-output reconciliation short-circuited current-generation material event on a run-wide flag"
         )
     if state.duplicate_role_event_side_effect_written:
         return InvariantResult.fail(

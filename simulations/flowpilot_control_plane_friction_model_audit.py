@@ -465,12 +465,292 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
         "issues": issues[:12],
     }
 
+def _safe_int(value: object) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+def _project_path(project_root: Path, value: object) -> Path | None:
+    if not isinstance(value, str) or not value:
+        return None
+    return project_root / value.replace("\\", "/")
+
+def _event_name_from_role_output(output: object) -> str:
+    if not isinstance(output, dict):
+        return ""
+    event_name = output.get("event_name")
+    if isinstance(event_name, str) and event_name:
+        return event_name
+    envelope = output.get("envelope")
+    if isinstance(envelope, dict) and isinstance(envelope.get("event_name"), str):
+        return envelope["event_name"]
+    event = output.get("event")
+    if isinstance(event, dict) and isinstance(event.get("event_name"), str):
+        return event["event_name"]
+    return ""
+
+def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
+    next_actions_text, next_actions_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_work_packets_next_actions.py"
+    )
+    persistence_text, persistence_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_runtime_state_persistence.py"
+    )
+    role_output_text, role_output_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_role_output_bridge_events.py"
+    )
+    next_action_uses_global_flags = (
+        "if flags.get('pm_material_packets_issued') and (not flags.get('material_scan_packets_relayed'))"
+        in next_actions_text
+        or "if flags.get('worker_scan_results_returned') and (not flags.get('material_scan_results_relayed_to_pm'))"
+        in next_actions_text
+        or "if flags.get('material_scan_results_relayed_to_pm') and (not flags.get('material_scan_result_disposition_recorded'))"
+        in next_actions_text
+    )
+    stale_save_preserves_existing_true_flags = (
+        "existing_value is True" in persistence_text
+        and "merged_flags[flag] = True" in persistence_text
+        and "_MATERIAL_GENERATION_PROGRESS_FLAGS" not in persistence_text
+    )
+    role_output_global_flag_short_circuit = (
+        "flags.get(flag) and event not in {ROLE_WORK_RESULT_RETURNED_EVENT, \"worker_current_node_result_returned\"}"
+        in role_output_text
+    )
+    return {
+        "next_actions_error": next_actions_error,
+        "persistence_error": persistence_error,
+        "role_output_error": role_output_error,
+        "next_action_uses_global_material_flags": next_action_uses_global_flags,
+        "stale_save_preserves_existing_true_flags": stale_save_preserves_existing_true_flags,
+        "role_output_has_global_flag_short_circuit": role_output_global_flag_short_circuit,
+    }
+
+def _audit_material_generation_progress_projection(
+    project_root: Path,
+    run_root: Path,
+    router_state: object,
+) -> dict[str, object]:
+    flags = _router_flags(router_state)
+    material_index, material_index_error = _read_json(
+        run_root / "material" / "material_scan_packets.json"
+    )
+    active_ref, active_ref_error = _read_json(
+        run_root / "packet_batches" / "active_material_scan.json"
+    )
+    batch_path: Path | None = None
+    if isinstance(active_ref, dict):
+        batch_path = _project_path(project_root, active_ref.get("batch_path"))
+        if batch_path is None and active_ref.get("batch_id"):
+            batch_path = run_root / "packet_batches" / f"{active_ref['batch_id']}.json"
+    active_batch, active_batch_error = _read_json(batch_path) if batch_path else (None, None)
+    packets = active_batch.get("packets") if isinstance(active_batch, dict) else []
+    packets = packets if isinstance(packets, list) else []
+    counts = active_batch.get("counts") if isinstance(active_batch, dict) else {}
+    counts = counts if isinstance(counts, dict) else {}
+    member_status = active_batch.get("member_status") if isinstance(active_batch, dict) else {}
+    member_status = member_status if isinstance(member_status, dict) else {}
+    packet_count = max(
+        len(packets),
+        _safe_int(member_status.get("packet_count")),
+        _safe_int(counts.get("registered")),
+    )
+    relayed = _safe_int(counts.get("relayed"))
+    results_returned = max(
+        _safe_int(counts.get("results_returned")),
+        _safe_int(member_status.get("results_returned")),
+    )
+    current_generation_id = (
+        str(material_index.get("current_generation_id") or "")
+        if isinstance(material_index, dict)
+        else ""
+    )
+    active_repair_transaction_id = (
+        str(material_index.get("repair_transaction_id") or "")
+        if isinstance(material_index, dict)
+        else ""
+    )
+    batch_generation_ids = sorted(
+        {
+            str(packet.get("packet_generation_id"))
+            for packet in packets
+            if isinstance(packet, dict) and packet.get("packet_generation_id")
+        }
+    )
+    batch_repair_ids = sorted(
+        {
+            str(packet.get("repair_transaction_id"))
+            for packet in packets
+            if isinstance(packet, dict) and packet.get("repair_transaction_id")
+        }
+    )
+    active_batch_matches_generation = (
+        not current_generation_id
+        or not batch_generation_ids
+        or batch_generation_ids == [current_generation_id]
+    )
+    batch_status = str(active_batch.get("status") or "") if isinstance(active_batch, dict) else ""
+    all_results_returned = bool(member_status.get("all_results_returned"))
+    pm_result_disposition = (
+        active_batch.get("pm_result_disposition") if isinstance(active_batch, dict) else None
+    )
+    stale_progress_flag_mismatches: list[dict[str, object]] = []
+    if flags.get("material_scan_packets_relayed") and relayed < packet_count:
+        stale_progress_flag_mismatches.append(
+            {
+                "flag": "material_scan_packets_relayed",
+                "flag_value": True,
+                "active_batch_relayed": relayed,
+                "active_batch_packet_count": packet_count,
+            }
+        )
+    if flags.get("worker_packets_delivered") and relayed < packet_count:
+        stale_progress_flag_mismatches.append(
+            {
+                "flag": "worker_packets_delivered",
+                "flag_value": True,
+                "active_batch_relayed": relayed,
+                "active_batch_packet_count": packet_count,
+            }
+        )
+    if flags.get("worker_scan_results_returned") and (
+        not all_results_returned or results_returned < packet_count
+    ):
+        stale_progress_flag_mismatches.append(
+            {
+                "flag": "worker_scan_results_returned",
+                "flag_value": True,
+                "active_batch_results_returned": results_returned,
+                "active_batch_packet_count": packet_count,
+                "active_batch_all_results_returned": all_results_returned,
+            }
+        )
+    if flags.get("material_scan_results_relayed_to_pm") and (
+        not all_results_returned or batch_status not in {"results_relayed_to_pm", "pm_absorbed", "accepted", "complete"}
+    ):
+        stale_progress_flag_mismatches.append(
+            {
+                "flag": "material_scan_results_relayed_to_pm",
+                "flag_value": True,
+                "active_batch_status": batch_status or None,
+                "active_batch_results_returned": results_returned,
+                "active_batch_all_results_returned": all_results_returned,
+            }
+        )
+    if flags.get("material_scan_result_disposition_recorded") and not isinstance(
+        pm_result_disposition, dict
+    ):
+        stale_progress_flag_mismatches.append(
+            {
+                "flag": "material_scan_result_disposition_recorded",
+                "flag_value": True,
+                "active_batch_pm_result_disposition_present": False,
+            }
+        )
+
+    material_dispatch_block = (
+        router_state.get("material_dispatch_block") if isinstance(router_state, dict) else None
+    )
+    material_dispatch_block = material_dispatch_block if isinstance(material_dispatch_block, dict) else {}
+    dispatch_repair_id = str(material_dispatch_block.get("repair_transaction_id") or "")
+    dispatch_matches_active_generation = (
+        not dispatch_repair_id
+        or not active_repair_transaction_id
+        or dispatch_repair_id == active_repair_transaction_id
+    )
+
+    role_output_ledger, role_output_error = _read_json(run_root / "role_output_ledger.json")
+    pm_disposition_outputs: list[dict[str, object]] = []
+    for output in (role_output_ledger.get("outputs") if isinstance(role_output_ledger, dict) else []) or []:
+        if not isinstance(output, dict):
+            continue
+        if _event_name_from_role_output(output) != "pm_records_material_scan_result_disposition":
+            continue
+        pm_disposition_outputs.append(
+            {
+                "output_id": output.get("output_id"),
+                "recorded_at": output.get("recorded_at"),
+                "body_path": output.get("body_path"),
+                "body_hash": output.get("body_hash"),
+            }
+        )
+
+    source_checks = _material_generation_source_checks(project_root)
+    has_active_repair_generation = bool(
+        active_repair_transaction_id or batch_repair_ids or current_generation_id
+    )
+    has_stale_material_flags = bool(stale_progress_flag_mismatches)
+    global_flags_match_active_generation = not has_stale_material_flags
+    projection_generation_scoped = (
+        active_batch_matches_generation
+        and global_flags_match_active_generation
+        and dispatch_matches_active_generation
+    )
+    next_action_derived_from_active_batch = not (
+        has_stale_material_flags and source_checks.get("next_action_uses_global_material_flags")
+    )
+    reissue_clears_or_quarantines_stale_progress_flags = not (
+        has_active_repair_generation and has_stale_material_flags
+    )
+    stale_save_preserves_material_generation_flag_clear = not (
+        has_active_repair_generation
+        and has_stale_material_flags
+        and source_checks.get("stale_save_preserves_existing_true_flags")
+    )
+    role_output_current_generation_not_short_circuited_by_global_flag = not (
+        flags.get("material_scan_result_disposition_recorded")
+        and pm_disposition_outputs
+        and not isinstance(pm_result_disposition, dict)
+        and source_checks.get("role_output_has_global_flag_short_circuit")
+    )
+    return {
+        "material_index_error": material_index_error,
+        "active_material_ref_error": active_ref_error,
+        "active_material_batch_error": active_batch_error,
+        "active_material_batch_path": (
+            batch_path.relative_to(project_root).as_posix()
+            if batch_path and batch_path.is_relative_to(project_root)
+            else str(batch_path) if batch_path else None
+        ),
+        "current_generation_id": current_generation_id or None,
+        "active_repair_transaction_id": active_repair_transaction_id or None,
+        "batch_generation_ids": batch_generation_ids,
+        "batch_repair_transaction_ids": batch_repair_ids,
+        "active_batch_matches_generation": active_batch_matches_generation,
+        "active_batch_status": batch_status or None,
+        "active_batch_counts": counts,
+        "active_batch_member_status": member_status,
+        "stale_progress_flag_mismatches": stale_progress_flag_mismatches,
+        "material_dispatch_block_repair_transaction_id": dispatch_repair_id or None,
+        "material_dispatch_block_matches_active_generation": dispatch_matches_active_generation,
+        "pm_material_disposition_role_outputs": pm_disposition_outputs[:8],
+        "role_output_ledger_error": role_output_error,
+        "source_checks": source_checks,
+        "projection_generation_scoped": projection_generation_scoped,
+        "global_flags_match_active_generation": global_flags_match_active_generation,
+        "next_action_derived_from_active_batch": next_action_derived_from_active_batch,
+        "reissue_clears_or_quarantines_stale_progress_flags": reissue_clears_or_quarantines_stale_progress_flags,
+        "stale_save_preserves_material_generation_flag_clear": stale_save_preserves_material_generation_flag_clear,
+        "role_output_current_generation_not_short_circuited_by_global_flag": role_output_current_generation_not_short_circuited_by_global_flag,
+    }
+
 def _audit_material_repair_generation_protocol(
     project_root: Path,
     run_root: Path,
     router_state: object,
 ) -> dict[str, object]:
-    del project_root
     action_samples: list[dict[str, object]] = []
     for action_path in sorted((run_root / "runtime" / "controller_actions").glob("*.json")):
         action_record, error = _read_json(action_path)
@@ -504,6 +784,11 @@ def _audit_material_repair_generation_protocol(
             )
     event_dedup = _audit_role_output_event_dedup(router_state)
     packet_authority = _audit_packet_result_authority(run_root)
+    material_progress_projection = _audit_material_generation_progress_projection(
+        project_root,
+        run_root,
+        router_state,
+    )
     return {
         "operation_replay_fresh_controller_action_id": not (
             (run_root / "controller_break_glass" / "incidents" / "incident-20260523T185400Z-controller-action-id-collision.json").exists()
@@ -544,10 +829,32 @@ def _audit_material_repair_generation_protocol(
             packet_authority.get("result_author_matches_current_role")
         ),
         "break_glass_patch_validation_finalized": not patch_pending,
+        "material_progress_projection_generation_scoped": bool(
+            material_progress_projection.get("projection_generation_scoped")
+        ),
+        "material_global_progress_flags_match_active_generation": bool(
+            material_progress_projection.get("global_flags_match_active_generation")
+        ),
+        "material_next_action_derived_from_active_batch": bool(
+            material_progress_projection.get("next_action_derived_from_active_batch")
+        ),
+        "material_reissue_clears_or_quarantines_stale_progress_flags": bool(
+            material_progress_projection.get("reissue_clears_or_quarantines_stale_progress_flags")
+        ),
+        "stale_run_state_save_preserves_material_generation_flag_clear": bool(
+            material_progress_projection.get("stale_save_preserves_material_generation_flag_clear")
+        ),
+        "material_dispatch_block_matches_active_generation": bool(
+            material_progress_projection.get("material_dispatch_block_matches_active_generation")
+        ),
+        "role_output_current_generation_not_short_circuited_by_global_flag": bool(
+            material_progress_projection.get("role_output_current_generation_not_short_circuited_by_global_flag")
+        ),
         "operation_replay_actions_missing_ledger_io": action_samples,
         "pending_break_glass_patch_records": patch_pending,
         "event_dedup": event_dedup,
         "packet_result_authority": packet_authority,
+        "material_generation_progress_projection": material_progress_projection,
     }
 
 def _router_control_blocker_status_matches(router_state: object, project_root: Path) -> tuple[bool, list[dict[str, object]]]:
@@ -2565,6 +2872,63 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="material_repair_generation_protocol_is_current",
             evidence=material_repair_protocol,
         )
+    if not (
+        material_repair_protocol.get("material_progress_projection_generation_scoped")
+        and material_repair_protocol.get("material_global_progress_flags_match_active_generation")
+    ):
+        _add_finding(
+            findings,
+            code="material_progress_flags_not_generation_scoped",
+            severity="error",
+            summary="Router-visible material progress flags disagree with the active material generation",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("material_next_action_derived_from_active_batch"):
+        _add_finding(
+            findings,
+            code="material_next_action_uses_stale_global_flags",
+            severity="error",
+            summary="material packet next-action selection is driven by stale run-wide flags instead of active batch state",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("material_reissue_clears_or_quarantines_stale_progress_flags"):
+        _add_finding(
+            findings,
+            code="material_reissue_keeps_stale_progress_flags",
+            severity="error",
+            summary="material packet reissue left superseded progress flags visible for the current generation",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("stale_run_state_save_preserves_material_generation_flag_clear"):
+        _add_finding(
+            findings,
+            code="stale_material_progress_flags_resurrected_by_save",
+            severity="error",
+            summary="stale run-state save can restore superseded material progress flags after current generation reset",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("material_dispatch_block_matches_active_generation"):
+        _add_finding(
+            findings,
+            code="material_dispatch_block_stale_generation",
+            severity="error",
+            summary="material dispatch protocol block references a superseded repair generation",
+            invariant="material_repair_generation_protocol_is_current",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("role_output_current_generation_not_short_circuited_by_global_flag"):
+        _add_finding(
+            findings,
+            code="role_output_current_generation_short_circuited_by_global_flag",
+            severity="error",
+            summary="role-output reconciliation can short-circuit current-generation material events on a run-wide flag",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
     if not material_repair_protocol.get("role_output_event_deduped_by_body_ref"):
         _add_finding(
             findings,
@@ -2771,6 +3135,27 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         stale_pm_material_disposition_restored=bool(
             material_repair_protocol.get("stale_pm_material_disposition_restored")
+        ),
+        material_progress_projection_generation_scoped=bool(
+            material_repair_protocol.get("material_progress_projection_generation_scoped")
+        ),
+        material_global_progress_flags_match_active_generation=bool(
+            material_repair_protocol.get("material_global_progress_flags_match_active_generation")
+        ),
+        material_next_action_derived_from_active_batch=bool(
+            material_repair_protocol.get("material_next_action_derived_from_active_batch")
+        ),
+        material_reissue_clears_or_quarantines_stale_progress_flags=bool(
+            material_repair_protocol.get("material_reissue_clears_or_quarantines_stale_progress_flags")
+        ),
+        stale_run_state_save_preserves_material_generation_flag_clear=bool(
+            material_repair_protocol.get("stale_run_state_save_preserves_material_generation_flag_clear")
+        ),
+        material_dispatch_block_matches_active_generation=bool(
+            material_repair_protocol.get("material_dispatch_block_matches_active_generation")
+        ),
+        role_output_current_generation_not_short_circuited_by_global_flag=bool(
+            material_repair_protocol.get("role_output_current_generation_not_short_circuited_by_global_flag")
         ),
         role_output_event_deduped_by_body_ref=bool(
             material_repair_protocol.get("role_output_event_deduped_by_body_ref")

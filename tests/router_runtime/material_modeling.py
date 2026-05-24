@@ -772,6 +772,107 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(transaction["status"], "complete")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
+
+    def test_material_repair_active_batch_overrides_stale_global_progress_flags(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state = read_json(router.run_state_path(run_root))
+        generation = router._commit_material_scan_repair_generation(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            transaction_id="repair-tx-active-generation-test",
+            packet_generation_id="repair-tx-active-generation-test-gen-001",
+            packet_specs=[
+                {
+                    "packet_id": "material-scan-repair-worker-a",
+                    "to_role": "worker_a",
+                    "body_text": "Repair generation packet A",
+                },
+                {
+                    "packet_id": "material-scan-repair-worker-b",
+                    "to_role": "worker_b",
+                    "body_text": "Repair generation packet B",
+                },
+            ],
+        )
+        state["flags"]["material_scan_packets_relayed"] = True
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        state["flags"]["material_scan_results_relayed_to_pm"] = True
+        state["flags"]["material_scan_result_disposition_recorded"] = True
+        router.save_run_state(run_root, state)
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+        self.assertEqual(set(action["packet_ids"]), {packet["packet_id"] for packet in generation["packets"]})
+        batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        self.assertEqual(batch["counts"]["relayed"], 0)
+        self.assertEqual(batch["counts"]["results_returned"], 0)
+
+    def test_material_repair_active_batch_blocks_stale_result_relay_flag(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state = read_json(router.run_state_path(run_root))
+        generation = router._commit_material_scan_repair_generation(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            transaction_id="repair-tx-active-results-test",
+            packet_generation_id="repair-tx-active-results-test-gen-001",
+            packet_specs=[
+                {
+                    "packet_id": "material-scan-repair-result-worker-a",
+                    "to_role": "worker_a",
+                    "body_text": "Repair result generation packet A",
+                },
+                {
+                    "packet_id": "material-scan-repair-result-worker-b",
+                    "to_role": "worker_b",
+                    "body_text": "Repair result generation packet B",
+                },
+            ],
+        )
+        router.save_run_state(run_root, state)
+        self.apply_next_packet_action(root, "relay_material_scan_packets")
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        state["flags"]["material_scan_results_relayed_to_pm"] = True
+        state["flags"]["material_scan_result_disposition_recorded"] = True
+        state["flags"]["material_scan_results_absorbed_by_pm"] = True
+        router.save_run_state(run_root, state)
+
+        for packet in generation["packets"][:1]:
+            envelope = packet_runtime.load_envelope(root, packet["packet_envelope_path"])
+            packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            packet_runtime.write_result(
+                root,
+                packet_envelope=envelope,
+                completed_by_role=envelope["to_role"],
+                completed_by_agent_id=f"{envelope['to_role']}-agent",
+                result_body_text="partial repair material result\n\nContract Self-Check\n\nstatus: pass\n",
+                next_recipient="project_manager",
+            )
+
+        state = read_json(router.run_state_path(run_root))
+        action = router._next_material_packet_action(root, state, run_root)  # type: ignore[attr-defined]
+        self.assertIsNotNone(action)
+        assert action is not None
+
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
+        self.assertIn("worker_b", action["to_role"])
+        self.assertNotEqual(action.get("action_type"), "relay_material_scan_results_to_pm")
     def test_material_scan_mechanical_agent_id_gap_reissues_to_worker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

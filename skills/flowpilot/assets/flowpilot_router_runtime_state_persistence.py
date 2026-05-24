@@ -38,6 +38,16 @@ _RUN_STATE_PENDING_REMINDER_FIELDS = (
     "last_liveness_probe",
     "liveness_probe_result",
 )
+_MATERIAL_GENERATION_PROGRESS_FLAGS = {
+    "material_scan_packets_relayed",
+    "worker_packets_delivered",
+    "worker_scan_results_returned",
+    "material_scan_results_relayed_to_pm",
+    "material_scan_result_disposition_recorded",
+    "material_scan_results_absorbed_by_pm",
+    "material_review_sufficient",
+    "material_review_insufficient",
+}
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -57,6 +67,18 @@ def _json_clone(value: Any) -> Any:
 
 def _public_run_state_snapshot(state: dict[str, Any]) -> dict[str, Any]:
     return {key: _json_clone(value) for key, value in state.items() if key not in _RUN_STATE_VOLATILE_META_KEYS}
+
+
+def _material_generation_key(state: dict[str, Any]) -> tuple[str, str, str] | None:
+    generation = state.get("active_material_generation")
+    if not isinstance(generation, dict):
+        return None
+    key = (
+        str(generation.get("packet_generation_id") or ""),
+        str(generation.get("repair_transaction_id") or ""),
+        str(generation.get("batch_id") or ""),
+    )
+    return key if any(key) else None
 
 
 def _run_state_snapshot_hash(state: dict[str, Any]) -> str:
@@ -146,6 +168,14 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
     merged = _public_run_state_snapshot(current)
     if existing.get("schema_version") != merged.get("schema_version") or existing.get("run_id") != merged.get("run_id"):
         return merged
+    existing_material_generation_key = _material_generation_key(existing)
+    current_material_generation_key = _material_generation_key(current)
+    existing_has_newer_material_generation = bool(
+        existing_material_generation_key
+        and existing_material_generation_key != current_material_generation_key
+    )
+    if existing_has_newer_material_generation:
+        merged["active_material_generation"] = _json_clone(existing.get("active_material_generation"))
     for field in _RUN_STATE_APPEND_ONLY_LIST_FIELDS:
         existing_items = existing.get(field)
         current_items = merged.get(field)
@@ -157,6 +187,9 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
     merged_flags = merged.setdefault("flags", {})
     if isinstance(merged_flags, dict):
         for flag, existing_value in existing_flags.items():
+            if existing_has_newer_material_generation and flag in _MATERIAL_GENERATION_PROGRESS_FLAGS:
+                merged_flags[flag] = bool(existing_value)
+                continue
             loaded_value = loaded_flags.get(flag)
             current_value = merged_flags.get(flag)
             if existing_value is True and loaded_value is not True and current_value is not True:

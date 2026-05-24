@@ -78,9 +78,10 @@ Risk intent brief:
   authority backs every advertised reader; Router-owned internal postconditions
   with ready inputs materialize evidence or emit a router-visible blocker
   instead of becoming passive Controller/role waits; resolved obligations clear
-  passive wait and reminder projections; and stale
-  daemon/run-state saves cannot resurrect a live wait after the authoritative
-  Router obligation state has cleared it.
+  passive wait and reminder projections; stale daemon/run-state saves cannot
+  resurrect a live wait after the authoritative Router obligation state has
+  cleared it; and material repair progress is derived from the active
+  generation/batch rather than stale run-wide flags.
 - Blindspot: this is still a focused control-plane model. The live-run audit
   checks file-level consistency, but it does not prove product content quality.
 """
@@ -410,7 +411,14 @@ class State:
     pm_material_disposition_generation_scoped: bool = True
     pm_material_disposition_matches_current_generation: bool = True
     stale_pm_material_disposition_restored: bool = False
+    material_progress_projection_generation_scoped: bool = True
+    material_global_progress_flags_match_active_generation: bool = True
+    material_next_action_derived_from_active_batch: bool = True
+    material_reissue_clears_or_quarantines_stale_progress_flags: bool = True
+    stale_run_state_save_preserves_material_generation_flag_clear: bool = True
+    material_dispatch_block_matches_active_generation: bool = True
     role_output_event_deduped_by_body_ref: bool = True
+    role_output_current_generation_not_short_circuited_by_global_flag: bool = True
     duplicate_role_event_side_effect_written: bool = False
     packet_result_author_identity_replayable: bool = True
     packet_result_author_matches_current_role: bool = True

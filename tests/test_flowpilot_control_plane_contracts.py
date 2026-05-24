@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import flowpilot_router as router  # noqa: E402
+import flowpilot_router_role_output_bridge_events as role_output_bridge_events  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as pm_decisions  # noqa: E402
 import flowpilot_closure_kernel as closure_kernel  # noqa: E402
 import packet_runtime  # noqa: E402
@@ -21,6 +22,30 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_jso
 
 
 class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
+    def test_material_disposition_role_output_does_not_short_circuit_on_global_flag(self) -> None:
+        scoped_identity = {
+            "event": "pm_records_material_scan_result_disposition",
+            "dedupe_key": "pm_records_material_scan_result_disposition:test",
+            "scope": {
+                "batch_id": "repair-generation-batch",
+                "packet_generation_id": "repair-generation",
+                "body_hash": "abc123",
+            },
+        }
+
+        self.assertFalse(
+            role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
+                "pm_records_material_scan_result_disposition",
+                scoped_identity,
+            )
+        )
+        self.assertTrue(
+            role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
+                "pm_records_research_result_disposition",
+                scoped_identity,
+            )
+        )
+
     def test_control_blocker_identity_includes_blocker_artifact(self) -> None:
         base = {
             "action_type": "handle_control_blocker",

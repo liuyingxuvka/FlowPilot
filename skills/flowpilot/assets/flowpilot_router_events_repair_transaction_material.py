@@ -100,6 +100,15 @@ def _commit_material_scan_repair_generation(router: ModuleType, project_root: Pa
     run_state['flags']['material_scan_results_absorbed_by_pm'] = False
     run_state['flags']['material_review_sufficient'] = False
     run_state['flags']['material_review_insufficient'] = False
+    run_state['active_material_generation'] = {
+        'schema_version': 'flowpilot.active_material_generation.v1',
+        'packet_generation_id': packet_generation_id,
+        'repair_transaction_id': transaction_id,
+        'batch_id': batch_id,
+        'parallel_batch_path': project_relative(project_root, router._parallel_packet_batch_path(run_root, batch_id)),
+        'material_index_path': project_relative(project_root, material_index_path),
+        'activated_at': utc_now(),
+    }
     run_state['material_review'] = None
     return {'packet_generation_id': packet_generation_id, 'packet_count': len(records), 'packets': records, 'batch_id': batch.get('batch_id'), 'parallel_batch_path': project_relative(project_root, router._parallel_packet_batch_path(run_root, batch_id)), 'previous_batch_id': previous_batch_id or None, 'superseded_packet_count': len(superseded_packets), 'dispatch_index_path': project_relative(project_root, material_index_path), 'packet_ledger_path': project_relative(project_root, run_root / 'packet_ledger.json')}
 

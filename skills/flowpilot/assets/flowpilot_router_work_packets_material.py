@@ -101,10 +101,16 @@ def _write_material_dispatch_block_report(router: ModuleType, project_root: Path
     material_index_path = router._material_scan_index_path(run_root)
     if not material_index_path.exists():
         raise RouterError('material dispatch block report requires material scan packet index')
+    material_index = read_json_if_exists(material_index_path)
+    repair_transaction_id = str(material_index.get('repair_transaction_id') or '')
     report_path = run_root / 'material' / 'material_dispatch_block.json'
     reported_at = utc_now()
-    write_json(report_path, {'schema_version': 'flowpilot.material_dispatch_block.v1', 'run_id': run_state['run_id'], 'checked_by_role': checked_by_role, 'dispatch_allowed': False, 'source_paths': [project_relative(project_root, material_index_path)], 'checks': payload.get('checks') if isinstance(payload.get('checks'), dict) else {}, 'blockers': blockers, 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'reported_at': reported_at, **_role_output_envelope_record(payload)})
-    run_state['material_dispatch_block'] = {'path': project_relative(project_root, report_path), 'blockers': blockers, 'reported_at': reported_at}
+    generation_fields = {
+        'repair_transaction_id': repair_transaction_id or None,
+        'current_generation_id': material_index.get('current_generation_id') if isinstance(material_index, dict) else None,
+    }
+    write_json(report_path, {'schema_version': 'flowpilot.material_dispatch_block.v1', 'run_id': run_state['run_id'], 'checked_by_role': checked_by_role, 'dispatch_allowed': False, 'source_paths': [project_relative(project_root, material_index_path)], 'checks': payload.get('checks') if isinstance(payload.get('checks'), dict) else {}, 'blockers': blockers, 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'reported_at': reported_at, **generation_fields, **_role_output_envelope_record(payload)})
+    run_state['material_dispatch_block'] = {'path': project_relative(project_root, report_path), 'blockers': blockers, 'reported_at': reported_at, **{key: value for key, value in generation_fields.items() if value}}
     run_state['flags']['reviewer_dispatch_allowed'] = False
 
 def _write_material_dispatch_recheck_protocol_blocker(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, event_name: str='router_protocol_blocker_material_scan_dispatch_recheck') -> None:

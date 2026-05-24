@@ -80,6 +80,49 @@ class RuntimeStatePersistenceTests(unittest.TestCase):
         self.assertNotIn(persistence._RUN_STATE_LOAD_META_FLAGS, merged)
         self.assertNotIn(persistence._RUN_STATE_LOAD_META_PENDING, merged)
 
+    def test_stale_save_does_not_restore_material_progress_flags_after_new_generation(self) -> None:
+        run_root = Path(".flowpilot/runs/run-persistence-material-generation-test")
+        loaded_state = _base_state(run_root)
+        loaded_state["flags"].update(
+            {
+                "material_scan_packets_relayed": True,
+                "worker_packets_delivered": True,
+                "worker_scan_results_returned": True,
+                "material_scan_results_relayed_to_pm": True,
+                "material_scan_result_disposition_recorded": True,
+            }
+        )
+        persistence._attach_run_state_load_metadata(loaded_state)
+
+        foreground_state = _base_state(run_root)
+        foreground_state["active_material_generation"] = {
+            "schema_version": "flowpilot.active_material_generation.v1",
+            "packet_generation_id": "repair-tx-material-gen-001",
+            "repair_transaction_id": "repair-tx-material",
+            "batch_id": "repair-tx-material-gen-001-batch",
+        }
+        foreground_state["flags"].update(
+            {
+                "material_scan_packets_relayed": False,
+                "worker_packets_delivered": False,
+                "worker_scan_results_returned": False,
+                "material_scan_results_relayed_to_pm": False,
+                "material_scan_result_disposition_recorded": False,
+            }
+        )
+
+        merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
+
+        self.assertEqual(
+            merged["active_material_generation"]["packet_generation_id"],
+            "repair-tx-material-gen-001",
+        )
+        self.assertFalse(merged["flags"]["material_scan_packets_relayed"])
+        self.assertFalse(merged["flags"]["worker_packets_delivered"])
+        self.assertFalse(merged["flags"]["worker_scan_results_returned"])
+        self.assertFalse(merged["flags"]["material_scan_results_relayed_to_pm"])
+        self.assertFalse(merged["flags"]["material_scan_result_disposition_recorded"])
+
     def test_parent_facade_delegates_load_and_stale_save_to_child(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-state-persistence-") as tmp:
             project_root = Path(tmp)

@@ -228,7 +228,13 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_repair_work_packet_facade_export_missing": "controller_repair_work_packet receipt helper was not exported through the Router facade",
     "pm_material_disposition_generation_blind": "PM material result disposition was not scoped to the current packet generation",
     "stale_pm_material_disposition_restored": "stale PM material disposition was restored as current-generation success",
+    "material_progress_flags_not_generation_scoped": "material progress flags were not scoped to the active material generation",
+    "material_next_action_uses_stale_global_flags": "material next action was derived from stale run-wide material flags instead of active batch state",
+    "material_reissue_keeps_stale_progress_flags": "material packet reissue left superseded progress flags visible for the current generation",
+    "stale_material_progress_flags_resurrected_by_save": "stale run-state save restored superseded material progress flags after current generation reset",
+    "material_dispatch_block_stale_generation": "material dispatch protocol block referenced a superseded repair generation",
     "role_output_duplicate_not_deduped": "role-output events were not deduped by event type and body reference",
+    "role_output_current_generation_short_circuited_by_global_flag": "role-output reconciliation short-circuited current-generation material event on a run-wide flag",
     "packet_result_author_identity_not_replayable": "packet result author identity was not replayable from the packet ledger",
     "break_glass_patch_validation_pending": "break-glass patch record remained pending validation after validation evidence existed",
     "controller_reads_sealed_body": "Controller read sealed packet/result body",
@@ -424,7 +430,14 @@ def _state_id(state: model.State) -> str:
         f"event={state.role_output_event_submitted},{state.role_output_event_accepted},"
         f"{state.role_output_file_backed_body_path_present},{state.role_output_body_hash_verified},"
         f"status_used={state.role_output_status_prepared_only},"
-        f"{state.role_output_status_used_as_event_evidence}"
+        f"{state.role_output_status_used_as_event_evidence}|"
+        f"material_repair_scope={state.material_progress_projection_generation_scoped},"
+        f"{state.material_global_progress_flags_match_active_generation},"
+        f"{state.material_next_action_derived_from_active_batch},"
+        f"{state.material_reissue_clears_or_quarantines_stale_progress_flags},"
+        f"{state.stale_run_state_save_preserves_material_generation_flag_clear},"
+        f"{state.material_dispatch_block_matches_active_generation},"
+        f"{state.role_output_current_generation_not_short_circuited_by_global_flag}"
     )
 
 

@@ -158,6 +158,14 @@ def _role_output_event_has_durable_authority(
     if not isinstance(meta, dict):
         return False
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+    if event == "pm_records_material_scan_result_disposition":
+        try:
+            batch = router._active_parallel_packet_batch(run_root, "material_scan")
+        except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
+            batch = None
+        if isinstance(batch, dict) and isinstance(batch.get("pm_result_disposition"), dict):
+            return True
+        return _run_state_has_event(run_state, event)
     if flags.get(meta.get("flag")) or _run_state_has_event(run_state, event):
         return True
     pending = run_state.get("pending_action")
@@ -187,6 +195,14 @@ def _role_output_event_has_durable_authority(
         if any(event == item_event for item_event, _meta in allowed_group):
             return True
     return False
+
+
+def _event_allows_run_wide_flag_short_circuit(event: str, scoped_identity: dict[str, Any] | None) -> bool:
+    if event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}:
+        return False
+    if event == "pm_records_material_scan_result_disposition" and scoped_identity is not None:
+        return False
+    return True
 
 
 def _sync_material_review_from_role_output_payload(
@@ -308,7 +324,7 @@ def _try_reconcile_direct_role_output_event_ledger(
         )
         scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
         if _scoped_event_is_recorded(run_state, scoped_identity) or (
-            flags.get(flag) and event not in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}
+            flags.get(flag) and _event_allows_run_wide_flag_short_circuit(event, scoped_identity)
         ):
             wait_closure = _close_waiting_controller_actions_for_external_event(
                 project_root,

@@ -17977,3 +17977,56 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - Inspect peer-agent dirty files before creating a local commit.
 - If this change is promoted, keep the OpenSpec change open until the team decides whether to archive it with the implementation evidence.
+
+## FlowPilot Material Progress Generation-Scope Model Upgrade
+
+- Project: FlowPilot
+- Trigger reason: User asked to upgrade FlowGuard so the newly identified material-repair bugs are model-visible before proposing a minimal root repair plan.
+- Status: model and live audit upgraded; production runtime code not changed
+- Skill decision: predictive KB preflight, OpenSpec explore, FlowGuard existing-model preflight, model-miss review, model-test alignment, and development-process flow
+- Recorded: 2026-05-24T09:32:23+02:00
+- Commands OK: True
+
+### Model Files
+
+- `simulations/flowpilot_control_plane_friction_model_state.py`
+- `simulations/flowpilot_control_plane_friction_model_transitions.py`
+- `simulations/flowpilot_control_plane_friction_model_invariants.py`
+- `simulations/flowpilot_control_plane_friction_model_hazards.py`
+- `simulations/flowpilot_control_plane_friction_model_audit.py`
+- `simulations/run_flowpilot_control_plane_friction_checks.py`
+- `tmp/flowguard_background/material_repair_model_after_skip_live.json`
+- `tmp/flowguard_background/material_repair_model_after_live.json`
+
+### Scope
+
+- Added first-class model state for material progress derived from the active material generation and batch.
+- Added hazards for stale run-wide material flags, stale-save flag resurrection, stale material dispatch block generation, and role-output short-circuiting a current-generation material event.
+- Extended live audit to compare the current material index, active material batch counts, Router flags, material dispatch block, and PM disposition role-output records.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m py_compile` for the changed control-plane friction model and runner files.
+- OK: `git diff --check`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp/flowguard_background/material_repair_model_after_skip_live.json`.
+- Expected fail on historical live run: `python simulations/run_flowpilot_control_plane_friction_checks.py --json-out tmp/flowguard_background/material_repair_model_after_live.json`; abstract checks passed and live audit reported 10 findings.
+
+### Findings
+
+- The current run has active repair4 material batch `registered`, `relayed=0`, and `results_returned=0`, while run-wide material progress flags still say relay, worker results, PM relay, and PM disposition are complete.
+- The material dispatch block still points at an older repair transaction, so the visible blocker is not tied to the active material generation.
+- PM disposition role-output records from older generations can combine with the global disposition flag and make current-generation closure look complete.
+- The root class is split authority: the active batch/generation is the real state, but next-action selection, stale-save merge, material dispatch blocking, and role-output reconciliation can still consult old run-wide flags.
+
+### Skipped Or Limited
+
+- No production FlowPilot runtime fix was implemented in this model-upgrade pass.
+- No heavyweight meta/capability project checks were run because this pass changed the model/audit layer only, not Router behavior or skill routing.
+- No install sync, commit, GitHub push, tag, release, deploy, or publication was performed.
+
+### Next Actions
+
+- Implement the minimal runtime root fix by making material progress read from the active batch/generation projection, not directly from run-wide flags.
+- Add a generation-aware stale-save exception so cleared material progress flags are not resurrected for a new active generation.
+- Require material role-output disposition closure to use scoped current-generation identity before any run-wide flag shortcut.

@@ -171,7 +171,11 @@ def _record_router_reconciled_external_event(
     scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
     if _scoped_event_is_recorded(run_state, scoped_identity):
         return False
-    if run_state.setdefault("flags", {}).get(flag) and not repeatable:
+    scoped_identity_requires_fresh_record = (
+        event == "pm_records_material_scan_result_disposition"
+        and scoped_identity is not None
+    )
+    if run_state.setdefault("flags", {}).get(flag) and not repeatable and not scoped_identity_requires_fresh_record:
         return False
     run_state["flags"][flag] = True
     run_state.setdefault("events", []).append(
