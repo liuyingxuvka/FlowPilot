@@ -18292,3 +18292,87 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Add a new hard-gate row whenever a future miss involves authority mismatch,
   stale proof, peer-run interference, progress-only evidence, or terminal
   overclaiming.
+
+## 2026-05-25 - End-to-End Synthetic Agent Chaos Replay
+
+- Task id: `flowpilot-e2e-synthetic-agent-chaos-replay-20260525`
+- Status: implemented, validated locally, installed skill synced, KB
+  postflight recorded, and prepared for scoped local commit
+- Skill decision: use_openspec + FlowGuard ExistingModelPreflight,
+  DevelopmentProcessFlow, TestMesh, and Model-Test Alignment
+- OpenSpec change: `add-end-to-end-synthetic-agent-chaos-replay`
+- FlowGuard schema: `1.0`
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_e2e_synthetic_chaos_matrix.py` plus generated
+  results for six finite full-flow fake-AI chaos rows.
+- Added runtime replay tests for golden startup-to-terminal flow, worker
+  bad-package then repair, PM repair bad then corrected, progress-only
+  background proof then final proof, peer-run isolation, and terminal overclaim
+  then clean closure.
+- Registered the matrix and replay tests in the fast tier and model-test
+  alignment evidence so future tier or evidence changes cannot silently drop
+  the full-flow chaos coverage.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_e2e_synthetic_chaos_matrix.py --json-out simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_matrix.py -q`
+  -> 3 passed, 13 subtests passed.
+- OK: `python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py -q`
+  -> 6 passed.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py tests/test_flowpilot_model_test_alignment.py -q`
+  -> 37 passed, 545 subtests passed.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python scripts/run_test_tier.py --tier fast --json`.
+- OK in background contract: router-startup supervisor under
+  `tmp/flowguard_background/router_startup_e2e_chaos/`, exit code `0`,
+  completed 8/8, proof reuse false.
+- OK in background contract: router-packets supervisor under
+  `tmp/flowguard_background/router_packets_e2e_chaos/`, exit code `0`,
+  completed 9/9, proof reuse false.
+- OK in background contract: router-terminal supervisor under
+  `tmp/flowguard_background/router_terminal_e2e_chaos/`, exit code `0`,
+  completed 25/25, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed,
+  proof reuse false, latest update verified in the current task window.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status
+  passed, proof reuse false, latest update verified in the current task window.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- Full-flow replay now covers not only normal AI package flow but also combined
+  process hazards across startup, active worker delivery, PM repair,
+  background proof gating, peer-run authority, and terminal closure.
+- Known-bad matrix checks reject missing phase coverage, missing evidence,
+  missing protected invariant, missing recovery route, missing final state, and
+  progress-only proof overclaim.
+- A stale Meta/Capability artifact set was rejected because timestamps did not
+  match the current task window; both checks were rerun and verified before
+  being counted as proof.
+- No production runtime behavior was changed in this pass.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, archive, or public publication was
+  performed.
+- This is not a mathematical guarantee for every future AI behavior. The
+  confidence claim is bounded to the finite full-flow chaos rows, current
+  FlowGuard models, current router runtime, and executable evidence listed
+  above.
+
+### Next Actions
+
+- Archive `add-end-to-end-synthetic-agent-chaos-replay` after review if the
+  implementation evidence is accepted.
+- Add a new E2E chaos row whenever a future miss spans multiple phases,
+  involves a control-plane blocker, depends on PM repair, crosses peer-run
+  authority, or can be mistaken for terminal completion.

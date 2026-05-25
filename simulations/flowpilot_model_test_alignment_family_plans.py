@@ -329,6 +329,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, FAILURE),
             ),
             _obligation(
+                "router_loop.e2e_synthetic_chaos_replay",
+                obligation_type="scenario",
+                description="Daemon-driven fake AI replays cross startup, packet dispatch, repair, proof, parallel-run isolation, and terminal closure without treating bad packages as completion.",
+                required_test_kinds=(HAPPY, FAILURE, EDGE),
+            ),
+            _obligation(
                 "daemon.lock_status_and_queue_progress",
                 obligation_type="invariant",
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
@@ -357,6 +363,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_router_runtime_packets",
                 test_kind=FAILURE,
                 covers=("router_loop.packet_result_review_loop",),
+            ),
+            _evidence(
+                "router_loop.e2e.happy.startup_to_terminal",
+                test_name="test_e2e_golden_fake_ai_run_reaches_clean_terminal_lifecycle",
+                path="tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                test_kind=HAPPY,
+                covers=("router_loop.e2e_synthetic_chaos_replay",),
+            ),
+            _evidence(
+                "router_loop.e2e.failure.worker_repair",
+                test_name="test_e2e_worker_bad_package_then_repair_continues_to_terminal",
+                path="tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                test_kind=FAILURE,
+                covers=("router_loop.e2e_synthetic_chaos_replay",),
+            ),
+            _evidence(
+                "router_loop.e2e.edge.parallel_isolation",
+                test_name="test_e2e_parallel_run_peer_stop_does_not_mutate_current_run",
+                path="tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                test_kind=EDGE,
+                covers=("router_loop.e2e_synthetic_chaos_replay",),
             ),
             _evidence(
                 "daemon.happy.formal_startup",

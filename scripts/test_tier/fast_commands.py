@@ -51,6 +51,15 @@ FAST_COMMANDS = (
         description="Hard-gate red-team matrix for fake AI packages, state invariants, and recovery routes.",
     ),
     TierCommand(
+        name="e2e_synthetic_chaos_matrix",
+        command=_py(
+            "simulations/flowpilot_e2e_synthetic_chaos_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json",
+        ),
+        description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -78,6 +87,16 @@ FAST_COMMANDS = (
         "hard_gate_red_team_replay_tests",
         "tests/test_flowpilot_hard_gate_red_team_replay.py",
         description="Runtime red-team replays for fake AI packages rejected without protected state mutation.",
+    ),
+    _pytest(
+        "e2e_synthetic_chaos_matrix_tests",
+        "tests/test_flowpilot_e2e_synthetic_chaos_matrix.py",
+        description="Focused tests for full-flow synthetic chaos coverage rows and known-bad matrix rejection.",
+    ),
+    _pytest(
+        "e2e_synthetic_chaos_replay_tests",
+        "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+        description="End-to-end fake AI replays across Router daemon, recovery, proof, isolation, and closure gates.",
     ),
     _pytest(
         "model_test_alignment_tests",

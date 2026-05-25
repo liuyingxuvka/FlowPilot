@@ -9,7 +9,7 @@
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 40,
+  "required_cell_count": 43,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -171,6 +171,24 @@
       "branch_kind": "happy_path",
       "family": "router loop/daemon",
       "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay"
+    },
+    {
+      "branch_kind": "failure_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
       "obligation_id": "daemon.lock_status_and_queue_progress"
     },
     {
@@ -253,7 +271,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 65,
+  "row_count": 68,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -982,6 +1000,90 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "test_current_node_completion_requires_reviewer_passed_packet_audit"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.e2e.happy.startup_to_terminal",
+      "evidence_owner": "test_flowpilot_e2e_synthetic_chaos_replay",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_e2e_golden_fake_ai_run_reaches_clean_terminal_lifecycle"
+    },
+    {
+      "branch_kind": "failure_path",
+      "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.e2e.failure.worker_repair",
+      "evidence_owner": "test_flowpilot_e2e_synthetic_chaos_replay",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_e2e_worker_bad_package_then_repair_continues_to_terminal"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.e2e.edge.parallel_isolation",
+      "evidence_owner": "test_flowpilot_e2e_synthetic_chaos_replay",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.e2e_synthetic_chaos_replay",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_e2e_parallel_run_peer_stop_does_not_mutate_current_run"
     },
     {
       "branch_kind": "happy_path",
@@ -2082,7 +2184,7 @@
   "rows_by_coverage_kind": {
     "background_artifact": 1,
     "fixture_trace": 1,
-    "ordinary_runtime": 42,
+    "ordinary_runtime": 45,
     "synthetic_trace": 21
   },
   "rows_by_family": {
@@ -2093,7 +2195,7 @@
     "packet/card/ack": 10,
     "role/output contracts": 6,
     "route mutation": 6,
-    "router loop/daemon": 8,
+    "router loop/daemon": 11,
     "startup": 4,
     "terminal/closure/resume": 11,
     "test tiering/slow-test contracts": 6
