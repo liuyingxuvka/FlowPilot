@@ -14,40 +14,15 @@ from flowpilot_router_errors import RouterError
 _RUN_STATE_LOAD_META_HASH = "_flowpilot_loaded_run_state_hash"
 _RUN_STATE_LOAD_META_FLAGS = "_flowpilot_loaded_run_state_flags"
 _RUN_STATE_LOAD_META_PENDING = "_flowpilot_loaded_pending_action"
-_RUN_STATE_VOLATILE_META_KEYS = {
-    _RUN_STATE_LOAD_META_HASH,
-    _RUN_STATE_LOAD_META_FLAGS,
-    _RUN_STATE_LOAD_META_PENDING,
-}
-_RUN_STATE_APPEND_ONLY_LIST_FIELDS = (
-    "history",
-    "events",
-    "quarantined_role_reports",
-    "control_blockers",
-    "resolved_control_blockers",
-    "protocol_blockers",
-    "gate_decisions",
-    "delivered_cards",
-    "delivered_mail",
-)
-_RUN_STATE_PENDING_REMINDER_FIELDS = (
-    "last_wait_reminder_at",
-    "last_wait_reminder_sha256",
-    "wait_reminder_text",
-    "wait_reminder_text_sha256",
-    "last_liveness_probe",
-    "liveness_probe_result",
-)
-_MATERIAL_GENERATION_PROGRESS_FLAGS = {
-    "material_scan_packets_relayed",
-    "worker_packets_delivered",
-    "worker_scan_results_returned",
-    "material_scan_results_relayed_to_pm",
-    "material_scan_result_disposition_recorded",
-    "material_scan_results_absorbed_by_pm",
-    "material_review_sufficient",
-    "material_review_insufficient",
-}
+_RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER = "_flowpilot_loaded_active_control_blocker"
+_RUN_STATE_VOLATILE_META_KEYS = {_RUN_STATE_LOAD_META_HASH, _RUN_STATE_LOAD_META_FLAGS, _RUN_STATE_LOAD_META_PENDING, _RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER}
+_RUN_STATE_APPEND_ONLY_LIST_FIELDS = ("history", "events", "quarantined_role_reports", "control_blockers", "resolved_control_blockers", "protocol_blockers",
+                                      "gate_decisions", "delivered_cards", "delivered_mail")
+_RUN_STATE_PENDING_REMINDER_FIELDS = ("last_wait_reminder_at", "last_wait_reminder_sha256", "wait_reminder_text", "wait_reminder_text_sha256",
+                                      "last_liveness_probe", "liveness_probe_result")
+_MATERIAL_GENERATION_PROGRESS_FLAGS = {"material_scan_packets_relayed", "worker_packets_delivered", "worker_scan_results_returned",
+                                       "material_scan_results_relayed_to_pm", "material_scan_result_disposition_recorded",
+                                       "material_scan_results_absorbed_by_pm", "material_review_sufficient", "material_review_insufficient"}
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -92,6 +67,8 @@ def _attach_run_state_load_metadata(state: dict[str, Any]) -> dict[str, Any]:
     state[_RUN_STATE_LOAD_META_FLAGS] = dict(flags)
     pending = state.get("pending_action") if isinstance(state.get("pending_action"), dict) else None
     state[_RUN_STATE_LOAD_META_PENDING] = _json_clone(pending) if pending else None
+    active_blocker = state.get("active_control_blocker") if isinstance(state.get("active_control_blocker"), dict) else None
+    state[_RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER] = _json_clone(active_blocker) if active_blocker else None
     return state
 
 
@@ -117,6 +94,22 @@ def _same_optional_pending_wait_identity(first: Any, second: Any) -> bool:
     if first_pending is None or second_pending is None:
         return first_pending is None and second_pending is None
     return _same_pending_wait_identity(first_pending, second_pending)
+
+
+def _same_active_control_blocker_identity(first: dict[str, Any], second: dict[str, Any]) -> bool:
+    first_key = str(first.get("blocker_id") or first.get("blocker_artifact_path") or "")
+    second_key = str(second.get("blocker_id") or second.get("blocker_artifact_path") or "")
+    if first_key and second_key:
+        return first_key == second_key
+    return first == second
+
+
+def _same_optional_active_control_blocker_identity(first: Any, second: Any) -> bool:
+    first_blocker = first if isinstance(first, dict) else None
+    second_blocker = second if isinstance(second, dict) else None
+    if first_blocker is None or second_blocker is None:
+        return first_blocker is None and second_blocker is None
+    return _same_active_control_blocker_identity(first_blocker, second_blocker)
 
 
 def _merge_pending_wait_reminder_state(existing: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
@@ -164,6 +157,29 @@ def _merge_stale_pending_action_projection(existing: Any, current: Any, loaded: 
     return None
 
 
+def _merge_stale_active_control_blocker_projection(existing: Any, current: Any, loaded: Any) -> dict[str, Any] | None:
+    existing_blocker = existing if isinstance(existing, dict) else None
+    current_blocker = current if isinstance(current, dict) else None
+    loaded_blocker = loaded if isinstance(loaded, dict) else None
+    if existing_blocker is not None and current_blocker is not None:
+        current_is_unchanged = _same_optional_active_control_blocker_identity(current_blocker, loaded_blocker)
+        existing_is_unchanged = _same_optional_active_control_blocker_identity(existing_blocker, loaded_blocker)
+        if current_is_unchanged and not existing_is_unchanged:
+            return _json_clone(existing_blocker)
+        if existing_is_unchanged and not current_is_unchanged:
+            return _json_clone(current_blocker)
+        return _json_clone(existing_blocker)
+    if existing_blocker is not None and current_blocker is None:
+        if loaded_blocker is not None and _same_active_control_blocker_identity(existing_blocker, loaded_blocker):
+            return None
+        return _json_clone(existing_blocker)
+    if existing_blocker is None and current_blocker is not None:
+        if loaded_blocker is not None and _same_active_control_blocker_identity(current_blocker, loaded_blocker):
+            return None
+        return _json_clone(current_blocker)
+    return None
+
+
 def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any]) -> dict[str, Any]:
     merged = _public_run_state_snapshot(current)
     if existing.get("schema_version") != merged.get("schema_version") or existing.get("run_id") != merged.get("run_id"):
@@ -199,6 +215,19 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
         merged.get("pending_action"),
         current.get(_RUN_STATE_LOAD_META_PENDING),
     )
+    merged_active_blocker = _merge_stale_active_control_blocker_projection(
+        existing.get("active_control_blocker"),
+        merged.get("active_control_blocker"),
+        current.get(_RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER),
+    )
+    merged["active_control_blocker"] = merged_active_blocker
+    if isinstance(merged_active_blocker, dict):
+        if _same_optional_active_control_blocker_identity(merged_active_blocker, existing.get("active_control_blocker")):
+            merged["latest_control_blocker_path"] = existing.get("latest_control_blocker_path")
+        elif not merged.get("latest_control_blocker_path"):
+            merged["latest_control_blocker_path"] = merged_active_blocker.get("blocker_artifact_path")
+    else:
+        merged["latest_control_blocker_path"] = None
     return merged
 
 
@@ -279,23 +308,10 @@ def save_run_state(router: ModuleType, run_root: Path, state: dict[str, Any]) ->
     _attach_run_state_load_metadata(state)
 
 
-__all__ = (
-    "_RUN_STATE_LOAD_META_HASH",
-    "_RUN_STATE_LOAD_META_FLAGS",
-    "_RUN_STATE_LOAD_META_PENDING",
-    "_json_clone",
-    "_public_run_state_snapshot",
-    "_run_state_snapshot_hash",
-    "_attach_run_state_load_metadata",
-    "_merge_append_only_run_state_list",
-    "_same_pending_wait_identity",
-    "_same_optional_pending_wait_identity",
-    "_merge_pending_wait_reminder_state",
-    "_merge_stale_pending_action_projection",
-    "_merge_stale_run_state_save",
-    "load_run_state",
-    "load_run_state_from_run_root",
-    "save_run_state",
-)
+__all__ = ("_RUN_STATE_LOAD_META_HASH", "_RUN_STATE_LOAD_META_FLAGS", "_RUN_STATE_LOAD_META_PENDING",
+           "_RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER", "_json_clone", "_public_run_state_snapshot", "_run_state_snapshot_hash",
+           "_attach_run_state_load_metadata", "_merge_append_only_run_state_list", "_same_pending_wait_identity",
+           "_same_optional_pending_wait_identity", "_merge_pending_wait_reminder_state", "_merge_stale_pending_action_projection",
+           "_merge_stale_run_state_save", "load_run_state", "load_run_state_from_run_root", "save_run_state")
 
 _LOCAL_NAMES = set(globals())

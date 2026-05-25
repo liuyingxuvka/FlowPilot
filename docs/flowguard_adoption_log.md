@@ -18130,3 +18130,90 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - If the foreground-controller timing-sensitive parallel failure recurs, isolate and harden that shard's lock timing assumptions.
 - Archive `expand-synthetic-exception-trace-packs` after review if the implementation evidence is accepted.
+
+## 2026-05-25 - add-systemic-synthetic-agent-replay
+
+- Project: FlowPilot
+- Trigger reason: User requested a complete plan execution for fake AI work
+  packages that cover high-risk AI workflow branches, especially control-plane
+  blockers, PM repair loops, stale restart state, peer interference, and final
+  terminal gates.
+- Status: implemented, validated locally, installed skill synced, and prepared
+  for scoped local commit
+- Skill decision: use_openspec + use_flowguard:model-test alignment,
+  TestMesh, DevelopmentProcessFlow
+- OpenSpec change: `add-systemic-synthetic-agent-replay`
+- FlowGuard schema: `1.0`
+
+### Changed Surfaces
+
+- Added six system-level synthetic agent replay stories for valid-envelope bad
+  content, stacked blockers, failed PM repair loops, stale restart state, peer
+  interference, and terminal total-gate rejection.
+- Extended the synthetic replay coverage matrix with `story_level`,
+  `recovery_loop`, `story_steps`, and `terminal_expectation`.
+- Added known-bad matrix coverage for missing system replay metadata and
+  live-completion overclaims.
+- Fixed runtime state stale-save merging so stale saves cannot clear or replace
+  a newer foreground `active_control_blocker`.
+- Hardened two foreground-controller write-lock tests whose short timing window
+  was flaky under parallel background load.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate add-systemic-synthetic-agent-replay --strict`.
+- OK: `python -m py_compile` for changed runtime, replay test, and coverage
+  matrix files.
+- OK: `python -m pytest tests/test_flowpilot_runtime_state_persistence.py -q`.
+- OK: focused system replay stale-save regression test.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_synthetic_agent_coverage_matrix.py -q`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python scripts/run_test_tier.py --tier fast`.
+- OK: selected foreground controller runtime slices after the timing hardening.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, proof reuse
+  false, status `passed`.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, proof reuse
+  false, status `passed`.
+- OK in background contract: router-route systemic replay supervisor under
+  `tmp/flowguard_background/router_route_systemic_replay/`, exit code `0`.
+- OK in standalone background contract: material-modeling intake, scan-relay,
+  and modelability slices under
+  `tmp/flowguard_background/router_material_systemic_replay/`, exit code `0`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The new replay packages cover cross-step failure stories rather than only
+  one-branch unit exceptions.
+- The runtime merge bug was real: a stale loaded run state could otherwise
+  erase or overwrite a newer foreground active control blocker.
+- The matrix now rejects system-level synthetic rows that omit recovery-loop or
+  terminal-expectation metadata.
+- Foreground-controller lock-timing tests needed a wider settlement window to
+  remain reliable when other model regressions run concurrently.
+- Some old background supervisor metadata remained `running` after interruption
+  without live processes or exit artifacts; those records were not counted as
+  pass evidence.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, archive, or public publication was
+  performed.
+- This does not claim a mathematical no-bug guarantee for all future AI
+  behavior. The claim is bounded to the modeled high-risk branches, executable
+  replay packages, and current FlowGuard/test evidence.
+
+### Next Actions
+
+- Keep adding a system-level replay row whenever a future runtime miss involves
+  control-plane blockage, repair loops, stale authority, peer interference, or
+  terminal overclaiming.
+- Treat stale background supervisor metadata without exit artifacts as
+  incomplete evidence even when child logs contain progress or partial passes.

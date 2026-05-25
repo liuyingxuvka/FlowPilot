@@ -68,7 +68,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
             if row["coverage_kind"] in coverage_matrix.SYNTHETIC_NON_LIVE_KINDS
         ]
 
-        self.assertGreaterEqual(len(synthetic_rows), 16)
+        self.assertGreaterEqual(len(synthetic_rows), 22)
         for row in synthetic_rows:
             with self.subTest(evidence_id=row["evidence_id"]):
                 self.assertFalse(row["live_completion_allowed"])
@@ -80,6 +80,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(row["test_name"], trace_test_text)
                 self.assertEqual(row["evidence_status"], "passed")
                 self.assertTrue(row["evidence_current"])
+                self.assertIn(row["story_level"], {"local", "system"})
 
     def test_p0_p1_required_branches_have_synthetic_replay_or_reason(self) -> None:
         report = coverage_matrix.build_report()
@@ -91,7 +92,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         ]
         evidence_ids = {row["evidence_id"] for row in high_risk_rows}
 
-        self.assertGreaterEqual(len(high_risk_rows), 15)
+        self.assertGreaterEqual(len(high_risk_rows), 21)
         self.assertLessEqual(
             {
                 "synthetic.control_blocker.failure.retry_budget_pm_escalation",
@@ -104,6 +105,12 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 "synthetic.controller.failure.boundary_repair_budget_escalation",
                 "synthetic.material.negative.active_generation_blocks_stale_flags",
                 "synthetic.terminal.negative.dirty_pm_suggestion_ledger",
+                "systemic.valid_envelope_bad_content.pm_repair_self_check",
+                "systemic.stacked_blockers.control_preempts_dirty_ledger",
+                "systemic.pm_repair_loop.followup_blocker",
+                "systemic.restart.stale_state_preserves_active_blocker",
+                "systemic.parallel.peer_run_stop_isolated",
+                "systemic.terminal.total_gate_dirty_sources",
             },
             evidence_ids,
         )
@@ -115,6 +122,35 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 else:
                     self.assertTrue(row.get("non_replayable_reason"))
                 self.assertTrue(row["covered_failure_mode"])
+
+    def test_system_level_rows_name_recovery_loop_and_terminal_expectation(self) -> None:
+        report = coverage_matrix.build_report()
+        system_rows = [
+            row
+            for row in report["rows"]
+            if row["story_level"] == "system"
+        ]
+        evidence_ids = {row["evidence_id"] for row in system_rows}
+
+        self.assertEqual(len(system_rows), 6)
+        self.assertLessEqual(
+            {
+                "systemic.valid_envelope_bad_content.pm_repair_self_check",
+                "systemic.stacked_blockers.control_preempts_dirty_ledger",
+                "systemic.pm_repair_loop.followup_blocker",
+                "systemic.restart.stale_state_preserves_active_blocker",
+                "systemic.parallel.peer_run_stop_isolated",
+                "systemic.terminal.total_gate_dirty_sources",
+            },
+            evidence_ids,
+        )
+        for row in system_rows:
+            with self.subTest(evidence_id=row["evidence_id"]):
+                self.assertEqual(row["coverage_kind"], "synthetic_trace")
+                self.assertTrue(row["recovery_loop"])
+                self.assertGreaterEqual(len(row["story_steps"]), 2)
+                self.assertIn(row["terminal_expectation"], coverage_matrix.SYSTEM_TERMINAL_EXPECTATIONS)
+                self.assertFalse(row["live_completion_allowed"])
 
     def test_route_resume_and_role_authority_branches_are_explicit_rows(self) -> None:
         rows = {

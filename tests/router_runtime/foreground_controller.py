@@ -177,7 +177,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
 
         def finish_write() -> None:
-            time.sleep(0.05)
+            time.sleep(0.5)
             action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             unlink_with_windows_retry(write_lock)
 
@@ -222,7 +222,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         os.utime(write_lock, (old, old))
 
         def finish_write() -> None:
-            time.sleep(0.05)
+            time.sleep(0.5)
             action_path.write_text(json.dumps(original_entry, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             unlink_with_windows_retry(write_lock)
 

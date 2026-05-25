@@ -123,6 +123,54 @@ class RuntimeStatePersistenceTests(unittest.TestCase):
         self.assertFalse(merged["flags"]["material_scan_results_relayed_to_pm"])
         self.assertFalse(merged["flags"]["material_scan_result_disposition_recorded"])
 
+    def test_stale_save_preserves_foreground_active_control_blocker(self) -> None:
+        run_root = Path(".flowpilot/runs/run-persistence-active-blocker-test")
+        loaded_state = _base_state(run_root)
+        persistence._attach_run_state_load_metadata(loaded_state)
+
+        foreground_state = _base_state(run_root)
+        foreground_state["active_control_blocker"] = {
+            "blocker_id": "control-blocker-foreground",
+            "blocker_artifact_path": ".flowpilot/runs/run-persistence-active-blocker-test/control_blocks/foreground.json",
+            "delivery_status": "pending",
+        }
+        foreground_state["latest_control_blocker_path"] = foreground_state["active_control_blocker"]["blocker_artifact_path"]
+
+        merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
+
+        self.assertEqual(merged["active_control_blocker"]["blocker_id"], "control-blocker-foreground")
+        self.assertEqual(
+            merged["latest_control_blocker_path"],
+            ".flowpilot/runs/run-persistence-active-blocker-test/control_blocks/foreground.json",
+        )
+
+    def test_stale_save_cannot_replace_newer_active_control_blocker_with_loaded_one(self) -> None:
+        run_root = Path(".flowpilot/runs/run-persistence-active-blocker-replacement-test")
+        loaded_state = _base_state(run_root)
+        loaded_state["active_control_blocker"] = {
+            "blocker_id": "control-blocker-loaded",
+            "blocker_artifact_path": ".flowpilot/runs/run-persistence-active-blocker-replacement-test/control_blocks/loaded.json",
+            "delivery_status": "pending",
+        }
+        loaded_state["latest_control_blocker_path"] = loaded_state["active_control_blocker"]["blocker_artifact_path"]
+        persistence._attach_run_state_load_metadata(loaded_state)
+
+        foreground_state = _base_state(run_root)
+        foreground_state["active_control_blocker"] = {
+            "blocker_id": "control-blocker-foreground",
+            "blocker_artifact_path": ".flowpilot/runs/run-persistence-active-blocker-replacement-test/control_blocks/foreground.json",
+            "delivery_status": "delivered",
+        }
+        foreground_state["latest_control_blocker_path"] = foreground_state["active_control_blocker"]["blocker_artifact_path"]
+
+        merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
+
+        self.assertEqual(merged["active_control_blocker"]["blocker_id"], "control-blocker-foreground")
+        self.assertEqual(
+            merged["latest_control_blocker_path"],
+            ".flowpilot/runs/run-persistence-active-blocker-replacement-test/control_blocks/foreground.json",
+        )
+
     def test_parent_facade_delegates_load_and_stale_save_to_child(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-state-persistence-") as tmp:
             project_root = Path(tmp)

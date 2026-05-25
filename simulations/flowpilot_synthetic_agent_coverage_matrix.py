@@ -25,6 +25,7 @@ PASS_STATUSES = {"passed"}
 BACKGROUND_INCOMPLETE_STATUSES = {"progress_only", "running", "missing", "stale", "failed"}
 SYNTHETIC_NON_LIVE_KINDS = {"synthetic_trace", "fixture_trace"}
 REPLAY_REQUIRED_RISK_TIERS = {"P0", "P1"}
+SYSTEM_TERMINAL_EXPECTATIONS = {"blocked", "continue_allowed", "completion_rejected"}
 REQUIRED_ROW_FIELDS = (
     "family",
     "model_id",
@@ -41,6 +42,7 @@ REQUIRED_ROW_FIELDS = (
     "synthetic_replay_required",
     "synthetic_replay_status",
     "covered_failure_mode",
+    "story_level",
 )
 
 ALIGNMENT_ROW_DEFAULTS = {
@@ -49,6 +51,10 @@ ALIGNMENT_ROW_DEFAULTS = {
     "synthetic_replay_status": "not_required",
     "non_replayable_reason": "",
     "covered_failure_mode": "ordinary_model_test_alignment",
+    "story_level": "local",
+    "recovery_loop": "",
+    "story_steps": [],
+    "terminal_expectation": "",
 }
 
 EXPLICIT_TRACE_ROW_DEFAULTS = {
@@ -57,6 +63,10 @@ EXPLICIT_TRACE_ROW_DEFAULTS = {
     "synthetic_replay_status": "present",
     "non_replayable_reason": "",
     "covered_failure_mode": "baseline_synthetic_trace_contract",
+    "story_level": "local",
+    "recovery_loop": "",
+    "story_steps": [],
+    "terminal_expectation": "",
 }
 
 
@@ -363,6 +373,144 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "covered_failure_mode": "dirty_pm_suggestion_ledger_blocks_final_completion",
     },
     {
+        "family": "control blockers",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.valid_envelope_bad_content_rejected",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.valid_envelope_bad_content.pm_repair_self_check",
+        "test_name": "test_system_story_valid_repair_envelope_bad_content_is_rejected",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "valid_role_envelope_with_bad_repair_content_is_rejected",
+        "story_level": "system",
+        "recovery_loop": "pm_repair_content_rejection",
+        "story_steps": ["control_blocker", "pm_repair_envelope", "bad_content_rejected"],
+        "terminal_expectation": "blocked",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.stacked_blockers_preempt_dirty_ledger",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.stacked_blockers.control_preempts_dirty_ledger",
+        "test_name": "test_system_story_stacked_blockers_preempt_and_preserve_dirty_ledger",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "active_control_blocker_preempts_and_preserves_dirty_ledger",
+        "story_level": "system",
+        "recovery_loop": "control_blocker_preemption",
+        "story_steps": ["active_control_blocker", "dirty_pm_suggestion_ledger", "handle_control_blocker"],
+        "terminal_expectation": "blocked",
+    },
+    {
+        "family": "material modeling",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.failed_pm_repair_loop_escalates",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.pm_repair_loop.followup_blocker",
+        "test_name": "test_system_story_failed_pm_repair_loop_registers_followup_blocker",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "pm_repair_attempt_that_still_blocks_registers_followup_blocker",
+        "story_level": "system",
+        "recovery_loop": "pm_repair_escalation",
+        "story_steps": ["pm_repair_decision", "repair_transaction", "recheck_blocked", "followup_blocker"],
+        "terminal_expectation": "blocked",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.stale_state_cannot_clear_active_blocker",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.restart.stale_state_preserves_active_blocker",
+        "test_name": "test_system_story_stale_run_state_save_cannot_clear_active_blocker",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "stale_state_save_cannot_clear_current_control_blocker",
+        "story_level": "system",
+        "recovery_loop": "stale_state_quarantine",
+        "story_steps": ["stale_state_loaded", "foreground_blocker_written", "stale_save_attempt", "blocker_preserved"],
+        "terminal_expectation": "blocked",
+    },
+    {
+        "family": "router loop/daemon",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.parallel_peer_authority_isolated",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.parallel.peer_run_stop_isolated",
+        "test_name": "test_system_story_parallel_run_stop_does_not_touch_peer_authority",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "peer_run_daemon_stop_does_not_overwrite_current_run_authority",
+        "story_level": "system",
+        "recovery_loop": "parallel_run_isolation",
+        "story_steps": ["two_active_locks", "stop_one_run", "peer_lock_preserved"],
+        "terminal_expectation": "continue_allowed",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "systemic_synthetic_agent_replay",
+        "obligation_id": "systemic.terminal_total_gate_rejects_dirty_sources",
+        "branch_kind": "system_recovery_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "systemic_synthetic_agent_replay",
+        "evidence_id": "systemic.terminal.total_gate_dirty_sources",
+        "test_name": "test_system_story_terminal_total_gate_rejects_multiple_dirty_sources",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "terminal_closure_rejects_multiple_dirty_sources",
+        "story_level": "system",
+        "recovery_loop": "terminal_total_gate",
+        "story_steps": ["final_replay_ready", "dirty_pm_suggestion", "dirty_self_interrogation", "dirty_defect", "closure_rejected"],
+        "terminal_expectation": "completion_rejected",
+    },
+    {
         "family": "route mutation",
         "model_id": "route_mutation",
         "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
@@ -628,6 +776,34 @@ def validate_coverage_rows(
                         "evidence_id": str(row.get("evidence_id", "")),
                     }
                 )
+        if row.get("story_level") == "system":
+            if not str(row.get("recovery_loop", "")).strip():
+                findings.append(
+                    {
+                        "code": "missing_system_recovery_loop",
+                        "message": "system-level replay rows must identify the recovery loop they prove",
+                        "evidence_id": str(row.get("evidence_id", "")),
+                    }
+                )
+            story_steps = row.get("story_steps")
+            if not isinstance(story_steps, list) or len(story_steps) < 2 or not all(str(step).strip() for step in story_steps):
+                findings.append(
+                    {
+                        "code": "missing_system_story_steps",
+                        "message": "system-level replay rows must list at least two story steps",
+                        "evidence_id": str(row.get("evidence_id", "")),
+                    }
+                )
+            terminal_expectation = str(row.get("terminal_expectation", ""))
+            if terminal_expectation not in SYSTEM_TERMINAL_EXPECTATIONS:
+                findings.append(
+                    {
+                        "code": "missing_system_terminal_expectation",
+                        "message": "system-level replay rows must declare the terminal expectation",
+                        "evidence_id": str(row.get("evidence_id", "")),
+                        "terminal_expectation": terminal_expectation,
+                    }
+                )
     return findings
 
 
@@ -649,6 +825,10 @@ def known_bad_cases() -> list[dict[str, Any]]:
         "synthetic_replay_status": "not_required",
         "non_replayable_reason": "",
         "covered_failure_mode": "known_bad_default",
+        "story_level": "local",
+        "recovery_loop": "",
+        "story_steps": [],
+        "terminal_expectation": "",
     }
     return [
         {
@@ -721,6 +901,29 @@ def known_bad_cases() -> list[dict[str, Any]]:
             ],
             "required_cells": [],
             "expected_codes": ["missing_non_replayable_reason"],
+        },
+        {
+            "name": "system_replay_missing_recovery_metadata",
+            "rows": [
+                {
+                    **base,
+                    "coverage_kind": "synthetic_trace",
+                    "risk_tier": "P1",
+                    "synthetic_replay_required": True,
+                    "synthetic_replay_status": "present",
+                    "covered_failure_mode": "system_rows_need_recovery_metadata",
+                    "story_level": "system",
+                    "recovery_loop": "",
+                    "story_steps": ["only_one_step"],
+                    "terminal_expectation": "",
+                }
+            ],
+            "required_cells": [],
+            "expected_codes": [
+                "missing_system_recovery_loop",
+                "missing_system_story_steps",
+                "missing_system_terminal_expectation",
+            ],
         },
     ]
 

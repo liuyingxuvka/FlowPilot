@@ -667,6 +667,218 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         with self.assertRaisesRegex(router.RouterError, "clean PM suggestion ledger"):
             router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
 
+    def test_system_story_valid_repair_envelope_bad_content_is_rejected(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="systemic_synthetic_trace",
+            error_message="valid envelope carries a PM repair decision missing self-check content",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/systemic-valid-envelope-bad-content.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        body = self.pm_control_blocker_decision_body(blocker["blocker_id"], rerun_target="pm_writes_route_draft")
+        body.pop("contract_self_check")
+
+        with self.assertRaisesRegex(router.RouterError, "requires contract_self_check"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "systemic/bad_pm_repair_content", body),
+            )
+        saved = read_json(router.run_state_path(run_root))
+        self.assertEqual(saved["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+
+    def test_system_story_stacked_blockers_preempt_and_preserve_dirty_ledger(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="systemic_synthetic_trace",
+            error_message="active blocker must preempt dirty ledger story",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=False)])
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+        router.apply_action(root, "handle_control_blocker")
+        ledger_text = (run_root / "pm_suggestion_ledger.jsonl").read_text(encoding="utf-8")
+        self.assertIn('"closure": {"blocks_current_gate_until_closed": true', ledger_text)
+
+    def test_system_story_failed_pm_repair_loop_registers_followup_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="systemic_synthetic_trace",
+            error_message="PM repair loop still has invalid material dispatch evidence",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "packet_reissue",
+            "replacement_packets": [
+                {
+                    "packet_id": "systemic-material-scan-r1",
+                    "replacement_for": "material-scan-001",
+                    "to_role": "worker_a",
+                    "body_text": "Systemic replay replacement packet with still-blocked dispatch evidence.",
+                }
+            ],
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "systemic/pm_repair_loop_decision", decision),
+        )
+
+        router.record_external_event(
+            root,
+            "router_direct_material_scan_dispatch_recheck_blocked",
+            self.role_report_envelope(
+                root,
+                "systemic/pm_repair_loop_recheck_blocked",
+                {
+                    "checked_by_role": "controller",
+                    "dispatch_allowed": False,
+                    "blockers": ["replacement packet still lacks valid dispatch evidence"],
+                },
+            ),
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        active = state["active_control_blocker"]
+        self.assertNotEqual(active["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(active["handling_lane"], "pm_repair_decision_required")
+        tx_index = read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
+        self.assertIsNone(tx_index["active_transaction"])
+
+    def test_system_story_stale_run_state_save_cannot_clear_active_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        stale_state, _ = router.load_run_state_from_run_root(root, run_root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="systemic_synthetic_trace",
+            error_message="foreground control blocker written after stale state load",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+
+        router.save_run_state(run_root, stale_state)
+
+        saved = read_json(router.run_state_path(run_root))
+        self.assertEqual(saved["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(saved["latest_control_blocker_path"], blocker["blocker_artifact_path"])
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+
+    def test_system_story_parallel_run_stop_does_not_touch_peer_authority(self) -> None:
+        root = self.make_project()
+        run_a = self.write_minimal_run(root, "run-a")
+        run_b = self.write_minimal_run(root, "run-b")
+        self.write_current_focus(root, run_b)
+        state_a = read_json(router.run_state_path(run_a))
+        state_b = read_json(router.run_state_path(run_b))
+        router._acquire_router_daemon_lock(root, run_a, state_a)  # type: ignore[attr-defined]
+        router._acquire_router_daemon_lock(root, run_b, state_b)  # type: ignore[attr-defined]
+
+        stopped = router.stop_router_daemon(root, reason="systemic_peer_stop", run_root=run_a)
+
+        self.assertEqual(stopped["run_id"], "run-a")
+        self.assertEqual(read_json(root / ".flowpilot" / "current.json")["current_run_id"], "run-b")
+        self.assertEqual(read_json(run_a / "runtime" / "router_daemon.lock")["status"], "released")
+        self.assertEqual(read_json(run_b / "runtime" / "router_daemon.lock")["status"], "active")
+        self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])
+        self.assertTrue(read_json(router.run_state_path(run_b))["daemon_mode_enabled"])
+
+    def test_system_story_terminal_total_gate_rejects_multiple_dirty_sources(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="systemic-node-packet-total-gate")
+        self.complete_evidence_quality_package(root)
+        self.complete_final_ledger_and_terminal_replay(root)
+        self.deliver_expected_card(root, "pm.closure")
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=False)])
+        self.write_self_interrogation_record(root, "terminal", clean=False)
+        defect_ledger_path = run_root / "defects" / "defect_ledger.json"
+        router.write_json(
+            defect_ledger_path,
+            {
+                "schema_version": "flowpilot.defect_ledger.v1",
+                "run_id": run_root.name,
+                "route_id": "route-001",
+                "route_version": 1,
+                "pm_owned": True,
+                "status": "active",
+                "counts": {
+                    "total": 1,
+                    "open": 1,
+                    "blocker_open": 1,
+                    "fixed_pending_recheck": 0,
+                    "closed": 0,
+                    "deferred": 0,
+                },
+                "defects": [
+                    {
+                        "defect_id": "systemic-terminal-defect",
+                        "severity": "blocker",
+                        "status": "open",
+                        "pm_triage": {"recheck_role_class": "human_like_reviewer"},
+                        "recheck_paths": [],
+                    }
+                ],
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "defect_ledger|PM suggestion ledger|self_interrogation"):
+            router.record_external_event(
+                root,
+                "pm_approves_terminal_closure",
+                self.role_decision_envelope(
+                    root,
+                    "systemic/terminal_total_gate_dirty_sources",
+                    {
+                        "approved_by_role": "project_manager",
+                        "decision": "approve_terminal_closure",
+                        **self.prior_path_context_review(root, "Terminal closure attempted with multiple dirty sources."),
+                        "final_report": {"status": "complete"},
+                    },
+                ),
+            )
+        state = read_json(router.run_state_path(run_root))
+        self.assertNotEqual(state["status"], "closed")
+
 
 if __name__ == "__main__":
     unittest.main()
