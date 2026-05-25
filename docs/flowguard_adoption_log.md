@@ -18376,3 +18376,82 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Add a new E2E chaos row whenever a future miss spans multiple phases,
   involves a control-plane blocker, depends on PM repair, crosses peer-run
   authority, or can be mistaken for terminal completion.
+
+## 2026-05-26 - Control-Plane Failure Canary
+
+- Trigger: user asked to extend fake-AI testing beyond normal package flow so
+  control-plane lock, daemon, resume, peer-run, terminal, and background-proof
+  failures are covered by runnable evidence.
+- Status: implemented, validated locally, installed skill synced, and prepared
+  for scoped local commit.
+- Skill decision: use_openspec + FlowGuard ExistingModelPreflight,
+  DevelopmentProcessFlow, TestMesh, and Model-Test Alignment.
+- OpenSpec change: `add-control-plane-failure-canary`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_control_plane_failure_canary_matrix.py` plus
+  generated results for seven finite control-plane failure rows.
+- Added runtime replay canaries for fresh write-lock recovery, corrupt scheduler
+  ledger handling, dead daemon resume restart, duplicate heartbeat resume,
+  peer-run stop isolation, background progress-only proof rejection, and
+  terminal stop while scheduler cleanup is blocked.
+- Registered the canary matrix and replay tests in fast tier and model-test
+  alignment so future tier or evidence edits cannot silently drop them.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_control_plane_failure_canary_matrix.py --json-out simulations/flowpilot_control_plane_failure_canary_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_control_plane_failure_canary_matrix.py`.
+- OK: `python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py`.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py tests/test_flowpilot_model_test_alignment.py`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python scripts/run_test_tier.py --tier fast --json`.
+- OK in background contract: router-startup supervisor under
+  `tmp/flowguard_background/`, exit code `0`, status passed, proof reuse false.
+- OK in background contract: router-foreground supervisor under
+  `tmp/flowguard_background/`, exit code `0`, status passed, proof reuse false.
+- OK in background contract: router-terminal supervisor under
+  `tmp/flowguard_background/`, exit code `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed,
+  proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status
+  passed, proof reuse false.
+- OK: `openspec validate add-control-plane-failure-canary --strict`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- Control-plane fake work packages now cover the failure surfaces most likely to
+  produce real bugs after the normal AI package path already passes.
+- A duplicate heartbeat wake keeps the historical resume-request flag after
+  `load_resume_state`; the canary now checks the real invariant instead:
+  liveness was checked once and the next legal action is role rehydration, not a
+  second resume-load loop.
+- The old PowerShell background wrapper wrote BOM-prefixed exit files and used
+  `completed` as meta status; the current task normalized the final evidence to
+  the stable classifier contract after verifying actual exit code `0`.
+- No production runtime behavior was changed in this pass.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, archive, or public publication was
+  performed.
+- This is not an absolute proof for every possible OS, hardware, antivirus, or
+  future live-AI failure. The confidence claim is bounded to the finite canary
+  rows, current FlowGuard models, current Router runtime, and listed executable
+  evidence.
+
+### Next Actions
+
+- Archive `add-control-plane-failure-canary` after review if the implementation
+  evidence is accepted.
+- Convert the background wrapper normalization into a reusable helper if future
+  tasks still launch Meta/Capability outside `scripts/run_test_tier.py`.

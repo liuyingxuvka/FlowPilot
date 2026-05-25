@@ -60,6 +60,15 @@ FAST_COMMANDS = (
         description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays.",
     ),
     TierCommand(
+        name="control_plane_failure_canary_matrix",
+        command=_py(
+            "simulations/flowpilot_control_plane_failure_canary_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_control_plane_failure_canary_matrix_results.json",
+        ),
+        description="Control-plane canary matrix for locks, daemon liveness, resume, authority, fences, and proof artifacts.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -97,6 +106,16 @@ FAST_COMMANDS = (
         "e2e_synthetic_chaos_replay_tests",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
         description="End-to-end fake AI replays across Router daemon, recovery, proof, isolation, and closure gates.",
+    ),
+    _pytest(
+        "control_plane_failure_canary_matrix_tests",
+        "tests/test_flowpilot_control_plane_failure_canary_matrix.py",
+        description="Focused tests for bounded control-plane failure canary rows and known-bad rejection.",
+    ),
+    _pytest(
+        "control_plane_failure_canary_replay_tests",
+        "tests/test_flowpilot_control_plane_failure_canary_replay.py",
+        description="Runtime control-plane canaries for locks, daemon liveness, duplicate resume, peer stops, fences, and proof gates.",
     ),
     _pytest(
         "model_test_alignment_tests",

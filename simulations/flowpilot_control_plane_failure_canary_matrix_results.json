@@ -1,0 +1,313 @@
+{
+  "coverage_boundary": "Rows prove bounded control-plane recovery through isolated fake-control failures: locks, runtime persistence, daemon liveness, duplicate resume, peer-run authority, terminal fences, and background artifacts. They do not prove every OS, hardware, antivirus, or live AI failure.",
+  "findings": [],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_protected_state_invariant",
+        "missing_required_canary"
+      ],
+      "name": "missing_protected_state_invariant",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "blocked_until_repair",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_recovery_route",
+        "missing_required_canary"
+      ],
+      "name": "missing_recovery_route",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "",
+          "standard_final_state": "blocked_until_repair",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_standard_final_state",
+        "missing_required_canary"
+      ],
+      "name": "missing_standard_final_state",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_evidence_test",
+        "missing_required_canary"
+      ],
+      "name": "missing_evidence_test",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "blocked_until_repair",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "progress_only_final_proof_overclaim",
+        "missing_required_canary"
+      ],
+      "name": "progress_only_final_proof_overclaim",
+      "rows": [
+        {
+          "canary_id": "control.background.progress_only_not_proof",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "progress_only_background_artifact",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "closed",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_state_mutation_overclaim",
+        "missing_required_canary"
+      ],
+      "name": "live_state_mutation_overclaim",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": true,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "blocked_until_repair",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": "known_bad_fixture_only"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_unmodeled_failure_boundary",
+        "missing_required_canary"
+      ],
+      "name": "missing_unmodeled_failure_boundary",
+      "rows": [
+        {
+          "canary_id": "known.bad",
+          "destructive_live_state_mutation": false,
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_canary",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "failure_injection": "known_bad",
+          "protected_state_invariant": "state_is_not_mutated_by_bad_control_input",
+          "recovery_route": "retry_after_repair",
+          "standard_final_state": "blocked_until_repair",
+          "surface": "runtime_json_lock",
+          "unmodeled_failure_boundary": ""
+        }
+      ]
+    }
+  ],
+  "ok": true,
+  "required_canary_count": 7,
+  "result_type": "flowpilot_control_plane_failure_canary_matrix",
+  "row_count": 7,
+  "rows": [
+    {
+      "canary_id": "control.lock.fresh_write_waits_then_recovers",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.lock.fresh_write_waits_then_recovers",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_fresh_scheduler_write_lock_waits_then_recovers",
+      "expected_outcome": "router_waits_on_fresh_lock_then_continues_after_valid_json_is_restored",
+      "failure_injection": "fresh_controller_or_scheduler_write_lock_then_writer_finishes",
+      "protected_state_invariant": "fresh_runtime_lock_is_not_stolen_and_settlement_is_recorded",
+      "recovery_route": "runtime_write_settlement_wait_then_retry",
+      "standard_final_state": "valid_runtime_ledger_and_no_stray_write_lock",
+      "surface": "runtime_json_lock",
+      "unmodeled_failure_boundary": "does_not_model_kernel_level_file_handle_loss_after_successful_json_replace"
+    },
+    {
+      "canary_id": "control.persistence.corrupt_scheduler_blocks_daemon",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.persistence.corrupt_scheduler_blocks_daemon",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_corrupt_scheduler_ledger_marks_daemon_error_not_live",
+      "expected_outcome": "daemon_records_error_status_and_stops_claiming_live_progress",
+      "failure_injection": "scheduler_ledger_contains_valid_prefix_plus_trailing_broken_bytes",
+      "protected_state_invariant": "corrupt_runtime_ledger_never_counts_as_daemon_progress",
+      "recovery_route": "daemon_error_status_then_manual_or_replay_repair",
+      "standard_final_state": "daemon_error_status_with_daemon_live_false",
+      "surface": "runtime_persistence",
+      "unmodeled_failure_boundary": "does_not_repair_arbitrary_user_edited_json_without_a_recovery_event"
+    },
+    {
+      "canary_id": "control.daemon.dead_owner_resume_restart",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.daemon.dead_owner_resume_restart",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_dead_daemon_resume_restart_path_before_normal_work",
+      "expected_outcome": "resume_checks_liveness_and_restarts_daemon_before_normal_work",
+      "failure_injection": "router_daemon_lock_points_to_missing_pid_and_stale_last_tick",
+      "protected_state_invariant": "dead_daemon_lock_cannot_be_treated_as_current_execution_authority",
+      "recovery_route": "heartbeat_resume_liveness_check_restart_router_daemon",
+      "standard_final_state": "resume_reentry_written_with_router_daemon_restarted_if_dead",
+      "surface": "daemon_liveness",
+      "unmodeled_failure_boundary": "does_not_prove_recovery_from_os_process_table_corruption"
+    },
+    {
+      "canary_id": "control.heartbeat.duplicate_resume_idempotent",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.heartbeat.duplicate_resume_idempotent",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_duplicate_heartbeat_resume_is_idempotent",
+      "expected_outcome": "router_keeps_one_resume_boundary_and_replays_current_state_once",
+      "failure_injection": "same_resume_wake_is_recorded_twice_before_resume_state_loads",
+      "protected_state_invariant": "duplicate_wake_does_not_skip_resume_liveness_or_spawn_parallel_resume_work",
+      "recovery_route": "idempotent_resume_reentry_with_current_run_authority_check",
+      "standard_final_state": "resume_state_loaded_with_single_reentry_evidence_and_role_rehydration_next",
+      "surface": "heartbeat_resume",
+      "unmodeled_failure_boundary": "does_not_verify_external_scheduler_exactly_once_delivery"
+    },
+    {
+      "canary_id": "control.peer.peer_stop_isolated",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.peer.peer_stop_isolated",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_peer_run_stop_does_not_mutate_current_run",
+      "expected_outcome": "peer_lock_released_without_mutating_current_focus_or_current_daemon",
+      "failure_injection": "stop_request_targets_peer_run_while_current_run_has_active_daemon_lock",
+      "protected_state_invariant": "current_run_pointer_and_current_daemon_lock_remain_authoritative",
+      "recovery_route": "scoped_peer_run_stop_only",
+      "standard_final_state": "peer_released_current_run_still_active",
+      "surface": "run_authority",
+      "unmodeled_failure_boundary": "does_not_model_two_real_human_operators_editing_current_pointer_concurrently"
+    },
+    {
+      "canary_id": "control.background.progress_only_not_proof",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.background.progress_only_not_proof",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_progress_only_background_artifact_is_not_standard_state",
+      "expected_outcome": "progress_only_artifact_is_rejected_until_final_exit_and_meta_exist",
+      "failure_injection": "combined_log_contains_progress_but_exit_and_meta_artifacts_are_missing",
+      "protected_state_invariant": "background_progress_lines_do_not_satisfy_completion_or_release_proof",
+      "recovery_route": "wait_for_final_artifacts_or_rerun_background_check",
+      "standard_final_state": "passed_background_artifact_requires_exit_zero_and_passed_meta",
+      "surface": "background_evidence",
+      "unmodeled_failure_boundary": "does_not_prove_the_semantic_quality_of_the_background_command_itself"
+    },
+    {
+      "canary_id": "control.terminal.stop_fence_survives_scheduler_lock",
+      "destructive_live_state_mutation": false,
+      "evidence_current": true,
+      "evidence_id": "control.terminal.stop_fence_survives_scheduler_lock",
+      "evidence_role": "primary_canary",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotControlPlaneFailureCanaryReplayTests.test_canary_stop_fence_survives_scheduler_lock",
+      "expected_outcome": "terminal_fence_and_daemon_stop_are_written_before_best_effort_scheduler_cleanup",
+      "failure_injection": "user_stop_arrives_while_scheduler_ledger_has_fresh_write_lock",
+      "protected_state_invariant": "terminal_stop_blocks_normal_controller_work_even_if_scheduler_cleanup_waits",
+      "recovery_route": "terminal_fence_first_then_best_effort_cleanup_diagnostic",
+      "standard_final_state": "stopped_by_user_with_terminal_stopped_daemon_and_best_effort_failure_recorded",
+      "surface": "terminal_fence",
+      "unmodeled_failure_boundary": "does_not_model_power_loss_between_terminal_fence_write_and_filesystem_flush"
+    }
+  ],
+  "rows_by_surface": {
+    "background_evidence": 1,
+    "daemon_liveness": 1,
+    "heartbeat_resume": 1,
+    "run_authority": 1,
+    "runtime_json_lock": 1,
+    "runtime_persistence": 1,
+    "terminal_fence": 1
+  }
+}

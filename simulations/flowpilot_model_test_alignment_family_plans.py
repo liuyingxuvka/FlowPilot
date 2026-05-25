@@ -335,6 +335,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, FAILURE, EDGE),
             ),
             _obligation(
+                "router_loop.control_plane_failure_canary",
+                obligation_type="hazard",
+                description="Bounded control-plane canaries cover locks, corrupt runtime persistence, daemon liveness, duplicate resume wakes, peer-run authority, terminal fences, and background proof artifacts.",
+                required_test_kinds=(HAPPY, FAILURE, EDGE),
+            ),
+            _obligation(
                 "daemon.lock_status_and_queue_progress",
                 obligation_type="invariant",
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
@@ -387,6 +393,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
                 test_kind=EDGE,
                 covers=("router_loop.e2e_synthetic_chaos_replay",),
+            ),
+            _evidence(
+                "router_loop.canary.happy.duplicate_resume",
+                test_name="test_canary_duplicate_heartbeat_resume_is_idempotent",
+                path="tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                command="python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                test_kind=HAPPY,
+                covers=("router_loop.control_plane_failure_canary",),
+            ),
+            _evidence(
+                "router_loop.canary.failure.lock_and_corrupt_persistence",
+                test_name="test_canary_corrupt_scheduler_ledger_marks_daemon_error_not_live",
+                path="tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                command="python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                test_kind=FAILURE,
+                covers=("router_loop.control_plane_failure_canary",),
+            ),
+            _evidence(
+                "router_loop.canary.edge.peer_stop_and_proof_gate",
+                test_name="test_canary_peer_run_stop_does_not_mutate_current_run",
+                path="tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                command="python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
+                test_kind=EDGE,
+                covers=("router_loop.control_plane_failure_canary",),
             ),
             _evidence(
                 "daemon.happy.formal_startup",
