@@ -42,6 +42,15 @@ FAST_COMMANDS = (
         description="Coverage matrix gate for synthetic AI traces, ordinary branch evidence, and full diagnostic blockers.",
     ),
     TierCommand(
+        name="hard_gate_red_team_matrix",
+        command=_py(
+            "simulations/flowpilot_hard_gate_red_team_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_hard_gate_red_team_matrix_results.json",
+        ),
+        description="Hard-gate red-team matrix for fake AI packages, state invariants, and recovery routes.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -59,6 +68,16 @@ FAST_COMMANDS = (
         "synthetic_agent_trace_replay_tests",
         "tests/test_flowpilot_synthetic_agent_trace_replay.py",
         description="Synthetic agent trace replay tests for fake role actions through real packet/runtime APIs.",
+    ),
+    _pytest(
+        "hard_gate_red_team_matrix_tests",
+        "tests/test_flowpilot_hard_gate_red_team_matrix.py",
+        description="Focused tests for hard-gate red-team coverage rows and known-bad matrix rejection.",
+    ),
+    _pytest(
+        "hard_gate_red_team_replay_tests",
+        "tests/test_flowpilot_hard_gate_red_team_replay.py",
+        description="Runtime red-team replays for fake AI packages rejected without protected state mutation.",
     ),
     _pytest(
         "model_test_alignment_tests",

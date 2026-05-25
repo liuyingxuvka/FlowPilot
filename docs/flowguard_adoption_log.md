@@ -18217,3 +18217,78 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
   terminal overclaiming.
 - Treat stale background supervisor metadata without exit artifacts as
   incomplete evidence even when child logs contain progress or partial passes.
+
+## 2026-05-25 - Hard-Gate Red-Team Pack
+
+- Task id: `flowpilot-hard-gate-red-team-pack-20260525`
+- Status: implemented, validated locally, installed skill synced, and prepared
+  for scoped local commit
+- Skill decision: use_openspec + FlowGuard ExistingModelPreflight,
+  TestMesh, Model-Test Alignment, DevelopmentProcessFlow
+- OpenSpec change: `add-hard-gate-red-team-pack`
+- FlowGuard schema: `1.0`
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_hard_gate_red_team_matrix.py` with six finite
+  red-team cells for unauthorized current-wait events, router-supplied
+  role-output event mismatch, wrong active-holder identity, progress-only
+  background proof, stale/peer run authority, and dirty terminal closure
+  overclaim.
+- Added matrix tests that reject missing evidence, missing protected invariant,
+  missing recovery route, and progress-only proof claimed as pass.
+- Added runtime red-team replay tests that assert rejection plus protected state
+  non-mutation for each hard-gate row.
+- Registered the hard-gate matrix and replay tests in the fast test tier.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_hard_gate_red_team_matrix.py --json-out simulations/flowpilot_hard_gate_red_team_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_hard_gate_red_team_matrix.py tests/test_flowpilot_hard_gate_red_team_replay.py tests/test_flowpilot_test_tiers.py -q`
+  -> 32 passed, 273 subtests passed.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `openspec validate add-hard-gate-red-team-pack --strict`.
+- OK: `python scripts/run_test_tier.py --tier fast`.
+- OK: `python scripts/run_test_tier.py --tier router-startup`.
+- OK in background contract: router-packets supervisor under
+  `tmp/flowguard_background/router_packets_hard_gate/`, exit code `0`,
+  completed 9/9, proof reuse false.
+- OK in background contract: router-terminal supervisor under
+  `tmp/flowguard_background/router_terminal_hard_gate/`, exit code `0`,
+  completed 25/25, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, proof reuse
+  false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py` -> 753 checks passed.
+- OK: `python scripts/audit_local_install_sync.py --json` -> 6 checks passed.
+
+### Findings
+
+- The hard-gate matrix now forces every fake AI work package class to name its
+  protected state invariant and recovery route, not just a test name.
+- Runtime replay proves both rejection and non-mutation for the highest-risk
+  authority and terminal overclaim cases.
+- Background progress is explicitly tested as non-proof unless final exit/meta
+  artifacts exist.
+- No production runtime behavior was changed in this pass.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, archive, or public publication was
+  performed.
+- This is not a mathematical guarantee for every possible future AI behavior.
+  The claim is bounded to the six hard-gate rows, current FlowGuard models, and
+  executable test evidence.
+
+### Next Actions
+
+- Archive `add-hard-gate-red-team-pack` after review if the implementation
+  evidence is accepted.
+- Add a new hard-gate row whenever a future miss involves authority mismatch,
+  stale proof, peer-run interference, progress-only evidence, or terminal
+  overclaiming.

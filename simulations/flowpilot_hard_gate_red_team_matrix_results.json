@@ -1,0 +1,205 @@
+{
+  "coverage_boundary": "Rows prove rejection and state-preservation behavior for fake AI packages. They do not prove live AI semantic quality or live project completion.",
+  "findings": [],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_evidence_test",
+        "missing_required_gate"
+      ],
+      "name": "missing_evidence_test",
+      "rows": [
+        {
+          "bad_package_class": "known_bad",
+          "entrypoint": "known.entrypoint",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_status": "passed",
+          "evidence_test": "",
+          "expected_outcome": "rejected",
+          "gate_id": "hard_gate.known_bad",
+          "live_completion_allowed": false,
+          "protected_state_invariant": "protected_state_remains_unchanged",
+          "recovery_route": "retry_after_repair"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_protected_state_invariant",
+        "missing_required_gate"
+      ],
+      "name": "missing_protected_state_invariant",
+      "rows": [
+        {
+          "bad_package_class": "known_bad",
+          "entrypoint": "known.entrypoint",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "gate_id": "hard_gate.known_bad",
+          "live_completion_allowed": false,
+          "protected_state_invariant": "",
+          "recovery_route": "retry_after_repair"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_recovery_route",
+        "missing_required_gate"
+      ],
+      "name": "missing_recovery_route",
+      "rows": [
+        {
+          "bad_package_class": "known_bad",
+          "entrypoint": "known.entrypoint",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "gate_id": "hard_gate.known_bad",
+          "live_completion_allowed": false,
+          "protected_state_invariant": "protected_state_remains_unchanged",
+          "recovery_route": ""
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invalid_evidence_status",
+        "progress_only_proof_claimed_pass",
+        "missing_required_gate"
+      ],
+      "name": "progress_only_proof_claimed_pass",
+      "rows": [
+        {
+          "background_final_artifact_required": true,
+          "bad_package_class": "known_bad",
+          "entrypoint": "known.entrypoint",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_status": "progress_only",
+          "evidence_test": "KnownBad.test_case",
+          "expected_outcome": "rejected",
+          "gate_id": "hard_gate.background.progress_only_not_proof",
+          "live_completion_allowed": false,
+          "protected_state_invariant": "protected_state_remains_unchanged",
+          "recovery_route": "retry_after_repair"
+        }
+      ]
+    }
+  ],
+  "ok": true,
+  "required_gate_count": 6,
+  "result_type": "flowpilot_hard_gate_red_team_matrix",
+  "row_count": 6,
+  "rows": [
+    {
+      "bad_package_class": "event_envelope_not_allowed_by_current_wait",
+      "entrypoint": "flowpilot_router.record_external_event",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.router_event.unauthorized_current_wait",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_unauthorized_event_envelope_preserves_pending_state",
+      "expected_outcome": "RouterError_or_control_blocker_before_gate_flag",
+      "gate_id": "hard_gate.router_event.unauthorized_current_wait",
+      "live_completion_allowed": false,
+      "notes": "A valid-looking role output envelope cannot satisfy an event unless the Router is waiting for that event.",
+      "protected_state_invariant": "pending_wait_event_flag_remains_false_and_run_not_closed",
+      "recovery_route": "control_blocker_or_retry_current_wait"
+    },
+    {
+      "bad_package_class": "router_supplied_event_not_in_current_wait",
+      "entrypoint": "role_output_runtime.validate_direct_router_submission_authority",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.role_output.router_supplied_event_mismatch",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_role_output_authority_mismatch_writes_no_output",
+      "expected_outcome": "RoleOutputRuntimeError_before_output_write",
+      "gate_id": "hard_gate.role_output.router_supplied_event_mismatch",
+      "live_completion_allowed": false,
+      "notes": "Officer/PM outputs using Router-supplied events must be bound to the current pending wait.",
+      "protected_state_invariant": "no_role_output_body_or_ledger_written",
+      "recovery_route": "reject_before_router_submission_then_retry_after_router_wait"
+    },
+    {
+      "bad_package_class": "wrong_active_holder_agent",
+      "entrypoint": "packet_runtime.active_holder_submit_result",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.packet.wrong_active_holder_identity",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_packet_wrong_holder_identity_preserves_ledger",
+      "expected_outcome": "PacketRuntimeError_before_result_envelope",
+      "gate_id": "hard_gate.packet.wrong_active_holder_identity",
+      "live_completion_allowed": false,
+      "notes": "A different agent id cannot submit work under an active-holder lease.",
+      "protected_state_invariant": "packet_ledger_keeps_no_result_completion",
+      "recovery_route": "same_holder_retry_or_packet_reissue"
+    },
+    {
+      "background_final_artifact_required": true,
+      "bad_package_class": "background_progress_without_exit_artifact",
+      "entrypoint": "scripts.test_tier.background.classify_background_artifact",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.background.progress_only_not_proof",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_background_progress_only_proof_is_not_pass",
+      "expected_outcome": "status_progress_only_and_not_ok",
+      "gate_id": "hard_gate.background.progress_only_not_proof",
+      "live_completion_allowed": false,
+      "notes": "Progress/liveness logs are not completion evidence.",
+      "protected_state_invariant": "no_pass_claim_without_exit_code_artifact",
+      "recovery_route": "wait_for_final_exit_or_rerun_background_check"
+    },
+    {
+      "bad_package_class": "stale_or_peer_run_control_request",
+      "entrypoint": "flowpilot_router.stop_router_daemon",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.run_authority.peer_stop_isolated",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_peer_run_stop_preserves_current_run_authority",
+      "expected_outcome": "target_run_only_no_current_focus_mutation",
+      "gate_id": "hard_gate.run_authority.peer_stop_isolated",
+      "live_completion_allowed": false,
+      "notes": "A stop command for one run must not steal or close the current run authority.",
+      "protected_state_invariant": "current_run_focus_and_peer_lock_remain_active",
+      "recovery_route": "ignore_peer_mutation_and_keep_current_run_authority"
+    },
+    {
+      "bad_package_class": "terminal_closure_with_dirty_pm_ledger",
+      "entrypoint": "flowpilot_router.record_external_event",
+      "evidence_current": true,
+      "evidence_id": "hard_gate.terminal.dirty_ledger_closure_overclaim",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHardGateRedTeamReplayTests.test_hard_gate_terminal_closure_overclaim_preserves_nonclosed_state",
+      "expected_outcome": "RouterError_before_closed_state",
+      "gate_id": "hard_gate.terminal.dirty_ledger_closure_overclaim",
+      "live_completion_allowed": false,
+      "notes": "A final closure package cannot close the run while repair ledgers remain dirty.",
+      "protected_state_invariant": "run_status_not_closed_and_terminal_flag_not_approved",
+      "recovery_route": "pm_repairs_dirty_ledger_then_terminal_gate_retries"
+    }
+  ],
+  "rows_by_bad_package_class": {
+    "background_progress_without_exit_artifact": 1,
+    "event_envelope_not_allowed_by_current_wait": 1,
+    "router_supplied_event_not_in_current_wait": 1,
+    "stale_or_peer_run_control_request": 1,
+    "terminal_closure_with_dirty_pm_ledger": 1,
+    "wrong_active_holder_agent": 1
+  },
+  "rows_by_entrypoint": {
+    "flowpilot_router.record_external_event": 2,
+    "flowpilot_router.stop_router_daemon": 1,
+    "packet_runtime.active_holder_submit_result": 1,
+    "role_output_runtime.validate_direct_router_submission_authority": 1,
+    "scripts.test_tier.background.classify_background_artifact": 1
+  }
+}
