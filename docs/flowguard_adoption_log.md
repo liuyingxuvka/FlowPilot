@@ -18078,3 +18078,55 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No production FlowPilot runtime behavior was changed by the synthetic trace harness.
 - No legacy monolithic full graph was rerun; current release confidence came from refreshed layered full parent proof.
 - No GitHub push, tag, release, deploy, archive, or local commit was performed.
+
+## FlowPilot Synthetic Exception Trace Packs
+
+- Project: FlowPilot
+- Trigger reason: User requested OpenSpec plus FlowGuard expansion of fake AI-agent work packages for high-risk exception paths.
+- Status: completed, validated, installed skill checked fresh, local git commit pending
+- Skill decision: predictive KB preflight, OpenSpec propose/apply, FlowGuard existing-model preflight, FlowGuard TestMesh, FlowGuard model-test alignment, FlowGuard development-process flow
+- Recorded: 2026-05-25T09:41:37+02:00
+- Commands OK: True
+
+### Scope
+
+- Added ten exceptional synthetic replay packages for control blocker retry and PM escalation, PM repair accept/reject, fatal blocker waiver rejection, resume active-blocker preemption, route mutation stale proof, PM package envelope authority, controller boundary repair budget, material repair generation stale-flag rejection, and terminal dirty-ledger blocking.
+- Extended the synthetic coverage matrix with risk tier, replay requirement, replay status, non-replayable reason, and covered failure mode fields.
+- Added P0/P1 matrix gates so ordinary runtime evidence cannot count as synthetic replay for replay-required exceptional branches.
+- Repaired a pre-existing dispatch-gate test fixture so the intended no-legal-next-action blocker is reached only after the required capability sync artifact exists.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -q` -> 16 passed in 238.37s.
+- OK: `python -m pytest tests/test_flowpilot_synthetic_agent_coverage_matrix.py -q` -> 5 passed, 47 subtests passed.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> row_count 59, findings empty.
+- OK: `python scripts/run_test_tier.py --tier fast`.
+- OK in background contract: `python simulations/run_meta_checks.py`, `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`, `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, proof reuse false.
+- OK in background contract: `python scripts/run_test_tier.py --tier router-route`.
+- OK in background contract: `python scripts/run_test_tier.py --tier router-terminal`.
+- OK after serial rerun: selected foreground controller runtime slices passed.
+- OK after fixture repair and serial rerun: selected dispatch-gate runtime slices passed.
+- OK: `openspec validate expand-synthetic-exception-trace-packs --strict`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+
+### Findings
+
+- P0/P1 exceptional branches now require explicit synthetic replay evidence or a written non-replayable reason.
+- The synthetic packages exercise real runtime APIs and do not directly mark route completion.
+- The existing dispatch-gate fixture overclaimed materialized state by setting flags without the matching capability sync artifact; the fixture was corrected rather than weakening the router behavior.
+- Foreground controller background execution showed one timing-sensitive parallel failure, but the affected slices passed when rerun serially.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, archive, or public publication was performed.
+- No production FlowPilot runtime behavior was changed in this pass.
+- This does not claim a mathematical guarantee for all future AI behavior; the claim is bounded by the current risk matrix and executable replay packages.
+
+### Next Actions
+
+- If the foreground-controller timing-sensitive parallel failure recurs, isolate and harden that shard's lock timing assumptions.
+- Archive `expand-synthetic-exception-trace-packs` after review if the implementation evidence is accepted.

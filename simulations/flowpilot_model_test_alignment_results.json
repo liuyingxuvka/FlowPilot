@@ -16896,17 +16896,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -16953,26 +16951,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "capability_legacy_full",
+            "artifact_name": "run_capability_checks",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
             },
-            "execution_status": "running",
-            "exit_code": null,
-            "meta_status": "running",
-            "name": "capability_legacy_full",
-            "ok": false,
-            "progress_seen": false,
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "run_capability_checks",
+            "ok": true,
+            "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [
-              "missing_exit"
-            ],
-            "status": "running"
+            "reasons": [],
+            "status": "passed"
           }
         },
         "background_recommended": true,
@@ -16992,7 +16988,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-24T20:10:03.691311+00:00",
+            "created_at": "2026-05-24T23:20:46.463841+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -17055,17 +17051,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -17112,26 +17106,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "meta_legacy_full",
+            "artifact_name": "run_meta_checks",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
             },
-            "execution_status": "running",
-            "exit_code": null,
-            "meta_status": "running",
-            "name": "meta_legacy_full",
-            "ok": false,
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "run_meta_checks",
+            "ok": true,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [
-              "missing_exit"
-            ],
-            "status": "running"
+            "reasons": [],
+            "status": "passed"
           }
         },
         "background_recommended": true,
@@ -17151,7 +17143,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-24T20:10:03.361719+00:00",
+            "created_at": "2026-05-24T23:20:46.427337+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -17212,17 +17204,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "capability_full",
@@ -17352,17 +17342,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:completed"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "meta_full",

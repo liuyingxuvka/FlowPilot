@@ -631,6 +631,19 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         route_memory.mkdir(parents=True, exist_ok=True)
         router.write_json(route_memory / "route_history_index.json", {"schema_version": "test", "routes": []})
         router.write_json(route_memory / "pm_prior_path_context.json", {"schema_version": "test", "reviewed": True})
+        capability_sync_path = run_root / "capabilities" / "capability_sync.json"
+        capability_sync_path.parent.mkdir(parents=True, exist_ok=True)
+        router.write_json(
+            capability_sync_path,
+            {
+                "schema_version": "flowpilot.capability_evidence_sync.v1",
+                "run_id": state["run_id"],
+                "synced_by": "router",
+                "pm_approved_manifest": True,
+                "source_paths": [],
+                "synced_at": "2026-05-25T00:00:00Z",
+            },
+        )
         router._write_startup_mechanical_audit(root, run_root, state, {})  # type: ignore[attr-defined]
         router.write_json(state_path, state)
 

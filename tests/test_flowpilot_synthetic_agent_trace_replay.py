@@ -13,7 +13,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import flowpilot_defects  # noqa: E402
 import packet_runtime  # noqa: E402
+import role_output_runtime  # noqa: E402
+import flowpilot_router as router  # noqa: E402
 from scripts.test_tier import background as test_tier_background  # noqa: E402
+from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase  # noqa: E402
 from tests.synthetic_agent_trace_replay import (  # noqa: E402
     SyntheticTracePackage,
     read_json,
@@ -220,6 +223,449 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
         self.assertEqual(evidence["status"], "progress_only")
         self.assertFalse(evidence["ok"])
         self.assertIn("missing_exit", evidence["reasons"])
+
+
+class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase):
+    def test_control_blocker_reissue_retry_budget_escalates_to_pm_fake_reviewer_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+
+        blockers: list[dict] = []
+        for attempt in range(3):
+            state = read_json(router.run_state_path(run_root))
+            blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+                root,
+                run_root,
+                state,
+                source="synthetic_trace",
+                error_message="current-node reviewer pass must explicitly pass",
+                event="current_node_reviewer_passes_result",
+                payload={
+                    "report_path": f".flowpilot/runs/test/reviews/synthetic-missing-passed-budget-{attempt}.json",
+                    "synthetic_trace_package": "control_blocker_reissue_then_pm_escalation",
+                },
+            )
+            self.assertIsInstance(blocker, dict)
+            blockers.append(blocker)
+            if attempt < 2:
+                self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
+                self.assertEqual(blocker["target_role"], "human_like_reviewer")
+                self.assertEqual(blocker["direct_retry_attempts_used"], attempt)
+                self.assertFalse(blocker["direct_retry_budget_exhausted"])
+            else:
+                self.assertEqual(blocker["handling_lane"], "pm_repair_decision_required")
+                self.assertEqual(blocker["target_role"], "project_manager")
+                self.assertEqual(blocker["policy_row_id"], "mechanical_control_plane_reissue")
+                self.assertEqual(blocker["direct_retry_attempts_used"], 2)
+                self.assertTrue(blocker["direct_retry_budget_exhausted"])
+                self.assertEqual(blocker["allowed_resolution_events"], ["pm_records_control_blocker_repair_decision"])
+
+        state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
+        attempts = state["blocker_repair_attempts"][blockers[-1]["attempt_key"]]
+        self.assertTrue(attempts["direct_retry_budget_exhausted"])
+        self.assertEqual(attempts["latest_target_role"], "project_manager")
+
+    def test_pm_repair_decision_accepts_registered_target_fake_pm_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="synthetic_trace",
+            error_message="fake PM package repairs route draft handoff",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-route-draft.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "synthetic/control_blocks/valid_route_draft_pm_repair_decision",
+                self.pm_control_blocker_decision_body(blocker["blocker_id"], rerun_target="pm_writes_route_draft"),
+            ),
+        )
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(
+            set(action["allowed_external_events"]),
+            {
+                "pm_writes_route_draft",
+                "pm_records_control_blocker_followup_blocker",
+                "pm_records_control_blocker_protocol_blocker",
+            },
+        )
+
+    def test_pm_repair_decision_rejects_invalid_targets_fake_pm_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["pm_route_skeleton_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="synthetic_trace",
+            error_message="fake PM package tries invalid repair target",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-invalid-target.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        with self.assertRaisesRegex(router.RouterError, "rerun_target must name a registered external event"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    root,
+                    "synthetic/control_blocks/unregistered_pm_repair_decision",
+                    self.pm_control_blocker_decision_body(
+                        blocker["blocker_id"],
+                        rerun_target="router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision",
+                    ),
+                ),
+            )
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertNotIn("pm_repair_rerun_target", original)
+
+        stale_root = self.make_project()
+        stale_run_root = self.boot_to_controller(stale_root)
+        stale_state = read_json(router.run_state_path(stale_run_root))
+        stale_blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            stale_root,
+            stale_run_root,
+            stale_state,
+            source="synthetic_trace",
+            error_message="fake PM package points to a registered target that is not receivable yet",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/synthetic-not-receivable.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(stale_root))
+        with self.assertRaisesRegex(router.RouterError, "pm_writes_route_draft: event requires unsatisfied flag"):
+            router.record_external_event(
+                stale_root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    stale_root,
+                    "synthetic/control_blocks/not_receivable_pm_repair_decision",
+                    self.pm_control_blocker_decision_body(stale_blocker["blocker_id"], rerun_target="pm_writes_route_draft"),
+                ),
+            )
+
+    def test_fatal_control_blocker_rejects_pm_ordinary_waiver_fake_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["continuation_binding_recorded"] = True
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="synthetic_trace",
+            error_message="envelope payload leaked role body fields to Controller: passed",
+            event="host_records_heartbeat_binding",
+            payload={"from_role": "host", "passed": True},
+        )
+        self.assertEqual(blocker["policy_row_id"], "fatal_protocol_violation")
+        self.assertTrue(blocker["hard_stop_conditions"])
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        body = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        body["recovery_option"] = "allowed_waiver"
+        body["return_gate"] = "host_records_heartbeat_binding"
+        with self.assertRaisesRegex(router.RouterError, "not allowed by blocker policy"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "synthetic/control_blocks/fatal_pm_waiver_rejected", body),
+            )
+
+    def test_resume_active_blocker_and_ambiguous_state_preempt_fake_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="synthetic_trace",
+            error_message="Controller has no legal next action while fake package resumes",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, action))
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "handle_control_blocker")
+        self.assertEqual(action["blocker_id"], blocker["blocker_id"])
+        self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
+
+        ambiguous_root = self.make_project()
+        ambiguous_run_root = self.boot_to_controller(ambiguous_root)
+        (ambiguous_run_root / "crew_memory" / "worker_b.json").unlink()
+        router.record_external_event(ambiguous_root, "heartbeat_or_manual_resume_requested")
+        action = self.next_after_display_sync(ambiguous_root)
+        self.assertEqual(action["action_type"], "load_resume_state")
+        router.apply_action(ambiguous_root, "load_resume_state")
+        action = self.next_after_display_sync(ambiguous_root)
+        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        self.assertEqual(action["memory_missing_role_keys"], ["worker_b"])
+        router.apply_action(ambiguous_root, "rehydrate_role_agents", self.resume_role_agent_payload(ambiguous_root, action))
+        self.deliver_expected_card(ambiguous_root, "controller.resume_reentry")
+        self.deliver_expected_card(ambiguous_root, "pm.crew_rehydration_freshness")
+        self.deliver_expected_card(ambiguous_root, "pm.resume_decision")
+
+        with self.assertRaises(router.RouterError):
+            router.record_external_event(
+                ambiguous_root,
+                "pm_resume_recovery_decision_returned",
+                self.role_decision_envelope(
+                    ambiguous_root,
+                    "synthetic/continuation/pm_resume_decision_continue_ambiguous",
+                    {
+                        "decision_owner": "project_manager",
+                        "decision": "continue_current_packet_loop",
+                        **self.prior_path_context_review(
+                            ambiguous_root,
+                            "PM resume decision considered ambiguous current route memory.",
+                        ),
+                        "controller_reminder": {
+                            "controller_only": True,
+                            "controller_may_read_sealed_bodies": False,
+                            "controller_may_infer_from_chat_history": False,
+                            "controller_may_advance_or_close_route": False,
+                        },
+                    },
+                ),
+            )
+
+    def test_route_mutation_stale_sibling_proof_fake_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.deliver_expected_card(root, "pm.prior_path_context")
+        self.deliver_expected_card(root, "pm.route_skeleton")
+        router.record_external_event(
+            root,
+            "pm_writes_route_draft",
+            {
+                "route": {
+                    "schema_version": "flowpilot.route.v1",
+                    "route_id": "route-001",
+                    "route_version": 1,
+                    "active_node_id": "node-001",
+                    "nodes": [
+                        {"node_id": "route-root", "node_kind": "parent", "title": "Route root", "child_node_ids": ["node-001", "node-002"]},
+                        {"node_id": "node-001", "node_kind": "leaf", "parent_node_id": "route-root", "title": "First branch", "leaf_readiness_gate": {"status": "pass"}},
+                        {"node_id": "node-002", "node_kind": "leaf", "parent_node_id": "route-root", "title": "Sibling branch", "leaf_readiness_gate": {"status": "pass"}},
+                    ],
+                },
+                **self.prior_path_context_review(root, "Synthetic route draft includes sibling branches for replacement policy."),
+            },
+        )
+        self.complete_route_checks(root)
+        router.record_external_event(root, "pm_activates_reviewed_route", {"route_id": "route-001", "active_node_id": "node-001"})
+        self.deliver_current_node_cards(root)
+        packet = packet_runtime.create_packet(
+            root,
+            packet_id="synthetic-node-packet-sibling-replacement",
+            from_role="project_manager",
+            to_role="worker_a",
+            node_id="node-001",
+            body_text="synthetic current node work",
+            metadata={"route_version": 1},
+        )
+        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+        router.record_external_event(
+            root,
+            "pm_registers_current_node_packet",
+            {"packet_id": "synthetic-node-packet-sibling-replacement", "packet_envelope_path": packet_path},
+        )
+        self.apply_until_action(root, "relay_current_node_packet")
+        _, result_path = self.submit_current_node_result_via_active_holder(
+            root,
+            packet_id="synthetic-node-packet-sibling-replacement",
+            result_body_text="synthetic reviewable result",
+        )
+        router.record_external_event(
+            root,
+            "worker_current_node_result_returned",
+            {"packet_id": "synthetic-node-packet-sibling-replacement", "result_envelope_path": result_path},
+        )
+        self.absorb_current_node_results_with_pm(root, [result_path])
+        self.deliver_expected_card(root, "reviewer.worker_result_review")
+        router.record_external_event(root, "current_node_reviewer_blocks_result")
+        self.close_model_miss_triage(root, output_name="synthetic/decisions/sibling_branch_replacement_triage")
+
+        with self.assertRaisesRegex(router.RouterError, "affected_sibling_nodes"):
+            router.record_external_event(
+                root,
+                "pm_mutates_route_after_review_block",
+                {
+                    "repair_node_id": "node-002-v2",
+                    "topology_strategy": "sibling_branch_replacement",
+                    "repair_of_node_id": "node-002",
+                    "replay_scope_node_id": "route-root",
+                    "stale_evidence": ["node-002-old-proof"],
+                    **self.prior_path_context_review(root, "Invalid sibling replacement intentionally lacks affected sibling list."),
+                },
+            )
+
+        router.record_external_event(
+            root,
+            "pm_mutates_route_after_review_block",
+            {
+                "repair_node_id": "node-002-v2",
+                "topology_strategy": "sibling_branch_replacement",
+                "repair_of_node_id": "node-002",
+                "affected_sibling_nodes": ["node-002"],
+                "replay_scope_node_id": "route-root",
+                "reason": "replace invalid sibling branch",
+                "stale_evidence": ["node-002-old-proof"],
+                **self.prior_path_context_review(root, "Sibling branch replacement considered stale sibling proof and replay scope."),
+            },
+        )
+
+        frontier = read_json(run_root / "execution_frontier.json")
+        self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
+        stale_ledger = read_json(run_root / "evidence" / "stale_evidence_ledger.json")
+        self.assertIn("node-002-old-proof", {item["evidence_id"] for item in stale_ledger["items"]})
+        packet_ledger = read_json(run_root / "packet_ledger.json")
+        self.assertEqual(packet_ledger["active_packet_status"], "superseded")
+        self.assertEqual(packet_ledger["route_mutation_packet_disposition"]["topology_strategy"], "sibling_branch_replacement")
+
+    def test_pm_package_disposition_envelope_authority_fake_package(self) -> None:
+        root = self.make_project()
+        replay = run_worker_result_trace(
+            SyntheticTracePackage(
+                name="pm_package_disposition_envelope_authority",
+                next_recipient="project_manager",
+            )
+        )
+        disposition = replay.pm_disposition()
+        self.assertEqual(disposition["output_type"], "pm_package_result_disposition")
+        self.assertEqual(disposition["from_role"], "project_manager")
+        self.assertEqual(disposition["controller_visibility"], "role_output_envelope_only")
+        self.assertFalse(disposition["chat_response_body_allowed"])
+
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "may be submitted only"):
+            role_output_runtime.submit_output(
+                root,
+                output_type="pm_package_result_disposition",
+                role="controller",
+                agent_id="agent-controller",
+                body={
+                    "decided_by_role": "controller",
+                    "decision": "absorbed",
+                    "decision_reason": "Controller cannot submit PM package disposition.",
+                },
+            )
+
+    def test_controller_boundary_repair_budget_escalates_fake_package(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        run_root, state, action = self.legacy_controller_boundary_action(root)
+        entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        state["pending_action"] = action
+        router._write_controller_receipt(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        router.save_run_state(run_root, state)
+        repair_1 = self.next_after_display_sync(root)
+        router.record_controller_action_receipt(
+            root,
+            action_id=repair_1["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+        repair_2 = read_json(router.run_state_path(run_root))["pending_action"]
+        self.assertEqual(repair_2["action_type"], "complete_missing_controller_deliverable")
+        self.assertEqual(repair_2["repair_attempt"], 2)
+
+        router.record_controller_action_receipt(
+            root,
+            action_id=repair_2["controller_action_id"],
+            status="done",
+            payload={"controller_action_completed": True},
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state.get("active_control_blocker"))
+        original = read_json(router._controller_action_path(run_root, entry["action_id"]))  # type: ignore[attr-defined]
+        self.assertEqual(original["status"], "blocked")
+        self.assertEqual(original["deliverable_repair_failed_receipts"], 2)
+
+    def test_material_repair_generation_blocks_stale_flags_fake_package(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state = read_json(router.run_state_path(run_root))
+        generation = router._commit_material_scan_repair_generation(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            transaction_id="synthetic-repair-tx-active-generation",
+            packet_generation_id="synthetic-repair-tx-active-generation-gen-001",
+            packet_specs=[
+                {"packet_id": "synthetic-material-repair-worker-a", "to_role": "worker_a", "body_text": "Repair generation packet A"},
+                {"packet_id": "synthetic-material-repair-worker-b", "to_role": "worker_b", "body_text": "Repair generation packet B"},
+            ],
+        )
+        state["flags"]["material_scan_packets_relayed"] = True
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        state["flags"]["material_scan_results_relayed_to_pm"] = True
+        state["flags"]["material_scan_result_disposition_recorded"] = True
+        router.save_run_state(run_root, state)
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "relay_material_scan_packets")
+        self.assertEqual(set(action["packet_ids"]), {packet["packet_id"] for packet in generation["packets"]})
+        batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        self.assertEqual(batch["counts"]["relayed"], 0)
+        self.assertEqual(batch["counts"]["results_returned"], 0)
+
+    def test_dirty_terminal_ledgers_block_completion_fake_package(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+        self.complete_pre_route_gates(root)
+        self.activate_route(root)
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="synthetic-node-packet-dirty-ledger")
+        self.complete_evidence_quality_package(root)
+        self.write_pm_suggestion_ledger(root, [self.pm_suggestion_entry(root, clean=False)])
+
+        self.deliver_expected_card(root, "pm.final_ledger")
+        with self.assertRaisesRegex(router.RouterError, "clean PM suggestion ledger"):
+            router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
 
 
 if __name__ == "__main__":

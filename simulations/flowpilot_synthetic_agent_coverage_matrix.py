@@ -24,6 +24,7 @@ from flowpilot_model_test_alignment_family_plans import (  # noqa: E402
 PASS_STATUSES = {"passed"}
 BACKGROUND_INCOMPLETE_STATUSES = {"progress_only", "running", "missing", "stale", "failed"}
 SYNTHETIC_NON_LIVE_KINDS = {"synthetic_trace", "fixture_trace"}
+REPLAY_REQUIRED_RISK_TIERS = {"P0", "P1"}
 REQUIRED_ROW_FIELDS = (
     "family",
     "model_id",
@@ -36,7 +37,27 @@ REQUIRED_ROW_FIELDS = (
     "evidence_current",
     "live_completion_allowed",
     "coverage_boundary",
+    "risk_tier",
+    "synthetic_replay_required",
+    "synthetic_replay_status",
+    "covered_failure_mode",
 )
+
+ALIGNMENT_ROW_DEFAULTS = {
+    "risk_tier": "ordinary",
+    "synthetic_replay_required": False,
+    "synthetic_replay_status": "not_required",
+    "non_replayable_reason": "",
+    "covered_failure_mode": "ordinary_model_test_alignment",
+}
+
+EXPLICIT_TRACE_ROW_DEFAULTS = {
+    "risk_tier": "P2",
+    "synthetic_replay_required": False,
+    "synthetic_replay_status": "present",
+    "non_replayable_reason": "",
+    "covered_failure_mode": "baseline_synthetic_trace_contract",
+}
 
 
 SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
@@ -71,6 +92,9 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "ack_return_does_not_complete_semantic_work",
     },
     {
         "family": "packet/card/ack",
@@ -87,6 +111,9 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "sealed_body_wrong_identity_or_stale_hash_rejected",
     },
     {
         "family": "router loop/daemon",
@@ -103,6 +130,9 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "raw_worker_result_cannot_skip_pm_disposition",
     },
     {
         "family": "terminal/closure/resume",
@@ -119,6 +149,9 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "non_live_evidence_disclosure_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "fixture_trace_cannot_support_live_completion_claim",
     },
     {
         "family": "test tiering/slow-test contracts",
@@ -135,6 +168,199 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "background_final_artifact_contract",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "background_progress_without_exit_is_not_pass_evidence",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "control_blocker_repair",
+        "obligation_id": "control_blocker.retry_budget_escalates_to_pm",
+        "branch_kind": "failure_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.control_blocker.failure.retry_budget_pm_escalation",
+        "test_name": "test_control_blocker_reissue_retry_budget_escalates_to_pm_fake_reviewer_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "same_role_reissue_budget_exhaustion_routes_to_pm",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "control_blocker_repair",
+        "obligation_id": "control_blocker.pm_repair_decision",
+        "branch_kind": "happy_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.control_blocker.happy.pm_repair_target_accepted",
+        "test_name": "test_pm_repair_decision_accepts_registered_target_fake_pm_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "pm_repair_accepts_registered_receivable_return_gate",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "control_blocker_repair",
+        "obligation_id": "control_blocker.pm_repair_decision",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.control_blocker.negative.invalid_pm_repair_target",
+        "test_name": "test_pm_repair_decision_rejects_invalid_targets_fake_pm_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "pm_repair_rejects_unregistered_or_not_receivable_targets",
+    },
+    {
+        "family": "control blockers",
+        "model_id": "control_blocker_repair",
+        "obligation_id": "control_blocker.fatal_protocol_violation",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.control_blocker.negative.fatal_ordinary_waiver_rejected",
+        "test_name": "test_fatal_control_blocker_rejects_pm_ordinary_waiver_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "fatal_protocol_blocker_cannot_be_ordinary_waived",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "terminal_closure_resume",
+        "obligation_id": "resume.current_run_reentry",
+        "branch_kind": "failure_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.resume.failure.active_blocker_or_ambiguous_state",
+        "test_name": "test_resume_active_blocker_and_ambiguous_state_preempt_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P0",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "resume_preempts_normal_work_for_blocker_or_ambiguity",
+    },
+    {
+        "family": "route mutation",
+        "model_id": "route_mutation",
+        "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.route_mutation.negative.stale_sibling_proof",
+        "test_name": "test_route_mutation_stale_sibling_proof_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "sibling_replacement_requires_affected_siblings_and_stales_old_proof",
+    },
+    {
+        "family": "role/output contracts",
+        "model_id": "role_output_contracts",
+        "obligation_id": "role_output.registry_authority",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.role_output.negative.pm_disposition_authority",
+        "test_name": "test_pm_package_disposition_envelope_authority_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "pm_package_disposition_requires_pm_role_envelope",
+    },
+    {
+        "family": "foreground controller",
+        "model_id": "foreground_controller_boundary",
+        "obligation_id": "controller_boundary.repair_budget_escalation",
+        "branch_kind": "failure_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.controller.failure.boundary_repair_budget_escalation",
+        "test_name": "test_controller_boundary_repair_budget_escalates_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "controller_receipts_without_deliverable_escalate_after_retry_budget",
+    },
+    {
+        "family": "material modeling",
+        "model_id": "material_modeling",
+        "obligation_id": "material_repair.active_generation_overrides_stale_flags",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.material.negative.active_generation_blocks_stale_flags",
+        "test_name": "test_material_repair_generation_blocks_stale_flags_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "active_repair_generation_ignores_stale_global_progress_flags",
+    },
+    {
+        "family": "terminal/closure/resume",
+        "model_id": "terminal_closure_resume",
+        "obligation_id": "closure.dirty_ledgers_block_completion",
+        "branch_kind": "negative_path",
+        "coverage_kind": "synthetic_trace",
+        "evidence_owner": "synthetic_agent_exception_trace_replay",
+        "evidence_id": "synthetic.terminal.negative.dirty_pm_suggestion_ledger",
+        "test_name": "test_dirty_terminal_ledgers_block_completion_fake_package",
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "live_completion_allowed": False,
+        "coverage_boundary": "control_flow_only",
+        "risk_tier": "P1",
+        "synthetic_replay_required": True,
+        "covered_failure_mode": "dirty_pm_suggestion_ledger_blocks_final_completion",
     },
     {
         "family": "route mutation",
@@ -151,6 +377,10 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "ordinary",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "ordinary_runtime_explicit_branch_row",
     },
     {
         "family": "terminal/closure/resume",
@@ -167,6 +397,10 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "ordinary",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "ordinary_runtime_explicit_branch_row",
     },
     {
         "family": "role/output contracts",
@@ -183,6 +417,10 @@ SYNTHETIC_TRACE_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "ordinary",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "covered_failure_mode": "ordinary_runtime_explicit_branch_row",
     },
 )
 
@@ -227,6 +465,7 @@ def _alignment_rows() -> list[dict[str, Any]]:
                 obligation = obligations[obligation_id]
                 rows.append(
                     {
+                        **ALIGNMENT_ROW_DEFAULTS,
                         "family": str(entry["family"]),
                         "model_id": str(plan["model_id"]),
                         "obligation_id": str(obligation_id),
@@ -252,7 +491,14 @@ def _alignment_rows() -> list[dict[str, Any]]:
 def build_coverage_rows() -> list[dict[str, Any]]:
     rows = _alignment_rows()
     for row in SYNTHETIC_TRACE_ROWS:
-        rows.append({**row, "evidence_role": "primary", "source": "explicit_trace_branch_row"})
+        rows.append(
+            {
+                **EXPLICIT_TRACE_ROW_DEFAULTS,
+                **row,
+                "evidence_role": "primary",
+                "source": "explicit_trace_branch_row",
+            }
+        )
     return rows
 
 
@@ -344,6 +590,44 @@ def validate_coverage_rows(
                     "evidence_id": str(row.get("evidence_id", "")),
                 }
             )
+        if row.get("risk_tier") in REPLAY_REQUIRED_RISK_TIERS and row.get("synthetic_replay_required") is True:
+            replay_status = str(row.get("synthetic_replay_status", ""))
+            if replay_status == "present":
+                if row.get("coverage_kind") not in SYNTHETIC_NON_LIVE_KINDS:
+                    findings.append(
+                        {
+                            "code": "missing_required_synthetic_replay",
+                            "message": "P0/P1 replay-required branches need synthetic or fixture trace evidence",
+                            "evidence_id": str(row.get("evidence_id", "")),
+                            "coverage_kind": str(row.get("coverage_kind", "")),
+                        }
+                    )
+            elif replay_status == "not_replayable":
+                if not str(row.get("non_replayable_reason", "")).strip():
+                    findings.append(
+                        {
+                            "code": "missing_non_replayable_reason",
+                            "message": "non-replayable P0/P1 branches must explain the replay boundary",
+                            "evidence_id": str(row.get("evidence_id", "")),
+                        }
+                    )
+            else:
+                findings.append(
+                    {
+                        "code": "missing_required_synthetic_replay",
+                        "message": "P0/P1 replay-required branches need a present or explained replay status",
+                        "evidence_id": str(row.get("evidence_id", "")),
+                        "synthetic_replay_status": replay_status,
+                    }
+                )
+            if not str(row.get("covered_failure_mode", "")).strip():
+                findings.append(
+                    {
+                        "code": "missing_covered_failure_mode",
+                        "message": "P0/P1 replay-required branches must name the covered failure mode",
+                        "evidence_id": str(row.get("evidence_id", "")),
+                    }
+                )
     return findings
 
 
@@ -360,6 +644,11 @@ def known_bad_cases() -> list[dict[str, Any]]:
         "evidence_current": True,
         "live_completion_allowed": False,
         "coverage_boundary": "ordinary_runtime_contract",
+        "risk_tier": "ordinary",
+        "synthetic_replay_required": False,
+        "synthetic_replay_status": "not_required",
+        "non_replayable_reason": "",
+        "covered_failure_mode": "known_bad_default",
     }
     return [
         {
@@ -403,6 +692,35 @@ def known_bad_cases() -> list[dict[str, Any]]:
                 "invalid_primary_evidence_status",
                 "progress_only_background_evidence",
             ],
+        },
+        {
+            "name": "p0_replay_required_ordinary_runtime_only",
+            "rows": [
+                {
+                    **base,
+                    "risk_tier": "P0",
+                    "synthetic_replay_required": True,
+                    "synthetic_replay_status": "present",
+                    "coverage_kind": "ordinary_runtime",
+                    "covered_failure_mode": "ordinary_runtime_cannot_substitute_for_synthetic_replay",
+                }
+            ],
+            "required_cells": [],
+            "expected_codes": ["missing_required_synthetic_replay"],
+        },
+        {
+            "name": "p1_non_replayable_without_reason",
+            "rows": [
+                {
+                    **base,
+                    "risk_tier": "P1",
+                    "synthetic_replay_required": True,
+                    "synthetic_replay_status": "not_replayable",
+                    "covered_failure_mode": "requires_explicit_non_replayable_boundary",
+                }
+            ],
+            "required_cells": [],
+            "expected_codes": ["missing_non_replayable_reason"],
         },
     ]
 

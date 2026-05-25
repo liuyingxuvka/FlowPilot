@@ -68,7 +68,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
             if row["coverage_kind"] in coverage_matrix.SYNTHETIC_NON_LIVE_KINDS
         ]
 
-        self.assertGreaterEqual(len(synthetic_rows), 6)
+        self.assertGreaterEqual(len(synthetic_rows), 16)
         for row in synthetic_rows:
             with self.subTest(evidence_id=row["evidence_id"]):
                 self.assertFalse(row["live_completion_allowed"])
@@ -80,6 +80,41 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
                 self.assertIn(row["test_name"], trace_test_text)
                 self.assertEqual(row["evidence_status"], "passed")
                 self.assertTrue(row["evidence_current"])
+
+    def test_p0_p1_required_branches_have_synthetic_replay_or_reason(self) -> None:
+        report = coverage_matrix.build_report()
+        high_risk_rows = [
+            row
+            for row in report["rows"]
+            if row["risk_tier"] in coverage_matrix.REPLAY_REQUIRED_RISK_TIERS
+            and row["synthetic_replay_required"] is True
+        ]
+        evidence_ids = {row["evidence_id"] for row in high_risk_rows}
+
+        self.assertGreaterEqual(len(high_risk_rows), 15)
+        self.assertLessEqual(
+            {
+                "synthetic.control_blocker.failure.retry_budget_pm_escalation",
+                "synthetic.control_blocker.happy.pm_repair_target_accepted",
+                "synthetic.control_blocker.negative.invalid_pm_repair_target",
+                "synthetic.control_blocker.negative.fatal_ordinary_waiver_rejected",
+                "synthetic.resume.failure.active_blocker_or_ambiguous_state",
+                "synthetic.route_mutation.negative.stale_sibling_proof",
+                "synthetic.role_output.negative.pm_disposition_authority",
+                "synthetic.controller.failure.boundary_repair_budget_escalation",
+                "synthetic.material.negative.active_generation_blocks_stale_flags",
+                "synthetic.terminal.negative.dirty_pm_suggestion_ledger",
+            },
+            evidence_ids,
+        )
+        for row in high_risk_rows:
+            with self.subTest(evidence_id=row["evidence_id"]):
+                self.assertIn(row["synthetic_replay_status"], {"present", "not_replayable"})
+                if row["synthetic_replay_status"] == "present":
+                    self.assertIn(row["coverage_kind"], coverage_matrix.SYNTHETIC_NON_LIVE_KINDS)
+                else:
+                    self.assertTrue(row.get("non_replayable_reason"))
+                self.assertTrue(row["covered_failure_mode"])
 
     def test_route_resume_and_role_authority_branches_are_explicit_rows(self) -> None:
         rows = {
