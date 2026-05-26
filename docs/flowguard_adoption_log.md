@@ -18531,3 +18531,80 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Complete predictive-KB postflight and local git commit.
 - Archive `add-real-router-dry-run-rehearsal` after review if the implementation
   evidence is accepted.
+
+## 2026-05-26 - Shadow Launcher Chaos Regression
+
+- Trigger: user asked whether prepared fake AI packages had been run through the
+  real installed launcher and Router for control-plane lock, daemon, stale
+  proof, peer-run, package-error, upgrade, and bounded recovery cases.
+- Status: implemented, validated locally, installed skill synced, and prepared
+  for local commit.
+- Skill decision: use OpenSpec plus FlowGuard ExistingModelPreflight,
+  DevelopmentProcessFlow, TestMesh, and Model-Test Alignment.
+- OpenSpec change: `add-shadow-launcher-chaos-regression`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_shadow_launcher_chaos_matrix.py` and generated
+  result JSON for six full-flow shadow-launcher chaos rows.
+- Added runtime replay tests that copy the installed FlowPilot skill and drive
+  Router startup, daemon stop, stale locks, duplicate resume, peer-run
+  isolation, legacy pointer migration, finite malformed fake AI packages, and a
+  bounded two-cycle recovery/cleanup loop.
+- Registered the new matrix and runtime replay tests in the fast tier.
+- Added FlowGuard Model-Test Alignment evidence for the new
+  `router_loop.shadow_launcher_chaos_regression` obligation and refreshed the
+  synthetic agent coverage matrix.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_shadow_launcher_chaos_matrix.py --json-out simulations/flowpilot_shadow_launcher_chaos_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_shadow_launcher_chaos_matrix.py -q` -> `4 passed, 13 subtests passed`.
+- OK: `python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py -q` -> `6 passed, 7 subtests passed`.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py tests/test_flowpilot_model_test_alignment.py -q` -> `39 passed, 580 subtests passed`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `openspec validate add-shadow-launcher-chaos-regression --strict`.
+- OK in background contract: fast tier under
+  `tmp/flowguard_background/shadow_launcher_chaos_final_20260526/`, exit code
+  `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed,
+  proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status
+  passed, proof reuse false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- The new evidence drives the copied installed launcher and real Router runtime
+  with prepared fake AI artifacts, rather than only exercising matrix rows.
+- Control-plane recovery now covers stale lock/dead daemon, duplicate resume,
+  progress-only proof rejection, peer-run isolation, legacy pointer migration,
+  finite malformed package rejection, and bounded residue-free recovery cycles.
+- A first runtime pass was too slow because malformed package cases repeatedly
+  booted full launcher state; the replay was tightened to boot once and inject
+  package variants through the Router boundary.
+- A daemon-stop assertion was corrected to rely on lock-release and stop
+  outcome evidence instead of a timing-sensitive status snapshot on Windows.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication
+  was performed.
+- No absolute proof is claimed for every future live-AI semantic behavior,
+  project-specific mistake, OS failure, or hardware failure. The confidence is
+  bounded to the current installed launcher, current Router/control-plane
+  contracts, listed fake package classes, and executable evidence above.
+
+### Next Actions
+
+- Complete predictive-KB postflight and local git commit.
+- Archive `add-shadow-launcher-chaos-regression` after review if the
+  implementation evidence is accepted.

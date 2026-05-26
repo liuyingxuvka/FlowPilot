@@ -1,0 +1,594 @@
+{
+  "coverage_boundary": "Rows prove bounded end-to-end control-plane behavior through fake AI packages, the installed launcher, real Router state, daemon recovery, peer isolation, malformed package rejection, and short cleanup repetition. They do not prove arbitrary live AI semantic quality, every historical migration, or indefinite stress behavior.",
+  "findings": [],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "invalid_evidence_status",
+        "missing_required_rehearsal"
+      ],
+      "name": "progress_only_background_evidence",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "progress_only",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "installed_launcher"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence",
+        "missing_required_rehearsal"
+      ],
+      "name": "stale_peer_proof",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": false,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "peer_conflict"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_installed_launcher_entrypoint",
+        "missing_required_rehearsal"
+      ],
+      "name": "missing_installed_launcher_evidence",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "repo_only_router_main_call"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "installed_launcher"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_state_mutation_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "direct_state_mutation",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": true,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "installed_launcher"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "unbounded_soak_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "unbounded_soak_claim",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 100,
+          "surface": "bounded_soak"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_ai_semantic_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "live_ai_semantic_overclaim",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "known_bad_package"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": true,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "installed_launcher"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "bad_package_classes_not_finite_or_complete",
+        "missing_required_rehearsal"
+      ],
+      "name": "malformed_package_class_missing",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "installed_flowpilot_skill"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_shadow_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_injection": "known_bad",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "missing_runtime_envelope"
+          ],
+          "forbidden_shortcuts": [
+            "repo_only_router_main_call"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "start"
+          ],
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "rehearsal_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "soak_cycle_bound": 1,
+          "surface": "malformed_packages"
+        }
+      ]
+    }
+  ],
+  "malformed_package_classes": [
+    "missing_runtime_envelope",
+    "wrong_event_schema",
+    "controller_visible_body_leak",
+    "wrong_author_role",
+    "stale_hash_or_path"
+  ],
+  "ok": true,
+  "required_rehearsal_count": 6,
+  "required_surface_count": 6,
+  "result_type": "flowpilot_shadow_launcher_chaos_matrix",
+  "row_count": 6,
+  "rows": [
+    {
+      "confidence_boundary": "proves installed launcher control flow, not live model reasoning quality",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "installed_flowpilot_skill",
+        "flowpilot_router.py",
+        "state",
+        "daemon-stop"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_installed_launcher_shadow_start_reaches_releasable_standard_state",
+      "expected_standard_state": "current_run_created_with_router_state_and_releasable_daemon_lock",
+      "failure_injection": "installed_launcher_shadow_run_without_repo_cli_shortcut",
+      "fake_ai_artifacts": [
+        "startup_intake_receipt",
+        "router_action_ledger"
+      ],
+      "finite_package_classes": [
+        "startup_shadow_package"
+      ],
+      "forbidden_shortcuts": [
+        "direct_router_state_mutation",
+        "repo_only_router_main_call"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "installed_skill_entrypoint",
+        "start",
+        "state",
+        "daemon_stop"
+      ],
+      "protected_state_invariant": "installed launcher must create run-scoped .flowpilot state through the public Router CLI",
+      "rehearsal_id": "shadow.launcher.installed_skill_cli_startup",
+      "required_evidence": [
+        "installed_skill_path_exists",
+        "subprocess_cli_exit_zero",
+        "current_json_written",
+        "state_command_returns_run_root",
+        "daemon_stop_exit_zero_or_no_live_daemon"
+      ],
+      "soak_cycle_bound": 1,
+      "surface": "installed_launcher"
+    },
+    {
+      "confidence_boundary": "does not prove external scheduler exactly-once delivery",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "record-event",
+        "next",
+        "load_resume_state",
+        "background_artifact_classifier"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_crash_recovery_bundle_handles_dead_daemon_duplicate_resume_and_progress_only_proof",
+      "expected_standard_state": "resume_state_loaded_after_liveness_check_and_progress_only_proof_rejected",
+      "failure_injection": "dead_daemon_lock_duplicate_resume_and_progress_only_background_log",
+      "fake_ai_artifacts": [
+        "heartbeat_resume_event",
+        "resume_reentry",
+        "background_artifacts"
+      ],
+      "finite_package_classes": [
+        "resume_shadow_package",
+        "background_progress_only_artifact"
+      ],
+      "forbidden_shortcuts": [
+        "count_progress_line_as_pass",
+        "skip_resume_liveness_check"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "startup",
+        "activation",
+        "stale_daemon_lock",
+        "duplicate_resume",
+        "proof_gate"
+      ],
+      "protected_state_invariant": "resume cannot continue normal work until daemon liveness and final proof artifacts are checked",
+      "rehearsal_id": "shadow.crash_recovery.stale_lock_duplicate_resume_progress_proof",
+      "required_evidence": [
+        "dead_daemon_decision_restart",
+        "duplicate_resume_idempotent",
+        "resume_reentry_written",
+        "progress_only_background_status_rejected"
+      ],
+      "soak_cycle_bound": 1,
+      "surface": "crash_recovery"
+    },
+    {
+      "confidence_boundary": "does not prove simultaneous human edits to current.json",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "stop_router_daemon",
+        "current.json",
+        "router_daemon.lock"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_peer_conflict_keeps_current_run_authority_and_rejects_stale_peer_proof",
+      "expected_standard_state": "peer_run_released_current_run_still_active_and_peer_proof_not_current",
+      "failure_injection": "peer_run_stop_and_stale_peer_proof_attempt_while_current_run_is_active",
+      "fake_ai_artifacts": [
+        "peer_run_a_state",
+        "current_run_b_state",
+        "peer_background_proof"
+      ],
+      "finite_package_classes": [
+        "peer_stop_shadow_package",
+        "peer_proof_shadow_package"
+      ],
+      "forbidden_shortcuts": [
+        "rewrite_current_pointer_to_peer",
+        "reuse_peer_proof_as_current_run_proof"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "parallel_runs",
+        "two_daemon_locks",
+        "peer_stop",
+        "current_state_assert"
+      ],
+      "protected_state_invariant": "current run focus and current daemon lock remain authoritative under peer cleanup",
+      "rehearsal_id": "shadow.peer_conflict.current_run_isolation",
+      "required_evidence": [
+        "peer_lock_released",
+        "current_pointer_unchanged",
+        "current_lock_still_active",
+        "stale_peer_proof_marked_not_current"
+      ],
+      "soak_cycle_bound": 1,
+      "surface": "peer_conflict"
+    },
+    {
+      "confidence_boundary": "does not prove every historical schema migration",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "state",
+        "load_bootstrap_state",
+        "load_run_state",
+        "installed_skill_files"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_legacy_pointer_and_installed_assets_resolve_to_current_standard_state",
+      "expected_standard_state": "legacy_active_pointer_resolves_to_current_run_state_without_fallback_to_unscoped_state",
+      "failure_injection": "old_active_run_pointer_fields_and_existing_installed_skill",
+      "fake_ai_artifacts": [
+        "legacy_current_pointer",
+        "minimal_running_run"
+      ],
+      "finite_package_classes": [
+        "legacy_pointer_shadow_package"
+      ],
+      "forbidden_shortcuts": [
+        "fallback_to_legacy_dot_flowpilot_root",
+        "assume_install_fresh_without_file_evidence"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "legacy_current_pointer",
+        "state_load",
+        "installed_source_presence"
+      ],
+      "protected_state_invariant": "old pointers may be read only as compatibility input and cannot bypass current run root authority",
+      "rehearsal_id": "shadow.upgrade_migration.legacy_pointer_install_freshness",
+      "required_evidence": [
+        "active_run_root_compatibility_loaded",
+        "run_state_matches_legacy_pointer_run",
+        "installed_skill_assets_present"
+      ],
+      "soak_cycle_bound": 1,
+      "surface": "upgrade_migration"
+    },
+    {
+      "confidence_boundary": "finite generator proves named protocol classes, not arbitrary natural-language bad answers",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "role-output-envelope",
+        "record-event",
+        "RouterError"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_malformed_fake_ai_package_generator_rejects_finite_bad_classes",
+      "expected_standard_state": "bad_packages_blocked_or_quarantined_without_startup_activation",
+      "failure_injection": "finite_generated_bad_fake_ai_packages",
+      "fake_ai_artifacts": [
+        "missing_runtime_envelope",
+        "wrong_event_schema",
+        "controller_visible_body_leak",
+        "wrong_author_role",
+        "stale_hash_or_path"
+      ],
+      "finite_package_classes": [
+        "missing_runtime_envelope",
+        "wrong_event_schema",
+        "controller_visible_body_leak",
+        "wrong_author_role",
+        "stale_hash_or_path"
+      ],
+      "forbidden_shortcuts": [
+        "unbounded_random_fuzz_claim",
+        "accept_controller_visible_body_fields"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "startup_wait",
+        "bad_package_generator",
+        "record_event_rejection",
+        "state_unchanged"
+      ],
+      "protected_state_invariant": "bad role output cannot advance the Router wait or leak body content to Controller",
+      "rehearsal_id": "shadow.malformed_packages.finite_bad_package_classes",
+      "required_evidence": [
+        "finite_bad_package_class_list",
+        "each_bad_package_rejected",
+        "startup_activation_flag_still_false"
+      ],
+      "soak_cycle_bound": 1,
+      "surface": "malformed_packages"
+    },
+    {
+      "confidence_boundary": "bounded soak catches residue regressions but is not a long-duration stress test",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "next",
+        "record-event",
+        "daemon-stop",
+        "router_daemon.lock"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_shadow_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_bounded_soak_repeats_startup_recovery_and_cleanup_without_residue",
+      "expected_standard_state": "each_cycle_finishes_with_released_or_terminal_daemon_lock_and_no_cross_cycle_current_leak",
+      "failure_injection": "two_cycle_startup_resume_stop_repetition",
+      "fake_ai_artifacts": [
+        "startup_shadow_package",
+        "resume_shadow_package"
+      ],
+      "finite_package_classes": [
+        "startup_shadow_package",
+        "resume_shadow_package"
+      ],
+      "forbidden_shortcuts": [
+        "claim_unbounded_soak",
+        "share_temp_project_between_cycles"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "cycle_startup",
+        "cycle_recovery_probe",
+        "cycle_stop_cleanup",
+        "residue_check"
+      ],
+      "protected_state_invariant": "repeated bounded control-plane cycles do not reuse stale run authority across temp projects",
+      "rehearsal_id": "shadow.soak.bounded_startup_recovery_cleanup",
+      "required_evidence": [
+        "cycle_count_bounded",
+        "each_cycle_has_current_run",
+        "each_cycle_stop_releases_daemon_authority"
+      ],
+      "soak_cycle_bound": 2,
+      "surface": "bounded_soak"
+    }
+  ],
+  "rows_by_surface": {
+    "bounded_soak": 1,
+    "crash_recovery": 1,
+    "installed_launcher": 1,
+    "malformed_packages": 1,
+    "peer_conflict": 1,
+    "upgrade_migration": 1
+  }
+}

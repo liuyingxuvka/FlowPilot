@@ -78,6 +78,15 @@ FAST_COMMANDS = (
         description="Control-plane canary matrix for locks, daemon liveness, resume, authority, fences, and proof artifacts.",
     ),
     TierCommand(
+        name="shadow_launcher_chaos_matrix",
+        command=_py(
+            "simulations/flowpilot_shadow_launcher_chaos_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_shadow_launcher_chaos_matrix_results.json",
+        ),
+        description="Shadow launcher chaos matrix for installed launcher, recovery, peer conflict, migration, bad packages, and bounded soak.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -135,6 +144,16 @@ FAST_COMMANDS = (
         "control_plane_failure_canary_replay_tests",
         "tests/test_flowpilot_control_plane_failure_canary_replay.py",
         description="Runtime control-plane canaries for locks, daemon liveness, duplicate resume, peer stops, fences, and proof gates.",
+    ),
+    _pytest(
+        "shadow_launcher_chaos_matrix_tests",
+        "tests/test_flowpilot_shadow_launcher_chaos_matrix.py",
+        description="Focused tests for installed-launcher shadow chaos rows and known-bad matrix rejection.",
+    ),
+    _pytest(
+        "shadow_launcher_chaos_replay_tests",
+        "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+        description="Runtime shadow chaos replays through installed launcher copy, real Router, daemon recovery, peer isolation, malformed packages, and cleanup loops.",
     ),
     _pytest(
         "model_test_alignment_tests",

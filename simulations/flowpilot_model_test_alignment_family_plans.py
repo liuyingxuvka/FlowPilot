@@ -353,6 +353,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, FAILURE, EDGE),
             ),
             _obligation(
+                "router_loop.shadow_launcher_chaos_regression",
+                obligation_type="scenario",
+                description="Shadow launcher chaos regressions drive fake AI packages through an installed launcher copy, real Router/daemon state, recovery, peer isolation, legacy pointer loading, malformed package rejection, and bounded cleanup loops.",
+                required_test_kinds=(HAPPY, EDGE, NEGATIVE),
+            ),
+            _obligation(
                 "daemon.lock_status_and_queue_progress",
                 obligation_type="invariant",
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
@@ -461,6 +467,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
                 test_kind=EDGE,
                 covers=("router_loop.control_plane_failure_canary",),
+            ),
+            _evidence(
+                "router_loop.shadow_launcher.happy.installed_start",
+                test_name="test_installed_launcher_shadow_start_reaches_releasable_standard_state",
+                path="tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                test_kind=HAPPY,
+                covers=("router_loop.shadow_launcher_chaos_regression",),
+            ),
+            _evidence(
+                "router_loop.shadow_launcher.edge.recovery_peer_soak",
+                test_name="test_crash_recovery_bundle_handles_dead_daemon_duplicate_resume_and_progress_only_proof",
+                path="tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                test_kind=EDGE,
+                covers=("router_loop.shadow_launcher_chaos_regression",),
+            ),
+            _evidence(
+                "router_loop.shadow_launcher.negative.bad_packages",
+                test_name="test_malformed_fake_ai_package_generator_rejects_finite_bad_classes",
+                path="tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                command="python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
+                test_kind=NEGATIVE,
+                covers=("router_loop.shadow_launcher_chaos_regression",),
             ),
             _evidence(
                 "daemon.happy.formal_startup",
