@@ -18618,6 +18618,93 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Archive `add-real-router-dry-run-rehearsal` after review if the implementation
   evidence is accepted.
 
+## 2026-05-26 - Historical Live-Run Replay Package Suite
+
+- Trigger: user asked whether historical fake AI work packages had been driven
+  through the real Router/control plane, including host lifecycle, launcher,
+  relay/receipt, background proof, install split-brain, stale display, and
+  Windows filesystem failure edges.
+- Status: implemented, validated locally, local install synced, and
+  predictive-KB postflight recorded; prepared for local commit.
+- Skill decision: use OpenSpec plus FlowGuard ExistingModelPreflight,
+  DevelopmentProcessFlow, TestMesh, and Model-Test Alignment.
+- OpenSpec change: `add-historical-live-run-replay-package-suite`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_historical_live_run_replay_matrix.py` and
+  generated result JSON for eleven high-risk historical live-run replay
+  package surfaces.
+- Added runtime replay tests for stale historical snapshots, progress-only or
+  incomplete background proof, partial host/role rehydration, relay completion
+  overclaim, semantic contract overclaim, install split-brain, stale UI
+  projection, and Windows lock/partial-JSON recovery boundaries.
+- Registered the matrix and runtime replay tests in the fast tier.
+- Added FlowGuard Model-Test Alignment evidence for the new
+  `router_loop.historical_live_run_replay_package_suite` obligation and
+  refreshed generated alignment/coverage artifacts.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_historical_live_run_replay_matrix.py --json-out simulations/flowpilot_historical_live_run_replay_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_historical_live_run_replay_matrix.py -q` -> `5 passed, 19 subtests passed`.
+- OK: `python -m pytest tests/test_flowpilot_historical_live_run_replay.py -q` -> `5 passed`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_test_tiers.py tests/test_flowpilot_historical_live_run_replay_matrix.py tests/test_flowpilot_historical_live_run_replay.py -q` -> `34 passed, 312 subtests passed`.
+- OK: `python -m pytest tests/test_flowpilot_model_test_alignment.py -q` -> `15 passed, 296 subtests passed`.
+- OK: `openspec validate add-historical-live-run-replay-package-suite --strict`.
+- OK in background contract: fast tier under
+  `tmp/flowguard_background/historical_live_run_replay_final_20260526/`,
+  exit code `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py` under
+  `tmp/flowguard_background/historical_live_run_replay_final_20260526/`,
+  exit code `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`
+  under `tmp/flowguard_background/historical_live_run_replay_final_20260526/`,
+  exit code `0`, status passed, proof reuse false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: predictive-KB postflight recorded event
+  `df4e0eb8-4685-4c8f-8795-e5d02ee1d06d`.
+
+### Findings
+
+- The package suite now separates three things that were previously easy to
+  blur: a fake AI work package, a real Router/control-plane runtime replay, and
+  a bounded evidence claim.
+- The first runtime pass exposed two real interface assumptions in the tests:
+  result-body hash support only counts after the recipient opens and verifies
+  the body, and write-lock liveness is classified through `classification`
+  rather than a generic `status` field. The tests were corrected to follow the
+  real contract.
+- The new rows make stale snapshots, progress-only logs, partial resume,
+  relay-done-without-mutation, semantic overclaim, stale UI projection, and
+  install split-brain fail as package evidence instead of being accepted as
+  completed work.
+
+### Skipped Or Limited
+
+- No live external AI call is part of this suite. The point is to drive real
+  control-plane behavior with prepared package artifacts, not to prove model
+  quality.
+- No absolute proof is claimed for every possible future live-AI semantic
+  mistake, operating-system crash, hardware failure, or unlisted package class.
+  The confidence is bounded to the current Router/control-plane contracts,
+  package classes, and executable evidence listed above.
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication
+  was performed.
+
+### Next Actions
+
+- Complete local git commit.
+- Archive `add-historical-live-run-replay-package-suite` after review if the
+  implementation evidence is accepted.
+
 ## 2026-05-26 - Shadow Launcher Chaos Regression
 
 - Trigger: user asked whether prepared fake AI packages had been run through the

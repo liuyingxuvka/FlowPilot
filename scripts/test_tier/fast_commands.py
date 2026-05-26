@@ -87,6 +87,15 @@ FAST_COMMANDS = (
         description="Shadow launcher chaos matrix for installed launcher, recovery, peer conflict, migration, bad packages, and bounded soak.",
     ),
     TierCommand(
+        name="historical_live_run_replay_matrix",
+        command=_py(
+            "simulations/flowpilot_historical_live_run_replay_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_historical_live_run_replay_matrix_results.json",
+        ),
+        description="Historical live-run replay package matrix for control-plane, relay, install, projection, and filesystem edge cases.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -154,6 +163,16 @@ FAST_COMMANDS = (
         "shadow_launcher_chaos_replay_tests",
         "tests/test_flowpilot_shadow_launcher_chaos_replay.py",
         description="Runtime shadow chaos replays through installed launcher copy, real Router, daemon recovery, peer isolation, malformed packages, and cleanup loops.",
+    ),
+    _pytest(
+        "historical_live_run_replay_matrix_tests",
+        "tests/test_flowpilot_historical_live_run_replay_matrix.py",
+        description="Focused tests for historical live-run replay package rows and known-bad matrix rejection.",
+    ),
+    _pytest(
+        "historical_live_run_replay_tests",
+        "tests/test_flowpilot_historical_live_run_replay.py",
+        description="Runtime historical live-run replay packages through real Router, packet/runtime, resume, proof, install, projection, and filesystem gates.",
     ),
     _pytest(
         "model_test_alignment_tests",

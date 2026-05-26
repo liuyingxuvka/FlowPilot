@@ -359,6 +359,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, EDGE, NEGATIVE),
             ),
             _obligation(
+                "router_loop.historical_live_run_replay_package_suite",
+                obligation_type="scenario",
+                description="Historical live-run replay packages bind prior real failure shapes to real Router, packet/runtime, resume, background proof, install, route evidence, display projection, and filesystem gates without claiming arbitrary live AI semantic quality.",
+                required_test_kinds=(HAPPY, EDGE, NEGATIVE),
+            ),
+            _obligation(
                 "daemon.lock_status_and_queue_progress",
                 obligation_type="invariant",
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
@@ -491,6 +497,30 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
                 test_kind=NEGATIVE,
                 covers=("router_loop.shadow_launcher_chaos_regression",),
+            ),
+            _evidence(
+                "router_loop.historical_live_run.happy.package_matrix",
+                test_name="test_historical_live_run_rows_cover_required_surfaces",
+                path="tests/test_flowpilot_historical_live_run_replay_matrix.py",
+                command="python -m pytest tests/test_flowpilot_historical_live_run_replay_matrix.py",
+                test_kind=HAPPY,
+                covers=("router_loop.historical_live_run_replay_package_suite",),
+            ),
+            _evidence(
+                "router_loop.historical_live_run.edge.snapshot_background_lifecycle",
+                test_name="test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence",
+                path="tests/test_flowpilot_historical_live_run_replay.py",
+                command="python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
+                test_kind=EDGE,
+                covers=("router_loop.historical_live_run_replay_package_suite",),
+            ),
+            _evidence(
+                "router_loop.historical_live_run.negative.relay_semantic_overclaim",
+                test_name="test_relay_lifecycle_and_semantic_contract_packages_block_overclaims",
+                path="tests/test_flowpilot_historical_live_run_replay.py",
+                command="python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
+                test_kind=NEGATIVE,
+                covers=("router_loop.historical_live_run_replay_package_suite",),
             ),
             _evidence(
                 "daemon.happy.formal_startup",

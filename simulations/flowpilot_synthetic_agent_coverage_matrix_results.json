@@ -9,7 +9,7 @@
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 60,
+  "required_cell_count": 63,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -249,6 +249,24 @@
       "branch_kind": "happy_path",
       "family": "router loop/daemon",
       "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
       "obligation_id": "daemon.lock_status_and_queue_progress"
     },
     {
@@ -373,7 +391,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 85,
+  "row_count": 88,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -1466,6 +1484,90 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "test_malformed_fake_ai_package_generator_rejects_finite_bad_classes"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay_matrix.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.historical_live_run.happy.package_matrix",
+      "evidence_owner": "test_flowpilot_historical_live_run_replay_matrix",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_historical_live_run_replay_matrix.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_historical_live_run_rows_cover_required_surfaces"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "background_artifact",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.historical_live_run.edge.snapshot_background_lifecycle",
+      "evidence_owner": "test_flowpilot_historical_live_run_replay",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_historical_live_run_replay.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.historical_live_run.negative.relay_semantic_overclaim",
+      "evidence_owner": "test_flowpilot_historical_live_run_replay",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.historical_live_run_replay_package_suite",
+      "obligation_type": "scenario",
+      "path": "tests/test_flowpilot_historical_live_run_replay.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_relay_lifecycle_and_semantic_contract_packages_block_overclaims"
     },
     {
       "branch_kind": "happy_path",
@@ -2760,9 +2862,9 @@
     }
   ],
   "rows_by_coverage_kind": {
-    "background_artifact": 2,
+    "background_artifact": 3,
     "fixture_trace": 1,
-    "ordinary_runtime": 61,
+    "ordinary_runtime": 63,
     "synthetic_trace": 21
   },
   "rows_by_family": {
@@ -2774,7 +2876,7 @@
     "repair transactions": 7,
     "role/output contracts": 6,
     "route mutation": 6,
-    "router loop/daemon": 21,
+    "router loop/daemon": 24,
     "startup": 4,
     "terminal/closure/resume": 11,
     "test tiering/slow-test contracts": 6

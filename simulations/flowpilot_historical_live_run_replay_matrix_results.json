@@ -1,0 +1,996 @@
+{
+  "coverage_boundary": "Rows prove bounded historical live-run replay package behavior through fake AI artifacts and real FlowPilot control surfaces: Router state, packet and role-output runtime, resume, background proof classification, install freshness, route evidence scope, display projection authority, and filesystem residue handling. They do not prove arbitrary live AI semantic quality, every possible production adapter trace, or unbounded parallel stress.",
+  "findings": [],
+  "historical_package_classes": [
+    "stale_historical_snapshot",
+    "partial_host_role_rehydration",
+    "production_adapter_gap",
+    "relay_done_without_runtime_mutation",
+    "parallel_peer_proof_reuse",
+    "background_exit_meta_mismatch",
+    "install_source_split_brain",
+    "route_mutation_stale_evidence",
+    "missing_skill_standard_result_matrix",
+    "stale_ui_projection",
+    "windows_lock_partial_json"
+  ],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "missing_required_replay",
+        "missing_required_surface"
+      ],
+      "name": "missing_required_surface",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "historical.snapshot.stale_pending_terminal_display",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "historical_snapshot"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence",
+        "missing_required_replay"
+      ],
+      "name": "stale_evidence",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": false,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "historical_snapshot"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_historical_snapshot_requirement",
+        "p0_missing_historical_snapshot",
+        "missing_required_replay"
+      ],
+      "name": "missing_historical_snapshot_for_p0",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": false,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "historical_snapshot"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "production_adapter_overclaim",
+        "missing_required_replay"
+      ],
+      "name": "production_adapter_overclaim_without_adapter",
+      "rows": [
+        {
+          "confidence_boundary": "claims full production replay parity",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": true,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "production_replay_adapter"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_runtime_entrypoint",
+        "relay_done_shortcut_not_forbidden",
+        "missing_required_replay"
+      ],
+      "name": "relay_done_without_runtime_mutation",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "controller_receipt"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "relay_done_without_runtime_mutation"
+          ],
+          "forbidden_shortcuts": [
+            "controller_reads_body_to_infer_success"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "relay_receipt_mechanics"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_ai_semantic_overclaim",
+        "missing_required_replay"
+      ],
+      "name": "live_ai_semantic_overclaim",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": true,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "historical_snapshot"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_state_mutation_overclaim",
+        "missing_required_replay"
+      ],
+      "name": "destructive_live_state_mutation",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": true,
+          "entrypoints": [
+            "run_snapshot_loader",
+            "real_router_runtime"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "stale_historical_snapshot"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "historical_snapshot"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invalid_evidence_status",
+        "missing_background_classifier_entrypoint",
+        "missing_required_replay"
+      ],
+      "name": "progress_only_background_evidence",
+      "rows": [
+        {
+          "confidence_boundary": "known bad fixture only",
+          "destructive_live_state_mutation": false,
+          "entrypoints": [
+            "tmp/flowguard_background"
+          ],
+          "evidence_current": true,
+          "evidence_role": "primary_historical_replay",
+          "evidence_status": "progress_only",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "failure_package": "known bad fixture",
+          "fake_ai_artifacts": [
+            "known_bad_package"
+          ],
+          "finite_package_classes": [
+            "background_exit_meta_mismatch"
+          ],
+          "forbidden_shortcuts": [
+            "trust_chat_display_as_router_state"
+          ],
+          "historical_snapshot_required": true,
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "load"
+          ],
+          "priority": "P0",
+          "production_replay_adapter_present": false,
+          "production_replay_adapter_required": false,
+          "protected_state_invariant": "bad input cannot mutate protected state",
+          "replay_id": "known.bad",
+          "required_evidence": [
+            "test_evidence"
+          ],
+          "source_records": [
+            "known_bad_source"
+          ],
+          "surface": "background_proof_edges"
+        }
+      ]
+    }
+  ],
+  "ok": true,
+  "required_replay_count": 11,
+  "required_surface_count": 11,
+  "result_type": "flowpilot_historical_live_run_replay_matrix",
+  "row_count": 11,
+  "rows": [
+    {
+      "confidence_boundary": "proves stale snapshot authority handling, not every archived schema variant",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "run_snapshot_loader",
+        "real_router_runtime",
+        "current.json",
+        "terminal_ledger"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence",
+      "expected_standard_state": "display is treated as projection only and Router state remains authoritative",
+      "failure_package": "historical snapshot shows terminal-looking display while Router still owns a pending action",
+      "fake_ai_artifacts": [
+        "stale_pending_action",
+        "terminal_display_projection"
+      ],
+      "finite_package_classes": [
+        "stale_historical_snapshot"
+      ],
+      "forbidden_shortcuts": [
+        "trust_chat_display_as_router_state",
+        "skip_current_pointer_check"
+      ],
+      "historical_snapshot_required": true,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "snapshot_load",
+        "current_pointer_check",
+        "terminal_display_check",
+        "standard_state_gate"
+      ],
+      "priority": "P0",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "historical snapshot replay cannot mark completion unless current run state and terminal ledger agree",
+      "replay_id": "historical.snapshot.stale_pending_terminal_display",
+      "required_evidence": [
+        "snapshot_run_id_loaded",
+        "current_pointer_matches_snapshot_or_rejected",
+        "pending_action_not_counted_as_terminal",
+        "terminal_ledger_authority_checked"
+      ],
+      "source_records": [
+        "prior_live_run_control_plane_blockers",
+        "router_state_snapshot_fixture"
+      ],
+      "surface": "historical_snapshot"
+    },
+    {
+      "confidence_boundary": "proves mechanical host-role rehydration gates, not host scheduler delivery guarantees",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "real_router_runtime",
+        "load_resume_state",
+        "rehydrate_role_agents",
+        "role_io_protocol"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_host_role_lifecycle_resume_requires_full_rehydrate_evidence",
+      "expected_standard_state": "normal work stays blocked until all six role records and resume memory evidence pass",
+      "failure_package": "resume continues after only some roles report liveness or after unknown liveness is treated as active",
+      "fake_ai_artifacts": [
+        "partial_rehydration_receipt",
+        "stale_memory_packet",
+        "timeout_unknown_liveness"
+      ],
+      "finite_package_classes": [
+        "partial_host_role_rehydration"
+      ],
+      "forbidden_shortcuts": [
+        "continue_with_partial_crew",
+        "treat_timeout_unknown_as_active"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "resume_wake",
+        "load_resume_state",
+        "rehydrate_role_agents",
+        "normal_work_gate"
+      ],
+      "priority": "P0",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "resume cannot resume work from partial host-role lifecycle evidence",
+      "replay_id": "host.lifecycle.partial_rehydrate_thread_limit",
+      "required_evidence": [
+        "load_resume_state_evidence_written",
+        "all_six_roles_checked",
+        "missing_role_rejected",
+        "timeout_unknown_not_active"
+      ],
+      "source_records": [
+        "resume_reentry",
+        "crew_rehydration_report",
+        "role_io_protocol_ledger"
+      ],
+      "surface": "host_role_lifecycle"
+    },
+    {
+      "confidence_boundary": "explicitly records adapter gap; does not prove production replay adapter parity",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "production_replay_adapter_manifest",
+        "real_router_runtime",
+        "package_confidence_gate"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_relay_lifecycle_and_semantic_contract_packages_block_overclaims",
+      "expected_standard_state": "row passes only when adapter absence is disclosed and no production-live overclaim is made",
+      "failure_package": "fixture replay is incorrectly claimed to prove production replay coverage",
+      "fake_ai_artifacts": [
+        "fixture_without_live_adapter"
+      ],
+      "finite_package_classes": [
+        "production_adapter_gap"
+      ],
+      "forbidden_shortcuts": [
+        "claim_fixture_is_production_replay",
+        "omit_adapter_presence"
+      ],
+      "historical_snapshot_required": true,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "fixture_snapshot",
+        "adapter_boundary_check",
+        "claim_boundary"
+      ],
+      "priority": "P0",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": true,
+      "protected_state_invariant": "fixture-only replay cannot be counted as production adapter conformance",
+      "replay_id": "production.replay.adapter_gap_disclosed",
+      "required_evidence": [
+        "adapter_presence_field_recorded",
+        "adapter_gap_disclosed",
+        "fixture_scope_disclosed",
+        "production_live_claim_absent"
+      ],
+      "source_records": [
+        "adapter_contract",
+        "fixture_snapshot_manifest"
+      ],
+      "surface": "production_replay_adapter"
+    },
+    {
+      "confidence_boundary": "proves mechanical relay evidence agreement for selected packet paths",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "packet_runtime",
+        "controller_relay_envelope",
+        "controller_receipt",
+        "packet_ledger"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_relay_lifecycle_and_semantic_contract_packages_block_overclaims",
+      "expected_standard_state": "completion remains blocked until runtime relay evidence and Router ledger agree",
+      "failure_package": "Controller marks relay done while packet ledger or runtime envelope was not mutated",
+      "fake_ai_artifacts": [
+        "done_receipt_without_relay_mutation",
+        "packet_envelope_only"
+      ],
+      "finite_package_classes": [
+        "relay_done_without_runtime_mutation"
+      ],
+      "forbidden_shortcuts": [
+        "trust_done_receipt_without_ledger",
+        "controller_reads_body_to_infer_success"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "issue_packet",
+        "controller_relay",
+        "done_receipt",
+        "runtime_state_audit"
+      ],
+      "priority": "P0",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "done receipt cannot replace packet/runtime state mutation evidence",
+      "replay_id": "relay.receipt.done_without_runtime_mutation",
+      "required_evidence": [
+        "controller_relay_signature_recorded",
+        "packet_ledger_status_mutated",
+        "receipt_hash_current",
+        "done_without_mutation_rejected"
+      ],
+      "source_records": [
+        "packet_ledger",
+        "controller_action_ledger",
+        "runtime_receipt"
+      ],
+      "surface": "relay_receipt_mechanics"
+    },
+    {
+      "confidence_boundary": "bounded peer proof isolation, not an unbounded load test",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "current.json",
+        "background_artifact_classifier",
+        "router_daemon.lock"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence",
+      "expected_standard_state": "peer proof remains scoped to peer run and current run authority is unchanged",
+      "failure_package": "peer run proof is reused as current run evidence during parallel package execution",
+      "fake_ai_artifacts": [
+        "peer_run_proof",
+        "current_run_replay_package"
+      ],
+      "finite_package_classes": [
+        "parallel_peer_proof_reuse"
+      ],
+      "forbidden_shortcuts": [
+        "reuse_peer_proof_for_current_run",
+        "rewrite_current_pointer_to_peer"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "parallel_runs",
+        "peer_proof_write",
+        "current_run_check",
+        "proof_scope_check"
+      ],
+      "priority": "P1",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "parallel peer evidence cannot overwrite current-run authority",
+      "replay_id": "parallel.stress.high_parallel_peer_proof_isolation",
+      "required_evidence": [
+        "peer_run_id_in_proof",
+        "current_run_id_compared",
+        "peer_proof_not_current",
+        "current_pointer_unchanged"
+      ],
+      "source_records": [
+        "peer_background_artifacts",
+        "current_run_pointer"
+      ],
+      "surface": "parallel_stress"
+    },
+    {
+      "confidence_boundary": "proves artifact classification, not remote runner durability",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "background_artifact_classifier",
+        "tmp/flowguard_background"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence",
+      "expected_standard_state": "progress-only and stale meta evidence is rejected before pass claims",
+      "failure_package": "background progress or mismatched exit/meta artifact is counted as final proof",
+      "fake_ai_artifacts": [
+        "progress_only_log",
+        "exit_meta_mismatch"
+      ],
+      "finite_package_classes": [
+        "background_exit_meta_mismatch"
+      ],
+      "forbidden_shortcuts": [
+        "count_progress_line_as_pass",
+        "ignore_exit_meta_mismatch"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "background_run",
+        "progress_log",
+        "exit_meta_race",
+        "proof_gate"
+      ],
+      "priority": "P1",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "only final current artifacts count as completion evidence",
+      "replay_id": "background.proof.edge_artifact_mismatch",
+      "required_evidence": [
+        "progress_only_status_rejected",
+        "missing_exit_detected",
+        "exit_meta_mismatch_classified",
+        "current_run_binding_checked"
+      ],
+      "source_records": [
+        "background_out",
+        "background_err",
+        "background_exit",
+        "background_meta"
+      ],
+      "surface": "background_proof_edges"
+    },
+    {
+      "confidence_boundary": "proves local digest mismatch detection, not full external install deployment",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "install_flowpilot.py",
+        "audit_local_install_sync.py",
+        "installed_flowpilot_skill"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_install_split_brain_and_ui_projection_packages_do_not_count_as_authority",
+      "expected_standard_state": "install split-brain is detected before local sync claim",
+      "failure_package": "installed skill or loaded prompt differs from repository source after tests pass",
+      "fake_ai_artifacts": [
+        "stale_installed_skill",
+        "loaded_old_prompt_manifest"
+      ],
+      "finite_package_classes": [
+        "install_source_split_brain"
+      ],
+      "forbidden_shortcuts": [
+        "skip_install_audit_after_source_change",
+        "assume_repo_test_means_installed_fresh"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "repo_change",
+        "installed_skill_check",
+        "prompt_manifest_check",
+        "install_sync_gate"
+      ],
+      "priority": "P1",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "repository tests cannot imply installed skill freshness",
+      "replay_id": "install.split_brain.stale_installed_and_loaded_prompt",
+      "required_evidence": [
+        "repo_digest_recorded",
+        "installed_digest_recorded",
+        "digest_mismatch_detected",
+        "install_sync_required"
+      ],
+      "source_records": [
+        "repo_skill_digest",
+        "installed_skill_digest",
+        "loaded_prompt_manifest"
+      ],
+      "surface": "install_split_brain"
+    },
+    {
+      "confidence_boundary": "package-level route evidence scope check; full route mutation tests remain separate",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "execution_frontier.json",
+        "route_artifacts",
+        "node_completion_ledger"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_install_split_brain_and_ui_projection_packages_do_not_count_as_authority",
+      "expected_standard_state": "old evidence is stale unless replay scope and same-scope ledger are current",
+      "failure_package": "old route frontier or sibling proof is reused after route mutation",
+      "fake_ai_artifacts": [
+        "old_frontier_current_node_packet",
+        "stale_sibling_completion_proof"
+      ],
+      "finite_package_classes": [
+        "route_mutation_stale_evidence"
+      ],
+      "forbidden_shortcuts": [
+        "reuse_old_frontier_packet",
+        "skip_same_scope_replay"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "route_mutation",
+        "old_frontier_replay",
+        "sibling_evidence_check",
+        "same_scope_gate"
+      ],
+      "priority": "P1",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "route mutation stales old current-node and sibling evidence",
+      "replay_id": "route.mutation.old_frontier_and_sibling_evidence",
+      "required_evidence": [
+        "route_version_compared",
+        "frontier_version_compared",
+        "sibling_evidence_scope_checked",
+        "stale_evidence_blocked"
+      ],
+      "source_records": [
+        "execution_frontier",
+        "route_version",
+        "node_completion_ledger"
+      ],
+      "surface": "route_mutation_stale_evidence"
+    },
+    {
+      "confidence_boundary": "proves standard-result-matrix gating for named packages, not answer truth",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "packet_runtime",
+        "role_output_runtime",
+        "skill_standard_result_matrix"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_relay_lifecycle_and_semantic_contract_packages_block_overclaims",
+      "expected_standard_state": "semantic completion remains blocked and package is routed to repair/review",
+      "failure_package": "AI result claims completion without inherited standard rows or approved waiver",
+      "fake_ai_artifacts": [
+        "result_without_skill_standard_matrix",
+        "unapproved_waiver"
+      ],
+      "finite_package_classes": [
+        "missing_skill_standard_result_matrix"
+      ],
+      "forbidden_shortcuts": [
+        "treat_contract_self_check_as_standard_matrix",
+        "accept_unapproved_waiver"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "work_packet",
+        "fake_worker_result",
+        "skill_standard_matrix_check",
+        "review_gate"
+      ],
+      "priority": "P2",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "mechanical result success cannot replace Skill Standard Result Matrix evidence",
+      "replay_id": "semantic.contract.missing_standard_matrix_or_waiver",
+      "required_evidence": [
+        "inherited_standard_ids_declared",
+        "result_matrix_present_or_waiver_approved",
+        "missing_matrix_rejected"
+      ],
+      "source_records": [
+        "skill_standard_contract",
+        "worker_result",
+        "reviewer_gate"
+      ],
+      "surface": "semantic_contract"
+    },
+    {
+      "confidence_boundary": "proves projection authority boundary for package rows, not all UI rendering states",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "display_plan_projection",
+        "state",
+        "controller_status"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_install_split_brain_and_ui_projection_packages_do_not_count_as_authority",
+      "expected_standard_state": "display is non-authoritative and Router state remains the source of truth",
+      "failure_package": "display projection says complete while Router state still waits for evidence",
+      "fake_ai_artifacts": [
+        "stale_visible_plan",
+        "chat_status_claim"
+      ],
+      "finite_package_classes": [
+        "stale_ui_projection"
+      ],
+      "forbidden_shortcuts": [
+        "trust_visible_projection_as_completion",
+        "skip_router_state_authority"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "display_projection_load",
+        "router_state_check",
+        "authority_gate"
+      ],
+      "priority": "P2",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "visible projection cannot close Router-controlled waits",
+      "replay_id": "ui.display.stale_projection_not_authority",
+      "required_evidence": [
+        "display_projection_version_compared",
+        "router_state_authority_checked",
+        "stale_projection_rejected"
+      ],
+      "source_records": [
+        "display_plan_projection",
+        "router_state",
+        "controller_status"
+      ],
+      "surface": "ui_display_projection"
+    },
+    {
+      "confidence_boundary": "proves bounded filesystem residue classification, not every OS-level file race",
+      "destructive_live_state_mutation": false,
+      "entrypoints": [
+        "router_json_write_lock",
+        "read_json",
+        "project_relative"
+      ],
+      "evidence_current": true,
+      "evidence_role": "primary_historical_replay",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_windows_filesystem_package_uses_lock_and_partial_json_as_recoverable_mechanical_state",
+      "expected_standard_state": "runtime classifies residue as recoverable mechanical state and does not advance",
+      "failure_package": "Windows path lock or partial JSON residue is treated as valid runtime state",
+      "fake_ai_artifacts": [
+        "held_windows_lock",
+        "partial_json_write",
+        "mixed_separator_path"
+      ],
+      "finite_package_classes": [
+        "windows_lock_partial_json"
+      ],
+      "forbidden_shortcuts": [
+        "ignore_write_lock",
+        "parse_partial_json_as_state",
+        "accept_out_of_root_path"
+      ],
+      "historical_snapshot_required": false,
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "write_lock_probe",
+        "partial_json_probe",
+        "path_case_probe",
+        "recovery_gate"
+      ],
+      "priority": "P2",
+      "production_replay_adapter_present": false,
+      "production_replay_adapter_required": false,
+      "protected_state_invariant": "partial or locked filesystem writes cannot become authoritative Router state",
+      "replay_id": "windows.fs.path_lock_and_partial_json",
+      "required_evidence": [
+        "write_lock_path_detected",
+        "partial_json_rejected",
+        "path_scope_preserved",
+        "recovery_state_recorded"
+      ],
+      "source_records": [
+        "runtime_write_lock",
+        "partial_json_candidate",
+        "path_normalization_case"
+      ],
+      "surface": "windows_filesystem"
+    }
+  ],
+  "rows_by_priority": {
+    "P0": 4,
+    "P1": 4,
+    "P2": 3
+  },
+  "rows_by_surface": {
+    "background_proof_edges": 1,
+    "historical_snapshot": 1,
+    "host_role_lifecycle": 1,
+    "install_split_brain": 1,
+    "parallel_stress": 1,
+    "production_replay_adapter": 1,
+    "relay_receipt_mechanics": 1,
+    "route_mutation_stale_evidence": 1,
+    "semantic_contract": 1,
+    "ui_display_projection": 1,
+    "windows_filesystem": 1
+  }
+}
