@@ -18830,3 +18830,56 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - Complete predictive-KB postflight and local git commit.
 - Archive `harden-package-disposition-semantics` after review if the implementation evidence is accepted.
+
+## 2026-05-27 - Known Friction Regression Gates
+
+- Trigger: user reported that FlowPilot/OpenSpark repeatedly claimed tests were green while the same historical failure classes reappeared in real runs, and asked for adversarial regression gates rather than another one-off current-run fix.
+- Status: implemented, validated locally, installed skill synced, and committed locally.
+- Skill decision: OpenSpec plus FlowGuard ExistingModelPreflight, DevelopmentProcessFlow, TestMesh, Model-Test Alignment, and Model Miss Review.
+- OpenSpec change: `harden-known-friction-regression-gates`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added a known-friction regression matrix covering Worker self-check failure, PM repair atomicity, packet reissue continuation, stale status projection, ACK false blocker, and controlled stop reconciliation.
+- Added known-bad coverage that rejects missing rows, progress-only evidence, model-only evidence, skipped live audit, missing historical replay, missing current transcript regression, and live-AI semantic overclaim.
+- Registered the new matrix in the fast tier and fixed duplicate fast-tier command names so background proof artifacts cannot collide by command base name.
+- Extended model-test alignment and full diagnostic source contracts around terminal quarantine, packet-result authority, material progress flags, duplicate role-output events, and lifecycle cleanup.
+- Reclassified deferred structure-split findings as deferred rather than fast-convergence blockers while keeping them visible in the coverage matrix.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_known_friction_regression_matrix.py --json-out simulations/flowpilot_known_friction_regression_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_known_friction_regression_matrix.py -q` -> `7 passed, 28 subtests passed`.
+- OK: `python -m pytest tests/test_flowpilot_known_friction_regression_matrix.py tests/test_flowpilot_model_test_alignment.py tests/test_flowpilot_test_tiers.py -q` -> `47 passed, 637 subtests passed`.
+- OK: `python simulations/run_flowpilot_event_idempotency_checks.py --json-out simulations/flowpilot_event_idempotency_checks_results.json`.
+- OK: `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_checks_results.json`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `openspec validate harden-known-friction-regression-gates --strict`.
+- OK: background `python simulations/run_meta_checks.py`; `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed, proof reuse false.
+- OK: background `python simulations/run_capability_checks.py`; `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status passed, proof reuse false.
+- OK: fast background supervisor; `tmp/flowguard_background/fast_background_supervisor.exit.txt` = `0`, status passed, proof reuse false, 33/33 commands passed.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The old failure pattern was not one missing unit test. It was a validation-boundary problem: model-only, progress-only, skipped-live, and fake-package-only evidence could be reported too broadly.
+- Known friction rows now require historical bad-case replay, concrete runtime/test evidence, background final-artifact evidence where applicable, and scoped confidence disclosure.
+- Duplicate fast-tier command names were a hidden proof-risk because multiple commands could write to the same background artifact base name.
+- The current `.flowpilot` live audit still exposes five current/historical run-artifact failures. This pass keeps that as a disclosed live-run gap instead of mutating active peer-run state and pretending the historical run is clean.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication was performed.
+- The default live audit against the active `.flowpilot` workspace was not repaired by editing run artifacts because other AI agents may be active and the change scope is to harden regression gates, not to rewrite the stopped historical run.
+- No absolute guarantee of every future AI behavior is claimed. Confidence is bounded to the six known friction surfaces, current executable tests, current FlowGuard models, current installed skill sync, and the disclosed live-audit limitation.
+
+### Next Actions
+
+- Use the known-friction matrix as the intake point for every future repeated real-run miss.
+- Archive `harden-known-friction-regression-gates` after review if the implementation evidence is accepted.
