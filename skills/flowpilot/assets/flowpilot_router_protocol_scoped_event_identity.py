@@ -45,18 +45,21 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
     },
     "pm_records_material_scan_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
         "retry_group_fields": ("event", "batch_id", "packet_generation_id"),
+        "conflict_fields": ("body_hash",),
     },
     "pm_records_research_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
         "retry_group_fields": ("event", "batch_id", "packet_generation_id"),
+        "conflict_fields": ("body_hash",),
     },
     "pm_records_current_node_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
         "retry_group_fields": ("event", "batch_id", "packet_generation_id"),
+        "conflict_fields": ("body_hash",),
     },
     "worker_current_node_result_returned": {
         "family": "current_node_result",

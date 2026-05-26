@@ -52,6 +52,7 @@ HAZARD_EXPECTED_FAILURES = {
     "material_dispatch_repair_event_not_accepted": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
     "material_dispatch_repair_event_not_routed": "reviewer block kind material_dispatch is not accepted end-to-end by PM model-miss repair",
     "pm_decision_self_resolves_blocker": "PM repair decision resolved the blocker by itself",
+    "post_decision_wait_exposed_before_pm_flag_visible": "post-decision repair wait events were exposed before the PM repair decision flag was visible",
     "repair_decision_before_model_miss_triage": "PM repair decision started before closing model-miss triage obligation",
     "repair_decision_before_model_miss_path_selected": "PM repair decision started before selecting a model-miss repair path",
     "model_backed_repair_without_officer_report": "PM selected a model-backed repair before officer same-class findings and minimal repair recommendation",
@@ -105,6 +106,7 @@ def _state_id(state: model.State) -> str:
         f"minimal={state.minimal_sufficient_repair_recommended},"
         f"pm_selected={state.pm_selected_repair_after_model_miss}|"
         f"pm={state.pm_repair_decision_recorded},self_resolve={state.pm_decision_resolves_blocker}|"
+        f"pm_flag_visible={state.pm_repair_decision_flag_visible}|"
         f"tx={state.repair_transaction_opened},{state.transaction_id_recorded},{state.transaction_plan_kind}|"
         f"exec={state.repair_plan_validation_passed},{state.replay_operation_recorded},"
         f"{state.replay_operation_safe},{state.concrete_repair_action_queued},"
@@ -115,7 +117,7 @@ def _state_id(state: model.State) -> str:
         f"stage={state.replacement_spec_written},{state.packet_files_staged},"
         f"{state.ledger_entries_staged},{state.dispatch_index_staged},"
         f"{state.router_resolution_table_staged},commit={state.transaction_committed_atomically},"
-        f"partial={state.partial_generation_published}|"
+        f"partial={state.partial_generation_published},post_wait={state.post_decision_wait_events_exposed}|"
         f"gen={state.replacement_generation_published},{state.old_generation_superseded},"
         f"{state.canonical_packet_identity_unique},{state.packet_hashes_replayable},"
         f"{state.result_write_targets_explicit},post_model={state.post_repair_model_check_passed}|"
@@ -242,6 +244,7 @@ def _architecture_candidate() -> dict[str, object]:
         "principles": [
             "PM repair decisions first close the model-miss obligation: FlowGuard-modelable blockers get officer same-class findings and a minimal repair recommendation, while out-of-scope blockers need an explicit incapability reason.",
             "PM repair decisions open a transaction; they never resolve blockers directly.",
+            "Post-decision repair waits are not exposed until the PM repair decision flag is visible to daemon-readable state.",
             "The repair transaction plan kind is the executable authority; PM explanation fields do not create Router work by themselves.",
             "Every committed repair transaction has a concrete queued action, existing event producer, Router handler, or explicit terminal stop.",
             "Replacement packets are committed as one generation across physical files, packet ledger, dispatch index, and router resolution table.",
@@ -256,6 +259,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Require officer model-miss reports to include same-class findings, candidate comparison, and a minimal sufficient repair recommendation for modelable blockers.",
             "Add a run-scoped repair_transaction record and transaction_id.",
             "Validate repair_transaction.plan_kind with plan-specific executable fields before commit.",
+            "Make PM repair decision flag, active blocker wait events, repair transaction, and projection indexes one post-decision state boundary.",
             "Move packet reissue materialization behind one commit function.",
             "Run the repaired FlowGuard model against the candidate fix before reviewer recheck.",
             "Replace allowed_resolution_events success-only lists with an outcome table containing distinct success and non-success event identities.",

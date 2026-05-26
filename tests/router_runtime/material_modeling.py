@@ -775,6 +775,58 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
 
+    def test_pm_repair_decision_side_effect_exposes_flag_before_wait_events(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state = read_json(router.run_state_path(run_root))
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action after material dispatch repair request",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "packet_reissue",
+            "replacement_packets": [
+                {
+                    "packet_id": "material-scan-001-r1",
+                    "replacement_for": "material-scan-001",
+                    "to_role": "worker_a",
+                    "body_text": "Reissued material scan packet with a committed repair generation.",
+                }
+            ],
+        }
+
+        state = read_json(router.run_state_path(run_root))
+        router._write_control_blocker_repair_decision(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_side_effect", decision),
+        )
+
+        self.assertTrue(state["flags"]["pm_control_blocker_repair_decision_recorded"])
+        action = router._next_control_blocker_action(root, state, run_root)  # type: ignore[attr-defined]
+        self.assertIsNotNone(action)
+        assert action is not None
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("router_direct_material_scan_dispatch_recheck_passed", action["allowed_external_events"])
+        self.assertEqual(action["repair_event_producer_evidence"]["source"], "repair_packet_generation")
+
     def test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

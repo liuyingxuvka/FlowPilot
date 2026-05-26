@@ -131,6 +131,7 @@ class State:
     pm_selected_repair_after_model_miss: bool = False
 
     pm_repair_decision_recorded: bool = False
+    pm_repair_decision_flag_visible: bool = False
     pm_decision_resolves_blocker: bool = False
     repair_transaction_opened: bool = False
     transaction_id_recorded: bool = False
@@ -153,6 +154,7 @@ class State:
     router_resolution_table_staged: bool = False
     transaction_committed_atomically: bool = False
     partial_generation_published: bool = False
+    post_decision_wait_events_exposed: bool = False
 
     replacement_generation_published: bool = False
     old_generation_superseded: bool = False
@@ -381,6 +383,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 holder="pm",
                 pm_repair_decision_recorded=True,
+                pm_repair_decision_flag_visible=True,
                 pm_decision_resolves_blocker=False,
             ),
         )
@@ -551,6 +554,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 dispatch_index_staged=True,
                 router_resolution_table_staged=True,
                 transaction_committed_atomically=True,
+                post_decision_wait_events_exposed=True,
                 partial_generation_published=False,
                 replacement_generation_published=True,
                 old_generation_superseded=True,
@@ -686,6 +690,15 @@ def pm_decision_cannot_resolve_blocker(state: State, trace) -> InvariantResult:
     del trace
     if state.pm_repair_decision_recorded and state.pm_decision_resolves_blocker:
         return InvariantResult.fail("PM repair decision resolved the blocker by itself")
+    return InvariantResult.pass_()
+
+
+def pm_decision_flag_is_visible_before_post_decision_wait(state: State, trace) -> InvariantResult:
+    del trace
+    if state.post_decision_wait_events_exposed and not state.pm_repair_decision_flag_visible:
+        return InvariantResult.fail(
+            "post-decision repair wait events were exposed before the PM repair decision flag was visible"
+        )
     return InvariantResult.pass_()
 
 
@@ -1004,6 +1017,11 @@ INVARIANTS = (
         predicate=pm_decision_cannot_resolve_blocker,
     ),
     Invariant(
+        name="pm_decision_flag_is_visible_before_post_decision_wait",
+        description="Post-decision repair waits are exposed only after the PM repair decision flag is visible to the daemon state.",
+        predicate=pm_decision_flag_is_visible_before_post_decision_wait,
+    ),
+    Invariant(
         name="model_miss_triage_precedes_repair_decision",
         description="Repair decisions start only after PM closes the model-miss obligation.",
         predicate=model_miss_triage_precedes_repair_decision,
@@ -1124,6 +1142,7 @@ def _safe_base(**changes: object) -> State:
             minimal_sufficient_repair_recommended=True,
             pm_selected_repair_after_model_miss=True,
             pm_repair_decision_recorded=True,
+            pm_repair_decision_flag_visible=True,
             repair_transaction_opened=True,
             transaction_id_recorded=True,
             transaction_plan_kind="packet_reissue",
@@ -1134,6 +1153,7 @@ def _safe_base(**changes: object) -> State:
             dispatch_index_staged=True,
             router_resolution_table_staged=True,
             transaction_committed_atomically=True,
+            post_decision_wait_events_exposed=True,
             replacement_generation_published=True,
             old_generation_superseded=True,
             canonical_packet_identity_unique=True,
@@ -1191,6 +1211,10 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_decision_self_resolves_blocker": _safe_base(
             pm_decision_resolves_blocker=True,
+        ),
+        "post_decision_wait_exposed_before_pm_flag_visible": _safe_base(
+            pm_repair_decision_flag_visible=False,
+            post_decision_wait_events_exposed=True,
         ),
         "repair_decision_before_model_miss_triage": _safe_base(
             model_miss_triage_recorded=False,

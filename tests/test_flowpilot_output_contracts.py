@@ -431,6 +431,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         )
         self.assertTrue(h1["completed"])
         self.assertTrue(h1["passed"])
+        self.assertEqual(h1["missing_required_fields"], ["source_output_contract_id"])
 
         plain_heading = packet_runtime.contract_self_check_metadata(
             "Status\n\nComplete\n\nContract Self-Check\n\nPassed.",
@@ -438,6 +439,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         )
         self.assertTrue(plain_heading["completed"])
         self.assertTrue(plain_heading["passed"])
+        self.assertEqual(plain_heading["missing_required_fields"], ["source_output_contract_id"])
 
         failed = packet_runtime.contract_self_check_metadata(
             "## Contract Self-Check\n\n- self_check_decision: failed\n",
@@ -445,6 +447,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         )
         self.assertTrue(failed["completed"])
         self.assertFalse(failed["passed"])
+        self.assertIn("source_output_contract_id", failed["missing_required_fields"])
 
         wrong_contract = packet_runtime.contract_self_check_metadata(
             "## Contract Self-Check\n\n"
@@ -455,6 +458,30 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertTrue(wrong_contract["completed"])
         self.assertFalse(wrong_contract["passed"])
         self.assertFalse(wrong_contract["source_output_contract_id_matches"])
+
+    def test_contract_self_check_metadata_reports_live_worker_missing_fields(self) -> None:
+        contract = {
+            "schema_version": "flowpilot.output_contract.v1",
+            "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
+            "contract_self_check_required": True,
+        }
+
+        live_worker_shape = (
+            "Material scan result\n\n"
+            "## Contract Self-Check\n\n"
+            "- output_contract_id: flowpilot.output_contract.worker_material_scan_result.v1\n"
+        )
+
+        result = packet_runtime.contract_self_check_metadata(live_worker_shape, contract)
+
+        self.assertTrue(result["completed"])
+        self.assertFalse(result["passed"])
+        self.assertIsNone(result["decision"])
+        self.assertIsNone(result["declared_source_output_contract_id"])
+        self.assertEqual(
+            result["missing_required_fields"],
+            ["self_check_decision", "source_output_contract_id"],
+        )
 
     def test_packet_rejects_contract_for_wrong_recipient(self) -> None:
         root = self.make_project()

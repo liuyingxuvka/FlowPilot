@@ -198,7 +198,7 @@ def _scoped_event_identity(router: ModuleType, project_root: Path, run_root: Pat
     dedupe_key = f'{event}:{router._stable_identity_hash(key_parts)}'
     retry_group_fields = tuple((str(field) for field in policy.get('retry_group_fields', ())))
     retry_group = f"{event}:{router._stable_identity_hash({field: str(scope.get(field) or '') for field in retry_group_fields})}"
-    return {'schema_version': router.EVENT_IDEMPOTENCY_LEDGER_SCHEMA, 'event': event, 'family': policy.get('family'), 'dedupe_key': dedupe_key, 'scope': scope, 'dedupe_fields': list(key_fields), 'retry_group': retry_group, 'max_distinct_keys_per_retry_group': policy.get('max_distinct_keys_per_retry_group')}
+    return {'schema_version': router.EVENT_IDEMPOTENCY_LEDGER_SCHEMA, 'event': event, 'family': policy.get('family'), 'dedupe_key': dedupe_key, 'scope': scope, 'dedupe_fields': list(key_fields), 'conflict_fields': [str(field) for field in policy.get('conflict_fields', ())], 'retry_group': retry_group, 'max_distinct_keys_per_retry_group': policy.get('max_distinct_keys_per_retry_group')}
 
 
 __all__ = (

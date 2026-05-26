@@ -39,11 +39,15 @@ REQUIRED_LABELS = (
     "select_cycle_scoped_event_after_reset",
     "select_cycle_scoped_event_without_reset",
     "select_lifecycle_replay",
+    "select_package_disposition_same_body_replay",
+    "select_package_disposition_different_body_conflict",
+    "select_package_disposition_new_generation",
     "router_accepts_new_scoped_event_identity",
     "router_returns_already_recorded_for_same_dedupe_key",
     "router_returns_already_recorded_for_same_cycle_replay",
     "router_escalates_after_retry_budget",
     "router_rejects_one_shot_new_context_without_reset",
+    "router_rejects_same_package_different_body_hash",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -54,6 +58,9 @@ HAZARD_EXPECTED_FAILURES = {
     "cycle_reuse_without_reset": "cycle-scoped event reused without reset evidence",
     "accepted_without_dedupe_key_fields": "accepted scoped event without dedupe key fields",
     "no_legal_next_action_after_swallow": "new scoped event identity was swallowed by global event flag",
+    "package_conflict_swallowed_as_replay": "conflicting package disposition body was treated as idempotent replay",
+    "package_body_hash_left_in_dedupe_key": "duplicate side effect written for replayed event identity",
+    "package_conflict_field_missing": "package disposition identity lacked body_hash conflict field",
 }
 
 REQUIRED_SCOPED_EVENT_POLICIES = {
@@ -95,21 +102,27 @@ REQUIRED_SCOPED_EVENT_POLICIES = {
     },
     "pm_records_material_scan_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
+        "forbidden_dedupe_fields": ("body_hash",),
+        "conflict_fields": ("body_hash",),
         "severity": "high",
-        "why": "material result disposition can recur after repair generations and must not be keyed only by the run-wide disposition flag",
+        "why": "material result disposition can recur after repair generations; conflicting same-generation bodies must block instead of creating another disposition",
     },
     "pm_records_research_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
+        "forbidden_dedupe_fields": ("body_hash",),
+        "conflict_fields": ("body_hash",),
         "severity": "medium",
-        "why": "research result disposition is a batch package decision and should dedupe by package identity",
+        "why": "research result disposition is a batch package decision and should dedupe by package identity with body_hash as conflict evidence",
     },
     "pm_records_current_node_result_disposition": {
         "family": "pm_package_disposition",
-        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash"),
+        "dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id"),
+        "forbidden_dedupe_fields": ("body_hash",),
+        "conflict_fields": ("body_hash",),
         "severity": "medium",
-        "why": "current-node result disposition is a batch package decision and should dedupe by package identity",
+        "why": "current-node result disposition is a batch package decision and should dedupe by package identity with body_hash as conflict evidence",
     },
 }
 
@@ -118,6 +131,7 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|event={state.event_name}|family={state.family}|"
         f"flag={state.flag_already_true}|key={state.incoming_key}|prior={','.join(state.prior_keys)}|"
+        f"conflict={state.conflict_matches_prior}|conflict_fields={state.conflict_fields_present}|"
         f"retry={state.retry_attempt}/{state.retry_budget}|reset={state.cycle_reset_recorded}|"
         f"side_effect={state.side_effect_written}|duplicate={state.duplicate_side_effect_written}|"
         f"escalated={state.explicit_escalation_written}|stuck={state.no_legal_next_action}|"
@@ -320,6 +334,33 @@ def _source_audit_report() -> dict[str, object]:
             scoped_fields = set(scoped_policy.get("dedupe_fields") or ())
             missing_fields = [field for field in policy["dedupe_fields"] if field not in scoped_fields]
             if not missing_fields:
+                forbidden = [
+                    field
+                    for field in policy.get("forbidden_dedupe_fields", ())
+                    if field in scoped_fields
+                ]
+                conflict_fields = set(scoped_policy.get("conflict_fields") or ())
+                missing_conflict_fields = [
+                    field
+                    for field in policy.get("conflict_fields", ())
+                    if field not in conflict_fields
+                ]
+                if not forbidden and not missing_conflict_fields:
+                    continue
+                findings.append(
+                    {
+                        "event": event,
+                        "severity": policy["severity"],
+                        "issue": "scoped idempotency policy has unsafe package conflict fields",
+                        "flag": meta.get("flag"),
+                        "family": policy["family"],
+                        "dedupe_fields": policy["dedupe_fields"],
+                        "production_policy_fields": sorted(scoped_fields),
+                        "forbidden_dedupe_fields_present": forbidden,
+                        "missing_conflict_fields": missing_conflict_fields,
+                        "why": policy["why"],
+                    }
+                )
                 continue
             findings.append(
                 {
@@ -377,7 +418,7 @@ def _source_audit_report() -> dict[str, object]:
             )
 
     return {
-        "ok": True,
+        "ok": not findings,
         "router_path": str(ROUTER_PATH.relative_to(PROJECT_ROOT)),
         "external_event_count": len(events),
         "scoped_policy_count": len(scoped_policies),

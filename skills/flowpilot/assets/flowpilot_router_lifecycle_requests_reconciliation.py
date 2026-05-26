@@ -6,6 +6,13 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_router_lifecycle_requests_terminal_quarantine import (
+    clear_active_repair_transaction_for_terminal_lifecycle,
+    quarantine_duplicate_role_events_for_terminal_lifecycle,
+    quarantine_material_progress_for_terminal_lifecycle,
+    quarantine_packet_result_authority_for_terminal_lifecycle,
+)
+
 
 _BOUND_ROUTER: ModuleType | None = None
 
@@ -201,6 +208,47 @@ def _reconcile_terminal_lifecycle_authorities(
     )
     if blocker_receipt:
         receipts.append(blocker_receipt)
+    router = _bound_router()
+    repair_receipt = clear_active_repair_transaction_for_terminal_lifecycle(
+        router,
+        project_root,
+        run_root,
+        run_state,
+        mode=mode,
+        event=event,
+        cleared_at=reconciled_at,
+    )
+    if repair_receipt:
+        receipts.append(repair_receipt)
+    material_receipt = quarantine_material_progress_for_terminal_lifecycle(
+        router,
+        project_root,
+        run_root,
+        run_state,
+        mode=mode,
+        event=event,
+        reconciled_at=reconciled_at,
+    )
+    if material_receipt:
+        receipts.append(material_receipt)
+    role_event_receipt = quarantine_duplicate_role_events_for_terminal_lifecycle(
+        run_state,
+        mode=mode,
+        event=event,
+        reconciled_at=reconciled_at,
+    )
+    if role_event_receipt:
+        receipts.append(role_event_receipt)
+    packet_authority_receipt = quarantine_packet_result_authority_for_terminal_lifecycle(
+        router,
+        project_root,
+        run_root,
+        mode=mode,
+        event=event,
+        reconciled_at=reconciled_at,
+    )
+    if packet_authority_receipt:
+        receipts.append(packet_authority_receipt)
 
     report = {
         "schema_version": "flowpilot.terminal_lifecycle_reconciliation.v1",

@@ -473,6 +473,28 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(item.path.startswith("tests/router_runtime/route_mutation_"))
                 self.assertIn("tests.router_runtime.route_mutation", item.command)
 
+    def test_known_friction_alignment_binds_matrix_and_contract_edges(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        router_entry = next(entry for entry in entries if entry["family"] == "router loop/daemon")
+        role_output_entry = next(entry for entry in entries if entry["family"] == "role/output contracts")
+        router_obligations = {item.obligation_id for item in router_entry["plan"].obligations}
+        role_output_obligations = {item.obligation_id for item in role_output_entry["plan"].obligations}
+        router_evidence = {item.evidence_id: item for item in router_entry["plan"].test_evidence}
+        role_output_evidence = {item.evidence_id: item for item in role_output_entry["plan"].test_evidence}
+
+        self.assertIn("router_loop.known_friction_regression_gate", router_obligations)
+        self.assertIn("output_contract.self_check_required_fields", role_output_obligations)
+        matrix_item = router_evidence["router_loop.known_friction.happy.matrix"]
+        self.assertEqual(matrix_item.path, "tests/test_flowpilot_known_friction_regression_matrix.py")
+        self.assertEqual(matrix_item.test_name, "test_known_friction_rows_cover_required_historical_failures")
+        known_bad_item = router_evidence["router_loop.known_friction.negative.known_bad"]
+        self.assertEqual(known_bad_item.test_name, "test_known_bad_cases_are_rejected")
+        contract_item = role_output_evidence["output_contract.negative.live_worker_missing_fields"]
+        self.assertEqual(
+            contract_item.test_name,
+            "test_contract_self_check_metadata_reports_live_worker_missing_fields",
+        )
+
     def test_repair_transaction_alignment_covers_empty_material_wait(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
         repair_entry = next(entry for entry in entries if entry["family"] == "repair transactions")
@@ -481,9 +503,16 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
 
         self.assertIn("repair_transactions.material_rework_requires_fresh_producer", obligations)
         self.assertIn("repair_transactions.multiround_fake_ai_no_producer_recovery", obligations)
+        self.assertIn("repair_transactions.pm_decision_flag_atomicity", obligations)
         item = evidence["repair_transactions.negative.material_role_reissue_no_producer"]
         self.assertEqual(item.test_name, "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer")
         self.assertEqual(item.path, "tests/router_runtime/material_modeling.py")
+        edge_item = evidence["repair_transactions.edge.pm_decision_side_effect_atomicity"]
+        self.assertEqual(
+            edge_item.test_name,
+            "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
+        )
+        self.assertEqual(edge_item.path, "tests/router_runtime/material_modeling.py")
         e2e_item = evidence["repair_transactions.e2e.no_producer_then_packet_reissue"]
         self.assertEqual(
             e2e_item.test_name,

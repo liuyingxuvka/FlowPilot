@@ -96,6 +96,15 @@ FAST_COMMANDS = (
         description="Historical live-run replay package matrix for control-plane, relay, install, projection, and filesystem edge cases.",
     ),
     TierCommand(
+        name="known_friction_regression_matrix",
+        command=_py(
+            "simulations/flowpilot_known_friction_regression_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_known_friction_regression_matrix_results.json",
+        ),
+        description="Known-friction parent gate for worker contracts, PM repair atomicity, blocker continuation, status, ACK, stop lifecycle, child replay, install, and background evidence boundaries.",
+    ),
+    TierCommand(
         name="flowguard_controller_break_glass",
         command=_py(
             "simulations/run_flowpilot_controller_break_glass_checks.py",
@@ -173,6 +182,11 @@ FAST_COMMANDS = (
         "historical_live_run_replay_tests",
         "tests/test_flowpilot_historical_live_run_replay.py",
         description="Runtime historical live-run replay packages through real Router, packet/runtime, resume, proof, install, projection, and filesystem gates.",
+    ),
+    _pytest(
+        "known_friction_regression_matrix_tests",
+        "tests/test_flowpilot_known_friction_regression_matrix.py",
+        description="Focused tests for six accepted known-friction parent rows, global gates, and known-bad overclaim rejection.",
     ),
     _pytest(
         "model_test_alignment_tests",

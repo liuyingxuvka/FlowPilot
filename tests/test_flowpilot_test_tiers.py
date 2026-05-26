@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from collections import Counter
 from pathlib import Path
 
 
@@ -73,6 +74,13 @@ class FlowPilotTestTierTests(unittest.TestCase):
             background_dir=ROOT / "tmp" / "test_background",
         )
         return "\n".join(" ".join(command["command"]) for command in plan["commands"])
+
+    def test_tier_command_names_are_unique_within_background_artifact_scope(self) -> None:
+        for tier in run_test_tier.tier_names():
+            with self.subTest(tier=tier):
+                names = [command.name for command in run_test_tier.commands_for_tier(tier)]
+                duplicates = sorted(name for name, count in Counter(names).items() if count > 1)
+                self.assertFalse(duplicates, f"{tier} has duplicate command names: {duplicates}")
 
     def test_collect_tier_scopes_pytest_to_tests_tree(self) -> None:
         commands = run_test_tier.commands_for_tier("collect")
@@ -217,6 +225,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("flowpilot_control_plane_failure_canary_matrix.py", text)
         self.assertIn("flowpilot_shadow_launcher_chaos_matrix.py", text)
         self.assertIn("flowpilot_historical_live_run_replay_matrix.py", text)
+        self.assertIn("flowpilot_known_friction_regression_matrix.py", text)
         self.assertIn("tests/test_flowpilot_model_test_alignment.py", text)
         self.assertIn("tests/test_flowpilot_hard_gate_red_team_matrix.py", text)
         self.assertIn("tests/test_flowpilot_hard_gate_red_team_replay.py", text)
@@ -230,6 +239,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("tests/test_flowpilot_shadow_launcher_chaos_replay.py", text)
         self.assertIn("tests/test_flowpilot_historical_live_run_replay_matrix.py", text)
         self.assertIn("tests/test_flowpilot_historical_live_run_replay.py", text)
+        self.assertIn("tests/test_flowpilot_known_friction_regression_matrix.py", text)
         self.assertIn("tests/test_flowpilot_cli_entrypoints.py", text)
         self.assertNotIn("check_public_release.py", text)
         self.assertNotIn("run_flowguard_coverage_sweep.py", text)
@@ -244,6 +254,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
         self.assertIn("no-producer PM repair recovery", descriptions["e2e_synthetic_chaos_matrix"])
         self.assertIn("producer-proof repair waits", descriptions["real_router_dry_run_rehearsal_matrix"])
+        self.assertIn("PM repair atomicity", descriptions["known_friction_regression_matrix"])
         self.assertIn("no-producer repair gates", descriptions["e2e_synthetic_chaos_replay_tests"])
         self.assertIn("repair producer proof", descriptions["real_router_dry_run_rehearsal_tests"])
 

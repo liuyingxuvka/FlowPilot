@@ -16,6 +16,7 @@ TEST_NAMES = (
     "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
     "test_process_route_model_canonical_event_writes_compatibility_alias",
     "test_pm_repair_transaction_commits_material_reissue_generation",
+    "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
     "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
     "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
     "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",

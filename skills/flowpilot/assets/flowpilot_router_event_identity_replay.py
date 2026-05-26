@@ -36,6 +36,38 @@ def _check_scoped_event_retry_budget(router: ModuleType, run_state: dict[str, An
         raise router.RouterError(f"event {identity.get('event')} exceeded scoped retry budget for this repair group; PM must record an escalation or protocol dead-end instead of another silent retry")
 
 
+def _check_scoped_event_conflict(router: ModuleType, run_state: dict[str, Any], identity: dict[str, Any] | None) -> None:
+    if not identity:
+        return
+    conflict_fields = tuple(str(field) for field in identity.get('conflict_fields') or () if field)
+    if not conflict_fields:
+        return
+    ledger = router._event_identity_ledger(run_state)
+    processed = ledger.get('processed')
+    if not isinstance(processed, dict):
+        return
+    event = str(identity.get('event') or '')
+    key = str(identity.get('dedupe_key') or '')
+    event_keys = processed.get(event)
+    if not isinstance(event_keys, dict):
+        return
+    existing = event_keys.get(key)
+    if not isinstance(existing, dict):
+        return
+    old_scope = existing.get('scope') if isinstance(existing.get('scope'), dict) else {}
+    new_scope = identity.get('scope') if isinstance(identity.get('scope'), dict) else {}
+    mismatches = [
+        field for field in conflict_fields
+        if str(old_scope.get(field) or '') != str(new_scope.get(field) or '')
+    ]
+    if mismatches:
+        fields = ', '.join(mismatches)
+        raise router.RouterError(
+            f"event {event} conflicts with an already recorded package disposition for this batch/generation; "
+            f"different {fields} requires an authorized repair/reissue path"
+        )
+
+
 def _mark_scoped_event_recorded(router: ModuleType, run_state: dict[str, Any], identity: dict[str, Any] | None) -> None:
     if not identity:
         return
@@ -93,11 +125,14 @@ def _external_event_flag_replay_requires_new_processing(router: ModuleType, run_
         return True
     if event in {router.PM_ROLE_WORK_REQUEST_EVENT, router.ROLE_WORK_RESULT_RETURNED_EVENT, router.PM_ROLE_WORK_RESULT_DECISION_EVENT, 'worker_current_node_result_returned'}:
         return True
+    if scoped_identity and scoped_identity.get('family') == 'pm_package_disposition':
+        return True
     return bool(scoped_identity and event == 'pm_mutates_route_after_review_block' and router._active_model_miss_review_block_flags(run_state))
 
 
 __all__ = (
     '_scoped_event_is_recorded',
+    '_check_scoped_event_conflict',
     '_check_scoped_event_retry_budget',
     '_mark_scoped_event_recorded',
     '_already_recorded_external_event_result',

@@ -108,6 +108,14 @@ PM_PACKAGE_RESULT_DECISIONS = {
     "route_or_node_mutation_required",
 }
 
+PM_PACKAGE_RESULT_PACKET_OUTCOMES = {
+    "accepted",
+    "rework_requested",
+    "canceled",
+    "blocked",
+    "route_or_node_mutation_required",
+}
+
 PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS = (
     "decided_by_role",
     "decision",
@@ -127,6 +135,13 @@ def pm_package_result_disposition_payload_contract(name: str) -> dict[str, Any]:
         "expected_output_contract_id": PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID,
         "runtime_command": "flowpilot_runtime.py submit-output-to-router",
         "required_fields": list(PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS),
+        "recommended_fields": ["packet_outcomes"],
+        "packet_outcomes_contract": {
+            "description": "One row per member packet when worker-specific outcomes differ.",
+            "required_fields": ["packet_id", "outcome", "reason"],
+            "allowed_outcomes": sorted(PM_PACKAGE_RESULT_PACKET_OUTCOMES),
+            "accepted_outcome_for_absorption": "accepted",
+        },
         "allowed_values": {
             "decided_by_role": ["project_manager"],
             "decision": sorted(PM_PACKAGE_RESULT_DECISIONS),
@@ -293,6 +308,7 @@ __all__ = (
     'PM_PACKAGE_RESULT_DISPOSITION_OUTPUT_TYPE',
     'PM_PACKAGE_RESULT_DISPOSITION_CONTRACT_ID',
     'PM_PACKAGE_RESULT_DECISIONS',
+    'PM_PACKAGE_RESULT_PACKET_OUTCOMES',
     'PM_PACKAGE_RESULT_DISPOSITION_REQUIRED_FIELDS',
     'pm_package_result_disposition_payload_contract',
     'PARALLEL_PACKET_BATCH_OPEN_STATUSES',

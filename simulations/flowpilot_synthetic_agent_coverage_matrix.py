@@ -933,17 +933,25 @@ def build_report() -> dict[str, Any]:
     rows = build_coverage_rows()
     findings = validate_coverage_rows(rows, required_cells)
     full_diagnostic = build_full_model_test_code_diagnostic()
+    deferred_diagnostic_findings: list[dict[str, Any]] = []
+    blocking_diagnostic_findings: list[dict[str, Any]] = []
     for finding in full_diagnostic["actionable_findings"]:
-        findings.append(
-            {
-                "code": "full_diagnostic_actionable_finding",
-                "message": finding["message"],
-                "source_code": finding["code"],
-                "surface_id": finding["surface_id"],
-                "path": finding["path"],
-                "repair_type": finding["repair_type"],
-            }
-        )
+        diagnostic_finding = {
+            "code": "full_diagnostic_actionable_finding",
+            "message": finding["message"],
+            "source_code": finding["code"],
+            "surface_id": finding["surface_id"],
+            "path": finding["path"],
+            "repair_type": finding["repair_type"],
+        }
+        if (
+            finding.get("source_code") == "needs_structure_split"
+            or finding.get("code") == "needs_structure_split"
+        ) and finding.get("repair_type") == "defer_structure_split":
+            deferred_diagnostic_findings.append(diagnostic_finding)
+            continue
+        blocking_diagnostic_findings.append(diagnostic_finding)
+        findings.append(diagnostic_finding)
 
     rows_by_family: dict[str, int] = defaultdict(int)
     rows_by_coverage_kind: dict[str, int] = defaultdict(int)
@@ -975,6 +983,8 @@ def build_report() -> dict[str, Any]:
             "release_convergence_ok": full_diagnostic["release_convergence_ok"],
             "gap_counts": full_diagnostic["gap_counts"],
             "actionable_summary": full_diagnostic["actionable_summary"],
+            "blocking_actionable_findings": blocking_diagnostic_findings,
+            "deferred_structure_split_findings": deferred_diagnostic_findings,
         },
     }
 

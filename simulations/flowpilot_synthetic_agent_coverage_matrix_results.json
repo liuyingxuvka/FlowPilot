@@ -2,14 +2,76 @@
   "coverage_boundary": "Matrix rows prove declared control-flow, runtime, model-test, and background-artifact coverage ownership. Synthetic or fixture rows do not prove live AI semantic quality or live completion.",
   "findings": [],
   "full_diagnostic": {
-    "actionable_summary": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_router_protocol_work_contracts|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_protocol_work_contracts has 322 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_protocol_work_contracts.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_protocol_work_contracts"
+        ],
+        "surface_owner": "flowpilot_router_protocol_work_contracts"
+      },
+      {
+        "dedupe_key": "flowpilot_router_work_packets_pm_role_writes_decisions|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_work_packets_pm_role_writes_decisions has 512 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_work_packets_pm_role_writes_decisions"
+        ],
+        "surface_owner": "flowpilot_router_work_packets_pm_role_writes_decisions"
+      }
+    ],
+    "blocking_actionable_findings": [],
+    "deferred_structure_split_findings": [
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_router_protocol_work_contracts has 322 lines, above the 320 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_protocol_work_contracts.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_router_protocol_work_contracts"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_router_work_packets_pm_role_writes_decisions has 512 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_router_work_packets_pm_role_writes_decisions"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 2
+    },
     "ok": true,
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 63,
+  "required_cell_count": 67,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -156,6 +218,12 @@
       "obligation_id": "output_contract.packet_binding"
     },
     {
+      "branch_kind": "negative_path",
+      "family": "role/output contracts",
+      "model_id": "role_output_contracts",
+      "obligation_id": "output_contract.self_check_required_fields"
+    },
+    {
       "branch_kind": "happy_path",
       "family": "router loop/daemon",
       "model_id": "router_loop_daemon",
@@ -267,6 +335,18 @@
       "branch_kind": "happy_path",
       "family": "router loop/daemon",
       "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.known_friction_regression_gate"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.known_friction_regression_gate"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
       "obligation_id": "daemon.lock_status_and_queue_progress"
     },
     {
@@ -316,6 +396,12 @@
       "family": "repair transactions",
       "model_id": "repair_transactions",
       "obligation_id": "repair_transactions.empty_transaction_returns_to_pm_repair"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "repair transactions",
+      "model_id": "repair_transactions",
+      "obligation_id": "repair_transactions.pm_decision_flag_atomicity"
     },
     {
       "branch_kind": "happy_path",
@@ -391,7 +477,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 88,
+  "row_count": 92,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -1066,6 +1152,34 @@
       "test_name": "test_packet_rejects_contract_for_wrong_recipient"
     },
     {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.test_flowpilot_output_contracts",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "output_contract.negative.live_worker_missing_fields",
+      "evidence_owner": "test_flowpilot_output_contracts",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "role/output contracts",
+      "live_completion_allowed": false,
+      "model_id": "role_output_contracts",
+      "non_replayable_reason": "",
+      "obligation_id": "output_contract.self_check_required_fields",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_output_contracts.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_contract_self_check_metadata_reports_live_worker_missing_fields"
+    },
+    {
       "branch_kind": "happy_path",
       "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
       "coverage_boundary": "ordinary_test_evidence",
@@ -1571,6 +1685,62 @@
     },
     {
       "branch_kind": "happy_path",
+      "command": "python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.known_friction.happy.matrix",
+      "evidence_owner": "test_flowpilot_known_friction_regression_matrix",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.known_friction_regression_gate",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_known_friction_regression_matrix.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_known_friction_rows_cover_required_historical_failures"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.known_friction.negative.known_bad",
+      "evidence_owner": "test_flowpilot_known_friction_regression_matrix",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.known_friction_regression_gate",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_known_friction_regression_matrix.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_known_bad_cases_are_rejected"
+    },
+    {
+      "branch_kind": "happy_path",
       "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
       "coverage_boundary": "ordinary_test_evidence",
       "coverage_kind": "ordinary_runtime",
@@ -1820,6 +1990,34 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "repair_transactions.edge.pm_decision_side_effect_atomicity",
+      "evidence_owner": "material_modeling",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "repair transactions",
+      "live_completion_allowed": false,
+      "model_id": "repair_transactions",
+      "non_replayable_reason": "",
+      "obligation_id": "repair_transactions.pm_decision_flag_atomicity",
+      "obligation_type": "hazard",
+      "path": "tests/router_runtime/material_modeling.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events"
     },
     {
       "branch_kind": "happy_path",
@@ -2864,7 +3062,7 @@
   "rows_by_coverage_kind": {
     "background_artifact": 3,
     "fixture_trace": 1,
-    "ordinary_runtime": 63,
+    "ordinary_runtime": 67,
     "synthetic_trace": 21
   },
   "rows_by_family": {
@@ -2873,10 +3071,10 @@
     "material modeling": 2,
     "meta/capability parents": 5,
     "packet/card/ack": 10,
-    "repair transactions": 7,
-    "role/output contracts": 6,
+    "repair transactions": 8,
+    "role/output contracts": 7,
     "route mutation": 6,
-    "router loop/daemon": 24,
+    "router loop/daemon": 26,
     "startup": 4,
     "terminal/closure/resume": 11,
     "test tiering/slow-test contracts": 6

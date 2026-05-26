@@ -276,6 +276,25 @@
         "residual_risks",
         "contract_self_check"
       ],
+      "recommended_body_fields": [
+        "packet_outcomes"
+      ],
+      "packet_outcomes_contract": {
+        "description": "One object per member packet when worker-specific outcomes differ inside a single authoritative package disposition.",
+        "required_fields": [
+          "packet_id",
+          "outcome",
+          "reason"
+        ],
+        "allowed_outcomes": [
+          "accepted",
+          "blocked",
+          "canceled",
+          "rework_requested",
+          "route_or_node_mutation_required"
+        ],
+        "absorbed_requires_all_outcomes": "accepted"
+      },
       "required_body_values": {
         "schema_version": "flowpilot.pm_package_result_disposition.v1",
         "decided_by_role": "project_manager"
@@ -294,7 +313,14 @@
       "controller_may_read_sealed_bodies": false,
       "controller_visibility": "role_output_envelope_only",
       "pm_must_open_result_bodies_after_controller_relay": true,
-      "pm_disposition_is_control_transaction": true
+      "pm_disposition_is_control_transaction": true,
+      "semantic_identity_fields": [
+        "router_event",
+        "batch_id",
+        "packet_ids",
+        "packet_generation_id"
+      ],
+      "body_hash_policy": "conflict_evidence_not_dedupe_identity"
     },
     {
       "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",

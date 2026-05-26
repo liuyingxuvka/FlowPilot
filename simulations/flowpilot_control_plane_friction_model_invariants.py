@@ -489,6 +489,18 @@ def role_event_identity_and_audit_records_are_closed(state: State, trace) -> Inv
         return InvariantResult.fail(
             "duplicate role-output event wrote a duplicate side effect"
         )
+    if not state.pm_package_disposition_semantic_identity_deduped:
+        return InvariantResult.fail(
+            "PM package dispositions were not deduped by semantic batch identity"
+        )
+    if not state.pm_package_disposition_body_hash_conflict_checked:
+        return InvariantResult.fail(
+            "PM package disposition body_hash was not checked as conflict evidence"
+        )
+    if not state.pm_package_packet_outcomes_recorded:
+        return InvariantResult.fail(
+            "PM package disposition did not record per-packet outcomes"
+        )
     if not state.break_glass_patch_validation_finalized:
         return InvariantResult.fail(
             "break-glass patch record remained pending validation after validation evidence existed"

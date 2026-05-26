@@ -116,6 +116,7 @@ import flowpilot_router_lifecycle_requests_blockers as lifecycle_request_blocker
 import flowpilot_router_lifecycle_requests_fence as lifecycle_request_fence  # noqa: E402
 import flowpilot_router_lifecycle_requests_reconciliation as lifecycle_request_reconciliation  # noqa: E402
 import flowpilot_router_lifecycle_requests_records as lifecycle_request_records  # noqa: E402
+import flowpilot_router_lifecycle_requests_terminal_quarantine as lifecycle_request_terminal_quarantine  # noqa: E402
 import flowpilot_router_lifecycle_support as lifecycle_support  # noqa: E402
 import flowpilot_router_model_gate_state as model_gate_state  # noqa: E402
 import flowpilot_router_payload_contracts as payload_contracts  # noqa: E402
@@ -1301,6 +1302,22 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             lifecycle_request_reconciliation._clear_active_control_blocker_for_terminal_lifecycle,
         )
         self.assertIs(
+            lifecycle_request_reconciliation.clear_active_repair_transaction_for_terminal_lifecycle,
+            lifecycle_request_terminal_quarantine.clear_active_repair_transaction_for_terminal_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_request_reconciliation.quarantine_material_progress_for_terminal_lifecycle,
+            lifecycle_request_terminal_quarantine.quarantine_material_progress_for_terminal_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_request_reconciliation.quarantine_duplicate_role_events_for_terminal_lifecycle,
+            lifecycle_request_terminal_quarantine.quarantine_duplicate_role_events_for_terminal_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_request_reconciliation.quarantine_packet_result_authority_for_terminal_lifecycle,
+            lifecycle_request_terminal_quarantine.quarantine_packet_result_authority_for_terminal_lifecycle,
+        )
+        self.assertIs(
             lifecycle_requests._write_run_lifecycle_request,
             lifecycle_request_records._write_run_lifecycle_request,
         )
@@ -1363,6 +1380,101 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 event="user_requests_run_cancel",
                 cleared_at="2026-05-18T00:00:00Z",
             )
+            quarantine_state = {
+                "run_id": "run-test",
+                "flags": {"material_scan_packets_relayed": True},
+                "active_repair_transaction": {
+                    "transaction_id": "repair-tx-contract",
+                    "status": "committed",
+                },
+                "events": [
+                    {"event": "worker_result", "payload": {"body_ref": {"path": "body.json", "hash": "hash-a"}}},
+                    {"event": "worker_result", "payload": {"body_ref": {"path": "body.json", "hash": "hash-a"}}},
+                ],
+                "external_event_idempotency": {
+                    "processed": {
+                        "pm_records_material_scan_result_disposition": {
+                            "first": {
+                                "scope": {
+                                    "batch_id": "batch-a",
+                                    "packet_ids": "packet-a",
+                                    "packet_generation_id": "generation-a",
+                                    "body_hash": "hash-a",
+                                }
+                            },
+                            "second": {
+                                "scope": {
+                                    "batch_id": "batch-a",
+                                    "packet_ids": "packet-a",
+                                    "packet_generation_id": "generation-a",
+                                    "body_hash": "hash-b",
+                                }
+                            },
+                        }
+                    }
+                },
+            }
+            repair_tx_path = router._repair_transaction_path(run_root, "repair-tx-contract")
+            router.write_json(repair_tx_path, {"status": "committed"})
+            repair_quarantine = (
+                lifecycle_request_terminal_quarantine.clear_active_repair_transaction_for_terminal_lifecycle(
+                    router,
+                    project_root,
+                    run_root,
+                    quarantine_state,
+                    mode="stopped_by_user",
+                    event="user_requests_run_stop",
+                    cleared_at="2026-05-18T00:00:01Z",
+                )
+            )
+            material_quarantine = (
+                lifecycle_request_terminal_quarantine.quarantine_material_progress_for_terminal_lifecycle(
+                    router,
+                    project_root,
+                    run_root,
+                    quarantine_state,
+                    mode="stopped_by_user",
+                    event="user_requests_run_stop",
+                    reconciled_at="2026-05-18T00:00:01Z",
+                )
+            )
+            event_quarantine = (
+                lifecycle_request_terminal_quarantine.quarantine_duplicate_role_events_for_terminal_lifecycle(
+                    quarantine_state,
+                    mode="stopped_by_user",
+                    event="user_requests_run_stop",
+                    reconciled_at="2026-05-18T00:00:01Z",
+                )
+            )
+            packet_ledger_path = run_root / "packet_ledger.json"
+            router.write_json(
+                packet_ledger_path,
+                {
+                    "packets": [
+                        {
+                            "packet_id": "packet-missing-author",
+                            "result_envelope": {
+                                "completed_by_role": "worker_a",
+                                "completed_agent_id": None,
+                                "completed_agent_id_belongs_to_role": False,
+                            },
+                        }
+                    ]
+                },
+            )
+            packet_authority_quarantine = (
+                lifecycle_request_terminal_quarantine.quarantine_packet_result_authority_for_terminal_lifecycle(
+                    router,
+                    project_root,
+                    run_root,
+                    mode="stopped_by_user",
+                    event="user_requests_run_stop",
+                    reconciled_at="2026-05-18T00:00:01Z",
+                )
+            )
+            packet_authority_status = router.read_json(packet_ledger_path)["packets"][0]["result_envelope"][
+                "author_identity_quarantine"
+            ]["status"]
             startup_support_state, startup_support_run_root = startup_support._ensure_startup_run_state(
                 project_root,
                 {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"},
@@ -1395,6 +1507,14 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         self.assertEqual(lifecycle_path.name, "run_lifecycle.json")
         self.assertIsNone(terminal_clearance)
+        self.assertEqual(repair_quarantine["status"], "superseded_by_terminal_lifecycle")
+        self.assertIsNone(quarantine_state["active_repair_transaction"])
+        self.assertFalse(quarantine_state["flags"]["material_scan_packets_relayed"])
+        self.assertEqual(material_quarantine["authority"], "material_progress_flags")
+        self.assertEqual(event_quarantine["duplicate_event_records_quarantined"], 1)
+        self.assertEqual(event_quarantine["package_identity_records_quarantined"], 1)
+        self.assertEqual(packet_authority_quarantine["result_author_identity_records_quarantined"], 1)
+        self.assertEqual(packet_authority_status, "terminal_lifecycle_quarantined")
         self.assertEqual(startup_support_state["run_id"], "run-test")
         self.assertEqual(startup_support_run_root, run_root)
         self.assertIn("resume_cycle_id", heartbeat_reset)

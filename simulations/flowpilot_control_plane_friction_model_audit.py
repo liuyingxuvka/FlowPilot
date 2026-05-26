@@ -404,12 +404,23 @@ def _audit_role_output_event_dedup(router_state: object) -> dict[str, object]:
     if not isinstance(router_state, dict):
         return {
             "deduped_by_body_ref": True,
+            "deduped_by_package_identity": True,
             "duplicate_side_effect_written": False,
             "duplicates": [],
+            "package_identity_conflicts": [],
+            "terminal_quarantined_duplicate_events": 0,
+            "terminal_quarantined_package_identity_records": 0,
         }
     keys: list[tuple[str, str, str]] = []
+    terminal_quarantined_duplicate_events = 0
     for event in router_state.get("events", []):
         if not isinstance(event, dict):
+            continue
+        if (
+            isinstance(event.get("terminal_lifecycle_quarantine"), dict)
+            and event["terminal_lifecycle_quarantine"].get("status") == "terminal_lifecycle_quarantined"
+        ):
+            terminal_quarantined_duplicate_events += 1
             continue
         payload = event.get("payload")
         body_ref = payload.get("body_ref") if isinstance(payload, dict) else None
@@ -425,10 +436,59 @@ def _audit_role_output_event_dedup(router_state: object) -> dict[str, object]:
         for (event, path, digest), count in counts.items()
         if count > 1
     ]
+    package_scope_groups: dict[tuple[str, str, str, str], set[str]] = {}
+    terminal_quarantined_package_identity_records = 0
+    idempotency = router_state.get("external_event_idempotency")
+    processed = idempotency.get("processed") if isinstance(idempotency, dict) else {}
+    if isinstance(processed, dict):
+        for event_name in (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        ):
+            event_records = processed.get(event_name)
+            if not isinstance(event_records, dict):
+                continue
+            for record in event_records.values():
+                if not isinstance(record, dict):
+                    continue
+                if (
+                    isinstance(record.get("terminal_lifecycle_quarantine"), dict)
+                    and record["terminal_lifecycle_quarantine"].get("status") == "terminal_lifecycle_quarantined"
+                ):
+                    terminal_quarantined_package_identity_records += 1
+                    continue
+                scope = record.get("scope")
+                if not isinstance(scope, dict):
+                    continue
+                key = (
+                    event_name,
+                    str(scope.get("batch_id") or ""),
+                    str(scope.get("packet_ids") or ""),
+                    str(scope.get("packet_generation_id") or ""),
+                )
+                body_hash = str(scope.get("body_hash") or "")
+                if all(key) and body_hash:
+                    package_scope_groups.setdefault(key, set()).add(body_hash)
+    package_identity_conflicts = [
+        {
+            "event": event,
+            "batch_id": batch_id,
+            "packet_ids": packet_ids,
+            "packet_generation_id": packet_generation_id,
+            "distinct_body_hash_count": len(body_hashes),
+        }
+        for (event, batch_id, packet_ids, packet_generation_id), body_hashes in package_scope_groups.items()
+        if len(body_hashes) > 1
+    ]
     return {
         "deduped_by_body_ref": not duplicates,
-        "duplicate_side_effect_written": bool(duplicates),
+        "deduped_by_package_identity": not package_identity_conflicts,
+        "duplicate_side_effect_written": bool(duplicates or package_identity_conflicts),
         "duplicates": duplicates[:12],
+        "package_identity_conflicts": package_identity_conflicts[:12],
+        "terminal_quarantined_duplicate_events": terminal_quarantined_duplicate_events,
+        "terminal_quarantined_package_identity_records": terminal_quarantined_package_identity_records,
     }
 
 def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
@@ -440,6 +500,7 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
         if isinstance(slot, dict) and slot.get("role_key")
     }
     issues: list[dict[str, object]] = []
+    quarantined_issues: list[dict[str, object]] = []
     for packet in (packet_ledger.get("packets") if isinstance(packet_ledger, dict) else []) or []:
         if not isinstance(packet, dict):
             continue
@@ -448,14 +509,21 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
             continue
         completed_by_role = str(result.get("completed_by_role") or "")
         if result.get("completed_agent_id_belongs_to_role") is False or not result.get("completed_agent_id"):
+            issue = {
+                "packet_id": packet.get("packet_id"),
+                "completed_by_role": completed_by_role,
+                "completed_agent_id": result.get("completed_agent_id"),
+                "completed_agent_id_belongs_to_role": result.get("completed_agent_id_belongs_to_role"),
+                "role_exists_in_crew_ledger": completed_by_role in role_keys,
+            }
+            if (
+                isinstance(result.get("author_identity_quarantine"), dict)
+                and result["author_identity_quarantine"].get("status") == "terminal_lifecycle_quarantined"
+            ):
+                quarantined_issues.append(issue)
+                continue
             issues.append(
-                {
-                    "packet_id": packet.get("packet_id"),
-                    "completed_by_role": completed_by_role,
-                    "completed_agent_id": result.get("completed_agent_id"),
-                    "completed_agent_id_belongs_to_role": result.get("completed_agent_id_belongs_to_role"),
-                    "role_exists_in_crew_ledger": completed_by_role in role_keys,
-                }
+                issue
             )
     return {
         "packet_ledger_error": packet_error,
@@ -463,6 +531,7 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
         "result_author_identity_replayable": not issues,
         "result_author_matches_current_role": all(issue.get("role_exists_in_crew_ledger") for issue in issues),
         "issues": issues[:12],
+        "terminal_quarantined_issues": quarantined_issues[:12],
     }
 
 def _safe_int(value: object) -> int:
@@ -529,13 +598,27 @@ def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
         "flags.get(flag) and event not in {ROLE_WORK_RESULT_RETURNED_EVENT, \"worker_current_node_result_returned\"}"
         in role_output_text
     )
+    scoped_identity_text, scoped_identity_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_protocol_scoped_event_identity.py"
+    )
+    package_disposition_conflict_checked = (
+        '"conflict_fields": ("body_hash",)' in scoped_identity_text
+        and '"dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash")'
+        not in scoped_identity_text
+    )
     return {
         "next_actions_error": next_actions_error,
         "persistence_error": persistence_error,
         "role_output_error": role_output_error,
+        "scoped_identity_error": scoped_identity_error,
         "next_action_uses_global_material_flags": next_action_uses_global_flags,
         "stale_save_preserves_existing_true_flags": stale_save_preserves_existing_true_flags,
         "role_output_has_global_flag_short_circuit": role_output_global_flag_short_circuit,
+        "package_disposition_conflict_checked": package_disposition_conflict_checked,
     }
 
 def _audit_material_generation_progress_projection(
@@ -715,6 +798,12 @@ def _audit_material_generation_progress_projection(
         and not isinstance(pm_result_disposition, dict)
         and source_checks.get("role_output_has_global_flag_short_circuit")
     )
+    packet_outcomes = (
+        pm_result_disposition.get("packet_outcomes")
+        if isinstance(pm_result_disposition, dict)
+        else None
+    )
+    pm_package_packet_outcomes_recorded = not isinstance(pm_result_disposition, dict) or bool(packet_outcomes)
     return {
         "material_index_error": material_index_error,
         "active_material_ref_error": active_ref_error,
@@ -744,6 +833,8 @@ def _audit_material_generation_progress_projection(
         "reissue_clears_or_quarantines_stale_progress_flags": reissue_clears_or_quarantines_stale_progress_flags,
         "stale_save_preserves_material_generation_flag_clear": stale_save_preserves_material_generation_flag_clear,
         "role_output_current_generation_not_short_circuited_by_global_flag": role_output_current_generation_not_short_circuited_by_global_flag,
+        "pm_package_disposition_body_hash_conflict_checked": bool(source_checks.get("package_disposition_conflict_checked")),
+        "pm_package_packet_outcomes_recorded": pm_package_packet_outcomes_recorded,
     }
 
 def _audit_material_repair_generation_protocol(
@@ -822,6 +913,15 @@ def _audit_material_repair_generation_protocol(
         ),
         "role_output_event_deduped_by_body_ref": bool(event_dedup.get("deduped_by_body_ref")),
         "duplicate_role_event_side_effect_written": bool(event_dedup.get("duplicate_side_effect_written")),
+        "pm_package_disposition_semantic_identity_deduped": bool(
+            event_dedup.get("deduped_by_package_identity")
+        ),
+        "pm_package_disposition_body_hash_conflict_checked": bool(
+            material_progress_projection.get("pm_package_disposition_body_hash_conflict_checked")
+        ),
+        "pm_package_packet_outcomes_recorded": bool(
+            material_progress_projection.get("pm_package_packet_outcomes_recorded")
+        ),
         "packet_result_author_identity_replayable": bool(
             packet_authority.get("result_author_identity_replayable")
         ),
@@ -2938,6 +3038,33 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="role_event_identity_and_audit_records_are_closed",
             evidence=material_repair_protocol,
         )
+    if not material_repair_protocol.get("pm_package_disposition_semantic_identity_deduped"):
+        _add_finding(
+            findings,
+            code="pm_package_disposition_not_semantic_deduped",
+            severity="error",
+            summary="PM package dispositions were not deduped by semantic batch identity",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("pm_package_disposition_body_hash_conflict_checked"):
+        _add_finding(
+            findings,
+            code="pm_package_disposition_conflict_unchecked",
+            severity="error",
+            summary="PM package disposition body_hash is not checked as conflict evidence",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
+    if not material_repair_protocol.get("pm_package_packet_outcomes_recorded"):
+        _add_finding(
+            findings,
+            code="pm_package_disposition_packet_outcomes_missing",
+            severity="error",
+            summary="PM package disposition did not record per-packet outcomes",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
     if not material_repair_protocol.get("packet_result_author_identity_replayable"):
         _add_finding(
             findings,
@@ -3162,6 +3289,15 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         duplicate_role_event_side_effect_written=bool(
             material_repair_protocol.get("duplicate_role_event_side_effect_written")
+        ),
+        pm_package_disposition_semantic_identity_deduped=bool(
+            material_repair_protocol.get("pm_package_disposition_semantic_identity_deduped")
+        ),
+        pm_package_disposition_body_hash_conflict_checked=bool(
+            material_repair_protocol.get("pm_package_disposition_body_hash_conflict_checked")
+        ),
+        pm_package_packet_outcomes_recorded=bool(
+            material_repair_protocol.get("pm_package_packet_outcomes_recorded")
         ),
         packet_result_author_identity_replayable=bool(
             material_repair_protocol.get("packet_result_author_identity_replayable")

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=72",
+    "summary": "sequences=3 initial_states=1 traces=90",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -16,7 +16,7 @@
         "failures": [
           "accepted scoped event without dedupe key fields"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=accepted|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_key_fields"
+        "state": "scenario=route_mutation_new_transaction|status=accepted|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_key_fields"
       },
       "cycle_reuse_without_reset": {
         "detected": true,
@@ -24,7 +24,7 @@
         "failures": [
           "cycle-scoped event reused without reset evidence"
         ],
-        "state": "scenario=cycle_scoped_event_after_reset|status=accepted|event=pm_registers_current_node_packet|family=cycle|flag=True|key=node-001-repair:packet-generation-2|prior=node-001:packet-generation-1|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_cycle_reset"
+        "state": "scenario=cycle_scoped_event_after_reset|status=accepted|event=pm_registers_current_node_packet|family=cycle|flag=True|key=node-001-repair:packet-generation-2|prior=node-001:packet-generation-1|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_cycle_reset"
       },
       "global_flag_swallows_new_route_mutation": {
         "detected": true,
@@ -33,7 +33,7 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry below budget was silently swallowed"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
       },
       "no_legal_next_action_after_swallow": {
         "detected": true,
@@ -43,7 +43,35 @@
           "repair retry below budget was silently swallowed",
           "idempotency decision produced no legal next action"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=True|reason=swallowed_then_stuck"
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=True|reason=swallowed_then_stuck"
+      },
+      "package_body_hash_left_in_dedupe_key": {
+        "detected": true,
+        "expected_failure": "duplicate side effect written for replayed event identity",
+        "failures": [
+          "same dedupe key wrote duplicate side effect",
+          "duplicate side effect written for replayed event identity",
+          "same package disposition identity wrote duplicate side effect"
+        ],
+        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=body_hash_created_new_dedupe_key"
+      },
+      "package_conflict_field_missing": {
+        "detected": true,
+        "expected_failure": "package disposition identity lacked body_hash conflict field",
+        "failures": [
+          "same dedupe key wrote duplicate side effect",
+          "same package disposition identity wrote duplicate side effect",
+          "package disposition identity lacked body_hash conflict field"
+        ],
+        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=False|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=no_conflict_field"
+      },
+      "package_conflict_swallowed_as_replay": {
+        "detected": true,
+        "expected_failure": "conflicting package disposition body was treated as idempotent replay",
+        "failures": [
+          "conflicting package disposition body was treated as idempotent replay"
+        ],
+        "state": "scenario=package_disposition_different_body_conflict|status=already_recorded|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=same_key_replay_without_conflict_check"
       },
       "repair_retry_below_budget_swallowed": {
         "detected": true,
@@ -52,7 +80,7 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry below budget was silently swallowed"
         ],
-        "state": "scenario=repair_retry_below_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|retry=2/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=repair_retry_below_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
       },
       "retry_budget_exceeded_without_escalation": {
         "detected": true,
@@ -61,7 +89,7 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry budget exceeded without explicit PM escalation"
         ],
-        "state": "scenario=repair_retry_exceeds_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-4:route-v5|prior=repair-tx-1:route-v2,repair-tx-2:route-v3,repair-tx-3:route-v4|retry=4/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=repair_retry_exceeds_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-4:route-v5|prior=repair-tx-1:route-v2,repair-tx-2:route-v3,repair-tx-3:route-v4|conflict=True|conflict_fields=True|retry=4/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
       },
       "unconditional_repeat_duplicates_gate_decision": {
         "detected": true,
@@ -70,7 +98,7 @@
           "same dedupe key wrote duplicate side effect",
           "duplicate side effect written for replayed event identity"
         ],
-        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
+        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
       }
     },
     "ok": true
@@ -95,6 +123,7 @@
       "control_repair_new_transaction",
       "cycle_scoped_event_after_reset",
       "gate_decision_new_key",
+      "package_disposition_new_generation",
       "repair_retry_below_budget",
       "route_mutation_new_transaction"
     ],
@@ -103,74 +132,36 @@
       "gate_decision_same_key_replay",
       "lifecycle_replay",
       "one_shot_same_key_replay",
+      "package_disposition_same_body_replay",
       "route_mutation_same_transaction_replay"
     ],
-    "edge_count": 24,
+    "edge_count": 30,
     "escalated": [
       "one_shot_new_context_rejected",
+      "package_disposition_different_body_conflict",
       "repair_retry_exceeds_budget"
     ],
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 25
+    "state_count": 31
   },
   "source_audit": {
-    "external_event_count": 109,
+    "external_event_count": 110,
     "finding_count": 0,
     "findings": [],
     "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
     "ok": true,
-    "repeatable_exception_count": 9,
+    "repeatable_exception_count": 1,
     "repeatable_exceptions": {
       "heartbeat_or_manual_resume_requested": {
         "condition": "append_only_tick",
         "exception_name": "pre_dedupe_special_case",
         "source_excerpt": "handled before generic duplicate check"
-      },
-      "pm_records_control_blocker_repair_decision": {
-        "condition": "conditional",
-        "exception_name": "repeatable_pm_repair_decision",
-        "source_excerpt": "repeatable_pm_repair_decision = ( event == PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT and isinstance(active_blocker, dict) and active_blocker.get(\"delivery_status\") == \"delivered\" and active_blocker.get(\"handling_lane\") in PM_DECISION_REQUIRE"
-      },
-      "pm_records_role_work_result_decision": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_pm_role_work_result_decision",
-        "source_excerpt": "repeatable_pm_role_work_result_decision = event == PM_ROLE_WORK_RESULT_DECISION_EVENT"
-      },
-      "pm_registers_role_work_request": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_pm_role_work_request",
-        "source_excerpt": "repeatable_pm_role_work_request = event == PM_ROLE_WORK_REQUEST_EVENT"
-      },
-      "pm_requests_startup_repair": {
-        "condition": "conditional",
-        "exception_name": "repeatable_startup_repair_request",
-        "source_excerpt": "repeatable_startup_repair_request = ( event == \"pm_requests_startup_repair\" and run_state[\"flags\"].get(flag) and run_state[\"flags\"].get(\"startup_fact_reported\") and run_state[\"flags\"].get(\"pm_startup_activation_card_delivered\")"
-      },
-      "pm_writes_route_draft": {
-        "condition": "conditional",
-        "exception_name": "repeatable_route_draft_repair",
-        "source_excerpt": "repeatable_route_draft_repair = ( event == \"pm_writes_route_draft\" and run_state[\"flags\"].get(flag) and not run_state[\"flags\"].get(\"route_activated_by_pm\")"
-      },
-      "role_records_gate_decision": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_gate_decision",
-        "source_excerpt": "repeatable_gate_decision = event == GATE_DECISION_EVENT"
-      },
-      "role_work_result_returned": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_role_work_result",
-        "source_excerpt": "repeatable_role_work_result = event == ROLE_WORK_RESULT_RETURNED_EVENT"
-      },
-      "worker_current_node_result_returned": {
-        "condition": "unconditional",
-        "exception_name": "repeatable_current_node_result",
-        "source_excerpt": "repeatable_current_node_result = event == \"worker_current_node_result_returned\""
       }
     },
-    "required_scoped_event_count": 6,
+    "required_scoped_event_count": 9,
     "router_path": "skills\\flowpilot\\assets\\flowpilot_router.py",
     "scoped_policies": {
       "pm_completes_current_node_from_reviewed_result": {
@@ -211,6 +202,32 @@
           "model_miss_block"
         ]
       },
+      "pm_records_control_blocker_followup_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
+      "pm_records_control_blocker_protocol_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
       "pm_records_control_blocker_repair_decision": {
         "dedupe_fields": [
           "control_blocker_id",
@@ -220,6 +237,67 @@
         "retry_group_fields": [
           "event",
           "control_blocker_id"
+        ]
+      },
+      "pm_records_current_node_result_disposition": {
+        "conflict_fields": [
+          "body_hash"
+        ],
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
+        ]
+      },
+      "pm_records_material_scan_result_disposition": {
+        "conflict_fields": [
+          "body_hash"
+        ],
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
+        ]
+      },
+      "pm_records_parent_protocol_blocker": {
+        "dedupe_fields": [
+          "control_blocker_id",
+          "repair_transaction_id",
+          "outcome"
+        ],
+        "family": "control_blocker_repair_outcome",
+        "retry_group_fields": [
+          "event",
+          "control_blocker_id",
+          "repair_transaction_id"
+        ]
+      },
+      "pm_records_research_result_disposition": {
+        "conflict_fields": [
+          "body_hash"
+        ],
+        "dedupe_fields": [
+          "batch_id",
+          "packet_ids",
+          "packet_generation_id"
+        ],
+        "family": "pm_package_disposition",
+        "retry_group_fields": [
+          "event",
+          "batch_id",
+          "packet_generation_id"
         ]
       },
       "pm_records_role_work_result_decision": {
@@ -302,6 +380,6 @@
         ]
       }
     },
-    "scoped_policy_count": 11
+    "scoped_policy_count": 17
   }
 }

@@ -43,6 +43,9 @@ REPAIR_RETRY_EXCEEDS_BUDGET = "repair_retry_exceeds_budget"
 CYCLE_EVENT_AFTER_RESET = "cycle_scoped_event_after_reset"
 CYCLE_EVENT_WITHOUT_RESET = "cycle_scoped_event_without_reset"
 LIFECYCLE_REPLAY = "lifecycle_replay"
+PACKAGE_DISPOSITION_SAME_BODY_REPLAY = "package_disposition_same_body_replay"
+PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT = "package_disposition_different_body_conflict"
+PACKAGE_DISPOSITION_NEW_GENERATION = "package_disposition_new_generation"
 
 SCENARIOS = (
     ONE_SHOT_REPLAY,
@@ -57,6 +60,9 @@ SCENARIOS = (
     CYCLE_EVENT_AFTER_RESET,
     CYCLE_EVENT_WITHOUT_RESET,
     LIFECYCLE_REPLAY,
+    PACKAGE_DISPOSITION_SAME_BODY_REPLAY,
+    PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT,
+    PACKAGE_DISPOSITION_NEW_GENERATION,
 )
 
 ACCEPTED_SCENARIOS = {
@@ -65,6 +71,7 @@ ACCEPTED_SCENARIOS = {
     GATE_DECISION_NEW_KEY,
     REPAIR_RETRY_BELOW_BUDGET,
     CYCLE_EVENT_AFTER_RESET,
+    PACKAGE_DISPOSITION_NEW_GENERATION,
 }
 
 IDEMPOTENT_SCENARIOS = {
@@ -73,11 +80,13 @@ IDEMPOTENT_SCENARIOS = {
     GATE_DECISION_SAME_KEY_REPLAY,
     CYCLE_EVENT_WITHOUT_RESET,
     LIFECYCLE_REPLAY,
+    PACKAGE_DISPOSITION_SAME_BODY_REPLAY,
 }
 
 ESCALATED_SCENARIOS = {
     ONE_SHOT_NEW_CONTEXT,
     REPAIR_RETRY_EXCEEDS_BUDGET,
+    PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT,
 }
 
 
@@ -103,6 +112,8 @@ class State:
     incoming_key: str = ""
     key_fields_present: bool = True
     key_matches_prior: bool = False
+    conflict_fields_present: bool = True
+    conflict_matches_prior: bool = True
 
     cycle_reset_recorded: bool = False
     route_version_advances: bool = False
@@ -298,6 +309,44 @@ def _selected_state(scenario: str) -> State:
             incoming_key="run-1:stop",
             key_matches_prior=True,
         )
+    if scenario == PACKAGE_DISPOSITION_SAME_BODY_REPLAY:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=True,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            key_matches_prior=True,
+            conflict_matches_prior=True,
+        )
+    if scenario == PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=True,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            key_matches_prior=True,
+            conflict_fields_present=True,
+            conflict_matches_prior=False,
+            terminal_reason="same_package_identity_different_body_hash",
+        )
+    if scenario == PACKAGE_DISPOSITION_NEW_GENERATION:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=True,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-2:gen-2:packet-c,packet-d",
+            cycle_reset_recorded=True,
+            route_version_advances=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -316,6 +365,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if state.family == "cycle" and state.flag_already_true and not state.cycle_reset_recorded:
         yield Transition("router_returns_already_recorded_for_same_cycle_replay", replace(state, status="already_recorded", terminal_reason="same_cycle_replay"))
+        return
+    if state.family == "package" and (state.key_matches_prior or state.incoming_key in state.prior_keys) and not state.conflict_matches_prior:
+        yield Transition("router_rejects_same_package_different_body_hash", replace(state, status="escalated", explicit_escalation_written=True))
         return
     if state.key_matches_prior or state.incoming_key in state.prior_keys:
         yield Transition("router_returns_already_recorded_for_same_dedupe_key", replace(state, status="already_recorded", terminal_reason="same_dedupe_key"))
@@ -337,7 +389,7 @@ def terminal_predicate(_input_obj: Tick, state: State, _trace: object) -> bool:
 
 def _hard_check_failures(state: State) -> list[str]:
     failures: list[str] = []
-    scoped_family = state.family in {"transaction", "gate", "cycle"}
+    scoped_family = state.family in {"transaction", "gate", "cycle", "package"}
     new_key = bool(state.incoming_key and state.incoming_key not in state.prior_keys)
     same_key = bool(state.incoming_key and state.incoming_key in state.prior_keys)
     if state.status == "accepted" and same_key:
@@ -363,6 +415,12 @@ def _hard_check_failures(state: State) -> list[str]:
         failures.append("idempotency decision produced no legal next action")
     if state.status == "accepted" and scoped_family and not state.key_fields_present:
         failures.append("accepted scoped event without dedupe key fields")
+    if state.family == "package" and state.status == "already_recorded" and not state.conflict_matches_prior:
+        failures.append("conflicting package disposition body was treated as idempotent replay")
+    if state.family == "package" and state.status == "accepted" and same_key:
+        failures.append("same package disposition identity wrote duplicate side effect")
+    if state.family == "package" and not state.conflict_fields_present:
+        failures.append("package disposition identity lacked body_hash conflict field")
     return failures
 
 
@@ -400,6 +458,8 @@ def hazard_states() -> dict[str, State]:
     retry_below = _selected_state(REPAIR_RETRY_BELOW_BUDGET)
     retry_exceeded = _selected_state(REPAIR_RETRY_EXCEEDS_BUDGET)
     cycle_new = _selected_state(CYCLE_EVENT_AFTER_RESET)
+    package_conflict = _selected_state(PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT)
+    package_same = _selected_state(PACKAGE_DISPOSITION_SAME_BODY_REPLAY)
     return {
         "global_flag_swallows_new_route_mutation": replace(
             route_new,
@@ -446,5 +506,25 @@ def hazard_states() -> dict[str, State]:
             side_effect_written=False,
             no_legal_next_action=True,
             terminal_reason="swallowed_then_stuck",
+        ),
+        "package_conflict_swallowed_as_replay": replace(
+            package_conflict,
+            status="already_recorded",
+            explicit_escalation_written=False,
+            terminal_reason="same_key_replay_without_conflict_check",
+        ),
+        "package_body_hash_left_in_dedupe_key": replace(
+            package_same,
+            status="accepted",
+            key_matches_prior=True,
+            side_effect_written=True,
+            duplicate_side_effect_written=True,
+            terminal_reason="body_hash_created_new_dedupe_key",
+        ),
+        "package_conflict_field_missing": replace(
+            package_same,
+            status="accepted",
+            conflict_fields_present=False,
+            terminal_reason="no_conflict_field",
         ),
     }

@@ -107,6 +107,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
             payload = _normalize_record_event_payload(project_root, run_state, event=event, payload=payload, envelope_path=envelope_path, envelope_hash=envelope_hash)
             payload_normalized_for_replay = True
             scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+        _check_scoped_event_conflict(run_state, scoped_identity)
         if _scoped_event_is_recorded(run_state, scoped_identity):
             return _already_recorded_external_event_result(project_root, run_root, run_state, event=event, payload=payload, scoped_identity=scoped_identity)
         if not _external_event_flag_replay_requires_new_processing(run_root, run_state, event=event, flag=flag, payload=payload, scoped_identity=scoped_identity):
@@ -134,12 +135,14 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     if not payload_normalized_for_replay:
         payload = _normalize_record_event_payload(project_root, run_state, event=event, payload=payload, envelope_path=envelope_path, envelope_hash=envelope_hash)
         scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    _check_scoped_event_conflict(run_state, scoped_identity)
     if _scoped_event_is_recorded(run_state, scoped_identity):
         return _already_recorded_external_event_result(project_root, run_root, run_state, event=event, payload=payload, scoped_identity=scoped_identity)
     if required_flag and (not run_state['flags'].get(required_flag)):
         raise RouterError(f'event {event} requires {required_flag}')
     _check_scoped_event_retry_budget(run_state, scoped_identity)
     if run_state['flags'].get(flag) and (not _external_event_flag_replay_requires_new_processing(run_root, run_state, event=event, flag=flag, payload=payload, scoped_identity=scoped_identity)):
+        _check_scoped_event_conflict(run_state, scoped_identity)
         return _already_recorded_external_event_result(project_root, run_root, run_state, event=event, payload=payload, scoped_identity=scoped_identity)
     payload = payload or {}
     route_action = router._route_action_for_event(event)

@@ -1075,6 +1075,15 @@ def hazard_states() -> dict[str, State]:
         "role_output_current_generation_short_circuited_by_global_flag": _safe_base(
             role_output_current_generation_not_short_circuited_by_global_flag=False,
         ),
+        "pm_package_disposition_not_semantic_deduped": _safe_base(
+            pm_package_disposition_semantic_identity_deduped=False,
+        ),
+        "pm_package_disposition_conflict_unchecked": _safe_base(
+            pm_package_disposition_body_hash_conflict_checked=False,
+        ),
+        "pm_package_disposition_packet_outcomes_missing": _safe_base(
+            pm_package_packet_outcomes_recorded=False,
+        ),
         "packet_result_author_identity_not_replayable": _safe_base(
             packet_result_author_identity_replayable=False,
             packet_result_author_matches_current_role=False,

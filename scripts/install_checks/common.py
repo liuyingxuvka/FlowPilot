@@ -134,6 +134,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_fence.py",
     "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_reconciliation.py",
     "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
+    "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_terminal_quarantine.py",
     "skills/flowpilot/assets/flowpilot_router_payload_contracts.py",
     "skills/flowpilot/assets/flowpilot_router_protocol_boot_cards.py",
     "skills/flowpilot/assets/flowpilot_router_protocol_catalog.py",

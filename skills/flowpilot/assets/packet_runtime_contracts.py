@@ -386,6 +386,14 @@ def contract_self_check_metadata(result_body_text: str, output_contract: dict[st
     explicit_fail = decision in {"failed", "fail", "blocked", "not_satisfied", "unsatisfied"}
     implied_pass = bool(_CONTRACT_SELF_CHECK_INLINE_PASS_RE.search(section)) if completed and not decision else False
     passed = completed and contract_matches and (explicit_pass or (implied_pass and not explicit_fail))
+    missing_fields: list[str] = []
+    if required:
+        if not completed:
+            missing_fields.append("Contract Self-Check")
+        if completed and not (decision or implied_pass):
+            missing_fields.append("self_check_decision")
+        if expected_contract_id and not declared_contract_id:
+            missing_fields.append("source_output_contract_id")
     return {
         "required": required,
         "source_output_contract_id": expected_contract_id,
@@ -395,4 +403,5 @@ def contract_self_check_metadata(result_body_text: str, output_contract: dict[st
         "decision": decision or None,
         "completed": completed,
         "passed": passed,
+        "missing_required_fields": missing_fields,
     }

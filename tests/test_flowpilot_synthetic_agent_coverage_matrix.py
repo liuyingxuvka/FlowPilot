@@ -43,7 +43,12 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
         self.assertGreater(report["required_cell_count"], 20)
         self.assertGreater(report["row_count"], report["required_cell_count"])
         self.assertEqual(report["findings"], [])
-        self.assertTrue(report["full_diagnostic"]["full_coverage_ok"], report["full_diagnostic"])
+        self.assertTrue(report["full_diagnostic"]["release_convergence_ok"], report["full_diagnostic"])
+        self.assertEqual(report["full_diagnostic"]["blocking_actionable_findings"], [])
+        for finding in report["full_diagnostic"]["deferred_structure_split_findings"]:
+            with self.subTest(surface_id=finding["surface_id"]):
+                self.assertEqual(finding["source_code"], "needs_structure_split")
+                self.assertEqual(finding["repair_type"], "defer_structure_split")
         for family in (
             "startup",
             "packet/card/ack",

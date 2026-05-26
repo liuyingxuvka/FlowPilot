@@ -420,6 +420,9 @@ class State:
     role_output_event_deduped_by_body_ref: bool = True
     role_output_current_generation_not_short_circuited_by_global_flag: bool = True
     duplicate_role_event_side_effect_written: bool = False
+    pm_package_disposition_semantic_identity_deduped: bool = True
+    pm_package_disposition_body_hash_conflict_checked: bool = True
+    pm_package_packet_outcomes_recorded: bool = True
     packet_result_author_identity_replayable: bool = True
     packet_result_author_matches_current_role: bool = True
     break_glass_patch_validation_finalized: bool = True

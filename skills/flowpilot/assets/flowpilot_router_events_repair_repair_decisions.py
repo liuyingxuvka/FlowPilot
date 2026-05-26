@@ -233,6 +233,7 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
     plan_kind = requested_plan_kind
     if packet_specs and rerun_target not in {'router_direct_material_scan_dispatch_recheck_passed', 'reviewer_allows_material_scan_dispatch'}:
         raise RouterError('repair transaction packet reissue is currently supported only for material scan dispatch')
+    run_state.setdefault('flags', {})['pm_control_blocker_repair_decision_recorded'] = True
     output = {'schema_version': 'flowpilot.control_blocker_repair_decision.v1', 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'decided_by_role': 'project_manager', 'decision': decision['decision'], 'repair_transaction_id': transaction_id, 'prior_path_context_review': prior_path_context_review, 'repair_action': repair_action, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'blocker_family': active_record.get('blocker_family'), 'repair_origin': repair_origin, 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'legacy_plan_kind': legacy_plan_kind, 'execution_plan': execution_plan, 'control_transaction': control_transaction, 'blockers': blockers, 'contract_self_check': contract_self_check, 'recorded_at': utc_now(), **_role_output_envelope_record(decision)}
     decision_path = run_root / 'control_blocks' / f'{blocker_id}.pm_repair_decision.json'
     write_json(decision_path, output)

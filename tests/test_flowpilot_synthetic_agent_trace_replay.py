@@ -62,6 +62,57 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
         self.assertEqual(disposition["controller_visibility"], "role_output_envelope_only")
         self.assertFalse(disposition["chat_response_body_allowed"])
 
+    def test_fake_ai_pm_package_trace_catches_same_package_conflicting_decisions(self) -> None:
+        replay = run_worker_result_trace(
+            SyntheticTracePackage(
+                name="fake_ai_conflicting_pm_package_decisions",
+                evidence_kind="synthetic",
+                next_recipient="project_manager",
+            )
+        )
+        first = replay.pm_disposition(decision="absorbed")
+        second = role_output_runtime.submit_output(
+            replay.root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id="run-test",
+            event_name="pm_records_current_node_result_disposition",
+            output_path=replay.run_root
+            / "synthetic_trace_outputs"
+            / f"{replay.package.name}.pm_disposition.rework.json",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": "rework_requested",
+                "decision_reason": "Synthetic fake-AI conflict for the same package generation.",
+                "residual_risks": [],
+            },
+        )
+        run_state = read_json(replay.run_root / "state.json")
+        first_identity = router._scoped_event_identity(  # type: ignore[attr-defined]
+            replay.root,
+            replay.run_root,
+            run_state,
+            "pm_records_current_node_result_disposition",
+            first,
+        )
+        second_identity = router._scoped_event_identity(  # type: ignore[attr-defined]
+            replay.root,
+            replay.run_root,
+            run_state,
+            "pm_records_current_node_result_disposition",
+            second,
+        )
+        self.assertEqual(first_identity["dedupe_key"], second_identity["dedupe_key"])  # type: ignore[index]
+        self.assertNotEqual(
+            first_identity["scope"]["body_hash"],  # type: ignore[index]
+            second_identity["scope"]["body_hash"],  # type: ignore[index]
+        )
+
+        router._mark_scoped_event_recorded(run_state, first_identity)  # type: ignore[attr-defined]
+        with self.assertRaisesRegex(router.RouterError, "conflicts with an already recorded package disposition"):  # type: ignore[attr-defined]
+            router._check_scoped_event_conflict(run_state, second_identity)  # type: ignore[attr-defined]
+
     def test_ack_only_trace_keeps_semantic_work_open(self) -> None:
         replay = start_worker_trace(
             SyntheticTracePackage(

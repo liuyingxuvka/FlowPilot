@@ -101,6 +101,13 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(HAPPY,),
         ),
         _source_obligation(
+            "pm_package_disposition.semantic_identity_and_packet_outcomes",
+            obligation_type="hazard",
+            description="Source-audited PM package disposition boundary dedupes by package identity, treats body hash as conflict evidence, and records per-packet outcomes before aggregate absorption.",
+            required_test_kinds=(EDGE, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "controller_aside.metadata_only_boundary",
             obligation_type="contract",
             description="Source-audited Controller process-aside boundary keeps brief status metadata from becoming formal evidence, decisions, progress authority, or Router events.",

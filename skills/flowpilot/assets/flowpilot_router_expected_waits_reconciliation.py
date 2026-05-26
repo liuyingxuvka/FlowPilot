@@ -169,6 +169,7 @@ def _record_router_reconciled_external_event(
     flag = str(meta["flag"])
     repeatable = event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}
     scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+    _check_scoped_event_conflict(run_state, scoped_identity)
     if _scoped_event_is_recorded(run_state, scoped_identity):
         return False
     scoped_identity_requires_fresh_record = (

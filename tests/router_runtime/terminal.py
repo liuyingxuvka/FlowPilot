@@ -96,6 +96,114 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(fence["controller_may_continue_route_work"])
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "write_terminal_summary")
+    def test_user_stop_quarantines_active_repair_and_historical_control_plane_artifacts(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        flags = state.setdefault("flags", {})
+        for flag in (
+            "material_scan_packets_relayed",
+            "worker_packets_delivered",
+            "worker_scan_results_returned",
+            "material_scan_results_relayed_to_pm",
+            "material_scan_result_disposition_recorded",
+        ):
+            flags[flag] = True
+
+        tx_id = "repair-tx-terminal-quarantine"
+        tx_path = run_root / "control_blocks" / "repair_transactions" / f"{tx_id}.json"
+        router.write_json(
+            tx_path,
+            {
+                "schema_version": "flowpilot.repair_transaction.v1",
+                "transaction_id": tx_id,
+                "run_id": state["run_id"],
+                "blocker_id": "control-blocker-terminal-quarantine",
+                "status": "committed",
+                "plan_kind": "packet_reissue",
+            },
+        )
+        state["active_repair_transaction"] = {
+            "transaction_id": tx_id,
+            "blocker_id": "control-blocker-terminal-quarantine",
+            "status": "committed",
+            "plan_kind": "packet_reissue",
+            "path": self.rel(root, tx_path),
+        }
+        body_ref = {
+            "path": self.rel(root, run_root / "reviews" / "startup_fact_report-terminal.json"),
+            "hash": "duplicate-review-hash",
+        }
+        state["events"] = [
+            {"event": "reviewer_reports_startup_facts", "payload": {"body_ref": body_ref}},
+            {"event": "reviewer_reports_startup_facts", "payload": {"body_ref": body_ref}},
+        ]
+        state["external_event_idempotency"] = {
+            "processed": {
+                "pm_records_material_scan_result_disposition": {
+                    "first": {
+                        "scope": {
+                            "batch_id": "batch-a",
+                            "packet_ids": "packet-a",
+                            "packet_generation_id": "generation-a",
+                            "body_hash": "hash-a",
+                        }
+                    },
+                    "second": {
+                        "scope": {
+                            "batch_id": "batch-a",
+                            "packet_ids": "packet-a",
+                            "packet_generation_id": "generation-a",
+                            "body_hash": "hash-b",
+                        }
+                    },
+                }
+            }
+        }
+        router.save_run_state(run_root, state)
+
+        packet_ledger_path = run_root / "packet_ledger.json"
+        packet_ledger = read_json(packet_ledger_path)
+        packet_ledger.setdefault("packets", []).append(
+            {
+                "packet_id": "packet-missing-author",
+                "result_envelope": {
+                    "completed_by_role": "worker_a",
+                    "completed_agent_id": None,
+                    "completed_agent_id_belongs_to_role": False,
+                },
+            }
+        )
+        router.write_json(packet_ledger_path, packet_ledger)
+
+        result = router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
+
+        self.assertTrue(result["ok"])
+        state = read_json(state_path)
+        self.assertIsNone(state["active_repair_transaction"])
+        for flag in (
+            "material_scan_packets_relayed",
+            "worker_packets_delivered",
+            "worker_scan_results_returned",
+            "material_scan_results_relayed_to_pm",
+            "material_scan_result_disposition_recorded",
+        ):
+            self.assertFalse(state["flags"][flag])
+        tx = read_json(tx_path)
+        self.assertEqual(tx["status"], "superseded_by_terminal_lifecycle")
+        self.assertEqual(state["events"][1]["terminal_lifecycle_quarantine"]["status"], "terminal_lifecycle_quarantined")
+        records = state["external_event_idempotency"]["processed"]["pm_records_material_scan_result_disposition"]
+        self.assertEqual(records["second"]["terminal_lifecycle_quarantine"]["status"], "terminal_lifecycle_quarantined")
+        packet_ledger = read_json(packet_ledger_path)
+        result_envelope = packet_ledger["packets"][-1]["result_envelope"]
+        self.assertEqual(result_envelope["author_identity_quarantine"]["status"], "terminal_lifecycle_quarantined")
+        reconciliation = read_json(run_root / "lifecycle" / "terminal_reconciliation.json")
+        authorities = {receipt["authority"] for receipt in reconciliation["cleanup_receipts"]}
+        self.assertIn("repair_transaction", authorities)
+        self.assertIn("material_progress_flags", authorities)
+        self.assertIn("role_output_event_identity", authorities)
+        self.assertIn("packet_result_author_identity", authorities)
     def test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

@@ -416,6 +416,10 @@
             "target": "_check_scoped_event_retry_budget"
           },
           {
+            "public": "_check_scoped_event_conflict",
+            "target": "_check_scoped_event_conflict"
+          },
+          {
             "public": "_control_blocker_repair_decision_identity_scope",
             "target": "_control_blocker_repair_decision_identity_scope"
           },

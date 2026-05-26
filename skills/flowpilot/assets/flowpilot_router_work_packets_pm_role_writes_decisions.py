@@ -292,6 +292,130 @@ def _material_generation_context_for_pm_disposition(router: ModuleType, project_
     }
 
 
+def _pm_package_disposition_body_hash(router: ModuleType, payload: dict[str, Any]) -> str:
+    _bind_router(router)
+    envelope = payload.get('_role_output_envelope')
+    if isinstance(envelope, dict):
+        for key in ('body_hash', 'body_raw_sha256', 'body_semantic_sha256'):
+            value = str(envelope.get(key) or '').strip()
+            if value:
+                return value
+    return router._payload_body_hash(payload)
+
+
+def _packet_outcome_counts(packet_outcomes: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for outcome in packet_outcomes:
+        key = str(outcome.get('outcome') or '')
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def _normalise_pm_package_packet_outcomes(
+    router: ModuleType,
+    records: list[dict[str, Any]],
+    payload: dict[str, Any],
+    *,
+    decision: str,
+    package_label: str,
+) -> list[dict[str, Any]]:
+    _bind_router(router)
+    packet_ids = [str(record.get('packet_id') or '') for record in records]
+    packet_roles = {str(record.get('packet_id') or ''): str(record.get('to_role') or record.get('holder_role') or '') for record in records}
+    if any((not packet_id for packet_id in packet_ids)):
+        raise RouterError(f'{package_label} result disposition requires packet ids for every member')
+    raw_outcomes = payload.get('packet_outcomes')
+    if raw_outcomes in (None, ''):
+        derived = 'accepted' if decision == 'absorbed' else decision
+        return [
+            {
+                'packet_id': packet_id,
+                'role': packet_roles.get(packet_id) or None,
+                'outcome': derived,
+                'reason': f'derived from aggregate PM decision: {decision}',
+                'derived_from_aggregate_decision': True,
+            }
+            for packet_id in packet_ids
+        ]
+    if not isinstance(raw_outcomes, list):
+        raise RouterError(f'{package_label} result disposition packet_outcomes must be a list')
+    expected = set(packet_ids)
+    seen: set[str] = set()
+    outcomes: list[dict[str, Any]] = []
+    for item in raw_outcomes:
+        if not isinstance(item, dict):
+            raise RouterError(f'{package_label} result disposition packet_outcomes entries must be objects')
+        packet_id = str(item.get('packet_id') or '').strip()
+        if not packet_id:
+            raise RouterError(f'{package_label} result disposition packet_outcomes entries require packet_id')
+        if packet_id not in expected:
+            raise RouterError(f'{package_label} result disposition packet_outcomes references unknown packet_id: {packet_id}')
+        if packet_id in seen:
+            raise RouterError(f'{package_label} result disposition packet_outcomes has duplicate packet_id: {packet_id}')
+        raw_outcome = str(item.get('outcome') or '').strip()
+        outcome = 'accepted' if raw_outcome == 'absorbed' else raw_outcome
+        allowed_outcomes = set(getattr(router, 'PM_PACKAGE_RESULT_PACKET_OUTCOMES', ()))
+        if outcome not in allowed_outcomes:
+            allowed = ', '.join(sorted(allowed_outcomes))
+            raise RouterError(f'{package_label} result disposition packet outcome must be one of: {allowed}')
+        reason = str(item.get('reason') or item.get('decision_reason') or '').strip()
+        if not reason:
+            raise RouterError(f'{package_label} result disposition packet_outcomes entries require reason')
+        normalised = {
+            'packet_id': packet_id,
+            'role': str(item.get('role') or packet_roles.get(packet_id) or '').strip() or None,
+            'outcome': outcome,
+            'reason': reason,
+            'derived_from_aggregate_decision': False,
+        }
+        for optional_key in ('rework_scope', 'blocker_id', 'repair_target', 'next_action'):
+            if item.get(optional_key) not in (None, ''):
+                normalised[optional_key] = item.get(optional_key)
+        outcomes.append(normalised)
+        seen.add(packet_id)
+    missing = sorted(expected - seen)
+    if missing:
+        raise RouterError(f"{package_label} result disposition packet_outcomes missing packet ids: {', '.join(missing)}")
+    return outcomes
+
+
+def _validate_pm_package_packet_outcomes_for_decision(
+    packet_outcomes: list[dict[str, Any]],
+    *,
+    decision: str,
+    package_label: str,
+) -> None:
+    if decision != 'absorbed':
+        return
+    nonaccepted = [item for item in packet_outcomes if item.get('outcome') != 'accepted']
+    if nonaccepted:
+        packet_ids = ', '.join(str(item.get('packet_id') or '') for item in nonaccepted)
+        raise RouterError(
+            f'{package_label} result disposition cannot be absorbed while packet outcomes require more work: {packet_ids}'
+        )
+
+
+def _check_existing_pm_package_disposition(
+    router: ModuleType,
+    batch: dict[str, Any],
+    payload: dict[str, Any],
+    *,
+    package_label: str,
+) -> str:
+    _bind_router(router)
+    incoming_hash = _pm_package_disposition_body_hash(router, payload)
+    existing = batch.get('pm_result_disposition')
+    if isinstance(existing, dict):
+        existing_hash = str(existing.get('source_body_hash') or '').strip()
+        if existing_hash and incoming_hash and existing_hash != incoming_hash:
+            raise RouterError(
+                f'{package_label} result disposition already recorded for this batch/generation; '
+                'different body hash requires an authorized repair/reissue path'
+            )
+        raise RouterError(f'{package_label} result disposition already recorded for this batch/generation')
+    return incoming_hash
+
+
 def _write_pm_package_result_disposition(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any], *, batch_kind: str, package_label: str, gate_kind: str, output_path: Path, router_event: str | None = None) -> None:
     _bind_router(router)
     payload = _load_file_backed_role_payload_if_present(project_root, payload)
@@ -308,7 +432,10 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
     if decision not in PM_PACKAGE_RESULT_DECISIONS:
         raise RouterError(f'{package_label} result disposition has unsupported decision')
     batch = router._active_parallel_packet_batch(run_root, batch_kind)
-    if not batch or batch.get('status') != 'results_relayed_to_pm':
+    if not batch:
+        raise RouterError(f'{package_label} result disposition requires results_relayed_to_pm')
+    source_body_hash = _check_existing_pm_package_disposition(router, batch, payload, package_label=package_label)
+    if batch.get('status') != 'results_relayed_to_pm':
         raise RouterError(f'{package_label} result disposition requires results_relayed_to_pm')
     records = [record for record in batch.get('packets') or [] if isinstance(record, dict)]
     if not records:
@@ -324,6 +451,8 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
     }.get(batch_kind, '')
     if not resolved_router_event:
         raise RouterError(f'{package_label} result disposition requires a registered router event')
+    packet_outcomes = _normalise_pm_package_packet_outcomes(router, records, payload, decision=decision, package_label=package_label)
+    _validate_pm_package_packet_outcomes_for_decision(packet_outcomes, decision=decision, package_label=package_label)
     control_transaction = router._validate_control_transaction_requirements(
         run_root,
         transaction_type='result_absorption',
@@ -350,10 +479,16 @@ def _write_pm_package_result_disposition(router: ModuleType, project_root: Path,
         and formal_package.get('formal_gate_package_path')
         and formal_package.get('formal_gate_package_hash')
     )
-    disposition = {'schema_version': 'flowpilot.pm_package_result_disposition.v1', 'run_id': run_state['run_id'], 'batch_id': batch.get('batch_id'), 'batch_kind': batch_kind, 'package_label': package_label, 'gate_kind': gate_kind, 'decided_by_role': 'project_manager', 'decision': decision, 'decision_reason': payload.get('decision_reason') or payload.get('reason') or '', 'packet_ids': [str(record.get('packet_id')) for record in records], 'packet_generation_id': material_generation_context.get('current_generation_id') if material_generation_context else None, 'material_generation': material_generation_context or None, 'result_envelope_paths': [str(record.get('result_envelope_path')) for record in records], 'formal_gate_package_released': release_satisfied, 'control_transaction': control_transaction, 'pm_reviewer_release_evidence': {'schema_version': 'flowpilot.pm_reviewer_release_evidence.v1', 'release_kind': 'absorbed_pm_package_result_disposition' if release_satisfied else 'none', 'release_satisfied': release_satisfied, 'formal_gate_package_required': decision == 'absorbed', 'formal_gate_package_path': formal_package.get('formal_gate_package_path'), 'formal_gate_package_hash': formal_package.get('formal_gate_package_hash'), 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none'}, 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none', 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'recorded_at': utc_now(), **formal_package, **_role_output_envelope_record(payload)}
+    packet_outcome_summary = _packet_outcome_counts(packet_outcomes)
+    disposition = {'schema_version': 'flowpilot.pm_package_result_disposition.v1', 'run_id': run_state['run_id'], 'batch_id': batch.get('batch_id'), 'batch_kind': batch_kind, 'package_label': package_label, 'gate_kind': gate_kind, 'decided_by_role': 'project_manager', 'decision': decision, 'decision_reason': payload.get('decision_reason') or payload.get('reason') or '', 'packet_ids': [str(record.get('packet_id')) for record in records], 'packet_outcomes': packet_outcomes, 'packet_outcome_summary': packet_outcome_summary, 'packet_generation_id': material_generation_context.get('current_generation_id') if material_generation_context else None, 'material_generation': material_generation_context or None, 'result_envelope_paths': [str(record.get('result_envelope_path')) for record in records], 'source_body_hash': source_body_hash, 'formal_gate_package_released': release_satisfied, 'control_transaction': control_transaction, 'pm_reviewer_release_evidence': {'schema_version': 'flowpilot.pm_reviewer_release_evidence.v1', 'release_kind': 'absorbed_pm_package_result_disposition' if release_satisfied else 'none', 'release_satisfied': release_satisfied, 'formal_gate_package_required': decision == 'absorbed', 'formal_gate_package_path': formal_package.get('formal_gate_package_path'), 'formal_gate_package_hash': formal_package.get('formal_gate_package_hash'), 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none'}, 'reviewer_receives_raw_worker_result': False, 'reviewer_review_scope': 'pm_formal_gate_package_only' if release_satisfied else 'none', 'residual_risks': payload.get('residual_risks') if isinstance(payload.get('residual_risks'), list) else [], 'recorded_at': utc_now(), **formal_package, **_role_output_envelope_record(payload)}
     write_json(output_path, disposition)
     material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
-    batch['pm_result_disposition'] = {'decision': decision, 'decision_path': project_relative(project_root, output_path), 'decision_hash': packet_runtime.sha256_file(output_path), 'recorded_at': disposition['recorded_at'], 'control_transaction': control_transaction, 'material_generation': material_generation_context or None}
+    outcomes_by_packet_id = {str(item.get('packet_id') or ''): item for item in packet_outcomes}
+    for record in records:
+        outcome = outcomes_by_packet_id.get(str(record.get('packet_id') or ''))
+        if outcome:
+            record['pm_result_outcome'] = outcome
+    batch['pm_result_disposition'] = {'decision': decision, 'decision_path': project_relative(project_root, output_path), 'decision_hash': packet_runtime.sha256_file(output_path), 'source_body_hash': source_body_hash, 'recorded_at': disposition['recorded_at'], 'packet_outcomes': packet_outcomes, 'packet_outcome_summary': packet_outcome_summary, 'control_transaction': control_transaction, 'material_generation': material_generation_context or None}
     if decision == 'absorbed':
         batch['status'] = 'pm_absorbed'
         if batch_kind == 'material_scan':

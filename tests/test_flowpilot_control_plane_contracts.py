@@ -26,6 +26,8 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
         scoped_identity = {
             "event": "pm_records_material_scan_result_disposition",
             "dedupe_key": "pm_records_material_scan_result_disposition:test",
+            "family": "pm_package_disposition",
+            "conflict_fields": ["body_hash"],
             "scope": {
                 "batch_id": "repair-generation-batch",
                 "packet_generation_id": "repair-generation",
@@ -33,18 +35,76 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
             },
         }
 
-        self.assertFalse(
-            role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
-                "pm_records_material_scan_result_disposition",
-                scoped_identity,
-            )
-        )
+        for event in (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        ):
+            with self.subTest(event=event):
+                self.assertFalse(
+                    role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
+                        event,
+                        {**scoped_identity, "event": event, "dedupe_key": f"{event}:test"},
+                    )
+                )
+
+    def test_non_package_role_output_can_still_short_circuit_on_global_flag(self) -> None:
         self.assertTrue(
             role_output_bridge_events._event_allows_run_wide_flag_short_circuit(
-                "pm_records_research_result_disposition",
-                scoped_identity,
+                "reviewer_reports_material_sufficient",
+                None,
             )
         )
+
+    def test_pm_package_disposition_identity_conflicts_on_body_hash(self) -> None:
+        for event in (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        ):
+            with self.subTest(event=event):
+                run_state: dict[str, object] = {}
+                first_identity = {
+                    "event": event,
+                    "dedupe_key": f"{event}:test",
+                    "family": "pm_package_disposition",
+                    "conflict_fields": ["body_hash"],
+                    "scope": {
+                        "batch_id": "batch-1",
+                        "packet_ids": "packet-a,packet-b",
+                        "packet_generation_id": "generation-1",
+                        "body_hash": "hash-a",
+                    },
+                    "retry_group": f"{event}:test",
+                }
+                router._mark_scoped_event_recorded(run_state, first_identity)  # type: ignore[attr-defined]
+
+                replay_identity = {
+                    **first_identity,
+                    "scope": {**first_identity["scope"], "body_hash": "hash-a"},
+                }
+                router._check_scoped_event_conflict(run_state, replay_identity)  # type: ignore[attr-defined]
+                self.assertTrue(router._scoped_event_is_recorded(run_state, replay_identity))  # type: ignore[attr-defined]
+
+                conflict_identity = {
+                    **first_identity,
+                    "scope": {**first_identity["scope"], "body_hash": "hash-b"},
+                }
+                with self.assertRaisesRegex(router.RouterError, "conflicts with an already recorded package disposition"):  # type: ignore[attr-defined]
+                    router._check_scoped_event_conflict(run_state, conflict_identity)  # type: ignore[attr-defined]
+
+    def test_pm_package_disposition_policies_use_body_hash_as_conflict_evidence(self) -> None:
+        for event in (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        ):
+            policy = router.SCOPED_EVENT_IDENTITY_POLICIES[event]  # type: ignore[attr-defined]
+            self.assertEqual(
+                tuple(policy["dedupe_fields"]),
+                ("batch_id", "packet_ids", "packet_generation_id"),
+            )
+            self.assertEqual(tuple(policy["conflict_fields"]), ("body_hash",))
 
     def test_control_blocker_identity_includes_blocker_artifact(self) -> None:
         base = {
@@ -248,56 +308,62 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self,
         root: Path,
         run_id: str,
+        *,
+        packet_count: int = 1,
     ) -> tuple[Path, dict, dict, Path]:
         run_root = self.write_minimal_run(root, run_id)
         run_state = read_json(router.run_state_path(run_root))
         records: list[dict[str, object]] = []
-        packet = packet_runtime.create_packet(
-            root,
-            packet_id="packet-release",
-            from_role="project_manager",
-            to_role="worker_a",
-            node_id="node-001",
-            body_text="material scan",
-        )
-        packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
-        packet = packet_runtime.controller_relay_envelope(
-            root,
-            envelope=packet,
-            envelope_path=packet_path,
-            controller_agent_id="agent-controller",
-            received_from_role="project_manager",
-            relayed_to_role="worker_a",
-        )
-        packet_runtime.read_packet_body_for_role(root, packet, role="worker_a")
-        result = packet_runtime.write_result(
-            root,
-            packet_envelope=packet,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a",
-            result_body_text="scan result\n\nContract Self-Check\n\nstatus: pass\n",
-            next_recipient="project_manager",
-        )
-        result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
-        result = packet_runtime.controller_relay_envelope(
-            root,
-            envelope=result,
-            envelope_path=result_path,
-            controller_agent_id="agent-controller",
-            received_from_role="worker_a",
-            relayed_to_role="project_manager",
-        )
-        packet_runtime.read_result_body_for_role(root, result, role="project_manager")
-        records.append(
-            {
-                "packet_id": "packet-release",
-                "to_role": "worker_a",
-                "packet_generation_id": "material-generation-release",
-                "packet_envelope_path": router.project_relative(root, packet_path),
-                "result_envelope_path": router.project_relative(root, result_path),
-                "status": "result_relayed_to_pm",
-            }
-        )
+        for index in range(packet_count):
+            suffix = "" if packet_count == 1 else f"-{chr(ord('a') + index)}"
+            packet_id = f"packet-release{suffix}"
+            role = "worker_a" if index % 2 == 0 else "worker_b"
+            packet = packet_runtime.create_packet(
+                root,
+                packet_id=packet_id,
+                from_role="project_manager",
+                to_role=role,
+                node_id="node-001",
+                body_text=f"material scan {packet_id}",
+            )
+            packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
+            packet = packet_runtime.controller_relay_envelope(
+                root,
+                envelope=packet,
+                envelope_path=packet_path,
+                controller_agent_id="agent-controller",
+                received_from_role="project_manager",
+                relayed_to_role=role,
+            )
+            packet_runtime.read_packet_body_for_role(root, packet, role=role)
+            result = packet_runtime.write_result(
+                root,
+                packet_envelope=packet,
+                completed_by_role=role,
+                completed_by_agent_id=f"agent-{role}",
+                result_body_text=f"scan result {packet_id}\n\nContract Self-Check\n\nstatus: pass\n",
+                next_recipient="project_manager",
+            )
+            result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
+            result = packet_runtime.controller_relay_envelope(
+                root,
+                envelope=result,
+                envelope_path=result_path,
+                controller_agent_id="agent-controller",
+                received_from_role=role,
+                relayed_to_role="project_manager",
+            )
+            packet_runtime.read_result_body_for_role(root, result, role="project_manager")
+            records.append(
+                {
+                    "packet_id": packet_id,
+                    "to_role": role,
+                    "packet_generation_id": "material-generation-release",
+                    "packet_envelope_path": router.project_relative(root, packet_path),
+                    "result_envelope_path": router.project_relative(root, result_path),
+                    "status": "result_relayed_to_pm",
+                }
+            )
         batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
             root,
             run_root,
@@ -655,6 +721,152 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(release["formal_gate_package_path"])
         self.assertTrue(release["formal_gate_package_hash"])
         self.assertFalse(release["reviewer_receives_raw_worker_result"])
+
+    def test_pm_disposition_records_packet_outcomes_and_blocks_mixed_absorption(self) -> None:
+        root = self.make_project()
+        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-packet-outcomes",
+            packet_count=2,
+        )
+        mixed_payload = role_output_runtime.submit_output(
+            root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id=run_root.name,
+            event_name="pm_records_material_scan_result_disposition",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": "rework_requested",
+                "decision_reason": "Worker B result needs a targeted repair.",
+                "packet_outcomes": [
+                    {
+                        "packet_id": "packet-release-a",
+                        "outcome": "accepted",
+                        "reason": "Worker A result is usable.",
+                    },
+                    {
+                        "packet_id": "packet-release-b",
+                        "outcome": "rework_requested",
+                        "reason": "Worker B result failed PM self-check.",
+                    },
+                ],
+                "residual_risks": [],
+            },
+        )
+
+        pm_decisions._write_pm_package_result_disposition(
+            router,
+            root,
+            run_root,
+            run_state,
+            mixed_payload,
+            batch_kind="material_scan",
+            package_label="material_scan",
+            gate_kind="material_sufficiency",
+            output_path=output_path,
+            router_event="pm_records_material_scan_result_disposition",
+        )
+
+        disposition = read_json(output_path)
+        self.assertFalse(disposition["formal_gate_package_released"])
+        self.assertEqual(disposition["packet_outcome_summary"]["accepted"], 1)
+        self.assertEqual(disposition["packet_outcome_summary"]["rework_requested"], 1)
+        batch = router._active_parallel_packet_batch(run_root, "material_scan")  # type: ignore[attr-defined]
+        self.assertEqual(batch["status"], "rework_requested")
+        outcomes = {record["packet_id"]: record["pm_result_outcome"]["outcome"] for record in batch["packets"]}
+        self.assertEqual(outcomes["packet-release-a"], "accepted")
+        self.assertEqual(outcomes["packet-release-b"], "rework_requested")
+
+    def test_pm_disposition_rejects_absorbed_with_rework_packet_outcome(self) -> None:
+        root = self.make_project()
+        run_root, run_state, _payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-contradictory-outcomes",
+        )
+        contradictory_payload = role_output_runtime.submit_output(
+            root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id=run_root.name,
+            event_name="pm_records_material_scan_result_disposition",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": "absorbed",
+                "decision_reason": "This contradicts the packet outcome.",
+                "packet_outcomes": [
+                    {
+                        "packet_id": "packet-release",
+                        "outcome": "rework_requested",
+                        "reason": "The packet still needs repair.",
+                    }
+                ],
+                "residual_risks": [],
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "cannot be absorbed while packet outcomes require more work"):  # type: ignore[attr-defined]
+            pm_decisions._write_pm_package_result_disposition(
+                router,
+                root,
+                run_root,
+                run_state,
+                contradictory_payload,
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                output_path=output_path,
+                router_event="pm_records_material_scan_result_disposition",
+            )
+
+    def test_pm_disposition_rejects_second_body_for_same_batch_generation(self) -> None:
+        root = self.make_project()
+        run_root, run_state, payload, output_path = self._prepare_material_scan_pm_disposition(
+            root,
+            "run-disposition-duplicate-conflict",
+        )
+        pm_decisions._write_pm_package_result_disposition(
+            router,
+            root,
+            run_root,
+            run_state,
+            payload,
+            batch_kind="material_scan",
+            package_label="material_scan",
+            gate_kind="material_sufficiency",
+            output_path=output_path,
+            router_event="pm_records_material_scan_result_disposition",
+        )
+        second_payload = role_output_runtime.submit_output(
+            root,
+            output_type="pm_package_result_disposition",
+            role="project_manager",
+            agent_id="agent-project_manager",
+            run_id=run_root.name,
+            event_name="pm_records_material_scan_result_disposition",
+            body={
+                "decided_by_role": "project_manager",
+                "decision": "rework_requested",
+                "decision_reason": "Different second PM body must not create a new decision.",
+                "residual_risks": [],
+            },
+        )
+
+        with self.assertRaisesRegex(router.RouterError, "already recorded for this batch/generation"):  # type: ignore[attr-defined]
+            pm_decisions._write_pm_package_result_disposition(
+                router,
+                root,
+                run_root,
+                run_state,
+                second_payload,
+                batch_kind="material_scan",
+                package_label="material_scan",
+                gate_kind="material_sufficiency",
+                output_path=output_path,
+                router_event="pm_records_material_scan_result_disposition",
+            )
 
     def test_material_disposition_rejects_stale_active_batch(self) -> None:
         root = self.make_project()

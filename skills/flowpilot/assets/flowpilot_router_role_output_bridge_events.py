@@ -125,6 +125,8 @@ def _role_output_body_payload_from_record(
     envelope: dict[str, Any],
 ) -> dict[str, Any]:
     _bind_router(router)
+    if isinstance(envelope.get("body_ref"), dict):
+        return _load_file_backed_role_payload(project_root, envelope)
     body_path = ""
     body_ref = envelope.get("body_ref")
     if isinstance(body_ref, dict):
@@ -200,7 +202,10 @@ def _role_output_event_has_durable_authority(
 def _event_allows_run_wide_flag_short_circuit(event: str, scoped_identity: dict[str, Any] | None) -> bool:
     if event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}:
         return False
-    if event == "pm_records_material_scan_result_disposition" and scoped_identity is not None:
+    if (
+        scoped_identity is not None
+        and scoped_identity.get("family") == "pm_package_disposition"
+    ):
         return False
     return True
 
@@ -323,6 +328,7 @@ def _try_reconcile_direct_role_output_event_ledger(
             payload,
         )
         scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+        _check_scoped_event_conflict(run_state, scoped_identity)
         if _scoped_event_is_recorded(run_state, scoped_identity) or (
             flags.get(flag) and _event_allows_run_wide_flag_short_circuit(event, scoped_identity)
         ):

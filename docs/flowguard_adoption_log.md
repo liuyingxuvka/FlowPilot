@@ -18781,3 +18781,52 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Complete predictive-KB postflight and local git commit.
 - Archive `add-shadow-launcher-chaos-regression` after review if the
   implementation evidence is accepted.
+## 2026-05-26 - PM Package Disposition Semantics
+
+- Trigger: user reported a FlowPanda/FlowPilot control-plane blocker where one package appeared to have two different PM decisions, and asked why fake AI/model tests missed it.
+- Status: implemented, validated locally, installed skill synced, and prepared for local commit.
+- Skill decision: use OpenSpec plus FlowGuard ExistingModelPreflight, DevelopmentProcessFlow, Model Miss Review, Model-Test Alignment, and TestMesh.
+- OpenSpec change: `harden-package-disposition-semantics`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- PM package dispositions for material scan, research, and current-node packages now use semantic package identity: `batch_id`, `packet_ids`, and `packet_generation_id`.
+- `body_hash` is now conflict evidence, not a dedupe key, so a second different PM body for the same package/generation is rejected instead of becoming a second decision.
+- PM writer logic now normalizes `packet_outcomes`, records packet-level outcomes in the disposition/batch summary, and rejects aggregate `absorbed` when any packet outcome is not accepted.
+- Runtime replay, expected-wait reconciliation, and role-output bridge paths now share the same conflict guard before run-wide flag short-circuiting.
+- Model, source-audit, live-audit, synthetic fake-AI replay, and model-test alignment coverage now all include this same-class bug.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: focused PM package unit/runtime tests -> `8 tests OK`.
+- OK: `python simulations/run_flowpilot_event_idempotency_checks.py --json-out simulations/flowpilot_event_idempotency_results.json`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out simulations/flowpilot_control_plane_friction_results.json`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --live-root . --json-out simulations/flowpilot_control_plane_friction_live_audit_results.json`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_control_plane_contracts`.
+- OK: `python -m unittest tests.test_flowpilot_output_contracts`.
+- OK: `python simulations/run_flowpilot_repair_transaction_checks.py --json-out simulations/flowpilot_repair_transaction_results.json`.
+- OK in background contract: `python simulations/run_meta_checks.py`; `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`; `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status passed, proof reuse false.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- The live blocker was not a legitimate worker-A/worker-B split decision. It was two batch-level PM package dispositions for the same material scan package/generation with different bodies.
+- Worker-specific disagreement is now represented inside one authoritative package disposition through `packet_outcomes`.
+- The old tests missed this because fixtures exercised single-decision happy paths, the event-idempotency model allowed `body_hash` in dedupe identity, and fake-AI replay did not submit a conflicting same-package PM body through the ledger/reconciliation path.
+- A full `tests.test_flowpilot_synthetic_agent_trace_replay` module run remained too slow/time-limited during this pass; the new targeted conflicting-disposition fake-AI replay passes and the previously failing body-hash reconciliation path was fixed.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication was performed.
+- Confidence is bounded to the three PM package event families, current Router/runtime conflict guards, listed fake-AI replay, model audits, and executable checks above.
+
+### Next Actions
+
+- Complete predictive-KB postflight and local git commit.
+- Archive `harden-package-disposition-semantics` after review if the implementation evidence is accepted.

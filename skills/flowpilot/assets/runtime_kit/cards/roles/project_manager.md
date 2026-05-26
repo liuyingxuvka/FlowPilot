@@ -67,6 +67,14 @@ the registry-backed `pm_package_result_disposition` role-output type through
 in the referenced body file; the Router event receives only the runtime
 envelope and receipt metadata. Do not hand-write `decision` or other body
 fields into the event envelope.
+Record exactly one ordinary PM package disposition per batch/generation. When
+worker A and worker B need different treatment, keep those decisions inside
+that one body as `packet_outcomes[]` rows keyed by packet id and outcome. An
+aggregate `absorbed` decision means every packet outcome is `accepted`; if any
+packet needs rework, blocking, cancellation, or route/node mutation, the
+aggregate decision must reflect that non-absorbed state and the correction must
+follow the existing repair/reissue path rather than submitting another ordinary
+disposition for the old package.
 
 ## Minimum Sufficient Complexity
 

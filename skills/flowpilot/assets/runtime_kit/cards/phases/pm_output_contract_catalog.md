@@ -63,6 +63,15 @@ When Router waits for `pm_records_material_scan_result_disposition`,
 Do not hand-write the event body. The event envelope must contain only the
 runtime-generated role-output envelope with `body_ref` and
 `runtime_receipt_ref`; the disposition body stays in the referenced file.
+This is one authoritative batch/generation decision, not one decision per
+worker. If worker results differ, put one `packet_outcomes[]` row per member
+packet in that same disposition body with `packet_id`, `outcome`, and
+`reason`. Use outcome `accepted` only for packets PM is absorbing; use
+`rework_requested`, `blocked`, `canceled`, or
+`route_or_node_mutation_required` for packets that cannot be absorbed. Do not
+submit a second ordinary package disposition for the same batch/generation;
+correction requires the existing repair/reissue path to create a new package
+identity.
 
 `progress_status`: every formal role-output work item has default
 Controller-visible metadata progress. Use `flowpilot_runtime.py

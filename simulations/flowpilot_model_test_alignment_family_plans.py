@@ -282,6 +282,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="Output contracts are repeated in packet envelope/body/ledger/result and rejected for wrong recipients.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
+            _obligation(
+                "output_contract.self_check_required_fields",
+                obligation_type="hazard",
+                description="Role-output self-checks expose exact missing required fields and do not treat a heading or wrong field name as a completed worker contract.",
+                required_test_kinds=(NEGATIVE,),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -315,6 +321,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_output_contracts",
                 test_kind=NEGATIVE,
                 covers=("output_contract.packet_binding",),
+            ),
+            _evidence(
+                "output_contract.negative.live_worker_missing_fields",
+                test_name="test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                path="tests/test_flowpilot_output_contracts.py",
+                command="python -m unittest tests.test_flowpilot_output_contracts",
+                test_kind=NEGATIVE,
+                covers=("output_contract.self_check_required_fields",),
             ),
         ),
     )
@@ -363,6 +377,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="scenario",
                 description="Historical live-run replay packages bind prior real failure shapes to real Router, packet/runtime, resume, background proof, install, route evidence, display projection, and filesystem gates without claiming arbitrary live AI semantic quality.",
                 required_test_kinds=(HAPPY, EDGE, NEGATIVE),
+            ),
+            _obligation(
+                "router_loop.known_friction_regression_gate",
+                obligation_type="hazard",
+                description="The six accepted historical friction surfaces are pinned to current runtime-backed regressions and reject model-only, stale, progress-only, or skipped evidence overclaims.",
+                required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
                 "daemon.lock_status_and_queue_progress",
@@ -523,6 +543,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("router_loop.historical_live_run_replay_package_suite",),
             ),
             _evidence(
+                "router_loop.known_friction.happy.matrix",
+                test_name="test_known_friction_rows_cover_required_historical_failures",
+                path="tests/test_flowpilot_known_friction_regression_matrix.py",
+                command="python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
+                test_kind=HAPPY,
+                covers=("router_loop.known_friction_regression_gate",),
+            ),
+            _evidence(
+                "router_loop.known_friction.negative.known_bad",
+                test_name="test_known_bad_cases_are_rejected",
+                path="tests/test_flowpilot_known_friction_regression_matrix.py",
+                command="python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
+                test_kind=NEGATIVE,
+                covers=("router_loop.known_friction_regression_gate",),
+            ),
+            _evidence(
                 "daemon.happy.formal_startup",
                 test_name="test_formal_startup_starts_router_daemon_before_controller_core",
                 path="tests/router_runtime/startup_bootstrap.py",
@@ -585,6 +621,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
+                "repair_transactions.pm_decision_flag_atomicity",
+                obligation_type="hazard",
+                description="A PM repair decision makes its required flag visible before daemon-readable post-decision wait events are exposed.",
+                required_test_kinds=(EDGE,),
+            ),
+            _obligation(
                 "repair_transactions.multiround_fake_ai_no_producer_recovery",
                 obligation_type="scenario",
                 description="Prepared fake AI replay rejects a no-producer PM repair and then accepts a corrected packet reissue with current producer evidence.",
@@ -626,6 +668,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "repair_transactions.executable_plan_required",
                     "repair_transactions.empty_transaction_returns_to_pm_repair",
                 ),
+            ),
+            _evidence(
+                "repair_transactions.edge.pm_decision_side_effect_atomicity",
+                test_name="test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
+                path="tests/router_runtime/material_modeling.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+                test_kind=EDGE,
+                covers=("repair_transactions.pm_decision_flag_atomicity",),
             ),
             _evidence(
                 "repair_transactions.e2e.no_producer_then_packet_reissue",

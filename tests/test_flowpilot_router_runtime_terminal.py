@@ -8,6 +8,7 @@ from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 TEST_NAMES = (
     "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
     "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
+    "test_user_stop_quarantines_active_repair_and_historical_control_plane_artifacts",
     "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
     "test_terminal_pending_heartbeat_action_is_noop",
     "test_reconcile_run_recovers_terminal_status_from_current_pointer",
