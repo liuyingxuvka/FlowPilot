@@ -216,12 +216,84 @@
           ]
         }
       ]
+    },
+    {
+      "expected_codes": [
+        "no_producer_repair_without_generation",
+        "missing_required_rehearsal"
+      ],
+      "name": "no_producer_repair_without_generation",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "awaiting_worker_result_without_new_packet",
+          "fake_ai_artifacts": [
+            "pm_no_producer_repair_decision"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence_used_as_repair_proof",
+        "missing_required_rehearsal"
+      ],
+      "name": "stale_worker_flags_used_as_repair_proof",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "awaiting_worker_result_without_new_packet",
+          "fake_ai_artifacts": [
+            "stale_worker_result_flags"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
     }
   ],
   "ok": true,
-  "required_rehearsal_count": 4,
+  "required_rehearsal_count": 5,
   "result_type": "flowpilot_real_router_dry_run_rehearsal_matrix",
-  "row_count": 4,
+  "row_count": 5,
   "rows": [
     {
       "allowed_event_boundary": "only Router-declared external events for the current wait may advance flags",
@@ -394,6 +466,54 @@
       ]
     },
     {
+      "allowed_event_boundary": "post-repair waits count only when the repair transaction exposes current producer evidence",
+      "confidence_boundary": "proves a prepared fake PM repair cannot advance until a current repair producer exists",
+      "evidence_current": true,
+      "evidence_id": "real_router.repair.producer_proof_recovery",
+      "evidence_role": "primary_real_router_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
+      "expected_standard_state": "legal_wait_with_repair_packet_generation_producer_evidence",
+      "fake_ai_artifacts": [
+        "material_scan_packets",
+        "stale_worker_result_flags",
+        "pm_no_producer_repair_decision",
+        "pm_packet_reissue_repair_decision",
+        "repair_packet_generation"
+      ],
+      "forbidden_shortcuts": [
+        "direct_state_mutation",
+        "stale_worker_result_flag_as_fresh_producer",
+        "role_reissue_without_packet_generation",
+        "await_role_event_without_producer_evidence"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "startup_complete",
+        "material_scan_dispatch",
+        "stale_worker_result_flags",
+        "control_blocker",
+        "pm_no_producer_repair_rejected",
+        "pm_packet_reissue_repair",
+        "producer_backed_wait_exposed"
+      ],
+      "rehearsal_id": "real_router.repair.producer_proof_recovery",
+      "required_ack_or_receipt_gates": [
+        "pm_repair_decision_envelope",
+        "repair_packet_generation_receipt",
+        "producer_evidence_on_followup_wait"
+      ],
+      "router_entrypoints": [
+        "router_runtime.record_external_event",
+        "router_runtime.next_action",
+        "packet_runtime.create_packet"
+      ],
+      "supporting_evidence": [
+        "e2e.pm_repair.no_producer_then_packet_reissue",
+        "repair_transactions.negative.material_role_reissue_no_producer"
+      ]
+    },
+    {
       "allowed_event_boundary": "known-bad rows are rejected before they can be counted as rehearsal proof",
       "confidence_boundary": "prevents rehearsal coverage from counting shortcut or overclaimed rows",
       "evidence_current": true,
@@ -445,7 +565,7 @@
     "matrix_validator": 1,
     "packet_runtime.active_holder_ack": 1,
     "packet_runtime.active_holder_submit_result": 1,
-    "packet_runtime.create_packet": 1,
+    "packet_runtime.create_packet": 2,
     "role_output_runtime.envelope": 1,
     "router_cli.apply": 1,
     "router_cli.next": 1,
@@ -456,8 +576,8 @@
     "router_event_catalog": 1,
     "router_lifecycle_terminal": 1,
     "router_runtime.apply_action": 2,
-    "router_runtime.next_action": 2,
-    "router_runtime.record_external_event": 2
+    "router_runtime.next_action": 3,
+    "router_runtime.record_external_event": 3
   },
   "rows_by_phase": {
     "active_holder_result": 1,
@@ -468,6 +588,7 @@
     "cli_run_until_wait": 1,
     "cli_start": 1,
     "cli_state": 1,
+    "control_blocker": 1,
     "current_node_packet_dispatch": 1,
     "duplicate_resume": 1,
     "evidence_quality": 1,
@@ -477,16 +598,21 @@
     "lifecycle_terminal": 1,
     "manual_resume": 1,
     "material_scan": 1,
+    "material_scan_dispatch": 1,
     "matrix_validation": 1,
     "pm_absorb_and_reviewer_review": 1,
     "pm_closure": 1,
+    "pm_no_producer_repair_rejected": 1,
+    "pm_packet_reissue_repair": 1,
+    "producer_backed_wait_exposed": 1,
     "product_architecture": 1,
     "progress_only_background_artifact": 1,
     "resume_state_load": 1,
     "route_activation": 1,
     "stale_daemon_owner": 1,
+    "stale_worker_result_flags": 1,
     "startup": 1,
-    "startup_complete": 1,
+    "startup_complete": 2,
     "terminal_replay": 1
   }
 }

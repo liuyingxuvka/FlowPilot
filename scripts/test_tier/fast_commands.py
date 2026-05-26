@@ -57,7 +57,7 @@ FAST_COMMANDS = (
             "--json-out",
             "simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json",
         ),
-        description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays.",
+        description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays, including no-producer PM repair recovery.",
     ),
     TierCommand(
         name="real_router_dry_run_rehearsal_matrix",
@@ -66,7 +66,7 @@ FAST_COMMANDS = (
             "--json-out",
             "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json",
         ),
-        description="Real Router dry-run rehearsal matrix for prepared fake AI packages through public runtime boundaries.",
+        description="Real Router dry-run rehearsal matrix for prepared fake AI packages through public runtime boundaries, including producer-proof repair waits.",
     ),
     TierCommand(
         name="control_plane_failure_canary_matrix",
@@ -123,7 +123,7 @@ FAST_COMMANDS = (
     _pytest(
         "e2e_synthetic_chaos_replay_tests",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
-        description="End-to-end fake AI replays across Router daemon, recovery, proof, isolation, and closure gates.",
+        description="End-to-end fake AI replays across Router daemon, recovery, proof, isolation, closure, and no-producer repair gates.",
     ),
     _pytest(
         "real_router_dry_run_rehearsal_matrix_tests",
@@ -133,7 +133,7 @@ FAST_COMMANDS = (
     _pytest(
         "real_router_dry_run_rehearsal_tests",
         "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
-        description="Runtime rehearsals for prepared fake AI packages through real Router, CLI, recovery, proof, and terminal gates.",
+        description="Runtime rehearsals for prepared fake AI packages through real Router, CLI, repair producer proof, recovery, proof, and terminal gates.",
     ),
     _pytest(
         "control_plane_failure_canary_matrix_tests",

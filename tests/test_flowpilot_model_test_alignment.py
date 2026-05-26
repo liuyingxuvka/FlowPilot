@@ -480,9 +480,22 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         evidence = {item.evidence_id: item for item in repair_entry["plan"].test_evidence}
 
         self.assertIn("repair_transactions.material_rework_requires_fresh_producer", obligations)
+        self.assertIn("repair_transactions.multiround_fake_ai_no_producer_recovery", obligations)
         item = evidence["repair_transactions.negative.material_role_reissue_no_producer"]
         self.assertEqual(item.test_name, "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer")
         self.assertEqual(item.path, "tests/router_runtime/material_modeling.py")
+        e2e_item = evidence["repair_transactions.e2e.no_producer_then_packet_reissue"]
+        self.assertEqual(
+            e2e_item.test_name,
+            "test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
+        )
+        self.assertEqual(e2e_item.path, "tests/test_flowpilot_e2e_synthetic_chaos_replay.py")
+        real_router_item = evidence["repair_transactions.real_router.producer_proof_recovery"]
+        self.assertEqual(
+            real_router_item.test_name,
+            "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
+        )
+        self.assertEqual(real_router_item.path, "tests/test_flowpilot_real_router_dry_run_rehearsal.py")
 
     def test_main_writes_json_only_when_requested(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-alignment-runner-") as tmp_name:

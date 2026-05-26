@@ -3,6 +3,92 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-26 FlowPilot Multi-Round Fake AI Control Rehearsal Hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: A live FlowPilot run exposed a control-plane repair path that
+  previous fake-AI and model simulations did not cover: stale progress flags,
+  a PM repair attempt without a concrete producer, and a later corrected repair
+  that must reopen a legal producer-backed wait.
+- Status: completed_validated_installed_synced_local_commit_pending
+- OpenSpec change: `harden-multiround-fake-ai-control-rehearsal`
+- Skill decision: predictive KB preflight, OpenSpec proposal/application,
+  FlowGuard existing-model preflight, DevelopmentProcessFlow, and
+  Model-Test Alignment.
+- FlowGuard schema: `1.0`
+
+### Model Files
+
+- `openspec/changes/harden-multiround-fake-ai-control-rehearsal/`
+- `simulations/flowpilot_e2e_synthetic_chaos_matrix.py`
+- `simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/flowpilot_e2e_synthetic_chaos_matrix_results.json`
+- `simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`;
+  returned schema `1.0`.
+- OK: focused matrix, model-test alignment, and tier-registration tests.
+- OK: focused E2E replay for bad PM repair rejection followed by corrected
+  `packet_reissue` producer evidence.
+- OK: focused real-Router rehearsal for no-producer rejection followed by
+  producer-backed repair recovery.
+- OK: `python simulations\flowpilot_e2e_synthetic_chaos_matrix.py --json-out
+  simulations\flowpilot_e2e_synthetic_chaos_matrix_results.json`.
+- OK: `python simulations\flowpilot_real_router_dry_run_rehearsal_matrix.py
+  --json-out simulations\flowpilot_real_router_dry_run_rehearsal_matrix_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py
+  --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_repair_transaction_checks.py
+  --json-out simulations\flowpilot_repair_transaction_results.json`.
+- OK: background `python simulations\run_meta_checks.py` completed through
+  `tmp\flowguard_background\run_meta_checks.*`, exit code `0`,
+  `proof_reused=false`.
+- OK: background `python simulations\run_capability_checks.py` completed
+  through `tmp\flowguard_background\run_capability_checks.*`, exit code `0`,
+  `proof_reused=false`.
+- OK: final low-parallel fast tier completed through
+  `tmp\flowguard_background\fast_multiround_repair_final_low_parallel_20260526\fast_background_supervisor.*`,
+  28/28 checks, exit code `0`, `proof_reused=false`.
+- OK: `openspec validate harden-multiround-fake-ai-control-rehearsal --strict`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\audit_local_install_sync.py --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\check_install.py --json`.
+
+### Findings
+
+- The missing bottom condition was not "AI stopped" by itself. The dangerous
+  branch is a PM control-blocker repair transaction that tries to resume a
+  material-dispatch repair without producing fresh packets or another concrete
+  producer.
+- The new E2E synthetic chaos row and real-Router rehearsal row both require
+  the bad no-producer repair to be rejected and the corrected `packet_reissue`
+  repair to expose producer evidence before the router can wait legally.
+- Model-Test Alignment now owns
+  `repair_transactions.multiround_fake_ai_no_producer_recovery` so the new
+  replay evidence cannot silently disappear from model coverage.
+- The initial fast-tier background run exposed a structure diagnostic in
+  `flowpilot_router_events_repair_repair_decisions.py`; removing stale imports
+  brought the surface below the split threshold without changing behavior.
+- A high-parallel fast-tier rerun exposed a shadow-launcher timeout from an
+  untracked peer suite. The single failing shadow scenario passed in isolation;
+  the final low-parallel fast-tier rerun passed.
+
+### Skipped Or Deferred Steps
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public
+  publication was performed.
+- The untracked shadow-launcher OpenSpec and test files were not staged in this
+  change; they were treated as concurrent peer work.
+- No claim is made that all possible live-AI behavior is exhausted. The claim
+  is bounded to the new no-producer repair recovery path, current real-Router
+  entrypoints, and the listed executable evidence.
+
 ## 2026-05-17 FlowPilot Behavior-Preserving Structural Reduction
 
 - Project: FlowGuardProjectAutopilot_20260430

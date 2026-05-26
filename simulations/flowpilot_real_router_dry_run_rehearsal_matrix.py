@@ -40,6 +40,7 @@ REQUIRED_REHEARSAL_IDS = {
     "real_router.full.startup_to_terminal_fake_ai_packages",
     "real_router.cli.public_boundary_smoke",
     "real_router.recovery.resume_and_background_proof_gate",
+    "real_router.repair.producer_proof_recovery",
     "real_router.authority.rejects_shortcut_overclaims",
 }
 
@@ -241,6 +242,61 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
         "live_ai_semantic_quality_proven": False,
     },
     {
+        "rehearsal_id": "real_router.repair.producer_proof_recovery",
+        "phase_sequence": [
+            "startup_complete",
+            "material_scan_dispatch",
+            "stale_worker_result_flags",
+            "control_blocker",
+            "pm_no_producer_repair_rejected",
+            "pm_packet_reissue_repair",
+            "producer_backed_wait_exposed",
+        ],
+        "fake_ai_artifacts": [
+            "material_scan_packets",
+            "stale_worker_result_flags",
+            "pm_no_producer_repair_decision",
+            "pm_packet_reissue_repair_decision",
+            "repair_packet_generation",
+        ],
+        "router_entrypoints": [
+            "router_runtime.record_external_event",
+            "router_runtime.next_action",
+            "packet_runtime.create_packet",
+        ],
+        "required_ack_or_receipt_gates": [
+            "pm_repair_decision_envelope",
+            "repair_packet_generation_receipt",
+            "producer_evidence_on_followup_wait",
+        ],
+        "allowed_event_boundary": (
+            "post-repair waits count only when the repair transaction exposes current producer evidence"
+        ),
+        "forbidden_shortcuts": [
+            "direct_state_mutation",
+            "stale_worker_result_flag_as_fresh_producer",
+            "role_reissue_without_packet_generation",
+            "await_role_event_without_producer_evidence",
+        ],
+        "expected_standard_state": "legal_wait_with_repair_packet_generation_producer_evidence",
+        "evidence_id": "real_router.repair.producer_proof_recovery",
+        "evidence_test": (
+            "FlowPilotRealRouterDryRunRehearsalTests."
+            "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue"
+        ),
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": "primary_real_router_rehearsal",
+        "supporting_evidence": [
+            "e2e.pm_repair.no_producer_then_packet_reissue",
+            "repair_transactions.negative.material_role_reissue_no_producer",
+        ],
+        "confidence_boundary": (
+            "proves a prepared fake PM repair cannot advance until a current repair producer exists"
+        ),
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
         "rehearsal_id": "real_router.authority.rejects_shortcut_overclaims",
         "phase_sequence": [
             "matrix_validation",
@@ -401,6 +457,29 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                     "message": "progress-only background output cannot be final proof",
                 }
             )
+        fake_artifacts = [str(item) for item in row.get("fake_ai_artifacts", [])]
+        forbidden = [str(item) for item in row.get("forbidden_shortcuts", [])]
+        expected_state = str(row.get("expected_standard_state") or "")
+        if "pm_no_producer_repair_decision" in fake_artifacts and "repair_packet_generation" not in fake_artifacts:
+            findings.append(
+                {
+                    "code": "no_producer_repair_without_generation",
+                    "rehearsal_id": rehearsal_id,
+                    "message": "no-producer PM repair rows must include corrected repair packet generation",
+                }
+            )
+        if (
+            "stale_worker_result_flags" in fake_artifacts
+            and "stale_worker_result_flag_as_fresh_producer" not in forbidden
+            and "repair_packet_generation" not in expected_state
+        ):
+            findings.append(
+                {
+                    "code": "stale_evidence_used_as_repair_proof",
+                    "rehearsal_id": rehearsal_id,
+                    "message": "stale worker flags must be forbidden or superseded by current repair generation evidence",
+                }
+            )
         if "terminal" in rehearsal_id and "closed" not in str(row.get("expected_standard_state") or ""):
             findings.append(
                 {
@@ -474,6 +553,29 @@ def known_bad_cases() -> list[dict[str, Any]]:
             "name": "semantic_quality_overclaim",
             "rows": [{**base, "live_ai_semantic_quality_proven": True}],
             "expected_codes": ["semantic_quality_overclaim", "missing_required_rehearsal"],
+        },
+        {
+            "name": "no_producer_repair_without_generation",
+            "rows": [
+                {
+                    **base,
+                    "fake_ai_artifacts": ["pm_no_producer_repair_decision"],
+                    "expected_standard_state": "awaiting_worker_result_without_new_packet",
+                }
+            ],
+            "expected_codes": ["no_producer_repair_without_generation", "missing_required_rehearsal"],
+        },
+        {
+            "name": "stale_worker_flags_used_as_repair_proof",
+            "rows": [
+                {
+                    **base,
+                    "fake_ai_artifacts": ["stale_worker_result_flags"],
+                    "forbidden_shortcuts": ["direct_state_mutation"],
+                    "expected_standard_state": "awaiting_worker_result_without_new_packet",
+                }
+            ],
+            "expected_codes": ["stale_evidence_used_as_repair_proof", "missing_required_rehearsal"],
         },
     ]
 

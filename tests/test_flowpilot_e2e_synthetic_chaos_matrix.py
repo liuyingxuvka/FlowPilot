@@ -48,6 +48,15 @@ class FlowPilotEndToEndSyntheticChaosMatrixTests(unittest.TestCase):
                 for expected in case["expected_codes"]:
                     self.assertIn(expected, codes)
 
+    def test_multiround_no_producer_repair_row_requires_corrected_recovery(self) -> None:
+        rows = {row["flow_id"]: row for row in matrix.build_rows()}
+        row = rows["e2e.pm_repair.no_producer_then_packet_reissue"]
+
+        self.assertIn("no_producer_pm_role_reissue", row["injected_error_sequence"])
+        self.assertIn("corrected_packet_reissue", row["injected_error_sequence"])
+        self.assertIn("repair_packet_generation", row["final_state"])
+        self.assertIn("test_e2e_no_producer_pm_repair_then_packet_reissue", row["evidence_test"])
+
     def test_matrix_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-e2e-chaos-matrix-") as tmp_name:
             output_path = Path(tmp_name) / "report.json"

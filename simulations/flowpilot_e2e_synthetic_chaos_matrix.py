@@ -38,6 +38,7 @@ REQUIRED_FLOW_IDS = {
     "e2e.happy.startup_to_terminal",
     "e2e.worker.bad_then_repaired_package",
     "e2e.pm_repair.bad_then_corrected",
+    "e2e.pm_repair.no_producer_then_packet_reissue",
     "e2e.background.progress_only_then_final_proof",
     "e2e.parallel.peer_run_isolation",
     "e2e.terminal.overclaim_then_clean_closure",
@@ -130,6 +131,40 @@ CHAOS_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_role": "primary_full_flow",
         "supporting_evidence": [
             "synthetic PM control-blocker repair tests",
+        ],
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "flow_id": "e2e.pm_repair.no_producer_then_packet_reissue",
+        "phase_sequence": [
+            "startup",
+            "material_scan_dispatch",
+            "stale_worker_result_flags",
+            "control_blocker",
+            "pm_no_producer_repair",
+            "pm_corrected_packet_reissue",
+            "producer_backed_legal_wait",
+        ],
+        "injected_error_sequence": [
+            "stale_worker_result_flags",
+            "no_producer_pm_role_reissue",
+            "corrected_packet_reissue",
+        ],
+        "expected_outcome": "no_producer_repair_rejected_then_packet_reissue_opens_producer_backed_wait",
+        "protected_state_invariant": "active_blocker_remains_until_repair_transaction_has_current_producer",
+        "recovery_route": "packet_reissue_repair_transaction_with_current_generation",
+        "final_state": "awaiting_material_recheck_with_repair_packet_generation_evidence",
+        "evidence_id": "e2e.pm_repair.no_producer_then_packet_reissue",
+        "evidence_test": (
+            "FlowPilotEndToEndSyntheticChaosReplayTests."
+            "test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence"
+        ),
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": "primary_full_flow",
+        "supporting_evidence": [
+            "repair_transactions.negative.material_role_reissue_no_producer",
+            "repair_transactions.happy.material_packet_reissue",
         ],
         "live_ai_semantic_quality_proven": False,
     },
@@ -325,6 +360,27 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                     "message": "progress-only evidence cannot be the final proof for closure",
                 }
             )
+        injected_errors = [str(item) for item in row.get("injected_error_sequence", [])]
+        if "no_producer_pm_role_reissue" in injected_errors and "corrected_packet_reissue" not in injected_errors:
+            findings.append(
+                {
+                    "code": "no_producer_repair_without_corrected_recovery",
+                    "flow_id": flow_id,
+                    "message": "no-producer PM repair rehearsal rows must include corrected packet reissue recovery",
+                }
+            )
+        if (
+            "stale_worker_result_flags" in injected_errors
+            and "current_generation" not in str(row.get("final_state") or "")
+            and "repair_packet_generation" not in str(row.get("final_state") or "")
+        ):
+            findings.append(
+                {
+                    "code": "stale_evidence_used_as_repair_proof",
+                    "flow_id": flow_id,
+                    "message": "stale worker result flags cannot count as fresh repair producer evidence",
+                }
+            )
         if row.get("live_ai_semantic_quality_proven") is not False:
             findings.append(
                 {
@@ -398,6 +454,32 @@ def known_bad_cases() -> list[dict[str, Any]]:
             "name": "semantic_quality_overclaim",
             "rows": [{**base, "live_ai_semantic_quality_proven": True}],
             "expected_codes": ["semantic_quality_overclaim", "missing_required_flow"],
+        },
+        {
+            "name": "no_producer_repair_without_corrected_recovery",
+            "rows": [
+                {
+                    **base,
+                    "injected_error_sequence": ["no_producer_pm_role_reissue"],
+                    "final_state": "awaiting_worker_result_without_new_packet",
+                }
+            ],
+            "expected_codes": ["no_producer_repair_without_corrected_recovery", "missing_required_flow"],
+        },
+        {
+            "name": "stale_worker_flags_used_as_repair_proof",
+            "rows": [
+                {
+                    **base,
+                    "injected_error_sequence": ["stale_worker_result_flags", "no_producer_pm_role_reissue"],
+                    "final_state": "awaiting_worker_result_without_new_packet",
+                }
+            ],
+            "expected_codes": [
+                "no_producer_repair_without_corrected_recovery",
+                "stale_evidence_used_as_repair_proof",
+                "missing_required_flow",
+            ],
         },
     ]
 

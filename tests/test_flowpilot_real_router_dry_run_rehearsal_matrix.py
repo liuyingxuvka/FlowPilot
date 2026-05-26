@@ -66,6 +66,16 @@ class FlowPilotRealRouterDryRunRehearsalMatrixTests(unittest.TestCase):
                 for expected in case["expected_codes"]:
                     self.assertIn(expected, codes)
 
+    def test_producer_proof_repair_row_forbids_stale_evidence_shortcut(self) -> None:
+        rows = {row["rehearsal_id"]: row for row in matrix.build_rows()}
+        row = rows["real_router.repair.producer_proof_recovery"]
+
+        self.assertIn("pm_no_producer_repair_decision", row["fake_ai_artifacts"])
+        self.assertIn("repair_packet_generation", row["fake_ai_artifacts"])
+        self.assertIn("producer_evidence_on_followup_wait", row["required_ack_or_receipt_gates"])
+        self.assertIn("stale_worker_result_flag_as_fresh_producer", row["forbidden_shortcuts"])
+        self.assertIn("test_real_router_repair_rehearsal_rejects_no_producer", row["evidence_test"])
+
     def test_matrix_cli_writes_json_report(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-real-router-matrix-") as tmp_name:
             output_path = Path(tmp_name) / "report.json"

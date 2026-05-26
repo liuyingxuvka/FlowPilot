@@ -554,6 +554,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="An empty delivered repair transaction falls back to the PM repair-decision wait instead of being counted as executable repair work.",
                 required_test_kinds=(NEGATIVE,),
             ),
+            _obligation(
+                "repair_transactions.multiround_fake_ai_no_producer_recovery",
+                obligation_type="scenario",
+                description="Prepared fake AI replay rejects a no-producer PM repair and then accepts a corrected packet reissue with current producer evidence.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -590,6 +596,22 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                     "repair_transactions.executable_plan_required",
                     "repair_transactions.empty_transaction_returns_to_pm_repair",
                 ),
+            ),
+            _evidence(
+                "repair_transactions.e2e.no_producer_then_packet_reissue",
+                test_name="test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
+                path="tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
+                command="python -m unittest tests.test_flowpilot_e2e_synthetic_chaos_replay.FlowPilotEndToEndSyntheticChaosReplayTests.test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
+                test_kind=HAPPY,
+                covers=("repair_transactions.multiround_fake_ai_no_producer_recovery",),
+            ),
+            _evidence(
+                "repair_transactions.real_router.producer_proof_recovery",
+                test_name="test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
+                path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                command="python -m unittest tests.test_flowpilot_real_router_dry_run_rehearsal.FlowPilotRealRouterDryRunRehearsalTests.test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
+                test_kind=NEGATIVE,
+                covers=("repair_transactions.multiround_fake_ai_no_producer_recovery",),
             ),
         ),
     )

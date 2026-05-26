@@ -220,6 +220,79 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
         self.assertEqual(active["pm_repair_decision_status"], "recorded")
         self.assertEqual(active["pm_repair_rerun_target"], "pm_writes_route_draft")
 
+    def test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["material_scan_packets_relayed"] = True
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="e2e_synthetic_chaos",
+            error_message="fake PM material repair tried to reuse stale worker results",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        bad_decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="continue_after_pm_review",
+            rerun_target="worker_scan_results_returned",
+        )
+        bad_decision["repair_transaction"] = {
+            "plan_kind": "role_reissue",
+            "target_role": "worker_a",
+        }
+
+        with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "e2e/pm_repair/no_producer_role_reissue", bad_decision),
+            )
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+        self.assertNotIn("repair_transaction_path", state["active_control_blocker"])
+
+        corrected_decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
+        )
+        corrected_decision["repair_transaction"] = {
+            "plan_kind": "packet_reissue",
+            "replacement_packets": [
+                {
+                    "packet_id": "e2e-material-repair-worker-a",
+                    "replacement_for": "material-scan-001",
+                    "to_role": "worker_a",
+                    "body_text": "E2E fake AI repair packet with a fresh producer.",
+                }
+            ],
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "e2e/pm_repair/corrected_packet_reissue", corrected_decision),
+        )
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("router_direct_material_scan_dispatch_recheck_passed", action["allowed_external_events"])
+        self.assertEqual(action["repair_event_producer_evidence"]["source"], "repair_packet_generation")
+        transaction = read_json(root / read_json(state_path)["active_control_blocker"]["repair_transaction_path"])
+        self.assertEqual(action["repair_event_producer_evidence"]["packet_generation_id"], transaction["packet_generation_id"])
+
     def test_e2e_background_progress_only_then_final_artifacts_controls_proof_gate(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-e2e-chaos-bg-") as tmp_name:
             root = Path(tmp_name)

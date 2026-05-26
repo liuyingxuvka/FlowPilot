@@ -273,6 +273,87 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             self.assertEqual(final["status"], "passed")
             self.assertTrue(final["ok"])
 
+    def test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["material_scan_packets_relayed"] = True
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="real_router_dry_run",
+            error_message="real Router rehearsal blocks stale worker result reuse as repair proof",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        no_producer = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="continue_after_pm_review",
+            rerun_target="worker_scan_results_returned",
+        )
+        no_producer["repair_transaction"] = {
+            "plan_kind": "role_reissue",
+            "target_role": "worker_a",
+        }
+        with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(
+                    root,
+                    "real_router_dry_run/repair/no_producer_role_reissue",
+                    no_producer,
+                ),
+            )
+
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+        self.assertNotIn("repair_transaction_path", state["active_control_blocker"])
+
+        corrected = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="router_direct_material_scan_dispatch_recheck_passed",
+        )
+        corrected["repair_transaction"] = {
+            "plan_kind": "packet_reissue",
+            "replacement_packets": [
+                {
+                    "packet_id": "real-router-material-repair-worker-a",
+                    "replacement_for": "material-scan-001",
+                    "to_role": "worker_a",
+                    "body_text": "Real Router dry-run fake AI repair packet with a fresh producer.",
+                }
+            ],
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(
+                root,
+                "real_router_dry_run/repair/corrected_packet_reissue",
+                corrected,
+            ),
+        )
+
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertIn("router_direct_material_scan_dispatch_recheck_passed", action["allowed_external_events"])
+        self.assertEqual(action["repair_event_producer_evidence"]["source"], "repair_packet_generation")
+        transaction = read_json(root / read_json(state_path)["active_control_blocker"]["repair_transaction_path"])
+        self.assertEqual(action["repair_event_producer_evidence"]["packet_generation_id"], transaction["packet_generation_id"])
+
 
 if __name__ == "__main__":
     import unittest

@@ -233,6 +233,17 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertNotIn("--legacy-full", text)
         self.assertNotIn("--full", text)
 
+    def test_fast_tier_descriptions_name_multiround_repair_rehearsals(self) -> None:
+        descriptions = {
+            command.name: command.description
+            for command in run_test_tier.commands_for_tier("fast")
+        }
+
+        self.assertIn("no-producer PM repair recovery", descriptions["e2e_synthetic_chaos_matrix"])
+        self.assertIn("producer-proof repair waits", descriptions["real_router_dry_run_rehearsal_matrix"])
+        self.assertIn("no-producer repair gates", descriptions["e2e_synthetic_chaos_replay_tests"])
+        self.assertIn("repair producer proof", descriptions["real_router_dry_run_rehearsal_tests"])
+
     def test_router_parent_composes_child_slice_commands(self) -> None:
         command_names = [command.name for command in run_test_tier.commands_for_tier("router")]
         self.assertIn("router_testmesh_parent", command_names)
