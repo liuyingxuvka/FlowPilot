@@ -137,8 +137,9 @@ Choose the executable plan kind deliberately:
   `repair_transaction.replacement_packet_specs_path` with its hash. Router will
   commit one new packet generation across packet files, packet ledger, material
   dispatch index, and reviewer outcome table before any recheck can pass.
-- Use `role_reissue` when the original role must resubmit a bounded report,
-  result, ACK, or decision.
+- Use `role_reissue` only when the PM itself is the concrete producer for a
+  fresh bounded PM report, decision, or ACK. Do not use it to start worker,
+  reviewer, host, or material-scan work.
 - Use `await_existing_event` only when a real current producer already exists
   for the awaited event. Do not use it to mean "start over".
 - Use `route_mutation` only for structural route/node/acceptance changes.
@@ -215,12 +216,13 @@ Use these exact field names and one of the allowed `decision` values:
 ```
 
 If the responsible role must reissue a malformed control-plane output, name
-that target and event in `rerun_target`, and set `repair_transaction.plan_kind`
-to `role_reissue` or `operation_replay` depending on whether Router should wait
-for a fresh role output or replay a recorded operation. If the repair creates
-replacement packets, set `repair_transaction.plan_kind` to `packet_reissue`;
-do not write packet specs as loose side files without committing them through
-the router transaction.
+that target and event in `rerun_target`. Use `await_existing_event` only when
+that role already has a current producer; use `operation_replay` for a recorded
+safe operation, `controller_repair_work_packet` for bounded Controller repair,
+or `packet_reissue` for replacement packets. For material-scan rework,
+`role_reissue` and stale existing-event waits are invalid because they do not
+produce a fresh packet generation. Do not write packet specs as loose side
+files without committing them through the router transaction.
 
 PM may recover by same-gate repair, rollback, supplemental node, repair node,
 route mutation, evidence quarantine, allowed waiver, user stop, or protocol

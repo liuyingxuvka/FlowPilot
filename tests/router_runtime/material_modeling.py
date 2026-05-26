@@ -762,6 +762,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(set(action["allowed_external_events"]), set(active["allowed_resolution_events"]))
+        self.assertEqual(action["repair_event_producer_evidence"]["source"], "repair_packet_generation")
+        self.assertEqual(action["repair_event_producer_evidence"]["packet_generation_id"], transaction["packet_generation_id"])
         router.record_external_event(root, "router_direct_material_scan_dispatch_recheck_passed")
         state = read_json(router.run_state_path(run_root))
         self.assertIsNone(state["active_control_blocker"])
@@ -772,6 +774,53 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(transaction["status"], "complete")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
+
+    def test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        self.deliver_expected_card(root, "pm.material_scan")
+        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["material_scan_packets_relayed"] = True
+        state["flags"]["worker_packets_delivered"] = True
+        state["flags"]["worker_scan_results_returned"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="Controller has no legal next action after PM rejected material scan result self-checks",
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="continue_after_pm_review",
+            rerun_target="worker_scan_results_returned",
+        )
+        decision["repair_transaction"] = {
+            "plan_kind": "role_reissue",
+            "target_role": "worker_a",
+        }
+
+        with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
+            router.record_external_event(
+                root,
+                "pm_records_control_blocker_repair_decision",
+                self.role_decision_envelope(root, "control_blocks/material_role_reissue_without_producer", decision),
+            )
+
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
+        self.assertNotIn("repair_transaction_path", state["active_control_blocker"])
+        original = read_json(self.control_blocker_path(root, blocker))
+        self.assertNotIn("repair_transaction_path", original)
 
     def test_material_repair_active_batch_overrides_stale_global_progress_flags(self) -> None:
         root = self.make_project()

@@ -720,13 +720,18 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertNotIn("controller_delivery_body", action)
         router.apply_action(root, "handle_control_blocker")
 
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="worker_current_node_result_returned",
+        )
+        decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
             self.role_decision_envelope(
                 root,
                 "control_blocks/wrong_role_pm_repair_decision",
-                self.pm_control_blocker_decision_body(blocker["blocker_id"], rerun_target="worker_current_node_result_returned"),
+                decision,
             ),
         )
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
@@ -743,7 +748,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(transaction_path.exists())
         transaction = read_json(transaction_path)
         self.assertEqual(transaction["status"], "committed")
-        self.assertEqual(transaction["plan_kind"], "role_reissue")
+        self.assertEqual(transaction["plan_kind"], "await_existing_event")
+        self.assertEqual(transaction["execution_plan"]["existing_event_producer"]["source"], "satisfied_required_flag")
     def test_pm_repair_decision_rejects_parent_repair_targeting_current_node_packet(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

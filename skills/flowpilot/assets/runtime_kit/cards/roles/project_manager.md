@@ -128,11 +128,15 @@ PM prose.
 not Router execution instructions. Use `operation_replay` for a safe recorded
 operation replay, `controller_repair_work_packet` for bounded Controller repair
 work, `packet_reissue` for replacement packet generation, `role_reissue` for a
-fresh role output, `await_existing_event` only when a current producer already
-exists, `route_mutation` for structural route changes, and `terminal_stop` for
-user stop or protocol dead-end. Avoid legacy `event_replay`; Router may reject
-it when no existing producer can emit the awaited event. Packet reissues must
-be committed by the router as one generation before reviewer recheck.
+fresh PM-produced role output, `await_existing_event` only when a current
+producer already exists, `route_mutation` for structural route changes, and
+`terminal_stop` for user stop or protocol dead-end. Do not use `role_reissue`
+to mean "start over" for worker, reviewer, host, or material-scan work; choose
+`packet_reissue`, `operation_replay`, `controller_repair_work_packet`, or
+`terminal_stop` when new work must be produced. Avoid legacy `event_replay`;
+Router may reject it when no existing producer can emit the awaited event.
+Packet reissues must be committed by the router as one generation before
+reviewer recheck.
 
 Before any route draft, node plan, repair, route mutation, resume continuation,
 final ledger, or closure decision, read the latest current-run route-memory

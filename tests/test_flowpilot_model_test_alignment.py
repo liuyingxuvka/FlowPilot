@@ -64,6 +64,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "terminal/closure/resume",
                 "role/output contracts",
                 "router loop/daemon",
+                "repair transactions",
                 "test tiering/slow-test contracts",
                 "meta/capability parents",
             ],
@@ -471,6 +472,17 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 item = evidence[evidence_id]
                 self.assertTrue(item.path.startswith("tests/router_runtime/route_mutation_"))
                 self.assertIn("tests.router_runtime.route_mutation", item.command)
+
+    def test_repair_transaction_alignment_covers_empty_material_wait(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        repair_entry = next(entry for entry in entries if entry["family"] == "repair transactions")
+        obligations = {item.obligation_id for item in repair_entry["plan"].obligations}
+        evidence = {item.evidence_id: item for item in repair_entry["plan"].test_evidence}
+
+        self.assertIn("repair_transactions.material_rework_requires_fresh_producer", obligations)
+        item = evidence["repair_transactions.negative.material_role_reissue_no_producer"]
+        self.assertEqual(item.test_name, "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer")
+        self.assertEqual(item.path, "tests/router_runtime/material_modeling.py")
 
     def test_main_writes_json_only_when_requested(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-alignment-runner-") as tmp_name:

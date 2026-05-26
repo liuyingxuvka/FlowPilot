@@ -7,6 +7,7 @@
     "terminal/closure/resume",
     "role/output contracts",
     "router loop/daemon",
+    "repair transactions",
     "test tiering/slow-test contracts",
     "meta/capability parents"
   ],
@@ -18,7 +19,7 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [],
     "actionable_summary": [],
-    "covered_surface_count": 771,
+    "covered_surface_count": 777,
     "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 1,
@@ -218,7 +219,7 @@
     "ok": true,
     "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
-    "surface_count": 771,
+    "surface_count": 777,
     "surface_counts": {
       "compatibility_facade": 113,
       "model_check_runner": 96,
@@ -226,7 +227,7 @@
       "owner_module": 248,
       "script_entrypoint": 19,
       "test_tier": 15,
-      "test_tier_command": 262
+      "test_tier_command": 268
     },
     "surfaces": [
       {
@@ -975,7 +976,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 222,
+        "line_count": 237,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1140,7 +1141,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 63,
+        "line_count": 65,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1239,7 +1240,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 315,
+        "line_count": 319,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1252,7 +1253,7 @@
         "surface_id": "asset:flowpilot_router_events_repair_repair_decisions",
         "surface_owner": "flowpilot_router_events_repair_repair_decisions",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -4673,7 +4674,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 314,
+        "line_count": 316,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_repair_transaction_checks",
@@ -12622,7 +12623,7 @@
         "surface_owner": "script:smoke_autopilot"
       },
       {
-        "command_count": 91,
+        "command_count": 94,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12631,7 +12632,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 91,
+        "line_count": 94,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "all",
@@ -12664,7 +12665,7 @@
         "surface_owner": "test-tier"
       },
       {
-        "command_count": 22,
+        "command_count": 25,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -12673,7 +12674,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 22,
+        "line_count": 25,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "fast",
@@ -13701,6 +13702,101 @@
         "background_recommended": false,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py",
+          "--json-out",
+          "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py --json-out simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_matrix",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:real_router_dry_run_rehearsal_matrix",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
+          "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_matrix_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:real_router_dry_run_rehearsal_matrix_tests",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
+          "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:real_router_dry_run_rehearsal_tests",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "unittest",
           "-v",
@@ -13989,6 +14085,8 @@
           "-k",
           "test_material_operation_replay_uses_current_generation_action",
           "-k",
+          "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -13996,7 +14094,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14608,9 +14706,11 @@
           "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
           "-k",
           "test_pm_repair_transaction_commits_material_reissue_generation",
+          "-k",
+          "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation -k test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -17051,6 +17151,101 @@
         "background_recommended": false,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py",
+          "--json-out",
+          "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py --json-out simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_matrix",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:real_router_dry_run_rehearsal_matrix",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
+          "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_matrix_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:real_router_dry_run_rehearsal_matrix_tests",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
+          "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "real_router_dry_run_rehearsal_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:real_router_dry_run_rehearsal_tests",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
           "--json-out",
           "simulations/flowpilot_synthetic_agent_coverage_matrix_results.json"
@@ -18653,9 +18848,11 @@
           "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
           "-k",
           "test_pm_repair_transaction_commits_material_reissue_generation",
+          "-k",
+          "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation -k test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20236,6 +20433,8 @@
           "-k",
           "test_material_operation_replay_uses_current_generation_action",
           "-k",
+          "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -20243,7 +20442,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20407,9 +20606,11 @@
           "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
           "-k",
           "test_pm_repair_transaction_commits_material_reissue_generation",
+          "-k",
+          "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation -k test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -21388,6 +21589,8 @@
           "-k",
           "test_material_operation_replay_uses_current_generation_action",
           "-k",
+          "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+          "-k",
           "test_operation_replay_repair_transaction_queues_replay_action",
           "-k",
           "test_repair_transaction_protocol_blocker_registers_followup_blocker",
@@ -21395,7 +21598,7 @@
           "test_repair_transaction_recheck_blocker_registers_followup_blocker",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_material_operation_replay_uses_current_generation_action -k test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision -k test_operation_replay_repair_transaction_queues_replay_action -k test_repair_transaction_protocol_blocker_registers_followup_blocker -k test_repair_transaction_recheck_blocker_registers_followup_blocker tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -22007,9 +22210,11 @@
           "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
           "-k",
           "test_pm_repair_transaction_commits_material_reissue_generation",
+          "-k",
+          "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
           "tests.router_runtime.material_modeling"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation -k test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer tests.router_runtime.material_modeling",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25190,6 +25395,46 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
+            "description": "Prepared fake AI work packages exercise the real Router CLI/runtime, card ACK, packet active-holder, role-output, resume, proof, and terminal lifecycle boundaries before coverage is claimed.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "router_loop.real_router_dry_run_rehearsal",
+            "obligation_type": "scenario",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "edge_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "The public Router CLI can start, inspect, advance, apply, and record prepared role-output events without bypassing runtime payload requirements.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "router_loop.real_router_cli_boundary",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "Bounded control-plane canaries cover locks, corrupt runtime persistence, daemon liveness, duplicate resume wakes, peer-run authority, terminal fences, and background proof artifacts.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -25343,6 +25588,78 @@
           },
           {
             "assertion_scope": "external_contract",
+            "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.real_router_dry_run_rehearsal"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.real_router.happy.full_rehearsal",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.real_router_cli_boundary"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.real_router.happy.cli_boundary",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_router_cli_boundary_runs_fake_role_output_through_public_commands"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.real_router_dry_run_rehearsal"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.real_router.edge.resume_and_proof",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_recovery_rehearsal_resume_idempotency_and_background_proof_gate"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.real_router_dry_run_rehearsal"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.real_router.negative.known_bad_matrix",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_known_bad_rows_are_rejected"
+          },
+          {
+            "assertion_scope": "external_contract",
             "command": "python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25475,6 +25792,188 @@
         "model_id": "router_loop_daemon",
         "ok": true,
         "summary": "OK: model=router_loop_daemon decision=model_test_alignment_green findings=0"
+      }
+    },
+    {
+      "coverage_boundary": "Repair-transaction alignment covers executable producer/action/handler/stop evidence and focused material-dispatch stale-wait regressions. It does not prove semantic quality of replacement packet contents.",
+      "decision": "model_test_alignment_green",
+      "family": "repair transactions",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_repair_transaction_checks.py"
+      ],
+      "model_id": "repair_transactions",
+      "ok": true,
+      "plan": {
+        "allow_orphan_code_contracts": false,
+        "allow_orphan_tests": false,
+        "boundary_contracts": [],
+        "boundary_observations": [],
+        "code_contracts": [],
+        "model_id": "repair_transactions",
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "A committed PM repair transaction has a concrete queued action, existing producer, Router handler, fresh packet generation, or terminal stop.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "repair_transactions.executable_plan_required",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Material-dispatch repair cannot commit a role reissue or existing-event wait that only observes stale worker result flags instead of producing fresh repair work.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "repair_transactions.material_rework_requires_fresh_producer",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "A repair transaction cannot replay a legacy event unless the current run has a matching existing producer for that event.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "repair_transactions.legacy_replay_requires_existing_producer",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "An empty delivered repair transaction falls back to the PM repair-decision wait instead of being counted as executable repair work.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "obligation_id": "repair_transactions.empty_transaction_returns_to_pm_repair",
+            "obligation_type": "contract",
+            "required": true,
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          }
+        ],
+        "require_code_contracts": false,
+        "test_evidence": [
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "repair_transactions.executable_plan_required"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.happy.material_packet_reissue",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/material_modeling.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_pm_repair_transaction_commits_material_reissue_generation"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "repair_transactions.material_rework_requires_fresh_producer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.material_role_reissue_no_producer",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/material_modeling.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "repair_transactions.legacy_replay_requires_existing_producer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.legacy_replay_no_producer",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/control_blockers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "repair_transactions.executable_plan_required",
+              "repair_transactions.empty_transaction_returns_to_pm_repair"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.empty_followup_wait_fallback",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/router_runtime/control_blockers.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision"
+          }
+        ]
+      },
+      "report": {
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "repair_transactions",
+        "ok": true,
+        "summary": "OK: model=repair_transactions decision=model_test_alignment_green findings=0"
       }
     },
     {
@@ -25844,7 +26343,7 @@
       }
     }
   ],
-  "plan_count": 8,
+  "plan_count": 9,
   "release_convergence_ok": true,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",

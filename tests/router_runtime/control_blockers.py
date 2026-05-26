@@ -72,17 +72,19 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_completed",
+            rerun_target="reviewer_passes_child_skill_gate_manifest",
+        )
+        decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
             self.role_decision_envelope(
                 root,
                 "control_blocks/pm_repair_to_reviewer_gate_followup",
-                self.pm_control_blocker_decision_body(
-                    blocker["blocker_id"],
-                    decision="repair_completed",
-                    rerun_target="reviewer_passes_child_skill_gate_manifest",
-                ),
+                decision,
             ),
         )
 
@@ -269,16 +271,18 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(blocker["handling_lane"], "fatal_protocol_violation")
 
         self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            rerun_target="host_records_heartbeat_binding",
+        )
+        decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
             self.role_decision_envelope(
                 root,
                 "control_blocks/fatal_pm_repair_decision",
-                self.pm_control_blocker_decision_body(
-                    blocker["blocker_id"],
-                    rerun_target="host_records_heartbeat_binding",
-                ),
+                decision,
             ),
         )
 
@@ -531,6 +535,68 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             action["event_contract_issue"]["fallback"],
             "pm_must_resubmit_control_blocker_repair_decision",
         )
+
+    def test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        state["flags"]["reviewer_material_sufficiency_card_delivered"] = True
+        router.save_run_state(run_root, state)
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="legacy empty repair transaction has no event producer",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/empty-transaction.json"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        transaction_path = run_root / "control_blocks" / "repair_transactions" / "repair-tx-empty-role-reissue.json"
+        transaction_path.parent.mkdir(parents=True, exist_ok=True)
+        router.write_json(
+            transaction_path,
+            {
+                "schema_version": router.REPAIR_TRANSACTION_SCHEMA,
+                "transaction_id": "repair-tx-empty-role-reissue",
+                "run_id": run_root.name,
+                "blocker_id": blocker["blocker_id"],
+                "status": "committed",
+                "plan_kind": "role_reissue",
+                "execution_plan": {
+                    "mode": "role_reissue",
+                    "target_role": "human_like_reviewer",
+                    "allowed_external_events": ["reviewer_reports_material_sufficient"],
+                },
+            },
+        )
+        artifact_path = self.control_blocker_path(root, blocker)
+        artifact = read_json(artifact_path)
+        artifact["pm_repair_decision_status"] = "recorded"
+        artifact["pm_repair_rerun_target"] = "reviewer_reports_material_sufficient"
+        artifact["allowed_resolution_events"] = ["reviewer_reports_material_sufficient"]
+        artifact["repair_transaction_id"] = "repair-tx-empty-role-reissue"
+        artifact["repair_transaction_path"] = self.rel(root, transaction_path)
+        router.write_json(artifact_path, artifact)
+        state = read_json(state_path)
+        state["active_control_blocker"].update(
+            {
+                "pm_repair_decision_status": "recorded",
+                "pm_repair_rerun_target": "reviewer_reports_material_sufficient",
+                "allowed_resolution_events": ["reviewer_reports_material_sufficient"],
+                "repair_transaction_id": "repair-tx-empty-role-reissue",
+                "repair_transaction_path": self.rel(root, transaction_path),
+            }
+        )
+        router.save_run_state(run_root, state)
+
+        action = self.next_after_display_sync(root)
+
+        self.assertEqual(action["action_type"], "await_role_decision")
+        self.assertEqual(action["to_role"], "project_manager")
+        self.assertEqual(action["allowed_external_events"], ["pm_records_control_blocker_repair_decision"])
+        self.assertEqual(action["event_contract_issue"]["reason"], "repair_transaction_missing_producer_evidence")
     def test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -716,13 +782,18 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         self.assertEqual(first["handling_lane"], "pm_repair_decision_required")
         self.assertTrue(self.handle_pending_control_blocker(root))
+        first_decision = self.pm_control_blocker_decision_body(
+            first["blocker_id"],
+            rerun_target="reviewer_reports_material_sufficient",
+        )
+        first_decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
             self.role_decision_envelope(
                 root,
                 "control_blocks/first_pm_repair_decision",
-                self.pm_control_blocker_decision_body(first["blocker_id"], rerun_target="reviewer_reports_material_sufficient"),
+                first_decision,
             ),
         )
 
@@ -740,13 +811,18 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         self.assertEqual(second["handling_lane"], "pm_repair_decision_required")
         self.assertTrue(self.handle_pending_control_blocker(root))
+        second_decision = self.pm_control_blocker_decision_body(
+            second["blocker_id"],
+            rerun_target="reviewer_reports_material_sufficient",
+        )
+        second_decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         result = router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
             self.role_decision_envelope(
                 root,
                 "control_blocks/second_pm_repair_decision",
-                self.pm_control_blocker_decision_body(second["blocker_id"], rerun_target="reviewer_reports_material_sufficient"),
+                second_decision,
             ),
         )
 

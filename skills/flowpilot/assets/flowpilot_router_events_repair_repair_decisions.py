@@ -90,6 +90,16 @@ def _existing_event_producer_evidence(router: ModuleType, run_root: Path, run_st
         return {'source': 'satisfied_required_flag', 'event': event, 'requires_flag': required_flag, 'producer_role': _event_wait_role(event, meta)}
     return None
 
+def _pm_owned_followup_producer_evidence(router: ModuleType, *, plan_kind: str, rerun_target: str, target_role: str, repair_origin: str) -> dict[str, Any]:
+    _bind_router(router)
+    if repair_origin == 'material_dispatch':
+        raise RouterError(f'material dispatch repair transaction cannot use {plan_kind}; use packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
+    producer_roles = router._event_producer_roles([rerun_target])
+    target_roles = router._role_set(target_role)
+    if producer_roles and producer_roles.issubset({'project_manager'}) and target_roles.issubset({'project_manager'}):
+        return {'source': 'pm_repair_decision_producer', 'event': rerun_target, 'producer_roles': sorted(producer_roles), 'target_role': target_role}
+    raise RouterError(f'{plan_kind} repair transaction requires a concrete producer for rerun_target; use await_existing_event with an existing producer, packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
+
 def _list_field(router: ModuleType, value: Any, *, field: str, required: bool=True) -> list[str]:
     _bind_router(router)
     if value in (None, '') and (not required):
@@ -107,6 +117,8 @@ def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, r
     if packet_specs:
         raise RouterError('repair transaction with replacement packets requires plan_kind=packet_reissue')
     if requested_plan_kind == 'await_existing_event':
+        if repair_origin == 'material_dispatch':
+            raise RouterError('material dispatch repair transaction cannot use await_existing_event; use packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
         evidence = router._existing_event_producer_evidence(run_root, run_state, rerun_target)
         if evidence is None:
             if legacy_plan_kind == 'event_replay':
@@ -116,7 +128,8 @@ def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, r
     if requested_plan_kind in {'role_reissue', 'route_mutation'}:
         target_role = str(request.get('target_role') or router._control_blocker_followup_target_role([rerun_target], 'project_manager')).strip()
         router._validate_wait_event_producer_binding([rerun_target], to_role=target_role, context=f'{requested_plan_kind} repair transaction')
-        return {'mode': requested_plan_kind, 'validated': True, 'queued_action': True, 'queued_action_type': 'await_role_decision', 'target_role': target_role, 'allowed_external_events': [rerun_target]}
+        producer_evidence = router._pm_owned_followup_producer_evidence(plan_kind=requested_plan_kind, rerun_target=rerun_target, target_role=target_role, repair_origin=repair_origin)
+        return {'mode': requested_plan_kind, 'validated': True, 'queued_action': False, 'existing_event_producer': producer_evidence, 'target_role': target_role, 'allowed_external_events': [rerun_target]}
     if requested_plan_kind == 'operation_replay':
         operation_ref = request.get('operation_ref')
         if not isinstance(operation_ref, dict):
@@ -307,6 +320,7 @@ __all__ = (
     '_event_already_recorded',
     '_controller_wait_entries_for_event',
     '_existing_event_producer_evidence',
+    '_pm_owned_followup_producer_evidence',
     '_list_field',
     '_repair_transaction_execution_plan',
     '_write_control_blocker_repair_decision',

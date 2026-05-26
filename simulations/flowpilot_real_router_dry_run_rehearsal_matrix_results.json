@@ -1,0 +1,492 @@
+{
+  "coverage_boundary": "Rows prove prepared fake AI packages can exercise selected real Router/runtime control-plane paths, including ACK/receipt, recovery, proof, and terminal gates. They do not prove live AI semantic quality or every possible project-specific failure.",
+  "findings": [],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "missing_required_field",
+        "missing_ack_or_receipt_gate",
+        "missing_required_rehearsal"
+      ],
+      "name": "missing_ack_or_receipt",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "fake_ai_artifacts": [
+            "fake_report"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invented_external_event_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "invented_external_event_artifact",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "fake_ai_artifacts": [
+            "invented_external_event"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_direct_state_mutation_ban",
+        "missing_required_rehearsal"
+      ],
+      "name": "direct_state_mutation_not_forbidden",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "fake_ai_artifacts": [
+            "fake_report"
+          ],
+          "forbidden_shortcuts": [
+            "manual_flag_set"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "progress_only_final_proof_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "progress_only_without_final_artifacts",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "fake_ai_artifacts": [
+            "progress_only_background_artifact"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_terminal_standard_state",
+        "missing_required_rehearsal"
+      ],
+      "name": "non_terminal_final_state",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "ready_for_pm_review",
+          "fake_ai_artifacts": [
+            "fake_report"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": false,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "real_router.full.startup_to_terminal_fake_ai_packages",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "semantic_quality_overclaim",
+        "missing_required_rehearsal"
+      ],
+      "name": "semantic_quality_overclaim",
+      "rows": [
+        {
+          "allowed_event_boundary": "known Router event only",
+          "confidence_boundary": "known bad fixture",
+          "evidence_current": true,
+          "evidence_id": "known.bad",
+          "evidence_role": "primary_real_router_rehearsal",
+          "evidence_status": "passed",
+          "evidence_test": "KnownBad.test_case",
+          "expected_standard_state": "blocked_until_repair",
+          "fake_ai_artifacts": [
+            "fake_report"
+          ],
+          "forbidden_shortcuts": [
+            "direct_state_mutation"
+          ],
+          "live_ai_semantic_quality_proven": true,
+          "phase_sequence": [
+            "startup"
+          ],
+          "rehearsal_id": "known.bad",
+          "required_ack_or_receipt_gates": [
+            "card_ack"
+          ],
+          "router_entrypoints": [
+            "router_cli.next"
+          ]
+        }
+      ]
+    }
+  ],
+  "ok": true,
+  "required_rehearsal_count": 4,
+  "result_type": "flowpilot_real_router_dry_run_rehearsal_matrix",
+  "row_count": 4,
+  "rows": [
+    {
+      "allowed_event_boundary": "only Router-declared external events for the current wait may advance flags",
+      "confidence_boundary": "proves prepared fake AI packages can exercise the real control plane to terminal state",
+      "evidence_current": true,
+      "evidence_id": "real_router.full.startup_to_terminal_fake_ai_packages",
+      "evidence_role": "primary_real_router_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state",
+      "expected_standard_state": "closed_run_with_terminal_lifecycle_record_and_no_active_control_blocker",
+      "fake_ai_artifacts": [
+        "startup_fact_report",
+        "pm_startup_activation_decision",
+        "material_scan_packets",
+        "product_behavior_model",
+        "current_node_packet_body",
+        "worker_result_envelope",
+        "pm_package_result_disposition",
+        "reviewer_result_report",
+        "evidence_quality_review",
+        "terminal_backward_replay_report",
+        "pm_terminal_closure_decision"
+      ],
+      "forbidden_shortcuts": [
+        "direct_state_mutation",
+        "direct_run_state_mutation",
+        "legacy_record_event_card_ack",
+        "invented_external_event",
+        "controller_reads_packet_body",
+        "terminal_closure_without_lifecycle_record"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "startup",
+        "material_scan",
+        "product_architecture",
+        "route_activation",
+        "current_node_packet_dispatch",
+        "active_holder_result",
+        "pm_absorb_and_reviewer_review",
+        "evidence_quality",
+        "final_ledger",
+        "terminal_replay",
+        "pm_closure",
+        "lifecycle_terminal"
+      ],
+      "rehearsal_id": "real_router.full.startup_to_terminal_fake_ai_packages",
+      "required_ack_or_receipt_gates": [
+        "system_card_read_receipts",
+        "system_card_ack_return_events",
+        "packet_active_holder_ack",
+        "packet_body_read_receipt",
+        "reviewer_runtime_result_body_hash_match",
+        "role_output_envelope_hashes"
+      ],
+      "router_entrypoints": [
+        "router_runtime.next_action",
+        "router_runtime.apply_action",
+        "router_runtime.record_external_event",
+        "card_runtime.open_card",
+        "card_runtime.submit_card_ack",
+        "packet_runtime.create_packet",
+        "packet_runtime.active_holder_ack",
+        "packet_runtime.active_holder_submit_result",
+        "role_output_runtime.envelope",
+        "router_lifecycle_terminal"
+      ],
+      "supporting_evidence": [
+        "e2e.happy.startup_to_terminal",
+        "router-packets child tier",
+        "router-terminal child tier"
+      ]
+    },
+    {
+      "allowed_event_boundary": "CLI record-event must submit Router-recognized events with controller-visible envelopes",
+      "confidence_boundary": "proves public Router command path can participate in prepared fake output rehearsal",
+      "evidence_current": true,
+      "evidence_id": "real_router.cli.public_boundary_smoke",
+      "evidence_role": "primary_real_router_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_router_cli_boundary_runs_fake_role_output_through_public_commands",
+      "expected_standard_state": "legal_wait_after_cli_recorded_startup_activation_event",
+      "fake_ai_artifacts": [
+        "reviewer_startup_fact_report_envelope",
+        "pm_startup_activation_decision_envelope"
+      ],
+      "forbidden_shortcuts": [
+        "direct_state_mutation",
+        "manual_pending_action_clear",
+        "manual_flag_set",
+        "non_json_cli_result",
+        "invented_external_event"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "cli_start",
+        "cli_state",
+        "cli_next",
+        "cli_apply",
+        "cli_role_event",
+        "cli_run_until_wait"
+      ],
+      "rehearsal_id": "real_router.cli.public_boundary_smoke",
+      "required_ack_or_receipt_gates": [
+        "startup_fact_card_ack",
+        "role_output_envelope_hashes",
+        "router_cli_json_results"
+      ],
+      "router_entrypoints": [
+        "router_cli.start",
+        "router_cli.state",
+        "router_cli.next",
+        "router_cli.apply",
+        "router_cli.record_event",
+        "router_cli.run_until_wait",
+        "card_runtime.open_card",
+        "card_runtime.submit_card_ack"
+      ],
+      "supporting_evidence": [
+        "router bootstrap CLI tests"
+      ]
+    },
+    {
+      "allowed_event_boundary": "resume events may trigger load_resume_state but progress-only proof cannot close work",
+      "confidence_boundary": "proves selected compounded recovery/proof gates return to legal control-plane state",
+      "evidence_current": true,
+      "evidence_id": "real_router.recovery.resume_and_background_proof_gate",
+      "evidence_role": "primary_real_router_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_recovery_rehearsal_resume_idempotency_and_background_proof_gate",
+      "expected_standard_state": "resume_state_loaded_and_background_proof_classifies_passed_only_after_final_artifacts",
+      "fake_ai_artifacts": [
+        "heartbeat_or_manual_resume_event",
+        "background_progress_log",
+        "background_exit_artifact",
+        "background_meta_artifact"
+      ],
+      "forbidden_shortcuts": [
+        "direct_state_mutation",
+        "daemon_status_live_without_owner_check",
+        "duplicate_resume_double_advance",
+        "progress_only_background_completion"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "startup_complete",
+        "stale_daemon_owner",
+        "manual_resume",
+        "duplicate_resume",
+        "resume_state_load",
+        "progress_only_background_artifact",
+        "final_background_artifacts"
+      ],
+      "rehearsal_id": "real_router.recovery.resume_and_background_proof_gate",
+      "required_ack_or_receipt_gates": [
+        "resume_reentry_evidence",
+        "controller_action_ledger_loaded",
+        "background_exit_artifact",
+        "background_meta_artifact"
+      ],
+      "router_entrypoints": [
+        "router_runtime.record_external_event",
+        "router_runtime.next_action",
+        "router_runtime.apply_action",
+        "background_artifact_classifier"
+      ],
+      "supporting_evidence": [
+        "control_plane_canary.dead_daemon_resume",
+        "control_plane_canary.progress_only_background_artifact"
+      ]
+    },
+    {
+      "allowed_event_boundary": "known-bad rows are rejected before they can be counted as rehearsal proof",
+      "confidence_boundary": "prevents rehearsal coverage from counting shortcut or overclaimed rows",
+      "evidence_current": true,
+      "evidence_id": "real_router.authority.rejects_shortcut_overclaims",
+      "evidence_role": "primary_real_router_rehearsal",
+      "evidence_status": "passed",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalMatrixTests.test_known_bad_rows_are_rejected",
+      "expected_standard_state": "known_bad_rejected_without_pass_evidence",
+      "fake_ai_artifacts": [
+        "missing_ack_row",
+        "invented_event_row",
+        "direct_state_mutation_row",
+        "progress_only_proof_row",
+        "semantic_overclaim_row"
+      ],
+      "forbidden_shortcuts": [
+        "missing_ack_or_receipt_gate",
+        "invented_external_event",
+        "direct_state_mutation",
+        "progress_only_background_completion",
+        "semantic_quality_overclaim"
+      ],
+      "live_ai_semantic_quality_proven": false,
+      "phase_sequence": [
+        "matrix_validation",
+        "known_bad_rows",
+        "authority_rejection"
+      ],
+      "rehearsal_id": "real_router.authority.rejects_shortcut_overclaims",
+      "required_ack_or_receipt_gates": [
+        "matrix_required_ack_or_receipt_gates",
+        "matrix_allowed_event_boundary",
+        "matrix_forbidden_shortcuts"
+      ],
+      "router_entrypoints": [
+        "matrix_validator",
+        "router_event_catalog",
+        "background_artifact_classifier"
+      ],
+      "supporting_evidence": [
+        "hard_gate_red_team_matrix"
+      ]
+    }
+  ],
+  "rows_by_entrypoint": {
+    "background_artifact_classifier": 2,
+    "card_runtime.open_card": 2,
+    "card_runtime.submit_card_ack": 2,
+    "matrix_validator": 1,
+    "packet_runtime.active_holder_ack": 1,
+    "packet_runtime.active_holder_submit_result": 1,
+    "packet_runtime.create_packet": 1,
+    "role_output_runtime.envelope": 1,
+    "router_cli.apply": 1,
+    "router_cli.next": 1,
+    "router_cli.record_event": 1,
+    "router_cli.run_until_wait": 1,
+    "router_cli.start": 1,
+    "router_cli.state": 1,
+    "router_event_catalog": 1,
+    "router_lifecycle_terminal": 1,
+    "router_runtime.apply_action": 2,
+    "router_runtime.next_action": 2,
+    "router_runtime.record_external_event": 2
+  },
+  "rows_by_phase": {
+    "active_holder_result": 1,
+    "authority_rejection": 1,
+    "cli_apply": 1,
+    "cli_next": 1,
+    "cli_role_event": 1,
+    "cli_run_until_wait": 1,
+    "cli_start": 1,
+    "cli_state": 1,
+    "current_node_packet_dispatch": 1,
+    "duplicate_resume": 1,
+    "evidence_quality": 1,
+    "final_background_artifacts": 1,
+    "final_ledger": 1,
+    "known_bad_rows": 1,
+    "lifecycle_terminal": 1,
+    "manual_resume": 1,
+    "material_scan": 1,
+    "matrix_validation": 1,
+    "pm_absorb_and_reviewer_review": 1,
+    "pm_closure": 1,
+    "product_architecture": 1,
+    "progress_only_background_artifact": 1,
+    "resume_state_load": 1,
+    "route_activation": 1,
+    "stale_daemon_owner": 1,
+    "startup": 1,
+    "startup_complete": 1,
+    "terminal_replay": 1
+  }
+}

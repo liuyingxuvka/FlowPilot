@@ -61,6 +61,7 @@ HAZARD_EXPECTED_FAILURES = {
     "legacy_event_replay_without_producer": "legacy event_replay transaction lacked an existing producer compatibility alias",
     "operation_replay_without_safe_recorded_operation": "operation_replay repair transaction did not queue a safe recorded operation replay",
     "controller_repair_packet_without_boundaries": "controller_repair_work_packet transaction lacked bounded work packet and queued action",
+    "role_reissue_without_event_producer": "role_reissue repair transaction lacked a concrete event producer",
     "transaction_commits_packet_files_without_ledger": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
     "transaction_commits_ledger_without_dispatch_index": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
     "transaction_commits_without_router_outcome_table": "repair transaction committed without packet files, ledger, dispatch index, router table, or atomic publication",
@@ -107,6 +108,7 @@ def _state_id(state: model.State) -> str:
         f"tx={state.repair_transaction_opened},{state.transaction_id_recorded},{state.transaction_plan_kind}|"
         f"exec={state.repair_plan_validation_passed},{state.replay_operation_recorded},"
         f"{state.replay_operation_safe},{state.concrete_repair_action_queued},"
+        f"role_producer={state.role_reissue_event_producer_bound},"
         f"{state.existing_event_producer_found},{state.controller_repair_packet_bounded},"
         f"{state.router_internal_handler_found},{state.terminal_stop_recorded},"
         f"legacy={state.legacy_event_replay_alias}|"

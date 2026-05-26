@@ -174,7 +174,22 @@ def _next_control_blocker_action(router: ModuleType, project_root: Path, run_sta
     executable_action = router._next_repair_transaction_executable_action(project_root, run_root, run_state, record)
     if executable_action is not None:
         return executable_action
-    return make_action(action_type='await_role_decision', actor='controller', label='controller_waits_for_control_blocker_resolution', summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.", allowed_reads=[artifact_rel, project_relative(project_root, router.run_state_path(run_root))], allowed_writes=[project_relative(project_root, router.run_state_path(run_root))], to_role=target_role, extra={'allowed_external_events': allowed_resolution_events, 'blocker_artifact_path': artifact_rel, 'policy_row_id': record.get('policy_row_id'), 'blocker_family': record.get('blocker_family'), 'first_handler': record.get('first_handler'), 'direct_retry_budget': record.get('direct_retry_budget'), 'direct_retry_attempts_used': record.get('direct_retry_attempts_used'), 'direct_retry_budget_exhausted': record.get('direct_retry_budget_exhausted'), 'pm_recovery_options': record.get('pm_recovery_options') or [], 'return_policy': record.get('return_policy') or {}, 'hard_stop_conditions': record.get('hard_stop_conditions') or [], 'target_role': target_role, 'handling_lane': lane, 'repair_transaction_id': record.get('repair_transaction_id'), 'repair_outcome_table': record.get('repair_outcome_table'), 'event_contract_issue': event_contract_issue})
+    wait_extra = {'allowed_external_events': allowed_resolution_events, 'blocker_artifact_path': artifact_rel, 'policy_row_id': record.get('policy_row_id'), 'blocker_family': record.get('blocker_family'), 'first_handler': record.get('first_handler'), 'direct_retry_budget': record.get('direct_retry_budget'), 'direct_retry_attempts_used': record.get('direct_retry_attempts_used'), 'direct_retry_budget_exhausted': record.get('direct_retry_budget_exhausted'), 'pm_recovery_options': record.get('pm_recovery_options') or [], 'return_policy': record.get('return_policy') or {}, 'hard_stop_conditions': record.get('hard_stop_conditions') or [], 'target_role': target_role, 'handling_lane': lane, 'repair_transaction_id': record.get('repair_transaction_id'), 'repair_outcome_table': record.get('repair_outcome_table'), 'event_contract_issue': event_contract_issue}
+    transaction = router._repair_transaction_for_control_blocker(project_root, run_root, record)
+    wait_target_role = target_role
+    if isinstance(transaction, dict):
+        execution_plan = transaction.get('execution_plan')
+        if isinstance(execution_plan, dict) and isinstance(execution_plan.get('existing_event_producer'), dict):
+            wait_extra['repair_event_producer_evidence'] = execution_plan.get('existing_event_producer')
+        elif isinstance(transaction.get('generation_commit'), dict):
+            wait_extra['repair_event_producer_evidence'] = {'source': 'repair_packet_generation', 'packet_generation_id': transaction.get('packet_generation_id'), 'packet_count': transaction.get('generation_commit', {}).get('packet_count'), 'transaction_id': transaction.get('transaction_id')}
+        mode = str((execution_plan or {}).get('mode') or transaction.get('plan_kind') or '')
+        if transaction.get('status') == 'committed' and mode in {'await_existing_event', 'role_reissue', 'route_mutation', 'packet_reissue'} and 'repair_event_producer_evidence' not in wait_extra:
+            wait_target_role = 'project_manager'
+            wait_extra['allowed_external_events'] = [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
+            wait_extra['target_role'] = wait_target_role
+            wait_extra['event_contract_issue'] = {'reason': 'repair_transaction_missing_producer_evidence', 'repair_transaction_id': transaction.get('transaction_id'), 'plan_kind': mode, 'fallback': 'pm_must_resubmit_control_blocker_repair_decision'}
+    return make_action(action_type='await_role_decision', actor='controller', label='controller_waits_for_control_blocker_resolution', summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.", allowed_reads=[artifact_rel, project_relative(project_root, router.run_state_path(run_root))], allowed_writes=[project_relative(project_root, router.run_state_path(run_root))], to_role=wait_target_role, extra=wait_extra)
 
 def _mark_control_blocker_delivered(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], pending: dict[str, Any]) -> None:
     _bind_router(router)

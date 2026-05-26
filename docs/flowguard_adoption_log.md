@@ -18455,3 +18455,79 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
   evidence is accepted.
 - Convert the background wrapper normalization into a reusable helper if future
   tasks still launch Meta/Capability outside `scripts/run_test_tier.py`.
+
+## 2026-05-26 - Real Router Dry-Run Rehearsal
+
+- Trigger: user asked whether prepared fake AI work packages had really been
+  run through the real Router, including CLI/runtime entrypoints, control-plane
+  waits, recovery, background proof, and terminal closure.
+- Status: implemented, validated locally, installed skill synced, and prepared
+  for local commit.
+- Skill decision: use OpenSpec plus FlowGuard ExistingModelPreflight,
+  DevelopmentProcessFlow, TestMesh, and Model-Test Alignment.
+- OpenSpec change: `add-real-router-dry-run-rehearsal`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py` plus a
+  generated result JSON for four bounded real-Router rehearsal rows.
+- Added runtime rehearsal tests that drive real Router APIs and public CLI
+  commands with prepared fake AI artifacts instead of direct state mutation.
+- Registered the new rehearsal matrix and tests in fast tier and FlowGuard
+  Model-Test Alignment.
+- Integrated peer repair-transaction changes uncovered by fast-tier evidence:
+  added missing router-terminal k-shard ownership, split duplicate negative
+  model-test evidence ownership, updated alignment family expectations, and kept
+  the repair-decision owner below the current structure diagnostic threshold.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py --json-out simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py tests/test_flowpilot_real_router_dry_run_rehearsal.py -q` -> `7 passed, 20 subtests passed`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`.
+- OK: focused tier/model reruns after peer integration:
+  `tests/test_flowpilot_test_tiers.py` -> `23 passed, 281 subtests passed`;
+  `tests/test_flowpilot_model_test_alignment.py` -> `15 passed, 288 subtests passed`.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `openspec validate add-real-router-dry-run-rehearsal --strict`.
+- OK in background contract: fast tier under
+  `tmp/flowguard_background/fast_real_router_dry_run_final_20260526/`, exit code
+  `0`, status passed, completed `25/25`, proof reuse false.
+- OK in background contract: `python simulations/run_meta_checks.py`;
+  `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed,
+  proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`;
+  `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status
+  passed, proof reuse false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`; installed
+  skill overwritten from repository source and source_fresh true.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- The new evidence is stronger than earlier synthetic-only packs because it
+  drives actual Router runtime and CLI boundaries with fake AI artifacts.
+- The confidence boundary is explicit: this proves prepared fake packages can
+  exercise the current control plane; it does not prove live AI semantic quality
+  for every future project.
+- The first fast-tier background run failed correctly after peer changes added a
+  repair-transaction model family and new runtime tests without complete shard
+  and evidence ownership registration. The failures were fixed with narrow
+  registration/model-evidence repairs.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication
+  was performed.
+- No absolute proof is claimed for every possible future live-AI behavior,
+  project-specific semantic mistake, OS failure, or hardware failure.
+
+### Next Actions
+
+- Complete predictive-KB postflight and local git commit.
+- Archive `add-real-router-dry-run-rehearsal` after review if the implementation
+  evidence is accepted.

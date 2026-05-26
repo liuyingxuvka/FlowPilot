@@ -139,6 +139,7 @@ class State:
     replay_operation_recorded: bool = False
     replay_operation_safe: bool = False
     concrete_repair_action_queued: bool = False
+    role_reissue_event_producer_bound: bool = False
     existing_event_producer_found: bool = False
     controller_repair_packet_bounded: bool = False
     router_internal_handler_found: bool = False
@@ -763,6 +764,8 @@ def repair_transaction_plan_is_executable(state: State, trace) -> InvariantResul
         )
     if state.transaction_plan_kind == "role_reissue" and not state.concrete_repair_action_queued:
         return InvariantResult.fail("role_reissue repair transaction did not queue a role reissue action")
+    if state.transaction_plan_kind == "role_reissue" and not state.role_reissue_event_producer_bound:
+        return InvariantResult.fail("role_reissue repair transaction lacked a concrete event producer")
     if state.transaction_plan_kind == "router_internal_reconcile" and not state.router_internal_handler_found:
         return InvariantResult.fail("router_internal_reconcile transaction lacked a Router handler")
     if state.transaction_plan_kind == "route_mutation" and not (
@@ -1229,6 +1232,11 @@ def hazard_states() -> dict[str, State]:
             transaction_plan_kind="controller_repair_work_packet",
             controller_repair_packet_bounded=False,
             concrete_repair_action_queued=True,
+        ),
+        "role_reissue_without_event_producer": _safe_base(
+            transaction_plan_kind="role_reissue",
+            concrete_repair_action_queued=True,
+            role_reissue_event_producer_bound=False,
         ),
         "transaction_commits_packet_files_without_ledger": _safe_base(
             transaction_committed_atomically=True,

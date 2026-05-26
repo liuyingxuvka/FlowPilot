@@ -335,6 +335,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, FAILURE, EDGE),
             ),
             _obligation(
+                "router_loop.real_router_dry_run_rehearsal",
+                obligation_type="scenario",
+                description="Prepared fake AI work packages exercise the real Router CLI/runtime, card ACK, packet active-holder, role-output, resume, proof, and terminal lifecycle boundaries before coverage is claimed.",
+                required_test_kinds=(HAPPY, EDGE, NEGATIVE),
+            ),
+            _obligation(
+                "router_loop.real_router_cli_boundary",
+                obligation_type="contract",
+                description="The public Router CLI can start, inspect, advance, apply, and record prepared role-output events without bypassing runtime payload requirements.",
+                required_test_kinds=(HAPPY,),
+            ),
+            _obligation(
                 "router_loop.control_plane_failure_canary",
                 obligation_type="hazard",
                 description="Bounded control-plane canaries cover locks, corrupt runtime persistence, daemon liveness, duplicate resume wakes, peer-run authority, terminal fences, and background proof artifacts.",
@@ -395,6 +407,38 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("router_loop.e2e_synthetic_chaos_replay",),
             ),
             _evidence(
+                "router_loop.real_router.happy.full_rehearsal",
+                test_name="test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state",
+                path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                command="python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                test_kind=HAPPY,
+                covers=("router_loop.real_router_dry_run_rehearsal",),
+            ),
+            _evidence(
+                "router_loop.real_router.happy.cli_boundary",
+                test_name="test_router_cli_boundary_runs_fake_role_output_through_public_commands",
+                path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                command="python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                test_kind=HAPPY,
+                covers=("router_loop.real_router_cli_boundary",),
+            ),
+            _evidence(
+                "router_loop.real_router.edge.resume_and_proof",
+                test_name="test_recovery_rehearsal_resume_idempotency_and_background_proof_gate",
+                path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                command="python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+                test_kind=EDGE,
+                covers=("router_loop.real_router_dry_run_rehearsal",),
+            ),
+            _evidence(
+                "router_loop.real_router.negative.known_bad_matrix",
+                test_name="test_known_bad_rows_are_rejected",
+                path="tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+                command="python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+                test_kind=NEGATIVE,
+                covers=("router_loop.real_router_dry_run_rehearsal",),
+            ),
+            _evidence(
                 "router_loop.canary.happy.duplicate_resume",
                 test_name="test_canary_duplicate_heartbeat_resume_is_idempotent",
                 path="tests/test_flowpilot_control_plane_failure_canary_replay.py",
@@ -449,6 +493,73 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_daemon_child_mesh",
                 test_kind=NEGATIVE,
                 covers=("daemon.parent_child_mesh",),
+            ),
+        ),
+    )
+
+    repair_transactions = ModelTestAlignmentPlan(
+        model_id="repair_transactions",
+        obligations=(
+            _obligation(
+                "repair_transactions.executable_plan_required",
+                obligation_type="invariant",
+                description="A committed PM repair transaction has a concrete queued action, existing producer, Router handler, fresh packet generation, or terminal stop.",
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+            _obligation(
+                "repair_transactions.material_rework_requires_fresh_producer",
+                obligation_type="hazard",
+                description="Material-dispatch repair cannot commit a role reissue or existing-event wait that only observes stale worker result flags instead of producing fresh repair work.",
+                required_test_kinds=(NEGATIVE,),
+            ),
+            _obligation(
+                "repair_transactions.legacy_replay_requires_existing_producer",
+                obligation_type="hazard",
+                description="A repair transaction cannot replay a legacy event unless the current run has a matching existing producer for that event.",
+                required_test_kinds=(NEGATIVE,),
+            ),
+            _obligation(
+                "repair_transactions.empty_transaction_returns_to_pm_repair",
+                obligation_type="contract",
+                description="An empty delivered repair transaction falls back to the PM repair-decision wait instead of being counted as executable repair work.",
+                required_test_kinds=(NEGATIVE,),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "repair_transactions.happy.material_packet_reissue",
+                test_name="test_pm_repair_transaction_commits_material_reissue_generation",
+                path="tests/router_runtime/material_modeling.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+                test_kind=HAPPY,
+                covers=("repair_transactions.executable_plan_required",),
+            ),
+            _evidence(
+                "repair_transactions.negative.material_role_reissue_no_producer",
+                test_name="test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
+                path="tests/router_runtime/material_modeling.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
+                test_kind=NEGATIVE,
+                covers=("repair_transactions.material_rework_requires_fresh_producer",),
+            ),
+            _evidence(
+                "repair_transactions.negative.legacy_replay_no_producer",
+                test_name="test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer",
+                path="tests/router_runtime/control_blockers.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
+                test_kind=NEGATIVE,
+                covers=("repair_transactions.legacy_replay_requires_existing_producer",),
+            ),
+            _evidence(
+                "repair_transactions.negative.empty_followup_wait_fallback",
+                test_name="test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+                path="tests/router_runtime/control_blockers.py",
+                command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
+                test_kind=NEGATIVE,
+                covers=(
+                    "repair_transactions.executable_plan_required",
+                    "repair_transactions.empty_transaction_returns_to_pm_repair",
+                ),
             ),
         ),
     )
@@ -643,6 +754,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 "python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
             ),
             coverage_boundary="Router-loop/daemon alignment covers foreground unit/runtime tests for queue, lock, and packet-loop behavior. It does not run long daemon soak tests.",
+        ),
+        _plan_entry(
+            "repair transactions",
+            repair_transactions,
+            model_checks=("python simulations/run_flowpilot_repair_transaction_checks.py",),
+            coverage_boundary="Repair-transaction alignment covers executable producer/action/handler/stop evidence and focused material-dispatch stale-wait regressions. It does not prove semantic quality of replacement packet contents.",
         ),
         _plan_entry(
             "test tiering/slow-test contracts",

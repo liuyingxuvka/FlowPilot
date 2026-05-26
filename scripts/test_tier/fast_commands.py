@@ -60,6 +60,15 @@ FAST_COMMANDS = (
         description="End-to-end synthetic chaos matrix for daemon-driven fake AI full-flow replays.",
     ),
     TierCommand(
+        name="real_router_dry_run_rehearsal_matrix",
+        command=_py(
+            "simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py",
+            "--json-out",
+            "simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json",
+        ),
+        description="Real Router dry-run rehearsal matrix for prepared fake AI packages through public runtime boundaries.",
+    ),
+    TierCommand(
         name="control_plane_failure_canary_matrix",
         command=_py(
             "simulations/flowpilot_control_plane_failure_canary_matrix.py",
@@ -106,6 +115,16 @@ FAST_COMMANDS = (
         "e2e_synthetic_chaos_replay_tests",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
         description="End-to-end fake AI replays across Router daemon, recovery, proof, isolation, and closure gates.",
+    ),
+    _pytest(
+        "real_router_dry_run_rehearsal_matrix_tests",
+        "tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
+        description="Focused tests for real Router rehearsal rows and known-bad overclaim rejection.",
+    ),
+    _pytest(
+        "real_router_dry_run_rehearsal_tests",
+        "tests/test_flowpilot_real_router_dry_run_rehearsal.py",
+        description="Runtime rehearsals for prepared fake AI packages through real Router, CLI, recovery, proof, and terminal gates.",
     ),
     _pytest(
         "control_plane_failure_canary_matrix_tests",

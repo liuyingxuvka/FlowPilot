@@ -144,6 +144,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.control_blockers",
         patterns=(
             "test_material_operation_replay_uses_current_generation_action",
+            "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
             "test_operation_replay_repair_transaction_queues_replay_action",
             "test_repair_transaction_protocol_blocker_registers_followup_blocker",
             "test_repair_transaction_recheck_blocker_registers_followup_blocker",
@@ -298,6 +299,7 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
             "test_process_route_model_canonical_event_writes_compatibility_alias",
             "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
             "test_pm_repair_transaction_commits_material_reissue_generation",
+            "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
         ),
         description="Material modelability, architecture, compatibility, and repair slice.",
     ),

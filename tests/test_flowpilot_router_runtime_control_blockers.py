@@ -18,6 +18,7 @@ TEST_NAMES = (
     "test_repair_transaction_protocol_blocker_registers_followup_blocker",
     "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
     "test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision",
+    "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
     "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
     "test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer",
     "test_operation_replay_repair_transaction_queues_replay_action",

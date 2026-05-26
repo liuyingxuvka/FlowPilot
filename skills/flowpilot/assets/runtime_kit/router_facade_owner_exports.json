@@ -852,6 +852,10 @@
             "target": "_existing_event_producer_evidence"
           },
           {
+            "public": "_pm_owned_followup_producer_evidence",
+            "target": "_pm_owned_followup_producer_evidence"
+          },
+          {
             "public": "_external_event_validation_issue",
             "target": "_external_event_validation_issue"
           },
