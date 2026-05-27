@@ -302,7 +302,9 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         snapshot = read_json(run_root / "route_state_snapshot.json")
         self.assertEqual(snapshot["state"]["status"], "stopped_by_user")
         self.assertTrue(snapshot["state"]["flags"]["run_stopped_by_user"])
-        self.assertEqual(snapshot["authority"]["active_source"], "index_active_runs_with_current_focus")
+        self.assertEqual(snapshot["authority"]["active_source"], "explicit_active_set")
+        self.assertEqual(snapshot["authority"]["source_authority"], "index_active_runs_with_current_focus")
+        self.assertTrue(snapshot["authority"]["current_pointer_is_ui_focus_only"])
     def test_terminal_summary_payload_requires_attribution_display_and_run_root_sources(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

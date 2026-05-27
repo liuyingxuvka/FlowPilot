@@ -18,6 +18,22 @@ MATERIAL_ARTIFACT_MAP_SCHEMA = "flowpilot.material_artifact_map.v1"
 MATERIAL_ARTIFACT_MAP_FILENAME = "material_artifact_map.json"
 
 
+def _runtime_open_roles(result: dict[str, Any]) -> list[str]:
+    roles: list[str] = []
+
+    def add_role(value: Any) -> None:
+        role = str(value or "")
+        if role and role not in roles:
+            roles.append(role)
+
+    add_role(result.get("next_recipient"))
+    relay = result.get("controller_relay")
+    if isinstance(relay, dict):
+        add_role(relay.get("relayed_to_role"))
+        add_role(relay.get("recipient_role"))
+    return roles
+
+
 def material_artifact_map_path(run_root: Path) -> Path:
     return run_root / "material" / MATERIAL_ARTIFACT_MAP_FILENAME
 
@@ -90,16 +106,7 @@ def _add_packet_index_entries(
             visibility=str(result.get("body_visibility") or "sealed_target_role_only"),
         )
         if result_ref is not None:
-            runtime_open_roles = sorted(
-                role
-                for role in {
-                    str(result.get("next_recipient") or ""),
-                    str((result.get("controller_relay") or {}).get("relayed_to_role") or "")
-                    if isinstance(result.get("controller_relay"), dict)
-                    else "",
-                }
-                if role
-            )
+            runtime_open_roles = _runtime_open_roles(result)
             entries.append(
                 entry_policy.make_entry(
                     entry_id=f"{batch_kind}:result:{packet_id}",

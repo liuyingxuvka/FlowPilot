@@ -164,7 +164,23 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         self.assertTrue(result_entry["requires_runtime_open"])
         self.assertTrue(result_entry["body_refs"])
         self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in result_entry["body_refs"]))
-        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager", "human_like_reviewer"])
+        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager"])
+        self.assertFalse(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
+
+        result_envelope["controller_relay"] = {
+            "verified": True,
+            "relayed_to_role": "human_like_reviewer",
+            "body_was_read_by_controller": False,
+        }
+        packet_runtime.write_json_atomic(result_envelope_path, result_envelope)
+        relayed_doc = material_map.refresh_material_artifact_map(project_root, run_root, {"run_id": "run-boundary"})
+        relayed_result_entry = next(
+            entry for entry in relayed_doc["entries"] if entry["entry_id"] == "material_scan:result:material-scan-001"
+        )
+        self.assertTrue(relayed_result_entry["sealed_body_boundary_preserved"])
+        self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in relayed_result_entry["body_refs"]))
+        self.assertEqual(relayed_result_entry["allowed_role_reads"], ["project_manager", "human_like_reviewer"])
+        self.assertTrue(relayed_result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
 
         summary = material_map.material_artifact_map_summary(doc)
         self.assertEqual(summary["entry_count"], doc["entry_count"])

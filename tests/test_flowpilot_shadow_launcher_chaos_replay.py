@@ -18,6 +18,9 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_jso
 from scripts.test_tier import background as test_tier_background
 
 
+INSTALLED_CLI_TIMEOUT_SECONDS = 180.0
+
+
 class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
     def copied_installed_skill_router(self, root: Path) -> Path:
         install_root = root / "skills-install" / "flowpilot"
@@ -26,7 +29,14 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(router_script.exists())
         return router_script
 
-    def run_installed_cli(self, router_script: Path, root: Path, args: list[str], *, timeout: float = 60.0) -> dict:
+    def run_installed_cli(
+        self,
+        router_script: Path,
+        root: Path,
+        args: list[str],
+        *,
+        timeout: float = INSTALLED_CLI_TIMEOUT_SECONDS,
+    ) -> dict:
         command = [sys.executable, str(router_script), "--root", str(root), *args]
         if "--json" not in command:
             command.append("--json")

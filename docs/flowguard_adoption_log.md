@@ -19298,3 +19298,54 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No peer AI work was reverted or cleaned up.
 - No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.
 - Unrelated parallel AI changes in known-friction proof artifacts, material artifact map, boundary tests, and generated result files were not folded into this task's scoped git commit.
+
+## 2026-05-27 20:07 +02:00 - Material Map And Authority Boundary Follow-Up
+
+### Summary
+
+- Task: close the remaining friction discovered during the role-output transaction hardening verification.
+- Route: `openspec_apply + flowguard_development_process_flow + flowguard_model_test_alignment`.
+- Change: `harden-role-output-transaction-commit`.
+
+### Changed Surfaces
+
+- Material artifact map role reads now come only from runtime-open evidence: `next_recipient`, `controller_relay.relayed_to_role`, or `controller_relay.recipient_role`.
+- Boundary tests now distinguish a sealed result body with no relay from a runtime relay that opens reviewer read authority.
+- Terminal replay recovery tests now preserve the active-set authority split: `active_source=explicit_active_set` and `source_authority=index_active_runs_with_current_focus`.
+- Shadow launcher installed-CLI chaos replay timeout increased from 60 seconds to 180 seconds to avoid false failure under background regression load.
+
+### Commands
+
+- OK: `python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_material_artifact_map_is_index_only_and_preserves_sealed_body_boundary tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_material_artifact_map_indexes_material_flow_without_body_text`.
+- OK: `python -m unittest tests.test_flowpilot_boundary_contracts tests.test_flowpilot_role_output_reconciliation`.
+- OK: `python simulations\flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations\flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_friction_checks.py --json-out simulations\flowpilot_control_plane_friction_results.json`.
+- OK: `python simulations\run_flowpilot_event_idempotency_checks.py`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_model_test_alignment tests.test_flowpilot_boundary_contracts`.
+- OK: focused terminal replay recovery rerun after the stale assertion fix.
+- OK: background `fast_background_supervisor` completed 60 checks with exit code 0 and proof reuse false.
+- OK: background `router_background_supervisor` completed 64 checks with exit code 0 and proof reuse false after rerun with the authority assertion fix.
+- OK: background `run_meta_checks` and `run_capability_checks` completed with exit code 0.
+- OK: `openspec validate harden-role-output-transaction-commit --strict`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py --json`.
+
+### Findings
+
+- The material map test had overclaimed reviewer body access. It treated a role that might eventually receive a relay as already having runtime-open read authority.
+- The terminal replay test had the opposite shape of miss: it collapsed two valid authority fields into one expected value and failed after the explicit-active-set contract was enforced.
+- The prior 60-second installed-CLI timeout was too brittle while broad background tiers were saturating the machine. That was a test-infrastructure friction point, not a product behavior failure.
+- The root pattern is not one narrow missing assertion. It is a family-level coverage problem: authority source, ingress path, domain writer, replay state, runtime relay, and background load must be checked together before claiming the defect family is closed.
+
+### Background Artifacts
+
+- `tmp\flowguard_background\fast_background_supervisor.meta.json`: status `passed`, exit `0`, completed `60`, latest update `2026-05-27T17:53:43+02:00`, proof reuse `false`.
+- `tmp\flowguard_background\router_background_supervisor.meta.json`: status `passed`, exit `0`, completed `64`, latest update `2026-05-27T20:04:08+02:00`, proof reuse `false`.
+- `tmp\flowguard_background\run_meta_checks.meta.json`: status `completed`, exit `0`, latest update `2026-05-27T17:07:19+02:00`.
+- `tmp\flowguard_background\run_capability_checks.meta.json`: status `completed`, exit `0`, latest update `2026-05-27T17:07:18+02:00`.
+
+### Skipped Or Limited
+
+- No peer AI work was reverted or cleaned up.
+- Generated result-file churn and unrelated parallel model-maturation/final-confidence work were left outside this task's scoped commit.
+- No GitHub push, tag, release, deploy, or public publication was performed.
