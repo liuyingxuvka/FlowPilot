@@ -303,6 +303,42 @@ def _diagnostic_repair_type(code: str, surface: dict[str, Any]) -> str:
     return DIAGNOSTIC_REPAIR_TYPES.get(code, "inspect_gap")
 
 
+def _maturation_signal_for_gap(code: str, surface: dict[str, Any]) -> str:
+    if code == "stale_evidence":
+        return "stale_evidence"
+    if code == "missing_model":
+        return "missing_model_obligation"
+    if code in {"missing_test", "internal_only_test"}:
+        return "missing_code_boundary_observation"
+    if code == "missing_code":
+        return "boundary_missing"
+    if code == "extra_code":
+        return "code_boundary_mismatch"
+    if code == "needs_structure_split":
+        kind = str(surface.get("kind", "unknown"))
+        if kind in {"model_check_runner", "model_check_runner_helper"}:
+            return "oversized_model"
+        return "duplicate_primary_edge_path"
+    return "missing_model_obligation"
+
+
+def _maturation_actions_for_gap(code: str, surface: dict[str, Any]) -> list[str]:
+    signal = _maturation_signal_for_gap(code, surface)
+    actions_by_signal = {
+        "stale_evidence": ["refresh_evidence"],
+        "missing_model_obligation": ["add_model_obligation"],
+        "missing_code_boundary_observation": ["add_code_boundary_observation"],
+        "boundary_missing": ["add_transition_case", "add_code_boundary_observation"],
+        "code_boundary_mismatch": [
+            "add_code_boundary_observation",
+            "add_model_obligation",
+        ],
+        "oversized_model": ["split_child_model"],
+        "duplicate_primary_edge_path": ["split_child_model"],
+    }
+    return actions_by_signal.get(signal, ["downgrade_claim"])
+
+
 def _diagnostic_severity(code: str, surface: dict[str, Any]) -> str:
     relevance = str(surface.get("release_relevance", _diagnostic_release_relevance(surface)))
     kind = str(surface.get("kind", "unknown"))
@@ -397,6 +433,8 @@ def _surface_findings(surface: dict[str, Any]) -> list[dict[str, Any]]:
                 "severity": severity,
                 "dedupe_key": _diagnostic_dedupe_key(code, surface),
                 "priority_score": _diagnostic_priority_score(code, surface),
+                "maturation_signal_type": _maturation_signal_for_gap(code, surface),
+                "maturation_actions": _maturation_actions_for_gap(code, surface),
                 "message": _diagnostic_message(code, surface),
             }
         )
@@ -977,6 +1015,47 @@ def _full_diagnostic_known_bad_report(case: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _singleton_authority_coverage() -> dict[str, Any]:
+    result_path = ROOT / "simulations" / "flowpilot_singleton_identity_results.json"
+    model_path = ROOT / "simulations" / "flowpilot_singleton_identity_model.py"
+    runner_path = ROOT / "simulations" / "run_flowpilot_singleton_identity_checks.py"
+    doc_path = ROOT / "docs" / "flowpilot_singleton_identity_authority.md"
+    test_path = ROOT / "tests" / "test_flowpilot_singleton_identity.py"
+    required_paths = (model_path, runner_path, doc_path, test_path, result_path)
+    missing = [
+        _repo_path(str(path.relative_to(ROOT))) for path in required_paths if not path.exists()
+    ]
+    payload: dict[str, Any] = {}
+    result_ok = False
+    authority_matrix_count = 0
+    live_risk_count = 0
+    live_gap_count = 0
+    confidence = "unknown"
+    if result_path.exists():
+        try:
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            payload = {"read_error": repr(exc)}
+        result_ok = payload.get("ok") is True
+        authority_matrix_count = int(payload.get("authority_matrix_count") or 0)
+        live_audit = payload.get("live_audit") if isinstance(payload, dict) else {}
+        if isinstance(live_audit, dict):
+            live_risk_count = int(live_audit.get("risk_count") or 0)
+            live_gap_count = int(live_audit.get("evidence_insufficient_count") or 0)
+        confidence = str(payload.get("confidence") or "unknown")
+    return {
+        "ok": not missing and result_ok and authority_matrix_count >= 8,
+        "result_path": "simulations/flowpilot_singleton_identity_results.json",
+        "missing": missing,
+        "result_ok": result_ok,
+        "confidence": confidence,
+        "authority_matrix_count": authority_matrix_count,
+        "live_risk_count": live_risk_count,
+        "live_evidence_insufficient_count": live_gap_count,
+        "full_closure_ok": payload.get("full_closure_ok") is True if payload else False,
+    }
+
+
 def build_full_model_test_code_diagnostic() -> dict[str, Any]:
     source_plan = build_source_contract_alignment_plan()
     source_contract_paths = {contract.path for contract in source_plan.code_contracts}
@@ -1026,8 +1105,9 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
         surface for surface in surfaces if _is_explicit_structure_split_skip(surface)
     ]
     actionable_summary = _actionable_summary(findings)
+    singleton_authority = _singleton_authority_coverage()
     return {
-        "ok": all(item["ok"] for item in known_bad),
+        "ok": all(item["ok"] for item in known_bad) and singleton_authority["ok"],
         "result_type": "flowpilot_full_model_test_code_diagnostic",
         "diagnostic_boundary": FULL_DIAGNOSTIC_BOUNDARY,
         "full_coverage_ok": not findings,
@@ -1064,6 +1144,7 @@ def build_full_model_test_code_diagnostic() -> dict[str, Any]:
         "actionable_findings": actionable_findings[:80],
         "actionable_summary": actionable_summary,
         "surfaces": surfaces,
+        "singleton_authority_coverage": singleton_authority,
         "known_bad_ok": all(item["ok"] for item in known_bad),
         "known_bad_sanity_checks": known_bad,
     }

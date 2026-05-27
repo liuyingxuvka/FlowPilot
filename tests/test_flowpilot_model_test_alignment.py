@@ -131,6 +131,14 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("script:run_test_tier", surfaces)
         self.assertIn("model-check:run_flowpilot_model_test_alignment_checks", surfaces)
         self.assertIn("tier:router", surfaces)
+        self.assertIn("model-check:run_flowpilot_singleton_identity_checks", surfaces)
+        singleton_authority = diagnostic["singleton_authority_coverage"]
+        self.assertTrue(singleton_authority["ok"], singleton_authority)
+        self.assertGreaterEqual(singleton_authority["authority_matrix_count"], 8)
+        self.assertEqual(
+            "simulations/flowpilot_singleton_identity_results.json",
+            singleton_authority["result_path"],
+        )
         for surface_id in (
             "asset:flowpilot_router",
             "script:run_test_tier",

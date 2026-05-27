@@ -3,6 +3,93 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-05-27 FlowPilot Singleton Identity Authority Safeguards
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the planned singleton/duplicate-conflict
+  hardening be completed end-to-end with OpenSpec and FlowGuard, local install
+  sync, background model regressions, local git evidence, and preservation of
+  parallel AI work.
+- Status: implemented_validated_installed_synced_local_git_pending
+- OpenSpec changes: `harden-singleton-identity-safeguards` and
+  `adopt-flowguard-model-maturation`
+- Skill decision: predictive KB preflight, OpenSpec proposal/application,
+  FlowGuard existing-model preflight, DevelopmentProcessFlow, and
+  Model-Test Alignment.
+- FlowGuard schema: `1.0`
+
+### Model Files
+
+- `simulations/flowpilot_singleton_identity_model.py`
+- `simulations/run_flowpilot_singleton_identity_checks.py`
+- `simulations/flowpilot_singleton_identity_results.json`
+- `simulations/flowpilot_model_maturation_model.py`
+- `simulations/flowpilot_model_maturation_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowpilot_singleton_identity_authority.md`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`;
+  returned schema `1.0`.
+- OK: `openspec validate harden-singleton-identity-safeguards --strict`.
+- OK: `openspec validate adopt-flowguard-model-maturation --strict`.
+- OK: `python simulations\run_flowpilot_singleton_identity_checks.py
+  --json-out simulations\flowpilot_singleton_identity_results.json`;
+  singleton confidence `full`, live audit risk count `0`.
+- OK: `python -m unittest tests.test_flowpilot_singleton_identity`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py
+  --json-out simulations\flowpilot_model_test_alignment_results.json`;
+  full coverage true with `867` covered surfaces and no gaps.
+- OK: `python -m unittest tests.test_flowpilot_model_test_alignment`.
+- OK: `python simulations\run_flowpilot_model_maturation_checks.py
+  --json-out simulations\flowpilot_model_maturation_results.json`;
+  result `ok=true`, confidence remains scoped because prompt/protocol source
+  contract gaps are still deliberately visible.
+- OK: `python -m pytest tests\test_flowpilot_model_maturation.py`.
+- OK: background `python simulations\run_meta_checks.py` completed through
+  `tmp\flowguard_background\run_meta_checks.*`, exit code `0`,
+  `proof_reused=false`.
+- OK: background `python simulations\run_capability_checks.py` completed through
+  `tmp\flowguard_background\run_capability_checks.*`, exit code `0`,
+  `proof_reused=false`.
+- OK: background `python simulations\run_meta_checks.py --full --fast`
+  completed through `tmp\flowguard_background\run_meta_checks_full_fast.*`,
+  exit code `0`, `proof_reused=false`.
+- OK: background `python simulations\run_capability_checks.py --full --fast`
+  completed through
+  `tmp\flowguard_background\run_capability_checks_full_fast.*`, exit code `0`,
+  `proof_reused=true`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`,
+  `python scripts\audit_local_install_sync.py --json`,
+  `python scripts\install_flowpilot.py --check --json`, and
+  `python scripts\check_install.py --json`.
+- OK: background `python scripts\smoke_autopilot.py --fast` completed through
+  `tmp\flowguard_background\smoke_autopilot_fast.*`, exit code `0`,
+  `proof_reused=true`.
+
+### Findings
+
+- The new singleton authority model distinguishes intended plurality from
+  illegal duplicate authority for parallel runs, daemon writers, active packet
+  holders, PM package dispositions, route replacement, material progress,
+  ACK/output waits, and final closure evidence.
+- The live audit is read-only and did not mutate peer-agent `.flowpilot` state.
+- Singleton authority now feeds install readiness, model maturation, and
+  model-test-code diagnostics.
+- The remaining model maturation scoped gaps are prompt-boundary and protocol
+  conformance surfaces outside this singleton hardening scope; they stayed
+  visible rather than being hidden by a broad green claim.
+
+### Skipped Steps
+
+- No peer AI work was reverted or cleaned up.
+- No broad formatter, dependency installation, GitHub push, tag, release,
+  deploy, or public publication was performed.
+- Prompt/protocol residual gaps were not repaired under this task because they
+  are wider than the singleton/duplicate-authority scope and may overlap
+  parallel work.
+
 ## 2026-05-26 FlowPilot Multi-Round Fake AI Control Rehearsal Hardening
 
 - Project: FlowGuardProjectAutopilot_20260430

@@ -33,6 +33,22 @@ gate. It lives in `simulations/run_flowpilot_model_test_alignment_checks.py`
 and maps major model obligations to ordinary tests before a coverage claim is
 trusted.
 
+The maintenance baseline also includes a FlowGuard model maturation closure
+gate. It lives in `simulations/run_flowpilot_model_maturation_checks.py` and
+consumes FlowGuard 0.27 `review_model_maturation_loop()` signals before broad
+maintenance or local install confidence is promoted. This gate turns ACK-only
+closure risk, route replacement disposition gaps, prompt-contract drift, stale
+result artifacts, oversized parent-model masking, and progress-only background
+evidence into explicit model actions or scoped-confidence decisions.
+
+The maintenance baseline also includes a focused singleton identity authority
+gate. It lives in `simulations/run_flowpilot_singleton_identity_checks.py` and
+records `simulations/flowpilot_singleton_identity_results.json`. It separates
+intended plurality such as parallel runs and background Flow blocks from
+illegal duplicate authority inside one scope, including daemon writers, active
+packet holders, PM package dispositions, route replacement, material progress
+generation, ACK/output waits, and final closure evidence.
+
 As of version 0.9.14, the active maintenance convergence baseline is recorded in
 `docs/flowpilot_maintenance_convergence_20260527.md`. Completed OpenSpec
 changes were archived, runtime retention and validation-artifact cleanup stayed
@@ -51,6 +67,9 @@ It covers two ownership surfaces:
   `flowpilot_persistent_router_daemon_model.py` remain import-compatible
   facades backed by focused state, transition, invariant, hazard, audit, and
   strategy helpers as applicable.
+
+The latest singleton-authority pass keeps the model-test-code alignment report
+at `867` covered surfaces with `0` gaps and `0` deferred structure splits.
 
 The current router-facade split also has a narrower FlowGuard gate at
 `simulations/flowpilot_router_facade_split_model.py`, checked by
@@ -671,7 +690,9 @@ python simulations/run_flowpilot_route_replanning_policy_checks.py --json-out si
 python simulations/run_flowpilot_runtime_closure_checks.py --json-out simulations/flowpilot_runtime_closure_results.json
 python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py --json-out simulations/flowpilot_recursive_closure_reconciliation_results.json
 python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json
+python simulations/run_flowpilot_singleton_identity_checks.py --json-out simulations/flowpilot_singleton_identity_results.json
 python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
+python simulations/run_flowpilot_model_maturation_checks.py --json-out simulations/flowpilot_model_maturation_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py
 ```

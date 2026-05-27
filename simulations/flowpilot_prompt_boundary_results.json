@@ -8,14 +8,14 @@
         "controller_partial_table_reads_defer": true,
         "heartbeat_template_disclaims_manual_router_loop": true,
         "packet_ack_continues_and_waits_for_router_result": true,
-        "router_card_checkin_policy_mentions_work_item_output": true,
-        "router_heartbeat_prompt_attaches_daemon_ledger": true,
+        "router_card_checkin_policy_mentions_work_item_output": false,
+        "router_heartbeat_prompt_attaches_daemon_ledger": false,
         "router_heartbeat_prompt_no_continue_router_loop": true,
-        "router_projection_disables_controller_apply_required": true,
-        "router_projects_controller_rows_to_receipt_metadata": true,
+        "router_projection_disables_controller_apply_required": false,
+        "router_projects_controller_rows_to_receipt_metadata": false,
         "router_startup_intake_no_direct_apply_wording": true,
-        "router_startup_intake_returns_to_router_work_board": true,
-        "router_table_prompt_forbids_router_commands_between_rows": true,
+        "router_startup_intake_returns_to_router_work_board": false,
+        "router_table_prompt_forbids_router_commands_between_rows": false,
         "skill_daemon_rows_distinguish_receipt_from_apply": true,
         "skill_has_pre_daemon_split": true,
         "skill_heartbeat_no_return_to_router": true,
@@ -24,8 +24,15 @@
         "skill_startup_intake_returns_to_router_work_board": true,
         "work_card_ack_continues_and_waits_for_router_output": true
       },
-      "failures": [],
-      "ok": true
+      "failures": [
+        "router_table_prompt_forbids_router_commands_between_rows",
+        "router_projects_controller_rows_to_receipt_metadata",
+        "router_projection_disables_controller_apply_required",
+        "router_heartbeat_prompt_attaches_daemon_ledger",
+        "router_startup_intake_returns_to_router_work_board",
+        "router_card_checkin_policy_mentions_work_item_output"
+      ],
+      "ok": false
     },
     "expected_rejections": {
       "failures": [],
@@ -94,5 +101,5 @@
     }
   },
   "model": "flowpilot_prompt_boundary",
-  "ok": true
+  "ok": false
 }
