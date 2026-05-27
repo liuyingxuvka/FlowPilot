@@ -90,3 +90,86 @@ control-blocker recovery.
 #### Scenario: PM selects route mutation only for structural changes
 - **WHEN** the repair requires adding, removing, or changing route nodes, gates, or acceptance boundaries
 - **THEN** PM uses `route_mutation` rather than using ordinary replay or reissue.
+
+### Requirement: Normal repair remains default before break-glass
+FlowPilot SHALL keep PM/control-blocker/packet repair as the default recovery
+path and SHALL allow Controller break-glass only after evidence shows the normal
+control repair lane itself is unavailable, contradictory, looping, or unable to
+produce a legal next action.
+
+#### Scenario: Available PM repair blocks break-glass
+- **WHEN** a control blocker can be delivered to the correct first handler or PM
+  and a legal PM repair transaction can be recorded
+- **THEN** Controller MUST NOT use break-glass and MUST follow the normal
+  blocker repair policy
+
+#### Scenario: Broken normal lane can trigger break-glass
+- **WHEN** the control blocker or PM repair path is itself the failing mechanism,
+  such as missing contract authority, impossible event authority, unavailable
+  packet routing, or contradictory Router action state
+- **THEN** Controller may open a break-glass incident instead of routing through
+  the broken normal lane
+
+#### Scenario: Break-glass does not resolve blocker by itself
+- **WHEN** break-glass temporarily compensates for a FlowPilot control-plane
+  defect
+- **THEN** existing blockers, route gates, and repair transactions remain
+  unresolved until the normal authorized flow can process or supersede them
+
+### Requirement: PM same-gate repair selects an executable producer path
+FlowPilot SHALL require PM same-gate repair decisions to select an executable repair transaction path that can produce the named return event.
+
+#### Scenario: Same-gate repair text is not enough
+- **WHEN** PM selects `same_gate_repair` and describes a worker reissue in `repair_action`
+- **THEN** Router MUST treat that text as policy explanation only
+- **AND** Router MUST require `repair_transaction.plan_kind` and plan-specific fields that create or reference the follow-up event producer.
+
+#### Scenario: Incomplete PM repair decision stays on PM
+- **WHEN** PM submits a same-gate repair decision whose executable transaction cannot produce the named `rerun_target`
+- **THEN** Router MUST reject the PM repair decision mechanically
+- **AND** Router MUST keep the active blocker targeted at PM for a corrected repair decision rather than moving the wait to workers.
+
+#### Scenario: PM can choose terminal or follow-up blocker instead of rework
+- **WHEN** PM determines that no safe producer can be created for the same gate
+- **THEN** PM MAY choose an explicit terminal stop, protocol blocker, follow-up blocker, route mutation, or another supported executable plan
+- **AND** Router MUST record that outcome through the existing blocker repair policy instead of creating an empty wait.
+
+### Requirement: Runtime Write-Lock Failures Are Mechanical Before Semantic
+
+FlowPilot SHALL classify runtime JSON write-lock failures as mechanical runtime
+settlement issues before routing them to PM semantic repair.
+
+#### Scenario: Controller action file has an active runtime write lock
+
+- **WHEN** Router encounters `RouterLedgerWriteInProgress` while reading,
+  writing, or summarizing a Controller action JSON file
+- **THEN** FlowPilot first records runtime write-lock wait or takeover evidence
+- **AND** it SHALL NOT create a PM semantic repair blocker until bounded runtime
+  settlement has failed.
+
+#### Scenario: Self-owned stale write lock can be mechanically recovered
+
+- **WHEN** runtime settlement proves the write lock is stale and owned by the
+  current daemon
+- **AND** the target JSON and temp-artifact checks are safe
+- **THEN** FlowPilot recovers it as mechanical runtime settlement
+- **AND** it SHALL NOT route the condition to PM semantic repair.
+
+#### Scenario: Runtime settlement fails after bounded recovery
+
+- **WHEN** a runtime write-lock condition remains unresolved after bounded
+  wait/takeover recovery
+- **THEN** FlowPilot may materialize a control-plane blocker
+- **AND** the blocker SHALL identify the failure as mechanical runtime ledger
+  settlement rather than reviewer, PM, or business-task content failure.
+
+### Requirement: PM escalation is reserved after relay mechanical repair boundary
+FlowPilot SHALL escalate missing relay evidence to PM/control-blocker handling only when the missing evidence is not mechanically repairable by Controller or the Controller mechanical repair budget is exhausted.
+
+#### Scenario: Invalid packet state escalates
+- **WHEN** a relay receipt cannot be reconciled because the envelope is missing, corrupted, addressed to an invalid role, contaminated, or fails relay readiness checks
+- **THEN** Router MAY materialize the appropriate control blocker or PM repair decision path instead of scheduling Controller mechanical relay repair
+
+#### Scenario: Repeated Controller relay repair failure escalates
+- **WHEN** Controller relay repair has been attempted up to the configured direct repair budget and the relay evidence is still missing or invalid
+- **THEN** Router MUST escalate with a blocker payload that names the original action, packet ids, missing relay evidence, repair attempts used, and the exhausted budget

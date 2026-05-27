@@ -69,3 +69,94 @@ object.
 - **THEN** `progress_summary` contains only public progress facts and does not
   expose sealed body fields, evidence tables, source file paths, hashes, packet
   body details, or report content.
+
+### Requirement: Controller status may use process asides operationally
+
+The Controller SHALL be allowed to use Controller-facing process asides to
+explain operational status in plain language, but SHALL NOT present aside text
+as formal content, evidence, approval, route decision, report reasoning, or
+gate judgment.
+
+#### Scenario: Controller reports submitted status from an aside
+
+- **WHEN** a Controller-facing process aside says a role has submitted a
+  formal output or is waiting for Router processing
+- **THEN** Controller may tell the user that the formal output has been
+  submitted or the system is waiting for processing
+- **AND** Controller does not summarize the formal output content from the
+  aside.
+
+#### Scenario: Controller sees business content in an aside
+
+- **WHEN** a Controller-facing process aside includes apparent business
+  content, evidence, conclusion, recommendation, or approval wording
+- **THEN** Controller ignores that content for formal decision purposes
+- **AND** Controller does not expose it as a formal user-facing conclusion.
+
+### Requirement: Current status summary is display-only projection
+
+The current status summary SHALL declare itself as a display-only projection
+and SHALL name the Controller action ledger plus Router daemon status as the
+authoritative control sources for Controller progress and stop decisions.
+
+#### Scenario: Status summary names projection authority
+
+- **WHEN** Router writes `current_status_summary.json`
+- **THEN** the summary includes projection metadata stating that it is not a
+  Controller stop authority
+- **AND** the summary names the Controller action ledger and Router daemon
+  status as authoritative control sources.
+
+#### Scenario: Status update permission is separate from stop permission
+
+- **WHEN** the summary reports that a user/status update may be returned during
+  a nonterminal run
+- **THEN** it also reports `controller_stop_allowed=false` and
+  `nonterminal_controller_must_stay_attached=true`.
+
+### Requirement: Next step projection carries source and freshness
+
+The current status summary SHALL attach source and freshness metadata to its
+`next_step` projection so Controller can distinguish executable ledger work
+from display-only or stale information.
+
+#### Scenario: Pending action is current
+
+- **WHEN** `next_step` is derived from the current pending Controller action
+- **THEN** the summary includes a `source_action_id`, `source_status`, and
+  `fresh_for_controller_decision=true`.
+
+#### Scenario: No pending action or completed action projection
+
+- **WHEN** there is no pending executable Controller action or the projected
+  action is already done/reconciled
+- **THEN** the summary marks `next_step.fresh_for_controller_decision=false`
+  and `next_step.display_only=true`.
+
+#### Scenario: Stale next step cannot authorize stop
+
+- **WHEN** `next_step.fresh_for_controller_decision=false`
+- **THEN** Controller MUST NOT use `next_step` as evidence that final Controller
+  exit is allowed.
+
+### Requirement: Current status reflects latest control-plane facts
+Controller user status SHALL derive current progress and wait wording from the
+latest reconciled run state, repair transaction, active blocker, ACK ledger,
+and lifecycle facts.
+
+#### Scenario: PM repair decision is already committed
+- **WHEN** a PM repair transaction has been committed and the fresh repair
+  generation is registered
+- **THEN** user-visible current status MUST NOT say FlowPilot is still waiting
+  for PM to decide the same blocker.
+
+#### Scenario: ACK has been resolved
+- **WHEN** a required ACK has a valid receipt and the target semantic work is
+  still pending
+- **THEN** user-visible current status MUST state that the receipt is resolved
+  and that the remaining wait is for semantic work, not for the same ACK.
+
+#### Scenario: Run is stopped
+- **WHEN** a user stop has been recorded for the current run
+- **THEN** user-visible current status MUST report the run as stopped or
+  terminal and MUST NOT present it as an active route.

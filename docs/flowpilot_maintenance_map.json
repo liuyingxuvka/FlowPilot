@@ -1,27 +1,15 @@
 {
   "categories": {
     "runtime_assets": {
-      "file_count": 352,
+      "file_count": 371,
       "largest": [
-        {
-          "lines": 620,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py"
-        },
-        {
-          "lines": 605,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py"
-        },
-        {
-          "lines": 503,
-          "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py"
-        },
-        {
-          "lines": 453,
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py"
-        },
         {
           "lines": 446,
           "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+        },
+        {
+          "lines": 441,
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py"
         },
         {
           "lines": 439,
@@ -32,12 +20,16 @@
           "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
         },
         {
-          "lines": 428,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py"
+          "lines": 431,
+          "path": "skills/flowpilot/assets/flowpilot_router_expected_waits_actions.py"
         },
         {
           "lines": 427,
           "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_basic.py"
+        },
+        {
+          "lines": 424,
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py"
         },
         {
           "lines": 418,
@@ -52,28 +44,36 @@
           "path": "skills/flowpilot/assets/packet_control_plane_model_transitions_dispatch_results.py"
         },
         {
-          "lines": 406,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py"
+          "lines": 407,
+          "path": "skills/flowpilot/assets/packet_runtime_contracts.py"
         },
         {
-          "lines": 401,
-          "path": "skills/flowpilot/assets/packet_runtime_relay_checks.py"
+          "lines": 406,
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py"
         },
         {
           "lines": 400,
           "path": "skills/flowpilot/assets/flowpilot_user_flow_mermaid.py"
         },
         {
-          "lines": 398,
-          "path": "skills/flowpilot/assets/packet_runtime_contracts.py"
+          "lines": 400,
+          "path": "skills/flowpilot/assets/packet_runtime_relay_checks.py"
         },
         {
           "lines": 395,
           "path": "skills/flowpilot/assets/role_output_runtime_contracts.py"
         },
         {
+          "lines": 380,
+          "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py"
+        },
+        {
           "lines": 378,
           "path": "skills/flowpilot/assets/packet_runtime_creation_core.py"
+        },
+        {
+          "lines": 376,
+          "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py"
         },
         {
           "lines": 367,
@@ -86,13 +86,13 @@
       ],
       "over_threshold": [],
       "over_threshold_count": 0,
-      "total_lines": 60793
+      "total_lines": 63607
     },
     "scripts": {
       "file_count": 36,
       "largest": [
         {
-          "lines": 751,
+          "lines": 752,
           "over_threshold": true,
           "path": "scripts/install_checks/common.py",
           "threshold": 450
@@ -118,7 +118,19 @@
         {
           "lines": 468,
           "over_threshold": true,
+          "path": "scripts/run_flowguard_coverage_sweep.py",
+          "threshold": 450
+        },
+        {
+          "lines": 468,
+          "over_threshold": true,
           "path": "scripts/run_test_tier.py",
+          "threshold": 450
+        },
+        {
+          "lines": 430,
+          "over_threshold": false,
+          "path": "scripts/test_tier/fast_commands.py",
           "threshold": 450
         },
         {
@@ -128,13 +140,7 @@
           "threshold": 450
         },
         {
-          "lines": 399,
-          "over_threshold": false,
-          "path": "scripts/run_flowguard_coverage_sweep.py",
-          "threshold": 450
-        },
-        {
-          "lines": 305,
+          "lines": 315,
           "over_threshold": false,
           "path": "scripts/test_tier/router_terminal_commands.py",
           "threshold": 450
@@ -204,17 +210,11 @@
           "over_threshold": false,
           "path": "scripts/audit_validation_artifacts.py",
           "threshold": 450
-        },
-        {
-          "lines": 146,
-          "over_threshold": false,
-          "path": "scripts/test_tier/router_packet_route_commands.py",
-          "threshold": 450
         }
       ],
       "over_threshold": [
         {
-          "lines": 751,
+          "lines": 752,
           "over_threshold": true,
           "path": "scripts/install_checks/common.py",
           "threshold": 450
@@ -240,20 +240,32 @@
         {
           "lines": 468,
           "over_threshold": true,
+          "path": "scripts/run_flowguard_coverage_sweep.py",
+          "threshold": 450
+        },
+        {
+          "lines": 468,
+          "over_threshold": true,
           "path": "scripts/run_test_tier.py",
           "threshold": 450
         }
       ],
-      "over_threshold_count": 5,
-      "total_lines": 7553
+      "over_threshold_count": 6,
+      "total_lines": 7981
     },
     "simulations": {
-      "file_count": 265,
+      "file_count": 273,
       "largest": [
         {
           "lines": 4482,
           "over_threshold": true,
           "path": "simulations/capability_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 3626,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
           "threshold": 1600
         },
         {
@@ -263,15 +275,15 @@
           "threshold": 1600
         },
         {
-          "lines": 1988,
-          "over_threshold": true,
-          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
-          "threshold": 1600
-        },
-        {
           "lines": 1683,
           "over_threshold": true,
           "path": "simulations/flowpilot_resume_model.py",
+          "threshold": 1600
+        },
+        {
+          "lines": 1643,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_model_test_alignment_source_code_contracts.py",
           "threshold": 1600
         },
         {
@@ -293,9 +305,9 @@
           "threshold": 1600
         },
         {
-          "lines": 1475,
+          "lines": 1509,
           "over_threshold": false,
-          "path": "simulations/flowpilot_model_test_alignment_source_code_contracts.py",
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
           "threshold": 1600
         },
         {
@@ -311,7 +323,7 @@
           "threshold": 1600
         },
         {
-          "lines": 1361,
+          "lines": 1393,
           "over_threshold": false,
           "path": "simulations/flowpilot_repair_transaction_model.py",
           "threshold": 1600
@@ -341,12 +353,6 @@
           "threshold": 1600
         },
         {
-          "lines": 1234,
-          "over_threshold": false,
-          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
-          "threshold": 1600
-        },
-        {
           "lines": 1183,
           "over_threshold": false,
           "path": "simulations/flowpilot_model_mesh_model.py",
@@ -359,15 +365,15 @@
           "threshold": 1600
         },
         {
-          "lines": 1069,
+          "lines": 1100,
           "over_threshold": false,
-          "path": "simulations/flowpilot_model_test_alignment_diagnostics.py",
+          "path": "simulations/flowpilot_control_plane_friction_model_hazards.py",
           "threshold": 1600
         },
         {
-          "lines": 1056,
+          "lines": 1089,
           "over_threshold": false,
-          "path": "simulations/flowpilot_structure_maintenance_router_catalog.py",
+          "path": "simulations/flowpilot_model_test_alignment_common.py",
           "threshold": 1600
         }
       ],
@@ -379,15 +385,15 @@
           "threshold": 1600
         },
         {
-          "lines": 3417,
+          "lines": 3626,
           "over_threshold": true,
-          "path": "simulations/meta_model.py",
+          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
           "threshold": 1600
         },
         {
-          "lines": 1988,
+          "lines": 3417,
           "over_threshold": true,
-          "path": "simulations/flowpilot_control_plane_friction_model_audit.py",
+          "path": "simulations/meta_model.py",
           "threshold": 1600
         },
         {
@@ -395,16 +401,22 @@
           "over_threshold": true,
           "path": "simulations/flowpilot_resume_model.py",
           "threshold": 1600
+        },
+        {
+          "lines": 1643,
+          "over_threshold": true,
+          "path": "simulations/flowpilot_model_test_alignment_source_code_contracts.py",
+          "threshold": 1600
         }
       ],
-      "over_threshold_count": 4,
-      "total_lines": 127957
+      "over_threshold_count": 5,
+      "total_lines": 136486
     },
     "tests": {
-      "file_count": 92,
+      "file_count": 109,
       "largest": [
         {
-          "lines": 2442,
+          "lines": 2446,
           "over_threshold": true,
           "path": "tests/router_runtime/common.py",
           "threshold": 900
@@ -416,25 +428,31 @@
           "threshold": 900
         },
         {
-          "lines": 1894,
-          "over_threshold": true,
-          "path": "tests/router_runtime/foreground_controller.py",
-          "threshold": 900
-        },
-        {
-          "lines": 1829,
+          "lines": 2204,
           "over_threshold": true,
           "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
           "threshold": 900
         },
         {
-          "lines": 1092,
+          "lines": 1951,
+          "over_threshold": true,
+          "path": "tests/router_runtime/foreground_controller.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1244,
+          "over_threshold": true,
+          "path": "tests/router_runtime/material_modeling.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1200,
           "over_threshold": true,
           "path": "tests/test_flowpilot_packet_runtime.py",
           "threshold": 900
         },
         {
-          "lines": 1007,
+          "lines": 1013,
           "over_threshold": true,
           "path": "tests/router_runtime/packets.py",
           "threshold": 900
@@ -446,9 +464,21 @@
           "threshold": 900
         },
         {
-          "lines": 936,
+          "lines": 978,
           "over_threshold": true,
-          "path": "tests/router_runtime/material_modeling.py",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "threshold": 900
+        },
+        {
+          "lines": 935,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+          "threshold": 900
+        },
+        {
+          "lines": 880,
+          "over_threshold": false,
+          "path": "tests/router_runtime/resume.py",
           "threshold": 900
         },
         {
@@ -458,9 +488,9 @@
           "threshold": 900
         },
         {
-          "lines": 845,
+          "lines": 854,
           "over_threshold": false,
-          "path": "tests/router_runtime/resume.py",
+          "path": "tests/router_runtime/control_blockers.py",
           "threshold": 900
         },
         {
@@ -470,13 +500,13 @@
           "threshold": 900
         },
         {
-          "lines": 737,
+          "lines": 778,
           "over_threshold": false,
-          "path": "tests/router_runtime/control_blockers.py",
+          "path": "tests/test_flowpilot_test_tiers.py",
           "threshold": 900
         },
         {
-          "lines": 721,
+          "lines": 734,
           "over_threshold": false,
           "path": "tests/router_runtime/dispatch_gate.py",
           "threshold": 900
@@ -485,12 +515,6 @@
           "lines": 685,
           "over_threshold": false,
           "path": "tests/router_runtime/startup_daemon.py",
-          "threshold": 900
-        },
-        {
-          "lines": 681,
-          "over_threshold": false,
-          "path": "tests/test_flowpilot_test_tiers.py",
           "threshold": 900
         },
         {
@@ -506,27 +530,15 @@
           "threshold": 900
         },
         {
-          "lines": 582,
-          "over_threshold": false,
-          "path": "tests/test_flowpilot_control_plane_contracts.py",
-          "threshold": 900
-        },
-        {
           "lines": 560,
           "over_threshold": false,
           "path": "tests/router_runtime/cards.py",
-          "threshold": 900
-        },
-        {
-          "lines": 549,
-          "over_threshold": false,
-          "path": "tests/test_flowpilot_card_runtime.py",
           "threshold": 900
         }
       ],
       "over_threshold": [
         {
-          "lines": 2442,
+          "lines": 2446,
           "over_threshold": true,
           "path": "tests/router_runtime/common.py",
           "threshold": 900
@@ -538,25 +550,31 @@
           "threshold": 900
         },
         {
-          "lines": 1894,
-          "over_threshold": true,
-          "path": "tests/router_runtime/foreground_controller.py",
-          "threshold": 900
-        },
-        {
-          "lines": 1829,
+          "lines": 2204,
           "over_threshold": true,
           "path": "tests/test_flowpilot_full_diagnostic_contracts.py",
           "threshold": 900
         },
         {
-          "lines": 1092,
+          "lines": 1951,
+          "over_threshold": true,
+          "path": "tests/router_runtime/foreground_controller.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1244,
+          "over_threshold": true,
+          "path": "tests/router_runtime/material_modeling.py",
+          "threshold": 900
+        },
+        {
+          "lines": 1200,
           "over_threshold": true,
           "path": "tests/test_flowpilot_packet_runtime.py",
           "threshold": 900
         },
         {
-          "lines": 1007,
+          "lines": 1013,
           "over_threshold": true,
           "path": "tests/router_runtime/packets.py",
           "threshold": 900
@@ -568,18 +586,24 @@
           "threshold": 900
         },
         {
-          "lines": 936,
+          "lines": 978,
           "over_threshold": true,
-          "path": "tests/router_runtime/material_modeling.py",
+          "path": "tests/test_flowpilot_control_plane_contracts.py",
+          "threshold": 900
+        },
+        {
+          "lines": 935,
+          "over_threshold": true,
+          "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
           "threshold": 900
         }
       ],
-      "over_threshold_count": 8,
-      "total_lines": 31879
+      "over_threshold_count": 10,
+      "total_lines": 37918
     }
   },
   "current_maintenance_decisions": [
-    "Runtime owner modules currently have 4 files over the StructureMesh line threshold; defer further runtime splitting unless a matching model block and external contract test justify it.",
+    "Runtime owner modules are under the StructureMesh line threshold; do not split runtime again without a matching model block and external contract test.",
     "Test-tier command definitions are split into stable command-group modules while scripts/test_tier/definitions.py remains the compatibility facade.",
     "Router facade split, structure-maintenance, and source-contract alignment models keep their old import paths while large catalogs move into helper modules.",
     "Large router-runtime tests stay as watchlist items in this pass; split them only by externally visible contract family and after fixture ownership is clear.",
@@ -587,12 +611,12 @@
   ],
   "diagnostic": {
     "alignment_ok": true,
-    "covered_surface_count": 737,
-    "deferred_structure_split_count": 3,
+    "covered_surface_count": 857,
+    "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
-    "full_coverage_ok": false,
+    "full_coverage_ok": true,
     "full_diagnostic_ok": true,
-    "gap_surface_count": 3,
+    "gap_surface_count": 0,
     "known_bad_ok": true,
     "path": "simulations/flowpilot_model_test_alignment_results.json",
     "present": true
@@ -660,30 +684,12 @@
   ],
   "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430",
   "runtime_owner_modules": {
-    "file_count": 273,
+    "file_count": 291,
     "largest": [
       {
-        "lines": 620,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
-        "threshold": 450
-      },
-      {
-        "lines": 605,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "threshold": 450
-      },
-      {
-        "lines": 503,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
-        "threshold": 450
-      },
-      {
-        "lines": 453,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
+        "lines": 441,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py",
         "threshold": 450
       },
       {
@@ -693,9 +699,9 @@
         "threshold": 450
       },
       {
-        "lines": 428,
+        "lines": 431,
         "over_threshold": false,
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_repair_schedule.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_expected_waits_actions.py",
         "threshold": 450
       },
       {
@@ -705,9 +711,21 @@
         "threshold": 450
       },
       {
+        "lines": 424,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
+        "threshold": 450
+      },
+      {
         "lines": 406,
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+        "threshold": 450
+      },
+      {
+        "lines": 380,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py",
         "threshold": 450
       },
       {
@@ -717,9 +735,9 @@
         "threshold": 450
       },
       {
-        "lines": 358,
+        "lines": 354,
         "over_threshold": false,
-        "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge_events.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_io_locks.py",
         "threshold": 450
       },
       {
@@ -735,12 +753,6 @@
         "threshold": 450
       },
       {
-        "lines": 350,
-        "over_threshold": false,
-        "path": "skills/flowpilot/assets/flowpilot_router_io_locks.py",
-        "threshold": 450
-      },
-      {
         "lines": 346,
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
@@ -753,7 +765,7 @@
         "threshold": 450
       },
       {
-        "lines": 341,
+        "lines": 344,
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_event_dispatcher.py",
         "threshold": 450
@@ -762,6 +774,12 @@
         "lines": 333,
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_system_cards_selection_next.py",
+        "threshold": 450
+      },
+      {
+        "lines": 327,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_reconciliation.py",
         "threshold": 450
       },
       {
@@ -777,40 +795,21 @@
         "threshold": 450
       },
       {
-        "lines": 315,
+        "lines": 317,
         "over_threshold": false,
         "path": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py",
         "threshold": 450
-      }
-    ],
-    "over_threshold": [
-      {
-        "lines": 620,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_scheduled.py",
-        "threshold": 450
       },
       {
-        "lines": 605,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_folds.py",
-        "threshold": 450
-      },
-      {
-        "lines": 503,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data.py",
-        "threshold": 450
-      },
-      {
-        "lines": 453,
-        "over_threshold": true,
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_materialization.py",
+        "lines": 317,
+        "over_threshold": false,
+        "path": "skills/flowpilot/assets/flowpilot_router_runtime_state_persistence.py",
         "threshold": 450
       }
     ],
-    "over_threshold_count": 4,
-    "total_lines": 45161
+    "over_threshold": [],
+    "over_threshold_count": 0,
+    "total_lines": 47511
   },
   "script_entrypoints": [
     {
@@ -844,8 +843,8 @@
       "threshold": 450
     },
     {
-      "lines": 399,
-      "over_threshold": false,
+      "lines": 468,
+      "over_threshold": true,
       "path": "scripts/run_flowguard_coverage_sweep.py",
       "threshold": 450
     },
@@ -877,14 +876,63 @@
     "tiers": {
       "all": {
         "background_recommended_count": 2,
-        "command_count": 80,
+        "command_count": 129,
         "commands": [
           "pytest_collect_tests",
           "flowguard_test_tiering",
           "flowguard_slow_test_contracts",
           "flowguard_model_test_alignment",
+          "synthetic_agent_coverage_matrix",
+          "hard_gate_red_team_matrix",
+          "e2e_synthetic_chaos_matrix",
+          "real_router_dry_run_rehearsal_matrix",
+          "control_plane_failure_canary_matrix",
+          "shadow_launcher_chaos_matrix",
+          "historical_live_run_replay_matrix",
+          "known_friction_regression_matrix",
           "flowguard_controller_break_glass",
           "test_tier_runner",
+          "synthetic_agent_trace_core_tests",
+          "synthetic_agent_trace_reissue_retry_tests",
+          "synthetic_agent_trace_pm_repair_accept_tests",
+          "synthetic_agent_trace_pm_repair_reject_tests",
+          "synthetic_agent_trace_fatal_waiver_tests",
+          "synthetic_agent_trace_resume_preempt_tests",
+          "synthetic_agent_trace_stale_sibling_tests",
+          "synthetic_agent_trace_envelope_authority_tests",
+          "synthetic_agent_trace_controller_budget_tests",
+          "synthetic_agent_trace_material_repair_tests",
+          "synthetic_agent_trace_dirty_terminal_tests",
+          "synthetic_agent_trace_bad_repair_envelope_tests",
+          "synthetic_agent_trace_stacked_blockers_tests",
+          "synthetic_agent_trace_failed_repair_loop_tests",
+          "synthetic_agent_trace_stale_run_state_tests",
+          "synthetic_agent_trace_parallel_stop_tests",
+          "synthetic_agent_trace_terminal_total_gate_tests",
+          "hard_gate_red_team_matrix_tests",
+          "hard_gate_red_team_replay_tests",
+          "e2e_synthetic_chaos_matrix_tests",
+          "e2e_synthetic_chaos_golden_lifecycle_tests",
+          "e2e_synthetic_chaos_worker_repair_tests",
+          "e2e_synthetic_chaos_pm_repair_tests",
+          "e2e_synthetic_chaos_no_producer_tests",
+          "e2e_synthetic_chaos_background_proof_tests",
+          "e2e_synthetic_chaos_parallel_stop_tests",
+          "e2e_synthetic_chaos_terminal_retry_tests",
+          "real_router_dry_run_rehearsal_matrix_tests",
+          "real_router_dry_run_rehearsal_tests",
+          "control_plane_failure_canary_matrix_tests",
+          "control_plane_failure_canary_replay_tests",
+          "shadow_launcher_chaos_matrix_tests",
+          "shadow_launcher_shadow_start_tests",
+          "shadow_launcher_crash_recovery_tests",
+          "shadow_launcher_peer_conflict_tests",
+          "shadow_launcher_legacy_assets_tests",
+          "shadow_launcher_malformed_package_tests",
+          "shadow_launcher_bounded_soak_tests",
+          "historical_live_run_replay_matrix_tests",
+          "historical_live_run_replay_tests",
+          "known_friction_regression_matrix_tests",
           "model_test_alignment_tests",
           "controller_break_glass_tests",
           "flowguard_proof_tests",
@@ -974,13 +1022,62 @@
       },
       "fast": {
         "background_recommended_count": 0,
-        "command_count": 11,
+        "command_count": 60,
         "commands": [
           "flowguard_test_tiering",
           "flowguard_slow_test_contracts",
           "flowguard_model_test_alignment",
+          "synthetic_agent_coverage_matrix",
+          "hard_gate_red_team_matrix",
+          "e2e_synthetic_chaos_matrix",
+          "real_router_dry_run_rehearsal_matrix",
+          "control_plane_failure_canary_matrix",
+          "shadow_launcher_chaos_matrix",
+          "historical_live_run_replay_matrix",
+          "known_friction_regression_matrix",
           "flowguard_controller_break_glass",
           "test_tier_runner",
+          "synthetic_agent_trace_core_tests",
+          "synthetic_agent_trace_reissue_retry_tests",
+          "synthetic_agent_trace_pm_repair_accept_tests",
+          "synthetic_agent_trace_pm_repair_reject_tests",
+          "synthetic_agent_trace_fatal_waiver_tests",
+          "synthetic_agent_trace_resume_preempt_tests",
+          "synthetic_agent_trace_stale_sibling_tests",
+          "synthetic_agent_trace_envelope_authority_tests",
+          "synthetic_agent_trace_controller_budget_tests",
+          "synthetic_agent_trace_material_repair_tests",
+          "synthetic_agent_trace_dirty_terminal_tests",
+          "synthetic_agent_trace_bad_repair_envelope_tests",
+          "synthetic_agent_trace_stacked_blockers_tests",
+          "synthetic_agent_trace_failed_repair_loop_tests",
+          "synthetic_agent_trace_stale_run_state_tests",
+          "synthetic_agent_trace_parallel_stop_tests",
+          "synthetic_agent_trace_terminal_total_gate_tests",
+          "hard_gate_red_team_matrix_tests",
+          "hard_gate_red_team_replay_tests",
+          "e2e_synthetic_chaos_matrix_tests",
+          "e2e_synthetic_chaos_golden_lifecycle_tests",
+          "e2e_synthetic_chaos_worker_repair_tests",
+          "e2e_synthetic_chaos_pm_repair_tests",
+          "e2e_synthetic_chaos_no_producer_tests",
+          "e2e_synthetic_chaos_background_proof_tests",
+          "e2e_synthetic_chaos_parallel_stop_tests",
+          "e2e_synthetic_chaos_terminal_retry_tests",
+          "real_router_dry_run_rehearsal_matrix_tests",
+          "real_router_dry_run_rehearsal_tests",
+          "control_plane_failure_canary_matrix_tests",
+          "control_plane_failure_canary_replay_tests",
+          "shadow_launcher_chaos_matrix_tests",
+          "shadow_launcher_shadow_start_tests",
+          "shadow_launcher_crash_recovery_tests",
+          "shadow_launcher_peer_conflict_tests",
+          "shadow_launcher_legacy_assets_tests",
+          "shadow_launcher_malformed_package_tests",
+          "shadow_launcher_bounded_soak_tests",
+          "historical_live_run_replay_matrix_tests",
+          "historical_live_run_replay_tests",
+          "known_friction_regression_matrix_tests",
           "model_test_alignment_tests",
           "controller_break_glass_tests",
           "flowguard_proof_tests",

@@ -61,3 +61,34 @@ top-to-bottom row processing when Router exposes new Controller work.
   is active
 - **THEN** Controller updates or rereads the action ledger and resumes
   top-to-bottom processing of ready Controller rows
+
+### Requirement: Controller table prompt repeats narrow break-glass reminder
+FlowPilot SHALL include a short break-glass reminder and playbook path in each
+generated `runtime/controller_action_ledger.json` `controller_table_prompt`
+without weakening the existing row-order, receipt, sealed-body, gate, and
+foreground-attachment instructions.
+
+#### Scenario: Work board names break-glass path
+- **WHEN** Router rebuilds `runtime/controller_action_ledger.json`
+- **THEN** `controller_table_prompt.text` includes the path
+  `skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md`
+
+#### Scenario: Work board limits break-glass scope
+- **WHEN** Controller reads `controller_table_prompt.text`
+- **THEN** the prompt states that break-glass is only for normal FlowPilot
+  control flow that appears broken, stuck, looping, or unable to produce a
+  legal next action
+- **AND** it states not to use break-glass for ordinary project bugs, worker
+  defects, review failures, or normal PM repair
+
+### Requirement: Controller relay rows name runtime relay before receipt
+The Controller ledger prompt SHALL tell Controller that every packet/result relay row must run the Router-provided runtime relay operation before writing a `done` receipt.
+
+#### Scenario: Relay row prompt forbids path-only completion
+- **WHEN** Controller reads a packet/result relay row
+- **THEN** the prompt MUST state that sending envelope paths in chat, ticking a checklist, or writing a self-attested receipt is not relay completion
+- **AND** the prompt MUST define valid relay completion as runtime relay evidence in the envelope and packet ledger
+
+#### Scenario: Relay row prompt preserves sealed-body boundary
+- **WHEN** Controller executes a packet/result relay row
+- **THEN** the prompt MUST state that Controller relays envelopes only and MUST NOT open, summarize, repair, or execute sealed bodies

@@ -1543,28 +1543,47 @@ def _external_event_contracts_from_source(source_path: Path) -> tuple[dict[str, 
         return {}, f"external event source unreadable: {exc}"
     except SyntaxError as exc:
         return {}, f"external event source unparsable: {exc}"
+    literal_defs: dict[str, Any] = {}
+    candidates: list[tuple[str, ast.AST]] = []
     for node in tree.body:
+        targets: list[str] = []
         value: ast.AST | None = None
-        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "EXTERNAL_EVENTS":
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+            targets = [node.target.id]
             value = node.value
-        elif (
-            isinstance(node, ast.AnnAssign)
-            and isinstance(node.target, ast.Name)
-            and node.target.id == "EXTERNAL_EVENT_DATA_BY_PHASE"
-        ):
+        elif isinstance(node, ast.Assign):
+            targets = [target.id for target in node.targets if isinstance(target, ast.Name)]
             value = node.value
-        elif isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name)
-            and target.id in {"EXTERNAL_EVENTS", "EXTERNAL_EVENT_DATA_BY_PHASE"}
-            for target in node.targets
-        ):
-            value = node.value
-        if value is None:
+        if value is None or not targets:
             continue
+        for target in targets:
+            if (
+                target == "EXTERNAL_EVENTS"
+                or target == "EXTERNAL_EVENT_DATA_BY_PHASE"
+                or target.endswith("_EXTERNAL_EVENT_DATA")
+            ):
+                candidates.append((target, value))
         try:
             parsed = ast.literal_eval(value)
         except (ValueError, SyntaxError) as exc:
-            return {}, f"EXTERNAL_EVENTS is not literal-evaluable: {exc}"
+            if not any(target in {"EXTERNAL_EVENTS", "EXTERNAL_EVENT_DATA_BY_PHASE"} for target in targets):
+                continue
+            if isinstance(value, ast.Name) and value.id in literal_defs:
+                parsed = literal_defs[value.id]
+            else:
+                return {}, f"EXTERNAL_EVENTS is not literal-evaluable: {exc}"
+        for target in targets:
+            literal_defs[target] = parsed
+    for target, value in candidates:
+        if target not in {"EXTERNAL_EVENTS", "EXTERNAL_EVENT_DATA_BY_PHASE"}:
+            continue
+        if isinstance(value, ast.Name) and value.id in literal_defs:
+            parsed = literal_defs[value.id]
+        else:
+            try:
+                parsed = ast.literal_eval(value)
+            except (ValueError, SyntaxError) as exc:
+                return {}, f"EXTERNAL_EVENTS is not literal-evaluable: {exc}"
         if not isinstance(parsed, dict):
             return {}, "external event definition was not a dict"
         if parsed and all(isinstance(item, dict) for item in parsed.values()):
@@ -1585,6 +1604,21 @@ def _external_event_contracts_from_source(source_path: Path) -> tuple[dict[str, 
 
 def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
     asset_root = project_root / "skills" / "flowpilot" / "assets"
+    phase_contracts: dict[str, dict[str, str]] = {}
+    phase_errors: list[str] = []
+    for source_path in (
+        asset_root / "flowpilot_router_protocol_external_event_data_startup.py",
+        asset_root / "flowpilot_router_protocol_external_event_data_material.py",
+        asset_root / "flowpilot_router_protocol_external_event_data_route.py",
+        asset_root / "flowpilot_router_protocol_external_event_data_terminal.py",
+    ):
+        contracts, error = _external_event_contracts_from_source(source_path)
+        if contracts:
+            phase_contracts.update(contracts)
+        elif error:
+            phase_errors.append(f"{source_path.name}: {error}")
+    if phase_contracts:
+        return phase_contracts, None
     for source_path in (
         asset_root / "flowpilot_router.py",
         asset_root / "flowpilot_router_protocol_external_events.py",
@@ -1596,6 +1630,8 @@ def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict
             return contracts, None
         if error and source_path.name == "flowpilot_router.py":
             router_error = error
+    if phase_errors:
+        return {}, "; ".join(phase_errors)
     return {}, router_error if "router_error" in locals() else "EXTERNAL_EVENTS definition not found"
 
 def _audit_expected_role_decision_event_prereqs(router_state: object, project_root: Path) -> dict[str, object]:

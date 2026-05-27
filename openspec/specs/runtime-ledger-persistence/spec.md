@@ -23,7 +23,9 @@ Daemon-critical runtime ledgers SHALL remain valid JSON after every write.
 ### Requirement: Runtime Ledger Writes Are Atomic
 
 Daemon-critical runtime ledger writes SHALL use an atomic replace strategy so a
-reader never observes a partially written JSON document.
+reader never observes a partially written JSON document, and recoverable target
+file contention SHALL be exposed as runtime write-lock settlement rather than a
+raw fatal filesystem exception.
 
 #### Scenario: Daemon reads while a ledger is being updated
 
@@ -47,6 +49,54 @@ reader never observes a partially written JSON document.
 - **AND** no fresh runtime JSON write lock exists for that ledger
 - **THEN** the daemon reports a repair-needed corruption state
 - **AND** it SHALL NOT continue scheduling from that ledger.
+
+#### Scenario: Windows replace contention persists after bounded retry
+
+- **WHEN** a runtime JSON writer owns its write lock but cannot replace the
+  target file because the operating system reports `PermissionError`
+- **AND** the bounded retry window is exhausted
+- **THEN** the writer raises a runtime ledger write-in-progress condition naming
+  the target path and lock metadata
+- **AND** it SHALL NOT surface a raw `PermissionError` to daemon control flow.
+
+#### Scenario: Dead-owner write lock is encountered before a retry
+
+- **WHEN** a runtime JSON write lock names a process that is no longer live
+- **THEN** the next writer records dead-owner takeover evidence
+- **AND** clears the stale lock before retrying the atomic write.
+
+#### Scenario: Writer cannot remove its own lock after a successful write
+
+- **WHEN** a runtime JSON writer has written, replaced, and verified the target
+  JSON
+- **AND** removing the matching `.write.lock` fails after bounded retry
+- **THEN** FlowPilot records runtime write-lock cleanup failure diagnostics
+- **AND** it SHALL NOT silently discard the cleanup failure evidence.
+
+#### Scenario: Later writer finds its own stale lock after successful cleanup failed
+
+- **WHEN** a runtime JSON writer sees a stale `.write.lock` whose owner pid is
+  the current process
+- **AND** the target JSON is parseable
+- **AND** no `.tmp-*` write artifact remains for that target directory
+- **THEN** FlowPilot records self-owned stale-lock takeover evidence
+- **AND** clears the stale lock before retrying the atomic write.
+
+#### Scenario: Self-owned stale lock has unsafe artifacts
+
+- **WHEN** a runtime JSON writer sees a stale `.write.lock` whose owner pid is
+  the current process
+- **AND** the target JSON is not parseable or a `.tmp-*` write artifact remains
+- **THEN** FlowPilot SHALL NOT clear the lock automatically
+- **AND** it reports the condition as unresolved mechanical runtime settlement.
+
+#### Scenario: Self-owned lock is still fresh
+
+- **WHEN** a runtime JSON writer sees a `.write.lock` whose owner pid is the
+  current process
+- **AND** the lock is still fresh
+- **THEN** FlowPilot treats it as active write settlement
+- **AND** it SHALL NOT clear the lock through the stale-lock takeover path.
 
 ### Requirement: Router Scheduler Ledger Has One Owner
 
@@ -77,3 +127,34 @@ freshness, and process evidence agree.
 - **THEN** status reports stale/dead daemon evidence
 - **AND** Router/Controller treat the run as needing daemon repair or restart
   rather than as actively driven.
+
+### Requirement: Atomic write verification uses transient-lock semantics
+Runtime ledger persistence SHALL apply transient write-lock semantics to atomic
+write verification and read-back, not only to the replace operation.
+
+#### Scenario: Replace succeeds but verification is denied
+- **WHEN** a runtime JSON write replaces a daemon-critical ledger successfully
+- **AND** the immediate verification read receives a transient access-denied
+  error
+- **THEN** the write helper reports a retryable write-in-progress outcome
+- **AND** the caller MUST NOT classify the ledger as corrupt or the daemon as
+  failed from that transient denial alone.
+
+### Requirement: Fresh write locks defer incomplete ledger reads
+Daemon-critical runtime ledger reads SHALL treat a fresh runtime JSON write
+lock plus an incomplete target ledger as in-progress write evidence unless the
+lock is stale enough for takeover.
+
+#### Scenario: Fresh lock and incomplete target with ambiguous liveness
+- **WHEN** a daemon-critical ledger is temporarily not parseable
+- **AND** a fresh runtime JSON write lock exists for that ledger
+- **AND** process-liveness evidence is unavailable, delayed, or contradictory
+- **THEN** Router MUST defer progress as runtime ledger write-in-progress
+- **AND** Router MUST NOT classify the ledger as corrupted until the lock is
+  stale or the target remains invalid without fresh write evidence
+
+#### Scenario: Dead owner with valid target remains takeover-eligible
+- **WHEN** a runtime JSON write lock names a dead owner
+- **AND** the target ledger is valid JSON
+- **THEN** Router MAY take over and clean up the stale lock according to the
+  existing write-lock policy

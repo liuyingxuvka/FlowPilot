@@ -6,13 +6,15 @@ TBD - created by archiving change enforce-current-scope-pre-review-reconciliatio
 ### Requirement: Review Work Requires Current-Scope Reconciliation
 Before reviewer work starts for startup or the active node, the system SHALL reconcile only the current scope's review-affecting obligations and SHALL NOT start reviewer work while any unresolved local obligation can still change the review package.
 
-#### Scenario: Startup reviewer waits for startup-local reconciliation
-- **WHEN** Router is about to deliver or accept startup fact review work and startup-local card returns, Controller actions, or PM prep obligations remain unresolved
-- **THEN** Router blocks reviewer work with a current-scope reconciliation wait instead of asking Reviewer to judge an unstable startup package
+#### Scenario: Drifted stateful postcondition is reconciled before review wait loops
+- **WHEN** startup or current-node pre-review reconciliation sees a local Controller row whose receipt and durable evidence are valid but whose Router-owned postcondition flag is false
+- **THEN** Router MUST first replay or reclaim that stateful postcondition into the authoritative state
+- **AND** Router MUST re-evaluate the local reconciliation blockers from the updated state before returning another wait or Controller action
 
-#### Scenario: Current-node reviewer waits for node-local reconciliation
-- **WHEN** Router is about to deliver or accept current-node review work and current-node worker result, PM disposition, ACK, or local blocker obligations remain unresolved
-- **THEN** Router blocks reviewer work with a current-node reconciliation wait instead of starting result review
+#### Scenario: Unrecoverable stateful drift blocks with evidence
+- **WHEN** pre-review reconciliation sees a local stateful row that claims reconciliation but no valid durable evidence can be found
+- **THEN** Router MUST record a repair/blocker reason naming the action, postcondition, and missing evidence
+- **AND** Reviewer work MUST remain blocked until that repair/blocker is resolved
 
 ### Requirement: Reconciliation Is Local To The Active Scope
 The system SHALL limit pre-review reconciliation to the active startup gate or active node scope and SHALL NOT clear, complete, or quarantine future-node, sibling-node, or route-wide obligations as part of local review preparation.
@@ -46,3 +48,20 @@ If an active scope has no final reviewer gate, the system SHALL run current-scop
 #### Scenario: Clean no-review node can transition
 - **WHEN** a node has no final reviewer gate and all current-node obligations are resolved or explicitly classified
 - **THEN** Router may complete or cross the node boundary without requiring an extra reviewer gate
+
+### Requirement: Current-Scope Blockers Use Closure Kernel
+Current-scope pre-review reconciliation SHALL decide whether local obligations
+still block review by using the shared FlowPilot closure kernel rather than a
+module-local list of closed statuses.
+
+#### Scenario: Resolved reconciled Controller action does not block review
+- **WHEN** a current-scope Controller action has `status=resolved` and its Router
+  reconciliation evidence is complete for the same obligation
+- **THEN** pre-review reconciliation treats the action as nonblocking and does
+  not keep the current scope in a passive wait
+
+#### Scenario: Closed Worker or PM lifecycle row does not block review
+- **WHEN** a current-scope Worker or PM lifecycle record has role-specific
+  closed evidence accepted by the closure kernel
+- **THEN** pre-review reconciliation treats the record as nonblocking without
+  requiring Controller-specific status vocabulary

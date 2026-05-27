@@ -102,3 +102,64 @@ confirmation.
 - **THEN** Router SHALL record only local projection evidence
 - **AND** user-dialog display confirmation SHALL remain a separate Controller,
   host, or user boundary
+
+### Requirement: Missing relay evidence is mechanically repairable by Controller
+When a packet/result relay receipt is missing runtime relay evidence but the envelope is otherwise valid and relayable, Router SHALL create a Controller-owned mechanical repair/replay path before escalating to PM.
+
+#### Scenario: Missing relay signature has valid envelope
+- **WHEN** Router reconciles a relay `done` receipt and finds `packet_dispatch_evidence_missing` only because `controller_relay` is absent from an otherwise relayable envelope
+- **THEN** Router MUST issue or preserve Controller work to perform the runtime relay operation
+- **AND** Router MUST NOT immediately materialize a PM-handled control blocker for that omission
+
+#### Scenario: Relay repair succeeds
+- **WHEN** the Controller mechanical repair writes valid runtime relay evidence for the missing envelope
+- **THEN** Router MUST reconcile the original relay postcondition and supersede or resolve the repair row without requiring a PM repair decision
+
+### Requirement: Router materializes ready internal postconditions before role waits
+FlowPilot SHALL classify deterministic Router-owned postconditions separately
+from role-provided external events and SHALL materialize them before exposing a
+passive Controller or role wait.
+
+#### Scenario: Capability evidence inputs are ready
+- **WHEN** child-skill manifest review has passed
+- **AND** PM has approved the child-skill manifest for route use
+- **AND** the capability source artifacts are present and valid
+- **AND** `capability_evidence_synced` is not yet recorded
+- **THEN** Router MUST write Router-owned capability sync evidence
+- **AND** Router MUST sync the matching event/flag
+- **AND** Router MUST recompute the next action from the updated state
+- **AND** Router MUST NOT create an `await_role_decision` row for
+  `capability_evidence_synced`
+
+#### Scenario: Capability evidence inputs are not ready
+- **WHEN** the prerequisite flags imply a Router-owned internal postcondition
+  is due
+- **AND** the source artifacts required to materialize that postcondition are
+  absent or invalid
+- **THEN** Router MUST expose a local control-plane blocker or repair action
+  that names the missing evidence
+- **AND** Router MUST NOT represent the missing Router artifact as a Controller
+  decision wait
+
+### Requirement: Internal postcondition materialization is idempotent
+FlowPilot SHALL make Router-owned internal postcondition materialization safe
+across repeated daemon ticks, foreground re-entry, and manual event replay.
+
+#### Scenario: Capability sync evidence already exists
+- **WHEN** Router repeats reconciliation after capability sync evidence already
+  exists
+- **THEN** Router MUST preserve one authoritative sync artifact
+- **AND** Router MUST keep the event/flag synced
+- **AND** Router MUST NOT create duplicate wait rows or duplicate sync records
+
+### Requirement: Router mechanical proof has a narrow replacement scope
+Router-owned proof SHALL replace Reviewer rechecking only for mechanical envelope, ledger, role-target, hash, and Controller body-boundary facts. Reviewer SHALL remain responsible for semantic package review, source sufficiency, result quality, acceptance risk, and independent challenge.
+
+#### Scenario: Reviewer trusts Router-computable checks
+- **WHEN** Router has recorded proof for packet target role, envelope hash, result hash, relay ledger state, and Controller sealed-body exclusion
+- **THEN** Reviewer cards MAY cite that proof instead of manually rechecking those mechanical facts
+- **AND** Reviewer cards MUST still require direct review of the formal package content and task-specific quality risks.
+
+#### Scenario: Router proof cannot approve semantic work
+- **WHEN** Router mechanical proof is complete but PM formal package content has not been reviewed
+- **THEN** Reviewer SHALL NOT pass the quality, material, research, or node-completion gate from Router proof alone.

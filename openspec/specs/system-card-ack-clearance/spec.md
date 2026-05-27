@@ -10,9 +10,15 @@ The system SHALL treat system-card ACKs as mechanical read receipts scoped to a 
 - **WHEN** Controller relays a system-card envelope or formal work-packet envelope
 - **THEN** Router records only the Controller-owned delivery step as done and keeps the target-role wait open until the target role returns the required ACK, report, or result event
 
-#### Scenario: ACK does not complete semantic work
-- **WHEN** a role submits a valid system-card ACK
-- **THEN** Router may clear the scoped read obligation but MUST keep any PM, reviewer, officer, or worker semantic decision/result gate open until its own report or result event arrives
+#### Scenario: ACK-only system-card ACK clears read wait
+- **WHEN** a role submits a valid ACK for a system card classified as `ack_only_prompt`
+- **THEN** Router may clear the scoped ACK/read wait for that card
+- **AND** the role is not kept busy by that ACK-only card after the wait is reconciled
+
+#### Scenario: Output-bearing card ACK does not complete semantic work
+- **WHEN** a role submits a valid system-card ACK for a card classified as `output_bearing_work_package`
+- **THEN** Router may clear the scoped read obligation
+- **AND** Router MUST keep any PM, reviewer, officer, or worker semantic decision/result gate open until its own report, result, decision, or packet-spec event arrives
 
 ### Requirement: Gate And Node Movement Requires ACK Clearance
 Before entering or leaving a route gate or node boundary, the system SHALL check pending required system-card ACKs for that boundary and SHALL NOT move the route boundary while any required ACK for that scope is unresolved.
@@ -46,3 +52,34 @@ When a required system-card ACK is missing and the original committed card or bu
 #### Scenario: Duplicate delivery is not normal recovery
 - **WHEN** a required ACK is merely missing
 - **THEN** Router MUST NOT issue a second copy of the same system card unless the original committed artifact is invalid, lost, stale, or tied to a replaced role identity
+
+### Requirement: ACK projection cannot become a false blocker
+FlowPilot SHALL keep ACK receipts, role work completion, and user-visible
+blocker language separate after ACK reconciliation.
+
+#### Scenario: ACK-only card is resolved
+- **WHEN** a system-card ACK-only wait has been resolved
+- **THEN** Router MUST clear ACK-only blocker wording from current status and
+  pending-action summaries while preserving any separate role-output wait.
+
+#### Scenario: Role output remains pending after ACK
+- **WHEN** ACK is resolved but the role report or result is still required
+- **THEN** Router MUST show the role-output wait as the remaining work and MUST
+  NOT reintroduce missing-ACK language for that same card.
+
+### Requirement: ACK Clearance Uses Closure Kernel Without Completing Work
+System-card ACK clearance SHALL use the shared closure kernel to decide whether
+the ACK/read obligation is mechanically settled, while preserving the existing
+separation between ACK settlement and semantic output-work completion.
+
+#### Scenario: ACK row closes read obligation only
+- **WHEN** a system-card ACK return is classified as `closed_success`
+- **THEN** Router clears the scoped read obligation and MUST keep any associated
+  worker, PM, reviewer, or officer output obligation open until its own evidence
+  closes
+
+#### Scenario: Missing ACK evidence remains blocking
+- **WHEN** a system-card ACK row has a closed-looking status but lacks the
+  required ACK envelope, receipt, or original-card identity
+- **THEN** the closure kernel classifies the ACK obligation as repair-required
+  or incomplete, and Router MUST NOT cross the protected boundary

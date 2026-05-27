@@ -75,3 +75,24 @@ active unfinished work.
 - **WHEN** status metadata is projected
 - **THEN** active work count is zero
 - **AND** UI/checkers can report audit history separately from live work.
+
+### Requirement: Historical replay packages preserve current-run authority under parallel pressure
+The system SHALL include high-parallel replay package rows that attempt peer
+proof reuse, current pointer overwrite, shared artifact reuse, and stale route
+evidence reuse.
+
+#### Scenario: Parallel package cannot cross-contaminate runs
+- **WHEN** two replay packages operate against different run roots, background
+  artifacts, or route versions
+- **THEN** the current run remains authoritative and peer evidence is marked
+  stale, scoped, blocked, or non-current
+
+### Requirement: Shadow peer conflicts preserve run isolation
+The system SHALL test peer-run conflicts involving shared background artifacts,
+local install state, active run ownership, and model-test evidence rows.
+
+#### Scenario: Peer run cannot consume another run's proof
+- **WHEN** a shadow peer flow attempts to reuse another run's proof, stop
+  another run, or overwrite shared background artifacts
+- **THEN** the active run remains isolated, stale evidence is rejected, and the
+  conflict is either blocked or quarantined

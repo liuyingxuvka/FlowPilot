@@ -64,3 +64,54 @@ records.
 #### Scenario: Persisted state proves pending work
 - **WHEN** current-run persisted state shows pending Controller actions, mailbox waits, packet leases, role reports, or result envelopes
 - **THEN** recovery MUST restore Router daemon and Controller ledger execution from those persisted records
+
+### Requirement: User stop immediately fences daemon mode
+FlowPilot SHALL make user-requested stop or cancel terminal before any further
+daemon-owned nonterminal action can be produced.
+
+#### Scenario: User requests run stop
+- **WHEN** Router records `user_requests_run_stop`
+- **THEN** Router MUST write terminal lifecycle state, terminal daemon status,
+  and a terminal daemon lock/projection before returning from the stop request
+- **AND** Router MUST cancel or supersede pending nonterminal Controller actions
+  for the stopped run.
+
+#### Scenario: Stop happens before terminal summary
+- **WHEN** the terminal summary has not yet been written after a user stop
+- **THEN** heartbeat/manual resume and Router daemon recovery MUST still treat
+  the run as terminal
+- **AND** they MUST NOT restart daemon mode, rehydrate roles, create heartbeat
+  automations, or continue route work for that run.
+
+### Requirement: Terminal cleanup preserves terminal actions only
+FlowPilot SHALL separate terminal cleanup work from ordinary nonterminal work
+when fencing a stopped run.
+
+#### Scenario: Pending terminal cleanup action exists
+- **WHEN** a run is terminal and a Router-authored terminal cleanup or terminal
+  summary Controller action is pending
+- **THEN** Controller MAY complete that terminal action
+- **AND** Router MUST NOT expose unrelated startup, heartbeat, role, or route
+  actions for the same run.
+
+### Requirement: Controlled stop reconciles all run-lifecycle authorities
+FlowPilot SHALL treat a user stop as a single lifecycle boundary across
+current-run pointers, daemon status, heartbeat/manual-resume evidence,
+Controller actions, and role-agent continuation authority.
+
+#### Scenario: User stops current run
+- **WHEN** the user requests the current FlowPilot run to stop
+- **THEN** FlowPilot MUST mark the run lifecycle as stopped or terminal, stop
+  daemon active ticking, suppress heartbeat/manual resume restart, supersede or
+  cancel nonterminal Controller actions, and prevent role-agent continuation
+  for that run.
+
+#### Scenario: Current pointer is stale after stop
+- **WHEN** `.flowpilot/current.json` still points at a stopped run
+- **THEN** the pointer status MUST be reconciled to a stopped or terminal state
+  before any status report or resume path can treat the run as active.
+
+#### Scenario: Resume after stop
+- **WHEN** heartbeat/manual resume observes a stopped run
+- **THEN** it MUST NOT restart the daemon, rehydrate roles, or continue route
+  work unless the user starts a new formal FlowPilot run.

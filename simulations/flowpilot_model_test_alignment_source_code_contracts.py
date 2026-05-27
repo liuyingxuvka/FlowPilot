@@ -169,7 +169,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "pm_decisions._write_pm_package_result_disposition",
-            path="skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py",
+            path="skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py",
             symbol="_write_pm_package_result_disposition",
             implements=("pm_package_disposition.semantic_identity_and_packet_outcomes",),
             external_inputs=("project_root", "run_root", "run_state", "payload", "batch_kind"),

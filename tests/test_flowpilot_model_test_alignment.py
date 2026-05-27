@@ -258,26 +258,24 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(surface["has_external_contract"], surface)
                 self.assertEqual(surface["gap_codes"], [])
 
-        skipped_table = surfaces["asset:flowpilot_router_protocol_external_event_data"]
-        self.assertEqual(skipped_table["split_status"], "skipped_split")
-        self.assertEqual(
-            skipped_table["structure_split_status"],
-            "explicitly_skipped",
-        )
-        self.assertEqual(skipped_table["safe_split_class"], "declarative_protocol_table")
-        self.assertGreater(skipped_table["line_count"], skipped_table["split_threshold"])
-        self.assertEqual(skipped_table["top_level_function_count"], 0)
-        self.assertEqual(skipped_table["top_level_class_count"], 0)
-        self.assertNotIn("needs_structure_split", skipped_table["gap_codes"])
-        self.assertTrue(skipped_table["has_external_contract"], skipped_table)
-        skipped_surface_ids = {
-            item["surface_id"]
-            for item in diagnostic["explicitly_skipped_structure_split_surfaces"]
-        }
-        self.assertIn(
-            "asset:flowpilot_router_protocol_external_event_data",
-            skipped_surface_ids,
-        )
+        split_table = surfaces["asset:flowpilot_router_protocol_external_event_data"]
+        self.assertEqual(split_table["split_status"], "completed_split")
+        self.assertEqual(split_table["safe_split_class"], "declarative_protocol_table")
+        self.assertLessEqual(split_table["line_count"], split_table["split_threshold"])
+        self.assertEqual(split_table["top_level_function_count"], 0)
+        self.assertEqual(split_table["top_level_class_count"], 0)
+        self.assertNotIn("needs_structure_split", split_table["gap_codes"])
+        self.assertTrue(split_table["has_external_contract"], split_table)
+        for surface_id in (
+            "asset:flowpilot_router_protocol_external_event_data_startup",
+            "asset:flowpilot_router_protocol_external_event_data_material",
+            "asset:flowpilot_router_protocol_external_event_data_route",
+            "asset:flowpilot_router_protocol_external_event_data_terminal",
+        ):
+            with self.subTest(completed_external_event_data_surface=surface_id):
+                surface = surfaces[surface_id]
+                self.assertTrue(surface["has_external_contract"], surface)
+                self.assertEqual(surface["gap_codes"], [])
 
     def test_full_diagnostic_uses_background_artifact_classification(self) -> None:
         diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]

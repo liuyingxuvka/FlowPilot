@@ -102,3 +102,40 @@ sealed-body boundaries.
 #### Scenario: Display user-visible text
 - **WHEN** a Controller action requires user-dialog display
 - **THEN** Controller MUST display exactly the Router-provided display text and write the required display receipt without adding hidden evidence or sealed content
+
+### Requirement: Controller receipts are durable facts before projections
+Controller receipts SHALL be persisted as durable action-local facts before any
+scheduler or display projection is updated.
+
+#### Scenario: Receipt is valid but scheduler fold is deferred
+- **WHEN** Controller records a valid receipt and the scheduler fold is deferred
+  because the daemon owns the scheduler ledger or a write lock is fresh
+- **THEN** the receipt remains durable and discoverable by action id
+- **AND** the matching Controller action record exposes receipt metadata
+- **AND** a later Router-owned fold reconciles scheduler and display state from
+  the receipt without requiring Controller to repeat the host action.
+
+### Requirement: Controller repair work packet receipts fold repair transactions
+FlowPilot SHALL reconcile `controller_repair_work_packet` done receipts into the owning repair transaction before clearing the active Router pending action.
+
+#### Scenario: Done receipt updates repair transaction
+- **WHEN** Controller writes a `done` receipt for a Router-authored `controller_repair_work_packet`
+- **THEN** Router MUST verify the action cannot approve gates, mutate routes, or read sealed bodies
+- **AND** Router MUST write the receipt result into the matching repair transaction
+- **AND** Router MUST move the transaction to a recheck state before clearing the pending action
+
+#### Scenario: Missing transaction blocks clearance
+- **WHEN** Controller writes a `done` receipt for `controller_repair_work_packet` but Router cannot update the matching repair transaction
+- **THEN** Router MUST preserve or create a control blocker
+- **AND** Router MUST NOT treat the Controller receipt alone as repair completion.
+
+### Requirement: Blocker-related waits use blocker-scoped identities
+FlowPilot SHALL include blocker-scoped identity fields in Controller action ids and scheduler idempotency keys for any action that carries control-blocker identity.
+
+#### Scenario: Await-role-decision rows for different blockers are distinct
+- **WHEN** Router creates two `await_role_decision` actions for different control blockers
+- **THEN** the actions MUST have distinct deterministic ids and scheduler idempotency keys
+
+#### Scenario: Blocker repair rows keep current idempotency
+- **WHEN** Router repeats the same control-blocker repair or wait for the same blocker
+- **THEN** the action identity MUST remain stable across retries

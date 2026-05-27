@@ -33,6 +33,15 @@ gate. It lives in `simulations/run_flowpilot_model_test_alignment_checks.py`
 and maps major model obligations to ordinary tests before a coverage claim is
 trusted.
 
+As of version 0.9.14, the active maintenance convergence baseline is recorded in
+`docs/flowpilot_maintenance_convergence_20260527.md`. Completed OpenSpec
+changes were archived, runtime retention and validation-artifact cleanup stayed
+read-only, and the latest generated maintenance map reports no runtime owner
+module above the 450-line threshold. New compatibility-preserving child modules
+own PM role-work package disposition helpers, external event data by phase, and
+process-contract policy data. The latest model-test-code alignment report
+covers 857 surfaces with 0 gaps and 0 deferred structure splits.
+
 It covers two ownership surfaces:
 
 - planned router split ownership, where `flowpilot_router.py` remains the

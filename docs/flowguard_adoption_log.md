@@ -19025,3 +19025,91 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 ### Next Actions
 
 - Future long replay additions should enter the fast tier as named scenario shards instead of aggregate module-level commands.
+
+## 2026-05-27 - Maintenance Convergence And Runtime Hotspot Contraction
+
+- Trigger: user approved executing the maintenance plan with OpenSpec and
+  FlowGuard while preserving parallel AI work.
+- Status: implemented locally through targeted code contraction, foreground
+  checks, background meta/capability regressions, documentation, version sync,
+  and local install sync. Final git sync is handled by the current task after
+  this log entry.
+- Route: `openspec_propose_apply + flowguard_existing_model_preflight +
+  architecture_reduction + structure_mesh + development_process_flow +
+  model_test_alignment`.
+
+### Changed Surfaces
+
+- Archived completed OpenSpec backlog items under `openspec/changes/archive/`
+  and left only `complete-flowpilot-maintenance-convergence` active.
+- Split PM package disposition, external event data, and process-contract
+  policy ownership into child modules while retaining compatibility facades.
+- Refreshed model-test-code alignment metadata so the new child modules are
+  directly covered.
+- Refreshed generated maintenance map and recorded read-only runtime retention
+  and validation artifact audit evidence.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate --all --strict --json --no-interactive` before archive
+  movement -> 166 passed, 0 failed.
+- OK: OpenSpec archive movement, followed by
+  `openspec validate --all --strict --json --no-interactive` -> 147 passed,
+  0 failed.
+- OK: `python scripts\audit_validation_artifacts.py --json`; read-only, 163
+  artifacts, 24 duplicate groups.
+- OK: `python scripts\flowpilot_runtime_retention.py --json --max-runs 30`;
+  read-only, current run protected.
+- OK: syntax compilation for touched runtime and simulation files.
+- OK: `python -m unittest tests.test_flowpilot_control_plane_contracts -v` ->
+  23 tests passed.
+- OK:
+  `python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests -v`
+  -> 14 tests passed.
+- OK:
+  `python -m unittest tests.test_flowpilot_model_test_alignment.FlowPilotModelTestAlignmentTests -v`
+  -> 16 tests passed.
+- OK: `python simulations\run_flowpilot_structure_maintenance_checks.py`.
+- OK:
+  `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`
+  -> 857 covered surfaces, 0 gaps, 0 deferred structure splits.
+- OK:
+  `python simulations\run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp\flowpilot_control_plane_friction_skip_live_latest.json`.
+- OK: background `run_meta_checks` artifact set exit code 0, status passed,
+  proof reused false.
+- OK: background `run_capability_checks` artifact set exit code 0, status
+  passed, proof reused false.
+- OK:
+  `python scripts\flowpilot_maintenance_map.py --json-out docs\flowpilot_maintenance_map.json --markdown-out docs\flowpilot_maintenance_map.md`;
+  no runtime owner module is over the 450-line threshold.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`;
+  installed FlowPilot digest now matches repository source.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The runtime owner layer is now under the current line threshold; remaining
+  large pressure is in model, script, and test surfaces that need separate
+  StructureMesh/TestMesh ownership.
+- The default live control-plane audit found active runtime-state issues in the
+  current `.flowpilot` run:
+  `material_progress_flags_not_generation_scoped`,
+  `material_reissue_keeps_stale_progress_flags`, and
+  `packet_result_author_identity_not_replayable`. This run was preserved
+  because peer agents are active.
+- A split-introduced source-audit readability issue around external event
+  aliases was fixed; the remaining live audit findings are runtime-state
+  findings, not event taxonomy parsing failures.
+- The abstract control-plane model, StructureMesh gate, foreground tests, and
+  background meta/capability checks are green for the code split itself.
+
+### Skipped Or Limited
+
+- No `.flowpilot` active-run state, runtime directories, current pointer, run
+  index, or validation artifacts were deleted or repaired.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+- The live-run audit limitation remains a disclosed active-runtime boundary
+  until the peer-owned run settles or is repaired by its owner.

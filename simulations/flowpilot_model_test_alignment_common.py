@@ -91,6 +91,10 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_protocol_event_capabilities",
     "asset:flowpilot_router_protocol_dispatch_policy",
     "asset:flowpilot_router_protocol_external_event_data",
+    "asset:flowpilot_router_protocol_external_event_data_material",
+    "asset:flowpilot_router_protocol_external_event_data_route",
+    "asset:flowpilot_router_protocol_external_event_data_startup",
+    "asset:flowpilot_router_protocol_external_event_data_terminal",
     "asset:flowpilot_router_protocol_external_event_registry",
     "asset:flowpilot_router_protocol_gate_registry",
     "asset:flowpilot_router_protocol_runtime_flags",
@@ -98,6 +102,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_protocol_gate_block_specs",
     "asset:flowpilot_router_protocol_gate_pass_clears",
     "asset:flowpilot_router_protocol_gate_reset_flags",
+    "asset:flowpilot_router_protocol_process_contracts",
     "asset:flowpilot_router_action_factory_dispatch",
     "asset:flowpilot_router_action_factory_dispatch_apply",
     "asset:flowpilot_router_action_factory_dispatch_blockers",
@@ -235,6 +240,10 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_index",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_officer",
     "asset:flowpilot_router_work_packets_pm_role_writes_decisions",
+    "asset:flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate",
+    "asset:flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition",
+    "asset:flowpilot_router_work_packets_pm_role_writes_decisions_packet_outcomes",
+    "asset:flowpilot_router_work_packets_pm_role_writes_decisions_role_result",
     "asset:flowpilot_router_work_packets_pm_role_writes_request",
     "asset:flowpilot_router_work_packets_pm_role_writes_results",
     "asset:flowpilot_user_flow_diagram",
@@ -610,17 +619,19 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "recommended_next_action": "monitor_external_event_shard_contracts",
     },
     "flowpilot_router_protocol_external_event_data": {
-        "split_status": "skipped_split",
+        "split_status": "completed_split",
         "split_reason": (
-            "phase_indexed_external_event_table_is_already_a_leaf_declarative_contract"
+            "phase_indexed_external_event_data_split_into_startup_material_route_terminal_tables"
         ),
-        "structure_split_status": "explicitly_skipped",
-        "structure_split_skip_reason": (
-            "table_only_no_functions_classes_state_writes_or_duplicate_effect_paths"
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data_startup.py",
+            "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data_material.py",
+            "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data_route.py",
+            "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data_terminal.py",
         ),
-        "peer_safety_status": "skip_confirmed_by_structuremesh_review",
+        "peer_safety_status": "claimed_by_complete_flowpilot_maintenance_convergence",
         "safe_split_class": "declarative_protocol_table",
-        "recommended_next_action": "monitor_external_event_phase_table_contracts",
+        "recommended_next_action": "monitor_external_event_data_phase_contracts",
     },
     "flowpilot_router_payload_contracts": {
         "split_status": "completed_split",
@@ -774,6 +785,10 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
             "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_request.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_results.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_packet_outcomes.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_role_result.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
         "safe_split_class": "runtime_pm_role_work_helper",

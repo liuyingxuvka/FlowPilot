@@ -55,3 +55,53 @@ fast-looping after a real barrier.
 - **WHEN** the focused FlowGuard runner evaluates its hazard catalog
 - **THEN** each known-bad projection or fast-loop hazard MUST be detected by an
   invariant before production code changes are trusted
+
+### Requirement: Terminal projections share one terminal fact
+FlowPilot SHALL refresh current-run status, run index, router state, daemon
+status, and daemon lock projection from the same terminal lifecycle fact after a
+run stop.
+
+#### Scenario: Stop projection is refreshed
+- **WHEN** user stop or cancel is recorded for a run
+- **THEN** `.flowpilot/current.json`, `.flowpilot/index.json`, the run router
+  state, the daemon status, and the daemon lock projection MUST agree that the
+  run is terminal or stopped
+- **AND** visible next-step text MUST NOT describe creating heartbeat
+  automation, starting roles, startup intake, or route work as the active next
+  task.
+
+#### Scenario: Historical ledger rows remain
+- **WHEN** historical Controller ledger rows or retry rows remain after terminal
+  projection refresh
+- **THEN** they MAY remain as history
+- **AND** they MUST be marked cancelled, superseded, terminal-only, or otherwise
+  not active for nonterminal execution.
+
+### Requirement: Daemon reconciles direct role-output events before work selection
+The Router daemon SHALL fold every authorized direct role-output event from durable role-output storage into canonical Router events, flags, and registered side-effect projections before returning an existing pending action or computing new work.
+
+#### Scenario: Material review event exists only in role output ledger
+- **WHEN** a valid `material_sufficiency_report` direct role output declares `reviewer_reports_material_insufficient`, the matching Controller action row is done, and the matching Router scheduler row is reconciled, but Router state lacks the material review event and flag
+- **THEN** Router MUST record the canonical event, sync `material_review` and `material_review_insufficient`, expose the PM repair or research branch, and MUST NOT continue projecting the old Reviewer wait
+
+#### Scenario: Generic direct role event is replayed
+- **WHEN** a valid direct role-output event was already folded into Router state and the same durable role-output evidence is seen again
+- **THEN** Router MUST treat the replay as idempotent and MUST NOT record a duplicate event or duplicate side effect
+
+#### Scenario: Invalid or unauthorized direct role event exists
+- **WHEN** a role-output ledger entry is missing runtime validation, declares an event that is not expected for the active wait, or violates the role-output contract
+- **THEN** Router MUST NOT fold it into canonical Router events and MUST surface a control-plane blocker or conservative waiting state
+
+### Requirement: Daemon clears stale waits after internal evidence appears
+The Router daemon SHALL reconcile stale Controller wait/projection rows when
+authoritative Router-owned internal postcondition evidence exists.
+
+#### Scenario: Old wait remains after capability sync evidence
+- **WHEN** `capabilities/capability_sync.json` exists and validates
+- **AND** `capability_evidence_synced` is recorded or can be reclaimed from the
+  artifact
+- **AND** an open or blocked Controller wait/reminder still names
+  `capability_evidence_synced`
+- **THEN** Router MUST mark that projection resolved from Router-owned evidence
+- **AND** Router MUST NOT keep reporting that the Controller or reviewer is the
+  missing actor for the already-satisfied postcondition

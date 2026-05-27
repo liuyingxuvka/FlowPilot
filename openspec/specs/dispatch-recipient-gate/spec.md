@@ -108,6 +108,28 @@ same role still owns unfinished prior work in the current run.
 - **THEN** the prior returned result does not by itself make `worker_b` busy
 - **AND** PM remains the busy role for the pending disposition.
 
+#### Scenario: ACK-only stale passive wait does not keep role busy
+
+- **GIVEN** a Controller passive wait row watches an ACK-only system-card return
+- **AND** the matching return ledger evidence is already resolved
+- **WHEN** Router evaluates a later independent dispatch to the same role
+- **THEN** Router reconciles the stale ACK wait through existing action-ledger and scheduler-row paths
+- **AND** the stale ACK wait alone does not keep the role busy.
+
+#### Scenario: Output-bearing card ACK does not clear work busy
+
+- **GIVEN** a role ACKed a system card classified as `output_bearing_work_package`
+- **AND** the card's required report, result, decision, or packet-spec event is not recorded
+- **WHEN** Router evaluates a later independent dispatch to the same role
+- **THEN** Router still treats the role as busy for the unfinished output-bearing work.
+
+#### Scenario: Output-bearing report clears work busy
+
+- **GIVEN** a role had an output-bearing work package wait
+- **AND** the matching report, result, decision, or packet-spec event has been recorded
+- **WHEN** Router evaluates a later independent dispatch to the same role
+- **THEN** Router reconciles the satisfied wait rows and does not keep the role busy from that completed work.
+
 ### Requirement: Existing dispatch legality checks remain enforced
 
 The pre-dispatch recipient gate SHALL preserve existing dispatch legality
@@ -139,3 +161,17 @@ busy source, and wait reason.
 - **THEN** the replacement wait action includes the target role, packet id when
   available, source ledger path, and blocked action type
 - **AND** it does not expose sealed packet or result body content.
+
+### Requirement: Router direct dispatch replaces Reviewer pre-dispatch approval for new PM packets
+Router SHALL use direct-dispatch validation as the active pre-worker gate for new PM-authored work packets. Reviewer pre-dispatch approval SHALL remain legacy-only and SHALL NOT be required before relaying a valid PM-authored Worker or Officer packet.
+
+#### Scenario: Valid PM packet relays after Router validation
+- **WHEN** PM registers a work packet for a Worker or Officer
+- **AND** Router verifies packet authority, target role, sealed body boundary, hash identity, active-holder state, and recipient availability
+- **THEN** Router SHALL allow Controller to relay the packet envelope to the assigned role
+- **AND** Router SHALL NOT require `reviewer.dispatch_request` or an equivalent Reviewer approval before relay.
+
+#### Scenario: Invalid packet still blocks before worker relay
+- **WHEN** a PM-authored work packet fails Router direct-dispatch validation
+- **THEN** Router SHALL block or repair the packet before worker relay
+- **AND** Reviewer approval SHALL NOT be used to override the failed mechanical gate.

@@ -2,6 +2,33 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.14 - 2026-05-27
+
+### Added
+
+- Added the `complete-flowpilot-maintenance-convergence` OpenSpec change for
+  local maintenance convergence, archive cleanup, read-only runtime retention
+  evidence, targeted StructureMesh contraction, and install-sync closure.
+- Added a maintenance convergence report at
+  `docs/flowpilot_maintenance_convergence_20260527.md` and refreshed the
+  generated maintenance map.
+- Added phase-owned external event data modules, PM package disposition helper
+  modules, and process-contract helpers while preserving existing import
+  facades.
+
+### Changed
+
+- Archived completed OpenSpec backlog items under `openspec/changes/archive/`
+  so only the current maintenance convergence change remains active.
+- Updated model-test-code alignment metadata for the new child modules; the
+  current alignment report covers 857 surfaces with 0 gaps and 0 deferred
+  structure splits.
+- Kept `.flowpilot` runtime cleanup read-only because another agent-owned
+  active run is present; live-run audit findings are reported but not repaired
+  by mutating peer runtime state.
+- Kept this as a local-only maintenance version; GitHub push, tag, and remote
+  release remain intentionally out of scope.
+
 ## 0.9.13 - 2026-05-18
 
 ### Added

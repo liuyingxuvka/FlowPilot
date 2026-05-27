@@ -17,13 +17,19 @@ FlowPilot SHALL keep Router planning metadata in a Router-owned scheduler table 
 ### Requirement: Router daemon queues independent work until a barrier
 The Router daemon SHALL reconcile visible tables once per tick and enqueue additional independent Controller rows while no barrier is active.
 
-#### Scenario: Startup work is queued without waiting for every receipt
-- **WHEN** a startup Controller row is already pending and the next startup card delivery is independent of that row
-- **THEN** Router records the pending row and may enqueue the card delivery row in the same daemon tick.
+#### Scenario: Equivalent Controller work in flight
+- **WHEN** Router is considering a Controller action whose action type, scope, and registered postcondition match an existing pending, running, waiting, done, or reconciled row
+- **THEN** Router MUST classify that existing row before enqueueing
+- **AND** Router MUST NOT enqueue another ordinary row for the same work unless the existing row is explicitly terminal-failed and eligible for bounded retry
 
-#### Scenario: Barrier stops enqueueing
-- **WHEN** Router reaches user input, host automation, control blocker handling, non-startup ACK waiting, role-result waiting, or current-scope reconciliation waiting
-- **THEN** Router stops enqueueing new Controller rows and exposes the barrier as the current wait.
+#### Scenario: Reconciled stateful row with drift blocks duplicate enqueue
+- **WHEN** the existing equivalent row is done/reconciled but its Router-owned stateful postcondition flag is false
+- **THEN** Router MUST enter reconciliation/repair for that row
+- **AND** Router MUST NOT enqueue a fresh ordinary row for the same action in the same scope
+
+#### Scenario: Independent startup work still queues
+- **WHEN** a different startup Controller row is pending but the next startup action has a different action type or postcondition and no dependency on the pending row
+- **THEN** Router MAY enqueue the independent row according to the existing nonblocking startup rules
 
 ### Requirement: Controller has a continuous standby row during live waits
 When the Router daemon is live and no ordinary Controller action is ready, FlowPilot SHALL expose a Controller-facing `continuous_controller_standby` row and a matching standby payload so the foreground Controller has a formal in-progress duty instead of an empty plan.
@@ -78,3 +84,45 @@ FlowPilot SHALL NOT add a second all-startup ACK gate before PM startup activati
 #### Scenario: PM activation proceeds after reviewer report and PM card ACK
 - **WHEN** Reviewer startup facts are recorded and PM has ACKed `pm.startup_activation`
 - **THEN** Router may accept the PM startup activation decision through the existing event path.
+
+### Requirement: Async scheduler waits on proven in-flight relay work
+FlowPilot SHALL treat packet relay/open/ACK/progress evidence as in-flight work and SHALL NOT issue a duplicate ordinary relay action while the same packet family and packet ids are already in progress.
+
+#### Scenario: Worker has opened relayed packet
+- **WHEN** packet relay evidence exists for a packet family
+- **AND** at least one addressed worker has opened, ACKed, or recorded progress for the packet
+- **AND** the worker result has not yet returned
+- **THEN** Router MUST wait for result or blocker evidence
+- **AND** Router MUST NOT issue the same packet relay command again
+
+#### Scenario: Relay evidence exists before aggregate flag is folded
+- **WHEN** Router-visible relay evidence proves packet dispatch
+- **AND** the aggregate dispatch flag is stale false at scheduler entry
+- **THEN** Router MUST run the registered evidence fold before next-action selection
+- **AND** duplicate-dispatch checks MUST see the folded in-flight state
+
+### Requirement: Async scheduler escalates only after bounded proof failure
+FlowPilot SHALL reserve Controller retry and PM repair escalation for cases where the registered evidence fold cannot prove completion or in-flight work from Router-visible records.
+
+#### Scenario: Controller receipt is done but all relay evidence is absent
+- **WHEN** a relay Controller row reports `done`
+- **AND** packet/result relay evidence is absent from the registered sources
+- **THEN** Router MAY use the existing retry budget and PM repair path
+- **AND** Router MUST NOT silently continue as if the relay had succeeded
+
+### Requirement: Scheduler ledger has one live mutation lane
+Router scheduler rows SHALL be mutated through one live Router-owned lane while
+daemon mode is active.
+
+#### Scenario: Receipt reconciliation wants scheduler update
+- **WHEN** Controller receipt reconciliation identifies a scheduler row that can
+  be marked done, blocked, superseded, or reconciled
+- **THEN** it submits that fact to the Router-owned fold lane
+- **AND** it SHALL NOT also rewrite the scheduler row through an independent
+  foreground path.
+
+#### Scenario: No live daemon owns the run
+- **WHEN** no live daemon lock exists and foreground recovery is explicitly
+  operating as the Router-owned fallback lane
+- **THEN** the foreground path may perform the scheduler fold
+- **AND** it records that fallback ownership in the reconciliation result.
