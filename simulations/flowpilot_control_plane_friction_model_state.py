@@ -419,6 +419,11 @@ class State:
     material_dispatch_block_matches_active_generation: bool = True
     role_output_event_deduped_by_body_ref: bool = True
     role_output_current_generation_not_short_circuited_by_global_flag: bool = True
+    role_output_package_disposition_domain_first_commit: bool = True
+    pm_package_authority_split_preserves_wait: bool = True
+    pm_package_authority_split_repairs_domain_commit: bool = True
+    pm_package_authority_split_crashed_daemon: bool = False
+    pm_package_authority_split_accepted_as_success: bool = False
     duplicate_role_event_side_effect_written: bool = False
     pm_package_disposition_semantic_identity_deduped: bool = True
     pm_package_disposition_body_hash_conflict_checked: bool = True

@@ -485,6 +485,25 @@ def role_event_identity_and_audit_records_are_closed(state: State, trace) -> Inv
         return InvariantResult.fail(
             "role-output reconciliation short-circuited current-generation material event on a run-wide flag"
         )
+    if not state.role_output_package_disposition_domain_first_commit:
+        return InvariantResult.fail(
+            "role-output package disposition reconciliation recorded event progress before domain artifact commit"
+        )
+    if not (
+        state.pm_package_authority_split_preserves_wait
+        or state.pm_package_authority_split_repairs_domain_commit
+    ):
+        return InvariantResult.fail(
+            "recorded PM package disposition without canonical authority closed the legal wait before preserving it or repairing the canonical domain commit"
+        )
+    if state.pm_package_authority_split_crashed_daemon:
+        return InvariantResult.fail(
+            "recorded PM package disposition without canonical authority crashed the daemon"
+        )
+    if state.pm_package_authority_split_accepted_as_success:
+        return InvariantResult.fail(
+            "recorded PM package disposition without canonical authority was accepted as successful progress"
+        )
     if state.duplicate_role_event_side_effect_written:
         return InvariantResult.fail(
             "duplicate role-output event wrote a duplicate side effect"

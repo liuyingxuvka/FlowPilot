@@ -1075,6 +1075,9 @@ def hazard_states() -> dict[str, State]:
         "role_output_current_generation_short_circuited_by_global_flag": _safe_base(
             role_output_current_generation_not_short_circuited_by_global_flag=False,
         ),
+        "pm_package_disposition_reconciled_without_domain_commit": _safe_base(
+            role_output_package_disposition_domain_first_commit=False,
+        ),
         "pm_package_disposition_not_semantic_deduped": _safe_base(
             pm_package_disposition_semantic_identity_deduped=False,
         ),
@@ -1110,6 +1113,16 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_package_disposition_packet_outcomes_missing": _safe_base(
             pm_package_packet_outcomes_recorded=False,
+        ),
+        "pm_package_authority_split_lost_wait": _safe_base(
+            pm_package_authority_split_preserves_wait=False,
+            pm_package_authority_split_repairs_domain_commit=False,
+        ),
+        "pm_package_authority_split_crashed_daemon": _safe_base(
+            pm_package_authority_split_crashed_daemon=True,
+        ),
+        "pm_package_authority_split_accepted_as_success": _safe_base(
+            pm_package_authority_split_accepted_as_success=True,
         ),
         "packet_result_author_identity_not_replayable": _safe_base(
             packet_result_author_identity_replayable=False,

@@ -15,6 +15,12 @@ LOCAL_PREFIXES = (
     "role",
     "run_packet",
 )
+STRUCTURE_SPLIT_CHILD_SURFACES = (
+    "flowpilot_router_event_dispatcher_record",
+    "flowpilot_router_expected_waits_reconciliation_pm_package",
+    "flowpilot_router_role_output_bridge_events_replay",
+    "flowpilot_router_runtime_state_persistence_save",
+)
 
 
 def assignment_names(node: ast.Assign | ast.AnnAssign) -> set[str]:
@@ -122,6 +128,13 @@ class FlowPilotAssetSurfaceContractTests(unittest.TestCase):
                 self.assertTrue(declares_all_exports(tree), f"{path.name} facade should declare __all__")
                 if exports is not None:
                     self.assertTrue(exports)
+
+    def test_structure_split_child_surfaces_are_parseable(self) -> None:
+        for stem in STRUCTURE_SPLIT_CHILD_SURFACES:
+            with self.subTest(stem=stem):
+                path = ASSET_ROOT / f"{stem}.py"
+                self.assertTrue(path.exists(), stem)
+                ast.parse(path.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

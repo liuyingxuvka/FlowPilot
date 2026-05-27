@@ -19223,3 +19223,40 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - The synthetic `micro_module_explosion` known-bad case remains blocked at
   `child_module_count=940`; the refreshed budget keeps the guard active while
   accepting the current tracked topology.
+
+## 2026-05-27 16:46 +02:00 - Role-Output Transaction Commit Hardening
+
+### Summary
+
+- Task: harden role-output PM package disposition transactions after the planned OpenSpec and FlowGuard cleanup.
+- Route: `openspec_apply + flowguard_existing_model_preflight + architecture_reduction + development_process_flow + model_test_alignment`.
+- Change: `harden-role-output-transaction-commit`.
+
+### Changed Surfaces
+
+- Reconciliation now commits canonical domain artifacts before finalizing package disposition progress.
+- Authority-split role-output replay can repair missing domain artifacts before fatal scoped conflict handling.
+- Package reconciliation coverage now spans material, research, and current-node package domains.
+- Model/test source contracts were refreshed to follow the event-dispatcher record and runtime-state persistence save split modules.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `openspec validate harden-role-output-transaction-commit --strict --json --no-interactive`.
+- OK: `openspec validate --all --strict --json --no-interactive` with 151 passed, 0 failed.
+- OK: `python -m unittest tests.test_flowpilot_role_output_reconciliation -v` with 13 tests passed.
+- OK: control-plane friction, event idempotency, repair transaction, PM package absorption, and model/test alignment FlowGuard checks.
+- OK: background `run_meta_checks` and `run_capability_checks` artifact sets completed with exit code 0, stderr empty, proof reuse false.
+- OK: local install sync and install freshness audits passed.
+
+### Findings
+
+- The previous transaction chain was still too brittle because event recording and role-output replay had separate precheck gates. Both paths now let legitimate authority-split repair commit the missing canonical domain artifact before claiming package disposition progress.
+- The repair is domain-wide, not material-only: material, research, and current-node package dispositions are covered by the model audit and tests.
+- The facade split introduced new owner modules; model/test alignment now points contracts at those owner files instead of stale parent surfaces.
+
+### Skipped Or Limited
+
+- No peer AI work was reverted or cleaned up.
+- Unrelated final-confidence peer change surfaces were left outside this task's intended commit scope.
+- No GitHub push, tag, release, deploy, or public publication was performed.

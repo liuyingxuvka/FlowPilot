@@ -11,7 +11,11 @@ def _durable_reconciliation_only_quarantined_repair_conflicts(reconciliation: di
     direct = reconciliation.get("direct_role_output_reconciliation")
     if not isinstance(direct, dict):
         return False
-    if not (direct.get("repair_owned_conflicts") or direct.get("stale_unowned_conflicts")):
+    if not (
+        direct.get("repair_owned_conflicts")
+        or direct.get("stale_unowned_conflicts")
+        or direct.get("package_authority_splits")
+    ):
         return False
     if direct.get("reconciled") or direct.get("already_recorded"):
         return False
@@ -19,6 +23,9 @@ def _durable_reconciliation_only_quarantined_repair_conflicts(reconciliation: di
     role_output = reconciliation.get("role_output_reconciliation")
     if isinstance(role_output, dict) and role_output.get("changed"):
         return False
+
+    if direct.get("package_authority_splits"):
+        return True
 
     batches = reconciliation.get("batches")
     if isinstance(batches, dict):

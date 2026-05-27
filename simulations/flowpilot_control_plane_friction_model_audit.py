@@ -756,6 +756,43 @@ def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
         / "assets"
         / "flowpilot_router_role_output_bridge_events.py"
     )
+    role_output_replay_text, role_output_replay_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_role_output_bridge_events_replay.py"
+    )
+    expected_waits_text, expected_waits_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_expected_waits_reconciliation.py"
+    )
+    expected_waits_pm_package_text, expected_waits_pm_package_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_expected_waits_reconciliation_pm_package.py"
+    )
+    expected_waits_family_text = "\n".join((expected_waits_text, expected_waits_pm_package_text))
+    expected_waits_family_error = expected_waits_error or expected_waits_pm_package_error
+    event_dispatcher_text, event_dispatcher_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_event_dispatcher.py"
+    )
+    action_provider_text, action_provider_error = _read_text(
+        project_root
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_router_action_providers_lifecycle.py"
+    )
     next_action_uses_global_flags = (
         "if flags.get('pm_material_packets_issued') and (not flags.get('material_scan_packets_relayed'))"
         in next_actions_text
@@ -785,15 +822,66 @@ def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
         and '"dedupe_fields": ("batch_id", "packet_ids", "packet_generation_id", "body_hash")'
         not in scoped_identity_text
     )
+    domain_commit_index = expected_waits_family_text.find("domain_commit = _commit_reconciled_event_domain_artifact")
+    event_flag_index = expected_waits_family_text.find('run_state["flags"][flag] = True')
+    package_reconciliation_domain_first_commit = (
+        expected_waits_family_error is None
+        and domain_commit_index >= 0
+        and event_flag_index >= 0
+        and domain_commit_index < event_flag_index
+        and "_write_pm_package_result_disposition(" in expected_waits_family_text
+    )
+    package_reconciliation_covers_all_domains = all(
+        event_name in expected_waits_family_text and batch_kind in expected_waits_family_text
+        for event_name, batch_kind in (
+            ("pm_records_material_scan_result_disposition", "material_scan"),
+            ("pm_records_research_result_disposition", "research"),
+            ("pm_records_current_node_result_disposition", "current_node"),
+        )
+    )
+    package_authority_split_guard_present = (
+        role_output_error is None
+        and role_output_replay_error is None
+        and "_package_disposition_authority_split(" in role_output_replay_text
+        and "_record_package_disposition_authority_split(" in role_output_replay_text
+        and "package_authority_splits" in role_output_replay_text
+        and event_dispatcher_error is None
+        and "_repair_direct_package_disposition_authority_split(" in event_dispatcher_text
+    )
+    package_authority_split_preserves_wait = (
+        package_authority_split_guard_present
+        and action_provider_error is None
+        and 'direct.get("package_authority_splits")' in action_provider_text
+    )
+    package_authority_split_repairs_domain_commit = (
+        package_authority_split_guard_present
+        and "_record_router_reconciled_external_event(" in role_output_replay_text
+        and "router_repaired_reconciled_event_domain_commit" in expected_waits_family_text
+        and "_write_pm_package_result_disposition(" in event_dispatcher_text
+        and "domain_commit_repaired" in event_dispatcher_text
+        and "router_repaired_direct_package_disposition_authority_split" in event_dispatcher_text
+    )
     return {
         "next_actions_error": next_actions_error,
         "persistence_error": persistence_error,
         "role_output_error": role_output_error,
+        "role_output_replay_error": role_output_replay_error,
+        "expected_waits_error": expected_waits_error,
+        "expected_waits_pm_package_error": expected_waits_pm_package_error,
+        "event_dispatcher_error": event_dispatcher_error,
+        "action_provider_error": action_provider_error,
         "scoped_identity_error": scoped_identity_error,
         "next_action_uses_global_material_flags": next_action_uses_global_flags,
         "stale_save_preserves_existing_true_flags": stale_save_preserves_existing_true_flags,
         "role_output_has_global_flag_short_circuit": role_output_global_flag_short_circuit,
         "package_disposition_conflict_checked": package_disposition_conflict_checked,
+        "package_reconciliation_covers_all_domains": package_reconciliation_covers_all_domains,
+        "package_reconciliation_domain_first_commit": (
+            package_reconciliation_domain_first_commit
+            and package_reconciliation_covers_all_domains
+        ),
+        "package_authority_split_preserves_wait": package_authority_split_preserves_wait,
+        "package_authority_split_repairs_domain_commit": package_authority_split_repairs_domain_commit,
     }
 
 def _audit_material_generation_progress_projection(
@@ -1009,6 +1097,9 @@ def _audit_material_generation_progress_projection(
         "stale_save_preserves_material_generation_flag_clear": stale_save_preserves_material_generation_flag_clear,
         "role_output_current_generation_not_short_circuited_by_global_flag": role_output_current_generation_not_short_circuited_by_global_flag,
         "pm_package_disposition_body_hash_conflict_checked": bool(source_checks.get("package_disposition_conflict_checked")),
+        "role_output_package_disposition_domain_first_commit": bool(source_checks.get("package_reconciliation_domain_first_commit")),
+        "pm_package_authority_split_preserves_wait": bool(source_checks.get("package_authority_split_preserves_wait")),
+        "pm_package_authority_split_repairs_domain_commit": bool(source_checks.get("package_authority_split_repairs_domain_commit")),
         "pm_package_packet_outcomes_recorded": pm_package_packet_outcomes_recorded,
     }
 
@@ -1093,6 +1184,15 @@ def _audit_material_repair_generation_protocol(
         ),
         "pm_package_disposition_body_hash_conflict_checked": bool(
             material_progress_projection.get("pm_package_disposition_body_hash_conflict_checked")
+        ),
+        "role_output_package_disposition_domain_first_commit": bool(
+            material_progress_projection.get("role_output_package_disposition_domain_first_commit")
+        ),
+        "pm_package_authority_split_preserves_wait": bool(
+            material_progress_projection.get("pm_package_authority_split_preserves_wait")
+        ),
+        "pm_package_authority_split_repairs_domain_commit": bool(
+            material_progress_projection.get("pm_package_authority_split_repairs_domain_commit")
         ),
         "pm_package_packet_outcomes_recorded": bool(
             material_progress_projection.get("pm_package_packet_outcomes_recorded")
@@ -3267,6 +3367,27 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="role_event_identity_and_audit_records_are_closed",
             evidence=material_repair_protocol,
         )
+    if not material_repair_protocol.get("role_output_package_disposition_domain_first_commit"):
+        _add_finding(
+            findings,
+            code="pm_package_disposition_reconciled_without_domain_commit",
+            severity="error",
+            summary="role-output package disposition reconciliation can record event progress before the canonical domain artifact commit",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
+    if not (
+        material_repair_protocol.get("pm_package_authority_split_preserves_wait")
+        or material_repair_protocol.get("pm_package_authority_split_repairs_domain_commit")
+    ):
+        _add_finding(
+            findings,
+            code="pm_package_authority_split_lost_wait",
+            severity="error",
+            summary="recorded PM package disposition without canonical authority can close the legal wait before preserving it or repairing the canonical domain commit",
+            invariant="role_event_identity_and_audit_records_are_closed",
+            evidence=material_repair_protocol,
+        )
     if not material_repair_protocol.get("pm_package_packet_outcomes_recorded"):
         _add_finding(
             findings,
@@ -3524,6 +3645,15 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         ),
         pm_package_disposition_body_hash_conflict_checked=bool(
             material_repair_protocol.get("pm_package_disposition_body_hash_conflict_checked")
+        ),
+        role_output_package_disposition_domain_first_commit=bool(
+            material_repair_protocol.get("role_output_package_disposition_domain_first_commit")
+        ),
+        pm_package_authority_split_preserves_wait=bool(
+            material_repair_protocol.get("pm_package_authority_split_preserves_wait")
+        ),
+        pm_package_authority_split_repairs_domain_commit=bool(
+            material_repair_protocol.get("pm_package_authority_split_repairs_domain_commit")
         ),
         pm_package_packet_outcomes_recorded=bool(
             material_repair_protocol.get("pm_package_packet_outcomes_recorded")

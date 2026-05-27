@@ -158,6 +158,7 @@ def _reconcile_pending_role_wait_from_packet_status(
         "result_envelope_path": payload["result_envelope_path"],
         "packet_status": status,
     }
+
 def _record_router_reconciled_external_event(
     project_root: Path,
     run_root: Path,
@@ -165,49 +166,11 @@ def _record_router_reconciled_external_event(
     event: str,
     payload: dict[str, Any],
 ) -> bool:
-    meta = EXTERNAL_EVENTS[event]
-    flag = str(meta["flag"])
-    repeatable = event in {ROLE_WORK_RESULT_RETURNED_EVENT, "worker_current_node_result_returned"}
-    scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
-    _check_scoped_event_conflict(run_state, scoped_identity)
-    if _scoped_event_is_recorded(run_state, scoped_identity):
-        return False
-    scoped_identity_requires_fresh_record = (
-        event == "pm_records_material_scan_result_disposition"
-        and scoped_identity is not None
+    from flowpilot_router_expected_waits_reconciliation_pm_package import (
+        _record_router_reconciled_external_event as _record_pm_package_event,
     )
-    if run_state.setdefault("flags", {}).get(flag) and not repeatable and not scoped_identity_requires_fresh_record:
-        return False
-    run_state["flags"][flag] = True
-    run_state.setdefault("events", []).append(
-        {
-            "event": event,
-            "summary": meta["summary"],
-            "payload": payload,
-            "recorded_at": utc_now(),
-            "reconciled_by_router": True,
-        }
-    )
-    _mark_scoped_event_recorded(run_state, scoped_identity)
-    wait_closure = _close_waiting_controller_actions_for_external_event(
-        project_root,
-        run_root,
-        run_state,
-        event=event,
-        payload=payload,
-        source="router_reconciled_external_event",
-    )
-    append_history(
-        run_state,
-        f"router_reconciled_{event}",
-        {
-            "event": event,
-            "payload": payload,
-            "controller_visibility": "metadata_only",
-            "wait_closure": wait_closure,
-        },
-    )
-    return True
+
+    return _record_pm_package_event(_bound_router(), project_root, run_root, run_state, event, payload)
 def _try_reconcile_material_scan_body_delivery(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
     return flowpilot_router_work_packets._try_reconcile_material_scan_body_delivery(_bound_router(), project_root, run_root, run_state)
 def _try_reconcile_material_scan_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
