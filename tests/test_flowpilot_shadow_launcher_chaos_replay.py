@@ -26,7 +26,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(router_script.exists())
         return router_script
 
-    def run_installed_cli(self, router_script: Path, root: Path, args: list[str], *, timeout: float = 30.0) -> dict:
+    def run_installed_cli(self, router_script: Path, root: Path, args: list[str], *, timeout: float = 60.0) -> dict:
         command = [sys.executable, str(router_script), "--root", str(root), *args]
         if "--json" not in command:
             command.append("--json")

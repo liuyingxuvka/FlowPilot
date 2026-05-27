@@ -37,3 +37,9 @@
 - [x] 6.2 Run install check and local install sync audit after synchronization.
 - [x] 6.3 Record FlowGuard adoption and predictive KB postflight notes.
 - [x] 6.4 Review git diff, stage intended files only, and commit local git state without pushing, publishing, tagging, deploying, or archiving.
+
+## 7. TestMesh Long-Run Split
+
+- [x] 7.1 Split long synthetic trace, end-to-end chaos, and shadow launcher replay suites into named fast-tier scenario shards.
+- [x] 7.2 Add tier tests that reject reintroduced aggregate replay commands and broad class-name selectors.
+- [x] 7.3 Rerun the split fast tier in the stable background artifact contract and inspect final supervisor exit/meta/combined evidence.

@@ -18980,3 +18980,48 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - Use the promoted defect-family gate matrix as the default intake point for any future repeated FlowPilot miss.
 - Archive `promote-known-friction-defect-family-gates` after review if implementation evidence is accepted.
+
+## 2026-05-27 - Fast-Tier Long Replay Shard Split
+
+- Trigger: user requested splitting tests that take too long and splitting models when they are genuinely too large.
+- Status: implemented, validated locally, and ready for local git commit.
+- Skill decision: FlowGuard TestMesh plus ModelMesh review, continuing the OpenSpec change `clarify-parallel-flow-block-authority`.
+
+### Changed Surfaces
+
+- Split long fast-tier replay checks into scenario-addressable shards:
+  - synthetic agent trace replay: aggregate replay command removed; core remains grouped and exception/system-story cases now run as named scenario shards.
+  - end-to-end synthetic chaos replay: aggregate replay command removed; repair/proof cases now run as named scenario shards.
+  - shadow launcher chaos replay: aggregate replay command removed; each launcher/recovery/peer/legacy/package/soak case now has its own background artifact base name.
+- Added a `pytest -k` command builder for test-tier commands.
+- Added test-tier coverage that rejects broad class-name selectors and reintroduced aggregate replay commands.
+- Increased the installed shadow-launcher CLI subprocess timeout from 30s to 60s to avoid false timeout failures under fast-tier background parallelism.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `python -m pytest tests\test_flowpilot_test_tiers.py tests\test_flowpilot_known_friction_regression_matrix.py -q` -> 34 passed, 350 subtests passed.
+- OK: first split smoke checks exposed that two replay shards still exceeded 5 minutes; they were further split to single-scenario shards.
+- OK: `python -m pytest tests\test_flowpilot_test_tiers.py -q` -> 26 passed, 396 subtests passed.
+- OK: `python -m pytest tests\test_flowpilot_shadow_launcher_chaos_replay.py -k test_installed_launcher_shadow_start_reaches_releasable_standard_state -q` -> 1 passed.
+- OK: `python simulations\run_flowpilot_model_mesh_checks.py --json-out simulations\flowpilot_model_mesh_results.json`; model graph, coverage, hazards, contract refinement, and progress checks passed. The live-run projection was not committed because it reflects local active-run state.
+- OK: final split fast-tier background supervisor at `tmp/flowguard_background/parallel_flow_authority_fast_split_final2`; `fast_background_supervisor.exit.txt` = `0`, status passed, proof reuse false, 60/60 commands passed.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`; installed `flowpilot` already fresh.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\check_install.py --json`.
+
+### Findings
+
+- The original 33-command fast tier hid multiple long replay families behind broad aggregate commands.
+- A first 55-command split still found a false timeout in the shadow launcher aggregate; the corrected 60-command split makes that scenario independently visible.
+- ModelMesh shows the model layer is already partitioned into child models for this route; no immediate model-file split was required by the current evidence.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication was performed.
+- No broad `meta_model.py` or `capability_model.py` split was performed in this pass because ModelMesh did not classify model partitioning as the current blocker.
+
+### Next Actions
+
+- Future long replay additions should enter the fast tier as named scenario shards instead of aggregate module-level commands.

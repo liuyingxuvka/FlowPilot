@@ -255,8 +255,65 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("no-producer PM repair recovery", descriptions["e2e_synthetic_chaos_matrix"])
         self.assertIn("producer-proof repair waits", descriptions["real_router_dry_run_rehearsal_matrix"])
         self.assertIn("PM repair atomicity", descriptions["known_friction_regression_matrix"])
-        self.assertIn("no-producer repair gates", descriptions["e2e_synthetic_chaos_replay_tests"])
+        self.assertIn("no-producer repair gate", descriptions["e2e_synthetic_chaos_no_producer_tests"])
         self.assertIn("repair producer proof", descriptions["real_router_dry_run_rehearsal_tests"])
+
+    def test_fast_tier_splits_long_replay_tests_into_named_shards(self) -> None:
+        commands = {
+            command.name: list(command.command)
+            for command in run_test_tier.commands_for_tier("fast")
+        }
+
+        self.assertNotIn("synthetic_agent_trace_replay_tests", commands)
+        self.assertNotIn("e2e_synthetic_chaos_replay_tests", commands)
+        self.assertNotIn("synthetic_agent_trace_repair_tests", commands)
+        self.assertNotIn("synthetic_agent_trace_system_story_tests", commands)
+        self.assertNotIn("e2e_synthetic_chaos_replay_repair_tests", commands)
+        self.assertNotIn("e2e_synthetic_chaos_replay_proof_tests", commands)
+        self.assertNotIn("shadow_launcher_chaos_replay_tests", commands)
+
+        expected_shards = {
+            "synthetic_agent_trace_core_tests",
+            "synthetic_agent_trace_reissue_retry_tests",
+            "synthetic_agent_trace_pm_repair_accept_tests",
+            "synthetic_agent_trace_pm_repair_reject_tests",
+            "synthetic_agent_trace_fatal_waiver_tests",
+            "synthetic_agent_trace_resume_preempt_tests",
+            "synthetic_agent_trace_stale_sibling_tests",
+            "synthetic_agent_trace_envelope_authority_tests",
+            "synthetic_agent_trace_controller_budget_tests",
+            "synthetic_agent_trace_material_repair_tests",
+            "synthetic_agent_trace_dirty_terminal_tests",
+            "synthetic_agent_trace_bad_repair_envelope_tests",
+            "synthetic_agent_trace_stacked_blockers_tests",
+            "synthetic_agent_trace_failed_repair_loop_tests",
+            "synthetic_agent_trace_stale_run_state_tests",
+            "synthetic_agent_trace_parallel_stop_tests",
+            "synthetic_agent_trace_terminal_total_gate_tests",
+            "e2e_synthetic_chaos_golden_lifecycle_tests",
+            "e2e_synthetic_chaos_worker_repair_tests",
+            "e2e_synthetic_chaos_pm_repair_tests",
+            "e2e_synthetic_chaos_no_producer_tests",
+            "e2e_synthetic_chaos_background_proof_tests",
+            "e2e_synthetic_chaos_parallel_stop_tests",
+            "e2e_synthetic_chaos_terminal_retry_tests",
+            "shadow_launcher_shadow_start_tests",
+            "shadow_launcher_crash_recovery_tests",
+            "shadow_launcher_peer_conflict_tests",
+            "shadow_launcher_legacy_assets_tests",
+            "shadow_launcher_malformed_package_tests",
+            "shadow_launcher_bounded_soak_tests",
+        }
+        self.assertLessEqual(expected_shards, set(commands))
+
+        for name in expected_shards:
+            with self.subTest(name=name):
+                command = commands[name]
+                self.assertIn("-k", command)
+                pattern = command[command.index("-k") + 1]
+                self.assertIn("test_", pattern)
+                self.assertNotEqual(pattern, "FlowPilotSyntheticAgentTraceReplayTests")
+                self.assertNotEqual(pattern, "FlowPilotEndToEndSyntheticChaosReplayTests")
 
     def test_router_parent_composes_child_slice_commands(self) -> None:
         command_names = [command.name for command in run_test_tier.commands_for_tier("router")]

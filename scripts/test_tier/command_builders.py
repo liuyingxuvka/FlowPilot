@@ -24,6 +24,14 @@ def _pytest(name: str, *paths: str, description: str) -> TierCommand:
     return TierCommand(name=name, command=_py("-m", "pytest", *paths, "-q"), description=description)
 
 
+def _pytest_k(name: str, path: str, pattern: str, *, description: str) -> TierCommand:
+    return TierCommand(
+        name=name,
+        command=_py("-m", "pytest", path, "-k", pattern, "-q"),
+        description=description,
+    )
+
+
 def _unittest(name: str, *modules: str, description: str) -> TierCommand:
     return TierCommand(name=name, command=_py("-m", "unittest", "-v", *modules), description=description)
 
