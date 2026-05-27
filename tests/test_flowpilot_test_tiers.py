@@ -100,6 +100,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         payload = json.loads(stdout.getvalue())
         self.assertIn("fast", payload["tiers"])
         self.assertIn("release", payload["tiers"])
+        self.assertIn("final-confidence", payload["tiers"])
 
     def test_main_release_dry_run_json_marks_release_only_commands(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-cli-") as tmp_name:
@@ -166,6 +167,16 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("public_release_check", release_commands)
         self.assertTrue(release_commands["public_release_check"].release_only)
         self.assertTrue(release_commands["public_release_check"].background_recommended)
+
+        final_confidence_commands = {
+            command.name: command
+            for command in run_test_tier.commands_for_tier("final-confidence")
+        }
+        self.assertIn("flowpilot_final_confidence_gate", final_confidence_commands)
+        self.assertIn(
+            "run_flowpilot_final_confidence_gate_checks.py",
+            " ".join(final_confidence_commands["flowpilot_final_confidence_gate"].command),
+        )
 
     def test_background_artifact_classifier_distinguishes_final_evidence_states(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-bg-classifier-") as tmp_name:

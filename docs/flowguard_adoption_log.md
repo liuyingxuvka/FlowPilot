@@ -19260,3 +19260,41 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No peer AI work was reverted or cleaned up.
 - Unrelated final-confidence peer change surfaces were left outside this task's intended commit scope.
 - No GitHub push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-27 17:16 +02:00 - Final Confidence Hard Gate
+
+### Summary
+
+- Task: enforce a non-degradable final confidence gate for FlowPilot completion claims.
+- Route: `openspec_propose_apply + flowguard_existing_model_preflight + test_mesh + structure_mesh + development_process_flow + model_test_alignment`.
+- Change: `enforce-final-confidence-hard-gate`.
+
+### Changed Surfaces
+
+- Added a final confidence aggregation module and CLI under `simulations/`.
+- Added an explicit `final-confidence` test tier.
+- Added focused tests for missing evidence, skipped live audit, failed live audit, incomplete full coverage, and scoped known-friction confidence.
+- Refreshed model-test alignment evidence so the final gate consumes `full_coverage_ok=true` rather than a stale red artifact.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `openspec validate enforce-final-confidence-hard-gate --strict`.
+- OK: `python simulations\run_flowpilot_final_confidence_gate_checks.py --run-checks --json-out tmp\final_confidence_gate\final_confidence_report_green.json` reported `full_confidence`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` reported full coverage with zero gaps.
+- OK: focused unit checks for final confidence, test-tier exposure, role-output reconciliation, asset surfaces, model runner contracts, and model-test alignment.
+- OK: local install sync, install audit, and install check passed.
+- OK: background `run_meta_checks` and `run_capability_checks` artifact sets completed with exit code 0, stderr empty, and no proof reuse.
+- OK: predictive KB postflight recorded event `a0474f06-78c6-482a-9537-b5a8e96eb4cc`.
+
+### Findings
+
+- A green subcheck is no longer enough for broad confidence; the final gate fails closed unless live control-plane audit, event idempotency, model-test full coverage, and known-friction Risk Evidence Ledger confidence are all current and full.
+- The default model-test alignment artifact was stale during the work and correctly blocked the final gate until regenerated.
+- The final confidence tier is intentionally separate from routine tiers so routine green checks do not silently imply release-level confidence.
+
+### Skipped Or Limited
+
+- No peer AI work was reverted or cleaned up.
+- No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.
+- Unrelated parallel AI changes in known-friction proof artifacts, material artifact map, boundary tests, and generated result files were not folded into this task's scoped git commit.
