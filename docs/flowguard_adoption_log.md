@@ -19541,3 +19541,50 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - The long persistent daemon compatibility scan completed after the focused daemon child checks; its exit artifact was inspected before final close-out.
 - No peer AI work was reverted or cleaned up.
 - No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.
+## 2026-05-27 23:12 +02:00 - Workflow Step Contract Gates
+
+### Summary
+
+- Task: prevent FlowPilot from skipping, reordering, or overclaiming declared workflow steps.
+- Route: `openspec_propose_apply + flowguard_existing_model_preflight + development_process_flow + model_test_alignment + test_mesh + structure_mesh + model_mesh`.
+- Change: `adopt-workflow-step-contract-gates`.
+
+### Changed Surfaces
+
+- Added a WorkflowStepContract projection for existing FlowPilot `next_step_contract` records.
+- Added a FlowGuard runner and ordinary tests for valid traces, missing receipts, stale receipts, ACK/work separation, and target-work completion gates.
+- Connected the new workflow-step evidence to model-test alignment diagnostics.
+- Split router daemon diagnostics and Controller break-glass recovery/CLI work into child modules while preserving parent facade entrypoints.
+- Added missing routine router child-test shards for stale role recovery and unknown liveness cases.
+- Fixed one public-release documentation path leak found by the release background scan.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `openspec validate adopt-workflow-step-contract-gates --strict --json`.
+- OK: `python simulations\run_flowpilot_workflow_step_contract_checks.py --json-out simulations\flowpilot_workflow_step_contract_results.json`.
+- OK: `python -m pytest tests/test_flowpilot_workflow_step_contracts.py -q` passed 5 tests.
+- OK: `python -m pytest tests/test_flowpilot_controller_break_glass.py -q` passed 6 tests.
+- OK: `python -m unittest tests.test_flowpilot_asset_surface_contracts -v` passed 3 tests.
+- OK: `python -m unittest tests.test_flowpilot_test_tiers -v` passed 26 tests after TestMesh shard repair.
+- OK: `python scripts\check_public_release.py --json --skip-validation` reported `error_count=0`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` reported full coverage and zero gap surfaces.
+- OK: `python simulations\flowpilot_known_friction_regression_matrix.py --json-out simulations\flowpilot_known_friction_regression_matrix_results.json`.
+- OK: `python simulations\run_meta_checks.py --full` and `python simulations\run_meta_checks.py --fast`.
+- OK: `python simulations\run_flowpilot_final_confidence_gate_checks.py --json-out simulations\flowpilot_final_confidence_gate_results.json` reported `full_confidence` with no blockers.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, and `python scripts\check_install.py`.
+
+### Findings
+
+- Workflow intent is now turned into concrete step contracts: Router-issued action, Controller receipt, ACK settlement, and target-work completion are separate facts.
+- ACK-only completion can no longer satisfy target work when the model says separate work evidence is required.
+- Stale receipts from an older action cannot be reused to clear a later action.
+- The full model-test-code inventory now recognizes the newly split child modules and reports no uncovered surfaces.
+- The final confidence gate is green only after fresh default evidence for control-plane, event idempotency, model-test alignment, and known-friction families.
+
+### Skipped Or Limited
+
+- No peer AI work was reverted or cleaned up.
+- Unrelated peer-owned edits and broad generated result churn were left unstaged unless needed for this scoped evidence chain.
+- The release background run initially found a local-path documentation leak; that single doc issue was fixed and the public-release scan then passed.
+- No GitHub push, tag, release, deploy, or public publication was performed.

@@ -92,6 +92,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
             "test_role_recovery_reissues_missing_obligations_in_original_order",
             "test_role_recovery_settles_existing_ack_without_replay_or_pm",
             "test_role_recovery_settles_existing_output_without_replay_or_pm",
+            "test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction",
         ),
         description="Resume role-recovery settlement slice.",
     ),
@@ -99,6 +100,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_resume_liveness_faults",
         "tests.router_runtime.resume",
         patterns=(
+            "test_active_agent_lookup_rejects_unknown_recovered_liveness",
             "test_blocked_role_recovery_receipt_reclaims_existing_report",
             "test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery",
             "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",

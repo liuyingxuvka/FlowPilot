@@ -1,0 +1,74 @@
+{
+  "blockers": [],
+  "decision": "full_confidence",
+  "evidence_rows": [
+    {
+      "blockers": [],
+      "details": {
+        "live_finding_codes": [],
+        "live_run_audit_ok": true,
+        "live_run_audit_skipped": false,
+        "live_run_id": "run-20260527-173225",
+        "top_level_ok": true
+      },
+      "name": "control_plane",
+      "ok": true,
+      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_control_plane_friction_results.json",
+      "status": "full_confidence"
+    },
+    {
+      "blockers": [],
+      "details": {
+        "flowguard_explorer_ok": true,
+        "hazard_detection_ok": true,
+        "progress_ok": true,
+        "safe_graph_ok": true,
+        "top_level_ok": true
+      },
+      "name": "event_idempotency",
+      "ok": true,
+      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_event_idempotency_results.json",
+      "status": "full_confidence"
+    },
+    {
+      "blockers": [],
+      "details": {
+        "alignment_ok": true,
+        "full_coverage_ok": true,
+        "full_diagnostic_ok": true,
+        "gap_counts": {},
+        "gap_surface_count": 0,
+        "top_level_ok": true
+      },
+      "name": "model_test_alignment",
+      "ok": true,
+      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_model_test_alignment_results.json",
+      "status": "full_confidence"
+    },
+    {
+      "blockers": [],
+      "details": {
+        "defect_family_gate_ok": true,
+        "gate_confidence": "full",
+        "gate_decision": "defect_family_gate_full_confidence",
+        "risk_ledger_confidence": "full",
+        "risk_ledger_decision": "risk_evidence_full_confidence",
+        "top_level_ok": true
+      },
+      "name": "known_friction",
+      "ok": true,
+      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_known_friction_regression_matrix_results.json",
+      "status": "full_confidence"
+    }
+  ],
+  "ok": true,
+  "result_paths": {
+    "control_plane": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_control_plane_friction_results.json",
+    "event_idempotency": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_event_idempotency_results.json",
+    "known_friction": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_known_friction_regression_matrix_results.json",
+    "model_test_alignment": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_model_test_alignment_results.json"
+  },
+  "result_type": "flowpilot_final_confidence_gate",
+  "subcheck_runs": [],
+  "summary": "FULL: all required final-confidence evidence is current and passing"
+}

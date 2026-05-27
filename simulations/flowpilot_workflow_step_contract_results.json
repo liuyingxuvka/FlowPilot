@@ -1,0 +1,314 @@
+{
+  "model_id": "flowpilot_workflow_step_contracts",
+  "ok": true,
+  "reports": {
+    "ack_separation": {
+      "known_bad_ack_only_as_work": {
+        "current_receipts": [
+          "ack_settlement:pm-output-wait",
+          "router_action_issued:await_role_decision:pm-output-wait"
+        ],
+        "findings": [
+          {
+            "claim_label": "work_complete:await_role_decision:pm-output-wait",
+            "code": "missing_claim_receipt",
+            "message": "claim 'work_complete:await_role_decision:pm-output-wait' requires current receipt 'work_output:await_role_decision:pm-output-wait' from step 'flowpilot.target_work:await_role_decision:pm-output-wait'",
+            "metadata": [],
+            "receipt_id": "work_output:await_role_decision:pm-output-wait",
+            "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+            "step_index": 3
+          }
+        ],
+        "first_failed_step_index": 3,
+        "ok": false,
+        "skipped_step_ids": [],
+        "stale_receipts": [],
+        "summary": "violations: findings=1 current_receipts=2 stale_receipts=0"
+      },
+      "known_bad_codes": {
+        "ack_only_as_work": [
+          "missing_claim_receipt"
+        ],
+        "stale_ack": [
+          "missing_prerequisite_receipt"
+        ]
+      },
+      "known_bad_stale_ack": {
+        "current_receipts": [
+          "router_action_issued:await_role_decision:pm-output-wait",
+          "work_output:await_role_decision:pm-output-wait"
+        ],
+        "findings": [
+          {
+            "claim_label": "",
+            "code": "missing_prerequisite_receipt",
+            "message": "step 'flowpilot.target_work:await_role_decision:pm-output-wait' requires current receipt 'ack_settlement:pm-output-wait'",
+            "metadata": [],
+            "receipt_id": "ack_settlement:pm-output-wait",
+            "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+            "step_index": 4
+          }
+        ],
+        "first_failed_step_index": 4,
+        "ok": false,
+        "skipped_step_ids": [],
+        "stale_receipts": [
+          "ack_settlement:pm-output-wait"
+        ],
+        "summary": "violations: findings=1 current_receipts=2 stale_receipts=1"
+      },
+      "ok": true,
+      "positive": {
+        "current_receipts": [
+          "ack_settlement:pm-output-wait",
+          "router_action_issued:await_role_decision:pm-output-wait",
+          "work_output:await_role_decision:pm-output-wait"
+        ],
+        "findings": [],
+        "first_failed_step_index": null,
+        "ok": true,
+        "skipped_step_ids": [],
+        "stale_receipts": [],
+        "summary": "ok: findings=0 current_receipts=3 stale_receipts=0"
+      },
+      "projected_contracts": [
+        {
+          "artifact_ids": [
+            "next_step_contract"
+          ],
+          "code_contract_ids": [
+            "workflow_step_contracts.project_action"
+          ],
+          "completion_labels": [
+            "ack_settlement:pm-output-wait:done"
+          ],
+          "completion_receipts": [
+            "ack_settlement:pm-output-wait"
+          ],
+          "description": "ACK clearance for 'project_manager' settles only the read-receipt wait.",
+          "evidence_kind": "workflow_step_contract",
+          "invalidates_receipts": [],
+          "metadata": [
+            [
+              "action_type",
+              "await_role_decision"
+            ],
+            [
+              "apply_required",
+              false
+            ],
+            [
+              "controller_completion_command",
+              "apply"
+            ],
+            [
+              "controller_completion_mode",
+              "router_apply"
+            ],
+            [
+              "recipient_role",
+              "project_manager"
+            ],
+            [
+              "router_pending_apply_required",
+              false
+            ]
+          ],
+          "produces_receipts": [
+            "ack_settlement:pm-output-wait"
+          ],
+          "release_required": false,
+          "required_for_claims": [
+            "ack_settled:pm-output-wait",
+            "routine"
+          ],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "requires_receipts": [
+            "router_action_issued:await_role_decision:pm-output-wait"
+          ],
+          "skip_policy": "forbidden",
+          "step_id": "flowpilot.next_step:await_role_decision:pm-output-wait"
+        },
+        {
+          "artifact_ids": [
+            "target_work_output"
+          ],
+          "code_contract_ids": [
+            "workflow_step_contracts.project_action"
+          ],
+          "completion_labels": [
+            "work_output:await_role_decision:pm-output-wait:done"
+          ],
+          "completion_receipts": [
+            "work_output:await_role_decision:pm-output-wait"
+          ],
+          "description": "Target work for 'project_manager' needs durable output evidence separate from ACK clearance.",
+          "evidence_kind": "workflow_step_contract",
+          "invalidates_receipts": [],
+          "metadata": [
+            [
+              "ack_scope",
+              "pm-output-wait"
+            ],
+            [
+              "action_type",
+              "await_role_decision"
+            ],
+            [
+              "recipient_role",
+              "project_manager"
+            ]
+          ],
+          "produces_receipts": [
+            "work_output:await_role_decision:pm-output-wait"
+          ],
+          "release_required": false,
+          "required_for_claims": [
+            "work_complete:await_role_decision:pm-output-wait",
+            "routine"
+          ],
+          "required_test_kinds": [
+            "edge_path",
+            "negative_path"
+          ],
+          "requires_receipts": [
+            "ack_settlement:pm-output-wait"
+          ],
+          "skip_policy": "forbidden",
+          "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait"
+        }
+      ]
+    },
+    "controller_receipt": {
+      "known_bad_codes": {
+        "forbidden_skip": [
+          "forbidden_step_skipped"
+        ],
+        "missing_prerequisite": [
+          "missing_prerequisite_receipt"
+        ]
+      },
+      "known_bad_forbidden_skip": {
+        "current_receipts": [],
+        "findings": [
+          {
+            "claim_label": "",
+            "code": "forbidden_step_skipped",
+            "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' was skipped but skip_policy is forbidden",
+            "metadata": [],
+            "receipt_id": "",
+            "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+            "step_index": 1
+          }
+        ],
+        "first_failed_step_index": 1,
+        "ok": false,
+        "skipped_step_ids": [
+          "flowpilot.next_step:deliver_controller_row:controller-row-1"
+        ],
+        "stale_receipts": [],
+        "summary": "violations: findings=1 current_receipts=0 stale_receipts=0"
+      },
+      "known_bad_missing_prerequisite": {
+        "current_receipts": [
+          "controller_receipt:deliver_controller_row:controller-row-1"
+        ],
+        "findings": [
+          {
+            "claim_label": "",
+            "code": "missing_prerequisite_receipt",
+            "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' requires current receipt 'router_action_issued:deliver_controller_row:controller-row-1'",
+            "metadata": [],
+            "receipt_id": "router_action_issued:deliver_controller_row:controller-row-1",
+            "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+            "step_index": 1
+          }
+        ],
+        "first_failed_step_index": 1,
+        "ok": false,
+        "skipped_step_ids": [],
+        "stale_receipts": [],
+        "summary": "violations: findings=1 current_receipts=1 stale_receipts=0"
+      },
+      "ok": true,
+      "positive": {
+        "current_receipts": [
+          "controller_receipt:deliver_controller_row:controller-row-1",
+          "router_action_issued:deliver_controller_row:controller-row-1"
+        ],
+        "findings": [],
+        "first_failed_step_index": null,
+        "ok": true,
+        "skipped_step_ids": [],
+        "stale_receipts": [],
+        "summary": "ok: findings=0 current_receipts=2 stale_receipts=0"
+      },
+      "projected_contracts": [
+        {
+          "artifact_ids": [
+            "next_step_contract"
+          ],
+          "code_contract_ids": [
+            "workflow_step_contracts.project_action"
+          ],
+          "completion_labels": [
+            "controller_receipt:deliver_controller_row:controller-row-1:done"
+          ],
+          "completion_receipts": [
+            "controller_receipt:deliver_controller_row:controller-row-1"
+          ],
+          "description": "Controller row for 'deliver_controller_row' must complete through a Controller receipt, not the normal Router apply path.",
+          "evidence_kind": "workflow_step_contract",
+          "invalidates_receipts": [],
+          "metadata": [
+            [
+              "action_type",
+              "deliver_controller_row"
+            ],
+            [
+              "apply_required",
+              false
+            ],
+            [
+              "controller_completion_command",
+              "controller-receipt"
+            ],
+            [
+              "controller_completion_mode",
+              "controller_action_ledger_receipt"
+            ],
+            [
+              "recipient_role",
+              "controller"
+            ],
+            [
+              "router_pending_apply_required",
+              true
+            ]
+          ],
+          "produces_receipts": [
+            "controller_receipt:deliver_controller_row:controller-row-1"
+          ],
+          "release_required": false,
+          "required_for_claims": [
+            "controller_row_complete:deliver_controller_row:controller-row-1",
+            "routine"
+          ],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "requires_receipts": [
+            "router_action_issued:deliver_controller_row:controller-row-1"
+          ],
+          "skip_policy": "forbidden",
+          "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1"
+        }
+      ]
+    }
+  },
+  "result_type": "flowpilot_workflow_step_contracts"
+}

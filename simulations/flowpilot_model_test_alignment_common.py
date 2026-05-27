@@ -230,6 +230,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_system_cards_selection_next",
     "asset:flowpilot_router_system_cards_selection_reconcile",
     "asset:flowpilot_router_system_cards_selection_tokens",
+    "asset:flowpilot_router_daemon_runtime_diagnostics",
     "asset:flowpilot_router_work_packets_current_node",
     "asset:flowpilot_router_work_packets_current_node_paths",
     "asset:flowpilot_router_work_packets_current_node_relay",
@@ -249,6 +250,8 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_user_flow_diagram",
     "asset:flowpilot_user_flow_diagram_cli",
     "asset:flowpilot_user_flow_diagram_generate",
+    "asset:flowpilot_controller_break_glass_cli",
+    "asset:flowpilot_controller_break_glass_recovery",
     "asset:packet_control_plane_model_invariants_dispatch",
     "asset:packet_control_plane_model_invariants_handoff",
     "asset:packet_control_plane_model_invariants_origin",
@@ -288,6 +291,9 @@ ASSET_MODEL_BINDING_PREFIXES = {
 }
 
 ASSET_MODEL_BINDING_STEMS = {
+    "flowpilot_controller_break_glass_cli": "controller_break_glass_runtime_contracts",
+    "flowpilot_controller_break_glass_recovery": "recovery_supervisor_contracts",
+    "flowpilot_router_daemon_runtime_diagnostics": "router_daemon_runtime_architecture",
     "flowpilot_closure_kernel": "control_plane_closure_kernel",
     "flowpilot_control_plane_contracts": "control_plane_contracts",
     "flowpilot_paths": "runtime_path_contracts",

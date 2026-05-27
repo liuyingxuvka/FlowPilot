@@ -19,7 +19,7 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [],
     "actionable_summary": [],
-    "covered_surface_count": 867,
+    "covered_surface_count": 873,
     "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
@@ -222,12 +222,12 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 867,
+    "surface_count": 873,
     "surface_counts": {
       "compatibility_facade": 112,
-      "model_check_runner": 99,
+      "model_check_runner": 102,
       "model_check_runner_helper": 19,
-      "owner_module": 263,
+      "owner_module": 266,
       "script_entrypoint": 19,
       "test_tier": 16,
       "test_tier_command": 339
@@ -2519,7 +2519,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 267,
+        "line_count": 278,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2543,7 +2543,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 270,
+        "line_count": 271,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -4657,6 +4657,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 173,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_recovery_supervisor_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_recovery_supervisor_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_recovery_supervisor_checks",
+        "surface_owner": "model-check:run_flowpilot_recovery_supervisor_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 169,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -4844,6 +4866,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_role_recovery_checks",
         "surface_owner": "model-check:run_flowpilot_role_recovery_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 103,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_role_recovery_liveness_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_role_recovery_liveness_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_role_recovery_liveness_checks",
+        "surface_owner": "model-check:run_flowpilot_role_recovery_liveness_checks"
       },
       {
         "covered": true,
@@ -5350,6 +5394,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_two_table_async_scheduler_checks",
         "surface_owner": "model-check:run_flowpilot_two_table_async_scheduler_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 166,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_workflow_step_contract_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_workflow_step_contract_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_workflow_step_contract_checks",
+        "surface_owner": "model-check:run_flowpilot_workflow_step_contract_checks"
       },
       {
         "covered": true,
@@ -6274,8 +6340,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 376,
-        "local_import_count": 0,
+        "line_count": 446,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": null,
         "name": "flowpilot_controller_break_glass",
@@ -6287,7 +6353,55 @@
         "surface_id": "asset:flowpilot_controller_break_glass",
         "surface_owner": "flowpilot_controller_break_glass",
         "top_level_class_count": 0,
-        "top_level_function_count": 16
+        "top_level_function_count": 25
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 186,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "controller_break_glass_runtime_contracts",
+        "name": "flowpilot_controller_break_glass_cli",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_cli.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_controller_break_glass_cli",
+        "surface_owner": "flowpilot_controller_break_glass_cli",
+        "top_level_class_count": 0,
+        "top_level_function_count": 3
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 256,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "recovery_supervisor_contracts",
+        "name": "flowpilot_controller_break_glass_recovery",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_controller_break_glass_recovery",
+        "surface_owner": "flowpilot_controller_break_glass_recovery",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -6980,7 +7094,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 275,
+        "line_count": 329,
         "local_import_count": 17,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7620,8 +7734,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 431,
-        "local_import_count": 0,
+        "line_count": 437,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_daemon_runtime",
@@ -7634,6 +7748,30 @@
         "surface_owner": "flowpilot_router_daemon_runtime",
         "top_level_class_count": 0,
         "top_level_function_count": 19
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 89,
+        "local_import_count": 0,
+        "max_severity": "none",
+        "model_binding": "router_daemon_runtime_architecture",
+        "name": "flowpilot_router_daemon_runtime_diagnostics",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_diagnostics.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_daemon_runtime_diagnostics",
+        "surface_owner": "flowpilot_router_daemon_runtime_diagnostics",
+        "top_level_class_count": 0,
+        "top_level_function_count": 2
       },
       {
         "covered": true,
@@ -10666,7 +10804,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 188,
+        "line_count": 204,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10714,7 +10852,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 166,
+        "line_count": 171,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10727,7 +10865,7 @@
         "surface_id": "asset:flowpilot_router_startup_support",
         "surface_owner": "flowpilot_router_startup_support",
         "top_level_class_count": 0,
-        "top_level_function_count": 9
+        "top_level_function_count": 10
       },
       {
         "completed_split_paths": [
@@ -11874,7 +12012,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 186,
+        "line_count": 193,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -16212,6 +16350,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+          "-k",
           "test_blocked_role_recovery_receipt_reclaims_existing_report",
           "-k",
           "test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery",
@@ -16223,7 +16363,7 @@
           "test_role_no_output_report_reissues_same_work_before_role_recovery",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_active_agent_lookup_rejects_unknown_recovered_liveness -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -16347,9 +16487,11 @@
           "test_role_recovery_settles_existing_ack_without_replay_or_pm",
           "-k",
           "test_role_recovery_settles_existing_output_without_replay_or_pm",
+          "-k",
+          "test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm -k test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -20510,15 +20652,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "passed"
+              "status": "failed"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -20565,24 +20707,26 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_capability_checks",
+            "artifact_name": "capability_legacy_full",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_capability_checks",
-            "ok": true,
-            "progress_seen": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "capability_legacy_full",
+            "ok": false,
+            "progress_seen": false,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -20602,7 +20746,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-24T23:20:46.463841+00:00",
+            "created_at": "2026-05-27T21:02:26.115088+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -20665,15 +20809,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "passed"
+              "status": "failed"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -20720,24 +20864,26 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_meta_checks",
+            "artifact_name": "meta_legacy_full",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_meta_checks",
-            "ok": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "meta_legacy_full",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -20757,7 +20903,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-27T19:42:27.568851+00:00",
+            "created_at": "2026-05-27T21:07:57.611644+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -20818,15 +20964,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "passed"
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -20956,15 +21102,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "passed"
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
@@ -21074,15 +21220,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "failed",
               "name": "public_release_check",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "passed"
+              "status": "failed"
             },
             {
               "artifact_name": "public_release_check",
@@ -21107,13 +21253,13 @@
           ],
           "selected": {
             "artifact_name": "public_release_check",
-            "artifact_root": "tmp/flowguard_background",
+            "artifact_root": "tmp/test_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\public_release_check.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\public_release_check.out.txt"
             },
             "execution_status": "passed",
             "exit_code": 0,
@@ -23868,6 +24014,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+          "-k",
           "test_blocked_role_recovery_receipt_reclaims_existing_report",
           "-k",
           "test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery",
@@ -23879,7 +24027,7 @@
           "test_role_no_output_report_reissues_same_work_before_role_recovery",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_active_agent_lookup_rejects_unknown_recovered_liveness -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24003,9 +24151,11 @@
           "test_role_recovery_settles_existing_ack_without_replay_or_pm",
           "-k",
           "test_role_recovery_settles_existing_output_without_replay_or_pm",
+          "-k",
+          "test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm -k test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25748,6 +25898,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_active_agent_lookup_rejects_unknown_recovered_liveness",
+          "-k",
           "test_blocked_role_recovery_receipt_reclaims_existing_report",
           "-k",
           "test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery",
@@ -25759,7 +25911,7 @@
           "test_role_no_output_report_reissues_same_work_before_role_recovery",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_active_agent_lookup_rejects_unknown_recovered_liveness -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25883,9 +26035,11 @@
           "test_role_recovery_settles_existing_ack_without_replay_or_pm",
           "-k",
           "test_role_recovery_settles_existing_output_without_replay_or_pm",
+          "-k",
+          "test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_load_resume_state_does_not_downgrade_existing_role_recovery_report -k test_role_recovery_reissues_missing_obligations_in_original_order -k test_role_recovery_settles_existing_ack_without_replay_or_pm -k test_role_recovery_settles_existing_output_without_replay_or_pm -k test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -35248,6 +35402,68 @@
           "symbol": "submit_controller_boundary_confirmation"
         },
         {
+          "code_contract_id": "workflow_step_contracts.project_action",
+          "error_paths": [],
+          "external_inputs": [
+            "action"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "path": "simulations/flowpilot_workflow_step_contracts.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "workflow_step_contracts_for_action"
+        },
+        {
+          "code_contract_id": "workflow_step_contracts.review_trace",
+          "error_paths": [],
+          "external_inputs": [
+            "steps",
+            "contracts"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "path": "simulations/flowpilot_workflow_step_contracts.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "review_trace"
+        },
+        {
+          "code_contract_id": "workflow_step_contracts.runner",
+          "error_paths": [],
+          "external_inputs": [],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "path": "simulations/run_flowpilot_workflow_step_contract_checks.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "build_report"
+        },
+        {
           "code_contract_id": "test_tier.commands_for_tier",
           "error_paths": [],
           "external_inputs": [
@@ -36288,6 +36504,30 @@
           "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited FlowGuard workflow-step contract projection for FlowPilot next_step_contract records, including Controller receipts, ACK-only settlement, target-work output, stale receipt invalidation, and claim gates.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "workflow_step_contracts.next_step_projection",
+          "obligation_type": "workflow_step",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path",
+            "edge_path"
           ],
           "requires_same_class_test_evidence": false,
           "risk_level": "high",
@@ -38327,6 +38567,96 @@
           "stale_reasons": [],
           "test_kind": "edge_path",
           "test_name": "test_controller_boundary_helper_writes_runtime_body_receipt_and_ledger"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_workflow_step_contracts",
+          "covered_code_contracts": [
+            "workflow_step_contracts.project_action"
+          ],
+          "covered_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.workflow_step.controller_receipt",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_controller_receipt_projection_blocks_apply_path_confusion"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_workflow_step_contracts",
+          "covered_code_contracts": [
+            "workflow_step_contracts.project_action",
+            "workflow_step_contracts.review_trace"
+          ],
+          "covered_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.workflow_step.known_bad",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_missing_prerequisite_and_forbidden_skip_are_rejected"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_workflow_step_contracts",
+          "covered_code_contracts": [
+            "workflow_step_contracts.project_action",
+            "workflow_step_contracts.review_trace"
+          ],
+          "covered_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.workflow_step.ack_separation",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_ack_read_receipt_does_not_complete_target_work"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_workflow_step_contracts",
+          "covered_code_contracts": [
+            "workflow_step_contracts.runner"
+          ],
+          "covered_obligations": [
+            "workflow_step_contracts.next_step_projection"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.workflow_step.runner",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_flowguard_workflow_step_runner_passes_known_good_and_known_bad"
         },
         {
           "assertion_scope": "external_contract",
@@ -41531,6 +41861,7 @@
             "router._refresh_router_daemon_lock",
             "router._release_router_daemon_lock",
             "router._resolve_run_root_target",
+            "router._router_daemon_error_diagnostics",
             "router._router_daemon_lock_path",
             "router._router_daemon_status_path",
             "router._router_daemon_tick",
@@ -41581,7 +41912,6 @@
             "Path",
             "ROUTER_DAEMON_TICK_SECONDS",
             "RouterError",
-            "RouterLedgerCorruptionError",
             "RouterLedgerWriteInProgress",
             "__name__",
             "_acquire_router_daemon_lock",
@@ -41591,6 +41921,7 @@
             "_refresh_router_daemon_lock",
             "_release_router_daemon_lock",
             "_resolve_run_root_target",
+            "_router_daemon_error_diagnostics",
             "_router_daemon_lock_path",
             "_router_daemon_status_path",
             "_router_daemon_tick",
@@ -41600,6 +41931,7 @@
             "append",
             "bool",
             "bootstrap",
+            "diagnostics",
             "dict",
             "error",
             "exc",
@@ -41645,6 +41977,7 @@
           "state_writes": [
             "bootstrap",
             "daemon_mode_enabled",
+            "diagnostics",
             "error",
             "existing_lock",
             "final_status",
@@ -52034,6 +52367,163 @@
         },
         {
           "calls": [
+            "Projection",
+            "WorkflowStepContract",
+            "_contract_value",
+            "_slug",
+            "action.get",
+            "action_contract_key",
+            "bool",
+            "contract_payload.get",
+            "contracts.append",
+            "isinstance",
+            "str",
+            "tuple"
+          ],
+          "code_contract_id": "workflow_step_contracts.project_action",
+          "found": true,
+          "parameters": [
+            "action"
+          ],
+          "parse_error": "",
+          "path": "simulations/flowpilot_workflow_step_contracts.py",
+          "raised_errors": [],
+          "return_values": [
+            "Projection"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Projection",
+            "WorkflowStepContract",
+            "_contract_value",
+            "_slug",
+            "ack_only",
+            "ack_scope",
+            "action",
+            "action_contract_key",
+            "action_type",
+            "append",
+            "bool",
+            "claim_label",
+            "completion_command",
+            "completion_label",
+            "completion_mode",
+            "completion_receipt",
+            "contract",
+            "contract_payload",
+            "contracts",
+            "description",
+            "dict",
+            "get",
+            "isinstance",
+            "issued_receipt",
+            "key",
+            "list",
+            "main_contract",
+            "metadata",
+            "recipient",
+            "release_required",
+            "scope",
+            "separate_work",
+            "str",
+            "tuple",
+            "work_contract",
+            "work_receipt"
+          ],
+          "state_writes": [
+            "ack_only",
+            "ack_scope",
+            "action_type",
+            "claim_label",
+            "completion_command",
+            "completion_label",
+            "completion_mode",
+            "completion_receipt",
+            "contract",
+            "contract_payload",
+            "contracts",
+            "description",
+            "issued_receipt",
+            "key",
+            "main_contract",
+            "metadata",
+            "recipient",
+            "release_required",
+            "scope",
+            "separate_work",
+            "work_contract",
+            "work_receipt"
+          ],
+          "symbol": "workflow_step_contracts_for_action"
+        },
+        {
+          "calls": [
+            "Trace",
+            "review_step_contract_trace"
+          ],
+          "code_contract_id": "workflow_step_contracts.review_trace",
+          "found": true,
+          "parameters": [
+            "contracts",
+            "steps"
+          ],
+          "parse_error": "",
+          "path": "simulations/flowpilot_workflow_step_contracts.py",
+          "raised_errors": [],
+          "return_values": [
+            "review_step_contract_trace"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Trace",
+            "TraceStep",
+            "WorkflowStepContract",
+            "contracts",
+            "review_step_contract_trace",
+            "steps",
+            "tuple"
+          ],
+          "state_writes": [],
+          "symbol": "review_trace"
+        },
+        {
+          "calls": [
+            "_ack_separation_report",
+            "_controller_receipt_report",
+            "bool"
+          ],
+          "code_contract_id": "workflow_step_contracts.runner",
+          "found": true,
+          "parameters": [],
+          "parse_error": "",
+          "path": "simulations/run_flowpilot_workflow_step_contract_checks.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "MODEL_ID",
+            "_ack_separation_report",
+            "_controller_receipt_report",
+            "ack",
+            "bool",
+            "controller",
+            "dict",
+            "ok",
+            "str"
+          ],
+          "state_writes": [
+            "ack",
+            "controller"
+          ],
+          "symbol": "build_report"
+        },
+        {
+          "calls": [
             "TierCommand",
             "_py",
             "commands_for_tier"
@@ -54573,6 +55063,90 @@
           "parse_error": "",
           "path": "tests/test_flowpilot_role_output_runtime.py",
           "test_name": "test_controller_boundary_helper_writes_runtime_body_receipt_and_ledger"
+        },
+        {
+          "assert_count": 6,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "workflow_step_contracts.project_action"
+          ],
+          "calls": [
+            "contracts.workflow_step_contracts_for_action",
+            "dict",
+            "len",
+            "runner._controller_receipt_action",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn"
+          ],
+          "evidence_id": "source.workflow_step.controller_receipt",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "test_name": "test_controller_receipt_projection_blocks_apply_path_confusion"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "workflow_step_contracts.project_action",
+            "workflow_step_contracts.review_trace"
+          ],
+          "calls": [
+            "contracts.review_trace",
+            "contracts.trace_step",
+            "contracts.workflow_step_contracts_for_action",
+            "runner._controller_receipt_action",
+            "self.assertFalse",
+            "self.assertIn"
+          ],
+          "evidence_id": "source.workflow_step.known_bad",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "test_name": "test_missing_prerequisite_and_forbidden_skip_are_rejected"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "workflow_step_contracts.project_action",
+            "workflow_step_contracts.review_trace"
+          ],
+          "calls": [
+            "complete_claim.to_dict",
+            "contracts.review_trace",
+            "contracts.trace_step",
+            "contracts.workflow_step_contracts_for_action",
+            "len",
+            "runner._ack_only_action",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.workflow_step.ack_separation",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "test_name": "test_ack_read_receipt_does_not_complete_target_work"
+        },
+        {
+          "assert_count": 3,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "workflow_step_contracts.runner"
+          ],
+          "calls": [
+            "runner.build_report",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.workflow_step.runner",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_workflow_step_contracts.py",
+          "test_name": "test_flowguard_workflow_step_runner_passes_known_good_and_known_bad"
         },
         {
           "assert_count": 17,

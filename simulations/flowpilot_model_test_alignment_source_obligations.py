@@ -305,6 +305,13 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             allow_shared_evidence=True,
         ),
         _source_obligation(
+            "workflow_step_contracts.next_step_projection",
+            obligation_type="workflow_step",
+            description="Source-audited FlowGuard workflow-step contract projection for FlowPilot next_step_contract records, including Controller receipts, ACK-only settlement, target-work output, stale receipt invalidation, and claim gates.",
+            required_test_kinds=(HAPPY, NEGATIVE, EDGE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "test_tiering.foreground_fast_scope",
             obligation_type="contract",
             description="Source-audited test-tier command selection boundary.",

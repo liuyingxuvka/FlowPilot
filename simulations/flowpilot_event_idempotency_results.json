@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=102",
+    "summary": "sequences=3 initial_states=1 traces=108",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -16,7 +16,7 @@
         "failures": [
           "accepted scoped event without dedupe key fields"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=accepted|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_key_fields"
+        "state": "scenario=route_mutation_new_transaction|status=accepted|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=2/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_key_fields"
       },
       "cycle_reuse_without_reset": {
         "detected": true,
@@ -24,7 +24,7 @@
         "failures": [
           "cycle-scoped event reused without reset evidence"
         ],
-        "state": "scenario=cycle_scoped_event_after_reset|status=accepted|event=pm_registers_current_node_packet|family=cycle|flag=True|key=node-001-repair:packet-generation-2|prior=node-001:packet-generation-1|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_cycle_reset"
+        "state": "scenario=cycle_scoped_event_after_reset|status=accepted|event=pm_registers_current_node_packet|family=cycle|flag=True|key=node-001-repair:packet-generation-2|prior=node-001:packet-generation-1|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=missing_cycle_reset"
       },
       "global_flag_swallows_new_route_mutation": {
         "detected": true,
@@ -33,7 +33,7 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry below budget was silently swallowed"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
       },
       "no_legal_next_action_after_swallow": {
         "detected": true,
@@ -43,7 +43,7 @@
           "repair retry below budget was silently swallowed",
           "idempotency decision produced no legal next action"
         ],
-        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=True|reason=swallowed_then_stuck"
+        "state": "scenario=route_mutation_new_transaction|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=2/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=True|reason=swallowed_then_stuck"
       },
       "package_body_hash_left_in_dedupe_key": {
         "detected": true,
@@ -53,7 +53,7 @@
           "duplicate side effect written for replayed event identity",
           "same package disposition identity wrote duplicate side effect"
         ],
-        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=body_hash_created_new_dedupe_key"
+        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=body_hash_created_new_dedupe_key"
       },
       "package_conflict_field_missing": {
         "detected": true,
@@ -63,7 +63,7 @@
           "same package disposition identity wrote duplicate side effect",
           "package disposition identity lacked body_hash conflict field"
         ],
-        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=False|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=no_conflict_field"
+        "state": "scenario=package_disposition_same_body_replay|status=accepted|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=True|conflict_fields=False|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=no_conflict_field"
       },
       "package_conflict_swallowed_as_replay": {
         "detected": true,
@@ -71,7 +71,7 @@
         "failures": [
           "conflicting package disposition body was treated as idempotent replay"
         ],
-        "state": "scenario=package_disposition_different_body_conflict|status=already_recorded|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=same_key_replay_without_conflict_check"
+        "state": "scenario=package_disposition_different_body_conflict|status=already_recorded|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=same_key_replay_without_conflict_check"
       },
       "repair_owned_package_conflict_accepted_as_success": {
         "detected": true,
@@ -79,7 +79,7 @@
         "failures": [
           "repair-owned package conflict was accepted as successful disposition"
         ],
-        "state": "scenario=package_disposition_control_blocker_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=accepted_stale_replay"
+        "state": "scenario=package_disposition_control_blocker_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=accepted_stale_replay"
       },
       "repair_owned_package_conflict_crashed_daemon": {
         "detected": true,
@@ -88,7 +88,7 @@
           "repair-owned package conflict replay did not preserve the legal wait",
           "repair-owned package conflict replay crashed the daemon"
         ],
-        "state": "scenario=package_disposition_pm_repair_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=daemon_error"
+        "state": "scenario=package_disposition_pm_repair_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=daemon_error"
       },
       "repair_retry_below_budget_swallowed": {
         "detected": true,
@@ -97,7 +97,7 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry below budget was silently swallowed"
         ],
-        "state": "scenario=repair_retry_below_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|retry=2/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=repair_retry_below_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-2:route-v3|prior=repair-tx-1:route-v2|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=2/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
       },
       "retry_budget_exceeded_without_escalation": {
         "detected": true,
@@ -106,7 +106,31 @@
           "new scoped event identity was swallowed by global event flag",
           "repair retry budget exceeded without explicit PM escalation"
         ],
-        "state": "scenario=repair_retry_exceeds_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-4:route-v5|prior=repair-tx-1:route-v2,repair-tx-2:route-v3,repair-tx-3:route-v4|conflict=True|conflict_fields=True|retry=4/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+        "state": "scenario=repair_retry_exceeds_budget|status=already_recorded|event=pm_mutates_route_after_review_block|family=transaction|flag=True|key=repair-tx-4:route-v5|prior=repair-tx-1:route-v2,repair-tx-2:route-v3,repair-tx-3:route-v4|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=4/3|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=global_flag_already_true"
+      },
+      "stale_unowned_package_conflict_accepted_as_success": {
+        "detected": true,
+        "expected_failure": "stale unowned package conflict was accepted as successful disposition",
+        "failures": [
+          "stale unowned package conflict was accepted as successful disposition"
+        ],
+        "state": "scenario=package_disposition_stale_unowned_conflict_replay|status=stale_quarantined|event=pm_records_material_scan_result_disposition|family=package|flag=False|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=role_output_ledger|canonical=True|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=accepted_stale_unowned_replay"
+      },
+      "stale_unowned_package_conflict_crashed_daemon": {
+        "detected": true,
+        "expected_failure": "stale unowned package conflict replay crashed the daemon",
+        "failures": [
+          "stale unowned package conflict replay crashed the daemon"
+        ],
+        "state": "scenario=package_disposition_stale_unowned_conflict_replay|status=stale_quarantined|event=pm_records_material_scan_result_disposition|family=package|flag=False|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=role_output_ledger|canonical=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=daemon_error"
+      },
+      "stale_unowned_package_conflict_reverted_canonical_body": {
+        "detected": true,
+        "expected_failure": "stale unowned package conflict replay did not preserve canonical body",
+        "failures": [
+          "stale unowned package conflict replay did not preserve canonical body"
+        ],
+        "state": "scenario=package_disposition_stale_unowned_conflict_replay|status=stale_quarantined|event=pm_records_material_scan_result_disposition|family=package|flag=False|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|replay=role_output_ledger|canonical=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=canonical_body_reverted_to_stale_replay"
       },
       "unconditional_repeat_duplicates_gate_decision": {
         "detected": true,
@@ -115,7 +139,7 @@
           "same dedupe key wrote duplicate side effect",
           "duplicate side effect written for replayed event identity"
         ],
-        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|conflict=True|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
+        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
       }
     },
     "ok": true
@@ -152,7 +176,7 @@
       "package_disposition_same_body_replay",
       "route_mutation_same_transaction_replay"
     ],
-    "edge_count": 34,
+    "edge_count": 36,
     "escalated": [
       "one_shot_new_context_rejected",
       "package_disposition_different_body_conflict",
@@ -166,7 +190,7 @@
       "package_disposition_control_blocker_owned_conflict_replay",
       "package_disposition_pm_repair_owned_conflict_replay"
     ],
-    "state_count": 35
+    "state_count": 37
   },
   "source_audit": {
     "external_event_count": 110,

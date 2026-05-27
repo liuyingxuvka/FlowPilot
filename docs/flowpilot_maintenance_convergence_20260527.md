@@ -166,7 +166,8 @@ Generated maintenance map:
 - Repository version bumped from `0.9.13` to `0.9.14`.
 - Changelog and handoff notes updated for the maintenance convergence pass.
 - OK: `python scripts\install_flowpilot.py --sync-repo-owned --json` refreshed
-  `C:\Users\liu_y\.codex\skills\flowpilot`; post-sync `source_fresh=true`.
+  the local `flowpilot` skill installation under the Codex skills directory;
+  post-sync `source_fresh=true`.
 - OK: `python scripts\audit_local_install_sync.py --json`; repo-owned skill
   freshness passed and installed skill names are unique.
 - OK: `python scripts\install_flowpilot.py --check --json`; installed

@@ -1645,6 +1645,27 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("project_root", "agent_id", "submit_output", "run_id", "action_id", "source_action_id"),
         ),
         _contract(
+            "workflow_step_contracts.project_action",
+            path="simulations/flowpilot_workflow_step_contracts.py",
+            symbol="workflow_step_contracts_for_action",
+            implements=("workflow_step_contracts.next_step_projection",),
+            external_inputs=("action",),
+        ),
+        _contract(
+            "workflow_step_contracts.review_trace",
+            path="simulations/flowpilot_workflow_step_contracts.py",
+            symbol="review_trace",
+            implements=("workflow_step_contracts.next_step_projection",),
+            external_inputs=("steps", "contracts"),
+        ),
+        _contract(
+            "workflow_step_contracts.runner",
+            path="simulations/run_flowpilot_workflow_step_contract_checks.py",
+            symbol="build_report",
+            implements=("workflow_step_contracts.next_step_projection",),
+            external_inputs=(),
+        ),
+        _contract(
             "test_tier.commands_for_tier",
             path="scripts/test_tier/definitions.py",
             symbol="commands_for_tier",
