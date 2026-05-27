@@ -3546,7 +3546,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 644,
+        "line_count": 649,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -4096,7 +4096,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 472,
+        "line_count": 481,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_event_idempotency_checks",
@@ -6646,7 +6646,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 92,
+        "line_count": 115,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6659,7 +6659,7 @@
         "surface_id": "asset:flowpilot_router_action_providers_lifecycle",
         "surface_owner": "flowpilot_router_action_providers_lifecycle",
         "top_level_class_count": 0,
-        "top_level_function_count": 2
+        "top_level_function_count": 3
       },
       {
         "covered": true,
@@ -7679,7 +7679,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 140,
+        "line_count": 287,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7692,7 +7692,7 @@
         "surface_id": "asset:flowpilot_router_event_identity_replay",
         "surface_owner": "flowpilot_router_event_identity_replay",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 11
       },
       {
         "covered": true,
@@ -8504,7 +8504,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 275,
+        "line_count": 296,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8517,7 +8517,7 @@
         "surface_id": "asset:flowpilot_router_lifecycle_requests_reconciliation",
         "surface_owner": "flowpilot_router_lifecycle_requests_reconciliation",
         "top_level_class_count": 0,
-        "top_level_function_count": 4
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -9490,7 +9490,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 380,
+        "line_count": 450,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9503,7 +9503,7 @@
         "surface_id": "asset:flowpilot_router_role_output_bridge_events",
         "surface_owner": "flowpilot_router_role_output_bridge_events",
         "top_level_class_count": 0,
-        "top_level_function_count": 9
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -20260,15 +20260,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -20315,24 +20317,26 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_capability_checks",
+            "artifact_name": "capability_legacy_full",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_capability_checks",
-            "ok": true,
-            "progress_seen": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "capability_legacy_full",
+            "ok": false,
+            "progress_seen": false,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -20415,15 +20419,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -20470,24 +20476,26 @@
             }
           ],
           "selected": {
-            "artifact_name": "run_meta_checks",
+            "artifact_name": "meta_legacy_full",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "run_meta_checks",
-            "ok": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "meta_legacy_full",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -20568,15 +20576,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -20706,15 +20716,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -28295,6 +28307,52 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
+            "description": "PM package-disposition conflict replay from role-output storage is classified as repair-owned audit evidence across material, research, and current-node paths instead of becoming a fresh disposition.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "router_loop.package_disposition_repair_owned_role_output_replay",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_test_kinds": [
+              "edge_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Daemon tick replay of repair-owned package-disposition conflicts quarantines stale evidence, preserves the legal owner wait, and does not enter daemon_error.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "router_loop.package_disposition_repair_owned_daemon_replay",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_test_kinds": [
+              "edge_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
             "description": "The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -28720,6 +28778,64 @@
             "stale_reasons": [],
             "test_kind": "negative_path",
             "test_name": "test_known_bad_cases_are_rejected"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.package_disposition_repair_owned_role_output_replay"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.package_disposition_repair_owned_replay.edge.role_output",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_role_output_reconciliation.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.package_disposition_repair_owned_daemon_replay"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.package_disposition_repair_owned_replay.edge.daemon_tick",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_role_output_reconciliation.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_daemon_tick_quarantines_repair_owned_package_conflict_without_erasing_wait"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_control_plane_contracts.py -k pm_package_disposition",
+            "covered_code_contracts": [],
+            "covered_obligations": [
+              "router_loop.package_disposition_repair_owned_role_output_replay",
+              "router_loop.package_disposition_repair_owned_daemon_replay"
+            ],
+            "evidence_current": true,
+            "evidence_id": "router_loop.package_disposition_repair_owned_replay.negative.classifier",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_control_plane_contracts.py",
+            "result_status": "passed",
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay"
           },
           {
             "assertion_scope": "external_contract",
@@ -39681,19 +39797,11 @@
         },
         {
           "calls": [
-            "event_keys.get",
-            "existing.get",
-            "identity.get",
-            "isinstance",
+            "_classify_scoped_event_conflict",
+            "classification.get",
             "join",
-            "ledger.get",
-            "new_scope.get",
-            "old_scope.get",
-            "processed.get",
             "router.RouterError",
-            "router._event_identity_ledger",
-            "str",
-            "tuple"
+            "str"
           ],
           "code_contract_id": "router._check_scoped_event_conflict",
           "found": true,
@@ -39714,41 +39822,21 @@
             "Any",
             "ModuleType",
             "RouterError",
-            "_event_identity_ledger",
-            "conflict_fields",
+            "_classify_scoped_event_conflict",
+            "classification",
             "dict",
-            "event",
-            "event_keys",
-            "existing",
             "field",
             "fields",
             "get",
             "identity",
-            "isinstance",
             "join",
-            "key",
-            "ledger",
-            "mismatches",
-            "new_scope",
-            "old_scope",
-            "processed",
             "router",
             "run_state",
-            "str",
-            "tuple"
+            "str"
           ],
           "state_writes": [
-            "conflict_fields",
-            "event",
-            "event_keys",
-            "existing",
-            "fields",
-            "key",
-            "ledger",
-            "mismatches",
-            "new_scope",
-            "old_scope",
-            "processed"
+            "classification",
+            "fields"
           ],
           "symbol": "_check_scoped_event_conflict"
         },

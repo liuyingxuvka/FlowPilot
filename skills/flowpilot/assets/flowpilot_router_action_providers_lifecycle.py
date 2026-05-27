@@ -7,6 +7,28 @@ from types import ModuleType
 from typing import Any
 
 
+def _durable_reconciliation_only_quarantined_repair_conflicts(reconciliation: dict[str, Any]) -> bool:
+    direct = reconciliation.get("direct_role_output_reconciliation")
+    if not isinstance(direct, dict):
+        return False
+    if not direct.get("repair_owned_conflicts"):
+        return False
+    if direct.get("reconciled") or direct.get("already_recorded"):
+        return False
+
+    role_output = reconciliation.get("role_output_reconciliation")
+    if isinstance(role_output, dict) and role_output.get("changed"):
+        return False
+
+    batches = reconciliation.get("batches")
+    if isinstance(batches, dict):
+        for summary in batches.values():
+            if isinstance(summary, dict) and summary.get("changed"):
+                return False
+
+    return True
+
+
 def lifecycle_provider(
     router: ModuleType,
     project_root: Path,
@@ -54,6 +76,7 @@ def run_reconciliation_barrier(
         durable_reconciliation.get("changed")
         and isinstance(pending_action, dict)
         and pending_action.get("action_type") == "await_role_decision"
+        and not _durable_reconciliation_only_quarantined_repair_conflicts(durable_reconciliation)
     ):
         run_state["pending_action"] = None
         router.append_history(

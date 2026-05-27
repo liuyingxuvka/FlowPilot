@@ -45,6 +45,8 @@ CYCLE_EVENT_WITHOUT_RESET = "cycle_scoped_event_without_reset"
 LIFECYCLE_REPLAY = "lifecycle_replay"
 PACKAGE_DISPOSITION_SAME_BODY_REPLAY = "package_disposition_same_body_replay"
 PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT = "package_disposition_different_body_conflict"
+PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT = "package_disposition_control_blocker_owned_conflict_replay"
+PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT = "package_disposition_pm_repair_owned_conflict_replay"
 PACKAGE_DISPOSITION_NEW_GENERATION = "package_disposition_new_generation"
 
 SCENARIOS = (
@@ -62,6 +64,8 @@ SCENARIOS = (
     LIFECYCLE_REPLAY,
     PACKAGE_DISPOSITION_SAME_BODY_REPLAY,
     PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT,
+    PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT,
+    PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT,
     PACKAGE_DISPOSITION_NEW_GENERATION,
 )
 
@@ -89,6 +93,11 @@ ESCALATED_SCENARIOS = {
     PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT,
 }
 
+REPAIR_OWNED_SCENARIOS = {
+    PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT,
+    PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT,
+}
+
 
 @dataclass(frozen=True)
 class Tick:
@@ -102,7 +111,7 @@ class Action:
 
 @dataclass(frozen=True)
 class State:
-    status: str = "new"  # new | running | accepted | already_recorded | escalated
+    status: str = "new"  # new | running | accepted | already_recorded | escalated | repair_owned
     scenario: str = "unset"
     event_name: str = ""
     family: str = "unset"  # one_shot | transaction | gate | cycle | lifecycle
@@ -114,6 +123,11 @@ class State:
     key_matches_prior: bool = False
     conflict_fields_present: bool = True
     conflict_matches_prior: bool = True
+    repair_owner: str = "none"  # none | control_blocker | pm_repair_transaction | terminal_quarantine
+    legal_wait_preserved: bool = True
+    daemon_crashed: bool = False
+    stale_conflict_accepted_as_success: bool = False
+    duplicate_blocker_created: bool = False
 
     cycle_reset_recorded: bool = False
     route_version_advances: bool = False
@@ -335,6 +349,36 @@ def _selected_state(scenario: str) -> State:
             conflict_matches_prior=False,
             terminal_reason="same_package_identity_different_body_hash",
         )
+    if scenario == PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=True,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            key_matches_prior=True,
+            conflict_fields_present=True,
+            conflict_matches_prior=False,
+            repair_owner="control_blocker",
+            terminal_reason="same_package_identity_different_body_hash_control_blocker_owned",
+        )
+    if scenario == PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=True,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            key_matches_prior=True,
+            conflict_fields_present=True,
+            conflict_matches_prior=False,
+            repair_owner="pm_repair_transaction",
+            terminal_reason="same_package_identity_different_body_hash_pm_repair_owned",
+        )
     if scenario == PACKAGE_DISPOSITION_NEW_GENERATION:
         return State(
             status="running",
@@ -366,6 +410,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.family == "cycle" and state.flag_already_true and not state.cycle_reset_recorded:
         yield Transition("router_returns_already_recorded_for_same_cycle_replay", replace(state, status="already_recorded", terminal_reason="same_cycle_replay"))
         return
+    if (
+        state.family == "package"
+        and (state.key_matches_prior or state.incoming_key in state.prior_keys)
+        and not state.conflict_matches_prior
+        and state.repair_owner in {"control_blocker", "pm_repair_transaction", "terminal_quarantine"}
+    ):
+        label = f"router_skips_{state.repair_owner}_owned_package_conflict_replay"
+        yield Transition(label, replace(state, status="repair_owned", side_effect_written=False, legal_wait_preserved=True))
+        return
     if state.family == "package" and (state.key_matches_prior or state.incoming_key in state.prior_keys) and not state.conflict_matches_prior:
         yield Transition("router_rejects_same_package_different_body_hash", replace(state, status="escalated", explicit_escalation_written=True))
         return
@@ -376,7 +429,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
 
 def is_terminal(state: State) -> bool:
-    return state.status in {"accepted", "already_recorded", "escalated"}
+    return state.status in {"accepted", "already_recorded", "escalated", "repair_owned"}
 
 
 def is_success(state: State) -> bool:
@@ -417,6 +470,17 @@ def _hard_check_failures(state: State) -> list[str]:
         failures.append("accepted scoped event without dedupe key fields")
     if state.family == "package" and state.status == "already_recorded" and not state.conflict_matches_prior:
         failures.append("conflicting package disposition body was treated as idempotent replay")
+    if state.family == "package" and state.status == "repair_owned":
+        if state.repair_owner not in {"control_blocker", "pm_repair_transaction", "terminal_quarantine"}:
+            failures.append("repair-owned package conflict lacked an owning control-plane authority")
+        if state.side_effect_written or state.stale_conflict_accepted_as_success:
+            failures.append("repair-owned package conflict was accepted as successful disposition")
+        if not state.legal_wait_preserved:
+            failures.append("repair-owned package conflict replay did not preserve the legal wait")
+        if state.daemon_crashed:
+            failures.append("repair-owned package conflict replay crashed the daemon")
+        if state.duplicate_blocker_created:
+            failures.append("repair-owned package conflict replay created a duplicate blocker")
     if state.family == "package" and state.status == "accepted" and same_key:
         failures.append("same package disposition identity wrote duplicate side effect")
     if state.family == "package" and not state.conflict_fields_present:
@@ -520,6 +584,20 @@ def hazard_states() -> dict[str, State]:
             side_effect_written=True,
             duplicate_side_effect_written=True,
             terminal_reason="body_hash_created_new_dedupe_key",
+        ),
+        "repair_owned_package_conflict_accepted_as_success": replace(
+            _selected_state(PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT),
+            status="repair_owned",
+            side_effect_written=True,
+            stale_conflict_accepted_as_success=True,
+            terminal_reason="accepted_stale_replay",
+        ),
+        "repair_owned_package_conflict_crashed_daemon": replace(
+            _selected_state(PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT),
+            status="repair_owned",
+            daemon_crashed=True,
+            legal_wait_preserved=False,
+            terminal_reason="daemon_error",
         ),
         "package_conflict_field_missing": replace(
             package_same,

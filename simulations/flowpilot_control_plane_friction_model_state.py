@@ -422,6 +422,11 @@ class State:
     duplicate_role_event_side_effect_written: bool = False
     pm_package_disposition_semantic_identity_deduped: bool = True
     pm_package_disposition_body_hash_conflict_checked: bool = True
+    pm_package_repair_owned_conflict_replay_quarantined: bool = True
+    pm_package_repair_owned_conflict_preserves_wait: bool = True
+    pm_package_repair_owned_conflict_crashed_daemon: bool = False
+    pm_package_repair_owned_conflict_accepted_as_success: bool = False
+    pm_package_repair_owned_conflict_duplicate_blocker: bool = False
     pm_package_packet_outcomes_recorded: bool = True
     packet_result_author_identity_replayable: bool = True
     packet_result_author_matches_current_role: bool = True

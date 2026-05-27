@@ -385,6 +385,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
+                "router_loop.package_disposition_repair_owned_role_output_replay",
+                obligation_type="hazard",
+                description="PM package-disposition conflict replay from role-output storage is classified as repair-owned audit evidence across material, research, and current-node paths instead of becoming a fresh disposition.",
+                required_test_kinds=(EDGE, NEGATIVE),
+            ),
+            _obligation(
+                "router_loop.package_disposition_repair_owned_daemon_replay",
+                obligation_type="hazard",
+                description="Daemon tick replay of repair-owned package-disposition conflicts quarantines stale evidence, preserves the legal owner wait, and does not enter daemon_error.",
+                required_test_kinds=(EDGE, NEGATIVE),
+            ),
+            _obligation(
                 "daemon.lock_status_and_queue_progress",
                 obligation_type="invariant",
                 description="The persistent Router daemon owns one run lock, records status, waits on fresh locks, and does not reactivate released locks.",
@@ -557,6 +569,33 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
                 test_kind=NEGATIVE,
                 covers=("router_loop.known_friction_regression_gate",),
+            ),
+            _evidence(
+                "router_loop.package_disposition_repair_owned_replay.edge.role_output",
+                test_name="test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error",
+                path="tests/test_flowpilot_role_output_reconciliation.py",
+                command="python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+                test_kind=EDGE,
+                covers=("router_loop.package_disposition_repair_owned_role_output_replay",),
+            ),
+            _evidence(
+                "router_loop.package_disposition_repair_owned_replay.edge.daemon_tick",
+                test_name="test_daemon_tick_quarantines_repair_owned_package_conflict_without_erasing_wait",
+                path="tests/test_flowpilot_role_output_reconciliation.py",
+                command="python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+                test_kind=EDGE,
+                covers=("router_loop.package_disposition_repair_owned_daemon_replay",),
+            ),
+            _evidence(
+                "router_loop.package_disposition_repair_owned_replay.negative.classifier",
+                test_name="test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay",
+                path="tests/test_flowpilot_control_plane_contracts.py",
+                command="python -m pytest tests/test_flowpilot_control_plane_contracts.py -k pm_package_disposition",
+                test_kind=NEGATIVE,
+                covers=(
+                    "router_loop.package_disposition_repair_owned_role_output_replay",
+                    "router_loop.package_disposition_repair_owned_daemon_replay",
+                ),
             ),
             _evidence(
                 "daemon.happy.formal_startup",

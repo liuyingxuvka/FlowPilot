@@ -481,12 +481,29 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         role_output_evidence = {item.evidence_id: item for item in role_output_entry["plan"].test_evidence}
 
         self.assertIn("router_loop.known_friction_regression_gate", router_obligations)
+        self.assertIn("router_loop.package_disposition_repair_owned_role_output_replay", router_obligations)
+        self.assertIn("router_loop.package_disposition_repair_owned_daemon_replay", router_obligations)
         self.assertIn("output_contract.self_check_required_fields", role_output_obligations)
         matrix_item = router_evidence["router_loop.known_friction.happy.matrix"]
         self.assertEqual(matrix_item.path, "tests/test_flowpilot_known_friction_regression_matrix.py")
         self.assertEqual(matrix_item.test_name, "test_known_friction_rows_cover_required_historical_failures")
         known_bad_item = router_evidence["router_loop.known_friction.negative.known_bad"]
         self.assertEqual(known_bad_item.test_name, "test_known_bad_cases_are_rejected")
+        replay_item = router_evidence["router_loop.package_disposition_repair_owned_replay.edge.role_output"]
+        self.assertEqual(
+            replay_item.test_name,
+            "test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error",
+        )
+        daemon_item = router_evidence["router_loop.package_disposition_repair_owned_replay.edge.daemon_tick"]
+        self.assertEqual(
+            daemon_item.test_name,
+            "test_daemon_tick_quarantines_repair_owned_package_conflict_without_erasing_wait",
+        )
+        classifier_item = router_evidence["router_loop.package_disposition_repair_owned_replay.negative.classifier"]
+        self.assertEqual(
+            classifier_item.test_name,
+            "test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay",
+        )
         contract_item = role_output_evidence["output_contract.negative.live_worker_missing_fields"]
         self.assertEqual(
             contract_item.test_name,

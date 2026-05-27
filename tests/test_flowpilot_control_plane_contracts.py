@@ -93,6 +93,73 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
                 with self.assertRaisesRegex(router.RouterError, "conflicts with an already recorded package disposition"):  # type: ignore[attr-defined]
                     router._check_scoped_event_conflict(run_state, conflict_identity)  # type: ignore[attr-defined]
 
+    def test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay(self) -> None:
+        for event in (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        ):
+            with self.subTest(event=event):
+                first_identity = {
+                    "event": event,
+                    "dedupe_key": f"{event}:test",
+                    "family": "pm_package_disposition",
+                    "conflict_fields": ["body_hash"],
+                    "scope": {
+                        "batch_id": "batch-1",
+                        "packet_ids": "packet-a,packet-b",
+                        "packet_generation_id": "generation-1",
+                        "body_hash": "hash-a",
+                    },
+                    "retry_group": f"{event}:test",
+                }
+                conflict_identity = {
+                    **first_identity,
+                    "scope": {**first_identity["scope"], "body_hash": "hash-b"},
+                }
+
+                blocker_state: dict[str, object] = {
+                    "active_control_blocker": {
+                        "blocker_id": "control-blocker-1",
+                        "originating_event": event,
+                        "handling_lane": "pm_repair_decision_required",
+                        "target_role": "project_manager",
+                        "pm_decision_required": True,
+                        "delivery_status": "delivered",
+                    }
+                }
+                router._mark_scoped_event_recorded(blocker_state, first_identity)  # type: ignore[attr-defined]
+                blocker_classification = router._classify_scoped_event_conflict(blocker_state, conflict_identity)  # type: ignore[attr-defined]
+                self.assertEqual(
+                    blocker_classification["classification"],
+                    "control_blocker_owned_stale_conflict",
+                )
+                with self.assertRaisesRegex(router.RouterError, "conflicts with an already recorded package disposition"):  # type: ignore[attr-defined]
+                    router._check_scoped_event_conflict(blocker_state, conflict_identity)  # type: ignore[attr-defined]
+
+                repair_state: dict[str, object] = {
+                    "active_repair_transaction": {
+                        "transaction_id": "repair-tx-1",
+                        "blocker_id": "control-blocker-1",
+                        "status": "committed",
+                        "originating_event": event,
+                    }
+                }
+                router._mark_scoped_event_recorded(repair_state, first_identity)  # type: ignore[attr-defined]
+                repair_classification = router._classify_scoped_event_conflict(repair_state, conflict_identity)  # type: ignore[attr-defined]
+                self.assertEqual(
+                    repair_classification["classification"],
+                    "pm_repair_owned_stale_conflict",
+                )
+
+                terminal_state: dict[str, object] = {"status": "stopped_by_user", "flags": {"run_stopped_by_user": True}}
+                router._mark_scoped_event_recorded(terminal_state, first_identity)  # type: ignore[attr-defined]
+                terminal_classification = router._classify_scoped_event_conflict(terminal_state, conflict_identity)  # type: ignore[attr-defined]
+                self.assertEqual(
+                    terminal_classification["classification"],
+                    "terminal_quarantine",
+                )
+
     def test_pm_package_disposition_policies_use_body_hash_as_conflict_evidence(self) -> None:
         for event in (
             "pm_records_material_scan_result_disposition",

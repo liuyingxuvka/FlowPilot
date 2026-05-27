@@ -19113,3 +19113,83 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No GitHub push, tag, release, deploy, or public publication was performed.
 - The live-run audit limitation remains a disclosed active-runtime boundary
   until the peer-owned run settles or is repaired by its owner.
+
+## 2026-05-27 11:52 +02:00 - Package Disposition Replay Recovery
+
+### Summary
+
+- Task: repair the repair-owned package disposition conflict replay path that
+  could make daemon role-output ledger replay crash or overclaim success after
+  a stale same-package different-body PM disposition remained replayable.
+- Route: `openspec_explore_propose_apply +
+  flowguard_existing_model_preflight + model_miss_review +
+  development_process_flow + model_test_alignment`.
+- OpenSpec change:
+  `harden-package-disposition-replay-recovery`.
+
+### Changed Surfaces
+
+- Added repair-owned package conflict states to event-idempotency and
+  control-plane friction models.
+- Added a shared scoped-event conflict classifier with terminal quarantine,
+  PM-repair-owned, and control-blocker-owned outcomes while keeping new direct
+  body conflicts hard-failing.
+- Routed role-output ledger replay through the classifier before the fatal
+  conflict check, writing `role_output_replay_quarantine` audit evidence.
+- Added regression tests across material, research, and current-node package
+  dispositions plus a daemon tick test proving the legal wait remains visible.
+- Promoted `known_friction.package_disposition_conflict_replay` into the
+  known-friction defect-family matrix with scoped-confidence boundaries.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate harden-package-disposition-replay-recovery --strict --json`.
+- OK: `python -m pytest tests/test_flowpilot_role_output_reconciliation.py -q`
+  -> 5 tests passed, 10 subtests passed.
+- OK: `python -m pytest tests/test_flowpilot_control_plane_contracts.py -q`
+  -> 24 tests passed, 9 subtests passed.
+- OK: `python -m pytest tests/test_flowpilot_model_test_alignment.py -q`
+  -> 16 tests passed, 313 subtests passed.
+- OK:
+  `python simulations/run_flowpilot_event_idempotency_checks.py --json-out tmp/flowpilot_event_idempotency_results.json`.
+- OK:
+  `python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit --json-out tmp/flowpilot_control_plane_friction_skip_live_results.json`.
+- OK:
+  `python simulations/run_flowpilot_control_plane_friction_checks.py --json-out tmp/flowpilot_control_plane_friction_full_latest.json`;
+  full control-plane friction check including live audit passed.
+- OK:
+  `python simulations/run_flowpilot_repair_transaction_checks.py --json-out tmp/flowpilot_repair_transaction_results.json`.
+- OK:
+  `python simulations/flowpilot_known_friction_regression_matrix.py --json-out tmp/flowpilot_known_friction_regression_matrix_results.json`.
+- OK:
+  `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out tmp/flowpilot_model_test_alignment_results.json`.
+- OK: background `run_meta_checks` artifact set completed with exit code 0,
+  stderr empty, proof reused false.
+- OK: background `run_capability_checks` artifact set completed with exit code
+  0, stderr empty, proof reused false.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+
+### Findings
+
+- This was the same defect family as the previous package body-hash fix, but a
+  missed input branch: daemon role-output ledger replay after repair ownership.
+- The fix does not accept stale conflicting package bodies as successful
+  dispositions; it writes audit-only quarantine and preserves the legal wait.
+- The final full control-plane friction check, including live audit, passed
+  after concurrent workspace changes settled. This task still did not mutate
+  peer-owned active runtime state or terminal heartbeat automation directly.
+- `run_flowpilot_model_test_alignment_checks.py` reports alignment green but
+  notes a non-blocking deferred structure split for
+  `flowpilot_router_role_output_bridge_events.py` at 466 lines.
+
+### Skipped Or Limited
+
+- No peer-owned active `.flowpilot` runtime state or terminal heartbeat
+  automation was changed.
+- No broad formatter, dependency install, GitHub push, tag, release, deploy, or
+  public publication was performed.
+- The failed router facade split parent check reports pre-existing global
+  child-module-count pressure and was not treated as this repair's gate.

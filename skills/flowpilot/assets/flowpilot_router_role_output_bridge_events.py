@@ -125,8 +125,6 @@ def _role_output_body_payload_from_record(
     envelope: dict[str, Any],
 ) -> dict[str, Any]:
     _bind_router(router)
-    if isinstance(envelope.get("body_ref"), dict):
-        return _load_file_backed_role_payload(project_root, envelope)
     body_path = ""
     body_ref = envelope.get("body_ref")
     if isinstance(body_ref, dict):
@@ -271,6 +269,39 @@ def _sync_material_review_from_role_output_payload(
     return changed
 
 
+def _record_role_output_replay_quarantine(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, event: str, record: dict[str, Any], classification: dict[str, Any]) -> dict[str, Any]:
+    _bind_router(router)
+    output_id = str(record.get("output_id") or "")
+    key = "|".join((event, str(classification.get("classification") or ""), str(classification.get("dedupe_key") or ""), output_id))
+    rows = run_state.setdefault("role_output_replay_quarantine", [])
+    if isinstance(rows, list):
+        existing = next((item for item in rows if isinstance(item, dict) and item.get("quarantine_key") == key), None)
+        if isinstance(existing, dict):
+            return {**existing, "already_quarantined": True}
+    else:
+        rows = []
+        run_state["role_output_replay_quarantine"] = rows
+    path = run_root / "runtime" / "role_output_replay_quarantine.jsonl"
+    summary = {
+        "schema_version": "flowpilot.role_output_replay_quarantine.v1",
+        "status": "quarantined_audit_only",
+        "quarantine_key": key,
+        "event": event,
+        "classification": classification.get("classification"),
+        "dedupe_key": classification.get("dedupe_key"),
+        "mismatches": classification.get("mismatches") or [],
+        "owner": classification.get("owner"),
+        "output_id": output_id or None,
+        "quarantined_at": router.utc_now(),
+        "quarantine_path": router.project_relative(project_root, path),
+    }
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(summary, sort_keys=True) + "\n")
+    rows.append(summary)
+    return summary
+
+
 def _try_reconcile_direct_role_output_event_ledger(
     router: ModuleType,
     project_root: Path,
@@ -282,6 +313,7 @@ def _try_reconcile_direct_role_output_event_ledger(
     changed = False
     reconciled = 0
     already_recorded = 0
+    repair_owned_conflicts = 0
     skipped_invalid = 0
     skipped_not_ready = 0
     skipped_unauthorized = 0
@@ -298,7 +330,13 @@ def _try_reconcile_direct_role_output_event_ledger(
         meta = EXTERNAL_EVENTS[event]
         flag = str(meta["flag"])
         required_flag = str(meta.get("requires_flag") or "")
-        if required_flag and not flags.get(required_flag):
+        scoped_policy = getattr(router, "SCOPED_EVENT_IDENTITY_POLICIES", {}).get(event)
+        is_package_disposition_event = (
+            isinstance(scoped_policy, dict)
+            and scoped_policy.get("family") == "pm_package_disposition"
+        )
+        required_flag_missing = bool(required_flag and not flags.get(required_flag))
+        if required_flag_missing and not is_package_disposition_event:
             skipped_not_ready += 1
             continue
         if not _role_output_event_has_durable_authority(router, run_root, run_state, event):
@@ -309,6 +347,35 @@ def _try_reconcile_direct_role_output_event_ledger(
             payload = _role_output_body_payload_from_record(router, project_root, record, envelope)
         except (role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError, TypeError, ValueError):
             skipped_invalid += 1
+            continue
+        scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
+        conflict_classification = _classify_scoped_event_conflict(run_state, scoped_identity)
+        if conflict_classification.get("classification") in {
+            "terminal_quarantine",
+            "pm_repair_owned_stale_conflict",
+            "control_blocker_owned_stale_conflict",
+        }:
+            repair_owned_conflicts += 1
+            quarantine = _record_role_output_replay_quarantine(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                event=event,
+                record=record,
+                classification=conflict_classification,
+            )
+            events.append(event)
+            if not quarantine.get("already_quarantined"):
+                changed = True
+                append_history(
+                    run_state,
+                    "router_skipped_repair_owned_package_disposition_conflict_replay",
+                    quarantine,
+                )
+            continue
+        if required_flag_missing:
+            skipped_not_ready += 1
             continue
         _preconsume_pending_card_return_ack_before_external_event(
             project_root,
@@ -327,7 +394,6 @@ def _try_reconcile_direct_role_output_event_ledger(
             event,
             payload,
         )
-        scoped_identity = _scoped_event_identity(project_root, run_root, run_state, event, payload)
         _check_scoped_event_conflict(run_state, scoped_identity)
         if _scoped_event_is_recorded(run_state, scoped_identity) or (
             flags.get(flag) and _event_allows_run_wide_flag_short_circuit(event, scoped_identity)
@@ -360,6 +426,7 @@ def _try_reconcile_direct_role_output_event_ledger(
             {
                 "reconciled": reconciled,
                 "already_recorded": already_recorded,
+                "repair_owned_conflicts": repair_owned_conflicts,
                 "events": events,
                 "skipped_invalid": skipped_invalid,
                 "skipped_not_ready": skipped_not_ready,
@@ -370,6 +437,7 @@ def _try_reconcile_direct_role_output_event_ledger(
         "changed": changed,
         "reconciled": reconciled,
         "already_recorded": already_recorded,
+        "repair_owned_conflicts": repair_owned_conflicts,
         "events": events,
         "skipped_invalid": skipped_invalid,
         "skipped_not_ready": skipped_not_ready,

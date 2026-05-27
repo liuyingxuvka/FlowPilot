@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=90",
+    "summary": "sequences=3 initial_states=1 traces=102",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -73,6 +73,23 @@
         ],
         "state": "scenario=package_disposition_different_body_conflict|status=already_recorded|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=same_key_replay_without_conflict_check"
       },
+      "repair_owned_package_conflict_accepted_as_success": {
+        "detected": true,
+        "expected_failure": "repair-owned package conflict was accepted as successful disposition",
+        "failures": [
+          "repair-owned package conflict was accepted as successful disposition"
+        ],
+        "state": "scenario=package_disposition_control_blocker_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=True|duplicate=False|escalated=False|stuck=False|reason=accepted_stale_replay"
+      },
+      "repair_owned_package_conflict_crashed_daemon": {
+        "detected": true,
+        "expected_failure": "repair-owned package conflict replay did not preserve the legal wait",
+        "failures": [
+          "repair-owned package conflict replay did not preserve the legal wait",
+          "repair-owned package conflict replay crashed the daemon"
+        ],
+        "state": "scenario=package_disposition_pm_repair_owned_conflict_replay|status=repair_owned|event=pm_records_material_scan_result_disposition|family=package|flag=True|key=material-batch-1:gen-1:packet-a,packet-b|prior=material-batch-1:gen-1:packet-a,packet-b|conflict=False|conflict_fields=True|retry=0/2|reset=False|side_effect=False|duplicate=False|escalated=False|stuck=False|reason=daemon_error"
+      },
       "repair_retry_below_budget_swallowed": {
         "detected": true,
         "expected_failure": "new scoped event identity was swallowed by global event flag",
@@ -135,7 +152,7 @@
       "package_disposition_same_body_replay",
       "route_mutation_same_transaction_replay"
     ],
-    "edge_count": 30,
+    "edge_count": 34,
     "escalated": [
       "one_shot_new_context_rejected",
       "package_disposition_different_body_conflict",
@@ -145,7 +162,11 @@
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 31
+    "repair_owned": [
+      "package_disposition_control_blocker_owned_conflict_replay",
+      "package_disposition_pm_repair_owned_conflict_replay"
+    ],
+    "state_count": 35
   },
   "source_audit": {
     "external_event_count": 110,

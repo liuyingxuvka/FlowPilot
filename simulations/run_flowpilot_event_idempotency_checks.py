@@ -41,6 +41,8 @@ REQUIRED_LABELS = (
     "select_lifecycle_replay",
     "select_package_disposition_same_body_replay",
     "select_package_disposition_different_body_conflict",
+    "select_package_disposition_control_blocker_owned_conflict_replay",
+    "select_package_disposition_pm_repair_owned_conflict_replay",
     "select_package_disposition_new_generation",
     "router_accepts_new_scoped_event_identity",
     "router_returns_already_recorded_for_same_dedupe_key",
@@ -48,6 +50,8 @@ REQUIRED_LABELS = (
     "router_escalates_after_retry_budget",
     "router_rejects_one_shot_new_context_without_reset",
     "router_rejects_same_package_different_body_hash",
+    "router_skips_control_blocker_owned_package_conflict_replay",
+    "router_skips_pm_repair_transaction_owned_package_conflict_replay",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -60,6 +64,8 @@ HAZARD_EXPECTED_FAILURES = {
     "no_legal_next_action_after_swallow": "new scoped event identity was swallowed by global event flag",
     "package_conflict_swallowed_as_replay": "conflicting package disposition body was treated as idempotent replay",
     "package_body_hash_left_in_dedupe_key": "duplicate side effect written for replayed event identity",
+    "repair_owned_package_conflict_accepted_as_success": "repair-owned package conflict was accepted as successful disposition",
+    "repair_owned_package_conflict_crashed_daemon": "repair-owned package conflict replay did not preserve the legal wait",
     "package_conflict_field_missing": "package disposition identity lacked body_hash conflict field",
 }
 
@@ -178,18 +184,21 @@ def _safe_graph_report(graph: dict[str, Any]) -> dict[str, object]:
     accepted = [state for state in terminals if state.status == "accepted"]
     already_recorded = [state for state in terminals if state.status == "already_recorded"]
     escalated = [state for state in terminals if state.status == "escalated"]
+    repair_owned = [state for state in terminals if state.status == "repair_owned"]
     missing_labels = sorted(set(REQUIRED_LABELS) - set(graph["labels"]))
     return {
         "ok": not graph["invariant_failures"]
         and not missing_labels
         and {state.scenario for state in accepted} == model.ACCEPTED_SCENARIOS
         and {state.scenario for state in already_recorded} == model.IDEMPOTENT_SCENARIOS
-        and {state.scenario for state in escalated} == model.ESCALATED_SCENARIOS,
+        and {state.scenario for state in escalated} == model.ESCALATED_SCENARIOS
+        and {state.scenario for state in repair_owned} == model.REPAIR_OWNED_SCENARIOS,
         "state_count": len(states),
         "edge_count": graph["edge_count"],
         "accepted": sorted(state.scenario for state in accepted),
         "already_recorded": sorted(state.scenario for state in already_recorded),
         "escalated": sorted(state.scenario for state in escalated),
+        "repair_owned": sorted(state.scenario for state in repair_owned),
         "missing_labels": missing_labels,
         "invariant_failure_count": len(graph["invariant_failures"]),
         "invariant_failures": graph["invariant_failures"][:5],

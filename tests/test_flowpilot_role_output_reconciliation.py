@@ -4,6 +4,7 @@ from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 import flowpilot_router_action_providers  # noqa: E402
+import flowpilot_router_role_output_bridge_events as role_output_bridge_events  # noqa: E402
 
 
 class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
@@ -98,6 +99,99 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             },
         )
 
+    def _seed_package_disposition_conflict_replay(
+        self,
+        root: Path,
+        run_root: Path,
+        *,
+        event: str = "pm_records_material_scan_result_disposition",
+        owner: str,
+    ) -> dict:
+        event_slug = event.replace("pm_records_", "").replace("_result_disposition", "")
+        self.pm_package_result_disposition_envelope(
+            root,
+            event,
+            name=f"{event_slug}/{owner}/pm_package_result_disposition_first",
+            decision="absorbed",
+            decision_reason="PM absorbed the current package result batch.",
+        )
+        self.pm_package_result_disposition_envelope(
+            root,
+            event,
+            name=f"{event_slug}/{owner}/pm_package_result_disposition_conflict",
+            decision="rework_requested",
+            decision_reason="A stale conflicting PM disposition was still replayable.",
+        )
+        ledger_records = role_output_bridge_events._role_output_ledger_outputs(router, run_root)
+        first_record = next(
+            record
+            for record in ledger_records
+            if "pm_package_result_disposition_first" in str(record)
+        )
+
+        state = read_json(router.run_state_path(run_root))
+        payload = role_output_bridge_events._role_output_body_payload_from_record(
+            router,
+            root,
+            first_record,
+            first_record["envelope"],
+        )
+        identity = router._scoped_event_identity(root, run_root, state, event, payload)  # type: ignore[attr-defined]
+        router._mark_scoped_event_recorded(state, identity)  # type: ignore[attr-defined]
+        flags = state.setdefault("flags", {})
+        required_flag = router.EXTERNAL_EVENTS[event].get("requires_flag")
+        if required_flag:
+            flags[required_flag] = True
+        flags[router.EXTERNAL_EVENTS[event]["flag"]] = True
+        if owner == "control_blocker":
+            allowed_events = [router.PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
+        elif owner == "pm_repair":
+            flags["pm_control_blocker_repair_decision_recorded"] = True
+            allowed_events = [
+                "router_direct_material_scan_dispatch_recheck_passed",
+                "router_direct_material_scan_dispatch_recheck_blocked",
+                "router_protocol_blocker_material_scan_dispatch_recheck",
+            ]
+        else:
+            raise AssertionError(f"unknown owner: {owner}")
+        state.setdefault("events", []).append(
+            {
+                "event": event,
+                "recorded_at": router.utc_now(),
+                "source": "test_existing_package_disposition",
+                "dedupe_key": identity["dedupe_key"],
+            }
+        )
+        state["pending_action"] = router.make_action(
+            action_type="await_role_decision",
+            actor="controller",
+            label=f"controller_waits_for_{event_slug}_{owner}_resolution",
+            summary="Wait for the existing control-plane owner to resolve package disposition conflict.",
+            to_role="project_manager",
+            extra={
+                "allowed_external_events": allowed_events,
+                "started_at": "2026-05-20T00:00:00Z",
+            },
+        )
+        if owner == "control_blocker":
+            state["active_control_blocker"] = {
+                "blocker_id": "control-blocker-1",
+                "originating_event": event,
+                "handling_lane": "pm_repair_decision_required",
+                "target_role": "project_manager",
+                "pm_decision_required": True,
+                "delivery_status": "delivered",
+            }
+        elif owner == "pm_repair":
+            state["active_repair_transaction"] = {
+                "transaction_id": "repair-tx-1",
+                "blocker_id": "control-blocker-1",
+                "status": "committed",
+                "originating_event": event,
+            }
+        router.save_run_state(run_root, state)
+        return state
+
     def test_material_role_output_event_reconciles_router_state_and_clears_stale_pending(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-material-role-output-reconcile")
@@ -134,6 +228,126 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             if isinstance(item, dict) and item.get("event") == "reviewer_reports_material_insufficient"
         ]
         self.assertEqual(len(replay_events), 1)
+
+    def test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error(self) -> None:
+        events = (
+            "pm_records_material_scan_result_disposition",
+            "pm_records_research_result_disposition",
+            "pm_records_current_node_result_disposition",
+        )
+        for event in events:
+            event_slug = event.replace("pm_records_", "").replace("_result_disposition", "")
+            for owner in ("control_blocker", "pm_repair"):
+                with self.subTest(event=event, owner=owner):
+                    root = self.make_project()
+                    run_root = self.write_minimal_run(root, f"run-package-conflict-replay-{event_slug}-{owner}")
+                    self.write_current_focus(root, run_root)
+                    state = self._seed_package_disposition_conflict_replay(root, run_root, event=event, owner=owner)
+
+                    result = router._reconcile_durable_wait_evidence(root, run_root, state)  # type: ignore[attr-defined]
+                    router.save_run_state(run_root, state)
+
+                    direct_reconcile = result["direct_role_output_reconciliation"]
+                    self.assertTrue(direct_reconcile["changed"])
+                    self.assertEqual(direct_reconcile["repair_owned_conflicts"], 1)
+                    self.assertEqual(direct_reconcile["reconciled"], 0)
+                    after = read_json(router.run_state_path(run_root))
+                    package_events = [
+                        item
+                        for item in after["events"]
+                        if isinstance(item, dict) and item.get("event") == event
+                    ]
+                    self.assertEqual(len(package_events), 1)
+                    self.assertEqual(
+                        (after.get("pending_action") or {}).get("label"),
+                        f"controller_waits_for_{event_slug}_{owner}_resolution",
+                    )
+                    quarantine_rows = after.get("role_output_replay_quarantine", [])
+                    self.assertEqual(len(quarantine_rows), 1)
+                    self.assertEqual(quarantine_rows[0]["event"], event)
+                    self.assertEqual(quarantine_rows[0]["status"], "quarantined_audit_only")
+                    quarantine_path = run_root / "runtime" / "role_output_replay_quarantine.jsonl"
+                    self.assertTrue(quarantine_path.exists())
+                    self.assertTrue(
+                        any(
+                            item.get("label") == "router_skipped_repair_owned_package_disposition_conflict_replay"
+                            for item in after.get("history", [])
+                            if isinstance(item, dict)
+                        )
+                    )
+
+                    replay = router._reconcile_durable_wait_evidence(root, run_root, after)  # type: ignore[attr-defined]
+                    self.assertFalse(replay["direct_role_output_reconciliation"]["changed"])
+                    self.assertEqual(replay["direct_role_output_reconciliation"]["repair_owned_conflicts"], 1)
+
+    def test_repair_owned_package_disposition_conflict_replay_is_seen_before_required_flag(self) -> None:
+        for owner in ("control_blocker", "pm_repair"):
+            with self.subTest(owner=owner):
+                root = self.make_project()
+                run_root = self.write_minimal_run(root, f"run-package-conflict-replay-missing-required-flag-{owner}")
+                self.write_current_focus(root, run_root)
+                state = self._seed_package_disposition_conflict_replay(root, run_root, owner=owner)
+                required_flag = router.EXTERNAL_EVENTS["pm_records_material_scan_result_disposition"]["requires_flag"]
+                state["flags"].pop(required_flag, None)
+                router.save_run_state(run_root, state)
+
+                result = router._reconcile_durable_wait_evidence(root, run_root, state)  # type: ignore[attr-defined]
+                router.save_run_state(run_root, state)
+
+                direct_reconcile = result["direct_role_output_reconciliation"]
+                self.assertTrue(direct_reconcile["changed"])
+                self.assertEqual(direct_reconcile["repair_owned_conflicts"], 1)
+                self.assertEqual(direct_reconcile["reconciled"], 0)
+                after = read_json(router.run_state_path(run_root))
+                package_events = [
+                    item
+                    for item in after["events"]
+                    if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+                ]
+                self.assertEqual(len(package_events), 1)
+                self.assertEqual(
+                    (after.get("pending_action") or {}).get("label"),
+                    f"controller_waits_for_material_scan_{owner}_resolution",
+                )
+                self.assertTrue(
+                    any(
+                        item.get("label") == "router_skipped_repair_owned_package_disposition_conflict_replay"
+                        for item in after.get("history", [])
+                        if isinstance(item, dict)
+                    )
+                )
+
+    def test_daemon_tick_quarantines_repair_owned_package_conflict_without_erasing_wait(self) -> None:
+        for owner in ("control_blocker", "pm_repair"):
+            with self.subTest(owner=owner):
+                root = self.make_project()
+                run_root = self.write_minimal_run(root, f"run-package-conflict-daemon-replay-{owner}")
+                self.write_current_focus(root, run_root)
+                self.release_startup_daemon_for_explicit_daemon_test(root)
+                state = read_json(router.run_state_path(run_root))
+                sync_action = router._next_display_plan_action(root, state, run_root)  # type: ignore[attr-defined]
+                if sync_action is not None:
+                    router._apply_sync_display_plan_state(root, run_root, state, sync_action, {})  # type: ignore[attr-defined]
+                    router.save_run_state(run_root, state)
+                self._seed_package_disposition_conflict_replay(root, run_root, owner=owner)
+
+                result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+                self.assertTrue(result["ok"])
+                status = read_json(run_root / "runtime" / "router_daemon_status.json")
+                self.assertNotEqual(status["lifecycle_status"], "daemon_error")
+                after = read_json(router.run_state_path(run_root))
+                self.assertEqual(
+                    (after.get("pending_action") or {}).get("label"),
+                    f"controller_waits_for_material_scan_{owner}_resolution",
+                )
+                self.assertEqual(len(after.get("role_output_replay_quarantine", [])), 1)
+                package_events = [
+                    item
+                    for item in after["events"]
+                    if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+                ]
+                self.assertEqual(len(package_events), 1)
 
     def test_resolved_wait_cannot_drive_current_work_or_wait_reminder(self) -> None:
         root = self.make_project()
