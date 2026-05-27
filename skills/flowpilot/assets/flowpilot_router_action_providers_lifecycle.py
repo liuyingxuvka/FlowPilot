@@ -11,7 +11,7 @@ def _durable_reconciliation_only_quarantined_repair_conflicts(reconciliation: di
     direct = reconciliation.get("direct_role_output_reconciliation")
     if not isinstance(direct, dict):
         return False
-    if not direct.get("repair_owned_conflicts"):
+    if not (direct.get("repair_owned_conflicts") or direct.get("stale_unowned_conflicts")):
         return False
     if direct.get("reconciled") or direct.get("already_recorded"):
         return False

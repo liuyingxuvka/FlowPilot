@@ -427,6 +427,10 @@ class State:
     pm_package_repair_owned_conflict_crashed_daemon: bool = False
     pm_package_repair_owned_conflict_accepted_as_success: bool = False
     pm_package_repair_owned_conflict_duplicate_blocker: bool = False
+    pm_package_stale_unowned_conflict_replay_quarantined: bool = True
+    pm_package_stale_unowned_conflict_preserves_canonical: bool = True
+    pm_package_stale_unowned_conflict_crashed_daemon: bool = False
+    pm_package_stale_unowned_conflict_accepted_as_success: bool = False
     pm_package_packet_outcomes_recorded: bool = True
     packet_result_author_identity_replayable: bool = True
     packet_result_author_matches_current_role: bool = True

@@ -47,6 +47,7 @@ PACKAGE_DISPOSITION_SAME_BODY_REPLAY = "package_disposition_same_body_replay"
 PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT = "package_disposition_different_body_conflict"
 PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT = "package_disposition_control_blocker_owned_conflict_replay"
 PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT = "package_disposition_pm_repair_owned_conflict_replay"
+PACKAGE_DISPOSITION_STALE_UNOWNED_CONFLICT = "package_disposition_stale_unowned_conflict_replay"
 PACKAGE_DISPOSITION_NEW_GENERATION = "package_disposition_new_generation"
 
 SCENARIOS = (
@@ -66,6 +67,7 @@ SCENARIOS = (
     PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT,
     PACKAGE_DISPOSITION_CONTROL_BLOCKER_OWNED_CONFLICT,
     PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT,
+    PACKAGE_DISPOSITION_STALE_UNOWNED_CONFLICT,
     PACKAGE_DISPOSITION_NEW_GENERATION,
 )
 
@@ -98,6 +100,10 @@ REPAIR_OWNED_SCENARIOS = {
     PACKAGE_DISPOSITION_PM_REPAIR_OWNED_CONFLICT,
 }
 
+STALE_QUARANTINED_SCENARIOS = {
+    PACKAGE_DISPOSITION_STALE_UNOWNED_CONFLICT,
+}
+
 
 @dataclass(frozen=True)
 class Tick:
@@ -111,7 +117,7 @@ class Action:
 
 @dataclass(frozen=True)
 class State:
-    status: str = "new"  # new | running | accepted | already_recorded | escalated | repair_owned
+    status: str = "new"  # new | running | accepted | already_recorded | escalated | repair_owned | stale_quarantined
     scenario: str = "unset"
     event_name: str = ""
     family: str = "unset"  # one_shot | transaction | gate | cycle | lifecycle
@@ -123,6 +129,9 @@ class State:
     key_matches_prior: bool = False
     conflict_fields_present: bool = True
     conflict_matches_prior: bool = True
+    replay_source: str = "direct"  # direct | role_output_ledger | daemon_tick
+    canonical_package_authority_available: bool = False
+    canonical_body_preserved: bool = True
     repair_owner: str = "none"  # none | control_blocker | pm_repair_transaction | terminal_quarantine
     legal_wait_preserved: bool = True
     daemon_crashed: bool = False
@@ -379,6 +388,22 @@ def _selected_state(scenario: str) -> State:
             repair_owner="pm_repair_transaction",
             terminal_reason="same_package_identity_different_body_hash_pm_repair_owned",
         )
+    if scenario == PACKAGE_DISPOSITION_STALE_UNOWNED_CONFLICT:
+        return State(
+            status="running",
+            scenario=scenario,
+            event_name="pm_records_material_scan_result_disposition",
+            family="package",
+            flag_already_true=False,
+            prior_keys=("material-batch-1:gen-1:packet-a,packet-b",),
+            incoming_key="material-batch-1:gen-1:packet-a,packet-b",
+            key_matches_prior=True,
+            conflict_fields_present=True,
+            conflict_matches_prior=False,
+            replay_source="role_output_ledger",
+            canonical_package_authority_available=True,
+            terminal_reason="same_package_identity_different_body_hash_canonical_authority_owned",
+        )
     if scenario == PACKAGE_DISPOSITION_NEW_GENERATION:
         return State(
             status="running",
@@ -419,6 +444,24 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         label = f"router_skips_{state.repair_owner}_owned_package_conflict_replay"
         yield Transition(label, replace(state, status="repair_owned", side_effect_written=False, legal_wait_preserved=True))
         return
+    if (
+        state.family == "package"
+        and (state.key_matches_prior or state.incoming_key in state.prior_keys)
+        and not state.conflict_matches_prior
+        and state.replay_source in {"role_output_ledger", "daemon_tick"}
+        and state.canonical_package_authority_available
+    ):
+        yield Transition(
+            "router_quarantines_canonical_package_authority_stale_conflict",
+            replace(
+                state,
+                status="stale_quarantined",
+                side_effect_written=False,
+                legal_wait_preserved=True,
+                canonical_body_preserved=True,
+            ),
+        )
+        return
     if state.family == "package" and (state.key_matches_prior or state.incoming_key in state.prior_keys) and not state.conflict_matches_prior:
         yield Transition("router_rejects_same_package_different_body_hash", replace(state, status="escalated", explicit_escalation_written=True))
         return
@@ -429,7 +472,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
 
 def is_terminal(state: State) -> bool:
-    return state.status in {"accepted", "already_recorded", "escalated", "repair_owned"}
+    return state.status in {"accepted", "already_recorded", "escalated", "repair_owned", "stale_quarantined"}
 
 
 def is_success(state: State) -> bool:
@@ -481,6 +524,15 @@ def _hard_check_failures(state: State) -> list[str]:
             failures.append("repair-owned package conflict replay crashed the daemon")
         if state.duplicate_blocker_created:
             failures.append("repair-owned package conflict replay created a duplicate blocker")
+    if state.family == "package" and state.status == "stale_quarantined":
+        if not state.canonical_package_authority_available:
+            failures.append("stale unowned package conflict lacked canonical package authority")
+        if state.side_effect_written or state.stale_conflict_accepted_as_success:
+            failures.append("stale unowned package conflict was accepted as successful disposition")
+        if not state.canonical_body_preserved:
+            failures.append("stale unowned package conflict replay did not preserve canonical body")
+        if state.daemon_crashed:
+            failures.append("stale unowned package conflict replay crashed the daemon")
     if state.family == "package" and state.status == "accepted" and same_key:
         failures.append("same package disposition identity wrote duplicate side effect")
     if state.family == "package" and not state.conflict_fields_present:
@@ -524,6 +576,7 @@ def hazard_states() -> dict[str, State]:
     cycle_new = _selected_state(CYCLE_EVENT_AFTER_RESET)
     package_conflict = _selected_state(PACKAGE_DISPOSITION_DIFFERENT_BODY_CONFLICT)
     package_same = _selected_state(PACKAGE_DISPOSITION_SAME_BODY_REPLAY)
+    stale_unowned = _selected_state(PACKAGE_DISPOSITION_STALE_UNOWNED_CONFLICT)
     return {
         "global_flag_swallows_new_route_mutation": replace(
             route_new,
@@ -598,6 +651,25 @@ def hazard_states() -> dict[str, State]:
             daemon_crashed=True,
             legal_wait_preserved=False,
             terminal_reason="daemon_error",
+        ),
+        "stale_unowned_package_conflict_accepted_as_success": replace(
+            stale_unowned,
+            status="stale_quarantined",
+            side_effect_written=True,
+            stale_conflict_accepted_as_success=True,
+            terminal_reason="accepted_stale_unowned_replay",
+        ),
+        "stale_unowned_package_conflict_crashed_daemon": replace(
+            stale_unowned,
+            status="stale_quarantined",
+            daemon_crashed=True,
+            terminal_reason="daemon_error",
+        ),
+        "stale_unowned_package_conflict_reverted_canonical_body": replace(
+            stale_unowned,
+            status="stale_quarantined",
+            canonical_body_preserved=False,
+            terminal_reason="canonical_body_reverted_to_stale_replay",
         ),
         "package_conflict_field_missing": replace(
             package_same,

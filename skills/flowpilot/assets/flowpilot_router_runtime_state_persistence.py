@@ -17,12 +17,17 @@ _RUN_STATE_LOAD_META_PENDING = "_flowpilot_loaded_pending_action"
 _RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER = "_flowpilot_loaded_active_control_blocker"
 _RUN_STATE_VOLATILE_META_KEYS = {_RUN_STATE_LOAD_META_HASH, _RUN_STATE_LOAD_META_FLAGS, _RUN_STATE_LOAD_META_PENDING, _RUN_STATE_LOAD_META_ACTIVE_CONTROL_BLOCKER}
 _RUN_STATE_APPEND_ONLY_LIST_FIELDS = ("history", "events", "quarantined_role_reports", "control_blockers", "resolved_control_blockers", "protocol_blockers",
-                                      "gate_decisions", "delivered_cards", "delivered_mail")
+                                      "gate_decisions", "delivered_cards", "delivered_mail", "role_output_replay_quarantine")
 _RUN_STATE_PENDING_REMINDER_FIELDS = ("last_wait_reminder_at", "last_wait_reminder_sha256", "wait_reminder_text", "wait_reminder_text_sha256",
                                       "last_liveness_probe", "liveness_probe_result")
 _MATERIAL_GENERATION_PROGRESS_FLAGS = {"material_scan_packets_relayed", "worker_packets_delivered", "worker_scan_results_returned",
                                        "material_scan_results_relayed_to_pm", "material_scan_result_disposition_recorded",
                                        "material_scan_results_absorbed_by_pm", "material_review_sufficient", "material_review_insufficient"}
+_PM_PACKAGE_DISPOSITION_EVENTS = {
+    "pm_records_material_scan_result_disposition",
+    "pm_records_research_result_disposition",
+    "pm_records_current_node_result_disposition",
+}
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -82,6 +87,98 @@ def _merge_append_only_run_state_list(existing: list[Any], current: list[Any]) -
         seen.add(identity)
         merged.append(item)
     return merged
+
+
+def _scope_body_hash(record: Any) -> str:
+    if not isinstance(record, dict):
+        return ""
+    scope = record.get("scope") if isinstance(record.get("scope"), dict) else {}
+    return str(scope.get("body_hash") or "").strip()
+
+
+def _event_payload_body_hash(event_record: Any) -> str:
+    if not isinstance(event_record, dict):
+        return ""
+    payload = event_record.get("payload") if isinstance(event_record.get("payload"), dict) else {}
+    envelope = payload.get("_role_output_envelope") if isinstance(payload.get("_role_output_envelope"), dict) else {}
+    for key in ("body_hash", "body_raw_sha256", "body_semantic_sha256"):
+        value = str(envelope.get(key) or "").strip()
+        if value:
+            return value
+    return str(payload.get("body_hash") or payload.get("source_body_hash") or "").strip()
+
+
+def _merge_external_event_idempotency_ledger(existing: Any, current: Any) -> dict[str, Any]:
+    existing_ledger = existing if isinstance(existing, dict) else {}
+    current_ledger = current if isinstance(current, dict) else {}
+    merged = _json_clone(current_ledger) if current_ledger else {}
+    if not isinstance(merged, dict):
+        merged = {}
+    schema_version = existing_ledger.get("schema_version") or current_ledger.get("schema_version")
+    if schema_version:
+        merged["schema_version"] = schema_version
+    merged_processed = merged.get("processed")
+    if not isinstance(merged_processed, dict):
+        merged_processed = {}
+        merged["processed"] = merged_processed
+    existing_processed = existing_ledger.get("processed")
+    if isinstance(existing_processed, dict):
+        for event, existing_keys in existing_processed.items():
+            if not isinstance(existing_keys, dict):
+                continue
+            target_keys = merged_processed.setdefault(event, {})
+            if not isinstance(target_keys, dict):
+                target_keys = {}
+                merged_processed[event] = target_keys
+            for dedupe_key, existing_record in existing_keys.items():
+                if not isinstance(existing_record, dict):
+                    continue
+                current_record = target_keys.get(dedupe_key)
+                if not isinstance(current_record, dict):
+                    target_keys[dedupe_key] = _json_clone(existing_record)
+                    continue
+                if (
+                    str(event) in _PM_PACKAGE_DISPOSITION_EVENTS
+                    and _scope_body_hash(existing_record)
+                    and _scope_body_hash(current_record)
+                    and _scope_body_hash(existing_record) != _scope_body_hash(current_record)
+                ):
+                    target_keys[dedupe_key] = _json_clone(existing_record)
+    existing_attempts = existing_ledger.get("attempts")
+    current_attempts = current_ledger.get("attempts")
+    if isinstance(existing_attempts, list) and isinstance(current_attempts, list):
+        merged["attempts"] = _merge_append_only_run_state_list(existing_attempts, current_attempts)
+    elif isinstance(existing_attempts, list) and "attempts" not in merged:
+        merged["attempts"] = _json_clone(existing_attempts)
+    elif "attempts" not in merged:
+        merged["attempts"] = []
+    return merged
+
+
+def _filter_stale_reconciled_package_events(events: Any, idempotency_ledger: Any) -> Any:
+    if not isinstance(events, list) or not isinstance(idempotency_ledger, dict):
+        return events
+    processed = idempotency_ledger.get("processed")
+    if not isinstance(processed, dict):
+        return events
+    authoritative_hashes: dict[str, set[str]] = {}
+    for event, records in processed.items():
+        if str(event) not in _PM_PACKAGE_DISPOSITION_EVENTS or not isinstance(records, dict):
+            continue
+        hashes = {body_hash for body_hash in (_scope_body_hash(record) for record in records.values()) if body_hash}
+        if hashes:
+            authoritative_hashes[str(event)] = hashes
+    if not authoritative_hashes:
+        return events
+    filtered: list[Any] = []
+    for item in events:
+        event = str(item.get("event") or "") if isinstance(item, dict) else ""
+        if event in authoritative_hashes and isinstance(item, dict) and item.get("reconciled_by_router") is True:
+            body_hash = _event_payload_body_hash(item)
+            if body_hash and body_hash not in authoritative_hashes[event]:
+                continue
+        filtered.append(item)
+    return filtered
 
 
 def _same_pending_wait_identity(first: dict[str, Any], second: dict[str, Any]) -> bool:
@@ -197,6 +294,14 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
         current_items = merged.get(field)
         if isinstance(existing_items, list) and isinstance(current_items, list):
             merged[field] = _merge_append_only_run_state_list(existing_items, current_items)
+    merged["external_event_idempotency"] = _merge_external_event_idempotency_ledger(
+        existing.get("external_event_idempotency"),
+        merged.get("external_event_idempotency"),
+    )
+    merged["events"] = _filter_stale_reconciled_package_events(
+        merged.get("events"),
+        merged.get("external_event_idempotency"),
+    )
     loaded_flags = current.get(_RUN_STATE_LOAD_META_FLAGS)
     loaded_flags = loaded_flags if isinstance(loaded_flags, dict) else {}
     existing_flags = existing.get("flags") if isinstance(existing.get("flags"), dict) else {}

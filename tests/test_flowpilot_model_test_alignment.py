@@ -483,6 +483,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("router_loop.known_friction_regression_gate", router_obligations)
         self.assertIn("router_loop.package_disposition_repair_owned_role_output_replay", router_obligations)
         self.assertIn("router_loop.package_disposition_repair_owned_daemon_replay", router_obligations)
+        self.assertIn("router_loop.package_disposition_stale_unowned_role_output_replay", router_obligations)
+        self.assertIn("router_loop.package_disposition_stale_unowned_daemon_replay", router_obligations)
         self.assertIn("output_contract.self_check_required_fields", role_output_obligations)
         matrix_item = router_evidence["router_loop.known_friction.happy.matrix"]
         self.assertEqual(matrix_item.path, "tests/test_flowpilot_known_friction_regression_matrix.py")
@@ -503,6 +505,26 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertEqual(
             classifier_item.test_name,
             "test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay",
+        )
+        stale_item = router_evidence["router_loop.package_disposition_stale_unowned_replay.edge.role_output"]
+        self.assertEqual(
+            stale_item.test_name,
+            "test_stale_unowned_package_disposition_replay_preserves_canonical_body",
+        )
+        stale_daemon_item = router_evidence["router_loop.package_disposition_stale_unowned_replay.edge.daemon_tick"]
+        self.assertEqual(
+            stale_daemon_item.test_name,
+            "test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body",
+        )
+        stale_negative_item = router_evidence["router_loop.package_disposition_stale_unowned_replay.negative.reject_old_body"]
+        self.assertEqual(
+            stale_negative_item.test_name,
+            "test_stale_unowned_package_disposition_replay_preserves_canonical_body",
+        )
+        stale_daemon_negative_item = router_evidence["router_loop.package_disposition_stale_unowned_replay.negative.no_daemon_error"]
+        self.assertEqual(
+            stale_daemon_negative_item.test_name,
+            "test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body",
         )
         contract_item = role_output_evidence["output_contract.negative.live_worker_missing_fields"]
         self.assertEqual(

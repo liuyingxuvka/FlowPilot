@@ -43,6 +43,7 @@ REQUIRED_LABELS = (
     "select_package_disposition_different_body_conflict",
     "select_package_disposition_control_blocker_owned_conflict_replay",
     "select_package_disposition_pm_repair_owned_conflict_replay",
+    "select_package_disposition_stale_unowned_conflict_replay",
     "select_package_disposition_new_generation",
     "router_accepts_new_scoped_event_identity",
     "router_returns_already_recorded_for_same_dedupe_key",
@@ -52,6 +53,7 @@ REQUIRED_LABELS = (
     "router_rejects_same_package_different_body_hash",
     "router_skips_control_blocker_owned_package_conflict_replay",
     "router_skips_pm_repair_transaction_owned_package_conflict_replay",
+    "router_quarantines_canonical_package_authority_stale_conflict",
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -66,6 +68,9 @@ HAZARD_EXPECTED_FAILURES = {
     "package_body_hash_left_in_dedupe_key": "duplicate side effect written for replayed event identity",
     "repair_owned_package_conflict_accepted_as_success": "repair-owned package conflict was accepted as successful disposition",
     "repair_owned_package_conflict_crashed_daemon": "repair-owned package conflict replay did not preserve the legal wait",
+    "stale_unowned_package_conflict_accepted_as_success": "stale unowned package conflict was accepted as successful disposition",
+    "stale_unowned_package_conflict_crashed_daemon": "stale unowned package conflict replay crashed the daemon",
+    "stale_unowned_package_conflict_reverted_canonical_body": "stale unowned package conflict replay did not preserve canonical body",
     "package_conflict_field_missing": "package disposition identity lacked body_hash conflict field",
 }
 
@@ -138,6 +143,7 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|event={state.event_name}|family={state.family}|"
         f"flag={state.flag_already_true}|key={state.incoming_key}|prior={','.join(state.prior_keys)}|"
         f"conflict={state.conflict_matches_prior}|conflict_fields={state.conflict_fields_present}|"
+        f"replay={state.replay_source}|canonical={state.canonical_package_authority_available}|"
         f"retry={state.retry_attempt}/{state.retry_budget}|reset={state.cycle_reset_recorded}|"
         f"side_effect={state.side_effect_written}|duplicate={state.duplicate_side_effect_written}|"
         f"escalated={state.explicit_escalation_written}|stuck={state.no_legal_next_action}|"

@@ -192,6 +192,144 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         router.save_run_state(run_root, state)
         return state
 
+    def _package_batch_kind_for_event(self, event: str) -> str:
+        return {
+            "pm_records_material_scan_result_disposition": "material_scan",
+            "pm_records_research_result_disposition": "research",
+            "pm_records_current_node_result_disposition": "current_node",
+        }[event]
+
+    def _canonical_disposition_path_for_event(self, run_root: Path, event: str) -> Path:
+        if event == "pm_records_material_scan_result_disposition":
+            return run_root / "material" / "pm_material_scan_result_disposition.json"
+        if event == "pm_records_research_result_disposition":
+            return run_root / "research" / "pm_research_result_disposition.json"
+        frontier = read_json(run_root / "execution_frontier.json")
+        route_id = str(frontier.get("active_route_id") or "route-001")
+        node_id = str(frontier.get("active_node_id") or "node-001")
+        return run_root / "routes" / route_id / "nodes" / node_id / "reviews" / "pm_current_node_result_disposition.json"
+
+    def _seed_parallel_batch_without_pm_disposition(self, root: Path, run_root: Path, event: str, state: dict) -> dict:
+        batch_kind = self._package_batch_kind_for_event(event)
+        batch = router._write_parallel_packet_batch(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            batch_id=f"{batch_kind}-batch-1",
+            batch_kind=batch_kind,
+            phase="test",
+            records=[
+                {
+                    "packet_id": f"{batch_kind}-packet-a",
+                    "to_role": "worker_a",
+                    "packet_generation_id": "gen-1",
+                    "result_envelope_path": "test-result-a.json",
+                    "result_body_path": "test-result-a.md",
+                    "status": "result_returned",
+                },
+                {
+                    "packet_id": f"{batch_kind}-packet-b",
+                    "to_role": "worker_b",
+                    "packet_generation_id": "gen-1",
+                    "result_envelope_path": "test-result-b.json",
+                    "result_body_path": "test-result-b.md",
+                    "status": "result_returned",
+                },
+            ],
+        )
+        batch["status"] = "results_relayed_to_pm"
+        router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
+        return batch
+
+    def _write_canonical_package_disposition(
+        self,
+        root: Path,
+        run_root: Path,
+        event: str,
+        state: dict,
+        payload: dict,
+    ) -> dict:
+        batch_kind = self._package_batch_kind_for_event(event)
+        batch = router._active_parallel_packet_batch(run_root, batch_kind)  # type: ignore[attr-defined]
+        self.assertIsInstance(batch, dict)
+        source_body_hash = router._payload_body_hash(payload)  # type: ignore[attr-defined]
+        output_path = self._canonical_disposition_path_for_event(run_root, event)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        disposition = {
+            "schema_version": "flowpilot.pm_package_result_disposition.v1",
+            "run_id": run_root.name,
+            "batch_id": batch["batch_id"],
+            "batch_kind": batch_kind,
+            "decision": payload.get("decision"),
+            "source_body_hash": source_body_hash,
+            "recorded_at": router.utc_now(),
+        }
+        router.write_json(output_path, disposition)
+        batch["pm_result_disposition"] = {
+            "decision": payload.get("decision"),
+            "decision_path": self.rel(root, output_path),
+            "decision_hash": packet_runtime.sha256_file(output_path),
+            "source_body_hash": source_body_hash,
+            "recorded_at": disposition["recorded_at"],
+        }
+        batch["status"] = str(payload.get("decision") or "rework_requested")
+        router._write_parallel_packet_batch_state(run_root, batch)  # type: ignore[attr-defined]
+        identity = router._scoped_event_identity(root, run_root, state, event, payload)  # type: ignore[attr-defined]
+        router._mark_scoped_event_recorded(state, identity)  # type: ignore[attr-defined]
+        flags = state.setdefault("flags", {})
+        required_flag = router.EXTERNAL_EVENTS[event].get("requires_flag")
+        if required_flag:
+            flags[required_flag] = True
+        flags[router.EXTERNAL_EVENTS[event]["flag"]] = True
+        state.setdefault("events", []).append(
+            {
+                "event": event,
+                "recorded_at": router.utc_now(),
+                "source": "test_foreground_canonical_package_disposition",
+                "payload": payload,
+            }
+        )
+        return identity
+
+    def _seed_stale_unowned_package_disposition_replay(
+        self,
+        root: Path,
+        run_root: Path,
+        *,
+        event: str = "pm_records_material_scan_result_disposition",
+    ) -> tuple[dict, dict]:
+        state = read_json(router.run_state_path(run_root))
+        self._seed_parallel_batch_without_pm_disposition(root, run_root, event, state)
+        router.save_run_state(run_root, state)
+        self.pm_package_result_disposition_envelope(
+            root,
+            event,
+            name="stale_unowned/pm_package_result_disposition_old",
+            decision="absorbed",
+            decision_reason="Older absorbed body that daemon may replay later.",
+        )
+        self.pm_package_result_disposition_envelope(
+            root,
+            event,
+            name="stale_unowned/pm_package_result_disposition_new",
+            decision="rework_requested",
+            decision_reason="Newer foreground body is the canonical disposition.",
+        )
+        ledger_records = role_output_bridge_events._role_output_ledger_outputs(router, run_root)
+        old_record = next(record for record in ledger_records if "disposition_old" in str(record))
+        new_record = next(record for record in ledger_records if "disposition_new" in str(record))
+        stale_state, _ = router.load_run_state_from_run_root(root, run_root)  # type: ignore[attr-defined]
+        canonical_state = read_json(router.run_state_path(run_root))
+        new_payload = role_output_bridge_events._role_output_body_payload_from_record(
+            router,
+            root,
+            new_record,
+            new_record["envelope"],
+        )
+        self._write_canonical_package_disposition(root, run_root, event, canonical_state, new_payload)
+        router.save_run_state(run_root, canonical_state)
+        return stale_state, old_record
+
     def test_material_role_output_event_reconciles_router_state_and_clears_stale_pending(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-material-role-output-reconcile")
@@ -279,6 +417,78 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                     replay = router._reconcile_durable_wait_evidence(root, run_root, after)  # type: ignore[attr-defined]
                     self.assertFalse(replay["direct_role_output_reconciliation"]["changed"])
                     self.assertEqual(replay["direct_role_output_reconciliation"]["repair_owned_conflicts"], 1)
+
+    def test_stale_unowned_package_disposition_replay_preserves_canonical_body(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-stale-unowned-package-disposition-replay")
+        self.write_current_focus(root, run_root)
+        stale_state, old_record = self._seed_stale_unowned_package_disposition_replay(root, run_root)
+        old_payload = role_output_bridge_events._role_output_body_payload_from_record(
+            router,
+            root,
+            old_record,
+            old_record["envelope"],
+        )
+        old_body_hash = router._payload_body_hash(old_payload)  # type: ignore[attr-defined]
+
+        result = router._reconcile_durable_wait_evidence(root, run_root, stale_state)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, stale_state)
+
+        direct_reconcile = result["direct_role_output_reconciliation"]
+        self.assertTrue(direct_reconcile["changed"])
+        self.assertEqual(direct_reconcile["stale_unowned_conflicts"], 1)
+        self.assertEqual(direct_reconcile["reconciled"], 0)
+        self.assertEqual(direct_reconcile["already_recorded"], 0)
+        after = read_json(router.run_state_path(run_root))
+        package_events = [
+            item
+            for item in after["events"]
+            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+        ]
+        self.assertEqual(len(package_events), 1)
+        canonical_disposition = read_json(run_root / "material" / "pm_material_scan_result_disposition.json")
+        self.assertEqual(canonical_disposition["decision"], "rework_requested")
+        self.assertNotEqual(canonical_disposition["source_body_hash"], old_body_hash)
+        processed = after["external_event_idempotency"]["processed"]["pm_records_material_scan_result_disposition"]
+        processed_hashes = {
+            item["scope"]["body_hash"]
+            for item in processed.values()
+            if isinstance(item, dict) and isinstance(item.get("scope"), dict)
+        }
+        self.assertEqual(processed_hashes, {canonical_disposition["source_body_hash"]})
+        quarantine_rows = after.get("role_output_replay_quarantine", [])
+        self.assertEqual(len(quarantine_rows), 1)
+        self.assertEqual(quarantine_rows[0]["classification"], "canonical_package_authority_stale_conflict")
+        self.assertTrue(
+            any(
+                item.get("label") == "router_skipped_stale_unowned_package_disposition_replay"
+                for item in after.get("history", [])
+                if isinstance(item, dict)
+            )
+        )
+
+    def test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-stale-unowned-package-disposition-daemon")
+        self.write_current_focus(root, run_root)
+        self.release_startup_daemon_for_explicit_daemon_test(root)
+        self._seed_stale_unowned_package_disposition_replay(root, run_root)
+
+        result = router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
+
+        self.assertTrue(result["ok"])
+        status = read_json(run_root / "runtime" / "router_daemon_status.json")
+        self.assertNotEqual(status["lifecycle_status"], "daemon_error")
+        after = read_json(router.run_state_path(run_root))
+        canonical_disposition = read_json(run_root / "material" / "pm_material_scan_result_disposition.json")
+        self.assertEqual(canonical_disposition["decision"], "rework_requested")
+        self.assertEqual(len(after.get("role_output_replay_quarantine", [])), 1)
+        package_events = [
+            item
+            for item in after["events"]
+            if isinstance(item, dict) and item.get("event") == "pm_records_material_scan_result_disposition"
+        ]
+        self.assertEqual(len(package_events), 1)
 
     def test_repair_owned_package_disposition_conflict_replay_is_seen_before_required_flag(self) -> None:
         for owner in ("control_blocker", "pm_repair"):

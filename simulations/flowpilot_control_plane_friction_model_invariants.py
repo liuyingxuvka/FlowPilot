@@ -517,6 +517,22 @@ def role_event_identity_and_audit_records_are_closed(state: State, trace) -> Inv
         return InvariantResult.fail(
             "repair-owned PM package disposition body_hash conflict replay created a duplicate blocker"
         )
+    if not state.pm_package_stale_unowned_conflict_replay_quarantined:
+        return InvariantResult.fail(
+            "stale unowned PM package disposition body_hash conflict replay was not quarantined"
+        )
+    if not state.pm_package_stale_unowned_conflict_preserves_canonical:
+        return InvariantResult.fail(
+            "stale unowned PM package disposition body_hash conflict replay did not preserve canonical body"
+        )
+    if state.pm_package_stale_unowned_conflict_crashed_daemon:
+        return InvariantResult.fail(
+            "stale unowned PM package disposition body_hash conflict replay crashed the daemon"
+        )
+    if state.pm_package_stale_unowned_conflict_accepted_as_success:
+        return InvariantResult.fail(
+            "stale unowned PM package disposition body_hash conflict replay was accepted as a successful disposition"
+        )
     if not state.pm_package_packet_outcomes_recorded:
         return InvariantResult.fail(
             "PM package disposition did not record per-packet outcomes"

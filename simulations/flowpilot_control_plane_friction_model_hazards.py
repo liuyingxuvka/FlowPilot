@@ -1096,6 +1096,18 @@ def hazard_states() -> dict[str, State]:
         "pm_package_repair_owned_conflict_duplicate_blocker": _safe_base(
             pm_package_repair_owned_conflict_duplicate_blocker=True,
         ),
+        "pm_package_stale_unowned_conflict_replay_not_quarantined": _safe_base(
+            pm_package_stale_unowned_conflict_replay_quarantined=False,
+        ),
+        "pm_package_stale_unowned_conflict_replay_reverted_canonical": _safe_base(
+            pm_package_stale_unowned_conflict_preserves_canonical=False,
+        ),
+        "pm_package_stale_unowned_conflict_replay_crashed_daemon": _safe_base(
+            pm_package_stale_unowned_conflict_crashed_daemon=True,
+        ),
+        "pm_package_stale_unowned_conflict_accepted_as_success": _safe_base(
+            pm_package_stale_unowned_conflict_accepted_as_success=True,
+        ),
         "pm_package_disposition_packet_outcomes_missing": _safe_base(
             pm_package_packet_outcomes_recorded=False,
         ),

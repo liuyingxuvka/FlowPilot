@@ -12,6 +12,13 @@ from flowpilot_router_errors import RouterError
 from flowpilot_router_protocol_catalog import *
 
 
+_PACKAGE_DISPOSITION_BATCH_KIND_BY_EVENT = {
+    "pm_records_material_scan_result_disposition": "material_scan",
+    "pm_records_research_result_disposition": "research",
+    "pm_records_current_node_result_disposition": "current_node",
+}
+
+
 def _bind_router(router: ModuleType) -> None:
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -158,14 +165,16 @@ def _role_output_event_has_durable_authority(
     if not isinstance(meta, dict):
         return False
     flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
-    if event == "pm_records_material_scan_result_disposition":
+    package_batch_kind = _PACKAGE_DISPOSITION_BATCH_KIND_BY_EVENT.get(event)
+    if package_batch_kind:
         try:
-            batch = router._active_parallel_packet_batch(run_root, "material_scan")
+            batch = router._active_parallel_packet_batch(run_root, package_batch_kind)
         except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
             batch = None
         if isinstance(batch, dict) and isinstance(batch.get("pm_result_disposition"), dict):
             return True
-        return _run_state_has_event(run_state, event)
+        if _run_state_has_event(run_state, event):
+            return True
     if flags.get(meta.get("flag")) or _run_state_has_event(run_state, event):
         return True
     pending = run_state.get("pending_action")
@@ -302,6 +311,105 @@ def _record_role_output_replay_quarantine(router: ModuleType, project_root: Path
     return summary
 
 
+def _canonical_pm_package_disposition_authority(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    event: str,
+) -> dict[str, Any] | None:
+    _bind_router(router)
+    batch_kind = _PACKAGE_DISPOSITION_BATCH_KIND_BY_EVENT.get(event)
+    if not batch_kind:
+        return None
+    try:
+        batch = router._active_parallel_packet_batch(run_root, batch_kind)
+    except (RouterError, OSError, json.JSONDecodeError, TypeError, ValueError):
+        batch = None
+    if not isinstance(batch, dict):
+        return None
+    disposition = batch.get("pm_result_disposition")
+    if not isinstance(disposition, dict):
+        return None
+    source_body_hash = str(disposition.get("source_body_hash") or "").strip()
+    decision_path = str(disposition.get("decision_path") or "").strip()
+    artifact: dict[str, Any] = {}
+    if decision_path:
+        try:
+            loaded = read_json_if_exists(resolve_project_path(project_root, decision_path))
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            loaded = {}
+        if isinstance(loaded, dict):
+            artifact = loaded
+            if not source_body_hash:
+                source_body_hash = str(loaded.get("source_body_hash") or "").strip()
+    if not source_body_hash:
+        return None
+    records = [item for item in batch.get("packets") or [] if isinstance(item, dict)]
+    generation_ids = sorted({str(item.get("packet_generation_id") or "") for item in records if item.get("packet_generation_id")})
+    return {
+        "authority": "canonical_pm_package_disposition",
+        "batch_kind": batch_kind,
+        "batch_id": str(batch.get("batch_id") or ""),
+        "packet_ids": sorted(str(item.get("packet_id") or "") for item in records if item.get("packet_id")),
+        "packet_generation_id": (
+            str((artifact.get("material_generation") or {}).get("current_generation_id") or "")
+            if isinstance(artifact.get("material_generation"), dict)
+            else ""
+        ) or str(artifact.get("packet_generation_id") or "") or (",".join(generation_ids) if generation_ids else ""),
+        "decision": disposition.get("decision") or artifact.get("decision"),
+        "decision_path": decision_path or None,
+        "source_body_hash": source_body_hash,
+    }
+
+
+def _classify_stale_unowned_pm_package_replay(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    event: str,
+    scoped_identity: dict[str, Any] | None,
+    conflict_classification: dict[str, Any],
+) -> dict[str, Any] | None:
+    _bind_router(router)
+    if not isinstance(scoped_identity, dict):
+        return None
+    if scoped_identity.get("family") != "pm_package_disposition":
+        return None
+    if conflict_classification.get("classification") in {
+        "terminal_quarantine",
+        "pm_repair_owned_stale_conflict",
+        "control_blocker_owned_stale_conflict",
+        "unknown_corruption",
+    }:
+        return None
+    authority = _canonical_pm_package_disposition_authority(router, project_root, run_root, event)
+    if authority is None:
+        return None
+    scope = scoped_identity.get("scope") if isinstance(scoped_identity.get("scope"), dict) else {}
+    replay_body_hash = str(scope.get("body_hash") or "").strip()
+    canonical_body_hash = str(authority.get("source_body_hash") or "").strip()
+    if not replay_body_hash or not canonical_body_hash or replay_body_hash == canonical_body_hash:
+        return None
+    return {
+        "classification": "canonical_package_authority_stale_conflict",
+        "event": event,
+        "dedupe_key": scoped_identity.get("dedupe_key"),
+        "family": scoped_identity.get("family"),
+        "mismatches": ["body_hash"],
+        "old_scope": {
+            "body_hash": canonical_body_hash,
+            "batch_kind": authority.get("batch_kind"),
+            "batch_id": authority.get("batch_id"),
+            "packet_ids": ",".join(authority.get("packet_ids") or []),
+            "packet_generation_id": authority.get("packet_generation_id"),
+        },
+        "new_scope": scope,
+        "owner": authority,
+        "replay_source": "role_output_ledger",
+        "previous_classification": conflict_classification.get("classification"),
+    }
+
+
 def _try_reconcile_direct_role_output_event_ledger(
     router: ModuleType,
     project_root: Path,
@@ -314,6 +422,7 @@ def _try_reconcile_direct_role_output_event_ledger(
     reconciled = 0
     already_recorded = 0
     repair_owned_conflicts = 0
+    stale_unowned_conflicts = 0
     skipped_invalid = 0
     skipped_not_ready = 0
     skipped_unauthorized = 0
@@ -374,6 +483,34 @@ def _try_reconcile_direct_role_output_event_ledger(
                     quarantine,
                 )
             continue
+        stale_unowned_classification = _classify_stale_unowned_pm_package_replay(
+            router,
+            project_root,
+            run_root,
+            event,
+            scoped_identity,
+            conflict_classification,
+        )
+        if stale_unowned_classification is not None:
+            stale_unowned_conflicts += 1
+            quarantine = _record_role_output_replay_quarantine(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                event=event,
+                record=record,
+                classification=stale_unowned_classification,
+            )
+            events.append(event)
+            if not quarantine.get("already_quarantined"):
+                changed = True
+                append_history(
+                    run_state,
+                    "router_skipped_stale_unowned_package_disposition_replay",
+                    quarantine,
+                )
+            continue
         if required_flag_missing:
             skipped_not_ready += 1
             continue
@@ -427,6 +564,7 @@ def _try_reconcile_direct_role_output_event_ledger(
                 "reconciled": reconciled,
                 "already_recorded": already_recorded,
                 "repair_owned_conflicts": repair_owned_conflicts,
+                "stale_unowned_conflicts": stale_unowned_conflicts,
                 "events": events,
                 "skipped_invalid": skipped_invalid,
                 "skipped_not_ready": skipped_not_ready,
@@ -438,6 +576,7 @@ def _try_reconcile_direct_role_output_event_ledger(
         "reconciled": reconciled,
         "already_recorded": already_recorded,
         "repair_owned_conflicts": repair_owned_conflicts,
+        "stale_unowned_conflicts": stale_unowned_conflicts,
         "events": events,
         "skipped_invalid": skipped_invalid,
         "skipped_not_ready": skipped_not_ready,
