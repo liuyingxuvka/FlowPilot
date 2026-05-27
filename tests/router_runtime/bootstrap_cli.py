@@ -56,6 +56,87 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue({"run-a", "run-b", current["current_run_id"]}.issubset(run_ids))
         self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-a")["status"], "running")
         self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-b")["status"], "running")
+
+    def test_active_ui_catalog_exposes_parallel_run_targets_and_stale_residue(self) -> None:
+        root = self.make_project()
+        run_a = self.write_minimal_run(root, "run-a", status="controller_ready")
+        self.write_minimal_run(root, "run-b", status="controller_ready")
+        self.write_minimal_run(root, "run-old", status="stopped_by_user")
+        self.write_current_focus(root, run_a)
+        router.write_json(
+            root / ".flowpilot" / "index.json",
+            {
+                "schema_version": "flowpilot.index.v1",
+                "runs": [
+                    {"run_id": "run-a", "run_root": ".flowpilot/runs/run-a", "status": "running"},
+                    {"run_id": "run-b", "run_root": ".flowpilot/runs/run-b", "status": "running"},
+                    {"run_id": "run-old", "run_root": ".flowpilot/runs/run-old", "status": "stopped_by_user"},
+                ],
+                "current_run_id": "run-a",
+                "updated_at": router.utc_now(),
+            },
+        )
+        state_a = read_json(router.run_state_path(run_a))
+
+        catalog = router._active_ui_task_catalog(root, run_a, state_a)  # type: ignore[attr-defined]
+
+        self.assertEqual(catalog["authority"], "explicit_active_set")
+        self.assertEqual(catalog["scope_kind"], "parallel_runs")
+        self.assertFalse(catalog["global_main_required"])
+        self.assertTrue(catalog["operation_target_required"])
+        self.assertEqual(catalog["operation_targets"]["current_focus"], "run:run-a")
+        self.assertEqual(
+            sorted(catalog["operation_targets"]["all_active"]["run_ids"]),
+            ["run-a", "run-b"],
+        )
+        self.assertEqual(
+            {item["run_id"]: item["target_id"] for item in catalog["active_tasks"]},
+            {"run-a": "run:run-a", "run-b": "run:run-b"},
+        )
+        self.assertEqual([item["run_id"] for item in catalog["background_active_tasks"]], ["run-b"])
+        self.assertEqual(
+            [(item["run_id"], item["stale_residue"], item["operation_target_allowed"]) for item in catalog["stale_residue_tasks"]],
+            [("run-old", True, False)],
+        )
+
+    def test_active_ui_catalog_keeps_block_scoped_agents_under_parent_flow_block(self) -> None:
+        root = self.make_project()
+        run_a = self.write_minimal_run(root, "run-a", status="controller_ready")
+        self.write_current_focus(root, run_a)
+        router.write_json(
+            root / ".flowpilot" / "index.json",
+            {
+                "schema_version": "flowpilot.index.v1",
+                "runs": [{"run_id": "run-a", "run_root": ".flowpilot/runs/run-a", "status": "running"}],
+                "current_run_id": "run-a",
+                "updated_at": router.utc_now(),
+            },
+        )
+        state_a = read_json(router.run_state_path(run_a))
+        state_a["active_flow_block_agents"] = [
+            {
+                "flow_block_id": "run-a",
+                "agent_role": "worker_a",
+                "result_target_id": "run:run-a",
+                "status": "running",
+            },
+            {
+                "flow_block_id": "run-a",
+                "agent_role": "reviewer",
+                "result_target_id": "run:run-a",
+                "status": "waiting",
+            },
+        ]
+
+        catalog = router._active_ui_task_catalog(root, run_a, state_a)  # type: ignore[attr-defined]
+
+        self.assertEqual(catalog["scope_kind"], "block_scoped_agents")
+        self.assertEqual(catalog["active_tasks"][0]["flow_block_id"], "run-a")
+        self.assertEqual(catalog["active_tasks"][0]["target_id"], "run:run-a")
+        self.assertEqual(
+            {agent["agent_role"]: agent["result_target_id"] for agent in catalog["block_scoped_agents"]},
+            {"worker_a": "run:run-a", "reviewer": "run:run-a"},
+        )
     def test_cli_accepts_json_after_subcommand(self) -> None:
         parsed = router.parse_args(["--root", "C:/tmp/project", "next", "--json"])
         self.assertEqual(parsed.command, "next")

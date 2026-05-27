@@ -175,6 +175,94 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
 
         self.assertEqual(ids, ["run-a", "run-b"])
 
+    def test_control_plane_audit_accepts_explicit_parallel_active_set_authority(self) -> None:
+        snapshot = {
+            "authority": {
+                "current_pointer_is_ui_focus_only": True,
+                "index_running_entries_are_parallel_run_authority": True,
+                "global_main_required": False,
+                "operation_target_required": True,
+                "background_running_index_entries": [
+                    {"run_id": "run-b", "target_id": "run:run-b", "operation_target_allowed": True}
+                ],
+            },
+            "active_ui_task_catalog": {
+                "authority": "explicit_active_set",
+                "global_main_required": False,
+                "operation_target_required": True,
+                "background_active_tasks": [
+                    {"run_id": "run-b", "target_id": "run:run-b", "operation_target_allowed": True}
+                ],
+                "operation_targets": {
+                    "single_targets": [
+                        {"run_id": "run-a", "target_id": "run:run-a"},
+                        {"run_id": "run-b", "target_id": "run:run-b"},
+                    ],
+                    "all_active": {"target_scope": "all_active", "run_ids": ["run-a", "run-b"]},
+                },
+            },
+        }
+
+        self.assertTrue(
+            control_audit._active_set_authority_is_explicit(
+                snapshot,
+                non_current_running_entries=["run-b"],
+                missing_background_projection=[],
+            )
+        )
+
+    def test_control_plane_audit_rejects_parallel_active_set_without_targets(self) -> None:
+        snapshot = {
+            "authority": {
+                "current_pointer_is_ui_focus_only": True,
+                "index_running_entries_are_parallel_run_authority": True,
+                "global_main_required": False,
+                "operation_target_required": True,
+                "background_running_index_entries": [{"run_id": "run-b"}],
+            },
+            "active_ui_task_catalog": {
+                "authority": "explicit_active_set",
+                "background_active_tasks": [{"run_id": "run-b", "operation_target_allowed": True}],
+                "operation_targets": {"single_targets": [{"run_id": "run-a", "target_id": "run:run-a"}]},
+            },
+        }
+
+        self.assertFalse(
+            control_audit._active_set_authority_is_explicit(
+                snapshot,
+                non_current_running_entries=["run-b"],
+                missing_background_projection=[],
+            )
+        )
+
+    def test_control_plane_audit_synthesizes_explicit_authority_from_index_for_old_snapshot(self) -> None:
+        snapshot = control_audit._active_set_authority_snapshot_from_index(
+            current={"current_run_id": "run-a", "status": "stopped_by_user"},
+            index={
+                "runs": [
+                    {"run_id": "run-b", "run_root": ".flowpilot/runs/run-b", "status": "running"},
+                    {"run_id": "run-c", "run_root": ".flowpilot/runs/run-c", "status": "running"},
+                    {"run_id": "run-old", "status": "complete"},
+                ]
+            },
+            current_run_id="run-a",
+        )
+
+        self.assertIsNotNone(snapshot)
+        assert snapshot is not None
+        self.assertEqual(snapshot["active_ui_task_catalog"]["authority"], "explicit_active_set")
+        self.assertEqual(
+            sorted(control_audit._background_running_projection_ids(snapshot)),
+            ["run-b", "run-c"],
+        )
+        self.assertTrue(
+            control_audit._active_set_authority_is_explicit(
+                snapshot,
+                non_current_running_entries=["run-b", "run-c"],
+                missing_background_projection=[],
+            )
+        )
+
     def test_model_mesh_does_not_require_role_origin_audit_for_plain_user_packet_body(self) -> None:
         packet_ledger = {
             "packets": [

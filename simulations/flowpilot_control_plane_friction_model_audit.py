@@ -174,6 +174,181 @@ def _background_running_projection_ids(snapshot: object) -> list[str]:
                 background_running_entries.append(item)
     return background_running_entries
 
+
+def _snapshot_authority(snapshot: object) -> dict[str, object]:
+    if not isinstance(snapshot, dict):
+        return {}
+    authority = snapshot.get("authority")
+    return authority if isinstance(authority, dict) else {}
+
+
+def _snapshot_active_catalog(snapshot: object) -> dict[str, object]:
+    if not isinstance(snapshot, dict):
+        return {}
+    catalog = snapshot.get("active_ui_task_catalog")
+    return catalog if isinstance(catalog, dict) else {}
+
+
+def _active_set_authority_is_explicit(
+    snapshot: object,
+    *,
+    non_current_running_entries: list[str],
+    missing_background_projection: list[str],
+) -> bool:
+    if not non_current_running_entries:
+        return True
+    authority = _snapshot_authority(snapshot)
+    catalog = _snapshot_active_catalog(snapshot)
+    operation_targets = catalog.get("operation_targets")
+    if not isinstance(operation_targets, dict):
+        operation_targets = authority.get("operation_targets")
+    single_targets = operation_targets.get("single_targets") if isinstance(operation_targets, dict) else None
+    target_run_ids = {
+        str(item.get("run_id") or "")
+        for item in single_targets
+        if isinstance(item, dict) and item.get("target_id")
+    } if isinstance(single_targets, list) else set()
+    background_tasks = catalog.get("background_active_tasks")
+    background_run_ids = {
+        str(item.get("run_id") or "")
+        for item in background_tasks
+        if isinstance(item, dict)
+        and item.get("target_id")
+        and item.get("operation_target_allowed") is True
+    } if isinstance(background_tasks, list) else set()
+    return bool(
+        isinstance(snapshot, dict)
+        and (snapshot.get("current_pointer_is_ui_focus_only") is True or authority.get("current_pointer_is_ui_focus_only") is True)
+        and (
+            snapshot.get("index_running_entries_are_parallel_run_authority") is True
+            or authority.get("index_running_entries_are_parallel_run_authority") is True
+        )
+        and (snapshot.get("global_main_required") is False or authority.get("global_main_required") is False or catalog.get("global_main_required") is False)
+        and (snapshot.get("operation_target_required") is True or authority.get("operation_target_required") is True or catalog.get("operation_target_required") is True)
+        and catalog.get("authority") == "explicit_active_set"
+        and not missing_background_projection
+        and set(non_current_running_entries).issubset(target_run_ids)
+        and set(non_current_running_entries).issubset(background_run_ids)
+    )
+
+
+def _run_target_id(run_id: str) -> str:
+    return f"run:{run_id}"
+
+
+def _active_set_authority_snapshot_from_index(
+    *,
+    current: object,
+    index: object,
+    current_run_id: str,
+) -> dict[str, object] | None:
+    """Build a read-only explicit active-set projection from current/index files."""
+
+    if not isinstance(index, dict):
+        return None
+    current_status = current.get("status") if isinstance(current, dict) else None
+    current_root = current.get("current_run_root") if isinstance(current, dict) else None
+    running_entries: list[dict[str, object]] = []
+    seen: set[str] = set()
+    for item in index.get("runs", []):
+        if not isinstance(item, dict) or item.get("status") != "running" or not item.get("run_id"):
+            continue
+        item_run_id = str(item.get("run_id"))
+        if item_run_id in seen:
+            continue
+        seen.add(item_run_id)
+        focus_selected = item_run_id == current_run_id
+        running_entries.append(
+            {
+                "run_id": item_run_id,
+                "flow_block_id": str(
+                    item.get("flow_block_id")
+                    or item.get("active_route_id")
+                    or item.get("route_id")
+                    or "unknown"
+                ),
+                "run_root": str(item.get("run_root") or f".flowpilot/runs/{item_run_id}"),
+                "status": "running",
+                "target_id": _run_target_id(item_run_id),
+                "target_scope": "single",
+                "operation_target_allowed": True,
+                "focus_selected": focus_selected,
+                "background_active": not focus_selected,
+                "stale_residue": False,
+            }
+        )
+    if current_run_id and current_status == "running" and current_run_id not in seen:
+        running_entries.append(
+            {
+                "run_id": current_run_id,
+                "flow_block_id": "current_focus",
+                "run_root": str(current_root or f".flowpilot/runs/{current_run_id}"),
+                "status": "running",
+                "target_id": _run_target_id(current_run_id),
+                "target_scope": "single",
+                "operation_target_allowed": True,
+                "focus_selected": True,
+                "background_active": False,
+                "stale_residue": False,
+            }
+        )
+    if not running_entries:
+        return None
+
+    active_run_ids = [str(item["run_id"]) for item in running_entries]
+    active_flow_block_ids = [str(item.get("flow_block_id") or "unknown") for item in running_entries]
+    single_targets = [
+        {
+            "target_id": str(item["target_id"]),
+            "target_scope": "single",
+            "run_id": str(item["run_id"]),
+            "flow_block_id": str(item.get("flow_block_id") or "unknown"),
+        }
+        for item in running_entries
+    ]
+    operation_targets = {
+        "target_scope_required": True,
+        "current_focus": _run_target_id(current_run_id) if current_run_id else None,
+        "single_targets": single_targets,
+        "all_active": {
+            "target_id": "all_active",
+            "target_scope": "all_active",
+            "run_ids": active_run_ids,
+            "flow_block_ids": active_flow_block_ids,
+        },
+    }
+    background_entries = [item for item in running_entries if not item.get("focus_selected")]
+    snapshot = {
+        "current_pointer_is_ui_focus_only": True,
+        "index_running_entries_are_parallel_run_authority": True,
+        "global_main_required": False,
+        "operation_target_required": True,
+        "authority": {
+            "active_source": "explicit_active_set",
+            "source_authority": "index_current_read_only_synthesis",
+            "current_pointer_is_ui_focus_only": True,
+            "index_running_entries_are_parallel_run_authority": True,
+            "global_main_required": False,
+            "operation_target_required": True,
+            "operation_targets": operation_targets,
+            "background_running_index_entries": background_entries,
+        },
+        "active_ui_task_catalog": {
+            "authority": "explicit_active_set",
+            "source_authority": "index_current_read_only_synthesis",
+            "scope_kind": "parallel_runs" if len(running_entries) > 1 else "single_run",
+            "current_focus": current_run_id,
+            "global_main_required": False,
+            "operation_target_required": True,
+            "active_tasks": running_entries,
+            "background_active_tasks": background_entries,
+            "stale_residue_tasks": [],
+            "operation_targets": operation_targets,
+        },
+    }
+    return snapshot
+
+
 def _audit_material_scan_dispatch_integrity(
     project_root: Path,
     run_root: Path,
@@ -3093,6 +3268,32 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     missing_background_projection = sorted(
         set(non_current_running_entries) - set(background_running_entries)
     )
+    active_set_authority_source = "stored_snapshot"
+    has_explicit_active_authority = _active_set_authority_is_explicit(
+        snapshot,
+        non_current_running_entries=non_current_running_entries,
+        missing_background_projection=missing_background_projection,
+    )
+    synthesized_active_authority = _active_set_authority_snapshot_from_index(
+        current=current,
+        index=index,
+        current_run_id=run_id,
+    )
+    if not has_explicit_active_authority and synthesized_active_authority is not None:
+        synthesized_background_entries = _background_running_projection_ids(synthesized_active_authority)
+        synthesized_missing_background = sorted(
+            set(non_current_running_entries) - set(synthesized_background_entries)
+        )
+        synthesized_is_explicit = _active_set_authority_is_explicit(
+            synthesized_active_authority,
+            non_current_running_entries=non_current_running_entries,
+            missing_background_projection=synthesized_missing_background,
+        )
+        if synthesized_is_explicit:
+            background_running_entries = synthesized_background_entries
+            missing_background_projection = synthesized_missing_background
+            active_set_authority_source = "read_only_index_synthesis"
+            has_explicit_active_authority = True
     if missing_background_projection:
         _add_finding(
             findings,
@@ -3104,17 +3305,9 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
                 "current_run_id": run_id,
                 "non_current_running_run_ids": non_current_running_entries,
                 "missing_background_projection_run_ids": missing_background_projection,
+                "active_set_authority_source": active_set_authority_source,
             },
         )
-    has_explicit_active_authority = (
-        not non_current_running_entries
-        or (
-            isinstance(snapshot, dict)
-            and snapshot.get("current_pointer_is_ui_focus_only") is True
-            and snapshot.get("index_running_entries_are_parallel_run_authority") is True
-            and not missing_background_projection
-        )
-    )
 
     projected_state = _safe_base(
         pm_material_understanding_written=pm_material_written,
@@ -3398,7 +3591,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     projected_failures = invariant_failures(projected_state)
     error_count = sum(1 for finding in findings if finding.get("severity") == "error")
     return {
-        "ok": error_count == 0,
+        "ok": error_count == 0 and not projected_failures,
         "skipped": False,
         "run_id": run_id,
         "run_root": run_root_rel,
@@ -3407,6 +3600,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         "findings": findings,
         "projected_state": projected_state.__dict__,
         "projected_invariant_failures": projected_failures,
+        "active_set_authority_source": active_set_authority_source,
     }
 
 

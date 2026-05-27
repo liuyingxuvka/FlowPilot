@@ -2319,7 +2319,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 234,
+        "line_count": 236,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2343,7 +2343,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 245,
+        "line_count": 261,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9828,7 +9828,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 156,
+        "line_count": 283,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9841,7 +9841,7 @@
         "surface_id": "asset:flowpilot_router_route_frontier_status_catalog",
         "surface_owner": "flowpilot_router_route_frontier_status_catalog",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -24538,12 +24538,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -24569,12 +24572,15 @@
               "exact_external_contract": false,
               "external_inputs": [],
               "external_outputs": [],
+              "model_miss_origin": false,
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
+              "required_closure_evidence_roles": [],
               "required_test_kinds": [
                 "happy_path"
               ],
+              "requires_same_class_test_evidence": false,
               "risk_level": "high",
               "side_effects": [],
               "state_reads": [],
@@ -24615,12 +24621,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -24631,6 +24640,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -24661,6 +24671,7 @@
             "message": "test evidence known_bad.stale is stale",
             "metadata": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [],
               "covered_obligations": [
@@ -24695,12 +24706,15 @@
               "exact_external_contract": false,
               "external_inputs": [],
               "external_outputs": [],
+              "model_miss_origin": false,
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
+              "required_closure_evidence_roles": [],
               "required_test_kinds": [
                 "happy_path"
               ],
+              "requires_same_class_test_evidence": false,
               "risk_level": "high",
               "side_effects": [],
               "state_reads": [],
@@ -24741,12 +24755,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -24757,6 +24774,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -24785,6 +24803,7 @@
             "message": "test evidence known_bad.progress_only status is running",
             "metadata": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [],
               "covered_obligations": [
@@ -24817,12 +24836,15 @@
               "exact_external_contract": false,
               "external_inputs": [],
               "external_outputs": [],
+              "model_miss_origin": false,
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
+              "required_closure_evidence_roles": [],
               "required_test_kinds": [
                 "happy_path"
               ],
+              "requires_same_class_test_evidence": false,
               "risk_level": "high",
               "side_effects": [],
               "state_reads": [],
@@ -24862,12 +24884,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -24878,6 +24903,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -24906,6 +24932,7 @@
             "message": "test evidence known_bad.overclaim claims more model confidence than its obligation bindings prove",
             "metadata": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [],
               "covered_obligations": [
@@ -24957,12 +24984,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -24973,6 +25003,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [],
@@ -24999,6 +25030,7 @@
             "message": "test evidence known_bad.orphan is not bound to any model obligation",
             "metadata": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [],
               "covered_obligations": [],
@@ -25029,12 +25061,15 @@
               "exact_external_contract": false,
               "external_inputs": [],
               "external_outputs": [],
+              "model_miss_origin": false,
               "obligation_id": "known_bad.required_obligation",
               "obligation_type": "hazard",
               "required": true,
+              "required_closure_evidence_roles": [],
               "required_test_kinds": [
                 "happy_path"
               ],
+              "requires_same_class_test_evidence": false,
               "risk_level": "high",
               "side_effects": [],
               "state_reads": [],
@@ -25074,12 +25109,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25090,6 +25128,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25108,6 +25147,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25181,13 +25221,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "startup.questions.pause_before_work",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25201,13 +25244,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "startup.run_isolation_and_activation",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25218,6 +25264,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25236,6 +25283,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25254,6 +25302,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25272,6 +25321,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25328,13 +25378,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "packet.physical_body_boundary",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25348,13 +25401,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "card.ack_identity_and_bundle",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25368,13 +25424,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "ack.return_wait_preconsumption",
             "obligation_type": "transition",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "edge_path",
               "failure_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25388,12 +25447,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "packet_control_plane.facade_split_integrity",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25404,6 +25466,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_packet_runtime",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25422,6 +25485,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_packet_runtime",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25440,6 +25504,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25458,6 +25523,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25476,6 +25542,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25494,6 +25561,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25512,6 +25580,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python skills/flowpilot/assets/run_packet_control_plane_checks.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25565,13 +25634,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "route_mutation.topology_and_recheck",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25585,13 +25657,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path",
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25602,6 +25677,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_route_mutation",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25620,6 +25696,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25638,6 +25715,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25656,6 +25734,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25711,13 +25790,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "terminal.final_ledger_and_backward_replay",
             "obligation_type": "invariant",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25731,12 +25813,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "closure.dirty_ledgers_block_completion",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "failure_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25750,13 +25835,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "resume.current_run_reentry",
             "obligation_type": "transition",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25767,6 +25855,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25785,6 +25874,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25803,6 +25893,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_closure",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25821,6 +25912,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25839,6 +25931,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25893,13 +25986,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "role_output.registry_authority",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25913,13 +26009,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "output_contract.packet_binding",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25933,12 +26032,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "output_contract.self_check_required_fields",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -25949,6 +26051,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25967,6 +26070,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -25985,6 +26089,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_output_contracts",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26003,6 +26108,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_output_contracts",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26021,6 +26127,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_output_contracts",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26079,13 +26186,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.packet_result_review_loop",
             "obligation_type": "transition",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26099,14 +26209,17 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.e2e_synthetic_chaos_replay",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path",
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26120,14 +26233,17 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.real_router_dry_run_rehearsal",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26141,12 +26257,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.real_router_cli_boundary",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26160,14 +26279,17 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.control_plane_failure_canary",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path",
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26181,14 +26303,17 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.shadow_launcher_chaos_regression",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26202,14 +26327,17 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.historical_live_run_replay_package_suite",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26223,13 +26351,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "router_loop.known_friction_regression_gate",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26243,13 +26374,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "daemon.lock_status_and_queue_progress",
             "obligation_type": "invariant",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26263,13 +26397,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "daemon.parent_child_mesh",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26280,6 +26417,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26298,6 +26436,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26316,6 +26455,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26334,6 +26474,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26352,6 +26493,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26370,6 +26512,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26388,6 +26531,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26406,6 +26550,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26424,6 +26569,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal_matrix.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26442,6 +26588,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26460,6 +26607,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26478,6 +26626,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26496,6 +26645,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26514,6 +26664,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26532,6 +26683,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_shadow_launcher_chaos_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26550,6 +26702,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay_matrix.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26568,6 +26721,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26586,6 +26740,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay.py",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26604,6 +26759,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26622,6 +26778,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_known_friction_regression_matrix",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26640,6 +26797,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26658,6 +26816,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26676,6 +26835,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_daemon_child_mesh",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26694,6 +26854,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_daemon_child_mesh",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26747,13 +26908,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.executable_plan_required",
             "obligation_type": "invariant",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26767,12 +26931,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.material_rework_requires_fresh_producer",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26786,12 +26953,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.legacy_replay_requires_existing_producer",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26805,12 +26975,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.empty_transaction_returns_to_pm_repair",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26824,12 +26997,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.pm_decision_flag_atomicity",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26843,13 +27019,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "repair_transactions.multiround_fake_ai_no_producer_recovery",
             "obligation_type": "scenario",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -26860,6 +27039,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26878,6 +27058,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26896,6 +27077,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26914,6 +27096,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26933,6 +27116,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_material_modeling",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26951,6 +27135,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_e2e_synthetic_chaos_replay.FlowPilotEndToEndSyntheticChaosReplayTests.test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -26969,6 +27154,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_real_router_dry_run_rehearsal.FlowPilotRealRouterDryRunRehearsalTests.test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27023,13 +27209,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "test_tiering.foreground_fast_scope",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27043,12 +27232,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "test_tiering.background_artifact_contract",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27062,13 +27254,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "slow_test.parent_child_contracts",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27079,6 +27274,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_test_tiers",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27097,6 +27293,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_test_tiers",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27115,6 +27312,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_tiering_flowguard_model_rejects_known_bad_hazards",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27133,6 +27331,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27151,6 +27350,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_test_tiers.FlowPilotTestTierTests.test_slow_test_contract_flowguard_model_rejects_parent_child_hazards",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27207,13 +27407,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "meta_parent.thin_default_and_layered_full_boundary",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27227,13 +27430,16 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "capability_parent.proof_reuse_and_fast_boundary",
             "obligation_type": "contract",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27247,12 +27453,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "parents.abstract_not_ordinary_conformance",
             "obligation_type": "invariant",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "edge_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -27263,6 +27472,7 @@
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27281,6 +27491,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27299,6 +27510,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowguard_result_proof",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27317,6 +27529,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowguard_result_proof",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -27335,6 +27548,7 @@
           },
           {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_control_gates",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -32527,13 +32741,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "startup.questions.pause_before_work",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32547,12 +32764,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "startup.run_isolation_and_activation",
           "obligation_type": "scenario",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "failure_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32566,12 +32786,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "packet.physical_body_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32585,12 +32808,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "card.ack_identity_and_bundle",
           "obligation_type": "hazard",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32604,12 +32830,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "ack.return_wait_preconsumption",
           "obligation_type": "transition",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32623,12 +32852,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "route_mutation.topology_and_recheck",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32642,13 +32874,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
           "obligation_type": "hazard",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32662,13 +32897,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "terminal.final_ledger_and_backward_replay",
           "obligation_type": "invariant",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32682,12 +32920,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "terminal.final_ledger_source_entries",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32701,12 +32942,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "terminal.requirement_trace_projection",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32720,13 +32964,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "resume.current_run_reentry",
           "obligation_type": "transition",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "failure_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32740,12 +32987,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "role_output.registry_authority",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32759,13 +33009,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "pm_package_disposition.semantic_identity_and_packet_outcomes",
           "obligation_type": "hazard",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32779,12 +33032,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "controller_aside.metadata_only_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32798,12 +33054,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "material_artifact_map.index_only_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32817,13 +33076,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "branch_pruning.result_case_classifier",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32837,13 +33099,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "branch_pruning.scheduled_receipt_effect_cases",
           "obligation_type": "scenario",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "replay",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32857,13 +33122,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "branch_pruning.role_output_authority_cases",
           "obligation_type": "hazard",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32877,13 +33145,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "branch_pruning.runtime_state_resume_cases",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32897,12 +33168,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_state.stale_save_merge_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32916,12 +33190,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_state.load_save_persistence_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32935,12 +33212,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "output_contract.packet_binding",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32954,13 +33234,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "router_loop.packet_result_review_loop",
           "obligation_type": "transition",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "failure_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32974,12 +33257,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_closure.officer_lifecycle_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -32993,12 +33279,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_closure.continuation_and_final_report_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33012,14 +33301,17 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "daemon.lock_status_queue_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "edge_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33033,12 +33325,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "startup_daemon.lock_liveness_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33052,13 +33347,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.high_priority_owner_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33072,12 +33370,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.router_boundary_helpers",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33091,13 +33392,16 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.router_owner_external_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33111,12 +33415,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.receipt_bootloader_policy_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33130,12 +33437,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.receipt_packet_fold_registry_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33149,12 +33459,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.receipt_packet_fold_lifecycle_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33168,12 +33481,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.receipt_scheduled_policy_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33187,12 +33503,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.current_work_pending_policy_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33206,12 +33525,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.standby_state_policy_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33225,12 +33547,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.role_output_bridge_event_policy_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33244,12 +33569,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "runtime_owner.startup_intake_flowguard_capability_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "edge_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33263,12 +33591,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "packet_runtime.owner_helper_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33282,12 +33613,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "packet_control_plane.runner_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33301,12 +33635,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "card_runtime.owner_helper_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33320,12 +33657,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "packet_runtime.runtime_owner_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33339,12 +33679,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "packet_control_plane.model_state_contract",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33358,12 +33701,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "role_output_runtime.owner_helper_contracts",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33377,12 +33723,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "test_tiering.foreground_fast_scope",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33396,12 +33745,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "meta_parent.thin_default_and_layered_full_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "happy_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33415,12 +33767,15 @@
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
+          "model_miss_origin": false,
           "obligation_id": "capability_parent.proof_reuse_and_fast_boundary",
           "obligation_type": "contract",
           "required": true,
+          "required_closure_evidence_roles": [],
           "required_test_kinds": [
             "negative_path"
           ],
+          "requires_same_class_test_evidence": false,
           "risk_level": "high",
           "side_effects": [],
           "state_reads": [],
@@ -33431,6 +33786,7 @@
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "router.run_until_wait",
@@ -33452,6 +33808,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "router.apply_action",
@@ -33473,6 +33830,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -33493,6 +33851,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_packet_runtime",
           "covered_code_contracts": [
             "packet.build_controller_handoff",
@@ -33514,6 +33873,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m pytest tests/test_flowpilot_card_runtime.py",
           "covered_code_contracts": [
             "card.open_card",
@@ -33536,6 +33896,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
           "covered_code_contracts": [
             "router.record_external_event",
@@ -33558,6 +33919,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.router_runtime.route_mutation_preconditions.RouteMutationPreconditionRuntimeTests.test_route_mutation_and_final_ledger_have_required_preconditions",
           "covered_code_contracts": [
             "router.record_external_event",
@@ -33579,6 +33941,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
           "covered_code_contracts": [
             "router.record_external_event",
@@ -33600,6 +33963,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_user_flow_diagram.FlowPilotUserFlowDiagramTests.test_sibling_branch_replacement_draws_replacement_and_replay_scope",
           "covered_code_contracts": [
             "route_sign.generate"
@@ -33620,6 +33984,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -33640,6 +34005,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_terminal",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -33660,6 +34026,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_terminal_ledger_source_entries.TerminalLedgerSourceEntryTests.test_terminal_source_entry_child_builds_expected_gate_families",
           "covered_code_contracts": [
             "terminal_ledger_source_entries.build_source_entries"
@@ -33680,6 +34047,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_terminal_ledger_source_entries.TerminalLedgerSourceEntryTests.test_terminal_source_entry_child_projects_requirement_trace_defaults",
           "covered_code_contracts": [
             "terminal_ledger_source_entries.route_nodes_with_requirement_trace",
@@ -33701,6 +34069,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
           "covered_code_contracts": [
             "router.record_external_event",
@@ -33723,6 +34092,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
           "covered_code_contracts": [
             "router.record_external_event",
@@ -33744,6 +34114,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_role_output_runtime",
           "covered_code_contracts": [
             "role_output.prepare_output_session"
@@ -33764,6 +34135,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_control_plane_contracts.FlowPilotControlPlaneContractRuntimeTests.test_pm_disposition_records_packet_outcomes_and_blocks_mixed_absorption",
           "covered_code_contracts": [
             "pm_decisions._write_pm_package_result_disposition"
@@ -33784,6 +34156,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_control_plane_contracts.FlowPilotControlPlaneContractRuntimeTests.test_pm_disposition_rejects_second_body_for_same_batch_generation",
           "covered_code_contracts": [
             "pm_decisions._write_pm_package_result_disposition",
@@ -33805,6 +34178,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_synthetic_agent_trace_replay.FlowPilotSyntheticAgentTraceReplayTests.test_fake_ai_pm_package_trace_catches_same_package_conflicting_decisions",
           "covered_code_contracts": [
             "role_output_runtime.submit_output",
@@ -33827,6 +34201,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_controller_process_aside_is_metadata_only_and_validated",
           "covered_code_contracts": [
             "controller_aside.contract",
@@ -33849,6 +34224,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_material_artifact_map_is_index_only_and_preserves_sealed_body_boundary",
           "covered_code_contracts": [
             "material_artifact_map.refresh",
@@ -33873,6 +34249,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_material_artifact_map_entry_policy_preserves_reference_boundaries",
           "covered_code_contracts": [
             "material_artifact_map_entries.make_entry",
@@ -33896,6 +34273,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
           "covered_code_contracts": [
             "branch_pruning.next_states"
@@ -33916,6 +34294,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
           "covered_code_contracts": [
             "branch_pruning.next_states",
@@ -33940,6 +34319,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
           "covered_code_contracts": [
             "branch_pruning.failures"
@@ -33960,6 +34340,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
           "covered_code_contracts": [
             "branch_pruning.failures"
@@ -33980,6 +34361,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_reconciliation_branch_pruning_model",
           "covered_code_contracts": [
             "branch_pruning.ownership_snapshot",
@@ -34001,6 +34383,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_closure_external_record_contracts_are_self_validating",
           "covered_code_contracts": [
             "runtime_closure.validate_officer_request_record",
@@ -34030,6 +34413,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "daemon.run_router_daemon",
@@ -34051,6 +34435,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "daemon.acquire_lock",
@@ -34072,6 +34457,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "daemon.acquire_lock",
@@ -34094,6 +34480,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
           "covered_code_contracts": [
             "daemon.write_status"
@@ -34114,6 +34501,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_startup_daemon_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "process_liveness.probe",
@@ -34137,6 +34525,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_barrier_bundle_contract_validates_required_obligations_and_roles",
           "covered_code_contracts": [
             "barrier_bundle.validate_barrier_bundle"
@@ -34157,6 +34546,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_break_glass_contract_records_controller_only_incident_patch_and_close",
           "covered_code_contracts": [
             "break_glass.open_incident",
@@ -34179,6 +34569,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_path_and_prompt_store_contracts_resolve_active_run_and_hash_checked_text",
           "covered_code_contracts": [
             "flowpilot_paths.resolve_flowpilot_paths",
@@ -34200,6 +34591,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_small_runtime_owner_helpers_return_stable_external_shapes",
           "covered_code_contracts": [
             "action_providers.lifecycle_provider",
@@ -34222,6 +34614,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_card_settlement_ack_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "card_settlement.card_ack_clearance_scope"
@@ -34242,6 +34635,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_controller_boundary_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "controller_boundary.patrol_timer_command"
@@ -34262,6 +34656,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_controller_reconciliation_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "controller_reconciliation.action_projection_kind"
@@ -34282,6 +34677,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_protocol_tables_and_mail_lookup_belong_to_owner_modules",
           "covered_code_contracts": [
             "controller_repair.bind_router",
@@ -34304,6 +34700,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_startup_boot_catalog_split_preserves_protocol_owner_boundary",
           "covered_code_contracts": [
             "startup_catalog.startup_boot_catalog",
@@ -34328,6 +34725,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_dispatch_gate_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "dispatch_gate.target_roles"
@@ -34348,6 +34746,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_action_factory_and_dispatch_gate_external_contracts",
           "covered_code_contracts": [
             "action_factory_dispatch.apply_dispatch_recipient_gate",
@@ -34369,6 +34768,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_card_delivery_and_controller_ledger_external_contracts",
           "covered_code_contracts": [
             "card_delivery.next_card_delivery_attempt",
@@ -34390,6 +34790,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_action_handler_modules_return_outcomes_and_reject_forbidden_authority",
           "covered_code_contracts": [
             "action_handlers_basic.check_packet_ledger",
@@ -34412,6 +34813,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_artifact_validation_and_child_skill_capability_external_contracts",
           "covered_code_contracts": [
             "artifact_validation.validate_artifact",
@@ -34434,6 +34836,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_controller_control_scheduler_external_contracts",
           "covered_code_contracts": [
             "router_cli.parse_args",
@@ -34459,6 +34862,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_reconciled_controller_action_backfills_receipt_done_scheduler_row",
           "covered_code_contracts": [
             "receipts_scheduled.reconcile_loop"
@@ -34479,6 +34883,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_receipt_bootloader_policy_child_preserves_facade_boundary",
           "covered_code_contracts": [
             "receipts_bootloader.boot_action_meta",
@@ -34501,6 +34906,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_receipt_packet_fold_registry_child_preserves_registered_actions",
           "covered_code_contracts": [
             "receipt_packet_fold_registry.registered_actions"
@@ -34521,6 +34927,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_pm_role_work_receipt_lifecycle_consumes_shared_policy",
           "covered_code_contracts": [
             "receipt_packet_fold_lifecycle.policy",
@@ -34543,6 +34950,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_scheduled_receipt_policy_child_preserves_facade_boundary",
           "covered_code_contracts": [
             "receipt_scheduled_policy.scheduler_row_reconciliation",
@@ -34566,6 +34974,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_boundary_contracts.FlowPilotBoundaryContractTests.test_current_work_pending_policy_child_preserves_facade_boundary",
           "covered_code_contracts": [
             "current_work_pending.has_controller_authority",
@@ -34590,6 +34999,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_foreground_controller_standby_state_policy_classifier",
           "covered_code_contracts": [
             "standby_policy.foreground_standby_state",
@@ -34611,6 +35021,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_event_wait_repair_external_contracts",
           "covered_code_contracts": [
             "event_identity.stable_identity_hash",
@@ -34636,6 +35047,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_facade_export_manifest_external_contracts",
           "covered_code_contracts": [
             "manifest_registry.owner_exports_for_domain",
@@ -34662,6 +35074,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_lifecycle_startup_system_card_external_contracts",
           "covered_code_contracts": [
             "lifecycle_requests.write_terminal_fence",
@@ -34700,6 +35113,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_quarantines_active_repair_and_historical_control_plane_artifacts",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -34720,6 +35134,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_startup_intake_flowguard_capability_child_preserves_boundary",
           "covered_code_contracts": [
             "startup_intake_flowguard_capability.route_classification",
@@ -34742,6 +35157,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_role_prompt_proof_terminal_work_packet_external_contracts",
           "covered_code_contracts": [
             "internal_actions.action_is_router_internal_mechanical",
@@ -34776,6 +35192,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_user_flow_external_contracts",
           "covered_code_contracts": [
             "user_flow_source.route_source_summary",
@@ -34800,6 +35217,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_role_output_bridge_events.RoleOutputBridgeEventChildTests.test_role_output_bridge_event_child_reads_body_and_checks_pending_authority",
           "covered_code_contracts": [
             "role_output_bridge_events.body_payload_from_record",
@@ -34821,6 +35239,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_packet_control_plane_and_reviewer_external_contracts",
           "covered_code_contracts": [
             "packet_invariants.controller_handoff_body_leak_never_advances",
@@ -34847,6 +35266,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_event_boundary_registry_covers_first_migrated_events",
           "covered_code_contracts": [
             "router_events.handle_precheck_event",
@@ -34868,6 +35288,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_event_dispatcher_passes_router_facade_to_event_helpers",
           "covered_code_contracts": [
             "event_dispatcher.record_external_event_unchecked"
@@ -34888,6 +35309,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_json_helpers_round_trip_through_io_owner",
           "covered_code_contracts": [
             "router_io.write_json",
@@ -34911,6 +35333,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_coarse_owner_bind_router_refreshes_facade_globals_without_overwriting_owner_locals",
           "covered_code_contracts": [
             "runtime_state.bind_router"
@@ -34931,6 +35354,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_state_persistence.RuntimeStatePersistenceTests.test_child_merge_preserves_foreground_clear_without_metadata_leak",
           "covered_code_contracts": [
             "runtime_state_persistence.merge_stale_run_state_save"
@@ -34951,6 +35375,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_state_persistence.RuntimeStatePersistenceTests.test_parent_facade_delegates_load_and_stale_save_to_child",
           "covered_code_contracts": [
             "runtime_state_persistence.load_run_state_from_run_root",
@@ -34972,6 +35397,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_route_domain_helpers_are_available_in_route_owner",
           "covered_code_contracts": [
             "router_route.route_payload_from_reviewed_draft"
@@ -34992,6 +35418,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_resume_domain_helpers_are_available_in_resume_owner",
           "covered_code_contracts": [
             "router_resume.reset_resume_cycle_for_wakeup"
@@ -35012,6 +35439,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_terminal_helpers_belong_to_owner_module",
           "covered_code_contracts": [
             "router_terminal.terminal_lifecycle_mode"
@@ -35032,6 +35460,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_packet_runtime_contracts_paths_schema_and_audit_boundaries",
           "covered_code_contracts": [
             "packet_audit.audit_barrier_bundles",
@@ -35055,6 +35484,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_runtime_owner_contracts.FlowPilotRuntimeOwnerContractTests.test_packet_control_plane_runner_main_uses_flowguard_report_exit_contract",
           "covered_code_contracts": [
             "packet_control_plane.main"
@@ -35075,6 +35505,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m pytest tests/test_flowpilot_card_runtime.py::test_card_runtime_owner_modules_expose_direct_external_contracts",
           "covered_code_contracts": [
             "card_bundle.validate_card_bundle_ack",
@@ -35098,6 +35529,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_packet_runtime.FlowPilotPacketRuntimeTests.test_packet_runtime_owner_modules_expose_direct_external_contracts",
           "covered_code_contracts": [
             "packet_startup.create_user_intake_packet",
@@ -35126,6 +35558,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_role_output_owner_modules_expose_direct_external_contracts",
           "covered_code_contracts": [
             "role_output_contracts.build_output_skeleton",
@@ -35149,6 +35582,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_controller_boundary_helper_writes_runtime_body_receipt_and_ledger",
           "covered_code_contracts": [
             "role_output_controller_boundary.build_confirmation_body",
@@ -35170,6 +35604,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_output_contracts",
           "covered_code_contracts": [
             "packet.create_packet",
@@ -35192,6 +35627,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -35212,6 +35648,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_packets",
           "covered_code_contracts": [
             "router.record_external_event"
@@ -35232,6 +35669,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_test_tiers",
           "covered_code_contracts": [
             "test_tier.commands_for_tier"
@@ -35252,6 +35690,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_thin_parent_checks",
           "covered_code_contracts": [
             "meta_runner.main"
@@ -35272,6 +35711,7 @@
         },
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowguard_result_proof",
           "covered_code_contracts": [
             "smoke.main"
@@ -51280,6 +51720,7 @@
               },
               "evidence": {
                 "assertion_scope": "external_contract",
+                "closure_evidence_role": "",
                 "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
                 "covered_code_contracts": [
                   "source_bad.foo"
@@ -51322,6 +51763,7 @@
               },
               "evidence": {
                 "assertion_scope": "external_contract",
+                "closure_evidence_role": "",
                 "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
                 "covered_code_contracts": [
                   "source_bad.foo"
@@ -51362,6 +51804,7 @@
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"
@@ -51457,6 +51900,7 @@
               },
               "evidence": {
                 "assertion_scope": "external_contract",
+                "closure_evidence_role": "",
                 "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
                 "covered_code_contracts": [
                   "source_bad.foo"
@@ -51500,6 +51944,7 @@
               },
               "evidence": {
                 "assertion_scope": "external_contract",
+                "closure_evidence_role": "",
                 "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
                 "covered_code_contracts": [
                   "source_bad.foo"
@@ -51544,6 +51989,7 @@
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"

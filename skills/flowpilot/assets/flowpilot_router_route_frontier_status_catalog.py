@@ -37,6 +37,76 @@ def _bind_router(router: ModuleType) -> None:
             continue
         current[name] = value
 
+
+def _active_ui_target_id(run_id: str) -> str:
+    return f"run:{run_id}"
+
+
+def _active_ui_task_entry(
+    router: ModuleType,
+    project_root: Path,
+    *,
+    run_id: str,
+    run_root: str,
+    status: str,
+    focus_selected: bool,
+    stale_residue: bool = False,
+    stale_reason: str | None = None,
+) -> dict[str, Any]:
+    target_id = _active_ui_target_id(run_id)
+    entry: dict[str, Any] = {
+        "run_id": run_id,
+        "flow_block_id": run_id,
+        "run_root": run_root,
+        "status": status or "running",
+        "target_id": target_id,
+        "target_scope": "single",
+        "operation_target_allowed": not stale_residue,
+        "display_plan_path": (
+            project_relative(project_root, project_root / run_root / "display_plan.json")
+            if run_root
+            else None
+        ),
+        "route_state_snapshot_path": (
+            project_relative(project_root, project_root / run_root / "route_state_snapshot.json")
+            if run_root
+            else None
+        ),
+        "focus_selected": focus_selected,
+        "background_active": (not focus_selected) and (not stale_residue),
+        "stale_residue": stale_residue,
+        "close_tab_behavior": (
+            "return_to_dialog_route_display" if focus_selected else "keep_background_run_available"
+        ),
+    }
+    if stale_reason:
+        entry["stale_reason"] = stale_reason
+    return entry
+
+
+def _active_ui_operation_targets(active_tasks: list[dict[str, Any]]) -> dict[str, Any]:
+    selectable = [task for task in active_tasks if task.get("operation_target_allowed")]
+    focus = next((task for task in selectable if task.get("focus_selected")), None)
+    return {
+        "target_scope_required": True,
+        "current_focus": focus.get("target_id") if isinstance(focus, dict) else None,
+        "single_targets": [
+            {
+                "target_id": task.get("target_id"),
+                "run_id": task.get("run_id"),
+                "flow_block_id": task.get("flow_block_id"),
+                "target_scope": "single",
+            }
+            for task in selectable
+        ],
+        "all_active": {
+            "target_id": "all_active",
+            "target_scope": "all_active",
+            "run_ids": [task.get("run_id") for task in selectable],
+            "flow_block_ids": [task.get("flow_block_id") for task in selectable],
+        },
+    }
+
 def _active_ui_task_catalog(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     current = read_json_if_exists(project_root / '.flowpilot' / 'current.json') or {}
@@ -51,6 +121,7 @@ def _active_ui_task_catalog(router: ModuleType, project_root: Path, run_root: Pa
     effective_status = run_status if run_status in hidden_statuses else current_status or run_status
     current_pointer_matches = current_run_id == run_id and current_run_root == run_root_rel
     active_tasks: list[dict[str, Any]] = []
+    stale_residue_tasks: list[dict[str, Any]] = []
     seen_run_ids: set[str] = set()
     for item in index.get('runs', []):
         if not isinstance(item, dict):
@@ -58,16 +129,72 @@ def _active_ui_task_catalog(router: ModuleType, project_root: Path, run_root: Pa
         item_run_id = str(item.get('run_id') or '')
         item_run_root = str(item.get('run_root') or '')
         item_status = str(item.get('status') or '')
-        if not item_run_id or item_status in hidden_statuses:
+        if not item_run_id:
+            continue
+        if item_status in hidden_statuses:
+            stale_residue_tasks.append(
+                _active_ui_task_entry(
+                    router,
+                    project_root,
+                    run_id=item_run_id,
+                    run_root=item_run_root,
+                    status=item_status,
+                    focus_selected=False,
+                    stale_residue=True,
+                    stale_reason=f"index_status_{item_status}",
+                )
+            )
             continue
         seen_run_ids.add(item_run_id)
         focus_selected = item_run_id == current_run_id
-        active_tasks.append({'run_id': item_run_id, 'run_root': item_run_root, 'status': item_status or 'running', 'display_plan_path': project_relative(project_root, project_root / item_run_root / 'display_plan.json') if item_run_root else None, 'route_state_snapshot_path': project_relative(project_root, project_root / item_run_root / 'route_state_snapshot.json') if item_run_root else None, 'focus_selected': focus_selected, 'background_active': not focus_selected, 'close_tab_behavior': 'return_to_dialog_route_display' if focus_selected else 'keep_background_run_available'})
+        active_tasks.append(
+            _active_ui_task_entry(
+                router,
+                project_root,
+                run_id=item_run_id,
+                run_root=item_run_root,
+                status=item_status or "running",
+                focus_selected=focus_selected,
+            )
+        )
     if current_pointer_matches and effective_status not in hidden_statuses and (run_id not in seen_run_ids):
-        active_tasks.append({'run_id': run_id, 'run_root': run_root_rel, 'status': effective_status or 'running', 'display_plan_path': project_relative(project_root, router._display_plan_path(run_root)), 'route_state_snapshot_path': project_relative(project_root, router._route_state_snapshot_path(run_root)), 'focus_selected': True, 'background_active': False, 'close_tab_behavior': 'return_to_dialog_route_display'})
+        active_tasks.append(
+            _active_ui_task_entry(
+                router,
+                project_root,
+                run_id=run_id,
+                run_root=run_root_rel,
+                status=effective_status or "running",
+                focus_selected=True,
+            )
+        )
     active_tasks.sort(key=lambda item: (not bool(item.get('focus_selected')), str(item.get('run_id') or '')))
     background_active_tasks = [item for item in active_tasks if item.get('background_active')]
-    return {'schema_version': 'flowpilot.active_ui_task_catalog.v1', 'authority': 'index_active_runs_with_current_focus', 'current_pointer_matches_run': current_pointer_matches, 'current_pointer_is_ui_focus_only': True, 'active_tasks': active_tasks, 'background_active_tasks': background_active_tasks, 'hidden_non_current_running_index_entries': [], 'completed_abandoned_stale_history_default_visible': False}
+    block_scoped_agents = run_state.get("active_flow_block_agents")
+    if not isinstance(block_scoped_agents, list):
+        block_scoped_agents = []
+    scope_kind = (
+        "block_scoped_agents"
+        if block_scoped_agents
+        else ("parallel_runs" if len(active_tasks) > 1 else ("single_run" if active_tasks else "no_active_tasks"))
+    )
+    return {
+        "schema_version": "flowpilot.active_ui_task_catalog.v1",
+        "authority": "explicit_active_set",
+        "source_authority": "index_active_runs_with_current_focus",
+        "scope_kind": scope_kind,
+        "current_pointer_matches_run": current_pointer_matches,
+        "current_pointer_is_ui_focus_only": True,
+        "global_main_required": False,
+        "operation_target_required": True,
+        "active_tasks": active_tasks,
+        "background_active_tasks": background_active_tasks,
+        "block_scoped_agents": block_scoped_agents,
+        "operation_targets": _active_ui_operation_targets(active_tasks),
+        "hidden_non_current_running_index_entries": stale_residue_tasks,
+        "stale_residue_tasks": stale_residue_tasks,
+        "completed_abandoned_stale_history_default_visible": False,
+    }
 
 
 def _route_node_checklist(router: ModuleType, node: dict[str, Any], *, node_complete: bool=False) -> list[dict[str, Any]]:

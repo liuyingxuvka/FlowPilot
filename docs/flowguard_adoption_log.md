@@ -18883,3 +18883,52 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - Use the known-friction matrix as the intake point for every future repeated real-run miss.
 - Archive `harden-known-friction-regression-gates` after review if the implementation evidence is accepted.
+
+## 2026-05-27 - Parallel Flow Block Active-Set Authority
+
+- Trigger: user clarified that FlowPilot may run independent Flow blocks A/B/C in parallel and asked for a concrete OpenSpec plus FlowGuard plan to remove repeated ambiguity around "current main line" semantics without rolling back peer AI work.
+- Status: implemented, validated locally, installed skill synced, and local git commit pending.
+- Skill decision: OpenSpec plus FlowGuard ExistingModelPreflight, UI Flow Structure, DevelopmentProcessFlow, TestMesh, and Model-Test Alignment.
+- OpenSpec change: `clarify-parallel-flow-block-authority`.
+- FlowGuard schema: `1.0`.
+
+### Changed Surfaces
+
+- Added an explicit `active_ui_task_catalog` authority contract with target ids, target scopes, focus/default-target metadata, background-active tasks, stale-residue classification, and `global_main_required: false`.
+- Updated route-state snapshots and status summaries so `.flowpilot/current.json` is UI focus only, while non-current running entries remain visible as targetable background work.
+- Hardened the control-plane friction live audit to reject missing target ids and to synthesize explicit active-set authority read-only from `.flowpilot/index.json` plus `.flowpilot/current.json` when stored route snapshots are old-format.
+- Added runtime and model tests for legal A/B parallel runs, block-scoped agents under one Flow block, stale residue, missing target ids, and missing active-set authority.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`.
+- OK: `openspec validate clarify-parallel-flow-block-authority --strict`.
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py::BootstrapCliRuntimeTests::test_active_ui_catalog_exposes_parallel_run_targets_and_stale_residue tests/test_flowpilot_router_runtime.py::BootstrapCliRuntimeTests::test_active_ui_catalog_keeps_block_scoped_agents_under_parent_flow_block -q` -> `2 passed`.
+- OK: `python -m pytest tests/test_flowpilot_full_coverage_finding_repairs.py::FlowPilotFullCoverageFindingRepairTests::test_control_plane_audit_reads_background_projection_from_authority tests/test_flowpilot_full_coverage_finding_repairs.py::FlowPilotFullCoverageFindingRepairTests::test_control_plane_audit_accepts_explicit_parallel_active_set_authority tests/test_flowpilot_full_coverage_finding_repairs.py::FlowPilotFullCoverageFindingRepairTests::test_control_plane_audit_rejects_parallel_active_set_without_targets tests/test_flowpilot_full_coverage_finding_repairs.py::FlowPilotFullCoverageFindingRepairTests::test_control_plane_audit_synthesizes_explicit_authority_from_index_for_old_snapshot -q` -> `4 passed`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_checks_results.json`; live audit ok true, active authority source `read_only_index_synthesis`, no projected invariant failures.
+- OK: `python -m pytest tests/test_flowpilot_router_runtime.py::ForegroundControllerRuntimeTests::test_display_plan_is_controller_synced_projection_from_pm_plan -q` -> `1 passed`.
+- OK: `python -m pytest tests/test_flowguard_result_proof.py tests/test_flowpilot_thin_parent_checks.py -q` -> `10 passed` after a transient FlowGuard peer-write import mismatch in the first fast background pass.
+- OK in background contract: `python simulations/run_meta_checks.py`; `tmp/flowguard_background/run_meta_checks.exit.txt` = `0`, status passed, proof reuse false.
+- OK in background contract: `python simulations/run_capability_checks.py`; `tmp/flowguard_background/run_capability_checks.exit.txt` = `0`, status passed, proof reuse false.
+- Scoped fast-tier evidence: `tmp/flowguard_background/parallel_flow_authority_fast/fast_background_supervisor.meta.json` completed 33/33 commands; 31 passed in the background run and the two transient FlowGuard import failures were rerun successfully after the sibling FlowGuard write settled.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The repeated ambiguity was not that FlowPilot needed one global main line. The missing contract was explicit active-set authority: each visible active run/block must expose a stable operation target, while current is only focus/default target.
+- Old route-state snapshots can still be present in real workspaces while peers are active. The live audit now handles that safely by read-only synthesis rather than mutating peer run state.
+- The fast background pass surfaced a separate same-time FlowGuard dependency write race. Focused reruns passed once the sibling dependency write finished, so the active-set change was not blocked by product logic failure.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, OpenSpec archive, or public publication was performed.
+- No `.flowpilot` peer-run runtime state was rewritten. The live audit fix is read-only for old snapshots to avoid disturbing concurrent AI work.
+- The fast-tier supervisor artifact remains a record of the first-pass transient dependency import failure; the corrected evidence is the focused rerun listed above.
+
+### Next Actions
+
+- Complete predictive-KB postflight and local git commit for this combined workspace state.
+- Archive `clarify-parallel-flow-block-authority` after review if implementation evidence is accepted.

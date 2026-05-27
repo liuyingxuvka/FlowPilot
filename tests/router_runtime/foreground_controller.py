@@ -1319,13 +1319,48 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(active_snapshot["authority"]["stale_running_index_entries"], [])
         self.assertEqual(
             active_snapshot["authority"]["background_running_index_entries"],
-            [{"focus_selected": False, "run_id": "run-stale", "run_root": ".flowpilot/runs/run-stale", "status": "running"}],
+            [
+                {
+                    "background_active": True,
+                    "flow_block_id": "run-stale",
+                    "focus_selected": False,
+                    "operation_target_allowed": True,
+                    "run_id": "run-stale",
+                    "run_root": ".flowpilot/runs/run-stale",
+                    "stale_residue": False,
+                    "status": "running",
+                    "target_id": "run:run-stale",
+                    "target_scope": "single",
+                }
+            ],
         )
+        self.assertEqual(active_snapshot["authority"]["active_source"], "explicit_active_set")
+        self.assertFalse(active_snapshot["authority"]["global_main_required"])
+        self.assertTrue(active_snapshot["authority"]["operation_target_required"])
         self.assertEqual(active_snapshot["active_ui_task_catalog"]["hidden_non_current_running_index_entries"], [])
+        self.assertEqual(active_snapshot["active_ui_task_catalog"]["authority"], "explicit_active_set")
+        self.assertEqual(active_snapshot["active_ui_task_catalog"]["scope_kind"], "parallel_runs")
+        self.assertFalse(active_snapshot["active_ui_task_catalog"]["global_main_required"])
+        self.assertTrue(active_snapshot["active_ui_task_catalog"]["operation_target_required"])
+        self.assertEqual(
+            active_snapshot["active_ui_task_catalog"]["operation_targets"]["current_focus"],
+            f"run:{active_snapshot['run_id']}",
+        )
+        self.assertEqual(
+            sorted(active_snapshot["active_ui_task_catalog"]["operation_targets"]["all_active"]["run_ids"]),
+            sorted([active_snapshot["run_id"], "run-stale"]),
+        )
         self.assertEqual(
             [item["run_id"] for item in active_snapshot["active_ui_task_catalog"]["background_active_tasks"]],
             ["run-stale"],
         )
+        self.assertEqual(
+            [item["target_id"] for item in active_snapshot["active_ui_task_catalog"]["background_active_tasks"]],
+            ["run:run-stale"],
+        )
+        self.assertEqual(status_summary["active_set_status"]["authority"], "explicit_active_set")
+        self.assertFalse(status_summary["active_set_status"]["global_main_required"])
+        self.assertTrue(status_summary["active_set_status"]["operation_target_required"])
         index_after = read_json(index_path)
         stale_entry = next(item for item in index_after["runs"] if item["run_id"] == "run-stale")
         self.assertEqual(stale_entry["status"], "running")
