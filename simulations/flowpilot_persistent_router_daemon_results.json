@@ -2,6 +2,7 @@
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
+    "exception_branches": [],
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],

@@ -19588,3 +19588,60 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Unrelated peer-owned edits and broad generated result churn were left unstaged unless needed for this scoped evidence chain.
 - The release background run initially found a local-path documentation leak; that single doc issue was fixed and the public-release scan then passed.
 - No GitHub push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-27 23:26 +02:00 - Model Maturation Closure Sweep
+
+### Summary
+
+- Task: use the latest FlowGuard model maturation gate to inspect FlowPilot, add missing model-maturation coverage, refresh local installation evidence, and keep peer-agent changes intact.
+- Route: `openspec_apply + flowguard_existing_model_preflight + development_process_flow + model_maturation + model_test_alignment + test_mesh`.
+- Change: `adopt-flowguard-model-maturation`.
+
+### Changed Surfaces
+
+- Added and refreshed the model maturation closure evidence chain for ACK/output separation, replacement packet disposition, prompt assets, protocol conformance, background proof, hierarchy freshness, and diagnostics.
+- Added persistent router daemon exception-branch export so future FlowGuard explorer exception branches include actionable trace details.
+- Refreshed hierarchy and maturation result artifacts after concurrent peer changes moved parent-model proof timestamps.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `openspec change validate adopt-flowguard-model-maturation --strict`.
+- OK: `python simulations\run_flowpilot_model_maturation_checks.py --json-out simulations\flowpilot_model_maturation_results.json`.
+- OK: `python simulations\run_flowpilot_model_hierarchy_checks.py --json-out simulations\flowpilot_model_hierarchy_results.json`.
+- OK: `python -m pytest tests\test_flowpilot_model_maturation.py -q`.
+- OK: `python scripts\install_flowpilot.py --install-missing --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK: focused persistent router daemon check completed with `flowguard_explorer.exception_branch_count=0`.
+- OK: focused startup daemon lock test passed after the scheduler write-lock wait window was made stable under background load.
+- OK: `tests.router_runtime.startup_daemon` passed 26 tests in the focused rerun.
+- OK: background `tmp\flowguard_background_maturation_final_router_rerun\router_background_supervisor.meta.json` completed with exit code 0 and 64 passed child checks.
+- OK: background `tmp\flowguard_background_maturation_final_integration_rerun\check_install.meta.json` completed with exit code 0.
+- OK: background `tmp\flowguard_background_maturation_final_integration_rerun\audit_local_install_sync.meta.json` completed with exit code 0.
+- OK: background `tmp\flowguard_background_maturation_final_integration_rerun\flowguard_coverage_sweep.meta.json` completed with exit code 0.
+- OK: background `tmp\flowguard_background_maturation_final_integration_rerun\smoke_autopilot_fast.meta.json` completed with exit code 0 and proof reuse true.
+
+### Findings
+
+- The maturation gate now blocks false full-closure claims from ACK-only completion, undisposed replacement packets, prompt-contract gaps, stale evidence, oversized parent masking, progress-only background evidence, and singleton duplicate authority gaps.
+- Current model maturation confidence remains `scoped`, not full, because prompt assets still need model-visible contract obligations and protocol conformance still reports a non-green source result.
+- The hierarchy stale-proof signal was refreshed successfully; after rerun, hierarchy evidence is current and no longer part of the scoped residual set.
+- The previous persistent-router daemon exception signal was stale; the latest focused rerun and router tier rerun both reported no FlowGuard explorer exception branches.
+- The previous router tier failure was a test timing race: the scheduler write-lock handoff could clear before the daemon's first tick under load. The wait window is now stable and the full router background rerun passed.
+
+### Background Artifacts
+
+- `tmp\flowguard_background_maturation_final_router_rerun\router_background_supervisor.meta.json`: status `passed`, exit `0`, 64 completed child checks, proof reuse false.
+- `tmp\flowguard_background_maturation_final_integration_rerun\flowguard_coverage_sweep.meta.json`: status `passed`, exit `0`, proof reuse false.
+- `tmp\flowguard_background_maturation_final_integration_rerun\smoke_autopilot_fast.meta.json`: status `passed`, exit `0`, proof reuse true.
+- `tmp\flowguard_background_maturation_final_integration_rerun\check_install.meta.json`: status `passed`, exit `0`.
+- `tmp\flowguard_background_maturation_final_integration_rerun\audit_local_install_sync.meta.json`: status `passed`, exit `0`.
+
+### Skipped Or Limited
+
+- Full model maturation closure was not claimed; the remaining prompt-boundary and protocol-conformance issues are explicit next model-upgrade targets.
+- Coverage sweep still reports classified findings, including current stopped-run live-state observations, but the latest sweep exits 0 and does not block this scoped maintenance claim.
+- No peer AI work was reverted or cleaned up.
+- No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.

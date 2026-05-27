@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from flowguard import Explorer
+from flowguard.export import exception_branch_to_dict
 
 import flowpilot_persistent_router_daemon_model as model
 
@@ -335,6 +336,10 @@ def _run_flowguard_explorer() -> dict[str, object]:
         "violation_count": len(report.violations),
         "dead_branch_count": len(report.dead_branches),
         "exception_branch_count": len(report.exception_branches),
+        "exception_branches": [
+            exception_branch_to_dict(branch)
+            for branch in report.exception_branches[:5]
+        ],
         "reachability_failure_count": len(report.reachability_failures),
         "reachability_failures": [
             failure.message for failure in report.reachability_failures

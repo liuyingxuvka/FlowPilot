@@ -144,104 +144,6 @@
         "risk_id": "protocol_contract_result_stale",
         "severity": "blocker",
         "signal_id": "protocol_contract_conformance_fresh"
-      },
-      {
-        "action": "split_child_model",
-        "code": "model_upgrade_required",
-        "message": "unresolved in-scope maturation signal requires model upgrade action",
-        "metadata": {
-          "current": true,
-          "description": "Oversized parent models must expose child maturation and thin/full evidence status.",
-          "evidence_id": "simulations/flowpilot_model_hierarchy_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1779910199.5745049,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_model_hierarchy_results.json",
-              "result_missing": false,
-              "result_mtime": 1779910268.9310777,
-              "sources": [
-                "simulations\\flowpilot_model_hierarchy_model.py",
-                "simulations\\run_flowpilot_model_hierarchy_checks.py",
-                "simulations\\meta_thin_parent_results.json",
-                "simulations\\capability_thin_parent_results.json",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowguard-model-hierarchy\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": false,
-              "result": "simulations/flowpilot_model_hierarchy_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "meta_capability_model_hierarchy",
-          "required": true,
-          "resolved": false,
-          "risk_id": "large_parent_ok_masks_child_gap",
-          "signal_id": "oversized_parent_child_maturity_visible",
-          "signal_type": "oversized_model",
-          "source_route": "model_mesh",
-          "suggested_actions": [
-            "split_child_model",
-            "add_model_obligation"
-          ]
-        },
-        "model_id": "meta_capability_model_hierarchy",
-        "risk_id": "large_parent_ok_masks_child_gap",
-        "severity": "blocker",
-        "signal_id": "oversized_parent_child_maturity_visible"
-      },
-      {
-        "action": "add_model_obligation",
-        "code": "model_upgrade_required",
-        "message": "unresolved in-scope maturation signal requires model upgrade action",
-        "metadata": {
-          "current": true,
-          "description": "Oversized parent models must expose child maturation and thin/full evidence status.",
-          "evidence_id": "simulations/flowpilot_model_hierarchy_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1779910199.5745049,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_model_hierarchy_results.json",
-              "result_missing": false,
-              "result_mtime": 1779910268.9310777,
-              "sources": [
-                "simulations\\flowpilot_model_hierarchy_model.py",
-                "simulations\\run_flowpilot_model_hierarchy_checks.py",
-                "simulations\\meta_thin_parent_results.json",
-                "simulations\\capability_thin_parent_results.json",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowguard-model-hierarchy\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": false,
-              "result": "simulations/flowpilot_model_hierarchy_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "meta_capability_model_hierarchy",
-          "required": true,
-          "resolved": false,
-          "risk_id": "large_parent_ok_masks_child_gap",
-          "signal_id": "oversized_parent_child_maturity_visible",
-          "signal_type": "oversized_model",
-          "source_route": "model_mesh",
-          "suggested_actions": [
-            "split_child_model",
-            "add_model_obligation"
-          ]
-        },
-        "model_id": "meta_capability_model_hierarchy",
-        "risk_id": "large_parent_ok_masks_child_gap",
-        "severity": "blocker",
-        "signal_id": "oversized_parent_child_maturity_visible"
       }
     ],
     "full_closure_ok": false,
@@ -252,14 +154,12 @@
       "add_code_boundary_observation",
       "add_model_obligation",
       "refresh_evidence",
-      "split_child_model",
       "downgrade_claim"
     ],
     "risk_id": "coarse_or_stale_flowpilot_model_confidence",
     "scoped_signal_ids": [
       "prompt_assets_are_contract_inputs",
-      "protocol_contract_conformance_fresh",
-      "oversized_parent_child_maturity_visible"
+      "protocol_contract_conformance_fresh"
     ],
     "signal_count": 10,
     "summary": "Only a scoped FlowGuard claim is supported until maturation signals are resolved."

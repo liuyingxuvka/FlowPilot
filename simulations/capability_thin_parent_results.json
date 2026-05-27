@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-27T19:29:59.534505+00:00",
+  "created_at": "2026-05-27T21:08:05.730505+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": false,
     "status": {
-      "created_at": "2026-05-24T23:20:46.463841+00:00",
+      "created_at": "2026-05-27T21:02:26.115088+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "legacy_monolith_required": false,
