@@ -36,6 +36,22 @@ def _bound_router() -> ModuleType:
     return _BOUND_ROUTER
 
 
+def _host_automation_toml_status(path: Path) -> str | None:
+    try:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line.startswith("status"):
+                continue
+            key, _, value = line.partition("=")
+            if key.strip() != "status":
+                continue
+            status = value.strip().strip('"').strip("'").strip()
+            return status or None
+    except OSError:
+        return None
+    return None
+
+
 def _clear_active_control_blocker_for_terminal_lifecycle(
     project_root: Path,
     run_root: Path,
@@ -102,8 +118,11 @@ def _reconcile_terminal_lifecycle_authorities(
         automation_id = str(continuation.get("host_automation_id") or "")
         automation_path = Path.home() / ".codex" / "automations" / automation_id / "automation.toml" if automation_id else None
         automation_exists = bool(automation_path and automation_path.exists())
+        automation_status = _host_automation_toml_status(automation_path) if automation_path and automation_exists else None
         if automation_id and not automation_exists:
             cleanup_status = "missing_verified"
+        elif automation_status in {"PAUSED", "DISABLED", "DELETED"}:
+            cleanup_status = "inactive_verified"
         elif automation_id and previous_heartbeat_active:
             cleanup_status = "external_cleanup_may_be_required"
         else:
@@ -113,6 +132,7 @@ def _reconcile_terminal_lifecycle_authorities(
         continuation["terminal_event"] = event
         continuation["terminal_reconciled_at"] = reconciled_at
         continuation["host_automation_cleanup_status"] = cleanup_status
+        continuation["host_automation_status"] = automation_status
         continuation["host_automation_toml_exists"] = automation_exists if automation_id else None
         continuation["host_automation_checked_path"] = str(automation_path) if automation_path else None
         write_json(continuation_path, continuation)
@@ -123,6 +143,7 @@ def _reconcile_terminal_lifecycle_authorities(
                 "previous_heartbeat_active": previous_heartbeat_active,
                 "heartbeat_active": False,
                 "host_automation_cleanup_status": continuation["host_automation_cleanup_status"],
+                "host_automation_status": continuation.get("host_automation_status"),
                 "host_automation_toml_exists": continuation["host_automation_toml_exists"],
             }
         )

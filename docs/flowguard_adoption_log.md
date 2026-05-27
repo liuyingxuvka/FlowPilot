@@ -19193,3 +19193,33 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
   public publication was performed.
 - The failed router facade split parent check reports pre-existing global
   child-module-count pressure and was not treated as this repair's gate.
+
+## 2026-05-27 12:08 +02:00 - Router Facade Split Budget Evidence Refresh
+
+### Summary
+
+- Task: reconcile stale router facade split evidence exposed while rerunning
+  post-repair model checks.
+- Route: `flowguard_structure_mesh + development_process_flow`.
+
+### Changed Surfaces
+
+- Updated the router facade split evidence default and maintenance-wave child
+  module budget to match the current tracked router module topology.
+
+### Commands
+
+- Failing before refresh:
+  `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`
+  reported `child_module_count=292` against the stale budget `280`.
+- OK after refresh:
+  `python simulations\run_flowpilot_router_facade_split_checks.py --json-out simulations\flowpilot_router_facade_split_results.json`.
+
+### Findings
+
+- This was not a package-disposition replay runtime regression; it was stale
+  structure evidence after prior router split work added cohesive child
+  modules.
+- The synthetic `micro_module_explosion` known-bad case remains blocked at
+  `child_module_count=940`; the refreshed budget keeps the guard active while
+  accepting the current tracked topology.

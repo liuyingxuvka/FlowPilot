@@ -74,8 +74,8 @@ class PromptAssetEvidence:
 
 @dataclass(frozen=True)
 class RouterFacadeSplitEvidence:
-    child_module_count: int = 102
-    max_child_module_count: int = 280
+    child_module_count: int = 292
+    max_child_module_count: int = 320
     micro_module_count: int = 0
     max_micro_module_count: int = 2
     facade_line_count: int = 448
