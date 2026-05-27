@@ -1,0 +1,102 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=72",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "body_access_without_role_lane_failure": {
+        "detected": true,
+        "expected_failure": "scoped body access grant opened without role-lane failure",
+        "failures": [
+          "scoped body access grant opened without role-lane failure and need",
+          "body-needed recovery progressed without scoped grant and review obligation",
+          "normal Controller resumed while recovery transaction was still open"
+        ]
+      },
+      "closed_without_family_repair": {
+        "detected": true,
+        "expected_failure": "recovery progressed before blocker family repair proof was complete",
+        "failures": [
+          "recovery progressed before blocker family repair proof was complete"
+        ]
+      },
+      "closed_without_reinjection": {
+        "detected": true,
+        "expected_failure": "recovery closed before Controller core reinjection",
+        "failures": [
+          "recovery closed before Controller core reinjection",
+          "normal Controller resumed without fresh Controller core"
+        ]
+      },
+      "historical_blocker_reactivated": {
+        "detected": true,
+        "expected_failure": "historical blocker was reactivated as current",
+        "failures": [
+          "historical blocker was reactivated as current instead of used as regression evidence"
+        ]
+      },
+      "normal_controller_reads_body": {
+        "detected": true,
+        "expected_failure": "normal Controller read a sealed body",
+        "failures": [
+          "normal Controller read a sealed body"
+        ]
+      },
+      "normal_resumed_with_open_transaction": {
+        "detected": true,
+        "expected_failure": "normal Controller resumed while recovery transaction was still open",
+        "failures": [
+          "normal Controller resumed while recovery transaction was still open"
+        ]
+      },
+      "recovery_approved_gate": {
+        "detected": true,
+        "expected_failure": "Recovery Supervisor approved a route gate",
+        "failures": [
+          "Recovery Supervisor approved a route gate"
+        ]
+      },
+      "recovery_did_target_project_work": {
+        "detected": true,
+        "expected_failure": "Recovery Supervisor performed target project work",
+        "failures": [
+          "Recovery Supervisor performed target project work"
+        ]
+      },
+      "recovery_mutated_route": {
+        "detected": true,
+        "expected_failure": "Recovery Supervisor mutated route authority",
+        "failures": [
+          "Recovery Supervisor mutated route authority"
+        ]
+      },
+      "recovery_reads_unscoped_body": {
+        "detected": true,
+        "expected_failure": "Recovery Supervisor read a body without a scoped grant",
+        "failures": [
+          "Recovery Supervisor read a body without a scoped grant"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "safe_graph": {
+    "edge_count": 14,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 15,
+    "success_scenarios": [
+      "metadata_only_control_plane_repair",
+      "scoped_body_access_control_plane_repair"
+    ]
+  }
+}

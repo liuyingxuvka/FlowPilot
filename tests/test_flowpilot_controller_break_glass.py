@@ -120,6 +120,139 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
+    def test_recovery_supervisor_records_transaction_body_grant_and_reinjection(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-recovery-supervisor-"))
+        try:
+            run_root = root / ".flowpilot" / "runs" / "run-test"
+            runtime = run_root / "runtime"
+            runtime.mkdir(parents=True)
+            (root / ".flowpilot").mkdir(exist_ok=True)
+            (root / ".flowpilot" / "current.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.current.v1",
+                        "current_run_id": "run-test",
+                        "current_run_root": ".flowpilot/runs/run-test",
+                        "status": "running",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (runtime / "controller_action_ledger.json").write_text("{}", encoding="utf-8")
+            (runtime / "sealed_result_body.md").write_text("diagnostic body", encoding="utf-8")
+            proof_path = runtime / "recovery_supervisor_proof.json"
+            proof_path.write_text('{"ok": true}', encoding="utf-8")
+
+            break_glass.open_incident(
+                root,
+                run_root,
+                incident_id="incident-rs",
+                trigger_summary="Repeated control blocker prevented legal next action.",
+                failure_kind="control_blocker_loop",
+                sources=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                normal_lanes=["pm_repair", "router_next_action"],
+            )
+            opened = break_glass.open_recovery_transaction(
+                root,
+                run_root,
+                transaction_id="recovery-rs",
+                incident_id="incident-rs",
+                trigger_summary="Escalate to Recovery Supervisor.",
+                failure_kind="control_blocker_loop",
+                blocker_ids=["blocker-rs"],
+                family_ids=["family-stale-proof"],
+                normal_lanes=["pm_repair", "router_next_action"],
+                controller_generation_id="controller-gen-1",
+                flowguard_obligations=["python simulations/run_flowpilot_recovery_supervisor_checks.py"],
+            )
+            self.assertEqual(opened["transaction"]["identity_mode"], "recovery_supervisor")
+            self.assertTrue(opened["transaction"]["normal_controller_suspended"])
+
+            blocker = break_glass.record_control_plane_blocker(
+                root,
+                run_root,
+                blocker_id="blocker-rs",
+                family_id="family-stale-proof",
+                status="closed",
+                summary="Same-family stale proof blocker was repaired.",
+                sources=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                recovery_transaction_id="recovery-rs",
+            )
+            self.assertTrue(blocker["ok"])
+
+            grant = break_glass.request_body_access(
+                root,
+                run_root,
+                transaction_id="recovery-rs",
+                grant_id="grant-rs",
+                body_path=".flowpilot/runs/run-test/runtime/sealed_result_body.md",
+                reason="Metadata cannot distinguish the same-family stale-body class.",
+                unavailable_role_lanes=["project_manager", "human_reviewer"],
+            )
+            self.assertFalse(grant["grant"]["normal_controller_body_access_granted"])
+            self.assertEqual(grant["grant"]["granted_to_identity"], "recovery_supervisor")
+
+            reinjection = break_glass.record_controller_reinjection(
+                root,
+                run_root,
+                transaction_id="recovery-rs",
+                reinjection_id="reinject-rs",
+                previous_generation_id="controller-gen-1",
+                next_generation_id="controller-gen-2",
+                controller_core_path="skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+                boundary_proof_path=".flowpilot/runs/run-test/runtime/recovery_supervisor_proof.json",
+                proof_artifacts=[".flowpilot/runs/run-test/runtime/recovery_supervisor_proof.json"],
+            )
+            self.assertTrue(reinjection["reinjection"]["old_controller_generation_invalidated"])
+
+            closed = break_glass.close_recovery_transaction(
+                root,
+                run_root,
+                transaction_id="recovery-rs",
+                disposition="permanent_fix_applied",
+                same_family_evidence=[".flowpilot/runs/run-test/runtime/recovery_supervisor_proof.json"],
+            )
+            self.assertFalse(closed["transaction"]["normal_controller_suspended"])
+            self.assertEqual(closed["transaction"]["status"], "closed")
+
+            index = read_json(run_root / "controller_break_glass" / "index.json")
+            self.assertEqual(index["recovery_transactions"][0]["status"], "closed")
+            ledger = read_json(run_root / "controller_break_glass" / "control_plane_blocker_ledger.json")
+            self.assertEqual(ledger["blockers"][0]["family_id"], "family-stale-proof")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_recovery_supervisor_cannot_close_without_reinjection(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-recovery-supervisor-bad-"))
+        try:
+            run_root = root / ".flowpilot" / "runs" / "run-test"
+            (run_root / "runtime").mkdir(parents=True)
+            proof_path = run_root / "runtime" / "proof.json"
+            proof_path.write_text('{"ok": true}', encoding="utf-8")
+            break_glass.open_recovery_transaction(
+                root,
+                run_root,
+                transaction_id="recovery-no-reinject",
+                incident_id="incident-no-reinject",
+                trigger_summary="Recovery cannot resume without new Controller core.",
+                failure_kind="controller_generation_dirty",
+                blocker_ids=[],
+                family_ids=["family-controller-generation"],
+                normal_lanes=["controller_core"],
+                controller_generation_id="controller-gen-1",
+                flowguard_obligations=["python simulations/run_flowpilot_recovery_supervisor_checks.py"],
+            )
+            with self.assertRaises(SystemExit):
+                break_glass.close_recovery_transaction(
+                    root,
+                    run_root,
+                    transaction_id="recovery-no-reinject",
+                    disposition="permanent_fix_applied",
+                    same_family_evidence=[".flowpilot/runs/run-test/runtime/proof.json"],
+                )
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
 
 class FlowPilotControllerBreakGlassRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_daemon_status_standby_and_patrol_expose_reminder(self) -> None:

@@ -21,6 +21,21 @@ Use normal FlowPilot repair whenever it is available. Break-glass is an escape
 hatch for the control plane, not a shortcut around PM, Reviewer, Worker, or
 FlowGuard authority.
 
+For severe failures, break-glass has two identities:
+
+- **ordinary Controller break-glass** records the incident, diagnoses
+  Controller-visible control-plane sources, and restores a legal next action
+  when possible;
+- **Recovery Supervisor mode** is a temporary emergency identity used only
+  after ordinary Controller break-glass cannot restore the control channel. It
+  suspends normal Controller progression, opens a recovery transaction, repairs
+  same-family control-plane blockers under FlowGuard evidence, and exits by
+  forcing a fresh Controller-core reinjection.
+
+Do not silently widen ordinary Controller authority. If Recovery Supervisor
+mode is required, record the identity transition and treat the old Controller
+generation as invalid until reinjection is recorded.
+
 ## When To Use
 
 Use break-glass only when current-run evidence shows one of these control-plane
@@ -39,6 +54,12 @@ failures:
   role-output schema disagree in a way that blocks normal routing.
 - The same control-plane blocker repeats after normal retry, PM repair, or role
   reissue cannot form a valid next action.
+
+Escalate from ordinary Controller break-glass to Recovery Supervisor mode when
+the current evidence shows that the Controller role itself is no longer a safe
+normal-flow actor, a PM/role lane needed to repair the issue is unavailable or
+contradictory, or the same control-plane blocker family has repeated after
+ordinary repair.
 
 ## When Not To Use
 
@@ -86,6 +107,21 @@ Controller may:
   becomes healthy again;
 - record a FlowPilot skill improvement observation for later permanent repair.
 
+Recovery Supervisor may additionally:
+
+- open a run-scoped recovery transaction;
+- record or update the control-plane blocker family ledger;
+- classify current blockers, historical blockers, quarantined stale evidence,
+  and weak evidence separately;
+- run FlowGuard same-family repair checks before recovery closure;
+- restore or replace broken role lanes through the existing Router/host
+  recovery path;
+- request a scoped, audited body-access grant only when metadata is
+  insufficient and the PM, Reviewer, or Officer lane that should read the body
+  is unavailable or contradictory;
+- record Controller reinjection proof and invalidate the old Controller
+  generation before normal flow resumes.
+
 ## Forbidden Actions
 
 Controller must not:
@@ -99,6 +135,79 @@ Controller must not:
 - publish, deploy, push, release, handle secrets, or perform irreversible work;
 - keep using break-glass after normal Router/Controller flow can produce a legal
   next action.
+
+Recovery Supervisor must not:
+
+- count scoped body access as ordinary Controller body access;
+- approve gates, terminal completion, route mutation, PM decisions, reviewer
+  decisions, officer decisions, or worker completion;
+- use historical blockers as live current work unless a current recovery
+  transaction explicitly reopens the blocker;
+- close recovery while current blockers remain open, same-family FlowGuard proof
+  is missing, or Controller reinjection has not been recorded.
+
+## Recovery Supervisor Transaction
+
+Create a recovery transaction under:
+
+`.flowpilot/runs/<run-id>/controller_break_glass/recovery_transactions/`
+
+The transaction must record:
+
+- linked incident id;
+- trigger summary and failure kind;
+- old Controller generation id;
+- blockers and defect-family ids;
+- normal lanes checked and why they failed;
+- FlowGuard obligations and proof artifacts;
+- body-access grants, if any;
+- same-family repair evidence;
+- Controller reinjection proof.
+
+While the transaction is open, normal route progression is suspended. It is not
+a stop or cancel of the user task; it is a repair mode that must return to the
+main FlowPilot flow after proof is current.
+
+## Control-Plane Blocker Family Ledger
+
+Record current and historical blockers under:
+
+`.flowpilot/runs/<run-id>/controller_break_glass/control_plane_blocker_ledger.json`
+
+Use the ledger to separate:
+
+- current open blockers that must be repaired, superseded, or quarantined before
+  recovery closes;
+- historical blockers that become regression evidence;
+- stale or superseded artifacts that must be quarantined;
+- weak evidence that cannot prove recovery.
+
+Do not reactivate every historical blocker as live work. Historical blockers
+feed the defect-family gate so the same class is repaired and regression-tested.
+
+## Scoped Body Access Grant
+
+Ordinary Controller still cannot read sealed packet/result/report bodies. If a
+body must be read during emergency recovery, first record a Recovery Supervisor
+body-access grant under:
+
+`.flowpilot/runs/<run-id>/controller_break_glass/body_access_grants/`
+
+The grant must name the exact body path, why metadata is insufficient, which
+PM/Reviewer/Officer lanes are unavailable or contradictory, and who must review
+the access after recovery. The access is read-only diagnosis and cannot approve
+completion or route work.
+
+## Controller Reinjection
+
+Before exiting Recovery Supervisor mode, record a Controller reinjection under:
+
+`.flowpilot/runs/<run-id>/controller_break_glass/controller_reinjections/`
+
+The record must name the previous Controller generation, the next Controller
+generation, Controller core path/hash or boundary proof, and proof artifacts.
+After reinjection, the ordinary Controller body boundary and gate restrictions
+are active again.
 
 ## Incident Record
 
@@ -140,6 +249,10 @@ The patch must record:
 Exit break-glass as soon as the control channel can produce a legal normal next
 action. Return to Router daemon status and Controller action ledger processing.
 Do not mark any route gate complete from break-glass evidence alone.
+
+For Recovery Supervisor mode, exit only after the recovery transaction is
+closed, same-family FlowGuard proof is recorded, current blockers are no longer
+open, and Controller reinjection proof exists.
 
 ## Final Reporting
 

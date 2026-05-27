@@ -19436,3 +19436,57 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No peer AI work was reverted or cleaned up.
 - Generated result-file churn and unrelated parallel model-maturation/final-confidence work were left outside this task's scoped commit.
 - No GitHub push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-27 22:12 +02:00 - Recovery Supervisor Glassbreak Hardening
+
+### Summary
+
+- Task: upgrade Controller break-glass from small local patches to a Recovery Supervisor repair transaction for severe control-plane failures.
+- Route: `openspec_propose_apply + flowguard_existing_model_preflight + flowguard_development_process_flow + flowguard_model_test_alignment`.
+- Change: `introduce-recovery-supervisor-glassbreak`.
+
+### Changed Surfaces
+
+- Added OpenSpec proposal, design, task list, and spec deltas for recovery-supervisor escalation, blocker-family repair, scoped body access, and Controller reinjection.
+- Added run-scoped Recovery Supervisor records: recovery transaction, control-plane blocker family ledger, scoped body-access grant, and Controller reinjection proof.
+- Updated the Controller break-glass playbook so normal Controller still cannot read sealed bodies, while Recovery Supervisor may read scoped body text only under an audited grant.
+- Added a focused FlowGuard model for identity transition, same-family repair, scoped body access, reinjection, and forbidden authority actions.
+- Added tests for valid transaction closure and invalid closure without reinjection.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_controller_break_glass.py simulations\flowpilot_recovery_supervisor_model.py simulations\run_flowpilot_recovery_supervisor_checks.py`.
+- OK: `python simulations\run_flowpilot_recovery_supervisor_checks.py`.
+- OK: `python simulations\run_flowpilot_controller_break_glass_checks.py`.
+- OK: `python -m unittest tests.test_flowpilot_controller_break_glass -v`.
+- OK: `python -m pytest tests\test_flowpilot_controller_break_glass.py -q`.
+- OK: targeted controller-boundary foreground unittest slice passed 9 tests.
+- OK: `openspec validate introduce-recovery-supervisor-glassbreak --strict`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: background `run_meta_checks` completed with exit code 0.
+- OK: background `run_capability_checks` completed with exit code 0.
+- OK: predictive KB postflight recorded event `7b850a74-9438-4385-874c-5063491b1c9c`.
+
+### Findings
+
+- Recovery is now treated as an explicit temporary identity switch: normal Controller yields control to Recovery Supervisor, the supervisor repairs the same blocker family, then a fresh Controller core must be reinjected before normal FlowPilot resumes.
+- Body access is still closed by default. The only allowed exception is an audited, run-scoped, specific-path grant when metadata is insufficient and the role lane has failed or is unavailable.
+- Historical control-plane blockers are regression evidence, not live blockers, unless a current run reopens the same family.
+- Closure fails closed without same-family repair evidence, no current open blockers, and Controller reinjection proof.
+- The old Controller boundary repair path still passes focused foreground tests.
+
+### Background Artifacts
+
+- `tmp\flowguard_background\run_meta_checks.meta.json`: status `completed`, exit `0`, latest update `2026-05-27T22:10:00+02:00`, proof reuse mentioned in output.
+- `tmp\flowguard_background\run_capability_checks.meta.json`: status `completed`, exit `0`, latest update `2026-05-27T22:10:00+02:00`, proof reuse mentioned in output.
+- `tmp\flowguard_background\run_meta_checks.out.txt` and `tmp\flowguard_background\run_capability_checks.out.txt` both reported `ok=true` and `graph.ok=true` in the refreshed result payloads.
+
+### Skipped Or Limited
+
+- The broad `tests.router_runtime.foreground_controller` suite was not claimed as green because an earlier full-suite run timed out; the directly relevant 9-test controller-boundary slice passed.
+- No peer AI work was reverted or cleaned up.
+- Existing parallel role-recovery/router work and unrelated generated result-file churn were left outside this task scope.
+- No GitHub push, tag, release, deploy, or public publication was performed.
