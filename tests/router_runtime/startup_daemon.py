@@ -8,6 +8,27 @@ import flowpilot_router_io_locks as router_io_locks  # noqa: E402
 
 
 class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
+    def test_daemon_error_diagnostics_include_memory_context(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-daemon-error", status="controller_ready")
+        state = read_json(router.run_state_path(run_root))
+        state["pending_action"] = router.make_action(
+            action_type="load_resume_state",
+            actor="controller",
+            label="controller_loads_resume_state",
+            summary="Pending action included in daemon diagnostics.",
+        )
+        router.save_run_state(run_root, state)
+
+        diagnostics = router._router_daemon_error_diagnostics(root, run_root, state, MemoryError())  # type: ignore[attr-defined]
+
+        self.assertEqual(diagnostics["type"], "MemoryError")
+        self.assertEqual(diagnostics["current_action"]["action_type"], "load_resume_state")
+        self.assertIn("artifact_size_summary", diagnostics)
+        self.assertIn("router_state", diagnostics["artifact_size_summary"]["key_files"])
+        self.assertIn("traceback", diagnostics)
+        self.assertIn("traceback_unavailable_reason", diagnostics)
+
     def test_bootloader_action_requires_pending_router_action(self) -> None:
         root = self.make_project()
 
@@ -526,7 +547,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
 
         def finish_write() -> None:
-            time.sleep(0.05)
+            time.sleep(0.5)
             ledger = router._empty_router_scheduler_ledger(root, run_root, state)  # type: ignore[attr-defined]
             scheduler_path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             unlink_with_windows_retry(write_lock)

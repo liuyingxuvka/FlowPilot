@@ -1495,6 +1495,14 @@
             "target": "_router_daemon_fill_action_queue"
           },
           {
+            "public": "_router_daemon_artifact_size_summary",
+            "target": "_router_daemon_artifact_size_summary"
+          },
+          {
+            "public": "_router_daemon_error_diagnostics",
+            "target": "_router_daemon_error_diagnostics"
+          },
+          {
             "public": "_router_daemon_resume_recovery_summary",
             "target": "_router_daemon_resume_recovery_summary"
           },
@@ -3249,6 +3257,10 @@
           {
             "public": "_active_agent_id_for_role",
             "target": "_active_agent_id_for_role"
+          },
+          {
+            "public": "_role_slot_has_current_host_liveness",
+            "target": "_role_slot_has_current_host_liveness"
           },
           {
             "public": "_controller_wait_allowed_external_events",

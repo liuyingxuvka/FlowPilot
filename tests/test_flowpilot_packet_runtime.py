@@ -1023,6 +1023,37 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 frontier_version=1,
             )
 
+    def test_active_holder_lease_rejects_replacement_without_active_host_proof(self) -> None:
+        root = self.make_project()
+        envelope = self.relay_packet(root, self.issue_packet(root))
+        _write_json(
+            root / ".flowpilot" / "runs" / "run-test" / "crew_ledger.json",
+            {
+                "schema_version": "flowpilot.crew_ledger.v1",
+                "run_id": "run-test",
+                "role_slots": [
+                    {
+                        "role_key": "worker_a",
+                        "status": "live_agent_recovered",
+                        "agent_id": "replacement-worker-a",
+                        "host_liveness_status": "unknown",
+                        "liveness_decision": "spawned_replacement_from_current_run_memory",
+                        "last_role_recovery_result": "targeted_replacement_spawned",
+                    }
+                ],
+            },
+        )
+
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "requires active host liveness proof"):
+            packet_runtime.issue_active_holder_lease(
+                root,
+                packet_envelope=envelope,
+                holder_role="worker_a",
+                holder_agent_id="replacement-worker-a",
+                route_version=1,
+                frontier_version=1,
+            )
+
     def test_active_holder_cli_round_trip_writes_controller_notice(self) -> None:
         root = self.make_project()
         self.relay_packet(root, self.issue_packet(root))

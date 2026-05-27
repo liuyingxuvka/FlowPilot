@@ -63,6 +63,27 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_startup_support'
 
+_STALE_OR_UNKNOWN_HOST_LIVENESS = {"missing", "cancelled", "unknown", "timeout_unknown", "completed"}
+
+
+def _role_slot_has_current_host_liveness(slot: dict[str, Any]) -> bool:
+    agent_id = slot.get("agent_id")
+    if not isinstance(agent_id, str) or not agent_id.strip():
+        return False
+    status = str(slot.get("status") or "")
+    host_liveness = str(slot.get("host_liveness_status") or "")
+    liveness_decision = str(slot.get("liveness_decision") or "")
+    if host_liveness in _STALE_OR_UNKNOWN_HOST_LIVENESS:
+        return False
+    if status == "live_agent_started":
+        return host_liveness in {"", "active"}
+    if status == "live_agent_rehydrated":
+        return host_liveness == "active" and liveness_decision == "confirmed_existing_agent"
+    if status in {"live_agent_recovered", "live_agent_recycled"}:
+        return host_liveness == "active" and liveness_decision in ROLE_AGENT_LIVENESS_DECISIONS
+    return False
+
+
 def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any]) -> tuple[dict[str, Any], Path]:
     run_id = str(bootstrap_state.get("run_id") or "")
     run_root_rel = str(bootstrap_state.get("run_root") or "")
@@ -104,23 +125,7 @@ def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
     for slot in slots:
         if isinstance(slot, dict) and slot.get("role_key") == role:
             agent_id = slot.get("agent_id")
-            status = str(slot.get("status") or "")
-            live_status = status in {
-                "live_agent_started",
-                "live_agent_rehydrated",
-                "live_agent_recovered",
-                "live_agent_recycled",
-            }
-            host_liveness = str(slot.get("host_liveness_status") or "")
-            liveness_decision = str(slot.get("liveness_decision") or "")
-            stale_or_unknown = host_liveness in {"missing", "cancelled", "unknown", "timeout_unknown", "completed"}
-            replacement_proven = liveness_decision == "spawned_replacement_from_current_run_memory"
-            if (
-                isinstance(agent_id, str)
-                and agent_id.strip()
-                and live_status
-                and (not stale_or_unknown or replacement_proven or status in {"live_agent_started", "live_agent_recovered", "live_agent_recycled"})
-            ):
+            if isinstance(agent_id, str) and agent_id.strip() and _role_slot_has_current_host_liveness(slot):
                 return agent_id.strip()
     return None
 

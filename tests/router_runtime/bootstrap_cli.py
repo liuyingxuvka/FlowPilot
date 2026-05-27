@@ -198,10 +198,48 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         parsed = router.parse_args(["--root", "C:/tmp/project", "state", "--json"])
         self.assertEqual(parsed.command, "state")
         self.assertTrue(parsed.json)
+        self.assertFalse(parsed.full)
+
+        parsed = router.parse_args(["--root", "C:/tmp/project", "state", "--full", "--json"])
+        self.assertEqual(parsed.command, "state")
+        self.assertTrue(parsed.full)
 
         parsed = router.parse_args(["--root", "C:/tmp/project", "reconcile-run", "--json"])
         self.assertEqual(parsed.command, "reconcile-run")
         self.assertTrue(parsed.json)
+
+    def test_state_command_compacts_controller_ledger_by_default(self) -> None:
+        root = self.make_project()
+        run_root = self.write_minimal_run(root, "run-compact-state", status="controller_ready")
+        self.write_current_focus(root, run_root)
+        state = read_json(router.run_state_path(run_root))
+        action = router.make_action(
+            action_type="load_resume_state",
+            actor="controller",
+            label="controller_loads_resume_state",
+            summary="Large row that should not be dumped by default.",
+        )
+        router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = router.main(["--root", str(root), "state", "--json"])
+        payload = json.loads(stdout.getvalue())
+
+        self.assertEqual(exit_code, 0, payload)
+        self.assertTrue(payload["compact"])
+        self.assertIn("counts", payload["controller_action_ledger"])
+        self.assertNotIn("actions", payload["controller_action_ledger"])
+
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            exit_code = router.main(["--root", str(root), "state", "--full", "--json"])
+        full_payload = json.loads(stdout.getvalue())
+
+        self.assertEqual(exit_code, 0, full_payload)
+        self.assertFalse(full_payload["compact"])
+        self.assertIn("actions", full_payload["controller_action_ledger"])
     def test_retired_high_risk_fold_commands_are_not_cli_commands(self) -> None:
         for command in (
             "deliver-card-bundle-checked",

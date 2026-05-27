@@ -458,6 +458,61 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
         blocker_record = read_json(self.control_blocker_path(root, blocker))
         self.assertEqual(blocker_record["resolution_status"], "resolved_by_controller_action_reconciliation")
+
+    def test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        first_report = self.recover_worker_a_after_liveness_fault(root)
+        self.assertTrue(first_report["all_six_roles_ready"])
+        first_transaction_id = first_report["transaction_id"]
+
+        result = router.record_external_event(
+            root,
+            "controller_reports_role_liveness_fault",
+            {
+                "role_key": "project_manager",
+                "host_liveness_status": "missing",
+                "detected_by": "controller",
+            },
+        )
+        self.assertTrue(result["role_recovery_requested"])
+        self.assertNotEqual(result["role_recovery_transaction"]["transaction_id"], first_transaction_id)
+
+        state = read_json(router.run_state_path(run_root))
+        reclaim = router._reclaim_role_recovery_postcondition_from_report(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test_new_transaction_must_not_reclaim_old_report",
+        )
+
+        self.assertFalse(reclaim["applied"])
+        self.assertEqual(reclaim["reason"], "role_recovery_report_not_ready")
+
+        action = self.next_after_display_sync(root)
+        self.assertEqual(action["action_type"], "load_role_recovery_state")
+        self.assertEqual(action["role_recovery_transaction"]["target_role_keys"], ["project_manager"])
+
+    def test_active_agent_lookup_rejects_unknown_recovered_liveness(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+
+        crew = read_json(run_root / "crew_ledger.json")
+        pm_slot = next(slot for slot in crew["role_slots"] if slot["role_key"] == "project_manager")
+        pm_slot.update(
+            {
+                "status": "live_agent_recovered",
+                "agent_id": "recovered-pm-unknown",
+                "host_liveness_status": "unknown",
+                "liveness_decision": "spawned_replacement_from_current_run_memory",
+            }
+        )
+        router.write_json(run_root / "crew_ledger.json", crew)
+
+        self.assertIsNone(router._active_agent_id_for_role(run_root, "project_manager"))  # type: ignore[attr-defined]
     def test_load_resume_state_does_not_downgrade_existing_role_recovery_report(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

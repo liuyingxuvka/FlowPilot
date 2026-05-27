@@ -53,14 +53,21 @@ def _active_holder_liveness_evidence(
         status = str(slot.get("status") or "")
         if status not in LIVE_CREW_SLOT_STATUSES:
             raise PacketRuntimeError(f"active-holder lease requires live host liveness proof for {holder_role}")
-        if status == "live_agent_rehydrated":
-            liveness_status = str(slot.get("host_liveness_status") or "")
-            liveness_decision = str(slot.get("liveness_decision") or "")
-            if not (
-                liveness_status == "active"
-                or liveness_decision == "spawned_replacement_from_current_run_memory"
-            ):
-                raise PacketRuntimeError(f"active-holder lease requires active or replaced host liveness for {holder_role}")
+        liveness_status = str(slot.get("host_liveness_status") or "")
+        liveness_decision = str(slot.get("liveness_decision") or "")
+        if liveness_status in {"missing", "cancelled", "unknown", "timeout_unknown", "completed"}:
+            raise PacketRuntimeError(f"active-holder lease requires active host liveness proof for {holder_role}")
+        if status == "live_agent_started":
+            host_liveness_proven = liveness_status in {"", "active"}
+        elif status == "live_agent_rehydrated":
+            host_liveness_proven = liveness_status == "active" and liveness_decision == "confirmed_existing_agent"
+        else:
+            host_liveness_proven = liveness_status == "active" and liveness_decision in {
+                "confirmed_existing_agent",
+                "spawned_replacement_from_current_run_memory",
+            }
+        if not host_liveness_proven:
+            raise PacketRuntimeError(f"active-holder lease requires active host liveness proof for {holder_role}")
         return {
             "schema_version": "flowpilot.active_holder_liveness_evidence.v1",
             "source": "crew_ledger",
@@ -75,7 +82,7 @@ def _active_holder_liveness_evidence(
             "recovery_result": slot.get("last_role_recovery_result") or slot.get("recovery_result"),
             "crew_generation": slot.get("crew_generation"),
             "role_binding_epoch": slot.get("role_binding_epoch"),
-            "host_liveness_proven": True,
+            "host_liveness_proven": host_liveness_proven,
         }
     raise PacketRuntimeError(f"active-holder lease requires current live role slot for {holder_role}")
 from packet_runtime_schema import (

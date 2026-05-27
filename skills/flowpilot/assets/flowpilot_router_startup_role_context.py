@@ -222,9 +222,18 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
     _bind_router(router)
     report_path = router._role_recovery_report_path(run_root)
     report = read_json_if_exists(report_path)
+    transaction = router._latest_role_recovery_transaction(run_root)
     if report.get('schema_version') != ROLE_RECOVERY_REPORT_SCHEMA:
         return None
+    if transaction.get('schema_version') != ROLE_RECOVERY_TRANSACTION_SCHEMA:
+        return None
     if str(report.get('run_id') or '') != str(run_state.get('run_id') or ''):
+        return None
+    if str(report.get('transaction_id') or '') != str(transaction.get('transaction_id') or ''):
+        return None
+    report_targets = [str(role) for role in report.get('target_role_keys') or []]
+    transaction_targets = [str(role) for role in transaction.get('target_role_keys') or []]
+    if report_targets != transaction_targets:
         return None
     if report.get('all_six_roles_ready') is not True or report.get('environment_blocked') is True:
         return None
@@ -237,12 +246,14 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
             continue
         role = str(slot.get('role_key') or '')
         agent_id = slot.get('agent_id')
-        if role in CREW_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip():
+        if role in transaction_targets and str(slot.get('last_role_recovery_transaction_id') or '') != str(transaction.get('transaction_id') or ''):
+            continue
+        if role in CREW_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_host_liveness(slot):
             ready_agents[role] = agent_id.strip()
     missing_roles = [role for role in CREW_ROLE_KEYS if role not in ready_agents]
     if missing_roles:
         return None
-    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'crew_path': crew_path, 'crew_relpath': project_relative(project_root, crew_path), 'ready_role_keys': list(CREW_ROLE_KEYS), 'ready_agents': ready_agents}
+    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'crew_path': crew_path, 'crew_relpath': project_relative(project_root, crew_path), 'ready_role_keys': list(CREW_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
 
 __all__ = (
     '_role_spawn_action_extra',

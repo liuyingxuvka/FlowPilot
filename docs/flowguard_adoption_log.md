@@ -19490,3 +19490,54 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - No peer AI work was reverted or cleaned up.
 - Existing parallel role-recovery/router work and unrelated generated result-file churn were left outside this task scope.
 - No GitHub push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-27 22:21 +02:00 - Role Recovery Liveness Proof Hardening
+
+### Summary
+
+- Task: harden FlowPilot role recovery so stale recovery reports, replacement intent, or unknown host liveness cannot be reclaimed as a live six-role crew.
+- Route: `openspec_apply + flowguard_existing_model_preflight + flowguard_development_process_flow + flowguard_model_test_alignment`.
+- Change: `harden-role-recovery-liveness-proofs`.
+
+### Changed Surfaces
+
+- Added OpenSpec proposal, design, task list, and spec deltas for role recovery liveness proof, daemon diagnostics, resume obligation replay, and persistent daemon compatibility.
+- Added a focused FlowGuard model and unittest coverage for stale report reclaim, unknown liveness, replacement-intent-only success, and daemon fatal diagnostics.
+- Made role recovery ready-context validation require the latest transaction id, target role set, crew slot transaction marker, and active host proof.
+- Made active role lookup and active-holder leases reject missing, unknown, cancelled, completed, and timeout host liveness even when an agent id or replacement decision is present.
+- Added bounded daemon fatal diagnostics and compact default CLI state output, with `state --full` preserving full payload inspection.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned schema `1.0`.
+- OK: `openspec validate harden-role-recovery-liveness-proofs --strict`.
+- OK: `python -m py_compile` for the changed runtime and new model/check files.
+- OK: `python simulations\run_flowpilot_role_recovery_liveness_checks.py --json`.
+- OK: `python -m unittest tests.test_flowpilot_role_recovery_liveness_model`.
+- OK: targeted router/runtime tests covering stale role recovery report reclaim, unknown recovered liveness, active-holder lease proof, compact state output, and daemon error diagnostics.
+- OK: adjacent resume/packet regression slices covering mid-run liveness faults, blocked recovery report reclaim, resume rehydration, and active holder lease continuity.
+- OK: daemon child model checks for liveness, startup lock, wait liveness, Controller actions, terminal projection, microstep lifecycle, and reconciliation with live projection skipped.
+- OK: background `run_meta_checks` completed with exit code 0 and valid proof reuse mentioned in the output.
+- OK: background `run_capability_checks` completed with exit code 0 and valid proof reuse mentioned in the output.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`, `python scripts\audit_local_install_sync.py --json`, `python scripts\install_flowpilot.py --check --json`, and `python scripts\check_install.py --json`.
+
+### Findings
+
+- The old failure class was a proof-boundary bug: replacement intent or an old successful report could be interpreted as present-tense role liveness.
+- Role recovery readiness now fails closed unless current transaction, current role set, current crew slot marker, memory/context proof, and active host liveness are all present together.
+- Packet active-holder leases now use the same present-tense host proof boundary, so a stale or unknown replacement cannot hold packet authority.
+- Routine `state --json` output no longer dumps large ledgers by default, reducing Controller-plane friction during status checks.
+- Daemon fatal status now includes bounded diagnostics that point to action/wait identity and runtime artifact sizes, instead of only reporting an exception name.
+
+### Background Artifacts
+
+- `tmp\flowguard_background\run_meta_checks.meta.json`: status `completed`, exit artifact `0`, latest update `2026-05-27T22:10:00+02:00`, proof reuse mentioned in output.
+- `tmp\flowguard_background\run_capability_checks.meta.json`: status `completed`, exit artifact `0`, latest update `2026-05-27T22:10:00+02:00`, proof reuse mentioned in output.
+- `tmp\flowguard_background\run_persistent_router_daemon_scan.meta.json`: status `completed`, exit `0`, latest update `2026-05-27T22:22:00+02:00`, proof reuse `false`.
+
+### Skipped Or Limited
+
+- `python simulations\run_flowpilot_daemon_reconciliation_checks.py` without `--skip-live-projection` reported the stopped active run `run-20260527-173225` as not continuable; the abstract model rerun with `--skip-live-projection` passed and the stopped live-run state was not treated as a code regression.
+- The long persistent daemon compatibility scan completed after the focused daemon child checks; its exit artifact was inspected before final close-out.
+- No peer AI work was reverted or cleaned up.
+- No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.

@@ -137,6 +137,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     reconcile_parser = sub.add_parser("reconcile-run", help="Rebuild derived indexes and live-run views for the current run")
     reconcile_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     state_parser = sub.add_parser("state", help="Print bootstrap and current run router state")
+    state_parser.add_argument("--full", action="store_true", help="Include full run, daemon, and controller ledger payloads")
     state_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     return parser.parse_args(argv)
 
@@ -231,21 +232,74 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "reconcile-run":
             result = reconcile_current_run(root)
         elif args.command == "state":
+            def _compact_action(action: dict[str, Any] | None) -> dict[str, Any] | None:
+                if not isinstance(action, dict):
+                    return None
+                return {
+                    "action_type": action.get("action_type"),
+                    "label": action.get("label"),
+                    "controller_action_id": action.get("controller_action_id"),
+                    "router_scheduler_row_id": action.get("router_scheduler_row_id"),
+                    "waiting_for_role": action.get("waiting_for_role") or action.get("to_role") or action.get("target_role"),
+                }
+
+            def _compact_run_state(run_state: dict[str, Any] | None) -> dict[str, Any] | None:
+                if not isinstance(run_state, dict):
+                    return None
+                flags = run_state.get("flags") if isinstance(run_state.get("flags"), dict) else {}
+                true_flags = sorted(str(key) for key, value in flags.items() if value is True)
+                return {
+                    "schema_version": run_state.get("schema_version"),
+                    "run_id": run_state.get("run_id"),
+                    "status": run_state.get("status"),
+                    "phase": run_state.get("phase"),
+                    "daemon_mode_enabled": bool(run_state.get("daemon_mode_enabled")),
+                    "pending_action": _compact_action(run_state.get("pending_action") if isinstance(run_state.get("pending_action"), dict) else None),
+                    "active_control_blocker_id": (run_state.get("active_control_blocker") or {}).get("blocker_id") if isinstance(run_state.get("active_control_blocker"), dict) else None,
+                    "true_flags": true_flags,
+                    "flag_count": len(flags),
+                }
+
+            def _compact_daemon_status(status: dict[str, Any]) -> dict[str, Any]:
+                if not isinstance(status, dict):
+                    return {}
+                return {
+                    "schema_version": status.get("schema_version"),
+                    "run_id": status.get("run_id"),
+                    "lifecycle_status": status.get("lifecycle_status"),
+                    "run_lifecycle_status": status.get("run_lifecycle_status"),
+                    "daemon_live": status.get("daemon_live"),
+                    "last_tick_at": status.get("last_tick_at"),
+                    "lock": status.get("lock"),
+                    "heartbeat": status.get("heartbeat"),
+                    "current_work": status.get("current_work"),
+                    "current_wait": status.get("current_wait"),
+                    "current_action": status.get("current_action"),
+                    "controller_action_ledger": status.get("controller_action_ledger"),
+                    "router_scheduler_ledger": status.get("router_scheduler_ledger"),
+                    "error": status.get("error"),
+                    "recovery_hints": status.get("recovery_hints") or [],
+                }
+
             def _state_command() -> dict[str, Any]:
                 bootstrap = load_bootstrap_state(root, create_if_missing=False)
                 run_state, run_root = load_run_state(root, bootstrap)
+                full_output = bool(getattr(args, "full", False))
                 active_ui_task_catalog = (
                     _active_ui_task_catalog(root, run_root, run_state)
                     if run_state is not None and run_root is not None
                     else {"schema_version": "flowpilot.active_ui_task_catalog.v1", "active_tasks": []}
                 )
+                daemon_status = read_json_if_exists(_router_daemon_status_path(run_root)) if run_root else {}
+                controller_ledger = read_json_if_exists(_controller_action_ledger_path(run_root)) if run_root else {}
                 return {
                     "bootstrap": bootstrap,
                     "run_root": str(run_root) if run_root else None,
-                    "run_state": run_state,
+                    "run_state": run_state if full_output else _compact_run_state(run_state),
                     "active_ui_task_catalog": active_ui_task_catalog,
-                    "router_daemon_status": read_json_if_exists(_router_daemon_status_path(run_root)) if run_root else {},
-                    "controller_action_ledger": read_json_if_exists(_controller_action_ledger_path(run_root)) if run_root else {},
+                    "router_daemon_status": daemon_status if full_output else _compact_daemon_status(daemon_status),
+                    "controller_action_ledger": controller_ledger if full_output else _controller_action_ledger_summary(run_root) if run_root else {},
+                    "compact": not full_output,
                 }
 
             result = _run_foreground_with_runtime_writer_settlement(_state_command, command_name=args.command)

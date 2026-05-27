@@ -1403,6 +1403,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                     "restore_result": "failed",
                     "targeted_replacement_attempted": True,
                     "targeted_replacement_result": "success",
+                    "host_liveness_status": "active",
+                    "liveness_decision": "spawned_replacement_from_current_run_memory",
                     "slot_reconciliation_attempted": False,
                     "full_crew_recycle_attempted": False,
                     "rehydrated_for_run_id": transaction["run_id"],

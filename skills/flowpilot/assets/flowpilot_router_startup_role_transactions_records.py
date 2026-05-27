@@ -115,6 +115,14 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
             agent_id = raw.get('agent_id')
             if not isinstance(agent_id, str) or not agent_id.strip():
                 raise RouterError(f'{role} requires a recovered live agent_id')
+            host_liveness_status = str(raw.get('host_liveness_status') or '')
+            if host_liveness_status not in ROLE_AGENT_HOST_LIVENESS_STATUSES:
+                raise RouterError(f'{role} requires host_liveness_status')
+            if host_liveness_status != 'active':
+                raise RouterError(f'{role} recovered agent requires active host liveness')
+            liveness_decision = str(raw.get('liveness_decision') or '')
+            if liveness_decision not in ROLE_AGENT_LIVENESS_DECISIONS:
+                raise RouterError(f'{role} requires liveness_decision')
             if raw.get('model_policy') != BACKGROUND_ROLE_MODEL_POLICY:
                 raise RouterError(f'{role} requires model_policy={BACKGROUND_ROLE_MODEL_POLICY}')
             if raw.get('reasoning_effort_policy') != BACKGROUND_ROLE_REASONING_EFFORT_POLICY:
@@ -130,19 +138,27 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
         else:
             environment_blocked = True
             agent_id = None
+            host_liveness_status = None
+            liveness_decision = None
         if result == ROLE_AGENT_OLD_RESTORE_RESULT:
             if not restore_attempted or restore_result != 'success':
                 raise RouterError(f'{role} old-agent restore result requires restore_attempted=true and restore_result=success')
+            if liveness_decision != 'confirmed_existing_agent':
+                raise RouterError(f'{role} old-agent restore requires confirmed_existing_agent liveness decision')
         elif result == ROLE_AGENT_TARGETED_REPLACEMENT_RESULT:
             if not restore_attempted or restore_result != 'failed':
                 raise RouterError(f'{role} targeted replacement requires failed restore first')
             if not targeted_attempted or targeted_result != 'success':
                 raise RouterError(f'{role} targeted replacement requires targeted_replacement_attempted=true and targeted_replacement_result=success')
+            if liveness_decision != 'spawned_replacement_from_current_run_memory':
+                raise RouterError(f'{role} targeted replacement requires spawned_replacement_from_current_run_memory liveness decision')
         elif result == ROLE_AGENT_FULL_CREW_RECYCLE_RESULT:
             if requested_scope == 'targeted' and (not (restore_attempted and restore_result == 'failed' and targeted_attempted and (targeted_result in {'failed', 'capacity_full'}) and slot_reconciliation_attempted)):
                 raise RouterError(f'{role} full crew recycle requires targeted restore/replacement/slot reconciliation escalation')
             if not full_recycle_attempted or full_recycle_result != 'success':
                 raise RouterError(f'{role} full crew recycle requires full_crew_recycle_attempted=true and full_crew_recycle_result=success')
+            if liveness_decision != 'spawned_replacement_from_current_run_memory':
+                raise RouterError(f'{role} full crew recycle requires spawned_replacement_from_current_run_memory liveness decision')
         elif result == ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT:
             if not full_recycle_attempted or full_recycle_result != 'failed':
                 raise RouterError(f'{role} environment_blocked requires failed full crew recycle')
@@ -167,7 +183,7 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
                 raise RouterError(f'{role} replacement must be seeded from common current-run context')
         old_slot = existing_by_role.get(role) or {}
         old_agent_id = raw.get('old_agent_id') or old_slot.get('agent_id')
-        records_by_role[role] = {'role_key': role, 'old_agent_id': old_agent_id, 'agent_id': agent_id, 'model_policy': BACKGROUND_ROLE_MODEL_POLICY if agent_id else None, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY if agent_id else None, 'recovery_result': result, 'restore_attempted': restore_attempted, 'restore_result': restore_result, 'targeted_replacement_attempted': targeted_attempted, 'targeted_replacement_result': targeted_result, 'old_close_failed': old_close_failed, 'spawn_capacity_full': spawn_capacity_full, 'slot_reconciliation_attempted': slot_reconciliation_attempted, 'full_crew_recycle_attempted': full_recycle_attempted, 'full_crew_recycle_result': full_recycle_result, 'rehydrated_for_run_id': run_state['run_id'], 'memory_context_injected': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'packet_ownership_reconciled': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'role_binding_epoch_advanced': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'superseded_agent_output_quarantined': bool(raw.get('superseded_agent_output_quarantined')), 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status == 'available', 'replacement_seeded_from_common_run_context': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status != 'available', 'recorded_at': utc_now()}
+        records_by_role[role] = {'role_key': role, 'old_agent_id': old_agent_id, 'agent_id': agent_id, 'model_policy': BACKGROUND_ROLE_MODEL_POLICY if agent_id else None, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY if agent_id else None, 'recovery_result': result, 'restore_attempted': restore_attempted, 'restore_result': restore_result, 'targeted_replacement_attempted': targeted_attempted, 'targeted_replacement_result': targeted_result, 'old_close_failed': old_close_failed, 'spawn_capacity_full': spawn_capacity_full, 'slot_reconciliation_attempted': slot_reconciliation_attempted, 'full_crew_recycle_attempted': full_recycle_attempted, 'full_crew_recycle_result': full_recycle_result, 'host_liveness_status': host_liveness_status, 'liveness_decision': liveness_decision, 'host_liveness_verified': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and host_liveness_status == 'active', 'rehydrated_for_run_id': run_state['run_id'], 'memory_context_injected': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'packet_ownership_reconciled': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'role_binding_epoch_advanced': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT, 'superseded_agent_output_quarantined': bool(raw.get('superseded_agent_output_quarantined')), 'role_memory_status': memory_status, 'memory_packet_path': context['memory_packet_path'], 'memory_packet_hash': context['memory_packet_hash'], 'core_prompt_path': context['core_prompt_path'], 'core_prompt_hash': context['core_prompt_hash'], 'memory_seeded_from_current_run': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status == 'available', 'replacement_seeded_from_common_run_context': result != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT and memory_status != 'available', 'recorded_at': utc_now()}
     missing = [role for role in expected_roles if role not in records_by_role]
     if missing:
         raise RouterError(f"missing role recovery records: {', '.join(missing)}")
