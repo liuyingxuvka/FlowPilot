@@ -1,5 +1,530 @@
 {
-  "coverage_boundary": "Rows prove that historically recurring FlowPilot control-plane failures are represented as parent gates over child fake-AI, historical replay, runtime, install-sync, current-transcript, and background-evidence checks. They do not prove arbitrary live AI semantic quality or unbounded production stress.",
+  "coverage_boundary": "Rows prove that historically recurring FlowPilot control-plane failures are represented as parent gates over child fake-AI, historical replay, runtime, install-sync, current-transcript, and background-evidence checks. Each row is also promoted to a FlowGuard defect-family gate consumed by the final risk ledger. They do not prove arbitrary live AI semantic quality or unbounded production stress.",
+  "defect_family_gate_ok": true,
+  "defect_family_gate_report": {
+    "defect_family_ids": [
+      "defect_family:worker_self_check_failure",
+      "defect_family:pm_repair_atomicity",
+      "defect_family:packet_reissue_continuation",
+      "defect_family:status_projection_stale",
+      "defect_family:ack_false_blocker",
+      "defect_family:controlled_stop_reconciliation"
+    ],
+    "gate_plan": {
+      "gate_count": 6,
+      "plan_id": "flowpilot_known_friction_defect_families",
+      "proof_evidence_count": 6
+    },
+    "gate_report": {
+      "blocked_gate_ids": [],
+      "confidence": "full",
+      "decision": "defect_family_gate_full_confidence",
+      "findings": [],
+      "ok": true,
+      "passed_gate_ids": [
+        "defect_family:worker_self_check_failure",
+        "defect_family:pm_repair_atomicity",
+        "defect_family:packet_reissue_continuation",
+        "defect_family:status_projection_stale",
+        "defect_family:ack_false_blocker",
+        "defect_family:controlled_stop_reconciliation"
+      ],
+      "plan_id": "flowpilot_known_friction_defect_families",
+      "scoped_gate_ids": [],
+      "summary": "OK: plan=flowpilot_known_friction_defect_families decision=defect_family_gate_full_confidence findings=0"
+    },
+    "ok": true,
+    "risk_ledger_plan": {
+      "ledger_id": "flowpilot_known_friction_risk_ledger",
+      "proof_evidence_count": 6,
+      "row_count": 6
+    },
+    "risk_ledger_report": {
+      "confidence": "full",
+      "decision": "risk_evidence_full_confidence",
+      "findings": [],
+      "ledger_id": "flowpilot_known_friction_risk_ledger",
+      "ok": true,
+      "summary": "OK: ledger=flowpilot_known_friction_risk_ledger decision=risk_evidence_full_confidence findings=0"
+    }
+  },
+  "defect_family_known_bad_cases": [
+    {
+      "expected_codes": [
+        "defect_family_not_promoted",
+        "recurring_miss_not_promoted"
+      ],
+      "name": "missing_family_promotion",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "recurring_miss_not_promoted",
+          "findings": [
+            {
+              "code": "recurring_miss_not_promoted",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "recurring or high-risk same-class model miss has not been promoted to a defect-family gate",
+              "metadata": {
+                "high_risk": true,
+                "recurrence_count": 2
+              },
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=recurring_miss_not_promoted findings=1"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=2"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "defect_family_not_promoted",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "recurring known-friction rows must be explicitly promoted to a defect-family gate"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invalid_evidence_status"
+      ],
+      "name": "progress_only_defect_family_proof",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "defect_family_proof_not_passing",
+          "findings": [
+            {
+              "code": "defect_family_proof_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family proof evidence status is progress_only",
+              "metadata": {},
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_defect_family_proof",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family gate has no current passing proof evidence",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_not_passing findings=2"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "proof_evidence_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof evidence status is progress_only",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_passing_proof",
+              "evidence_id": "",
+              "message": "required risk has no current passing proof evidence",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=4"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "invalid_evidence_status",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "known-friction evidence must be passed before parent confidence can pass"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence"
+      ],
+      "name": "stale_defect_family_proof",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "stale_defect_family_proof",
+          "findings": [
+            {
+              "code": "stale_defect_family_proof",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family proof evidence is stale or its route evidence is stale",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_defect_family_proof",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family gate has no current passing proof evidence",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=stale_defect_family_proof findings=2"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "stale_proof_evidence",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof evidence is stale or its route evidence is stale",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_passing_proof",
+              "evidence_id": "",
+              "message": "required risk has no current passing proof evidence",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=4"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "stale_evidence",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "known-friction evidence must be current"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "defect_family_proof_internal_path_only"
+      ],
+      "name": "internal_only_defect_family_proof",
+      "report": {
+        "blocked_gate_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "confidence": "blocked",
+        "decision": "defect_family_proof_internal_path_only",
+        "findings": [
+          {
+            "code": "defect_family_proof_internal_path_only",
+            "evidence_id": "",
+            "gate_id": "defect_family:worker_self_check_failure",
+            "message": "passing defect-family proof does not exercise the external authority boundary",
+            "metadata": {},
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "passed_gate_ids": [],
+        "plan_id": "flowpilot_known_friction_defect_families",
+        "scoped_gate_ids": [],
+        "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_internal_path_only findings=1"
+      },
+      "row_findings": []
+    }
+  ],
   "findings": [],
   "known_bad_cases": [
     {
@@ -13,6 +538,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -51,6 +582,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "progress_only",
@@ -89,6 +626,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": false,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -127,6 +670,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -165,6 +714,12 @@
           "child_evidence_ids": [
             "hard_gate_red_team_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -203,6 +758,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -241,6 +802,12 @@
           "child_evidence_ids": [
             "historical_live_run_replay_matrix"
           ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
           "evidence_current": true,
           "evidence_role": "primary_known_friction_gate",
           "evidence_status": "passed",
@@ -297,6 +864,12 @@
         "hard_gate_red_team_matrix",
         "pm_package_disposition_semantics"
       ],
+      "defect_family_authority_boundary": "role_output_runtime + packet_runtime + material_scan PM disposition writer",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:worker_self_check_failure",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
@@ -332,6 +905,12 @@
         "e2e_synthetic_chaos_matrix",
         "real_router_dry_run_rehearsal_matrix"
       ],
+      "defect_family_authority_boundary": "control_blocker PM repair decision handler + persistent router daemon status projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:pm_repair_atomicity",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
@@ -365,6 +944,12 @@
         "real_router_dry_run_rehearsal_matrix",
         "historical_live_run_replay_matrix"
       ],
+      "defect_family_authority_boundary": "material packet generation registry + Router next-action projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:packet_reissue_continuation",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
@@ -396,6 +981,12 @@
         "historical_live_run_replay_matrix",
         "control_plane_failure_canary_matrix"
       ],
+      "defect_family_authority_boundary": "current status summary + route frontier display projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": false,
+      "defect_family_id": "defect_family:status_projection_stale",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
@@ -427,6 +1018,12 @@
         "packet/card/ack",
         "historical_live_run_replay_matrix"
       ],
+      "defect_family_authority_boundary": "card ACK return ledger + Router ACK/return preconsumption",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:ack_false_blocker",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
@@ -459,6 +1056,12 @@
         "shadow_launcher_chaos_matrix",
         "historical_live_run_replay_matrix"
       ],
+      "defect_family_authority_boundary": "lifecycle stop request + daemon status + current pointer reconciliation",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": false,
+      "defect_family_id": "defect_family:controlled_stop_reconciliation",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",

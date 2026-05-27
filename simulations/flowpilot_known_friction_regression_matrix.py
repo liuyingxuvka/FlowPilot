@@ -14,6 +14,26 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Sequence
 
+from flowguard import (
+    DEFECT_CASE_ROLE_HISTORICAL_HOLDOUT,
+    DEFECT_CASE_ROLE_OBSERVED_FAILURE,
+    DEFECT_CASE_ROLE_SAME_CLASS_GENERALIZED,
+    DEFECT_FAMILY_DECISION_FULL,
+    DEFECT_FAMILY_DECISION_SCOPED,
+    RISK_CONFIDENCE_BLOCKED,
+    RISK_CONFIDENCE_FULL,
+    RISK_CONFIDENCE_SCOPED,
+    DefectFamilyCase,
+    DefectFamilyEvidence,
+    DefectFamilyGate,
+    DefectFamilyGatePlan,
+    RiskEvidenceLedgerPlan,
+    RiskEvidenceProof,
+    RiskEvidenceRow,
+    review_defect_family_gates,
+    review_risk_evidence_ledger,
+)
+
 
 PASS_STATUSES = {"passed"}
 PRIMARY_ROLE = "primary_known_friction_gate"
@@ -47,6 +67,12 @@ REQUIRED_GLOBAL_GATES = {
 
 REQUIRED_ROW_FIELDS = (
     "friction_id",
+    "defect_family_id",
+    "defect_family_recurrence_count",
+    "defect_family_high_risk",
+    "defect_family_authority_boundary",
+    "defect_family_gate_required",
+    "defect_family_promoted",
     "priority",
     "source_class",
     "historical_bad_case",
@@ -267,7 +293,33 @@ KNOWN_FRICTION_ROWS: tuple[dict[str, Any], ...] = (
 
 
 def build_rows() -> list[dict[str, Any]]:
-    return [dict(row) for row in KNOWN_FRICTION_ROWS]
+    return [_row_with_defect_family(row) for row in KNOWN_FRICTION_ROWS]
+
+
+def _defect_family_id(friction_id: str) -> str:
+    return "defect_family:" + friction_id.replace("known_friction.", "")
+
+
+def _proof_evidence_id(defect_family_id: str) -> str:
+    return "proof:" + defect_family_id
+
+
+def _row_with_defect_family(row: dict[str, Any]) -> dict[str, Any]:
+    friction_id = str(row["friction_id"])
+    priority = str(row["priority"])
+    defect_family_id = _defect_family_id(friction_id)
+    enriched = dict(row)
+    enriched.update(
+        {
+            "defect_family_id": defect_family_id,
+            "defect_family_recurrence_count": 2,
+            "defect_family_high_risk": priority == "P0",
+            "defect_family_authority_boundary": str(row["runtime_surface"]),
+            "defect_family_gate_required": True,
+            "defect_family_promoted": True,
+        }
+    )
+    return enriched
 
 
 def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -331,6 +383,30 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                     "code": "wrong_evidence_role",
                     "friction_id": friction_id,
                     "message": "known-friction rows must use primary parent-gate evidence role",
+                }
+            )
+        if row.get("defect_family_gate_required") is not True:
+            findings.append(
+                {
+                    "code": "missing_defect_family_gate_requirement",
+                    "friction_id": friction_id,
+                    "message": "recurring known-friction rows must require a defect-family gate",
+                }
+            )
+        if row.get("defect_family_promoted") is not True:
+            findings.append(
+                {
+                    "code": "defect_family_not_promoted",
+                    "friction_id": friction_id,
+                    "message": "recurring known-friction rows must be explicitly promoted to a defect-family gate",
+                }
+            )
+        if int(row.get("defect_family_recurrence_count") or 0) < 2 and row.get("defect_family_high_risk") is not True:
+            findings.append(
+                {
+                    "code": "defect_family_not_promoted_from_recurring_or_high_risk",
+                    "friction_id": friction_id,
+                    "message": "known-friction rows must be promoted as recurring or high-risk families",
                 }
             )
         if row.get("live_ai_semantic_quality_proven") is not False:
@@ -418,9 +494,236 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return findings
 
 
+def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) -> DefectFamilyGatePlan:
+    """Build the upgraded FlowGuard recurring defect-family gate plan."""
+
+    rows = list(rows) if rows is not None else build_rows()
+    gates: list[DefectFamilyGate] = []
+    proof_evidence: list[DefectFamilyEvidence] = []
+    for row in rows:
+        defect_family_id = str(row.get("defect_family_id") or _defect_family_id(str(row.get("friction_id") or "")))
+        observed_id = f"{defect_family_id}:observed"
+        same_class_id = f"{defect_family_id}:same_class"
+        holdout_id = f"{defect_family_id}:holdout"
+        proof_id = _proof_evidence_id(defect_family_id)
+        proof_evidence.append(
+            DefectFamilyEvidence(
+                proof_id,
+                result_status=str(row.get("evidence_status") or "not_run"),
+                current=row.get("evidence_current") is True,
+                assertion_scope="external_contract",
+                producer_route="known_friction_regression_matrix",
+                command=f"{row.get('model_check')}; {row.get('runtime_test')}",
+                summary=str(row.get("full_confidence_boundary") or ""),
+                metadata={
+                    "friction_id": str(row.get("friction_id") or ""),
+                    "child_evidence_ids": list(row.get("child_evidence_ids") or ()),
+                    "global_gates": list(row.get("global_gates") or ()),
+                },
+            )
+        )
+        gates.append(
+            DefectFamilyGate(
+                gate_id=defect_family_id,
+                family_name=str(row.get("source_class") or ""),
+                description=str(row.get("expected_safe_behavior") or ""),
+                recurrence_count=int(row.get("defect_family_recurrence_count") or 1),
+                high_risk=row.get("defect_family_high_risk") is True,
+                required=row.get("defect_family_gate_required") is True,
+                promoted=row.get("defect_family_promoted") is True,
+                model_obligation_id=str(row.get("model_obligation") or ""),
+                authority_boundary=str(row.get("defect_family_authority_boundary") or row.get("runtime_surface") or ""),
+                cases=(
+                    DefectFamilyCase(
+                        observed_id,
+                        DEFECT_CASE_ROLE_OBSERVED_FAILURE,
+                        description=str(row.get("historical_bad_case") or ""),
+                        source=str(row.get("replay_fixture") or ""),
+                    ),
+                    DefectFamilyCase(
+                        same_class_id,
+                        DEFECT_CASE_ROLE_SAME_CLASS_GENERALIZED,
+                        description=str(row.get("expected_safe_behavior") or ""),
+                        source=str(row.get("source_class") or ""),
+                    ),
+                    DefectFamilyCase(
+                        holdout_id,
+                        DEFECT_CASE_ROLE_HISTORICAL_HOLDOUT,
+                        description=str(row.get("trigger_state") or ""),
+                        source=str(row.get("runtime_test") or ""),
+                    ),
+                ),
+                observed_failure_case_id=observed_id,
+                same_class_generalized_case_id=same_class_id,
+                historical_holdout_case_id=holdout_id,
+                proof_evidence_ids=(proof_id,),
+                metadata={"friction_id": str(row.get("friction_id") or "")},
+            )
+        )
+    return DefectFamilyGatePlan(
+        "flowpilot_known_friction_defect_families",
+        gates=tuple(gates),
+        proof_evidence=tuple(proof_evidence),
+        allow_scoped_confidence=True,
+    )
+
+
+def build_defect_family_risk_ledger_plan(rows: Sequence[dict[str, Any]] | None = None) -> RiskEvidenceLedgerPlan:
+    """Build the final confidence ledger rows that consume defect-family gates."""
+
+    rows = list(rows) if rows is not None else build_rows()
+    gate_report = review_defect_family_gates(build_defect_family_gate_plan(rows))
+    full_ids = set(gate_report.passed_gate_ids)
+    scoped_ids = set(gate_report.scoped_gate_ids)
+    proof_evidence: list[RiskEvidenceProof] = []
+    ledger_rows: list[RiskEvidenceRow] = []
+    for row in rows:
+        defect_family_id = str(row.get("defect_family_id") or _defect_family_id(str(row.get("friction_id") or "")))
+        proof_id = _proof_evidence_id(defect_family_id)
+        gate_current = defect_family_id in full_ids or defect_family_id in scoped_ids
+        if defect_family_id in full_ids:
+            gate_confidence = RISK_CONFIDENCE_FULL
+            scoped_reasons: tuple[str, ...] = ()
+        elif defect_family_id in scoped_ids:
+            gate_confidence = RISK_CONFIDENCE_SCOPED
+            scoped_reasons = ("defect-family gate is scoped; do not claim unbounded live AI semantic quality",)
+        else:
+            gate_confidence = RISK_CONFIDENCE_BLOCKED
+            scoped_reasons = ()
+        proof_evidence.append(
+            RiskEvidenceProof(
+                proof_id,
+                proof_kind="known_friction_regression",
+                result_status=str(row.get("evidence_status") or "not_run"),
+                current=row.get("evidence_current") is True,
+                assertion_scope="external_contract",
+                producer_route="known_friction_regression_matrix",
+                command=f"{row.get('model_check')}; {row.get('runtime_test')}",
+                summary=str(row.get("full_confidence_boundary") or ""),
+            )
+        )
+        ledger_rows.append(
+            RiskEvidenceRow(
+                risk_id=str(row.get("friction_id") or ""),
+                description=str(row.get("historical_bad_case") or ""),
+                model_obligation_id=str(row.get("model_obligation") or ""),
+                proof_evidence_ids=(proof_id,),
+                require_external_proof=True,
+                defect_family_id=defect_family_id,
+                defect_family_gate_required=True,
+                defect_family_gate_current=gate_current,
+                defect_family_gate_confidence=gate_confidence,
+                defect_family_scoped_reasons=scoped_reasons,
+                next_actions=tuple(str(item) for item in row.get("forbidden_shortcuts") or ()),
+            )
+        )
+    return RiskEvidenceLedgerPlan(
+        "flowpilot_known_friction_risk_ledger",
+        rows=tuple(ledger_rows),
+        proof_evidence=tuple(proof_evidence),
+        require_code_contracts=False,
+        allow_scoped_confidence=True,
+    )
+
+
+def build_defect_family_report(rows: Sequence[dict[str, Any]] | None = None) -> dict[str, Any]:
+    rows = list(rows) if rows is not None else build_rows()
+    gate_plan = build_defect_family_gate_plan(rows)
+    gate_report = review_defect_family_gates(gate_plan)
+    ledger_plan = build_defect_family_risk_ledger_plan(rows)
+    ledger_report = review_risk_evidence_ledger(ledger_plan)
+    return {
+        "ok": gate_report.ok and ledger_report.ok,
+        "gate_report": gate_report.to_dict(),
+        "risk_ledger_report": ledger_report.to_dict(),
+        "gate_plan": {
+            "plan_id": gate_plan.plan_id,
+            "gate_count": len(gate_plan.gates),
+            "proof_evidence_count": len(gate_plan.proof_evidence),
+        },
+        "risk_ledger_plan": {
+            "ledger_id": ledger_plan.ledger_id,
+            "row_count": len(ledger_plan.rows),
+            "proof_evidence_count": len(ledger_plan.proof_evidence),
+        },
+        "defect_family_ids": [gate.gate_id for gate in gate_plan.gates],
+    }
+
+
+def defect_family_known_bad_cases() -> list[dict[str, Any]]:
+    row = build_rows()[0]
+    missing_promotion = dict(row)
+    missing_promotion["defect_family_promoted"] = False
+
+    progress_only = dict(row)
+    progress_only["evidence_status"] = "progress_only"
+
+    stale = dict(row)
+    stale["evidence_current"] = False
+
+    internal_only_rows = [dict(row)]
+    internal_gate_plan = build_defect_family_gate_plan(internal_only_rows)
+    internal_evidence = tuple(
+        DefectFamilyEvidence(
+            evidence.evidence_id,
+            result_status=evidence.result_status,
+            current=evidence.current,
+            assertion_scope="internal_path",
+            producer_route=evidence.producer_route,
+            command=evidence.command,
+            summary=evidence.summary,
+        )
+        for evidence in internal_gate_plan.proof_evidence
+    )
+    internal_gate_report = review_defect_family_gates(
+        DefectFamilyGatePlan(
+            internal_gate_plan.plan_id,
+            gates=internal_gate_plan.gates,
+            proof_evidence=internal_evidence,
+            allow_scoped_confidence=True,
+        )
+    )
+
+    return [
+        {
+            "name": "missing_family_promotion",
+            "report": build_defect_family_report((missing_promotion,)),
+            "row_findings": validate_rows((missing_promotion,)),
+            "expected_codes": [
+                "defect_family_not_promoted",
+                "recurring_miss_not_promoted",
+            ],
+        },
+        {
+            "name": "progress_only_defect_family_proof",
+            "report": build_defect_family_report((progress_only,)),
+            "row_findings": validate_rows((progress_only,)),
+            "expected_codes": ["invalid_evidence_status"],
+        },
+        {
+            "name": "stale_defect_family_proof",
+            "report": build_defect_family_report((stale,)),
+            "row_findings": validate_rows((stale,)),
+            "expected_codes": ["stale_evidence"],
+        },
+        {
+            "name": "internal_only_defect_family_proof",
+            "report": internal_gate_report.to_dict(),
+            "row_findings": [],
+            "expected_codes": ["defect_family_proof_internal_path_only"],
+        },
+    ]
+
+
 def known_bad_cases() -> list[dict[str, Any]]:
     base = {
         "friction_id": "known.bad",
+        "defect_family_id": "defect_family:known.bad",
+        "defect_family_recurrence_count": 2,
+        "defect_family_high_risk": True,
+        "defect_family_authority_boundary": "role_output_runtime",
+        "defect_family_gate_required": True,
+        "defect_family_promoted": True,
         "priority": "P0",
         "source_class": "worker_output_contract_failure",
         "historical_bad_case": "known bad fixture",
@@ -482,6 +785,16 @@ def known_bad_cases() -> list[dict[str, Any]]:
 def build_report() -> dict[str, Any]:
     rows = build_rows()
     findings = validate_rows(rows)
+    defect_family_report = build_defect_family_report(rows)
+    if not defect_family_report["ok"]:
+        findings.append(
+            {
+                "code": "defect_family_gate_failed",
+                "message": "one or more known-friction defect-family gates failed",
+                "gate_report": defect_family_report["gate_report"],
+                "risk_ledger_report": defect_family_report["risk_ledger_report"],
+            }
+        )
     rows_by_priority = Counter(str(row["priority"]) for row in rows)
     observed_global_gates = sorted(
         {str(gate) for row in rows for gate in row.get("global_gates", [])}
@@ -502,10 +815,14 @@ def build_report() -> dict[str, Any]:
             "Rows prove that historically recurring FlowPilot control-plane failures "
             "are represented as parent gates over child fake-AI, historical replay, "
             "runtime, install-sync, current-transcript, and background-evidence checks. "
-            "They do not prove arbitrary live AI semantic quality or unbounded production stress."
+            "Each row is also promoted to a FlowGuard defect-family gate consumed "
+            "by the final risk ledger. They do not prove arbitrary live AI semantic "
+            "quality or unbounded production stress."
         ),
         "required_friction_count": len(REQUIRED_FRICTION_IDS),
         "row_count": len(rows),
+        "defect_family_gate_ok": defect_family_report["ok"],
+        "defect_family_gate_report": defect_family_report,
         "rows_by_priority": dict(sorted(rows_by_priority.items())),
         "required_global_gates": sorted(REQUIRED_GLOBAL_GATES),
         "observed_global_gates": observed_global_gates,
@@ -513,6 +830,7 @@ def build_report() -> dict[str, Any]:
         "findings": findings,
         "rows": rows,
         "known_bad_cases": known_bad_cases(),
+        "defect_family_known_bad_cases": defect_family_known_bad_cases(),
     }
 
 

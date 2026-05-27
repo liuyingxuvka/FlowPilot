@@ -39,6 +39,36 @@ is active.
   defects.
 - Controlled nonterminal pause requires a pause snapshot.
 
+## Recurring Defect-Family Promotion
+
+A single modelable bug can close through the ordinary defect flow after the
+observed failure, same-class recheck, and post-repair model check are current.
+When the same class appears again, or when a first failure is high risk enough
+that a local point fix would overclaim confidence, FlowPilot must promote it to
+a FlowGuard defect-family gate.
+
+The known high-level dirty families are currently:
+
+- `worker_self_check_failure`: worker result bodies look complete but miss
+  machine-checkable contract fields.
+- `pm_repair_atomicity`: PM repair decisions expose follow-up events before
+  daemon-visible repair state is committed.
+- `packet_reissue_continuation`: material packet repair waits on stale worker
+  result flags or lacks a fresh packet producer.
+- `status_projection_stale`: user-visible status or route display is generated
+  from stale Router facts.
+- `ack_false_blocker`: ACK receipt clearance is confused with semantic role
+  output completion, or a resolved ACK reappears as a blocker.
+- `controlled_stop_reconciliation`: stop/cancel releases one lifecycle surface
+  while current pointers, daemon state, heartbeat/manual-resume, or role
+  continuation still look active.
+
+Each family needs a model obligation, authority boundary, observed historical
+failure, same-class generalized case, historical holdout, and current external
+proof. The Risk Evidence Ledger must consume the family gate before any final
+full-confidence claim. Progress-only, stale, skipped, model-only, or
+internal-only proof is not enough.
+
 ## Residual Blindspots
 
 This model does not prove that a human reviewer made a good aesthetic judgement

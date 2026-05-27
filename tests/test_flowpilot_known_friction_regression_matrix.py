@@ -5,6 +5,8 @@ import sys
 import unittest
 from pathlib import Path
 
+from flowguard import DEFECT_FAMILY_DECISION_FULL, RISK_CONFIDENCE_FULL
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MATRIX_PATH = ROOT / "simulations" / "flowpilot_known_friction_regression_matrix.py"
@@ -37,7 +39,9 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
         self.assertEqual(report["row_count"], report["required_friction_count"])
         self.assertEqual(report["rows_by_priority"]["P0"], 4)
         self.assertIn("historically recurring FlowPilot", report["coverage_boundary"])
+        self.assertIn("defect-family gate", report["coverage_boundary"])
         self.assertIn("do not prove arbitrary live AI semantic quality", report["coverage_boundary"])
+        self.assertTrue(report["defect_family_gate_ok"], report["defect_family_gate_report"])
 
     def test_known_friction_rows_cover_six_accepted_surfaces(self) -> None:
         self.test_known_friction_rows_cover_required_historical_failures()
@@ -48,6 +52,11 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
                 self.assertEqual(row["evidence_status"], "passed")
                 self.assertTrue(row["evidence_current"])
                 self.assertEqual(row["evidence_role"], matrix.PRIMARY_ROLE)
+                self.assertTrue(row["defect_family_gate_required"])
+                self.assertTrue(row["defect_family_promoted"])
+                self.assertGreaterEqual(row["defect_family_recurrence_count"], 2)
+                self.assertTrue(row["defect_family_id"].startswith("defect_family:"))
+                self.assertTrue(row["defect_family_authority_boundary"])
                 self.assertIn("historical_live_run_replay_matrix", row["child_evidence_ids"])
                 self.assertIn("scoped_confidence_disclosure", row["global_gates"])
                 self.assertTrue(row["model_obligation"])
@@ -89,6 +98,46 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
 
     def test_known_friction_known_bad_cases_are_rejected(self) -> None:
         self.test_known_bad_cases_are_rejected()
+
+    def test_recurring_defect_family_gate_consumes_known_friction_rows(self) -> None:
+        report = matrix.build_report()
+        family_report = report["defect_family_gate_report"]
+
+        self.assertTrue(family_report["ok"], family_report)
+        self.assertEqual(family_report["gate_plan"]["gate_count"], len(matrix.REQUIRED_FRICTION_IDS))
+        self.assertEqual(family_report["risk_ledger_plan"]["row_count"], len(matrix.REQUIRED_FRICTION_IDS))
+        self.assertEqual(
+            set(family_report["defect_family_ids"]),
+            {row["defect_family_id"] for row in matrix.build_rows()},
+        )
+        self.assertEqual(family_report["gate_report"]["decision"], DEFECT_FAMILY_DECISION_FULL)
+        self.assertEqual(family_report["risk_ledger_report"]["confidence"], RISK_CONFIDENCE_FULL)
+        self.assertEqual(family_report["gate_report"]["findings"], [])
+        self.assertEqual(family_report["risk_ledger_report"]["findings"], [])
+
+    def test_defect_family_known_bad_cases_are_rejected(self) -> None:
+        checks = {case["name"]: case for case in matrix.defect_family_known_bad_cases()}
+
+        for name, case in checks.items():
+            with self.subTest(name=name):
+                row_codes = {finding["code"] for finding in case["row_findings"]}
+                if name == "internal_only_defect_family_proof":
+                    finding_codes = {finding["code"] for finding in case["report"]["findings"]}
+                else:
+                    gate_codes = {
+                        finding["code"]
+                        for finding in case["report"]["gate_report"]["findings"]
+                    }
+                    ledger_codes = {
+                        finding["code"]
+                        for finding in case["report"]["risk_ledger_report"]["findings"]
+                    }
+                    finding_codes = row_codes | gate_codes | ledger_codes
+                self.assertTrue(
+                    row_codes or not case["report"].get("ok", False),
+                    f"{name} unexpectedly passed",
+                )
+                self.assertLessEqual(set(case["expected_codes"]), finding_codes)
 
 
 if __name__ == "__main__":

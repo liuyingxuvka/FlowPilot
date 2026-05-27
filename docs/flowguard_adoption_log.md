@@ -18932,3 +18932,51 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 
 - Complete predictive-KB postflight and local git commit for this combined workspace state.
 - Archive `clarify-parallel-flow-block-authority` after review if implementation evidence is accepted.
+
+## 2026-05-27 - Known-Friction Defect-Family Gates
+
+- Trigger: user asked to use upgraded FlowGuard, not a FlowPilot-only patch, so repeated FlowPilot failures become higher-level gates.
+- Status: implemented, validated locally, installed skill synced, duplicate local FlowGuard skill installs cleaned, and local git commit created.
+- Skill decision: OpenSpec plus FlowGuard ExistingModelPreflight, ModelMissReview, DevelopmentProcessFlow, and Model-Test Alignment.
+- OpenSpec change: `promote-known-friction-defect-family-gates`.
+- FlowGuard version: `0.22.2`; schema `1.0`.
+
+### Changed Surfaces
+
+- Promoted six known repeated miss families to FlowGuard defect-family gates: `worker_self_check_failure`, `pm_repair_atomicity`, `packet_reissue_continuation`, `status_projection_stale`, `ack_false_blocker`, and `controlled_stop_reconciliation`.
+- Extended `simulations/flowpilot_known_friction_regression_matrix.py` so each known-friction row now carries a defect-family id, recurrence/high-risk promotion signal, authority boundary, observed failure, generalized same-class case, historical holdout, and current external proof.
+- Wired the matrix through FlowGuard `review_defect_family_gates` and Risk Evidence Ledger review so stale, model-only, progress-only, internal-only, skipped, or missing proof cannot be reported as full confidence.
+- Added tests for happy-path defect-family gate consumption and known-bad cases that should be rejected.
+- Added OpenSpec proposal/design/spec/tasks and documented the governance rule in `docs/defect_governance_flowguard_risk_intent.md`.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.__version__, flowguard.SCHEMA_VERSION, hasattr(flowguard, 'review_defect_family_gates'))"` -> FlowGuard `0.22.2`, schema `1.0`, helper available.
+- OK: `python -m unittest tests.test_flowpilot_known_friction_regression_matrix -v` -> 9 tests passed.
+- OK: `python simulations\flowpilot_known_friction_regression_matrix.py --json-out tmp\flowpilot_known_friction_regression_matrix_current.json`; six defect-family rows, full confidence.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out tmp\flowpilot_model_test_alignment_after_defect_family.json`; no unresolved non-deferred gaps, two existing deferred structure splits remain.
+- OK: `openspec validate promote-known-friction-defect-family-gates --strict`.
+- OK: `python -m unittest tests.test_flowpilot_known_friction_regression_matrix tests.test_flowpilot_model_test_alignment tests.test_flowpilot_test_tiers -v` -> 51 tests passed, including peer test-tier shard edits.
+- OK: `openspec validate --all --strict` -> 166 passed, 0 failed.
+- OK: `python -m compileall -q simulations tests`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json` after removing 11 byte-identical nested duplicate FlowGuard skill copies from the Codex skills root.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\check_install.py --json` -> 754 checks passed.
+
+### Findings
+
+- The repeat problem is now modeled as a defect family that must be closed at FlowGuard/Risk Evidence level, not as a final-software-only FlowPilot bug.
+- The final confidence path now depends on both a defect-family gate and Risk Evidence Ledger consumption.
+- Peer AI test-tier shard edits were preserved and not staged by this work line.
+
+### Skipped Or Limited
+
+- No FlowPilot runtime code path was changed because this miss was at the model/evidence gate layer.
+- No peer test-tier shard changes were staged or reverted.
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+
+### Next Actions
+
+- Use the promoted defect-family gate matrix as the default intake point for any future repeated FlowPilot miss.
+- Archive `promote-known-friction-defect-family-gates` after review if implementation evidence is accepted.
