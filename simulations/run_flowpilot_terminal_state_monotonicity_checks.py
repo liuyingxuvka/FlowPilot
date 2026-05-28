@@ -16,8 +16,19 @@ import flowpilot_terminal_state_monotonicity_model as model
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_terminal_state_monotonicity_results.json"
-ROUTER_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
-CARD_RUNTIME_PATH = PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "card_runtime.py"
+ROUTER_SOURCE_PATHS = (
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_system_cards_returns.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_card_returns_records.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_card_returns_actions.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_router_card_returns_settlement.py",
+)
+CARD_RUNTIME_SOURCE_PATHS = (
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "card_runtime.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "card_runtime_ack.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "card_runtime_bundle.py",
+    PROJECT_ROOT / "skills" / "flowpilot" / "assets" / "card_runtime_ledgers.py",
+)
 
 
 REQUIRED_LABELS = tuple(
@@ -202,19 +213,45 @@ def _window(text: str, needle: str, radius: int = 240) -> str:
 
 
 def _function_block(text: str, function_name: str) -> str:
+    blocks = _function_blocks(text, function_name)
+    return "\n".join(blocks)
+
+
+def _function_blocks(text: str, function_name: str) -> list[str]:
     marker = f"def {function_name}"
-    start = text.find(marker)
-    if start == -1:
-        return ""
-    next_def = text.find("\ndef ", start + len(marker))
-    if next_def == -1:
-        next_def = len(text)
-    return text[start:next_def]
+    blocks: list[str] = []
+    search_from = 0
+    while True:
+        start = text.find(marker, search_from)
+        if start == -1:
+            return blocks
+        next_def = text.find("\ndef ", start + len(marker))
+        if next_def == -1:
+            next_def = len(text)
+        blocks.append(text[start:next_def])
+        search_from = next_def
+
+
+def _source_bundle(paths: tuple[Path, ...]) -> str:
+    return "\n\n".join(path.read_text(encoding="utf-8") for path in paths)
+
+
+def _relative_paths(paths: tuple[Path, ...]) -> list[str]:
+    return [str(path.relative_to(PROJECT_ROOT)).replace("\\", "/") for path in paths]
+
+
+def _status_assignment_present(text: str, status: str) -> bool:
+    return (
+        f'["status"] = "{status}"' in text
+        or f"['status'] = '{status}'" in text
+        or f'.get("status") == "{status}"' in text
+        or f".get('status') == '{status}'" in text
+    )
 
 
 def _source_audit() -> dict[str, object]:
-    router_source = ROUTER_PATH.read_text(encoding="utf-8")
-    runtime_source = CARD_RUNTIME_PATH.read_text(encoding="utf-8")
+    router_source = _source_bundle(ROUTER_SOURCE_PATHS)
+    runtime_source = _source_bundle(CARD_RUNTIME_SOURCE_PATHS)
     findings: list[dict[str, object]] = []
 
     selector_window = _function_block(router_source, "_pending_return_records")
@@ -231,10 +268,31 @@ def _source_audit() -> dict[str, object]:
 
     writer_risks: list[dict[str, object]] = []
     runtime_lines = runtime_source.splitlines()
+    merge_helper_block = _function_block(runtime_source, "_merge_pending_return_ack")
+    merge_helper_preserves_terminal_records = (
+        "_return_has_terminal_proof(pending, completed_keys)" in merge_helper_block
+        and "return" in merge_helper_block
+        and (
+            'pending["status"] = next_status' in merge_helper_block
+            or "pending['status'] = next_status" in merge_helper_block
+        )
+    )
     for idx, line in enumerate(runtime_lines, start=1):
-        if 'pending["status"] = "returned"' in line or 'pending["status"] = "bundle_ack_incomplete"' in line:
+        if (
+            'pending["status"] = "returned"' in line
+            or 'pending["status"] = "bundle_ack_incomplete"' in line
+            or "pending['status'] = 'returned'" in line
+            or "pending['status'] = 'bundle_ack_incomplete'" in line
+            or 'pending["status"] = next_status' in line
+            or "pending['status'] = next_status" in line
+        ):
             nearby = "\n".join(runtime_lines[max(0, idx - 8) : min(len(runtime_lines), idx + 8)])
-            guarded = "resolved_at" in nearby or "completed_returns" in nearby
+            guarded = (
+                "resolved_at" in nearby
+                or "completed_returns" in nearby
+                or "_return_has_terminal_proof" in nearby
+                or ("next_status" in line and merge_helper_preserves_terminal_records)
+            )
             if not guarded:
                 writer_risks.append(
                     {
@@ -253,14 +311,17 @@ def _source_audit() -> dict[str, object]:
             }
         )
 
-    return_check_window = _function_block(router_source, "_apply_card_return_event_check")
-    bundle_check_window = _function_block(router_source, "_apply_card_bundle_return_event_check")
-    checks_write_resolved = (
-        'item["status"] = "resolved"' in return_check_window
-        and 'item["status"] = "resolved"' in bundle_check_window
-        and "completed_returns" in return_check_window
-        and "completed_returns" in bundle_check_window
+    return_check_windows = _function_blocks(router_source, "_apply_card_return_event_check")
+    bundle_check_windows = _function_blocks(router_source, "_apply_card_bundle_return_event_check")
+    return_check_writes_resolved = any(
+        _status_assignment_present(block, "resolved") and "completed_returns" in block
+        for block in return_check_windows
     )
+    bundle_check_writes_resolved = any(
+        _status_assignment_present(block, "resolved") and "completed_returns" in block
+        for block in bundle_check_windows
+    )
+    checks_write_resolved = return_check_writes_resolved and bundle_check_writes_resolved
     if not checks_write_resolved:
         findings.append(
             {
@@ -272,8 +333,10 @@ def _source_audit() -> dict[str, object]:
 
     return {
         "ok": not any(finding["severity"] == "error" for finding in findings),
-        "router_path": str(ROUTER_PATH.relative_to(PROJECT_ROOT)).replace("\\", "/"),
-        "card_runtime_path": str(CARD_RUNTIME_PATH.relative_to(PROJECT_ROOT)).replace("\\", "/"),
+        "router_path": "source_bundle",
+        "card_runtime_path": "source_bundle",
+        "router_paths": _relative_paths(ROUTER_SOURCE_PATHS),
+        "card_runtime_paths": _relative_paths(CARD_RUNTIME_SOURCE_PATHS),
         "router_pending_selector_uses_resolved_at": selector_uses_resolved_at,
         "router_pending_selector_uses_completed_keys": selector_uses_completed_keys,
         "router_card_return_checks_write_resolved_completion": checks_write_resolved,

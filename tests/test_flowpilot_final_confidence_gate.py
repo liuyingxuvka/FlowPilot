@@ -52,9 +52,12 @@ PASSING_PAYLOADS = {
         "alignment_ok": True,
         "full_diagnostic_ok": True,
         "full_coverage_ok": True,
+        "release_convergence_ok": True,
         "full_model_test_code_diagnostic": {
+            "deferred_structure_split_count": 0,
             "gap_counts": {},
             "gap_surface_count": 0,
+            "unresolved_non_deferred_gap_count": 0,
         },
     },
     "known_friction": {
@@ -128,12 +131,34 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
         self.assertIn("control_plane_check_failed", blocker["codes"])
         self.assertIn("break_glass_patch_validation_pending", blocker["details"]["live_finding_codes"])
 
-    def test_alignment_green_with_full_coverage_false_blocks(self) -> None:
+    def test_deferred_structure_split_only_allows_release_convergence(self) -> None:
         payloads = copy.deepcopy(PASSING_PAYLOADS)
         payloads["model_test_alignment"]["full_coverage_ok"] = False
+        payloads["model_test_alignment"]["release_convergence_ok"] = True
         payloads["model_test_alignment"]["full_model_test_code_diagnostic"] = {
+            "deferred_structure_split_count": 3,
             "gap_counts": {"needs_structure_split": 3},
             "gap_surface_count": 3,
+            "unresolved_non_deferred_gap_count": 0,
+        }
+
+        report = self.evaluate(payloads)
+
+        self.assertTrue(report["ok"], report)
+        self.assertEqual(report["decision"], gate.DECISION_RELEASE_CONVERGED)
+        self.assertEqual(report["blockers"], [])
+        row = next(item for item in report["evidence_rows"] if item["name"] == "model_test_alignment")
+        self.assertEqual(row["details"]["coverage_claim"], "release_convergence_deferred_structure_only")
+
+    def test_alignment_green_with_non_deferred_gap_blocks(self) -> None:
+        payloads = copy.deepcopy(PASSING_PAYLOADS)
+        payloads["model_test_alignment"]["full_coverage_ok"] = False
+        payloads["model_test_alignment"]["release_convergence_ok"] = False
+        payloads["model_test_alignment"]["full_model_test_code_diagnostic"] = {
+            "deferred_structure_split_count": 0,
+            "gap_counts": {"missing_test": 1},
+            "gap_surface_count": 1,
+            "unresolved_non_deferred_gap_count": 1,
         }
 
         report = self.evaluate(payloads)
@@ -141,7 +166,8 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
         self.assertFalse(report["ok"])
         blocker = next(item for item in report["blockers"] if item["evidence"] == "model_test_alignment")
         self.assertIn("full_coverage_ok_false", blocker["codes"])
-        self.assertEqual(blocker["details"]["gap_counts"], {"needs_structure_split": 3})
+        self.assertIn("release_convergence_ok_false", blocker["codes"])
+        self.assertEqual(blocker["details"]["gap_counts"], {"missing_test": 1})
 
     def test_known_friction_scoped_risk_ledger_blocks(self) -> None:
         payloads = copy.deepcopy(PASSING_PAYLOADS)

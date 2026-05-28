@@ -191,6 +191,9 @@ def build_inventory(
 ) -> dict[str, Any]:
     sweep = _read_json(sweep_path)
     alignment = _read_json(alignment_path)
+    full_diagnostic = alignment.get("full_model_test_code_diagnostic")
+    if not isinstance(full_diagnostic, dict):
+        full_diagnostic = {}
     replay_evidence = _read_replay_evidence(replay_evidence_path)
     test_text = _test_corpus()
     source_audited_runners = _source_audited_runner_keys(alignment)
@@ -264,6 +267,8 @@ def build_inventory(
         "source_audit_ok": bool(alignment.get("source_audit_ok")),
         "full_coverage_ok": bool(alignment.get("full_coverage_ok")),
         "release_convergence_ok": bool(alignment.get("release_convergence_ok")),
+        "deferred_structure_split_count": int(full_diagnostic.get("deferred_structure_split_count") or 0),
+        "unresolved_non_deferred_gap_count": int(full_diagnostic.get("unresolved_non_deferred_gap_count") or 0),
         "finding_count": sum(int(record["finding_count"]) for record in records),
         "gap_class_counts": {item["gap_class"]: item["runner_count"] for item in prioritized_groups},
         "coverage_tier_counts": sweep.get("coverage_tier_counts") or {},
@@ -326,6 +331,8 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         f"- Source audit ok: `{str(report['source_audit_ok']).lower()}`\n"
         f"- Full coverage ok: `{str(report['full_coverage_ok']).lower()}`\n"
         f"- Release convergence ok: `{str(report['release_convergence_ok']).lower()}`\n"
+        f"- Deferred structure split count: `{report['deferred_structure_split_count']}`\n"
+        f"- Unresolved non-deferred gap count: `{report['unresolved_non_deferred_gap_count']}`\n"
         f"- Finding count across sweep records: `{report['finding_count']}`\n\n"
         "## Prioritized Gap Groups\n\n"
         + _markdown_table(rows)

@@ -605,12 +605,12 @@
     ],
     "interpretation": "These are metadata-only findings. A dirty raw pending record is not necessarily an active blocker if the Router selector computes effective status from resolved_at/completed-return proof.",
     "ok": true,
-    "return_event_ledger_count": 62,
+    "return_event_ledger_count": 63,
     "skipped": false
   },
   "model": "flowpilot_terminal_state_monotonicity",
   "model_boundary": "control-plane terminal-state merge/idempotency; no production mutation and no sealed body inspection",
-  "ok": false,
+  "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "ok": true,
@@ -687,24 +687,26 @@
     "sealed_body_replay": "skipped_with_reason: model and live audit use metadata only"
   },
   "source_audit": {
-    "card_runtime_path": "skills/flowpilot/assets/card_runtime.py",
-    "finding_count": 2,
-    "findings": [
-      {
-        "code": "pending_return_selector_status_only",
-        "severity": "error",
-        "summary": "Router pending-return selector does not visibly use resolved_at and completed-return proof."
-      },
-      {
-        "code": "card_return_check_does_not_record_terminal_completion",
-        "severity": "error",
-        "summary": "Router card-return checks do not visibly set resolved status and completed-return proof for both card and bundle returns."
-      }
+    "card_runtime_path": "source_bundle",
+    "card_runtime_paths": [
+      "skills/flowpilot/assets/card_runtime.py",
+      "skills/flowpilot/assets/card_runtime_ack.py",
+      "skills/flowpilot/assets/card_runtime_bundle.py",
+      "skills/flowpilot/assets/card_runtime_ledgers.py"
     ],
-    "ok": false,
-    "router_card_return_checks_write_resolved_completion": false,
-    "router_path": "skills/flowpilot/assets/flowpilot_router.py",
-    "router_pending_selector_uses_completed_keys": false,
-    "router_pending_selector_uses_resolved_at": false
+    "finding_count": 0,
+    "findings": [],
+    "ok": true,
+    "router_card_return_checks_write_resolved_completion": true,
+    "router_path": "source_bundle",
+    "router_paths": [
+      "skills/flowpilot/assets/flowpilot_router.py",
+      "skills/flowpilot/assets/flowpilot_router_system_cards_returns.py",
+      "skills/flowpilot/assets/flowpilot_router_card_returns_records.py",
+      "skills/flowpilot/assets/flowpilot_router_card_returns_actions.py",
+      "skills/flowpilot/assets/flowpilot_router_card_returns_settlement.py"
+    ],
+    "router_pending_selector_uses_completed_keys": true,
+    "router_pending_selector_uses_resolved_at": true
   }
 }

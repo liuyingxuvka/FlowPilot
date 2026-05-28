@@ -19645,3 +19645,284 @@ User authorized an OpenSpec plus FlowGuard root-cause repair after PM package di
 - Coverage sweep still reports classified findings, including current stopped-run live-state observations, but the latest sweep exits 0 and does not block this scoped maintenance claim.
 - No peer AI work was reverted or cleaned up.
 - No broad formatter, dependency installation, GitHub push, tag, release, deploy, or public publication was performed.
+## 2026-05-28 - Control-plane state consistency model miss repair
+
+- Trigger: user asked to upgrade the FlowGuard model so the previously identified FlowPilot control-plane blockers are caught before deriving the smallest root-cause repair plan.
+- Route: `flowguard-existing-model-preflight` + `flowguard-model-miss-review` + `flowguard-model-test-alignment`.
+- Model files: `simulations/flowpilot_control_plane_state_consistency_model.py`, `simulations/run_flowpilot_control_plane_state_consistency_checks.py`.
+- New counterexamples: `observed_research_batch_joined_without_return_event`, `reminder_sent_after_research_batch_joined`, `daemon_recovery_uses_mutable_source_prompt`, `global_stop_claim_with_active_host_automations`.
+- Validation: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`; `python -m py_compile simulations\flowpilot_control_plane_state_consistency_model.py simulations\run_flowpilot_control_plane_state_consistency_checks.py` passed; `python simulations\run_flowpilot_control_plane_state_consistency_checks.py --json-out tmp\flowpilot_control_plane_state_consistency_after.json` passed with safe graph, progress, explorer, hazards, and repair candidates all true; `python simulations\run_meta_checks.py` passed the thin parent with routine confidence current.
+- Scope boundary: no production Router logic was edited. Full release confidence was not claimed because the meta result still says full regression is required for release confidence, and separate prompt-boundary actual-source checks still show existing prompt text gaps.
+- Root-fix direction: one shared packet-family reconciler before next-action/reminder selection, active-run `runtime_kit` prompt authority for daemon recovery, and explicit FlowPilot-vs-global stop scope.
+
+## 2026-05-28 21:32 +02:00 - Packet-result family parity enforcement
+
+### Summary
+
+- Task: upgrade FlowGuard so a research durable-result reconciliation miss forces same-class sibling review across material scan, research, current-node, and PM role-work packet-result families.
+- Route: `openspec_propose + openspec_apply + flowguard_existing_model_preflight + flowguard_model_test_alignment + flowguard_test_mesh + development_process_flow`.
+- Change: `enforce-packet-result-family-parity`.
+
+### Changed Surfaces
+
+- Added `simulations/flowpilot_packet_result_family_parity_model.py` and `simulations/run_flowpilot_packet_result_family_parity_checks.py` for obligation-family parity plus analogous-defect scanning.
+- Routed packet-result parity into model-test alignment and known-friction regression evidence.
+- Extended Router durable result reconciliation so current-node and PM role-work active batch members fold durable envelopes before waits/reminders, while wrong-recipient envelopes remain invalid.
+- Added `tests/router_runtime/packet_result_family.py` and registered `router_packet_result_family` in the router-packets TestMesh tier and fast FlowGuard command set.
+- Synced the repository-owned `flowpilot` Codex skill into `$CODEX_HOME\skills\flowpilot`.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` returned `1.0`.
+- OK: `python -m py_compile` for changed Router, simulation, and runtime-test modules.
+- OK: `python -m unittest tests.router_runtime.packet_result_family` passed 9 tests.
+- OK: `python simulations\run_flowpilot_packet_result_family_parity_checks.py --json-out simulations\flowpilot_packet_result_family_parity_results.json`.
+- OK: `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json`.
+- OK: `python simulations\run_flowpilot_control_plane_state_consistency_checks.py`.
+- OK: `python simulations\flowpilot_known_friction_regression_matrix.py --json-out simulations\flowpilot_known_friction_regression_matrix_results.json`.
+- OK: background `tmp\flowguard_background\run_meta_checks.meta.json` completed with exit code 0.
+- OK: background `tmp\flowguard_background\run_capability_checks.meta.json` completed with exit code 0.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+- OK: `python scripts\smoke_autopilot.py --fast` via `tmp\flowguard_background\smoke_autopilot_fast_after_sync.meta.json`, exit code 0.
+
+### Findings
+
+- The first model-test alignment run correctly blocked the new model because the packet-result obligations were too coarse and had duplicate primary evidence owners. The model was split into leaf obligations by packet family and mechanism.
+- The new wrong-recipient tests exposed a real current-node sibling miss: result completion previously checked only envelope file existence on the current-node completion path. The fix routes current-node complete/missing-role decisions through the shared durable result envelope validator.
+- Packet-result parity now blocks missing sibling evidence, stale sibling evidence, wrong evidence provenance, and unreviewed analogous-defect candidates.
+- Known-friction defect-family evidence is green after refreshing model-test alignment, so the packet-result family gate is consumed by the broader control-plane risk ledger.
+
+### Background Artifacts
+
+- `tmp\flowguard_background\run_meta_checks.meta.json`: status `completed`, exit `0`, stdout/stderr/combined/exit artifacts present.
+- `tmp\flowguard_background\run_capability_checks.meta.json`: status `completed`, exit `0`, stdout/stderr/combined/exit artifacts present.
+- `tmp\flowguard_background\smoke_autopilot_fast_after_sync.meta.json`: status `completed`, exit `0`, stdout/stderr/combined/exit artifacts present, proof reuse reported for meta and capability thin-parent results.
+
+### Skipped Or Limited
+
+- The foreground `python scripts\smoke_autopilot.py` attempt timed out at the tool boundary and was not counted as pass evidence; the later `--fast` logged run is the accepted smoke evidence.
+- `router-packets` full tier execution was not rerun as a whole; the newly added `router_packet_result_family` tier command was dry-run registered, and its underlying runtime suite was executed directly.
+- No peer AI work was reverted or cleaned up.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
+## 2026-05-28 22:27 +02:00 - Prompt-boundary source bundle maintenance
+
+### Summary
+
+- Task: run a FlowGuard maintenance-pruning pass after the FlowGuard-first work-order change and separate stale validation-boundary failures from real runtime or protocol debt.
+- Route: `predictive_kb_preflight + openspec_explore + flowguard_existing_model_preflight + architecture_reduction + structure_mesh + model_mesh + test_mesh + development_process_flow`.
+- Change: updated the prompt-boundary source audit so the checker reads the router compatibility facade plus the owner modules and runtime prompt assets that now hold the actual prompt/control text.
+
+### Changed Surfaces
+
+- `simulations/run_flowpilot_prompt_boundary_checks.py`
+- `simulations/flowpilot_prompt_boundary_results.json`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION); print(flowguard.__file__)"` returned schema `1.0` from the real local FlowGuard package.
+- OK: `python simulations/run_flowpilot_prompt_boundary_checks.py --json-out simulations/flowpilot_prompt_boundary_results.json`.
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 20 --json-out tmp/maintenance_prune/flowguard_coverage_sweep_after_prompt.json`.
+- OK: `python simulations/run_flowpilot_full_model_coverage_inventory.py --sweep-json tmp/maintenance_prune/flowguard_coverage_sweep_after_prompt.json --alignment-json simulations/flowpilot_model_test_alignment_results.json --json-out tmp/maintenance_prune/coverage_inventory_after_prompt.json --markdown-out tmp/maintenance_prune/coverage_inventory_after_prompt.md`.
+- OK: `python -m py_compile simulations/run_flowpilot_prompt_boundary_checks.py`.
+- OK: `python -m unittest tests.test_flowpilot_full_model_test_gap_closure` passed 10 tests.
+- OK: `python scripts/flowpilot_maintenance_map.py --json-out tmp/maintenance_prune/maintenance_map.json --markdown-out tmp/maintenance_prune/maintenance_map.md`.
+
+### Findings
+
+- The stale failures were caused by the prompt-boundary source audit still reading only `skills/flowpilot/assets/flowpilot_router.py` after router prompt text moved into owner modules and runtime prompt assets.
+- The refreshed prompt-boundary check now reports `ok: true`; FlowGuard explorer found no dead branches, exception branches, reachability failures, or stuck states.
+- The coverage sweep finding count dropped from 55 to 50 and `runner_not_ok` gaps dropped from 6 to 4.
+- Remaining gaps are real separate maintenance surfaces: `flowpilot_control_plane_friction`, `flowpilot_final_confidence_gate`, `flowpilot_terminal_state_monotonicity`, `protocol_contract_conformance`, live packet-authority projection, and StructureMesh split candidates.
+
+### Skipped Or Limited
+
+- No broad runtime owner split was attempted in this pass.
+- Protocol conformance source gaps were mapped but not repaired because they are behavior-bearing protocol debt.
+- No local install sync was required because installed FlowPilot runtime assets were not changed.
+- No peer AI work was reverted or cleaned up.
+- No GitHub push, tag, release, deploy, or destructive cleanup was performed.
+
+## 2026-05-28 23:12 +02:00 - FlowPilot maintenance convergence v2
+
+### Summary
+
+- Task: finish the user-requested OpenSpec + FlowGuard maintenance convergence
+  pass while preserving concurrent peer-agent work.
+- Route: `predictive_kb_preflight + openspec_propose/apply +
+  flowguard_existing_model_preflight + development_process_flow +
+  model_test_alignment + model_mesh + architecture_reduction +
+  structure_mesh + test_mesh`.
+- Change: created and completed OpenSpec change
+  `finish-flowpilot-maintenance-convergence-v2`, repaired stale protocol and
+  terminal source audits after router/module splitting, disposed terminal live
+  run cleanup evidence without destructive cleanup, classified remaining model
+  tiers, and recorded a StructureMesh deferral watchlist.
+
+### Changed Surfaces
+
+- `openspec/changes/finish-flowpilot-maintenance-convergence-v2/`
+- `simulations/flowpilot_protocol_contract_conformance_model.py`
+- `simulations/run_flowpilot_terminal_state_monotonicity_checks.py`
+- `simulations/flowpilot_model_mesh_model.py`
+- `simulations/flowpilot_final_confidence_gate.py`
+- `simulations/run_flowpilot_full_model_coverage_inventory.py`
+- `scripts/run_flowguard_coverage_sweep.py`
+- `tests/test_flowpilot_final_confidence_gate.py`
+- `tests/test_flowpilot_full_model_coverage_inventory.py`
+
+### Commands
+
+- OK: real FlowGuard import preflight returned schema `1.0`.
+- OK: `openspec validate finish-flowpilot-maintenance-convergence-v2 --strict`.
+- OK: protocol conformance, terminal monotonicity, control-plane friction,
+  model mesh, model-test alignment, coverage sweep, coverage inventory, and
+  final-confidence result artifacts were refreshed.
+- OK: `python -m unittest tests.test_flowpilot_final_confidence_gate`.
+- OK: `python -m unittest tests.test_flowpilot_full_model_coverage_inventory tests.test_flowpilot_full_model_test_gap_closure tests.test_flowpilot_full_coverage_finding_repairs`.
+- OK: release background suite in `tmp/flowguard_background_v2_release_final/`
+  completed with `release_tooling`, `meta_full`, `capability_full`, and
+  `public_release_check` all `status=passed`, `exit=0`, and
+  `proof_reused=false`.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/check_install.py --json` passed 770 checks.
+
+### Findings
+
+- Protocol conformance was failing because the source probe still treated the
+  router facade as the complete source of truth; it now consumes the split
+  router source bundle and handles current single-quoted contract fields.
+- Terminal monotonicity was failing for the same facade-only reason; it now
+  audits the split router/card-runtime source owners and reports no source
+  findings.
+- The stopped live run `run-20260528-142320` had no host heartbeat automation
+  file on disk. Its missing automation was verified and recorded as terminal
+  cleanup evidence without deleting runtime state.
+- Model mesh now treats stopped terminal runs as not continuable, so packet
+  authority findings are not over-read as current continuation blockers.
+- Coverage inventory now has no `runner_not_ok` or `unclassified_model_tier`
+  gap classes.
+- Final confidence is `release_convergence_with_deferred_structure_splits`:
+  blockers are zero, unresolved non-deferred model/test/code gaps are zero,
+  and five oversized runtime modules remain on the StructureMesh watchlist.
+
+### Skipped Or Limited
+
+- No broad runtime module split was applied in this pass. Architecture
+  Reduction classified all five remaining structure candidates as
+  `risky_keep/manual_review`; each requires a future claimed StructureMesh
+  route with parity evidence.
+- `full_coverage_ok` remains false only because those five structure splits
+  are intentionally deferred; `release_convergence_ok` is true.
+- The public release check still reports dirty git status as a warning while
+  peer-agent and current-task changes remain uncommitted, but it has
+  `error_count=0`.
+- No peer-agent changes were reverted, no destructive cleanup was performed,
+  and no GitHub push, tag, deploy, or release was attempted.
+
+## 2026-05-28 22:56 +02:00 - FlowGuard kernel adoption evidence closure
+
+### Summary
+
+- Task: continue the user-requested FlowPilot-to-FlowGuard kernel adoption
+  closure without taking over peer-owned OpenSpec work.
+- Route: `predictive_kb_preflight + openspec_propose/apply + flowguard_existing_model_preflight + flowguard_model_test_alignment + flowguard_development_process_flow`.
+- Change: created dedicated OpenSpec change
+  `close-flowguard-kernel-adoption-gaps`, added missing external
+  `CodeContract` and `TestEvidence` rows for controller wait audit and runtime
+  gateway surfaces, and documented legacy-data/old-logic disposition.
+
+### Changed Surfaces
+
+- `openspec/changes/close-flowguard-kernel-adoption-gaps/`
+- `simulations/flowpilot_model_test_alignment_source_code_contracts.py`
+- `simulations/flowpilot_model_test_alignment_source_test_evidence.py`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION); print(flowguard.__file__)"` returned schema `1.0` from the real local FlowGuard package.
+- OK: focused external-contract tests passed 2 tests.
+- OK: source contract audit reported `ok=true`, `finding_count=0`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out tmp/flowguard_kernel_alignment_check.json`; `ok=true`, `source_audit_ok=true`, `full_diagnostic_ok=true`, `release_convergence_ok=true`, and `internal_only_count=0`.
+- OK: `python -m unittest tests.test_flowpilot_runtime_gateway_adoption tests.test_flowpilot_controller_wait_receipt_audit -v` passed 12 tests.
+- OK: `openspec validate --all --strict --json --no-interactive` passed 164 items.
+- OK: background `tmp/flowguard_background/run_meta_checks.meta.json` completed with exit code 0 and `proof_reused=false`.
+- OK: background `tmp/flowguard_background/run_capability_checks.meta.json` completed with exit code 0 and `proof_reused=false`.
+- OK: `python scripts/install_flowpilot.py --install-missing --sync-repo-owned --json`; repo-owned FlowPilot was already fresh.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+- OK: `python scripts/check_install.py --json`.
+
+### Findings
+
+- The current FlowGuard package is real and importable; no fake mini-framework
+  was introduced.
+- The full diagnostic no longer reports `internal_only_test` for
+  `flowpilot_router_controller_wait_audit.py` or
+  `flowpilot_runtime_gateway.py`.
+- `full_coverage_ok` remains false only because of deferred StructureMesh
+  findings for oversized runtime modules; those are documented structure debt,
+  not unresolved external-contract evidence gaps.
+- Legacy references in docs, equivalence matrices, tests, and compatibility
+  facades are current compatibility/audit evidence. Retired cockpit/watchdog
+  paths are absent according to install and local sync audits.
+
+### Skipped Or Limited
+
+- No peer-owned `finish-flowpilot-maintenance-convergence-v2` tasks were
+  marked or implemented.
+- No behavior-bearing legacy compatibility path was deleted in this pass.
+- No GitHub push, tag, release, deploy, or destructive cleanup was performed.
+
+## 2026-05-28 23:28 +02:00 - Prompt and structure legacy residue cleanup
+
+### Trigger
+
+The user asked for a detailed pass over FlowPilot prompts, prompt-like
+structure, and small residual old-logic details after the FlowGuard-kernel
+adoption work, while preserving active peer-agent work.
+
+### Changed Surfaces
+
+- `openspec/changes/prune-prompt-structure-legacy-residue/`
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/flowpilot_router_protocol_startup_catalog.py`
+- `simulations/run_flowpilot_prompt_boundary_checks.py`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION); print(flowguard.__file__)"` returned schema `1.0` from the real local FlowGuard package.
+- OK: `python -m py_compile skills\flowpilot\assets\flowpilot_router_protocol_startup_catalog.py simulations\run_flowpilot_prompt_boundary_checks.py`.
+- OK: `python simulations\run_flowpilot_prompt_boundary_checks.py --json-out tmp\prompt_legacy_residue_boundary.json`; `ok=true`, `actual_prompt_sources.ok=true`, and `flowguard_explorer.ok=true`.
+- OK: `python -m unittest tests.test_flowpilot_card_instruction_coverage -v` passed 14 tests.
+- OK: `python -m unittest tests.test_flowpilot_asset_surface_contracts -v` passed 3 tests.
+- OK: `openspec validate --all --strict --json --no-interactive` passed 165 items.
+- OK: `python scripts\check_install.py --json`.
+- OK: `python scripts\install_flowpilot.py --install-missing --sync-repo-owned --json`; installed FlowPilot was refreshed from repo source.
+- OK: `python scripts\audit_local_install_sync.py --json`; repo-owned installed FlowPilot is fresh.
+
+### Findings
+
+- Active prompt residue found and patched: the old fresh-run command is now
+  labeled as a compatibility-only alias, not the current operator path.
+- Active startup-catalog residue found and patched: the old role-core prompt
+  injection row is now a compatibility receipt repair and explicitly not
+  retired external recovery authority.
+- Registry and facade `legacy_*` rows were preserved because they are current
+  compatibility evidence or old-data repair/quarantine paths, not active agent
+  instructions.
+- Heartbeat/manual resume and Cockpit/chat route-sign text were preserved as
+  current continuation/display mechanisms, distinct from retired watchdog or
+  external recovery layers.
+
+### Skipped Or Limited
+
+- No peer-owned `finish-flowpilot-maintenance-convergence-v2` tasks were
+  marked or implemented.
+- No registry/facade table was renamed, because the scan found compatibility
+  evidence rather than active owner/export ambiguity.
+- No StructureMesh split, GitHub push, tag, release, deploy, or destructive
+  cleanup was performed.

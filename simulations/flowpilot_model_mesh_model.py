@@ -20,6 +20,7 @@ except Exception:  # pragma: no cover - runner performs the explicit preflight.
 
 
 SAFE_DECISIONS = {"mesh_green_can_continue"}
+TERMINAL_DECISIONS = {"terminal_not_continuable"}
 BLOCKING_DECISIONS = {
     "blocked_by_cross_model_contradiction",
     "blocked_by_live_evidence",
@@ -904,7 +905,7 @@ def _live_projection_findings(
                 "current_run_can_continue": current_run_can_continue,
             }
         )
-    if decision != "mesh_green_can_continue" and not findings:
+    if decision != "mesh_green_can_continue" and decision not in TERMINAL_DECISIONS and not findings:
         findings.append(
             {
                 "id": "flowpilot_model_mesh.not_green",
@@ -968,6 +969,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
     active_route = _read_json(run_root / "routes" / active_route_id / "flow.json")
     packet_ledger = _read_json(run_root / "packet_ledger.json")
     status_summary = _read_json(run_root / "display" / "current_status_summary.json")
+    current_state = _read_json(root / ".flowpilot" / "current.json")
     repair_index = _read_json(run_root / "control_blocks" / "repair_transactions" / "repair_transaction_index.json")
     control_transaction_registry = _read_json(
         root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "control_transaction_registry.json"
@@ -984,6 +986,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
             "active_route": active_route,
             "packet_ledger": packet_ledger,
             "current_status_summary": status_summary,
+            "current": current_state,
             "repair_transaction_index": repair_index,
             "control_transaction_registry": control_transaction_registry,
             "route_action_policy_registry": route_action_policy_registry,
@@ -1009,6 +1012,10 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         packet_ledger,
         trusted_packet_ids=trusted_packet_ids,
     )
+    terminal_run = (
+        _dict_get(current_state, ["current_run_id"]) == resolved_run_id
+        and _dict_get(current_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
+    ) or _dict_get(router_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
     authorities_agree = _authorities_agree(frontier, packet_ledger, status_summary)
     control_registry_registered = isinstance(control_transaction_registry, Mapping)
     control_registry_rows = (
@@ -1049,7 +1056,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         blocking_reasons.append("parent_repair_reuses_leaf_event")
     if not parent_child_conformant:
         blocking_reasons.append("parent_child_lifecycle_conformance_failed")
-    if packet_authority_unchecked:
+    if packet_authority_unchecked and not terminal_run:
         blocking_reasons.append("packet_authority_unchecked")
     if not authorities_agree:
         blocking_reasons.append("current_authorities_disagree")
@@ -1068,6 +1075,19 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
 
     if parse_errors:
         decision = "model_coverage_insufficient"
+    elif terminal_run and not (
+        collapsed_repair
+        or parent_leaf_event
+        or not parent_child_conformant
+        or not authorities_agree
+        or not control_registry_registered
+        or not control_registry_valid
+        or not control_commit_scope_complete
+        or not legal_policy_registered
+        or not legal_action_projected
+        or not legal_action_conformant
+    ):
+        decision = "terminal_not_continuable"
     elif (
         collapsed_repair
         or parent_leaf_event
@@ -1109,9 +1129,9 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         parent_repair_reuses_leaf_event=parent_leaf_event,
         parent_child_lifecycle_conformant=parent_child_conformant,
         parent_child_lifecycle_replayed=True,
-        role_origin_checked=not packet_authority_unchecked,
-        completed_agent_id_belongs_to_role=not packet_authority_unchecked,
-        packet_evidence_accepted=packet_authority_unchecked,
+        role_origin_checked=not packet_authority_unchecked or terminal_run,
+        completed_agent_id_belongs_to_role=not packet_authority_unchecked or terminal_run,
+        packet_evidence_accepted=packet_authority_unchecked and not terminal_run,
         known_hazard_live_projection_available=True,
         sealed_body_opened_by_mesh=False,
         coverage_parse_errors_ignored=False,
@@ -1141,7 +1161,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         "ok": classification_ok,
         "classification_ok": classification_ok,
         "current_run_can_continue": current_run_can_continue,
-        "permission": "can_continue" if current_run_can_continue else "blocked_or_insufficient",
+        "permission": "can_continue" if current_run_can_continue else ("terminal" if decision in TERMINAL_DECISIONS else "blocked_or_insufficient"),
         "run_id": resolved_run_id,
         "run_root": str(run_root),
         "decision": decision,
@@ -1149,6 +1169,10 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         "findings": findings,
         "metadata_only": True,
         "sealed_body_opened_by_mesh": False,
+        "terminal_disposition": {
+            "terminal_run": terminal_run,
+            "packet_authority_unchecked_disposed_by_terminal_state": bool(packet_authority_unchecked and terminal_run),
+        },
         "projected_state": state.__dict__,
         "projected_failures": projected_failures,
     }
@@ -1162,6 +1186,7 @@ __all__ = [
     "MAX_SEQUENCE_LENGTH",
     "NEGATIVE_SCENARIOS",
     "SAFE_DECISIONS",
+    "TERMINAL_DECISIONS",
     "SCENARIOS",
     "Action",
     "State",

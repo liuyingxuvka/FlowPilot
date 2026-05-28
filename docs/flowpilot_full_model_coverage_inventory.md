@@ -6,13 +6,15 @@ This inventory proves that FlowGuard model/check entrypoints were enumerated and
 
 ## Summary
 
-- Runner count: `96`
+- Runner count: `106`
 - Sweep ok: `true`
 - Model-test alignment ok: `true`
 - Source audit ok: `true`
-- Full coverage ok: `true`
+- Full coverage ok: `false`
 - Release convergence ok: `true`
-- Finding count across sweep records: `17`
+- Deferred structure split count: `5`
+- Unresolved non-deferred gap count: `0`
+- Finding count across sweep records: `42`
 
 ## Prioritized Gap Groups
 

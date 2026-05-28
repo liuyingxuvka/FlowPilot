@@ -1,16 +1,126 @@
 {
   "classification_counts": {
-    "boundary_expected_or_informational": 17
+    "boundary_expected_or_informational": 42
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 5,
-    "coverage_strong": 19,
+    "coverage_strong": 23,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 65
+    "supporting_model_owned": 71
   },
-  "existing_result_read_count": 70,
-  "finding_count": 17,
+  "existing_result_read_count": 77,
+  "finding_count": 42,
   "finding_ledger": [
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+      "kind": "compatibility_facade",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
+      "name": "flowpilot_router_controller_scheduler_standby",
+      "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
+      "surface_owner": "flowpilot_router_controller_scheduler_standby"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+      "kind": "owner_module",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+      "name": "flowpilot_controller_break_glass",
+      "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:flowpilot_controller_break_glass",
+      "surface_owner": "flowpilot_controller_break_glass"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
+      "kind": "owner_module",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
+      "name": "flowpilot_router_controller_wait_audit",
+      "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:flowpilot_router_controller_wait_audit",
+      "surface_owner": "flowpilot_router_controller_wait_audit"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+      "kind": "owner_module",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+      "name": "flowpilot_router_daemon_runtime",
+      "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:flowpilot_router_daemon_runtime",
+      "surface_owner": "flowpilot_router_daemon_runtime"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+      "kind": "owner_module",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+      "name": "role_output_runtime_envelopes",
+      "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:role_output_runtime_envelopes",
+      "surface_owner": "role_output_runtime_envelopes"
+    },
     {
       "classification": "boundary_expected_or_informational",
       "code": "missing_test_evidence",
@@ -25,12 +135,15 @@
         "exact_external_contract": false,
         "external_inputs": [],
         "external_outputs": [],
+        "model_miss_origin": false,
         "obligation_id": "known_bad.required_obligation",
         "obligation_type": "hazard",
         "required": true,
+        "required_closure_evidence_roles": [],
         "required_test_kinds": [
           "happy_path"
         ],
+        "requires_same_class_test_evidence": false,
         "risk_level": "high",
         "side_effects": [],
         "state_reads": [],
@@ -50,6 +163,7 @@
       "message": "test evidence known_bad.stale is stale",
       "metadata": {
         "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
         "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
         "covered_code_contracts": [],
         "covered_obligations": [
@@ -61,6 +175,7 @@
         "evidence_target_id": "",
         "overclaims_model_confidence": false,
         "path": "tests/test_flowpilot_model_test_alignment.py",
+        "proof_artifact": null,
         "result_status": "passed",
         "stale_reasons": [
           "model obligation changed after evidence was recorded"
@@ -88,12 +203,15 @@
         "exact_external_contract": false,
         "external_inputs": [],
         "external_outputs": [],
+        "model_miss_origin": false,
         "obligation_id": "known_bad.required_obligation",
         "obligation_type": "hazard",
         "required": true,
+        "required_closure_evidence_roles": [],
         "required_test_kinds": [
           "happy_path"
         ],
+        "requires_same_class_test_evidence": false,
         "risk_level": "high",
         "side_effects": [],
         "state_reads": [],
@@ -113,6 +231,7 @@
       "message": "test evidence known_bad.progress_only status is running",
       "metadata": {
         "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
         "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
         "covered_code_contracts": [],
         "covered_obligations": [
@@ -124,6 +243,7 @@
         "evidence_target_id": "",
         "overclaims_model_confidence": false,
         "path": "tests/test_flowpilot_model_test_alignment.py",
+        "proof_artifact": null,
         "result_status": "running",
         "stale_reasons": [],
         "test_kind": "happy_path",
@@ -149,12 +269,15 @@
         "exact_external_contract": false,
         "external_inputs": [],
         "external_outputs": [],
+        "model_miss_origin": false,
         "obligation_id": "known_bad.required_obligation",
         "obligation_type": "hazard",
         "required": true,
+        "required_closure_evidence_roles": [],
         "required_test_kinds": [
           "happy_path"
         ],
+        "requires_same_class_test_evidence": false,
         "risk_level": "high",
         "side_effects": [],
         "state_reads": [],
@@ -174,6 +297,7 @@
       "message": "test evidence known_bad.overclaim claims more model confidence than its obligation bindings prove",
       "metadata": {
         "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
         "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
         "covered_code_contracts": [],
         "covered_obligations": [
@@ -185,6 +309,7 @@
         "evidence_target_id": "",
         "overclaims_model_confidence": true,
         "path": "tests/test_flowpilot_model_test_alignment.py",
+        "proof_artifact": null,
         "result_status": "passed",
         "stale_reasons": [],
         "test_kind": "happy_path",
@@ -204,6 +329,7 @@
       "message": "test evidence known_bad.orphan is not bound to any model obligation",
       "metadata": {
         "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
         "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
         "covered_code_contracts": [],
         "covered_obligations": [],
@@ -213,6 +339,7 @@
         "evidence_target_id": "",
         "overclaims_model_confidence": false,
         "path": "tests/test_flowpilot_model_test_alignment.py",
+        "proof_artifact": null,
         "result_status": "passed",
         "stale_reasons": [],
         "test_kind": "happy_path",
@@ -238,12 +365,15 @@
         "exact_external_contract": false,
         "external_inputs": [],
         "external_outputs": [],
+        "model_miss_origin": false,
         "obligation_id": "known_bad.required_obligation",
         "obligation_type": "hazard",
         "required": true,
+        "required_closure_evidence_roles": [],
         "required_test_kinds": [
           "happy_path"
         ],
+        "requires_same_class_test_evidence": false,
         "risk_level": "high",
         "side_effects": [],
         "state_reads": [],
@@ -272,6 +402,114 @@
       "runner": "flowpilot_model_test_alignment",
       "section": "abstract",
       "section_path": "known_bad_sanity_checks.5.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_family_member_mechanism_evidence",
+      "evidence_id": "",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "current_node",
+      "message": "required family member has no current passing evidence for the mechanism",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.0.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_family_evidence",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "research",
+      "message": "family evidence is not current",
+      "metadata": {
+        "stale_reasons": []
+      },
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.1.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_family_evidence",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "research",
+      "message": "family evidence is not current",
+      "metadata": {
+        "stale_reasons": []
+      },
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.1.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "invalid_family_evidence_provenance",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "wrong_recipient_rejection",
+      "member_id": "pm_role_work",
+      "message": "family evidence provenance does not prove the required mechanism",
+      "metadata": {
+        "actual_provenance": "internal_note",
+        "allowed_provenance": [
+          "runtime_test",
+          "flowguard_model"
+        ]
+      },
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.2.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "material_scan",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "current_node",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "pm_role_work",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "packet_result_family_parity.known_bad_cases.3.report",
       "severity": "blocker"
     },
     {
@@ -321,6 +559,7 @@
         },
         "evidence": {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"
@@ -332,6 +571,7 @@
           "evidence_target_id": "",
           "overclaims_model_confidence": false,
           "path": "test_synthetic_source.py",
+          "proof_artifact": null,
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "happy_path",
@@ -367,6 +607,7 @@
         },
         "evidence": {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"
@@ -378,6 +619,7 @@
           "evidence_target_id": "",
           "overclaims_model_confidence": false,
           "path": "test_synthetic_source.py",
+          "proof_artifact": null,
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "happy_path",
@@ -414,6 +656,7 @@
         },
         "evidence": {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"
@@ -425,6 +668,7 @@
           "evidence_target_id": "",
           "overclaims_model_confidence": false,
           "path": "test_synthetic_source.py",
+          "proof_artifact": null,
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "happy_path",
@@ -461,6 +705,7 @@
         },
         "evidence": {
           "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
           "covered_code_contracts": [
             "source_bad.foo"
@@ -472,6 +717,7 @@
           "evidence_target_id": "",
           "overclaims_model_confidence": false,
           "path": "test_synthetic_source.py",
+          "proof_artifact": null,
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "happy_path",
@@ -544,6 +790,126 @@
     },
     {
       "classification": "boundary_expected_or_informational",
+      "code": "missing_family_member_mechanism_evidence",
+      "evidence_id": "",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "current_node",
+      "message": "required family member has no current passing evidence for the mechanism",
+      "metadata": {},
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.0.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_family_evidence",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "research",
+      "message": "family evidence is not current",
+      "metadata": {
+        "stale_reasons": []
+      },
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.1.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_family_evidence",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "research",
+      "message": "family evidence is not current",
+      "metadata": {
+        "stale_reasons": []
+      },
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.1.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "invalid_family_evidence_provenance",
+      "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "wrong_recipient_rejection",
+      "member_id": "pm_role_work",
+      "message": "family evidence provenance does not prove the required mechanism",
+      "metadata": {
+        "actual_provenance": "internal_note",
+        "allowed_provenance": [
+          "runtime_test",
+          "flowguard_model"
+        ]
+      },
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.2.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "material_scan",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "current_node",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+      "classification": "boundary_expected_or_informational",
+      "code": "unreviewed_analogous_defect_candidate",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "mechanism_id": "full_durable_envelope_event_fold",
+      "member_id": "pm_role_work",
+      "message": "analogous defect candidate has not been reviewed or dispositioned",
+      "metadata": {},
+      "runner": "flowpilot_packet_result_family_parity",
+      "section": "abstract",
+      "section_path": "known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "frontier_status": "stopped_by_user",
+      "id": "current_run_is_controlled_user_stop",
+      "runner": "flowpilot_process_liveness",
+      "section": "abstract",
+      "section_path": "current_run_projection",
+      "severity": "info",
+      "status": "stopped_by_user",
+      "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
+      "terminal_event": "user_requests_run_stop"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
       "completed_node_count": 0,
       "id": "route_nodes_never_activated",
       "review_pass_count": 0,
@@ -562,12 +928,74 @@
       "section_path": "current_run_projection",
       "severity": "info",
       "summary": "normal route-wide completion was not claimed for the current run"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "id": "packet_loop_stopped_by_user",
+      "previous_active_packet_status": "router-next-action-ready-for-controller",
+      "runner": "flowpilot_process_liveness",
+      "section": "abstract",
+      "section_path": "current_run_projection",
+      "severity": "info",
+      "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
+    },
+    {
+      "claim_label": "work_complete:await_role_decision:pm-output-wait",
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_claim_receipt",
+      "message": "claim 'work_complete:await_role_decision:pm-output-wait' requires current receipt 'work_output:await_role_decision:pm-output-wait' from step 'flowpilot.target_work:await_role_decision:pm-output-wait'",
+      "metadata": [],
+      "receipt_id": "work_output:await_role_decision:pm-output-wait",
+      "runner": "flowpilot_workflow_step_contract",
+      "section": "abstract",
+      "section_path": "reports.ack_separation.known_bad_ack_only_as_work",
+      "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+      "step_index": 3
+    },
+    {
+      "claim_label": "",
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_prerequisite_receipt",
+      "message": "step 'flowpilot.target_work:await_role_decision:pm-output-wait' requires current receipt 'ack_settlement:pm-output-wait'",
+      "metadata": [],
+      "receipt_id": "ack_settlement:pm-output-wait",
+      "runner": "flowpilot_workflow_step_contract",
+      "section": "abstract",
+      "section_path": "reports.ack_separation.known_bad_stale_ack",
+      "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+      "step_index": 4
+    },
+    {
+      "claim_label": "",
+      "classification": "boundary_expected_or_informational",
+      "code": "forbidden_step_skipped",
+      "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' was skipped but skip_policy is forbidden",
+      "metadata": [],
+      "receipt_id": "",
+      "runner": "flowpilot_workflow_step_contract",
+      "section": "abstract",
+      "section_path": "reports.controller_receipt.known_bad_forbidden_skip",
+      "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+      "step_index": 1
+    },
+    {
+      "claim_label": "",
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_prerequisite_receipt",
+      "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' requires current receipt 'router_action_issued:deliver_controller_row:controller-row-1'",
+      "metadata": [],
+      "receipt_id": "router_action_issued:deliver_controller_row:controller-row-1",
+      "runner": "flowpilot_workflow_step_contract",
+      "section": "abstract",
+      "section_path": "reports.controller_receipt.known_bad_missing_prerequisite",
+      "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+      "step_index": 1
     }
   ],
   "ok": true,
   "read_only": true,
-  "read_only_execution_count": 26,
-  "runner_count": 96,
+  "read_only_execution_count": 29,
+  "runner_count": 106,
   "runners": [
     {
       "coverage_tier": "supporting_model_owned",
@@ -879,7 +1307,7 @@
         "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=49 progress_steps=10\n[flowguard] progress 10% work=5/49 traces=25 violations=0\n[flowguard] progress 20% work=10/49 traces=100 violations=0\n[flowguard] progress 30% work=15/49 traces=225 violations=0\n[flowguard] progress 40% work=20/49 traces=400 violations=0\n[flowguard] progress 50% work=25/49 traces=625 violations=0\n[flowguard] progress 60% work=30/49 traces=900 violations=0\n[flowguard] progress 70% work=35/49 traces=1238 violations=0\n[flowguard] progress 80% work=40/49 traces=1735 violations=0\n[flowguard] progress 90% work=45/49 traces=2501 violations=0\n[flowguard] progress 100% work=49/49 traces=3329 violations=0\n"
+        "stderr_tail": "[flowguard] start phase=explore work_total=56 progress_steps=10\n[flowguard] progress 10% work=6/56 traces=36 violations=0\n[flowguard] progress 20% work=12/56 traces=144 violations=0\n[flowguard] progress 30% work=17/56 traces=289 violations=0\n[flowguard] progress 40% work=23/56 traces=529 violations=0\n[flowguard] progress 50% work=28/56 traces=784 violations=0\n[flowguard] progress 60% work=34/56 traces=1156 violations=0\n[flowguard] progress 70% work=40/56 traces=1621 violations=0\n[flowguard] progress 80% work=45/56 traces=2188 violations=0\n[flowguard] progress 90% work=51/56 traces=3227 violations=0\n[flowguard] progress 100% work=56/56 traces=4422 violations=0\n"
       },
       "ok": true,
       "parsed": true,
@@ -1289,6 +1717,58 @@
           ],
           "ok": true,
           "present": true
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_controller_wait_receipt_audit_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_controller_wait_receipt_audit",
+      "script": "simulations/run_flowpilot_controller_wait_receipt_audit_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
         }
       },
       "skipped_checks": {}
@@ -2253,6 +2733,106 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_final_confidence_gate_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "runner": "flowpilot_final_confidence_gate",
+      "script": "simulations/run_flowpilot_final_confidence_gate_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_flowguard_work_order_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_flowguard_work_order",
+      "script": "simulations/run_flowpilot_flowguard_work_order_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "abstract_strong_live_mapping_weaker",
       "finding_count": 0,
       "findings": [],
@@ -2626,6 +3206,54 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_model_maturation_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "runner": "flowpilot_model_maturation",
+      "script": "simulations/run_flowpilot_model_maturation_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "coverage_strong",
       "finding_count": 0,
       "findings": [],
@@ -2682,8 +3310,118 @@
     },
     {
       "coverage_tier": "coverage_strong",
-      "finding_count": 15,
+      "finding_count": 27,
       "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+          "kind": "compatibility_facade",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
+          "name": "flowpilot_router_controller_scheduler_standby",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
+          "surface_owner": "flowpilot_router_controller_scheduler_standby"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+          "kind": "owner_module",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+          "name": "flowpilot_controller_break_glass",
+          "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:flowpilot_controller_break_glass",
+          "surface_owner": "flowpilot_controller_break_glass"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
+          "kind": "owner_module",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
+          "name": "flowpilot_router_controller_wait_audit",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:flowpilot_router_controller_wait_audit",
+          "surface_owner": "flowpilot_router_controller_wait_audit"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+          "kind": "owner_module",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+          "name": "flowpilot_router_daemon_runtime",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:flowpilot_router_daemon_runtime",
+          "surface_owner": "flowpilot_router_daemon_runtime"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+          "kind": "owner_module",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+          "name": "role_output_runtime_envelopes",
+          "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:role_output_runtime_envelopes",
+          "surface_owner": "role_output_runtime_envelopes"
+        },
         {
           "classification": "boundary_expected_or_informational",
           "code": "missing_test_evidence",
@@ -2698,12 +3436,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -2723,6 +3464,7 @@
           "message": "test evidence known_bad.stale is stale",
           "metadata": {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -2734,6 +3476,7 @@
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
             "path": "tests/test_flowpilot_model_test_alignment.py",
+            "proof_artifact": null,
             "result_status": "passed",
             "stale_reasons": [
               "model obligation changed after evidence was recorded"
@@ -2761,12 +3504,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -2786,6 +3532,7 @@
           "message": "test evidence known_bad.progress_only status is running",
           "metadata": {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -2797,6 +3544,7 @@
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
             "path": "tests/test_flowpilot_model_test_alignment.py",
+            "proof_artifact": null,
             "result_status": "running",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -2822,12 +3570,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -2847,6 +3598,7 @@
           "message": "test evidence known_bad.overclaim claims more model confidence than its obligation bindings prove",
           "metadata": {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [
@@ -2858,6 +3610,7 @@
             "evidence_target_id": "",
             "overclaims_model_confidence": true,
             "path": "tests/test_flowpilot_model_test_alignment.py",
+            "proof_artifact": null,
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -2877,6 +3630,7 @@
           "message": "test evidence known_bad.orphan is not bound to any model obligation",
           "metadata": {
             "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
             "covered_code_contracts": [],
             "covered_obligations": [],
@@ -2886,6 +3640,7 @@
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
             "path": "tests/test_flowpilot_model_test_alignment.py",
+            "proof_artifact": null,
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "happy_path",
@@ -2911,12 +3666,15 @@
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
+            "model_miss_origin": false,
             "obligation_id": "known_bad.required_obligation",
             "obligation_type": "hazard",
             "required": true,
+            "required_closure_evidence_roles": [],
             "required_test_kinds": [
               "happy_path"
             ],
+            "requires_same_class_test_evidence": false,
             "risk_level": "high",
             "side_effects": [],
             "state_reads": [],
@@ -2945,6 +3703,114 @@
           "runner": "flowpilot_model_test_alignment",
           "section": "abstract",
           "section_path": "known_bad_sanity_checks.5.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_family_member_mechanism_evidence",
+          "evidence_id": "",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "message": "required family member has no current passing evidence for the mechanism",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.0.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_family_evidence",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "research",
+          "message": "family evidence is not current",
+          "metadata": {
+            "stale_reasons": []
+          },
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_family_evidence",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "research",
+          "message": "family evidence is not current",
+          "metadata": {
+            "stale_reasons": []
+          },
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "invalid_family_evidence_provenance",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "pm_role_work",
+          "message": "family evidence provenance does not prove the required mechanism",
+          "metadata": {
+            "actual_provenance": "internal_note",
+            "allowed_provenance": [
+              "runtime_test",
+              "flowguard_model"
+            ]
+          },
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.2.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "packet_result_family_parity.known_bad_cases.3.report",
           "severity": "blocker"
         },
         {
@@ -2994,6 +3860,7 @@
             },
             "evidence": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [
                 "source_bad.foo"
@@ -3005,6 +3872,7 @@
               "evidence_target_id": "",
               "overclaims_model_confidence": false,
               "path": "test_synthetic_source.py",
+              "proof_artifact": null,
               "result_status": "passed",
               "stale_reasons": [],
               "test_kind": "happy_path",
@@ -3040,6 +3908,7 @@
             },
             "evidence": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [
                 "source_bad.foo"
@@ -3051,6 +3920,7 @@
               "evidence_target_id": "",
               "overclaims_model_confidence": false,
               "path": "test_synthetic_source.py",
+              "proof_artifact": null,
               "result_status": "passed",
               "stale_reasons": [],
               "test_kind": "happy_path",
@@ -3087,6 +3957,7 @@
             },
             "evidence": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [
                 "source_bad.foo"
@@ -3098,6 +3969,7 @@
               "evidence_target_id": "",
               "overclaims_model_confidence": false,
               "path": "test_synthetic_source.py",
+              "proof_artifact": null,
               "result_status": "passed",
               "stale_reasons": [],
               "test_kind": "happy_path",
@@ -3134,6 +4006,7 @@
             },
             "evidence": {
               "assertion_scope": "external_contract",
+              "closure_evidence_role": "",
               "command": "python -m unittest tests.test_flowpilot_model_test_alignment",
               "covered_code_contracts": [
                 "source_bad.foo"
@@ -3145,6 +4018,7 @@
               "evidence_target_id": "",
               "overclaims_model_confidence": false,
               "path": "test_synthetic_source.py",
+              "proof_artifact": null,
               "result_status": "passed",
               "stale_reasons": [],
               "test_kind": "happy_path",
@@ -3462,6 +4336,163 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 7,
+      "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_family_member_mechanism_evidence",
+          "evidence_id": "",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "message": "required family member has no current passing evidence for the mechanism",
+          "metadata": {},
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.0.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_family_evidence",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "research",
+          "message": "family evidence is not current",
+          "metadata": {
+            "stale_reasons": []
+          },
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_family_evidence",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "research",
+          "message": "family evidence is not current",
+          "metadata": {
+            "stale_reasons": []
+          },
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "invalid_family_evidence_provenance",
+          "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "pm_role_work",
+          "message": "family evidence provenance does not prove the required mechanism",
+          "metadata": {
+            "actual_provenance": "internal_note",
+            "allowed_provenance": [
+              "runtime_test",
+              "flowguard_model"
+            ]
+          },
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.2.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.3.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.3.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+          "classification": "boundary_expected_or_informational",
+          "code": "unreviewed_analogous_defect_candidate",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "message": "analogous defect candidate has not been reviewed or dispositioned",
+          "metadata": {},
+          "runner": "flowpilot_packet_result_family_parity",
+          "section": "abstract",
+          "section_path": "known_bad_cases.3.report",
+          "severity": "blocker"
+        }
+      ],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_packet_result_family_parity_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "runner": "flowpilot_packet_result_family_parity",
+      "script": "simulations/run_flowpilot_packet_result_family_parity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -3832,8 +4863,20 @@
     },
     {
       "coverage_tier": "supporting_model_owned",
-      "finding_count": 2,
+      "finding_count": 4,
       "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "frontier_status": "stopped_by_user",
+          "id": "current_run_is_controlled_user_stop",
+          "runner": "flowpilot_process_liveness",
+          "section": "abstract",
+          "section_path": "current_run_projection",
+          "severity": "info",
+          "status": "stopped_by_user",
+          "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
+          "terminal_event": "user_requests_run_stop"
+        },
         {
           "classification": "boundary_expected_or_informational",
           "completed_node_count": 0,
@@ -3854,6 +4897,16 @@
           "section_path": "current_run_projection",
           "severity": "info",
           "summary": "normal route-wide completion was not claimed for the current run"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "id": "packet_loop_stopped_by_user",
+          "previous_active_packet_status": "router-next-action-ready-for-controller",
+          "runner": "flowpilot_process_liveness",
+          "section": "abstract",
+          "section_path": "current_run_projection",
+          "severity": "info",
+          "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
         }
       ],
       "metadata": {
@@ -3938,6 +4991,56 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_recovery_supervisor_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_recovery_supervisor",
+      "script": "simulations/run_flowpilot_recovery_supervisor_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
         },
         "live": {
           "keys": [],
@@ -4436,6 +5539,51 @@
       "skipped_checks": {
         "production_conformance_replay": "skipped_with_reason: this is a pre-implementation abstract recovery model; production replay is added after the router adapter changes exist"
       }
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_role_recovery_liveness_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_role_recovery_liveness",
+      "script": "simulations/run_flowpilot_role_recovery_liveness_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
     },
     {
       "coverage_tier": "supporting_model_owned",
@@ -4970,6 +6118,51 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_runtime_gateway_adoption_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_runtime_gateway_adoption",
+      "script": "simulations/run_flowpilot_runtime_gateway_adoption_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "finding_count": 0,
       "findings": [],
@@ -5005,6 +6198,58 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_singleton_identity_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_singleton_identity",
+      "script": "simulations/run_flowpilot_singleton_identity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [
+            "live_audit"
+          ],
+          "ok": true,
+          "present": true
         },
         "progress": {
           "keys": [
@@ -5587,6 +6832,104 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 4,
+      "findings": [
+        {
+          "claim_label": "work_complete:await_role_decision:pm-output-wait",
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_claim_receipt",
+          "message": "claim 'work_complete:await_role_decision:pm-output-wait' requires current receipt 'work_output:await_role_decision:pm-output-wait' from step 'flowpilot.target_work:await_role_decision:pm-output-wait'",
+          "metadata": [],
+          "receipt_id": "work_output:await_role_decision:pm-output-wait",
+          "runner": "flowpilot_workflow_step_contract",
+          "section": "abstract",
+          "section_path": "reports.ack_separation.known_bad_ack_only_as_work",
+          "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+          "step_index": 3
+        },
+        {
+          "claim_label": "",
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_prerequisite_receipt",
+          "message": "step 'flowpilot.target_work:await_role_decision:pm-output-wait' requires current receipt 'ack_settlement:pm-output-wait'",
+          "metadata": [],
+          "receipt_id": "ack_settlement:pm-output-wait",
+          "runner": "flowpilot_workflow_step_contract",
+          "section": "abstract",
+          "section_path": "reports.ack_separation.known_bad_stale_ack",
+          "step_id": "flowpilot.target_work:await_role_decision:pm-output-wait",
+          "step_index": 4
+        },
+        {
+          "claim_label": "",
+          "classification": "boundary_expected_or_informational",
+          "code": "forbidden_step_skipped",
+          "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' was skipped but skip_policy is forbidden",
+          "metadata": [],
+          "receipt_id": "",
+          "runner": "flowpilot_workflow_step_contract",
+          "section": "abstract",
+          "section_path": "reports.controller_receipt.known_bad_forbidden_skip",
+          "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+          "step_index": 1
+        },
+        {
+          "claim_label": "",
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_prerequisite_receipt",
+          "message": "step 'flowpilot.next_step:deliver_controller_row:controller-row-1' requires current receipt 'router_action_issued:deliver_controller_row:controller-row-1'",
+          "metadata": [],
+          "receipt_id": "router_action_issued:deliver_controller_row:controller-row-1",
+          "runner": "flowpilot_workflow_step_contract",
+          "section": "abstract",
+          "section_path": "reports.controller_receipt.known_bad_missing_prerequisite",
+          "step_id": "flowpilot.next_step:deliver_controller_row:controller-row-1",
+          "step_index": 1
+        }
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_workflow_step_contract_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_workflow_step_contract",
+      "script": "simulations/run_flowpilot_workflow_step_contract_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],

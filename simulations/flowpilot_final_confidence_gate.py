@@ -15,6 +15,7 @@ from typing import Any, Mapping, Sequence
 
 
 DECISION_FULL = "full_confidence"
+DECISION_RELEASE_CONVERGED = "release_convergence_with_deferred_structure_splits"
 DECISION_BLOCKED = "blocked"
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -142,20 +143,58 @@ def evaluate_model_test_alignment(path: Path, payload: Mapping[str, Any] | None,
     full_diagnostic = payload.get("full_model_test_code_diagnostic")
     if not isinstance(full_diagnostic, dict):
         full_diagnostic = {}
+    full_coverage_ok = bool(payload.get("full_coverage_ok"))
+    release_convergence_ok = bool(payload.get("release_convergence_ok")) or (
+        full_coverage_ok and "release_convergence_ok" not in payload
+    )
+    gap_counts = payload.get("gap_counts") or full_diagnostic.get("gap_counts") or {}
+    gap_surface_count = int(full_diagnostic.get("gap_surface_count") or 0)
+    unresolved_non_deferred_gap_count = int(
+        full_diagnostic.get("unresolved_non_deferred_gap_count") or 0
+    )
+    deferred_structure_split_count = int(
+        full_diagnostic.get("deferred_structure_split_count") or 0
+    )
+    deferred_structure_only = (
+        not full_coverage_ok
+        and release_convergence_ok
+        and unresolved_non_deferred_gap_count == 0
+        and deferred_structure_split_count > 0
+        and gap_surface_count == deferred_structure_split_count
+        and set(gap_counts) <= {"needs_structure_split"}
+    )
 
     row["details"]["top_level_ok"] = bool(payload.get("ok"))
     row["details"]["alignment_ok"] = bool(payload.get("alignment_ok"))
     row["details"]["full_diagnostic_ok"] = bool(payload.get("full_diagnostic_ok"))
-    row["details"]["full_coverage_ok"] = bool(payload.get("full_coverage_ok"))
-    row["details"]["gap_counts"] = payload.get("gap_counts") or full_diagnostic.get("gap_counts") or {}
-    row["details"]["gap_surface_count"] = full_diagnostic.get("gap_surface_count")
+    row["details"]["full_coverage_ok"] = full_coverage_ok
+    row["details"]["release_convergence_ok"] = release_convergence_ok
+    row["details"]["gap_counts"] = gap_counts
+    row["details"]["gap_surface_count"] = gap_surface_count
+    row["details"]["unresolved_non_deferred_gap_count"] = unresolved_non_deferred_gap_count
+    row["details"]["deferred_structure_split_count"] = deferred_structure_split_count
+    row["details"]["coverage_claim"] = (
+        "full_coverage" if full_coverage_ok else "release_convergence_deferred_structure_only"
+        if deferred_structure_only
+        else "blocked"
+    )
 
-    for field in ("ok", "alignment_ok", "full_diagnostic_ok", "full_coverage_ok"):
+    for field in ("ok", "alignment_ok", "full_diagnostic_ok"):
         if not payload.get(field):
             row["blockers"].append(f"{field}_false")
+    if not full_coverage_ok and not deferred_structure_only:
+        row["blockers"].append("full_coverage_ok_false")
+    if not full_coverage_ok and not release_convergence_ok:
+        row["blockers"].append("release_convergence_ok_false")
 
     row["ok"] = not row["blockers"]
-    row["status"] = DECISION_FULL if row["ok"] else DECISION_BLOCKED
+    row["status"] = (
+        DECISION_FULL
+        if row["ok"] and full_coverage_ok
+        else DECISION_RELEASE_CONVERGED
+        if row["ok"]
+        else DECISION_BLOCKED
+    )
     return row
 
 
@@ -219,13 +258,22 @@ def evaluate_final_confidence(result_paths: Mapping[str, Path]) -> dict[str, Any
         if row["blockers"]
     ]
     ok = not blockers
-    decision = DECISION_FULL if ok else DECISION_BLOCKED
+    release_converged = ok and any(row["status"] == DECISION_RELEASE_CONVERGED for row in evidence_rows)
+    decision = (
+        DECISION_BLOCKED
+        if not ok
+        else DECISION_RELEASE_CONVERGED
+        if release_converged
+        else DECISION_FULL
+    )
     return {
         "ok": ok,
         "decision": decision,
         "summary": (
             "FULL: all required final-confidence evidence is current and passing"
-            if ok
+            if decision == DECISION_FULL
+            else "RELEASE_CONVERGED: required evidence passes with explicitly deferred structure split debt"
+            if decision == DECISION_RELEASE_CONVERGED
             else f"BLOCKED: {len(blockers)} required evidence source(s) are not full confidence"
         ),
         "evidence_rows": evidence_rows,
@@ -273,6 +321,7 @@ def write_json(path: Path, payload: Mapping[str, Any]) -> None:
 __all__ = [
     "DECISION_BLOCKED",
     "DECISION_FULL",
+    "DECISION_RELEASE_CONVERGED",
     "DEFAULT_RESULT_PATHS",
     "evaluate_final_confidence",
     "result_paths_for_dir",

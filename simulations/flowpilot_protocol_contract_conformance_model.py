@@ -995,7 +995,7 @@ def _material_scan_router_requires_inline_body_text_only(router_source: str) -> 
 
 def _material_scan_index_forbids_controller_body_reads(router_source: str) -> bool:
     segment = _function_segment(router_source, "_write_material_scan_packets")
-    return '"controller_may_read_packet_body": False' in segment
+    return '"controller_may_read_packet_body": False' in segment or "'controller_may_read_packet_body': False" in segment
 
 
 def _material_dispatch_block_event_registered(router: Any) -> bool:
@@ -1182,14 +1182,20 @@ def _startup_card_prose_paths(text: str) -> frozenset[str]:
 
 
 def _function_segment(source: str, function_name: str) -> str:
-    match = re.search(rf"^def {re.escape(function_name)}\(.*?(?=^def |\Z)", source, re.DOTALL | re.MULTILINE)
-    return match.group(0) if match else ""
+    matches = re.findall(rf"^def {re.escape(function_name)}\(.*?(?=^def |\Z)", source, re.DOTALL | re.MULTILINE)
+    return "\n\n".join(matches)
+
+
+def _router_source_bundle(project_root: Path) -> str:
+    assets_root = project_root / "skills" / "flowpilot" / "assets"
+    paths = sorted(assets_root.glob("flowpilot_router*.py"))
+    return "\n\n".join(path.read_text(encoding="utf-8") for path in paths)
 
 
 def _startup_router_validator_paths(router_source: str) -> frozenset[str]:
     segment = _function_segment(router_source, "_validate_startup_external_fact_review")
     paths = {"external_fact_review"}
-    for field_name in re.findall(r'review\.get\("([^"]+)"\)', segment):
+    for field_name in re.findall(r"""review\.get\(['"]([^'"]+)['"]\)""", segment):
         paths.add(f"external_fact_review.{field_name}")
     return frozenset(paths)
 
@@ -1203,7 +1209,7 @@ def _startup_router_canonical_paths(router_source: str) -> frozenset[str]:
 
 def _pm_control_blocker_router_fields(router_source: str) -> frozenset[str]:
     segment = _function_segment(router_source, "_write_control_blocker_repair_decision")
-    fields = set(re.findall(r'decision\.get\("([^"]+)"\)', segment))
+    fields = set(re.findall(r"""decision\.get\(['"]([^'"]+)['"]\)""", segment))
     if 'decision["decision"]' in segment or "decision['decision']" in segment:
         fields.add("decision")
     return frozenset(fields)
@@ -1215,7 +1221,11 @@ def _pm_resume_router_fields(router: Any) -> frozenset[str]:
 
 def _pm_resume_action_contract_fields(router_source: str) -> frozenset[str]:
     delivery_segment = _function_segment(router_source, "_next_system_card_action")
-    wait_segment = _function_segment(router_source, "compute_controller_action")
+    wait_segment = (
+        _function_segment(router_source, "compute_controller_action")
+        + "\n"
+        + _function_segment(router_source, "fresh_action_provider")
+    )
     helper_segment = _function_segment(router_source, "_pm_resume_decision_payload_contract")
     card_dispatch_segment = _function_segment(router_source, "_pm_decision_payload_contract_for_card")
     event_dispatch_segment = _function_segment(router_source, "_role_decision_payload_contract_for_events")
@@ -1224,6 +1234,7 @@ def _pm_resume_action_contract_fields(router_source: str) -> frozenset[str]:
     wait_has_contract = (
         '"payload_contract": _pm_resume_decision_payload_contract' in wait_segment
         or "payload_contract=_pm_resume_decision_payload_contract" in wait_segment
+        or "payload_contract=router._pm_resume_decision_payload_contract" in wait_segment
         or (
             "_role_decision_payload_contract_for_events" in wait_segment
             and 'allowed_events == ["pm_resume_recovery_decision_returned"]' in event_dispatch_segment
@@ -1292,17 +1303,22 @@ def _display_status_available_before_startup_fact_review(router_source: str) -> 
         return False
     if "startup_activation_approved" in segment:
         return False
-    compute_segment = _function_segment(router_source, "compute_controller_action")
-    display_index = compute_segment.find("_next_startup_display_action")
-    system_card_index = compute_segment.find("_next_system_card_action")
-    return display_index != -1 and system_card_index != -1 and display_index < system_card_index
+    for provider_segment in (
+        _function_segment(router_source, "compute_controller_action"),
+        _function_segment(router_source, "fresh_action_provider"),
+    ):
+        display_index = provider_segment.find("_next_startup_display_action")
+        system_card_index = provider_segment.find("_next_system_card_action")
+        if display_index != -1 and system_card_index != -1:
+            return display_index < system_card_index
+    return False
 
 
 def _startup_repair_request_repeatable_for_new_blocking_report(router_source: str) -> bool:
     segment = _function_segment(router_source, "_external_event_flag_replay_requires_new_processing")
     return (
-        'event == "pm_requests_startup_repair"' in segment
-        and "run_state[\"flags\"].get(flag)" in segment
+        ('event == "pm_requests_startup_repair"' in segment or "event == 'pm_requests_startup_repair'" in segment)
+        and ("run_state[\"flags\"].get(flag)" in segment or "run_state['flags'].get(flag)" in segment)
         and "startup_fact_reported" in segment
         and "pm_startup_activation_card_delivered" in segment
     )
@@ -1392,8 +1408,7 @@ def _router_routes_control_blocker_followup_to_event_producer(router_source: str
 
 def collect_source_state(project_root: Path) -> State:
     router = _load_router(project_root)
-    router_path = project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py"
-    router_source = router_path.read_text(encoding="utf-8")
+    router_source = _router_source_bundle(project_root)
     runtime_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit"
     startup_card_text = (runtime_root / "cards" / "reviewer" / "startup_fact_check.md").read_text(encoding="utf-8")
     pm_core_text = (runtime_root / "cards" / "roles" / "project_manager.md").read_text(encoding="utf-8")

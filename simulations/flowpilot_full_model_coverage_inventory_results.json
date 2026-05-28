@@ -3,16 +3,17 @@
   "alignment_path": "simulations/flowpilot_model_test_alignment_results.json",
   "claim_boundary": "This inventory proves that FlowGuard model/check entrypoints were enumerated and classified against current evidence. Scoped replay or skipped checks remain blocking unless the replay evidence manifest attaches them to exact current runtime or source evidence.",
   "classification_counts": {
-    "boundary_expected_or_informational": 17
+    "boundary_expected_or_informational": 42
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 5,
-    "coverage_strong": 19,
+    "coverage_strong": 23,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 65
+    "supporting_model_owned": 71
   },
-  "finding_count": 17,
-  "full_coverage_ok": true,
+  "deferred_structure_split_count": 5,
+  "finding_count": 42,
+  "full_coverage_ok": false,
   "gap_class_counts": {},
   "prioritized_groups": [],
   "read_only": true,
@@ -369,7 +370,7 @@
         "exit_code": 0,
         "mode": "executed_read_only",
         "parse_error": null,
-        "stderr_tail": "[flowguard] start phase=explore work_total=49 progress_steps=10\n[flowguard] progress 10% work=5/49 traces=25 violations=0\n[flowguard] progress 20% work=10/49 traces=100 violations=0\n[flowguard] progress 30% work=15/49 traces=225 violations=0\n[flowguard] progress 40% work=20/49 traces=400 violations=0\n[flowguard] progress 50% work=25/49 traces=625 violations=0\n[flowguard] progress 60% work=30/49 traces=900 violations=0\n[flowguard] progress 70% work=35/49 traces=1238 violations=0\n[flowguard] progress 80% work=40/49 traces=1735 violations=0\n[flowguard] progress 90% work=45/49 traces=2501 violations=0\n[flowguard] progress 100% work=49/49 traces=3329 violations=0\n"
+        "stderr_tail": "[flowguard] start phase=explore work_total=56 progress_steps=10\n[flowguard] progress 10% work=6/56 traces=36 violations=0\n[flowguard] progress 20% work=12/56 traces=144 violations=0\n[flowguard] progress 30% work=17/56 traces=289 violations=0\n[flowguard] progress 40% work=23/56 traces=529 violations=0\n[flowguard] progress 50% work=28/56 traces=784 violations=0\n[flowguard] progress 60% work=34/56 traces=1156 violations=0\n[flowguard] progress 70% work=40/56 traces=1621 violations=0\n[flowguard] progress 80% work=45/56 traces=2188 violations=0\n[flowguard] progress 90% work=51/56 traces=3227 violations=0\n[flowguard] progress 100% work=56/56 traces=4422 violations=0\n"
       },
       "ok": true,
       "ordinary_test_reference_strength": "ordinary_test_text_reference",
@@ -861,6 +862,64 @@
           ],
           "ok": true,
           "present": true
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_controller_wait_receipt_audit_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_controller_wait_receipt_audit",
+      "script": "simulations/run_flowpilot_controller_wait_receipt_audit_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
         }
       },
       "skipped_checks": {}
@@ -2014,6 +2073,118 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_final_confidence_gate_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "replay_evidence": {},
+      "runner": "flowpilot_final_confidence_gate",
+      "script": "simulations/run_flowpilot_final_confidence_gate_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_flowguard_work_order_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_flowguard_work_order",
+      "script": "simulations/run_flowpilot_flowguard_work_order_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "abstract_strong_live_mapping_weaker",
       "covered_skipped_checks": [],
       "finding_count": 0,
@@ -2456,6 +2627,60 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_model_maturation_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "replay_evidence": {},
+      "runner": "flowpilot_model_maturation",
+      "script": "simulations/run_flowpilot_model_maturation_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
       "finding_count": 0,
@@ -2519,9 +2744,9 @@
     {
       "coverage_tier": "coverage_strong",
       "covered_skipped_checks": [],
-      "finding_count": 15,
+      "finding_count": 27,
       "finding_counts": {
-        "boundary_expected_or_informational": 15
+        "boundary_expected_or_informational": 27
       },
       "gap_classes": [
         "currently_consumable_inventory_evidence"
@@ -2798,6 +3023,62 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 7,
+      "finding_counts": {
+        "boundary_expected_or_informational": 7
+      },
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_packet_result_family_parity_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "source_audited_alignment",
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "replay_evidence": {},
+      "runner": "flowpilot_packet_result_family_parity",
+      "script": "simulations/run_flowpilot_packet_result_family_parity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -3238,9 +3519,9 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
-      "finding_count": 2,
+      "finding_count": 4,
       "finding_counts": {
-        "boundary_expected_or_informational": 2
+        "boundary_expected_or_informational": 4
       },
       "gap_classes": [
         "currently_consumable_inventory_evidence"
@@ -3335,6 +3616,62 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_recovery_supervisor_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_recovery_supervisor",
+      "script": "simulations/run_flowpilot_recovery_supervisor_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
         },
         "live": {
           "keys": [],
@@ -3488,7 +3825,7 @@
         "stderr_tail": "[flowguard] start phase=explore work_total=24 progress_steps=10\n[flowguard] progress 10% work=3/24 traces=28 violations=0\n[flowguard] progress 20% work=5/24 traces=84 violations=0\n[flowguard] progress 30% work=8/24 traces=376 violations=0\n[flowguard] progress 40% work=10/24 traces=864 violations=0\n[flowguard] progress 50% work=12/24 traces=1640 violations=0\n[flowguard] progress 60% work=15/24 traces=3392 violations=0\n[flowguard] progress 70% work=17/24 traces=4960 violations=0\n[flowguard] progress 80% work=20/24 traces=7912 violations=0\n[flowguard] progress 90% work=22/24 traces=10280 violations=0\n[flowguard] progress 100% work=24/24 traces=12968 violations=0\n"
       },
       "ok": true,
-      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "ordinary_test_reference_strength": "source_audited_alignment",
       "parsed": true,
       "read_only_mode": "executed_read_only",
       "replay_evidence": {
@@ -3988,6 +4325,57 @@
       "skipped_checks": {
         "production_conformance_replay": "skipped_with_reason: this is a pre-implementation abstract recovery model; production replay is added after the router adapter changes exist"
       }
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_role_recovery_liveness_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_role_recovery_liveness",
+      "script": "simulations/run_flowpilot_role_recovery_liveness_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
     },
     {
       "coverage_tier": "supporting_model_owned",
@@ -4704,6 +5092,57 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_runtime_gateway_adoption_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_runtime_gateway_adoption",
+      "script": "simulations/run_flowpilot_runtime_gateway_adoption_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
       "finding_count": 0,
@@ -4745,6 +5184,64 @@
           "keys": [],
           "ok": null,
           "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "coverage_strong",
+      "covered_skipped_checks": [],
+      "finding_count": 0,
+      "finding_counts": {},
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_singleton_identity_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_singleton_identity",
+      "script": "simulations/run_flowpilot_singleton_identity_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [
+            "live_audit"
+          ],
+          "ok": true,
+          "present": true
         },
         "progress": {
           "keys": [
@@ -5466,6 +5963,59 @@
     {
       "coverage_tier": "supporting_model_owned",
       "covered_skipped_checks": [],
+      "finding_count": 4,
+      "finding_counts": {
+        "boundary_expected_or_informational": 4
+      },
+      "gap_classes": [
+        "currently_consumable_inventory_evidence"
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_workflow_step_contract_results.json"
+      },
+      "ok": true,
+      "ordinary_test_reference_strength": "ordinary_test_text_reference",
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "replay_evidence": {},
+      "runner": "flowpilot_workflow_step_contract",
+      "script": "simulations/run_flowpilot_workflow_step_contract_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "covered_skipped_checks": [],
       "finding_count": 0,
       "finding_counts": {},
       "gap_classes": [
@@ -6162,9 +6712,10 @@
   "release_convergence_ok": true,
   "replay_evidence_path": "simulations/flowpilot_full_model_replay_evidence.json",
   "result_type": "flowpilot_full_model_coverage_inventory",
-  "runner_count": 96,
+  "runner_count": 106,
   "schema_version": "flowpilot.full_model_coverage_inventory.v1",
   "source_audit_ok": true,
   "sweep_ok": true,
-  "sweep_path": "simulations/flowpilot_full_model_coverage_sweep_results.json"
+  "sweep_path": "simulations/flowpilot_full_model_coverage_sweep_results.json",
+  "unresolved_non_deferred_gap_count": 0
 }

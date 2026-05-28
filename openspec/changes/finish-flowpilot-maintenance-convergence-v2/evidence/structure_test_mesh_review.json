@@ -1,0 +1,575 @@
+{
+  "architecture_reduction": {
+    "plan": {
+      "candidates": [
+        {
+          "affected_public_entrypoints": [
+            "skills/flowpilot/assets/flowpilot_controller_break_glass.py"
+          ],
+          "affected_side_effects": [
+            "runtime_writes"
+          ],
+          "affected_state": [
+            "runtime_state"
+          ],
+          "candidate_id": "defer_split:flowpilot_controller_break_glass",
+          "candidate_type": "manual_review",
+          "code_node_id": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+          "completion_evidence_refs": [],
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json",
+            "simulations/flowpilot_final_confidence_gate_results.json",
+            "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+          ],
+          "lifecycle_disposition": "active",
+          "metadata": {
+            "line_count": 603,
+            "surface_kind": "owner_module"
+          },
+          "proof_status": "risky_keep",
+          "rationale": "Candidate is structurally oversized but has current external-contract evidence; keep in place during this maintenance pass and split only after a claimed StructureMesh route with parity replay.",
+          "required_next_route": "structure_mesh",
+          "source_model_element": "needs_structure_split",
+          "target_action": "manual_review"
+        },
+        {
+          "affected_public_entrypoints": [
+            "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py"
+          ],
+          "affected_side_effects": [
+            "runtime_writes"
+          ],
+          "affected_state": [
+            "runtime_state"
+          ],
+          "candidate_id": "defer_split:flowpilot_router_controller_scheduler_standby",
+          "candidate_type": "manual_review",
+          "code_node_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+          "completion_evidence_refs": [],
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json",
+            "simulations/flowpilot_final_confidence_gate_results.json",
+            "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+          ],
+          "lifecycle_disposition": "active",
+          "metadata": {
+            "line_count": 394,
+            "surface_kind": "compatibility_facade"
+          },
+          "proof_status": "risky_keep",
+          "rationale": "Candidate is structurally oversized but has current external-contract evidence; keep in place during this maintenance pass and split only after a claimed StructureMesh route with parity replay.",
+          "required_next_route": "structure_mesh",
+          "source_model_element": "needs_structure_split",
+          "target_action": "manual_review"
+        },
+        {
+          "affected_public_entrypoints": [
+            "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py"
+          ],
+          "affected_side_effects": [
+            "runtime_writes"
+          ],
+          "affected_state": [
+            "runtime_state"
+          ],
+          "candidate_id": "defer_split:flowpilot_router_controller_wait_audit",
+          "candidate_type": "manual_review",
+          "code_node_id": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+          "completion_evidence_refs": [],
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json",
+            "simulations/flowpilot_final_confidence_gate_results.json",
+            "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+          ],
+          "lifecycle_disposition": "active",
+          "metadata": {
+            "line_count": 539,
+            "surface_kind": "owner_module"
+          },
+          "proof_status": "risky_keep",
+          "rationale": "Candidate is structurally oversized but has current external-contract evidence; keep in place during this maintenance pass and split only after a claimed StructureMesh route with parity replay.",
+          "required_next_route": "structure_mesh",
+          "source_model_element": "needs_structure_split",
+          "target_action": "manual_review"
+        },
+        {
+          "affected_public_entrypoints": [
+            "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+          ],
+          "affected_side_effects": [
+            "runtime_writes"
+          ],
+          "affected_state": [
+            "runtime_state"
+          ],
+          "candidate_id": "defer_split:flowpilot_router_daemon_runtime",
+          "candidate_type": "manual_review",
+          "code_node_id": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "completion_evidence_refs": [],
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json",
+            "simulations/flowpilot_final_confidence_gate_results.json",
+            "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+          ],
+          "lifecycle_disposition": "active",
+          "metadata": {
+            "line_count": 488,
+            "surface_kind": "owner_module"
+          },
+          "proof_status": "risky_keep",
+          "rationale": "Candidate is structurally oversized but has current external-contract evidence; keep in place during this maintenance pass and split only after a claimed StructureMesh route with parity replay.",
+          "required_next_route": "structure_mesh",
+          "source_model_element": "needs_structure_split",
+          "target_action": "manual_review"
+        },
+        {
+          "affected_public_entrypoints": [
+            "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+          ],
+          "affected_side_effects": [
+            "runtime_writes"
+          ],
+          "affected_state": [
+            "runtime_state"
+          ],
+          "candidate_id": "defer_split:role_output_runtime_envelopes",
+          "candidate_type": "manual_review",
+          "code_node_id": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+          "completion_evidence_refs": [],
+          "evidence_refs": [
+            "simulations/flowpilot_model_test_alignment_results.json",
+            "simulations/flowpilot_final_confidence_gate_results.json",
+            "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+          ],
+          "lifecycle_disposition": "active",
+          "metadata": {
+            "line_count": 464,
+            "surface_kind": "owner_module"
+          },
+          "proof_status": "risky_keep",
+          "rationale": "Candidate is structurally oversized but has current external-contract evidence; keep in place during this maintenance pass and split only after a claimed StructureMesh route with parity replay.",
+          "required_next_route": "structure_mesh",
+          "source_model_element": "needs_structure_split",
+          "target_action": "manual_review"
+        }
+      ],
+      "companion_route_triggers": [
+        {
+          "complexity_signal": "oversized runtime contract modules",
+          "recommended_timing": "after peer-agent ownership claim",
+          "required": true,
+          "route_id": "model_test_alignment",
+          "trigger_reason": "full diagnostic has only deferred needs_structure_split findings"
+        },
+        {
+          "complexity_signal": "public runtime state and side-effect boundaries",
+          "recommended_timing": "dedicated future split route",
+          "required": true,
+          "route_id": "structure_mesh",
+          "trigger_reason": "all public-entrypoint splits require facade/parity evidence before code moves"
+        }
+      ],
+      "observable_contract": {
+        "observable_outputs": [
+          "FlowGuard JSON result files",
+          "router/control-plane runtime JSON shapes",
+          "final-confidence decision and blocker schema"
+        ],
+        "observable_side_effects": [
+          "write_json/write_json_atomic runtime writes",
+          "router/controller history append",
+          "runtime gateway guarded writes"
+        ],
+        "observable_state": [
+          "run_state",
+          "router daemon status and lock state",
+          "break-glass incident/index state",
+          "role-output envelope/session state",
+          "controller wait audit state"
+        ],
+        "public_entrypoints": [
+          "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+          "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+          "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+        ],
+        "rationale": "Only structure-size findings remain. Public/runtime behavior is guarded by current model-test, live control-plane, model mesh, and final-confidence evidence, but peer-agent activity means runtime module splits need dedicated StructureMesh claims before code movement.",
+        "source_code_boundary_id": "flowpilot_runtime_contract_assets",
+        "source_model_id": "flowpilot_model_test_alignment.full_model_test_code_diagnostic",
+        "validation_boundaries": [
+          "simulations/run_flowpilot_model_test_alignment_checks.py",
+          "simulations/run_flowpilot_final_confidence_gate_checks.py",
+          "simulations/run_flowpilot_control_plane_friction_checks.py",
+          "simulations/run_flowpilot_model_mesh_checks.py"
+        ]
+      },
+      "rationale": "Classify remaining structure debt before deciding whether production code can be safely contracted.",
+      "reduction_id": "finish_flowpilot_maintenance_convergence_v2.structure_reduction",
+      "target_structure": null
+    },
+    "report": {
+      "completed_candidate_ids": [],
+      "decision": "no_ready_reduction_candidates",
+      "findings": [
+        {
+          "candidate_id": "defer_split:flowpilot_controller_break_glass",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "defer_split:flowpilot_router_controller_scheduler_standby",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "defer_split:flowpilot_router_controller_wait_audit",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "defer_split:flowpilot_router_daemon_runtime",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "defer_split:role_output_runtime_envelopes",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "severity": "warning"
+        }
+      ],
+      "ok": true,
+      "ready_candidate_ids": [],
+      "reduction_id": "finish_flowpilot_maintenance_convergence_v2.structure_reduction",
+      "required_next_routes": [
+        "structure_mesh"
+      ],
+      "summary": "OK: reduction=finish_flowpilot_maintenance_convergence_v2.structure_reduction decision=no_ready_reduction_candidates findings=5",
+      "target_actions": []
+    }
+  },
+  "result_type": "finish_flowpilot_maintenance_convergence_v2_structure_test_mesh_review",
+  "structure_mesh": {
+    "applied": false,
+    "reason": "Architecture Reduction returned no ready candidates; all remaining candidates are risky_keep/manual_review and require future StructureMesh claims.",
+    "watchlist_path": "openspec/changes/finish-flowpilot-maintenance-convergence-v2/evidence/structure_deferral_watchlist.md"
+  },
+  "summary": {
+    "architecture_reduction_ok": true,
+    "deferred_structure_split_count": 5,
+    "production_structure_edits_applied": false,
+    "test_mesh_ok": true,
+    "unresolved_non_deferred_gap_count": 0
+  },
+  "test_mesh": {
+    "plan": {
+      "allowed_shared_side_effects": [],
+      "allowed_shared_state": [],
+      "child_suites": [
+        {
+          "background": false,
+          "command": "python simulations/run_protocol_contract_conformance_checks.py --json-out simulations/protocol_contract_conformance_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "conformance_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [
+            "source_probe_classification"
+          ],
+          "owns_state": [
+            "protocol_contracts"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/protocol_contract_conformance_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "protocol_contract_conformance",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        {
+          "background": false,
+          "command": "python simulations/run_flowpilot_terminal_state_monotonicity_checks.py --json-out simulations/flowpilot_terminal_state_monotonicity_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "conformance_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [
+            "terminal_status_projection"
+          ],
+          "owns_state": [
+            "terminal_pending_return"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/flowpilot_terminal_state_monotonicity_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "terminal_state_monotonicity",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        {
+          "background": false,
+          "command": "python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "live_current_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [],
+          "owns_state": [
+            "live_run_audit"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "control_plane_friction_live",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        {
+          "background": false,
+          "command": "python simulations/run_flowpilot_model_mesh_checks.py --json-out simulations/flowpilot_model_mesh_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "mesh_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [],
+          "owns_state": [
+            "terminal_live_projection"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/flowpilot_model_mesh_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "model_mesh_live_projection",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        {
+          "background": false,
+          "command": "python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "mesh_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "child",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [],
+          "owns_state": [
+            "model_test_code_inventory"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/flowpilot_model_test_alignment_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "model_test_alignment_full_diagnostic",
+          "test_count": 0,
+          "timeout_seconds": null
+        },
+        {
+          "background": false,
+          "command": "python simulations/run_flowpilot_final_confidence_gate_checks.py --json-out simulations/flowpilot_final_confidence_gate_results.json",
+          "duration_seconds": null,
+          "evidence_current": true,
+          "evidence_tier": "mesh_green",
+          "exit_code": 0,
+          "has_exit_artifact": true,
+          "has_result_artifact": true,
+          "layer": "parent_coverage",
+          "log_root": "",
+          "not_run_reason": "",
+          "owned_leaf_cell_ids": [],
+          "owns_side_effects": [],
+          "owns_state": [
+            "final_confidence_claim"
+          ],
+          "progress_only": false,
+          "release_required": false,
+          "result_path": "simulations/flowpilot_final_confidence_gate_results.json",
+          "result_status": "passed",
+          "selected_count": 0,
+          "skipped_count": 0,
+          "skipped_visible": true,
+          "stale_reasons": [],
+          "suite_id": "final_confidence_gate",
+          "test_count": 0,
+          "timeout_seconds": null
+        }
+      ],
+      "decision_scope": "routine",
+      "parent_suite_id": "finish_flowpilot_maintenance_convergence_v2.validation_mesh",
+      "partition_items": [
+        {
+          "description": "",
+          "item_id": "protocol_source_contracts",
+          "item_type": "behavior",
+          "owner_suite_id": "protocol_contract_conformance",
+          "ownership": "child",
+          "touched_paths": [
+            "simulations/flowpilot_protocol_contract_conformance_model.py"
+          ]
+        },
+        {
+          "description": "",
+          "item_id": "terminal_monotonicity_source_and_live",
+          "item_type": "behavior",
+          "owner_suite_id": "terminal_state_monotonicity",
+          "ownership": "child",
+          "touched_paths": [
+            "simulations/run_flowpilot_terminal_state_monotonicity_checks.py"
+          ]
+        },
+        {
+          "description": "",
+          "item_id": "live_control_plane_cleanup",
+          "item_type": "behavior",
+          "owner_suite_id": "control_plane_friction_live",
+          "ownership": "child",
+          "touched_paths": [
+            ".flowpilot/runs/run-20260528-142320"
+          ]
+        },
+        {
+          "description": "",
+          "item_id": "terminal_model_mesh_projection",
+          "item_type": "behavior",
+          "owner_suite_id": "model_mesh_live_projection",
+          "ownership": "child",
+          "touched_paths": [
+            "simulations/flowpilot_model_mesh_model.py"
+          ]
+        },
+        {
+          "description": "",
+          "item_id": "model_test_code_inventory",
+          "item_type": "behavior",
+          "owner_suite_id": "model_test_alignment_full_diagnostic",
+          "ownership": "child",
+          "touched_paths": [
+            "simulations/flowpilot_model_test_alignment_results.json"
+          ]
+        },
+        {
+          "description": "",
+          "item_id": "final_claim_aggregation",
+          "item_type": "behavior",
+          "owner_suite_id": "final_confidence_gate",
+          "ownership": "child",
+          "touched_paths": [
+            "simulations/flowpilot_final_confidence_gate.py"
+          ]
+        }
+      ],
+      "release_deferred_allowed": true,
+      "required_evidence_tier": "abstract_green",
+      "required_leaf_cell_ids": [],
+      "target_split_derivation": {
+        "covered_partition_item_ids": [
+          "protocol_source_contracts",
+          "terminal_monotonicity_source_and_live",
+          "live_control_plane_cleanup",
+          "terminal_model_mesh_projection",
+          "model_test_code_inventory",
+          "final_claim_aggregation"
+        ],
+        "derived_from_flowguard_model": true,
+        "rationale": "Focused child evidence owns the repaired runtime/protocol/model-test partitions before broad final-confidence aggregation.",
+        "side_effect_owner_fields": [
+          "source_probe_classification",
+          "terminal_status_projection"
+        ],
+        "source_model_id": "finish_flowpilot_maintenance_convergence_v2",
+        "source_model_path": "openspec/changes/finish-flowpilot-maintenance-convergence-v2/specs",
+        "state_owner_fields": [
+          "protocol_contracts",
+          "terminal_pending_return",
+          "live_run_audit",
+          "terminal_live_projection",
+          "model_test_code_inventory",
+          "final_confidence_claim"
+        ],
+        "target_suite_ids": [
+          "protocol_contract_conformance",
+          "terminal_state_monotonicity",
+          "control_plane_friction_live",
+          "model_mesh_live_projection",
+          "model_test_alignment_full_diagnostic",
+          "final_confidence_gate"
+        ]
+      }
+    },
+    "report": {
+      "decision": "test_mesh_green_can_continue",
+      "decision_scope": "routine",
+      "findings": [],
+      "ok": true,
+      "parent_suite_id": "finish_flowpilot_maintenance_convergence_v2.validation_mesh",
+      "release_obligations": [],
+      "summary": "OK: parent=finish_flowpilot_maintenance_convergence_v2.validation_mesh scope=routine decision=test_mesh_green_can_continue findings=0"
+    }
+  }
+}

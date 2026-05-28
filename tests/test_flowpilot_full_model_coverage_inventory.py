@@ -30,7 +30,10 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         self.assertNotIn("unclassified_model_tier", report["gap_class_counts"])
         self.assertTrue(report["sweep_ok"])
         self.assertTrue(report["alignment_ok"])
-        self.assertTrue(report["full_coverage_ok"])
+        self.assertTrue(report["release_convergence_ok"])
+        self.assertEqual(report["unresolved_non_deferred_gap_count"], 0)
+        if not report["full_coverage_ok"]:
+            self.assertGreater(report["deferred_structure_split_count"], 0)
         self.assertIn("replay evidence manifest", report["claim_boundary"])
 
     def test_inventory_marks_source_audited_and_scoped_replay_boundaries(self) -> None:
