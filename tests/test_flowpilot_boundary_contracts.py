@@ -287,7 +287,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
             "action_type": "await_current_scope_reconciliation",
             "label": "Wait for local reconciliation",
         }
-        packet_runtime.write_json_atomic(
+        router.write_json(
             runtime_root / "router_scheduler_ledger.json",
             {
                 "schema_version": "test.router_scheduler_ledger.v1",

@@ -100,6 +100,14 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
             self.assertEqual(patch["schema_version"], break_glass.PATCH_SCHEMA)
             self.assertTrue(patch["temporary"])
             self.assertTrue(patch["forbidden_actions_preserved"]["gate_approval"])
+            break_glass.record_patch_validation(
+                root,
+                run_root,
+                patch_id="patch-test",
+                command="python simulations/run_flowpilot_controller_break_glass_checks.py",
+                result="passed",
+                summary="Break-glass model checks passed.",
+            )
 
             index = read_json(run_root / "controller_break_glass" / "index.json")
             self.assertEqual(index["schema_version"], break_glass.INDEX_SCHEMA)
@@ -117,6 +125,85 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
             self.assertFalse(finalized_patch["temporary"])
             self.assertFalse(finalized_patch["permanent_fix_needed"])
             self.assertEqual(closed["incident"]["patch_finalization"]["finalized_patch_count"], 1)
+            self.assertEqual(closed["incident"]["closure_review"]["closure_path"], "validated_patch_closure")
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_break_glass_close_rejects_unvalidated_permanent_patch(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-break-glass-unvalidated-"))
+        try:
+            run_root = root / ".flowpilot" / "runs" / "run-test"
+            runtime = run_root / "runtime"
+            runtime.mkdir(parents=True)
+            (runtime / "controller_action_ledger.json").write_text("{}", encoding="utf-8")
+            break_glass.open_incident(
+                root,
+                run_root,
+                incident_id="incident-unvalidated",
+                trigger_summary="Controller control channel needed a temporary patch.",
+                failure_kind="no_legal_next_action",
+                sources=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                normal_lanes=["controller_action_ledger"],
+            )
+            break_glass.record_patch(
+                root,
+                run_root,
+                incident_id="incident-unvalidated",
+                patch_id="patch-unvalidated",
+                reason="Temporary control-plane compensation.",
+                touched_paths=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                validation=["python simulations/run_flowpilot_controller_break_glass_checks.py"],
+            )
+
+            with self.assertRaisesRegex(SystemExit, "patch validation"):
+                break_glass.close_incident(
+                    root,
+                    run_root,
+                    incident_id="incident-unvalidated",
+                    disposition="permanent_fix_applied",
+                )
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
+
+    def test_break_glass_close_allows_explicit_quarantine_for_pending_patch(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-break-glass-quarantine-"))
+        try:
+            run_root = root / ".flowpilot" / "runs" / "run-test"
+            runtime = run_root / "runtime"
+            runtime.mkdir(parents=True)
+            (runtime / "controller_action_ledger.json").write_text("{}", encoding="utf-8")
+            break_glass.open_incident(
+                root,
+                run_root,
+                incident_id="incident-quarantine",
+                trigger_summary="Controller control channel evidence was too weak to claim repair.",
+                failure_kind="no_legal_next_action",
+                sources=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                normal_lanes=["controller_action_ledger"],
+            )
+            break_glass.record_patch(
+                root,
+                run_root,
+                incident_id="incident-quarantine",
+                patch_id="patch-quarantine",
+                reason="Temporary control-plane compensation.",
+                touched_paths=[".flowpilot/runs/run-test/runtime/controller_action_ledger.json"],
+                validation=["python simulations/run_flowpilot_controller_break_glass_checks.py"],
+            )
+
+            closed = break_glass.close_incident(
+                root,
+                run_root,
+                incident_id="incident-quarantine",
+                disposition="weak_evidence_quarantined",
+            )
+
+            self.assertEqual(closed["incident"]["status"], "quarantined")
+            self.assertEqual(closed["incident"]["closure_review"]["closure_path"], "weak_evidence_quarantine")
+            patch = read_json(run_root / "controller_break_glass" / "patches" / "patch-quarantine.json")
+            self.assertEqual(patch["final_disposition"], "weak_evidence_quarantined")
+            self.assertTrue(patch["permanent_fix_needed"])
+            self.assertEqual(patch["validation_status"], "pending")
         finally:
             shutil.rmtree(root, ignore_errors=True)
 
@@ -167,6 +254,8 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
             )
             self.assertEqual(opened["transaction"]["identity_mode"], "recovery_supervisor")
             self.assertTrue(opened["transaction"]["normal_controller_suspended"])
+            incident = read_json(run_root / "controller_break_glass" / "incidents" / "incident-rs.json")
+            self.assertEqual(incident["related_recovery_transaction_ids"], ["recovery-rs"])
 
             blocker = break_glass.record_control_plane_blocker(
                 root,

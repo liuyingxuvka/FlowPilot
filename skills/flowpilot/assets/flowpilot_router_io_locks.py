@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_process_liveness import process_is_live as _process_is_live
 from flowpilot_router_errors import RouterLedgerWriteInProgress
 from flowpilot_router_io_paths import utc_now
@@ -162,6 +163,7 @@ def _record_json_write_lock_takeover(path: Path, liveness: dict[str, Any], *, re
     }
     log_path = _json_write_lock_takeover_log_path(path)
     try:
+        assert_runtime_gateway_write(log_path, GATEWAY_ROUTER_JSON, operation="append_runtime_json_write_lock_takeover")
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
@@ -194,6 +196,7 @@ def _record_json_write_lock_cleanup_failure(
     }
     log_path = _json_write_lock_cleanup_log_path(path)
     try:
+        assert_runtime_gateway_write(log_path, GATEWAY_ROUTER_JSON, operation="append_runtime_json_write_lock_cleanup_failure")
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with log_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")

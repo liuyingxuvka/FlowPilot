@@ -605,12 +605,12 @@
     ],
     "interpretation": "These are metadata-only findings. A dirty raw pending record is not necessarily an active blocker if the Router selector computes effective status from resolved_at/completed-return proof.",
     "ok": true,
-    "return_event_ledger_count": 8,
+    "return_event_ledger_count": 62,
     "skipped": false
   },
   "model": "flowpilot_terminal_state_monotonicity",
   "model_boundary": "control-plane terminal-state merge/idempotency; no production mutation and no sealed body inspection",
-  "ok": true,
+  "ok": false,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "ok": true,
@@ -688,12 +688,23 @@
   },
   "source_audit": {
     "card_runtime_path": "skills/flowpilot/assets/card_runtime.py",
-    "finding_count": 0,
-    "findings": [],
-    "ok": true,
-    "router_card_return_checks_write_resolved_completion": true,
+    "finding_count": 2,
+    "findings": [
+      {
+        "code": "pending_return_selector_status_only",
+        "severity": "error",
+        "summary": "Router pending-return selector does not visibly use resolved_at and completed-return proof."
+      },
+      {
+        "code": "card_return_check_does_not_record_terminal_completion",
+        "severity": "error",
+        "summary": "Router card-return checks do not visibly set resolved status and completed-return proof for both card and bundle returns."
+      }
+    ],
+    "ok": false,
+    "router_card_return_checks_write_resolved_completion": false,
     "router_path": "skills/flowpilot/assets/flowpilot_router.py",
-    "router_pending_selector_uses_completed_keys": true,
-    "router_pending_selector_uses_resolved_at": true
+    "router_pending_selector_uses_completed_keys": false,
+    "router_pending_selector_uses_resolved_at": false
   }
 }

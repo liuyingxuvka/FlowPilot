@@ -98,7 +98,7 @@ When the router returns a control blocker, Controller may deliver only the publi
 
 When the user asks to stop or cancel the active run, record `user_requests_run_stop` or `user_requests_run_cancel`, then follow the terminal lifecycle action. Do not continue route work after that.
 
-All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Current packet completions go directly to Router through the active-holder lease, and formal file-backed role outputs go through `flowpilot_runtime.py submit-output-to-router`. Controller follows Router daemon status and the Controller action ledger, then relays only Router-authorized metadata. Role-to-role work uses packet/mail ledgers, not shared prompt context.
+All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Current packet completions go directly to Router through the active-holder lease, and formal file-backed role outputs go through `flowpilot_runtime.py submit-output-to-router`. Fixed-router-event role outputs are never complete after a local `submit-output` receipt; the Router-directed command must record the Router event before the wait can close. Controller follows Router daemon status and the Controller action ledger, then relays only Router-authorized metadata. Role-to-role work uses packet/mail ledgers, not shared prompt context.
 
 ## Runtime Kit
 

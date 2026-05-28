@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_CARD_RUNTIME, assert_runtime_gateway_write
+
 
 CARD_ENVELOPE_SCHEMA = "flowpilot.card_envelope.v1"
 CARD_BUNDLE_ENVELOPE_SCHEMA = "flowpilot.card_bundle_envelope.v1"
@@ -43,6 +45,7 @@ def stable_json_hash(payload: dict[str, Any]) -> str:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
+    assert_runtime_gateway_write(path, GATEWAY_CARD_RUNTIME, operation="card_runtime_write_json")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 

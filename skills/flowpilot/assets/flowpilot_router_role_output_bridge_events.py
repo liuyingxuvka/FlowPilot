@@ -8,6 +8,7 @@ from types import ModuleType
 from typing import Any
 
 import role_output_runtime
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_router_errors import RouterError
 from flowpilot_router_protocol_catalog import *
 
@@ -304,6 +305,7 @@ def _record_role_output_replay_quarantine(router: ModuleType, project_root: Path
         "quarantined_at": router.utc_now(),
         "quarantine_path": router.project_relative(project_root, path),
     }
+    assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_role_output_replay_quarantine")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(summary, sort_keys=True) + "\n")

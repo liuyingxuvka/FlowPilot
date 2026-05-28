@@ -75,4 +75,5 @@ def submit_controller_boundary_confirmation(
         output_path=output_path or (run_root / "startup" / "controller_boundary_confirmation.json"),
         run_id=resolved_run_id,
         controller_status_packet_path=controller_status_packet_path,
+        router_directed_submission=False,
     )

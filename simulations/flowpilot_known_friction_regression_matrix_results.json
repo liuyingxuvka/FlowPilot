@@ -9,12 +9,18 @@
       "defect_family:packet_reissue_continuation",
       "defect_family:status_projection_stale",
       "defect_family:ack_false_blocker",
-      "defect_family:controlled_stop_reconciliation"
+      "defect_family:controlled_stop_reconciliation",
+      "defect_family:local_fixed_router_event_receipt_only",
+      "defect_family:resume_rehydration_postcondition_replay_miss",
+      "defect_family:control_blocker_same_family_storm",
+      "defect_family:protocol_dead_end_reopened_by_resume",
+      "defect_family:break_glass_patch_limbo",
+      "defect_family:heartbeat_diagnostic_only_resume"
     ],
     "gate_plan": {
-      "gate_count": 7,
+      "gate_count": 13,
       "plan_id": "flowpilot_known_friction_defect_families",
-      "proof_evidence_count": 7
+      "proof_evidence_count": 13
     },
     "gate_report": {
       "blocked_gate_ids": [],
@@ -29,7 +35,13 @@
         "defect_family:packet_reissue_continuation",
         "defect_family:status_projection_stale",
         "defect_family:ack_false_blocker",
-        "defect_family:controlled_stop_reconciliation"
+        "defect_family:controlled_stop_reconciliation",
+        "defect_family:local_fixed_router_event_receipt_only",
+        "defect_family:resume_rehydration_postcondition_replay_miss",
+        "defect_family:control_blocker_same_family_storm",
+        "defect_family:protocol_dead_end_reopened_by_resume",
+        "defect_family:break_glass_patch_limbo",
+        "defect_family:heartbeat_diagnostic_only_resume"
       ],
       "plan_id": "flowpilot_known_friction_defect_families",
       "scoped_gate_ids": [],
@@ -38,8 +50,8 @@
     "ok": true,
     "risk_ledger_plan": {
       "ledger_id": "flowpilot_known_friction_risk_ledger",
-      "proof_evidence_count": 7,
-      "row_count": 7
+      "proof_evidence_count": 13,
+      "row_count": 13
     },
     "risk_ledger_report": {
       "confidence": "full",
@@ -135,7 +147,27 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
           "message": "required known-friction row is missing"
         },
         {
@@ -155,6 +187,16 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.status_projection_stale",
           "message": "required known-friction row is missing"
         },
@@ -166,7 +208,22 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
           "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
         },
         {
           "code": "missing_source_class",
@@ -182,6 +239,21 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
         },
         {
           "code": "missing_source_class",
@@ -645,7 +717,27 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
           "message": "required known-friction row is missing"
         },
         {
@@ -665,6 +757,16 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.status_projection_stale",
           "message": "required known-friction row is missing"
         },
@@ -676,7 +778,22 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
           "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
         },
         {
           "code": "missing_source_class",
@@ -692,6 +809,21 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
         },
         {
           "code": "missing_source_class",
@@ -986,7 +1118,27 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
           "message": "required known-friction row is missing"
         },
         {
@@ -1006,6 +1158,16 @@
         },
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.status_projection_stale",
           "message": "required known-friction row is missing"
         },
@@ -1017,7 +1179,22 @@
         {
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
           "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
         },
         {
           "code": "missing_source_class",
@@ -1033,6 +1210,21 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
         },
         {
           "code": "missing_source_class",
@@ -1397,7 +1589,7 @@
     "scoped_confidence_disclosure"
   ],
   "ok": true,
-  "required_friction_count": 7,
+  "required_friction_count": 13,
   "required_global_gates": [
     "background_final_artifact_contract",
     "copied_runtime_kit_freshness",
@@ -1407,7 +1599,7 @@
     "scoped_confidence_disclosure"
   ],
   "result_type": "flowpilot_known_friction_regression_matrix",
-  "row_count": 7,
+  "row_count": 13,
   "rows": [
     {
       "child_evidence_ids": [
@@ -1683,10 +1875,246 @@
       "runtime_test": "tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
       "source_class": "daemon_lifecycle_stop_boundary",
       "trigger_state": "User stop/cancel or daemon release races current-run lifecycle projection and resume logic."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "role_output_runtime_matrix"
+      ],
+      "defect_family_authority_boundary": "role_output_runtime submit-output / submit-output-to-router boundary + Router event recorder",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:local_fixed_router_event_receipt_only",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Local-only submission is rejected for fixed-event outputs; the role must use the Router-directed runtime path that records both receipt and Router event evidence before any blocker can close.",
+      "forbidden_shortcuts": [
+        "treat_local_receipt_as_router_event",
+        "close_control_blocker_before_fixed_router_event_records"
+      ],
+      "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+      "full_confidence_boundary": "Covers fixed Router-event output transaction boundaries and local-only rejection; does not prove semantic correctness of the PM decision body.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "copied_runtime_kit_freshness",
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 recorded repeated PM control-blocker repair receipts through the local submit-output entrypoint, but the fixed Router event was not recorded as the authoritative state transition.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_role_output_runtime_checks.py",
+      "model_obligation": "role_output_runtime.accepted_outputs_submit_directly_to_router",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.pm_control_blocker_repair_receipt_without_router_event",
+      "runtime_surface": "role_output_runtime submit-output / submit-output-to-router boundary + Router event recorder",
+      "runtime_test": "tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_fixed_router_event_output_requires_router_directed_submission",
+      "source_class": "local_role_output_receipt_without_router_event",
+      "trigger_state": "A formal role-output contract has a fixed Router event and the role tries to close the obligation through a local receipt path."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "resume_rehydration_replay"
+      ],
+      "defect_family_authority_boundary": "startup resume binding reports + Controller scheduler receipt reconciliation",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:resume_rehydration_postcondition_replay_miss",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router validates the current-run crew rehydration report, reclaims the resume postcondition idempotently, and only opens a blocker when current-run evidence is absent or invalid.",
+      "forbidden_shortcuts": [
+        "ignore_current_run_crew_rehydration_report",
+        "open_rehydrate_blocker_before_replay_scan"
+      ],
+      "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+      "full_confidence_boundary": "Covers current-run six-role report replay and invalid-report blocking; does not prove host agents stay alive forever after rehydration.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 had a valid six-role rehydration report, but a later receipt replay did not restore resume_roles_restored and reopened a mechanical control blocker.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_resume_checks.py",
+      "model_obligation": "resume.resume_rehydration_obligations_replayed_mechanically",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.crew_rehydration_report_ready_but_resume_flags_false",
+      "runtime_surface": "startup resume binding reports + Controller scheduler receipt reconciliation",
+      "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+      "source_class": "resume_rehydration_postcondition_replay",
+      "trigger_state": "Heartbeat/manual resume sees a done rehydrate_role_agents receipt or report while run-state flags are stale or incomplete."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "control_blocker_family_runtime"
+      ],
+      "defect_family_authority_boundary": "control blocker write path, active index summaries, PM repair decision terminal disposition",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:control_blocker_same_family_storm",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router computes a same-family key before writing, reuses active or PM-pending family records, and still materializes distinct blockers for distinct causes.",
+      "forbidden_shortcuts": [
+        "write_new_blocker_for_same_family_pending_pm",
+        "swallow_distinct_blocker_with_old_family_record"
+      ],
+      "friction_id": "known_friction.control_blocker_same_family_storm",
+      "full_confidence_boundary": "Covers same-family blocker coalescing and distinct-cause materialization for the audited control paths; does not prove every future blocker schema has a perfect family key.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 accumulated hundreds of blockers with the same mechanical_control_plane_reissue family key instead of preserving one active PM/control repair state.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+      "model_obligation": "control_plane_friction.control_blocker_action_identity_bound_to_artifact + control_blocker.family_key_coalescing",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.repeated_mechanical_control_plane_reissue_family",
+      "runtime_surface": "control blocker write path, active index summaries, PM repair decision terminal disposition",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
+      "source_class": "same_family_control_blocker_repetition",
+      "trigger_state": "The same responsible role, action type, stage, postcondition, and error class fails repeatedly during heartbeat/manual resume."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "terminal_state_monotonicity"
+      ],
+      "defect_family_authority_boundary": "PM repair decision handler + control blocker family lookup + daemon terminal projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:protocol_dead_end_reopened_by_resume",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router writes durable protocol-dead-end lifecycle evidence, marks the run state terminal/protocol-dead-end, and suppresses same-family reopen during resume.",
+      "forbidden_shortcuts": [
+        "reopen_protocol_dead_end_family_on_resume",
+        "report_terminal_protocol_state_as_live_work"
+      ],
+      "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+      "full_confidence_boundary": "Covers same-family protocol-dead-end suppression and terminal status projection; does not prove the PM chose the right protocol-dead-end disposition semantically.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 recorded PM protocol-dead-end / terminal-stop decisions, but heartbeat/manual resume could still reopen the same blocker family instead of surfacing the terminal protocol boundary.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+      "model_obligation": "control_plane_friction.control_blocker_done_receipt_applies_delivery_postcondition + control_blocker.protocol_dead_end_terminal_disposition",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.protocol_dead_end_decision_reopened_by_heartbeat",
+      "runtime_surface": "PM repair decision handler + control blocker family lookup + daemon terminal projection",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+      "source_class": "protocol_dead_end_resume_reactivation",
+      "trigger_state": "A same-family control blocker already has a terminal protocol-dead-end disposition and a resume tick replays the old failure."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "controller_break_glass_model"
+      ],
+      "defect_family_authority_boundary": "controller_break_glass incident index + recovery transaction + patch validation/finalization",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:break_glass_patch_limbo",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Break-glass closure requires normal-lane exclusion, incident/recovery linkage, validation evidence for permanent fixes, or an explicit blocked/quarantined disposition that keeps permanent_fix_needed visible.",
+      "forbidden_shortcuts": [
+        "close_permanent_fix_with_not_run_validation",
+        "hide_open_break_glass_incident_as_normal_standby"
+      ],
+      "friction_id": "known_friction.break_glass_patch_limbo",
+      "full_confidence_boundary": "Covers break-glass patch validation, quarantine, blocked, and recovery-link closure paths; does not authorize Controller to perform target-project work.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 left a break-glass incident open with a patch listed as validation not_run and no durable recovery transaction or blocked/quarantined closure path.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_controller_break_glass_checks.py",
+      "model_obligation": "flowpilot_controller_break_glass.patch_validation_before_return_to_normal",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.break_glass_open_patch_validation_not_run",
+      "runtime_surface": "controller_break_glass incident index + recovery transaction + patch validation/finalization",
+      "runtime_test": "tests.test_flowpilot_controller_break_glass.FlowPilotControllerBreakGlassTests.test_break_glass_close_rejects_unvalidated_permanent_patch",
+      "source_class": "break_glass_unvalidated_patch_closure",
+      "trigger_state": "Controller uses the break-glass lane for a FlowPilot control-plane defect and records a patch or recovery transaction."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "daemon_liveness_model"
+      ],
+      "defect_family_authority_boundary": "router daemon status control_projection + heartbeat/manual resume attach/recover path",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:heartbeat_diagnostic_only_resume",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Heartbeat records the wake, then Controller checks current daemon process/lock/status and action ledger, attaches or restores only after that check, and never claims work-chain liveness from old route state or wait-agent timeout.",
+      "forbidden_shortcuts": [
+        "treat_wait_agent_timeout_as_live_agent",
+        "start_second_router_writer_while_live_lock_exists"
+      ],
+      "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+      "full_confidence_boundary": "Covers stale-heartbeat attach/recover authority and status projection boundaries; does not prove host scheduler delivery under all Codex desktop failures.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 heartbeat wakes recorded diagnostic or launcher work but did not stay attached to current daemon/action-ledger evidence long enough to expose real Controller work or a terminal boundary.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_daemon_liveness_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+      "model_obligation": "daemon_liveness.controller_checks_delayed_heartbeat + resume.resume_wake_recorded_to_router",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.heartbeat_wake_without_current_daemon_authority",
+      "runtime_surface": "router daemon status control_projection + heartbeat/manual resume attach/recover path",
+      "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
+      "source_class": "heartbeat_resume_diagnostic_only_loop",
+      "trigger_state": "Heartbeat/manual resume fires after daemon heartbeat is stale, old chat state still looks active, or wait-agent timeout is tempting to treat as liveness."
     }
   ],
   "rows_by_priority": {
-    "P0": 5,
+    "P0": 11,
     "P1": 2
   }
 }

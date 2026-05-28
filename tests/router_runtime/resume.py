@@ -240,6 +240,10 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             recovery = action["router_daemon_resume_recovery"]
             self.assertTrue(recovery["router_daemon_lock_live"])
             self.assertEqual(recovery["decision"], "attach_controller_to_live_daemon")
+            self.assertFalse(recovery["work_chain_liveness_claimed"])
+            self.assertEqual(recovery["liveness_authority"], "current_daemon_lock_process_and_controller_action_ledger")
+            self.assertTrue(recovery["old_route_state_liveness_rejected"])
+            self.assertTrue(recovery["wait_agent_timeout_liveness_rejected"])
             self.assertIn(self.rel(root, run_root / "runtime" / "router_daemon_status.json"), action["allowed_reads"])
             self.assertIn(self.rel(root, run_root / "runtime" / "controller_action_ledger.json"), action["allowed_reads"])
 
@@ -269,6 +273,9 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(recovery["router_daemon_active_owner_live"])
         self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
         self.assertEqual(recovery["decision"], "attach_controller_to_live_daemon")
+        self.assertFalse(recovery["work_chain_liveness_claimed"])
+        self.assertTrue(recovery["old_route_state_liveness_rejected"])
+        self.assertTrue(recovery["wait_agent_timeout_liveness_rejected"])
 
         router.apply_action(root, "load_resume_state")
         resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
@@ -295,6 +302,8 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(recovery["router_daemon_active_owner_live"])
         self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
         self.assertEqual(recovery["decision"], "restart_router_daemon_from_current_state")
+        self.assertFalse(recovery["work_chain_liveness_claimed"])
+        self.assertTrue(recovery["wait_agent_timeout_liveness_rejected"])
 
         router.apply_action(root, "load_resume_state")
         resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
@@ -579,6 +588,57 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(state["flags"]["resume_roles_restored"])
         self.assertEqual(state["active_control_blocker"]["originating_action_type"], "rehydrate_role_agents")
         self.assertNotEqual((state.get("pending_action") or {}).get("action_type"), "rehydrate_role_agents")
+
+    def test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        self.complete_startup_activation(root)
+        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
+        router.apply_action(root, "load_resume_state")
+        original_action = self.next_after_display_sync(root)
+        self.assertEqual(original_action["action_type"], "rehydrate_role_agents")
+        router.apply_action(root, "rehydrate_role_agents", self.resume_role_agent_payload(root, original_action))
+        report = read_json(run_root / "continuation" / "crew_rehydration_report.json")
+        self.assertTrue(report["all_six_roles_ready"])
+        self.assertTrue(report["current_run_memory_complete"])
+
+        state = read_json(router.run_state_path(run_root))
+        state["flags"]["resume_roles_restored"] = False
+        state["flags"]["resume_role_agents_rehydrated"] = False
+        state["flags"]["crew_rehydration_report_written"] = False
+        stale_action = router.make_action(
+            action_type="rehydrate_role_agents",
+            actor="controller",
+            label="host_rehydrates_resume_roles_before_pm_decision_stale_projection",
+            summary="Stale projection whose current-run crew report already exists.",
+            extra={"postcondition": "resume_roles_restored"},
+        )
+        state["pending_action"] = stale_action
+        entry = router._write_controller_action_entry(root, run_root, state, stale_action)  # type: ignore[attr-defined]
+        router.save_run_state(run_root, state)
+        router.record_controller_action_receipt(
+            root,
+            action_id=entry["action_id"],
+            status="done",
+            payload={"roles_rehydrated": 6},
+        )
+
+        next_action = self.next_after_display_sync(root)
+
+        self.assertNotEqual(next_action["action_type"], "handle_control_blocker")
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertTrue(state["flags"]["resume_role_agents_rehydrated"])
+        self.assertTrue(state["flags"]["crew_rehydration_report_written"])
+        self.assertIsNone(state.get("active_control_blocker"))
+        refreshed = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
+        self.assertEqual(refreshed["router_reconciliation_status"], "reconciled")
+        self.assertEqual(
+            refreshed["router_reconciliation"]["source"],
+            "controller_receipt_resume_rehydration_report_reclaim",
+        )
+
     def test_role_no_output_report_reissues_same_work_before_role_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

@@ -12,6 +12,14 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase, read_jso
 from tests.synthetic_agent_trace_replay import SyntheticTracePackage, start_worker_trace
 
 
+HISTORICAL_METADATA_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "fixtures"
+    / "flowpilot"
+    / "run-20260527-212331-control-plane-metadata.json"
+)
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -118,7 +126,74 @@ def _display_projection_is_authoritative(state: dict[str, Any], projection: dict
     return {"authoritative": not reasons, "reasons": reasons}
 
 
+def _fixed_router_event_receipts_are_authoritative(fixture: dict[str, Any]) -> dict[str, Any]:
+    receipts = fixture["fixed_router_event_receipts"]
+    reasons: list[str] = []
+    if receipts.get("local_submit_output_receipts", 0) and not receipts.get("router_directed_receipts", 0):
+        reasons.append("local_submit_output_receipts_are_not_router_events")
+    if receipts.get("router_event_records", 0) < receipts.get("local_submit_output_receipts", 0):
+        reasons.append("router_event_count_does_not_match_receipt_count")
+    if receipts.get("local_receipt_closes_blocker") is True:
+        reasons.append("local_receipt_was_allowed_to_close_blocker")
+    return {"authoritative": not reasons, "reasons": reasons}
+
+
+def _same_family_control_blockers_are_collapsed(fixture: dict[str, Any]) -> dict[str, Any]:
+    blockers = fixture["control_blockers"]
+    reasons: list[str] = []
+    if blockers.get("same_family_should_collapse_to_one_active_or_terminal_record") is not True:
+        reasons.append("fixture_does_not_expect_same_family_collapse")
+    if blockers.get("dominant_family_count", 0) > 1:
+        reasons.append("same_family_blockers_were_materialized_repeatedly")
+    return {"collapsed": not reasons, "reasons": reasons}
+
+
+def _break_glass_incident_has_closed_evidence(fixture: dict[str, Any]) -> dict[str, Any]:
+    break_glass = fixture["break_glass"]
+    reasons: list[str] = []
+    if break_glass.get("open_incidents", 0):
+        reasons.append("break_glass_incident_still_open")
+    if not break_glass.get("recovery_transactions"):
+        reasons.append("break_glass_recovery_transaction_missing")
+    if break_glass.get("patch_validation_status") == "not_run":
+        reasons.append("break_glass_patch_validation_not_run")
+    return {"covered": not reasons, "reasons": reasons}
+
+
 class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
+    def test_run_20260527_metadata_fixture_contains_no_sealed_bodies(self) -> None:
+        fixture = json.loads(HISTORICAL_METADATA_FIXTURE.read_text(encoding="utf-8"))
+
+        self.assertEqual(fixture["run_id"], "run-20260527-212331")
+        self.assertEqual(fixture["fixture_scope"], "controller_visible_control_plane_metadata_only")
+        self.assertFalse(fixture["sealed_body_policy"]["contains_sealed_packet_bodies"])
+        self.assertFalse(fixture["sealed_body_policy"]["contains_sealed_result_bodies"])
+        self.assertFalse(fixture["sealed_body_policy"]["contains_sealed_report_bodies"])
+
+    def test_run_20260527_local_pm_receipts_without_router_event_do_not_close_blocker(self) -> None:
+        fixture = json.loads(HISTORICAL_METADATA_FIXTURE.read_text(encoding="utf-8"))
+
+        gate = _fixed_router_event_receipts_are_authoritative(fixture)
+        self.assertFalse(gate["authoritative"])
+        self.assertIn("local_submit_output_receipts_are_not_router_events", gate["reasons"])
+        self.assertIn("router_event_count_does_not_match_receipt_count", gate["reasons"])
+
+    def test_run_20260527_same_family_blocker_storm_is_not_a_valid_new_blocker_series(self) -> None:
+        fixture = json.loads(HISTORICAL_METADATA_FIXTURE.read_text(encoding="utf-8"))
+
+        gate = _same_family_control_blockers_are_collapsed(fixture)
+        self.assertFalse(gate["collapsed"])
+        self.assertIn("same_family_blockers_were_materialized_repeatedly", gate["reasons"])
+
+    def test_run_20260527_break_glass_limbo_is_reported_as_uncovered(self) -> None:
+        fixture = json.loads(HISTORICAL_METADATA_FIXTURE.read_text(encoding="utf-8"))
+
+        gate = _break_glass_incident_has_closed_evidence(fixture)
+        self.assertFalse(gate["covered"])
+        self.assertIn("break_glass_incident_still_open", gate["reasons"])
+        self.assertIn("break_glass_recovery_transaction_missing", gate["reasons"])
+        self.assertIn("break_glass_patch_validation_not_run", gate["reasons"])
+
     def test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence(self) -> None:
         root = self.make_project()
         run_a = self.write_minimal_run(root, "run-historical-a")

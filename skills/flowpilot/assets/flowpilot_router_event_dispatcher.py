@@ -27,6 +27,7 @@ import flowpilot_router_role_output_bridge_events as role_output_bridge_events
 import flowpilot_user_flow_diagram
 import packet_runtime
 import role_output_runtime
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
@@ -113,6 +114,7 @@ def _quarantine_direct_scoped_event_conflict(
     if not already_quarantined:
         rows.append(record)
         path = run_root / "runtime" / "direct_event_replay_quarantine.jsonl"
+        assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_direct_event_replay_quarantine")
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")

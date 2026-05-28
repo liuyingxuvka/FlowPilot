@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=8 initial_states=1 traces=180",
+    "summary": "sequences=9 initial_states=1 traces=225",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -88,11 +88,25 @@
           "temporary break-glass patch was used without a patch record"
         ]
       },
+      "missing_patch_validation": {
+        "detected": true,
+        "expected_failure": "without closed validation",
+        "failures": [
+          "break-glass patch returned to normal flow without closed validation, blocked, or quarantined disposition"
+        ]
+      },
       "missing_playbook_read": {
         "detected": true,
         "expected_failure": "without reading the playbook",
         "failures": [
           "break-glass opened without reading the playbook"
+        ]
+      },
+      "missing_recovery_transaction": {
+        "detected": true,
+        "expected_failure": "lacked a recovery transaction",
+        "failures": [
+          "break-glass closure lacked a recovery transaction or explicit blocked/quarantined disposition"
         ]
       },
       "missing_return_to_normal": {
@@ -116,6 +130,14 @@
           "break-glass opened without a FlowPilot control-plane failure",
           "ordinary project defect used break-glass"
         ]
+      },
+      "patch_validation_not_run": {
+        "detected": true,
+        "expected_failure": "validation stayed not_run",
+        "failures": [
+          "break-glass patch returned to normal flow without closed validation, blocked, or quarantined disposition",
+          "break-glass patch validation stayed not_run"
+        ]
       }
     },
     "ok": true
@@ -133,7 +155,7 @@
       "event_authority_contradiction",
       "pm_packet_repair_lane_broken"
     ],
-    "edge_count": 20,
+    "edge_count": 21,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -141,6 +163,6 @@
       "normal_pm_repair_available",
       "ordinary_project_bug"
     ],
-    "state_count": 21
+    "state_count": 22
   }
 }

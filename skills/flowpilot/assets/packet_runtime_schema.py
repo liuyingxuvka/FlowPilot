@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import barrier_bundle
+from flowpilot_runtime_gateway import GATEWAY_PACKET_RUNTIME, assert_runtime_gateway_write
 
 
 PACKET_ENVELOPE_SCHEMA = "flowpilot.packet_envelope.v1"
@@ -293,6 +294,11 @@ def _release_json_write_lock(lock_path: Path) -> None:
 
 
 def _write_bytes_atomic(path: Path, payload: bytes, *, verify_json: bool = False) -> None:
+    assert_runtime_gateway_write(
+        path,
+        GATEWAY_PACKET_RUNTIME,
+        operation="write_json_atomic" if verify_json else "write_text_atomic",
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = _acquire_json_write_lock(path)
     tmp_path = path.with_name(f".tmp-{path.name}-{os.getpid()}-{time.time_ns():x}")

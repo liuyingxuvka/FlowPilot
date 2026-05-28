@@ -81,6 +81,14 @@ def open_recovery_transaction(
         "final_disposition": None,
     }
     tx_ref = core._save_recovery_transaction(project_root, run_root, transaction)
+    incident_path = core.break_glass_root(run_root) / "incidents" / f"{incident_id}.json"
+    incident = core.read_json(incident_path)
+    if incident.get("schema_version") == core.INCIDENT_SCHEMA:
+        related = list(incident.get("related_recovery_transaction_ids") or [])
+        if transaction_id not in related:
+            related.append(transaction_id)
+        incident["related_recovery_transaction_ids"] = related
+        core.write_json(incident_path, incident)
     index = core.load_index(run_root)
     index["recovery_transactions"] = [
         item for item in index.get("recovery_transactions", []) if item.get("transaction_id") != transaction_id

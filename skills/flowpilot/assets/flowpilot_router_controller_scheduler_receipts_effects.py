@@ -111,6 +111,21 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
             return {'applied': True, 'postcondition': 'role_recovery_roles_restored', 'source': 'controller_receipt_role_recovery_report_write'}
         return router._reclaim_role_recovery_postcondition_from_report(project_root, run_root, run_state, source='controller_receipt_role_recovery_report_reclaim')
     if action_type == 'rehydrate_role_agents':
+        has_rehydration_payload = 'rehydrated_role_agents' in receipt_payload or 'role_agents' in receipt_payload
+        has_report_reference = any(
+            isinstance(receipt_payload.get(key), str) and str(receipt_payload.get(key)).strip()
+            for key in ('crew_rehydration_report_path', 'report_path', 'rehydration_report_path')
+        )
+        if has_report_reference or not has_rehydration_payload:
+            reclaim = router._reclaim_resume_rehydration_postcondition_from_report(
+                project_root,
+                run_root,
+                run_state,
+                source='controller_receipt_resume_rehydration_report_reclaim',
+                payload=receipt_payload,
+            )
+            if reclaim.get('applied'):
+                return reclaim
         router._write_resume_role_rehydration_report(project_root, run_root, run_state, receipt_payload)
         return {'applied': True, 'postcondition': 'resume_roles_restored'}
     if action_type == 'confirm_controller_core_boundary' or (action_type == CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE and str(pending_action.get('repair_target_action_type') or '') == 'confirm_controller_core_boundary'):

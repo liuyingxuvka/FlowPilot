@@ -25,7 +25,7 @@ NEGATIVE_SCENARIOS = (
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 PATCH_SCENARIOS = {"control_flow_stuck_no_legal_next_action"}
-MAX_SEQUENCE_LENGTH = 8
+MAX_SEQUENCE_LENGTH = 9
 
 
 @dataclass(frozen=True)
@@ -41,15 +41,17 @@ class Action:
 @dataclass(frozen=True)
 class State:
     scenario: str = "none"
-    status: str = "new"  # new | assessed | incident_open | patch_recorded | returned | disclosed | accepted | rejected
+    status: str = "new"  # new | assessed | incident_open | patch_recorded | patch_validated | returned | disclosed | accepted | rejected
     flowpilot_control_failure: bool = False
     ordinary_project_defect: bool = False
     normal_repair_available: bool = False
     normal_lanes_checked: bool = False
     playbook_read: bool = False
     incident_recorded: bool = False
+    recovery_transaction_recorded: bool = False
     patch_used: bool = False
     patch_recorded: bool = False
+    patch_validation_status: str = "none"  # none | pending | passed | blocked | quarantined | not_run
     returned_to_normal_flow: bool = False
     final_disclosed: bool = False
 
@@ -140,12 +142,28 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (
             Transition(
                 f"open_incident_{state.scenario}",
-                replace(state, status="incident_open", playbook_read=True, incident_recorded=True),
+                replace(
+                    state,
+                    status="incident_open",
+                    playbook_read=True,
+                    incident_recorded=True,
+                    recovery_transaction_recorded=True,
+                ),
             ),
         )
     if state.status == "incident_open":
         if state.patch_used and not state.patch_recorded:
-            return (Transition(f"record_patch_{state.scenario}", replace(state, status="patch_recorded", patch_recorded=True)),)
+            return (
+                Transition(
+                    f"record_patch_{state.scenario}",
+                    replace(
+                        state,
+                        status="patch_recorded",
+                        patch_recorded=True,
+                        patch_validation_status="pending",
+                    ),
+                ),
+            )
         return (
             Transition(
                 f"return_to_normal_{state.scenario}",
@@ -153,6 +171,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
     if state.status == "patch_recorded":
+        return (
+            Transition(
+                f"record_patch_validation_{state.scenario}",
+                replace(state, status="patch_validated", patch_validation_status="passed"),
+            ),
+        )
+    if state.status == "patch_validated":
         return (
             Transition(
                 f"return_to_normal_{state.scenario}",
@@ -187,7 +212,7 @@ def policy_failures(state: State) -> list[str]:
         failures.append("Controller break-glass published or deployed")
     if state.controller_handled_secret:
         failures.append("Controller break-glass handled secrets or private account data")
-    if state.status in {"incident_open", "patch_recorded", "returned", "disclosed", "accepted"}:
+    if state.status in {"incident_open", "patch_recorded", "patch_validated", "returned", "disclosed", "accepted"}:
         if not state.playbook_read:
             failures.append("break-glass opened without reading the playbook")
         if not state.normal_lanes_checked:
@@ -200,8 +225,15 @@ def policy_failures(state: State) -> list[str]:
             failures.append("normal PM repair lane was available but break-glass was used")
         if not state.incident_recorded:
             failures.append("break-glass used without an incident record")
+        if not state.recovery_transaction_recorded:
+            failures.append("break-glass closure lacked a recovery transaction or explicit blocked/quarantined disposition")
     if state.patch_used and state.status in {"returned", "disclosed", "accepted"} and not state.patch_recorded:
         failures.append("temporary break-glass patch was used without a patch record")
+    if state.patch_used and state.status in {"returned", "disclosed", "accepted"}:
+        if state.patch_validation_status not in {"passed", "blocked", "quarantined"}:
+            failures.append("break-glass patch returned to normal flow without closed validation, blocked, or quarantined disposition")
+        if state.patch_validation_status == "not_run":
+            failures.append("break-glass patch validation stayed not_run")
     if state.status in {"disclosed", "accepted"} and not state.returned_to_normal_flow:
         failures.append("break-glass did not return to normal Controller flow")
     if state.status == "accepted" and not state.final_disclosed:
@@ -253,8 +285,10 @@ def _accepted_valid_state() -> State:
         normal_lanes_checked=True,
         playbook_read=True,
         incident_recorded=True,
+        recovery_transaction_recorded=True,
         patch_used=True,
         patch_recorded=True,
+        patch_validation_status="passed",
         returned_to_normal_flow=True,
         final_disclosed=True,
     )
@@ -268,7 +302,10 @@ def hazard_states() -> dict[str, State]:
         "missing_normal_lane_check": replace(base, normal_lanes_checked=False),
         "missing_playbook_read": replace(base, playbook_read=False),
         "missing_incident_record": replace(base, incident_recorded=False),
+        "missing_recovery_transaction": replace(base, recovery_transaction_recorded=False),
         "missing_patch_record": replace(base, patch_recorded=False),
+        "missing_patch_validation": replace(base, patch_validation_status="pending"),
+        "patch_validation_not_run": replace(base, patch_validation_status="not_run"),
         "missing_return_to_normal": replace(base, returned_to_normal_flow=False),
         "missing_final_disclosure": replace(base, final_disclosed=False),
         "controller_reads_sealed_body": replace(base, controller_read_sealed_body=True),

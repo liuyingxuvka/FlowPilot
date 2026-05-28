@@ -67,6 +67,15 @@ Patch records capture touched paths, temporary compensation, validation
 evidence, rollback notes, final disposition, and whether a permanent root fix is
 needed.
 
+Incidents may leave open status only through an explicit closure path:
+
+- a linked Recovery Supervisor transaction that is already closed;
+- validated patch closure where success dispositions have closed validation
+  evidence and no `not_run` validation placeholders;
+- diagnostic-only closure when no patch was used;
+- weak-evidence quarantine;
+- explicit blocked/manual-repair disposition.
+
 ## Completion Boundary
 
 Break-glass can restore the control channel, but it cannot close route gates,

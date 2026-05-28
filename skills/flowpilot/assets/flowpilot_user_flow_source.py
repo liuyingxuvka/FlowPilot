@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_USER_FLOW, assert_runtime_gateway_write
 from flowpilot_user_flow_tree import _all_route_nodes, _route_display_depth, _snapshot_route
 
 
@@ -100,6 +101,7 @@ def _load_route_source(
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    assert_runtime_gateway_write(path, GATEWAY_USER_FLOW, operation="user_flow_write_json")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 

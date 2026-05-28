@@ -3,7 +3,7 @@ recipient_role: controller
 recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as Controller for a current FlowPilot run whose normal control flow appears broken.
 forbidden_scope: Do not treat this card as authority for project implementation, gate approval, route mutation, PM decisions, reviewer decisions, officer decisions, worker output, sealed packet/result body access, publication, deployment, secret handling, or any run other than the current run.
-required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an incident record, patch record, validation record, output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path.
 work_authority: This emergency playbook may be used only after the current Router/Controller flow cannot produce a legal next action and normal PM/control-blocker/packet repair is unavailable or contradictory. It does not authorize PM, reviewer, officer, worker, route, gate, product, release, or sealed-body work.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only. If an active-holder lane is present, wait for Router's controller_next_action_notice.json before relaying or resuming normal work.
@@ -241,14 +241,26 @@ The patch must record:
 - whether the patch is temporary or proposed permanent source change;
 - validation commands or evidence;
 - rollback notes;
-- final disposition: reverted, kept for current run only, promoted to root
-  fix candidate, or superseded.
+- current validation status. Planned commands with `result: not_run` are
+  pending evidence, not proof of repair;
+- final disposition: permanent fix applied, superseded by permanent fix,
+  rolled back, diagnostic-only no patch, weak-evidence quarantine, or explicit
+  blocked/manual-repair disposition.
 
 ## Exit Rule
 
 Exit break-glass as soon as the control channel can produce a legal normal next
 action. Return to Router daemon status and Controller action ledger processing.
 Do not mark any route gate complete from break-glass evidence alone.
+
+An incident may leave open status only through one of these closure paths:
+
+- a closed Recovery Supervisor transaction linked to the incident;
+- validated patch closure where repair/supersede claims have closed validation
+  evidence, not `not_run` placeholders;
+- diagnostic-only closure when no patch was used;
+- weak-evidence quarantine;
+- explicit blocked/manual-repair disposition.
 
 For Recovery Supervisor mode, exit only after the recovery transaction is
 closed, same-family FlowGuard proof is recorded, current blockers are no longer

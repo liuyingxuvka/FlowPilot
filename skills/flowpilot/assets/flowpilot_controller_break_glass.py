@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_BREAK_GLASS, assert_runtime_gateway_write
+
 
 INCIDENT_SCHEMA = "flowpilot.controller_break_glass_incident.v1"
 PATCH_SCHEMA = "flowpilot.controller_break_glass_patch.v1"
@@ -21,6 +23,25 @@ RECOVERY_TRANSACTION_SCHEMA = "flowpilot.recovery_supervisor_transaction.v1"
 CONTROL_BLOCKER_LEDGER_SCHEMA = "flowpilot.control_plane_blocker_ledger.v1"
 BODY_ACCESS_GRANT_SCHEMA = "flowpilot.recovery_supervisor_body_access_grant.v1"
 CONTROLLER_REINJECTION_SCHEMA = "flowpilot.controller_reinjection.v1"
+
+PATCH_SUCCESS_DISPOSITIONS = {
+    "permanent_fix_applied",
+    "superseded_by_permanent_fix",
+}
+PATCH_NON_SUCCESS_DISPOSITIONS = {
+    "rolled_back",
+    "diagnostic_only_no_patch",
+    "weak_evidence_quarantined",
+    "blocked_requires_manual_repair",
+}
+PATCH_FINAL_DISPOSITIONS = PATCH_SUCCESS_DISPOSITIONS | PATCH_NON_SUCCESS_DISPOSITIONS
+PATCH_VALIDATION_CLOSED_RESULTS = {
+    "passed",
+    "skipped_with_reason",
+    "not_applicable",
+}
+INCIDENT_BLOCKED_DISPOSITIONS = {"blocked_requires_manual_repair"}
+INCIDENT_QUARANTINE_DISPOSITIONS = {"weak_evidence_quarantined"}
 
 
 def utc_now() -> str:
@@ -34,6 +55,7 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
+    assert_runtime_gateway_write(path, GATEWAY_BREAK_GLASS, operation="break_glass_write_json")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
@@ -153,6 +175,78 @@ def _source_records(project_root: Path, sources: list[str], *, body_read: bool =
             }
         )
     return records
+
+
+def _patch_validation_status(patch: dict[str, Any]) -> str:
+    evidence = patch.get("validation_evidence")
+    if not isinstance(evidence, list) or not evidence:
+        return "not_required" if patch.get("patch_kind") == "diagnostic_only" else "pending"
+    results = [str(item.get("result") or "not_run") for item in evidence if isinstance(item, dict)]
+    if not results:
+        return "not_required" if patch.get("patch_kind") == "diagnostic_only" else "pending"
+    if any(result in {"failed", "error"} for result in results):
+        return "failed"
+    if any(result == "not_run" for result in results):
+        return "pending"
+    if all(result in PATCH_VALIDATION_CLOSED_RESULTS for result in results):
+        return "closed"
+    return "review_required"
+
+
+def _validate_patch_finalization(patch: dict[str, Any], *, disposition: str) -> None:
+    if disposition not in PATCH_FINAL_DISPOSITIONS:
+        raise SystemExit(f"Unsupported break-glass patch disposition: {disposition}")
+    validation_status = _patch_validation_status(patch)
+    if disposition in PATCH_SUCCESS_DISPOSITIONS and validation_status != "closed":
+        raise SystemExit(
+            "Cannot finalize break-glass patch as repaired while validation is "
+            f"{validation_status}; record validation evidence or use blocked/quarantine disposition."
+        )
+    if disposition == "diagnostic_only_no_patch" and patch.get("patch_kind") != "diagnostic_only":
+        raise SystemExit("diagnostic_only_no_patch disposition requires a diagnostic-only patch record.")
+
+
+def _closed_recovery_transactions(run_root: Path, transaction_ids: list[str]) -> list[str]:
+    closed: list[str] = []
+    for transaction_id in transaction_ids:
+        transaction = read_json(recovery_transaction_path(run_root, transaction_id))
+        if transaction.get("schema_version") == RECOVERY_TRANSACTION_SCHEMA and transaction.get("status") == "closed":
+            closed.append(safe_id(str(transaction_id), "recovery"))
+    return closed
+
+
+def _incident_closure_review(run_root: Path, incident: dict[str, Any], *, disposition: str) -> dict[str, Any]:
+    patch_ids = [str(item) for item in incident.get("related_patch_ids") or []]
+    transaction_ids = [str(item) for item in incident.get("related_recovery_transaction_ids") or []]
+    closed_transactions = _closed_recovery_transactions(run_root, transaction_ids)
+    if closed_transactions:
+        return {
+            "closure_path": "closed_recovery_transaction",
+            "closed_recovery_transaction_ids": closed_transactions,
+        }
+    if disposition in INCIDENT_BLOCKED_DISPOSITIONS:
+        return {"closure_path": "blocked_disposition"}
+    if disposition in INCIDENT_QUARANTINE_DISPOSITIONS:
+        return {"closure_path": "weak_evidence_quarantine"}
+    if not patch_ids:
+        if disposition == "diagnostic_only_no_patch":
+            return {"closure_path": "validated_diagnostic_closure"}
+        raise SystemExit(
+            "Break-glass incident closure requires a recovery transaction, "
+            "validated patch, diagnostic-only disposition, quarantine, or explicit blocked disposition."
+        )
+    pending: list[dict[str, str]] = []
+    for patch_id in patch_ids:
+        patch = read_json(break_glass_root(run_root) / "patches" / f"{safe_id(patch_id, 'patch')}.json")
+        status = _patch_validation_status(patch)
+        if disposition in PATCH_SUCCESS_DISPOSITIONS and status != "closed":
+            pending.append({"patch_id": patch_id, "validation_status": status})
+    if pending:
+        raise SystemExit(
+            "Break-glass incident has patch validation that is not closed: "
+            + ", ".join(f"{item['patch_id']}={item['validation_status']}" for item in pending)
+        )
+    return {"closure_path": "validated_patch_closure"}
 
 
 def record_control_plane_blocker(
@@ -286,6 +380,7 @@ def open_incident(
             "Controller returns to Router daemon status and action ledger processing",
         ],
         "related_patch_ids": [],
+        "related_recovery_transaction_ids": [],
         "closed_at": None,
         "final_disposition": None,
     }
@@ -345,6 +440,7 @@ def record_patch(
             {"kind": "command", "path": None, "command": command, "result": "not_run", "summary": "Planned validation command."}
             for command in validation
         ],
+        "validation_status": "pending" if validation else "not_required",
         "rollback": {
             "required": True,
             "notes": "Use git diff for source patches or supersede with a permanent FlowPilot root fix.",
@@ -372,12 +468,64 @@ def record_patch(
     return {"ok": True, "patch": patch, "patch_path": str(patch_path)}
 
 
+def record_patch_validation(
+    project_root: Path,
+    run_root: Path,
+    *,
+    patch_id: str,
+    command: str,
+    result: str,
+    summary: str,
+    evidence_path: str | None = None,
+) -> dict[str, Any]:
+    patch_id = safe_id(patch_id, "patch")
+    patch_path = break_glass_root(run_root) / "patches" / f"{patch_id}.json"
+    patch = read_json(patch_path)
+    if patch.get("schema_version") != PATCH_SCHEMA:
+        raise SystemExit(f"Patch not found: {patch_id}")
+    evidence = patch.get("validation_evidence")
+    if not isinstance(evidence, list):
+        evidence = []
+    updated = False
+    for item in evidence:
+        if not isinstance(item, dict):
+            continue
+        if str(item.get("command") or "") == command:
+            item["result"] = result
+            item["summary"] = summary
+            item["path"] = evidence_path
+            item["recorded_at"] = utc_now()
+            updated = True
+            break
+    if not updated:
+        evidence.append(
+            {
+                "kind": "command",
+                "path": evidence_path,
+                "command": command,
+                "result": result,
+                "summary": summary,
+                "recorded_at": utc_now(),
+            }
+        )
+    patch["validation_evidence"] = evidence
+    patch["validation_status"] = _patch_validation_status(patch)
+    write_json(patch_path, patch)
+    index = load_index(run_root)
+    for item in index.get("patches", []):
+        if item.get("patch_id") == patch_id:
+            item["validation_status"] = patch["validation_status"]
+    save_index(run_root, index)
+    return {"ok": True, "patch": patch, "patch_path": str(patch_path.relative_to(project_root))}
+
+
 def finalize_patch(project_root: Path, run_root: Path, *, patch_id: str, disposition: str) -> dict[str, Any]:
     patch_id = safe_id(patch_id, "patch")
     patch_path = break_glass_root(run_root) / "patches" / f"{patch_id}.json"
     patch = read_json(patch_path)
     if patch.get("schema_version") != PATCH_SCHEMA:
         raise SystemExit(f"Patch not found: {patch_id}")
+    _validate_patch_finalization(patch, disposition=disposition)
     finalized_at = utc_now()
     patch["final_disposition"] = disposition
     patch["finalized_at"] = finalized_at
@@ -393,6 +541,7 @@ def finalize_patch(project_root: Path, run_root: Path, *, patch_id: str, disposi
         "rolled_back",
         "diagnostic_only_no_patch",
     }
+    patch["validation_status"] = _patch_validation_status(patch)
     write_json(patch_path, patch)
     index = load_index(run_root)
     for item in index.get("patches", []):
@@ -409,6 +558,7 @@ def close_incident(project_root: Path, run_root: Path, *, incident_id: str, disp
     incident = read_json(incident_path)
     if incident.get("schema_version") != INCIDENT_SCHEMA:
         raise SystemExit(f"Incident not found: {incident_id}")
+    closure_review = _incident_closure_review(run_root, incident, disposition=disposition)
     finalized_patches: list[dict[str, Any]] = []
     patch_errors: list[dict[str, str]] = []
     for patch_id in incident.get("related_patch_ids") or []:
@@ -423,8 +573,13 @@ def close_incident(project_root: Path, run_root: Path, *, incident_id: str, disp
         finalized = finalize_patch(project_root, run_root, patch_id=str(patch_id), disposition=disposition)
         finalized_patches.append({"patch_id": str(patch_id), "final_disposition": finalized["patch"].get("final_disposition"), "already_finalized": False})
     incident["status"] = "closed"
+    if disposition in INCIDENT_BLOCKED_DISPOSITIONS:
+        incident["status"] = "blocked"
+    elif disposition in INCIDENT_QUARANTINE_DISPOSITIONS:
+        incident["status"] = "quarantined"
     incident["closed_at"] = utc_now()
     incident["final_disposition"] = disposition
+    incident["closure_review"] = closure_review
     incident["patch_finalization"] = {
         "finalized_patch_count": len(finalized_patches),
         "finalized_patches": finalized_patches,
@@ -434,7 +589,9 @@ def close_incident(project_root: Path, run_root: Path, *, incident_id: str, disp
     index = load_index(run_root)
     for item in index.get("incidents", []):
         if item.get("incident_id") == incident_id:
-            item["status"] = "closed"
+            item["status"] = incident["status"]
+            item["final_disposition"] = disposition
+            item["closure_path"] = closure_review.get("closure_path")
     save_index(run_root, index)
     return {"ok": True, "incident": incident, "incident_path": str(incident_path.relative_to(project_root))}
 

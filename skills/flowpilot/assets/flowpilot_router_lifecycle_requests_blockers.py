@@ -7,6 +7,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
+
 
 _BOUND_ROUTER: ModuleType | None = None
 
@@ -74,6 +76,7 @@ def _try_write_control_blocker_for_exception(
             }
             flowpilot_root = project_root / ".flowpilot"
             failure_path = flowpilot_root / "control_blocker_materialization_failures.jsonl"
+            assert_runtime_gateway_write(failure_path, GATEWAY_ROUTER_JSON, operation="append_control_blocker_materialization_failure")
             failure_path.parent.mkdir(parents=True, exist_ok=True)
             with failure_path.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(fallback, sort_keys=True) + "\n")

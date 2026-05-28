@@ -135,11 +135,19 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                 touched_paths=["runtime/controller_action_ledger.json"],
                 validation=["python scripts/check_install.py"],
             )
+            break_glass.record_patch_validation(
+                project_root,
+                run_root,
+                patch_id="Patch 1",
+                command="python scripts/check_install.py",
+                result="passed",
+                summary="Install check passed after break-glass diagnostic.",
+            )
             close_result = break_glass.close_incident(
                 project_root,
                 run_root,
                 incident_id="Incident 1",
-                disposition="normal lane restored",
+                disposition="permanent_fix_applied",
             )
 
             self.assertTrue(incident_result["ok"])

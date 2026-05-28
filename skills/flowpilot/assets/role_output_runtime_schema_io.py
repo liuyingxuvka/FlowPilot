@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import packet_runtime
+from flowpilot_runtime_gateway import GATEWAY_ROLE_OUTPUT, assert_runtime_gateway_write
 from role_output_runtime_schema_specs import (
     CONTRACT_REGISTRY_PATH,
     PROMPT_MANIFEST_SCHEMA,
@@ -26,6 +27,7 @@ def _json_bytes(payload: dict[str, Any]) -> bytes:
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
+    assert_runtime_gateway_write(path, GATEWAY_ROLE_OUTPUT, operation="role_output_write_json")
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_name(f".{path.name}.tmp")
     tmp_path.write_bytes(_json_bytes(payload))

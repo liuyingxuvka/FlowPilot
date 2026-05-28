@@ -13,24 +13,378 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": true,
+  "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [],
-    "actionable_summary": [],
-    "covered_surface_count": 873,
-    "deferred_structure_split_count": 0,
+    "actionable_findings": [
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "name": "smoke_autopilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:all:smoke_autopilot_fast",
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "name": "smoke_autopilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:integration:smoke_autopilot_fast",
+        "surface_owner": "test-tier:integration"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_runtime_gateway|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "add_code_boundary_observation"
+        ],
+        "maturation_signal_type": "missing_code_boundary_observation",
+        "message": "flowpilot_runtime_gateway has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_runtime_gateway",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_gateway.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_runtime_gateway",
+        "surface_owner": "flowpilot_runtime_gateway"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_controller_break_glass",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_controller_break_glass",
+        "surface_owner": "flowpilot_controller_break_glass"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_daemon_runtime",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_daemon_runtime",
+        "surface_owner": "flowpilot_router_daemon_runtime"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+        "name": "role_output_runtime_envelopes",
+        "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:role_output_runtime_envelopes",
+        "surface_owner": "role_output_runtime_envelopes"
+      }
+    ],
+    "actionable_summary": [
+      {
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "finding_count": 1,
+        "gap_codes": [
+          "stale_evidence"
+        ],
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "paths": [
+          "scripts/run_test_tier.py"
+        ],
+        "primary_code": "stale_evidence",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_ids": [
+          "tier-command:all:smoke_autopilot_fast"
+        ],
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "finding_count": 1,
+        "gap_codes": [
+          "stale_evidence"
+        ],
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "paths": [
+          "scripts/run_test_tier.py"
+        ],
+        "primary_code": "stale_evidence",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_ids": [
+          "tier-command:integration:smoke_autopilot_fast"
+        ],
+        "surface_owner": "test-tier:integration"
+      },
+      {
+        "dedupe_key": "flowpilot_runtime_gateway|upgrade_to_external_contract_test|internal_only_test",
+        "finding_count": 1,
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "message": "flowpilot_runtime_gateway has tests or mentions but no source-level external contract binding",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_runtime_gateway.py"
+        ],
+        "primary_code": "internal_only_test",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_ids": [
+          "asset:flowpilot_runtime_gateway"
+        ],
+        "surface_owner": "flowpilot_runtime_gateway"
+      },
+      {
+        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_controller_break_glass.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_controller_break_glass"
+        ],
+        "surface_owner": "flowpilot_controller_break_glass"
+      },
+      {
+        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_daemon_runtime"
+        ],
+        "surface_owner": "flowpilot_router_daemon_runtime"
+      },
+      {
+        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:role_output_runtime_envelopes"
+        ],
+        "surface_owner": "role_output_runtime_envelopes"
+      }
+    ],
+    "covered_surface_count": 869,
+    "deferred_structure_split_count": 3,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
-    "findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
-    "gap_counts_by_release_relevance": {},
-    "gap_counts_by_repair_type": {},
-    "gap_counts_by_severity": {},
-    "gap_surface_count": 0,
+    "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_controller_break_glass",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_controller_break_glass",
+        "surface_owner": "flowpilot_controller_break_glass"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_router_daemon_runtime",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_daemon_runtime",
+        "surface_owner": "flowpilot_router_daemon_runtime"
+      },
+      {
+        "code": "internal_only_test",
+        "dedupe_key": "flowpilot_runtime_gateway|upgrade_to_external_contract_test|internal_only_test",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "add_code_boundary_observation"
+        ],
+        "maturation_signal_type": "missing_code_boundary_observation",
+        "message": "flowpilot_runtime_gateway has tests or mentions but no source-level external contract binding",
+        "name": "flowpilot_runtime_gateway",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_gateway.py",
+        "priority_score": 17,
+        "release_relevance": "runtime_contract",
+        "repair_type": "upgrade_to_external_contract_test",
+        "severity": "high",
+        "surface_id": "asset:flowpilot_runtime_gateway",
+        "surface_owner": "flowpilot_runtime_gateway"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+        "name": "role_output_runtime_envelopes",
+        "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:role_output_runtime_envelopes",
+        "surface_owner": "role_output_runtime_envelopes"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "name": "smoke_autopilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:all:smoke_autopilot_fast",
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_autopilot_fast has non-final background evidence status: running",
+        "name": "smoke_autopilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:integration:smoke_autopilot_fast",
+        "surface_owner": "test-tier:integration"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "internal_only_test": 1,
+      "needs_structure_split": 3,
+      "stale_evidence": 2
+    },
+    "gap_counts_by_release_relevance": {
+      "release_gate": 2,
+      "runtime_contract": 4
+    },
+    "gap_counts_by_repair_type": {
+      "complete_background_evidence": 2,
+      "defer_structure_split": 3,
+      "upgrade_to_external_contract_test": 1
+    },
+    "gap_counts_by_severity": {
+      "critical": 2,
+      "high": 1,
+      "medium": 3
+    },
+    "gap_surface_count": 6,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -209,7 +563,7 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": true,
+    "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
     "singleton_authority_coverage": {
       "authority_matrix_count": 8,
@@ -222,12 +576,12 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 873,
+    "surface_count": 875,
     "surface_counts": {
       "compatibility_facade": 112,
-      "model_check_runner": 102,
+      "model_check_runner": 103,
       "model_check_runner_helper": 19,
-      "owner_module": 266,
+      "owner_module": 267,
       "script_entrypoint": 19,
       "test_tier": 16,
       "test_tier_command": 339
@@ -844,7 +1198,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 276,
+        "line_count": 291,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -892,7 +1246,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 307,
+        "line_count": 310,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1027,7 +1381,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 188,
+        "line_count": 267,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -1040,7 +1394,7 @@
         "surface_id": "asset:flowpilot_router_events_repair_blocker_records",
         "surface_owner": "flowpilot_router_events_repair_blocker_records",
         "top_level_class_count": 0,
-        "top_level_function_count": 7
+        "top_level_function_count": 9
       },
       {
         "completed_split_paths": [
@@ -1056,7 +1410,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 77,
+        "line_count": 81,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -2484,7 +2838,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "compatibility_facade",
-        "line_count": 31,
+        "line_count": 35,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -3645,7 +3999,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 203,
+        "line_count": 207,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_controller_break_glass_checks",
@@ -5119,6 +5473,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 30,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_runtime_gateway_adoption_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_runtime_gateway_adoption_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_runtime_gateway_adoption_checks",
+        "surface_owner": "model-check:run_flowpilot_runtime_gateway_adoption_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 205,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -6220,8 +6596,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 77,
-        "local_import_count": 0,
+        "line_count": 80,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": null,
         "name": "card_runtime_io",
@@ -6332,28 +6708,44 @@
         "top_level_function_count": 11
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 446,
-        "local_import_count": 2,
-        "max_severity": "none",
+        "line_count": 603,
+        "local_import_count": 3,
+        "max_severity": "medium",
         "model_binding": null,
         "name": "flowpilot_controller_break_glass",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_controller_break_glass",
         "surface_owner": "flowpilot_controller_break_glass",
         "top_level_class_count": 0,
-        "top_level_function_count": 25
+        "top_level_function_count": 30
       },
       {
         "covered": true,
@@ -6364,7 +6756,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 186,
+        "line_count": 203,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "controller_break_glass_runtime_contracts",
@@ -6388,7 +6780,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 256,
+        "line_count": 264,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "recovery_supervisor_contracts",
@@ -7638,7 +8030,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 424,
+        "line_count": 446,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7726,28 +8118,44 @@
         "top_level_function_count": 2
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 437,
-        "local_import_count": 1,
-        "max_severity": "none",
+        "line_count": 488,
+        "local_import_count": 2,
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_daemon_runtime",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_daemon_runtime",
         "surface_owner": "flowpilot_router_daemon_runtime",
         "top_level_class_count": 0,
-        "top_level_function_count": 19
+        "top_level_function_count": 20
       },
       {
         "covered": true,
@@ -7830,8 +8238,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 288,
-        "local_import_count": 9,
+        "line_count": 290,
+        "local_import_count": 10,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_event_dispatcher",
@@ -8110,7 +8518,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 317,
+        "line_count": 354,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8671,8 +9079,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 124,
-        "local_import_count": 2,
+        "line_count": 126,
+        "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_io_json",
@@ -8695,8 +9103,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 354,
-        "local_import_count": 3,
+        "line_count": 357,
+        "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_io_locks",
@@ -8743,8 +9151,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 96,
-        "local_import_count": 0,
+        "line_count": 99,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_lifecycle_requests_blockers",
@@ -9705,8 +10113,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 126,
-        "local_import_count": 0,
+        "line_count": 129,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_resume",
@@ -9753,8 +10161,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 346,
-        "local_import_count": 17,
+        "line_count": 348,
+        "local_import_count": 18,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_role_output_bridge",
@@ -9777,8 +10185,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 424,
-        "local_import_count": 4,
+        "line_count": 426,
+        "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_role_output_bridge_events",
@@ -9801,8 +10209,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 325,
-        "local_import_count": 1,
+        "line_count": 327,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_role_output_bridge_events_replay",
@@ -10732,7 +11140,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 115,
+        "line_count": 195,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -10745,7 +11153,7 @@
         "surface_id": "asset:flowpilot_router_startup_resume_binding_reports",
         "surface_owner": "flowpilot_router_startup_resume_binding_reports",
         "top_level_class_count": 0,
-        "top_level_function_count": 5
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -11548,6 +11956,34 @@
         "top_level_function_count": 1
       },
       {
+        "covered": false,
+        "evidence_status": "passed",
+        "gap_codes": [
+          "internal_only_test"
+        ],
+        "has_code": true,
+        "has_external_contract": false,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 285,
+        "local_import_count": 0,
+        "max_severity": "high",
+        "model_binding": "runtime_cli_architecture",
+        "name": "flowpilot_runtime_gateway",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_runtime_gateway.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [
+          "upgrade_to_external_contract_test"
+        ],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_runtime_gateway",
+        "surface_owner": "flowpilot_runtime_gateway",
+        "top_level_class_count": 2,
+        "top_level_function_count": 8
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -11556,7 +11992,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 116,
+        "line_count": 136,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "runtime_cli_architecture",
@@ -11676,8 +12112,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 159,
-        "local_import_count": 1,
+        "line_count": 161,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": null,
         "name": "flowpilot_user_flow_source",
@@ -11964,8 +12400,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 135,
-        "local_import_count": 3,
+        "line_count": 137,
+        "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
         "name": "packet_runtime_active_holder_core",
@@ -12435,8 +12871,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 324,
-        "local_import_count": 1,
+        "line_count": 330,
+        "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
         "name": "packet_runtime_schema",
@@ -12531,7 +12967,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 78,
+        "line_count": 79,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -12547,24 +12983,40 @@
         "top_level_function_count": 2
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 446,
+        "line_count": 464,
         "local_import_count": 4,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "role_output_runtime_architecture",
         "name": "role_output_runtime_envelopes",
         "parse_error": "",
         "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:role_output_runtime_envelopes",
         "surface_owner": "role_output_runtime_envelopes",
         "top_level_class_count": 0,
@@ -12579,7 +13031,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 308,
+        "line_count": 323,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -12669,8 +13121,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 150,
-        "local_import_count": 2,
+        "line_count": 152,
+        "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
         "name": "role_output_runtime_schema_io",
@@ -17569,15 +18021,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "running",
+              "exit_code": null,
+              "meta_status": "running",
               "name": "smoke_autopilot_fast",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "missing_exit"
+              ],
+              "status": "running"
             },
             {
               "artifact_name": "smoke_autopilot_fast",
@@ -17613,15 +18067,17 @@
               "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
               "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
             "name": "smoke_autopilot_fast",
-            "ok": true,
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -17631,9 +18087,11 @@
           "--fast"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_autopilot.py --fast",
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -17641,14 +18099,16 @@
         "kind": "test_tier_command",
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "critical",
         "model_binding": "test_tiering_model",
         "name": "smoke_autopilot_fast",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
         "surface_id": "tier-command:all:smoke_autopilot_fast",
         "surface_owner": "test-tier:all",
@@ -20532,15 +20992,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
+              "execution_status": "running",
+              "exit_code": null,
+              "meta_status": "running",
               "name": "smoke_autopilot_fast",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "missing_exit"
+              ],
+              "status": "running"
             },
             {
               "artifact_name": "smoke_autopilot_fast",
@@ -20576,15 +21038,17 @@
               "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
               "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
             "name": "smoke_autopilot_fast",
-            "ok": true,
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
@@ -20594,9 +21058,11 @@
           "--fast"
         ],
         "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_autopilot.py --fast",
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -20604,14 +21070,16 @@
         "kind": "test_tier_command",
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "critical",
         "model_binding": "test_tiering_model",
         "name": "smoke_autopilot_fast",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
         "surface_id": "tier-command:integration:smoke_autopilot_fast",
         "surface_owner": "test-tier:integration",
@@ -20652,15 +21120,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
-              "meta_status": "completed",
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "failed"
+              "status": "passed"
             },
             {
               "artifact_name": "capability_legacy_full",
@@ -20707,26 +21175,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "capability_legacy_full",
+            "artifact_name": "run_capability_checks",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\capability_legacy_full.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
             },
-            "execution_status": "running",
-            "exit_code": null,
-            "meta_status": "running",
-            "name": "capability_legacy_full",
-            "ok": false,
-            "progress_seen": false,
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "run_capability_checks",
+            "ok": true,
+            "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [
-              "missing_exit"
-            ],
-            "status": "running"
+            "reasons": [],
+            "status": "passed"
           }
         },
         "background_recommended": true,
@@ -20809,15 +21275,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
-              "meta_status": "completed",
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "failed"
+              "status": "passed"
             },
             {
               "artifact_name": "meta_legacy_full",
@@ -20864,26 +21330,24 @@
             }
           ],
           "selected": {
-            "artifact_name": "meta_legacy_full",
+            "artifact_name": "run_meta_checks",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\meta_legacy_full.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
             },
-            "execution_status": "running",
-            "exit_code": null,
-            "meta_status": "running",
-            "name": "meta_legacy_full",
-            "ok": false,
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "run_meta_checks",
+            "ok": true,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [
-              "missing_exit"
-            ],
-            "status": "running"
+            "reasons": [],
+            "status": "passed"
           }
         },
         "background_recommended": true,
@@ -20903,7 +21367,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-27T21:07:57.611644+00:00",
+            "created_at": "2026-05-27T21:12:03.026992+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -20964,15 +21428,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
-              "meta_status": "completed",
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "failed"
+              "status": "passed"
             },
             {
               "artifact_name": "capability_full",
@@ -21102,15 +21566,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
-              "meta_status": "completed",
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [],
-              "status": "failed"
+              "status": "passed"
             },
             {
               "artifact_name": "meta_full",
@@ -26838,8 +27302,11 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 0,
-    "unresolved_non_deferred_gap_counts": {}
+    "unresolved_non_deferred_gap_count": 3,
+    "unresolved_non_deferred_gap_counts": {
+      "internal_only_test": 1,
+      "stale_evidence": 2
+    }
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -30231,7 +30698,7 @@
     }
   ],
   "plan_count": 9,
-  "release_convergence_ok": true,
+  "release_convergence_ok": false,
   "result_type": "flowpilot_model_test_alignment",
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
   "source_audit_ok": true,
@@ -40421,10 +40888,12 @@
             "_write_receipt",
             "bool",
             "build_output_skeleton",
+            "contract.get",
             "default_role_output_status_packet_path",
             "join",
             "session.get",
             "str",
+            "strip",
             "utc_now",
             "uuid.uuid4",
             "validate_output_body",
@@ -40443,6 +40912,7 @@
             "output_type",
             "project_root",
             "role",
+            "router_directed_submission",
             "run_id",
             "session_path"
           ],
@@ -40499,6 +40969,7 @@
             "event_name",
             "explicit_array_fields",
             "first_validation",
+            "fixed_router_event",
             "get",
             "hash_key",
             "hex",
@@ -40519,6 +40990,8 @@
             "resolved_output_path",
             "resolved_run_id",
             "role",
+            "router_directed_submission",
+            "router_event_mode",
             "run_id",
             "run_root",
             "session",
@@ -40528,6 +41001,7 @@
             "spec",
             "status_path",
             "str",
+            "strip",
             "submitted_body",
             "utc_now",
             "uuid",
@@ -40543,6 +41017,7 @@
             "envelope",
             "event_name",
             "first_validation",
+            "fixed_router_event",
             "ledger_record",
             "merged_body",
             "receipt",
@@ -40552,6 +41027,7 @@
             "resolved_agent_id",
             "resolved_output_path",
             "resolved_run_id",
+            "router_event_mode",
             "run_root",
             "session",
             "session_id",
@@ -42072,6 +42548,7 @@
         },
         {
           "calls": [
+            "assert_runtime_gateway_write",
             "existing.get",
             "existing_liveness.get",
             "handle.fileno",
@@ -42118,6 +42595,7 @@
           "state_reads": [
             "Any",
             "FileExistsError",
+            "GATEWAY_ROUTER_JSON",
             "ModuleType",
             "Path",
             "ROUTER_DAEMON_LOCK_SCHEMA",
@@ -42129,6 +42607,7 @@
             "_router_daemon_lock_liveness",
             "_router_daemon_lock_path",
             "_router_daemon_owner",
+            "assert_runtime_gateway_write",
             "bool",
             "dict",
             "dumps",
@@ -42288,6 +42767,7 @@
         },
         {
           "calls": [
+            "_router_daemon_control_projection",
             "bool",
             "current_action.get",
             "get",
@@ -42355,6 +42835,7 @@
             "_derive_current_work",
             "_ensure_continuous_standby_controller_action",
             "_pending_wait_summary",
+            "_router_daemon_control_projection",
             "_router_daemon_heartbeat_monitor",
             "_router_daemon_lock_has_live_owner",
             "_router_daemon_lock_liveness",
@@ -42366,10 +42847,12 @@
             "_terminal_lifecycle_mode",
             "age_seconds",
             "bool",
+            "control_projection",
             "controller_ledger_summary",
             "current_action",
             "current_wait",
             "current_work",
+            "daemon_live",
             "dict",
             "effective_lifecycle_status",
             "error",
@@ -42403,10 +42886,12 @@
             "write_json"
           ],
           "state_writes": [
+            "control_projection",
             "controller_ledger_summary",
             "current_action",
             "current_wait",
             "current_work",
+            "daemon_live",
             "effective_lifecycle_status",
             "heartbeat_monitor",
             "lock_liveness",
@@ -43036,7 +43521,9 @@
         {
           "calls": [
             "SystemExit",
+            "_incident_closure_review",
             "break_glass_root",
+            "closure_review.get",
             "finalize_patch",
             "finalized_patches.append",
             "get",
@@ -43076,12 +43563,16 @@
           ],
           "state_reads": [
             "Any",
+            "INCIDENT_BLOCKED_DISPOSITIONS",
+            "INCIDENT_QUARANTINE_DISPOSITIONS",
             "INCIDENT_SCHEMA",
             "PATCH_SCHEMA",
             "Path",
             "SystemExit",
+            "_incident_closure_review",
             "append",
             "break_glass_root",
+            "closure_review",
             "dict",
             "disposition",
             "finalize_patch",
@@ -43106,12 +43597,15 @@
             "run_root",
             "safe_id",
             "save_index",
+            "status",
             "str",
             "utc_now",
             "write_json"
           ],
           "state_writes": [
             "closed_at",
+            "closure_path",
+            "closure_review",
             "final_disposition",
             "finalized",
             "finalized_patches",
@@ -44788,6 +45282,7 @@
             "router._controller_action_completion_class",
             "router._current_scope_reconciliation_wait_still_blocked",
             "router._rebuild_controller_action_ledger",
+            "router._reclaim_resume_rehydration_postcondition_from_report",
             "router._reclaim_role_recovery_postcondition_from_report",
             "router._refresh_route_memory",
             "router._resolve_control_blockers_for_reconciled_controller_action",
@@ -44864,6 +45359,7 @@
             "_pending_action_postcondition_satisfied",
             "_read_json_for_runtime_scan",
             "_rebuild_controller_action_ledger",
+            "_reclaim_resume_rehydration_postcondition_from_report",
             "_reclaim_role_recovery_postcondition_from_report",
             "_refresh_route_memory",
             "_resolve_control_blockers_for_reconciled_controller_action",
@@ -47247,6 +47743,7 @@
           "calls": [
             "_should_materialize_control_blocker",
             "_write_control_blocker",
+            "assert_runtime_gateway_write",
             "failure_path.open",
             "failure_path.parent.mkdir",
             "handle.write",
@@ -47280,10 +47777,12 @@
           "state_reads": [
             "Any",
             "Exception",
+            "GATEWAY_ROUTER_JSON",
             "Path",
             "_should_materialize_control_blocker",
             "_write_control_blocker",
             "action_type",
+            "assert_runtime_gateway_write",
             "bootstrap",
             "dict",
             "dumps",
@@ -53649,6 +54148,7 @@
             "break_glass.close_incident",
             "break_glass.open_incident",
             "break_glass.record_patch",
+            "break_glass.record_patch_validation",
             "self.assertEqual",
             "self.assertFalse",
             "self.assertTrue",
@@ -54169,7 +54669,7 @@
             "current_work_pending._pending_role_wait_should_use_batch_projection",
             "current_work_pending._scheduler_row_for_pending_action",
             "dict",
-            "packet_runtime.write_json_atomic",
+            "router.write_json",
             "runtime_root.mkdir",
             "self.assertEqual",
             "self.assertIn",

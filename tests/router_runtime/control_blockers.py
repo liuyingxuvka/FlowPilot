@@ -831,6 +831,165 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state["active_control_blocker"]["blocker_id"], second["blocker_id"])
         self.assertEqual(state["active_control_blocker"]["pm_repair_decision_status"], "recorded")
         self.assertTrue((run_root / "control_blocks" / f"{second['blocker_id']}.pm_repair_decision.json").exists())
+    def test_same_family_pending_pm_control_blocker_reuses_existing_artifact(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        error = "Controller has no legal next action while reviewer gate result is waiting"
+
+        first = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        second = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            read_json(state_path),
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+
+        self.assertEqual(second["blocker_id"], first["blocker_id"])
+        self.assertEqual(second["same_family_reuse_count"], 1)
+        blocker_artifacts = [
+            path
+            for path in (run_root / "control_blocks").glob("control-blocker-*.json")
+            if not path.name.endswith(".sealed_repair_packet.json")
+        ]
+        self.assertEqual(len(blocker_artifacts), 1)
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], first["blocker_id"])
+        self.assertEqual(state["active_control_blocker"]["family_key"], first["family_key"])
+    def test_same_family_delivered_pm_control_blocker_reuses_existing_artifact(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        error = "Controller has no legal next action while reviewer gate result is waiting"
+
+        first = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        second = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            read_json(state_path),
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+
+        self.assertEqual(second["blocker_id"], first["blocker_id"])
+        self.assertEqual(second["delivery_status"], "delivered")
+        self.assertEqual(second["same_family_reuse_count"], 1)
+        state = read_json(state_path)
+        self.assertEqual(state["active_control_blocker"]["blocker_id"], first["blocker_id"])
+        self.assertEqual(state["active_control_blocker"]["delivery_status"], "delivered")
+    def test_distinct_pm_control_blocker_causes_create_distinct_families(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+
+        first = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message="packet group reviewer audit failed: first reviewer audit issue",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/first.json"},
+        )
+        second = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            read_json(state_path),
+            source="test",
+            error_message="packet group reviewer audit failed: second reviewer audit issue",
+            event="reviewer_reports_material_sufficient",
+            payload={"report_path": ".flowpilot/runs/test/reviews/second.json"},
+        )
+
+        self.assertNotEqual(second["blocker_id"], first["blocker_id"])
+        self.assertNotEqual(second["family_key"], first["family_key"])
+        blocker_artifacts = [
+            path
+            for path in (run_root / "control_blocks").glob("control-blocker-*.json")
+            if not path.name.endswith(".sealed_repair_packet.json")
+        ]
+        self.assertEqual(len(blocker_artifacts), 2)
+    def test_protocol_dead_end_terminal_family_suppresses_reopened_blocker(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state_path = router.run_state_path(run_root)
+        state = read_json(state_path)
+        error = "Controller has no legal next action while reviewer gate result is waiting"
+
+        blocker = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+        self.assertTrue(self.handle_pending_control_blocker(root))
+        decision = self.pm_control_blocker_decision_body(
+            blocker["blocker_id"],
+            decision="repair_not_required",
+            rerun_target="",
+        )
+        decision["recovery_option"] = "protocol_dead_end"
+        decision["return_gate"] = "terminal_stop"
+        decision["repair_transaction"] = {
+            "plan_kind": "terminal_stop",
+            "terminal_reason": "PM found no legal recovery path for this control blocker family.",
+        }
+        router.record_external_event(
+            root,
+            "pm_records_control_blocker_repair_decision",
+            self.role_decision_envelope(root, "control_blocks/protocol_dead_end_pm_repair_decision", decision),
+        )
+
+        state = read_json(state_path)
+        self.assertEqual(state["status"], "protocol_dead_end")
+        self.assertIsNone(state["active_control_blocker"])
+        self.assertTrue(state["flags"]["control_blocker_protocol_dead_end_declared"])
+        self.assertTrue((run_root / "lifecycle" / "control_blocker_protocol_dead_end.json").exists())
+
+        reopened = router._write_control_blocker(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            source="test",
+            error_message=error,
+            action_type="controller_no_legal_next_action",
+            payload={"path": self.rel(root, state_path), "role": "controller"},
+        )
+
+        self.assertEqual(reopened["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(reopened["resolution_status"], "repair_transaction_terminal_stop")
+        state = read_json(state_path)
+        self.assertEqual(state["status"], "protocol_dead_end")
+        self.assertIsNone(state["active_control_blocker"])
+        self.assertIn(blocker["family_key"], state["control_blocker_family_terminal_dispositions"])
     def test_missing_open_receipt_control_blocker_routes_to_same_reviewer_reissue(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

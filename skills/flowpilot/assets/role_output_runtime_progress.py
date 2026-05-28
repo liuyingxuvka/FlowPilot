@@ -116,6 +116,11 @@ def write_output_progress_status(
     controller_status_packet_path: str | Path | None = None,
     session_id: str | None = None,
     controller_aside: str | None = None,
+    local_receipt_written: bool | None = None,
+    router_event_recording_required: bool | None = None,
+    router_event_recorded: bool | None = None,
+    router_event_name: str | None = None,
+    router_handoff_status: str | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
@@ -161,6 +166,16 @@ def write_output_progress_status(
         "progress_is_decision_evidence": False,
         "body_text_persisted_in_status": False,
     }
+    if local_receipt_written is not None:
+        payload["local_receipt_written"] = bool(local_receipt_written)
+    if router_event_recording_required is not None:
+        payload["router_event_recording_required"] = bool(router_event_recording_required)
+    if router_event_recorded is not None:
+        payload["router_event_recorded"] = bool(router_event_recorded)
+    if router_event_name:
+        payload["router_event_name"] = str(router_event_name)
+    if router_handoff_status:
+        payload["router_handoff_status"] = str(router_handoff_status)
     aside = _controller_aside_or_error(
         controller_aside,
         from_role=role,

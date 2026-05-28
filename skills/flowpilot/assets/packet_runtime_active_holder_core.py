@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_PACKET_RUNTIME, assert_runtime_gateway_write
 from packet_runtime_ledger import _packet_ledger_record
 from packet_runtime_paths import (
     load_envelope,
@@ -74,6 +75,7 @@ def _append_active_holder_event(
     event.setdefault("schema_version", ACTIVE_HOLDER_EVENT_SCHEMA)
     event.setdefault("created_at", utc_now())
     event_path = _active_holder_events_path(project_root, envelope)
+    assert_runtime_gateway_write(event_path, GATEWAY_PACKET_RUNTIME, operation="append_active_holder_event")
     event_path.parent.mkdir(parents=True, exist_ok=True)
     with event_path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(event, sort_keys=True) + "\n")

@@ -185,6 +185,7 @@ def submit_output(
     session_path: str | Path | None = None,
     controller_status_packet_path: str | Path | None = None,
     controller_aside: str | None = None,
+    router_directed_submission: bool = False,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
     spec = _spec_for(output_type)
@@ -206,6 +207,13 @@ def submit_output(
         session_id = str(session.get("session_id") or "")
     if not _role_allowed(spec, role):
         raise RoleOutputRuntimeError(f"{output_type} may be submitted only by {', '.join(spec.allowed_roles)}")
+    contract = _contract_by_id(project_root, spec.contract_id)
+    router_event_mode = str(contract.get("router_event_mode") or "").strip()
+    fixed_router_event = router_event_mode == "fixed" and bool(spec.event_name)
+    if fixed_router_event and not router_directed_submission:
+        raise RoleOutputRuntimeError(
+            f"{output_type} has fixed Router event {spec.event_name}; use submit-output-to-router"
+        )
     if body_file:
         submitted_body = _read_json(_resolve_project_path(project_root, body_file))
     elif body is not None:
@@ -214,7 +222,6 @@ def submit_output(
         raise RoleOutputRuntimeError("submit-output requires body-json or body-file")
     skeleton = build_output_skeleton(project_root, output_type=output_type, role=role, run_id=resolved_run_id)
     merged_body = _deep_merge(skeleton, submitted_body)
-    contract = _contract_by_id(project_root, spec.contract_id)
     _apply_runtime_fixed_values(
         project_root,
         merged_body,
@@ -258,7 +265,7 @@ def submit_output(
         "schema_version": ROLE_OUTPUT_RUNTIME_RECEIPT_SCHEMA,
         "receipt_id": receipt_id,
         "runtime_schema_version": ROLE_OUTPUT_RUNTIME_SCHEMA,
-        "runtime_entrypoint": "submit_output",
+        "runtime_entrypoint": "submit_output_to_router" if router_directed_submission else "submit_output",
         "run_id": resolved_run_id,
         "role": role,
         "agent_id": resolved_agent_id,
@@ -275,6 +282,9 @@ def submit_output(
         "body_text_persisted_in_receipt": False,
         "runtime_validates_mechanics_only": True,
         "semantic_sufficiency_reviewed_by_runtime": False,
+        "local_receipt_written": True,
+        "router_event_recording_required": fixed_router_event,
+        "router_event_recorded": False,
         "created_at": utc_now(),
     }
     receipt_path = _write_receipt(run_root, receipt)
@@ -308,6 +318,9 @@ def submit_output(
         "controller_visibility": "ledger_metadata_only",
         "controller_may_read_body": False,
         "semantic_sufficiency_reviewed_by_runtime": False,
+        "local_receipt_written": True,
+        "router_event_recording_required": fixed_router_event,
+        "router_event_recorded": False,
         "recorded_at": utc_now(),
     }
     _append_ledger(run_root, resolved_run_id, ledger_record)
@@ -324,6 +337,11 @@ def submit_output(
         controller_status_packet_path=status_path,
         session_id=session_id,
         controller_aside=controller_aside,
+        local_receipt_written=True,
+        router_event_recording_required=fixed_router_event,
+        router_event_recorded=False,
+        router_event_name=event_name or spec.event_name,
+        router_handoff_status="pending_router_event" if fixed_router_event else "local_receipt_only",
     )
     return envelope
 

@@ -65,6 +65,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 },
             },
             output_path=".flowpilot/runs/run-test/continuation/pm_resume_runtime_body.json",
+            router_directed_submission=True,
         )
 
         self.assertEqual(envelope["schema_version"], role_output_runtime.ROLE_OUTPUT_ENVELOPE_SCHEMA)
@@ -86,6 +87,11 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertNotIn("decision", envelope)
         self.assertNotIn("evidence", envelope)
         self.assertTrue(envelope["role_output_runtime_validated"])
+        receipt = role_output_runtime.validate_envelope_runtime_receipt(root, envelope)
+        self.assertEqual(receipt["runtime_entrypoint"], "submit_output_to_router")
+        self.assertTrue(receipt["local_receipt_written"])
+        self.assertTrue(receipt["router_event_recording_required"])
+        self.assertFalse(receipt["router_event_recorded"])
 
         body = self.read_json(root / envelope["body_ref"]["path"])
         self.assertEqual(body["decision_owner"], "project_manager")
@@ -150,6 +156,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             role="project_manager",
             agent_id="agent-pm-contract",
             body={"decision": "approved"},
+            router_directed_submission=True,
         )
         receipt = role_output_runtime_envelopes.validate_envelope_runtime_receipt(root, envelope)
         recovered = role_output_runtime_envelopes.runtime_envelope_for_body(
@@ -170,6 +177,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             role="project_manager",
             agent_id="agent-pm-startup",
             body={"decision": "approved"},
+            router_directed_submission=True,
         )
 
         self.assertEqual(envelope["event_name"], "pm_approves_startup_activation")
@@ -181,6 +189,59 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertEqual(body["schema_version"], "flowpilot.pm_startup_activation_approval.v1")
         self.assertEqual(body["approved_by_role"], "project_manager")
         self.assertEqual(body["decision"], "approved")
+
+    def test_fixed_router_event_output_requires_router_directed_submission(self) -> None:
+        root = self.make_project()
+        with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "use submit-output-to-router"):
+            role_output_runtime.submit_output(
+                root,
+                output_type="pm_startup_activation_approval",
+                role="project_manager",
+                agent_id="agent-pm-local-only",
+                body={"decision": "approved"},
+            )
+
+    def test_cli_submit_output_to_router_records_receipt_event_and_progress_milestone(self) -> None:
+        root = self.make_project()
+        with (
+            mock.patch.object(
+                flowpilot_runtime.flowpilot_router,
+                "record_external_event",
+                return_value={"ok": True, "event": "pm_approves_startup_activation"},
+            ) as record_external_event,
+            mock.patch("builtins.print") as printed,
+        ):
+            exit_code = flowpilot_runtime.main(
+                [
+                    "--root",
+                    str(root),
+                    "submit-output-to-router",
+                    "--output-type",
+                    "pm_startup_activation_approval",
+                    "--role",
+                    "project_manager",
+                    "--agent-id",
+                    "agent-pm-cli-success",
+                    "--body-json",
+                    '{"decision":"approved"}',
+                ]
+            )
+
+        self.assertEqual(exit_code, 0)
+        payload = json.loads(printed.call_args.args[0])
+        self.assertTrue(payload["ok"])
+        self.assertFalse(payload["blocked"])
+        self.assertEqual(payload["event"], "pm_approves_startup_activation")
+        record_external_event.assert_called_once()
+        envelope = payload["envelope"]
+        receipt = role_output_runtime.validate_envelope_runtime_receipt(root, envelope)
+        self.assertEqual(receipt["runtime_entrypoint"], "submit_output_to_router")
+        status = self.read_json(root / envelope["controller_status_packet_path"])
+        self.assertEqual(status["status"], "router_event_recorded")
+        self.assertTrue(status["local_receipt_written"])
+        self.assertTrue(status["router_event_recording_required"])
+        self.assertTrue(status["router_event_recorded"])
+        self.assertEqual(status["router_handoff_status"], "recorded")
 
     def test_direct_router_submission_authority_accepts_fixed_contract_event(self) -> None:
         root = self.make_project()
@@ -301,6 +362,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 return_value={"ok": True, "authority_source": "current_router_wait"},
             ),
             mock.patch.object(flowpilot_runtime.role_output_runtime, "submit_output", return_value=envelope),
+            mock.patch.object(flowpilot_runtime.role_output_runtime, "write_output_progress_status"),
             mock.patch.object(
                 flowpilot_runtime.flowpilot_router,
                 "record_external_event",
@@ -351,6 +413,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 return_value={"ok": True, "authority_source": "current_router_wait"},
             ),
             mock.patch.object(flowpilot_runtime.role_output_runtime, "submit_output", return_value=envelope),
+            mock.patch.object(flowpilot_runtime.role_output_runtime, "write_output_progress_status"),
             mock.patch.object(
                 flowpilot_runtime.flowpilot_router,
                 "record_external_event",
@@ -390,6 +453,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                     "impact_on_decision": "PM selected role restoration after checking current route memory.",
                 },
             },
+            router_directed_submission=True,
         )
 
         loaded = router._load_file_backed_role_payload(root, envelope)  # type: ignore[attr-defined]
@@ -424,6 +488,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                         "impact_on_decision": "Missing decision should be rejected before the router sees it.",
                     },
                 },
+                router_directed_submission=True,
             )
 
     def test_runtime_rejects_wrong_role_and_role_key_agent_id(self) -> None:
@@ -588,6 +653,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 "reason": "The reviewer has direct evidence for the gate decision.",
                 "next_action": "continue",
             },
+            router_directed_submission=True,
         )
 
         body = self.read_json(root / envelope["body_ref"]["path"])
@@ -772,6 +838,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 },
             },
             controller_aside="Submitted the formal envelope; waiting for Router.",
+            router_directed_submission=True,
         )
         self.assertEqual(envelope["controller_status_packet_path"], session["controller_status_packet_path"])
         self.assertEqual(envelope["controller_aside"]["text"], "Submitted the formal envelope; waiting for Router.")
@@ -780,6 +847,10 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertEqual(status["status"], "submitted")
         self.assertEqual(status["progress"], 999)
         self.assertEqual(status["controller_aside"]["text"], "Submitted the formal envelope; waiting for Router.")
+        self.assertTrue(status["local_receipt_written"])
+        self.assertTrue(status["router_event_recording_required"])
+        self.assertFalse(status["router_event_recorded"])
+        self.assertEqual(status["router_handoff_status"], "pending_router_event")
 
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "controller_aside"):
             role_output_runtime.update_output_progress(

@@ -7,6 +7,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
+
 
 def write_host_heartbeat_binding(
     router: ModuleType,
@@ -85,6 +87,7 @@ def append_heartbeat_tick(
         "heartbeat_automation_status_checked": payload.get("heartbeat_automation_status_checked") is True,
     }
     ticks_path = run_root / "continuation" / "heartbeat_ticks.jsonl"
+    assert_runtime_gateway_write(ticks_path, GATEWAY_ROUTER_JSON, operation="append_heartbeat_tick")
     ticks_path.parent.mkdir(parents=True, exist_ok=True)
     with ticks_path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(tick, sort_keys=True) + "\n")

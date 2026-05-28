@@ -11,6 +11,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_router_daemon_runtime_diagnostics import (
     _router_daemon_artifact_size_summary,
     _router_daemon_error_diagnostics,
@@ -28,6 +29,7 @@ def _resolve_run_root_target(router: ModuleType, project_root: Path, *, run_id: 
 
 def _append_router_daemon_event(router: ModuleType, run_root: Path, event: str, details: dict[str, Any] | None=None) -> None:
     path = router._router_daemon_event_log_path(run_root)
+    assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_router_daemon_event")
     path.parent.mkdir(parents=True, exist_ok=True)
     record = {'schema_version': router.ROUTER_DAEMON_EVENT_LOG_SCHEMA, 'event': event, 'recorded_at': router.utc_now(), 'details': details or {}}
     with path.open('a', encoding='utf-8') as handle:
@@ -40,6 +42,7 @@ def _acquire_router_daemon_lock(router: ModuleType, project_root: Path, run_root
     now = router.utc_now()
     lock = {'schema_version': router.ROUTER_DAEMON_LOCK_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'status': 'active', 'created_at': now, 'last_tick_at': now, 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'stale_after_seconds': router.ROUTER_DAEMON_LOCK_STALE_SECONDS, 'owner': router._router_daemon_owner(), 'single_writer_lock': True}
     try:
+        assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="acquire_router_daemon_lock")
         with path.open('x', encoding='utf-8') as handle:
             handle.write(router.json.dumps(lock, indent=2, sort_keys=True) + '\n')
             handle.flush()
@@ -86,6 +89,49 @@ def _release_router_daemon_lock(router: ModuleType, project_root: Path, run_root
     router._append_router_daemon_event(run_root, 'router_daemon_lock_released', {'status': status, 'reason': reason})
     return lock
 
+def _router_daemon_control_projection(router: ModuleType, run_state: dict[str, Any], *, daemon_live: bool, current_wait: dict[str, Any], current_action: dict[str, Any] | None, controller_ledger: dict[str, Any] | None=None) -> dict[str, Any]:
+    terminal_mode = router._terminal_lifecycle_mode(run_state)
+    pending_action = run_state.get('pending_action') if isinstance(run_state.get('pending_action'), dict) else {}
+    active_blocker = run_state.get('active_control_blocker') if isinstance(run_state.get('active_control_blocker'), dict) else {}
+    current_action_type = str((current_action or {}).get('action_type') or '')
+    pending_ids = []
+    waiting_ids = []
+    if isinstance(controller_ledger, dict):
+        pending_ids = list(controller_ledger.get('pending_action_ids') or [])
+        waiting_ids = list(controller_ledger.get('waiting_action_ids') or [])
+    if terminal_mode == 'protocol_dead_end':
+        projection_kind = 'protocol_dead_end'
+    elif terminal_mode:
+        projection_kind = 'terminal_stopped'
+    elif pending_action.get('requires_user') or pending_action.get('requires_user_dialog_display_confirmation'):
+        projection_kind = 'blocked_for_user'
+    elif active_blocker or (current_wait.get('blocker') or {}).get('required') or (current_wait.get('reissue') or {}).get('required'):
+        projection_kind = 'blocked_for_protocol'
+    elif current_action_type and current_action_type != 'continuous_controller_standby':
+        projection_kind = 'controller_work_ready'
+    elif current_wait.get('waiting_for_role') or current_wait.get('action_type') == 'await_role_decision':
+        projection_kind = 'waiting_for_role'
+    elif daemon_live:
+        projection_kind = 'live_daemon_standby'
+    else:
+        projection_kind = 'standby_no_live_daemon'
+    return {
+        'schema_version': 'flowpilot.router_control_projection.v1',
+        'projection_kind': projection_kind,
+        'terminal_lifecycle_status': terminal_mode,
+        'daemon_live': bool(daemon_live),
+        'controller_stop_allowed': projection_kind in {'terminal_stopped', 'protocol_dead_end'},
+        'work_chain_liveness_claimed': False,
+        'heartbeat_is_launcher_only': True,
+        'old_route_state_liveness_rejected': True,
+        'wait_agent_timeout_liveness_rejected': True,
+        'authority_sources': ['runtime/router_daemon_status.json', 'runtime/router_daemon.lock', 'runtime/controller_action_ledger.json'],
+        'active_control_blocker_id': active_blocker.get('blocker_id'),
+        'current_action_type': current_action_type or None,
+        'pending_action_ids': pending_ids,
+        'waiting_action_ids': waiting_ids,
+    }
+
 
 def _write_router_daemon_status(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, lifecycle_status: str, current_action: dict[str, Any] | None=None, recovery_hints: list[str] | None=None, lock: dict[str, Any] | None=None, error: dict[str, Any] | None=None) -> dict[str, Any]:
     lock_payload = lock if isinstance(lock, dict) else router.read_json_if_exists(router._router_daemon_lock_path(run_root))
@@ -111,7 +157,9 @@ def _write_router_daemon_status(router: ModuleType, project_root: Path, run_root
     router_scheduler_summary = router._router_scheduler_ledger_summary(run_root)
     heartbeat_monitor = router._router_daemon_heartbeat_monitor(lock_payload, lock_liveness, status_exists=True, status_ok=True)
     current_work = router._derive_current_work(project_root, run_root, run_state, current_wait=current_wait, current_action=current_action, controller_ledger=controller_ledger_summary)
-    status = {'schema_version': router.ROUTER_DAEMON_STATUS_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'daemon_mode_enabled': bool(run_state.get('daemon_mode_enabled')), 'lifecycle_status': 'terminal_stopped' if terminal_mode else effective_lifecycle_status, 'run_lifecycle_status': terminal_mode, 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'last_tick_at': router.utc_now(), 'process': lock_owner or router._router_daemon_owner(), 'lock': {'path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'status': lock_payload.get('status'), 'last_tick_at': lock_payload.get('last_tick_at'), 'live': lock_liveness['live'], 'process_live': lock_liveness['process_live'], 'fresh': lock_liveness['fresh'], 'age_seconds': lock_liveness['age_seconds'], 'reasons': lock_liveness['reasons']}, 'heartbeat': heartbeat_monitor, 'daemon_live': bool(bool(run_state.get('daemon_mode_enabled')) and lock_liveness['live']), 'current_work': current_work, 'current_wait': current_wait, 'continuous_standby_task': (standby_entry.get('action') or {}).get('continuous_standby_task') if isinstance(standby_entry, dict) else router._continuous_standby_task_payload(project_root, run_root, current_wait) if standby_required else None, 'current_action': {'action_type': current_action.get('action_type'), 'label': current_action.get('label'), 'controller_action_id': current_action.get('controller_action_id'), 'controller_projection_kind': router._controller_action_projection_kind(current_action), 'ordinary_controller_work_row': not router._action_is_passive_wait_status(current_action), 'apply_required': current_action.get('apply_required'), 'relay_allowed': current_action.get('relay_allowed')} if isinstance(current_action, dict) else None, 'controller_action_ledger': controller_ledger_summary, 'router_scheduler_ledger': router_scheduler_summary, 'break_glass_reminder': router._controller_break_glass_reminder(), 'router_internal_ownership_ledger_visible_to_controller': False, 'recovery_hints': recovery_hints or [], 'error': error, 'controller_should_watch_action_ledger': True, 'router_owns_waiting': True}
+    daemon_live = bool(bool(run_state.get('daemon_mode_enabled')) and lock_liveness['live'])
+    control_projection = _router_daemon_control_projection(router, run_state, daemon_live=daemon_live, current_wait=current_wait, current_action=current_action if isinstance(current_action, dict) else None, controller_ledger=controller_ledger_summary)
+    status = {'schema_version': router.ROUTER_DAEMON_STATUS_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': router.project_relative(project_root, run_root), 'daemon_mode_enabled': bool(run_state.get('daemon_mode_enabled')), 'lifecycle_status': 'terminal_stopped' if terminal_mode else effective_lifecycle_status, 'run_lifecycle_status': terminal_mode, 'tick_interval_seconds': router.ROUTER_DAEMON_TICK_SECONDS, 'last_tick_at': router.utc_now(), 'process': lock_owner or router._router_daemon_owner(), 'lock': {'path': router.project_relative(project_root, router._router_daemon_lock_path(run_root)), 'status': lock_payload.get('status'), 'last_tick_at': lock_payload.get('last_tick_at'), 'live': lock_liveness['live'], 'process_live': lock_liveness['process_live'], 'fresh': lock_liveness['fresh'], 'age_seconds': lock_liveness['age_seconds'], 'reasons': lock_liveness['reasons']}, 'heartbeat': heartbeat_monitor, 'daemon_live': daemon_live, 'control_projection': control_projection, 'current_work': current_work, 'current_wait': current_wait, 'continuous_standby_task': (standby_entry.get('action') or {}).get('continuous_standby_task') if isinstance(standby_entry, dict) else router._continuous_standby_task_payload(project_root, run_root, current_wait) if standby_required else None, 'current_action': {'action_type': current_action.get('action_type'), 'label': current_action.get('label'), 'controller_action_id': current_action.get('controller_action_id'), 'controller_projection_kind': router._controller_action_projection_kind(current_action), 'ordinary_controller_work_row': not router._action_is_passive_wait_status(current_action), 'apply_required': current_action.get('apply_required'), 'relay_allowed': current_action.get('relay_allowed')} if isinstance(current_action, dict) else None, 'controller_action_ledger': controller_ledger_summary, 'router_scheduler_ledger': router_scheduler_summary, 'break_glass_reminder': router._controller_break_glass_reminder(), 'router_internal_ownership_ledger_visible_to_controller': False, 'recovery_hints': recovery_hints or [], 'error': error, 'controller_should_watch_action_ledger': True, 'router_owns_waiting': True}
     router.write_json(router._router_daemon_status_path(run_root), status)
     run_state['router_daemon_status_path'] = router.project_relative(project_root, router._router_daemon_status_path(run_root))
     return status
@@ -136,7 +184,10 @@ def _router_daemon_resume_recovery_summary(router: ModuleType, project_root: Pat
         decision = 'attach_controller_to_live_daemon'
     else:
         decision = 'restart_router_daemon_from_current_state'
-    return {'schema_version': 'flowpilot.router_daemon_resume_recovery.v1', 'router_daemon_status_path': router.project_relative(project_root, status_path), 'router_daemon_status_exists': status_path.exists(), 'router_daemon_lock_path': router.project_relative(project_root, lock_path), 'router_daemon_lock_exists': lock_path.exists(), 'router_daemon_lock_live': lock_live, 'router_daemon_owner_process_live': bool(lock_liveness.get('process_live')), 'router_daemon_active_owner_live': active_owner_live, 'router_daemon_lock_status': lock.get('status'), 'router_daemon_last_tick_at': lock.get('last_tick_at') or status.get('last_tick_at'), 'heartbeat': heartbeat_monitor, 'controller_action_ledger_path': router.project_relative(project_root, ledger_path), 'controller_action_ledger_exists': ledger_exists, 'controller_action_ledger_rescanned': True, 'decision': decision, 'terminal_lifecycle_status': terminal_mode, 'restart_only_after_controller_liveness_check_finds_dead': not bool(terminal_mode), 'never_start_second_router_writer': True}
+    daemon_live = bool(bool(run_state.get('daemon_mode_enabled')) and lock_live)
+    current_wait = router._pending_wait_summary(run_state, project_root=project_root)
+    control_projection = _router_daemon_control_projection(router, run_state, daemon_live=daemon_live, current_wait=current_wait, current_action=status.get('current_action') if isinstance(status.get('current_action'), dict) else None, controller_ledger=router._controller_action_ledger_summary(run_root))
+    return {'schema_version': 'flowpilot.router_daemon_resume_recovery.v1', 'router_daemon_status_path': router.project_relative(project_root, status_path), 'router_daemon_status_exists': status_path.exists(), 'router_daemon_lock_path': router.project_relative(project_root, lock_path), 'router_daemon_lock_exists': lock_path.exists(), 'router_daemon_lock_live': lock_live, 'router_daemon_owner_process_live': bool(lock_liveness.get('process_live')), 'router_daemon_active_owner_live': active_owner_live, 'router_daemon_lock_status': lock.get('status'), 'router_daemon_last_tick_at': lock.get('last_tick_at') or status.get('last_tick_at'), 'heartbeat': heartbeat_monitor, 'controller_action_ledger_path': router.project_relative(project_root, ledger_path), 'controller_action_ledger_exists': ledger_exists, 'controller_action_ledger_rescanned': True, 'decision': decision, 'terminal_lifecycle_status': terminal_mode, 'control_projection': control_projection, 'work_chain_liveness_claimed': False, 'liveness_authority': 'current_daemon_lock_process_and_controller_action_ledger', 'old_route_state_liveness_rejected': True, 'wait_agent_timeout_liveness_rejected': True, 'restart_only_after_controller_liveness_check_finds_dead': not bool(terminal_mode), 'never_start_second_router_writer': True}
 
 
 def _ensure_daemon_runtime_state(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, lifecycle_status: str='manual_router_loop') -> dict[str, Any]:

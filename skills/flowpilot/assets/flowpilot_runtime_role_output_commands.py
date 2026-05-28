@@ -65,11 +65,31 @@ def execute_role_output_command(
             session_path=args.session_path or None,
             controller_status_packet_path=args.controller_status_packet_path or None,
             controller_aside=args.controller_aside or None,
+            router_directed_submission=True,
         )
         event_name = str(args.event_name or envelope.get("event_name") or "").strip()
         if not event_name:
             raise role_output_runtime.RoleOutputRuntimeError("submit-output-to-router requires event_name")
         router_handoff = record_router_event_or_blocked_next_action(root, event_name, envelope)
+        role_output_runtime.write_output_progress_status(
+            root,
+            run_root=role_output_runtime._run_paths(root, str(authority.get("run_id") or args.run_id or "") or None)[1],
+            output_type=args.output_type,
+            role=args.role,
+            agent_id=args.agent_id,
+            status="router_event_recorded",
+            message=f"Router event {event_name} recorded for {args.output_type}.",
+            progress=1000,
+            event_name=event_name,
+            controller_status_packet_path=args.controller_status_packet_path or envelope.get("controller_status_packet_path"),
+            session_id=authority.get("session_id"),
+            controller_aside=args.controller_aside or None,
+            local_receipt_written=True,
+            router_event_recording_required=True,
+            router_event_recorded=True,
+            router_event_name=event_name,
+            router_handoff_status="recorded",
+        )
         result = {
             "ok": True,
             "command": "submit-output-to-router",

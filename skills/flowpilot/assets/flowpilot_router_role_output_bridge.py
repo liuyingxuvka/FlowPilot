@@ -35,6 +35,7 @@ import flowpilot_router_events
 import flowpilot_router_resume
 import flowpilot_router_role_output_bridge_events as role_output_bridge_events
 import flowpilot_router_startup_flow
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_card_manifest_from_run
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 from flowpilot_router_protocol_catalog import *
@@ -323,6 +324,7 @@ def write_role_output_envelope(
         source_path = resolve_project_path(project_root, body_file)
         if not source_path.exists():
             raise RouterError(f"role output body file is missing: {body_file}")
+        assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="copy_role_output_body_file")
         path.write_bytes(source_path.read_bytes())
     elif body is not None:
         write_json(path, body)

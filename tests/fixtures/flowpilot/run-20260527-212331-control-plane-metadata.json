@@ -1,0 +1,47 @@
+{
+  "run_id": "run-20260527-212331",
+  "fixture_scope": "controller_visible_control_plane_metadata_only",
+  "sealed_body_policy": {
+    "contains_sealed_packet_bodies": false,
+    "contains_sealed_result_bodies": false,
+    "contains_sealed_report_bodies": false
+  },
+  "fixed_router_event_receipts": {
+    "output_type": "pm_control_blocker_repair_decision",
+    "fixed_router_event": "pm_records_control_blocker_repair_decision",
+    "local_submit_output_receipts": 92,
+    "router_directed_receipts": 0,
+    "router_event_records": 1,
+    "local_receipt_closes_blocker": false
+  },
+  "resume_rehydration": {
+    "expected_role_count": 6,
+    "report_all_six_roles_ready": true,
+    "report_current_run_memory_complete": true,
+    "final_resume_roles_restored_flag": false,
+    "wait_agent_timeout_treated_as_active": false
+  },
+  "control_blockers": {
+    "total_blocker_files": 608,
+    "dominant_family_key": "mechanical_control_plane_reissue||rehydrate_role_agents|controller",
+    "dominant_family_count": 607,
+    "same_family_should_collapse_to_one_active_or_terminal_record": true
+  },
+  "protocol_dead_end": {
+    "pm_terminal_decision_recorded": true,
+    "protocol_dead_end_disposition_recorded": true,
+    "same_family_reopened_after_resume": true
+  },
+  "break_glass": {
+    "open_incidents": 1,
+    "recovery_transactions": 0,
+    "patch_validation_status": "not_run",
+    "permanent_fix_needed": true
+  },
+  "heartbeat_resume": {
+    "wake_count": 54,
+    "launcher_record_required_before_resume_claim": true,
+    "work_chain_liveness_claimed_from_old_state": false,
+    "wait_agent_timeout_used_as_liveness": false
+  }
+}

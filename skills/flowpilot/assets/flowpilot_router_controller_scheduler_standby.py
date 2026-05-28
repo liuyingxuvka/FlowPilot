@@ -141,6 +141,9 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
     no_pending_controller_actions = not (pending_action_ids or waiting_action_ids)
     final_answer_allowed = bool(controller_stop_allowed and no_pending_controller_actions and (not controller_must_continue_standby) and (not controller_must_process_pending_action) and (not wait_target_action_ready))
     continuous_standby_status = 'released' if final_answer_allowed else ('in_progress' if controller_patrol_required or controller_must_continue_standby else 'not_active')
+    control_projection = daemon_status.get('control_projection') if isinstance(daemon_status.get('control_projection'), dict) else {}
+    if not control_projection:
+        control_projection = {'schema_version': 'flowpilot.router_control_projection.v1', 'projection_kind': 'terminal_stopped' if terminal else ('blocked_for_user' if user_required else standby_state), 'terminal_lifecycle_status': run_lifecycle if terminal else None, 'daemon_live': bool(daemon_live), 'controller_stop_allowed': bool(controller_stop_allowed), 'work_chain_liveness_claimed': False, 'heartbeat_is_launcher_only': True, 'old_route_state_liveness_rejected': True, 'wait_agent_timeout_liveness_rejected': True, 'authority_sources': ['runtime/router_daemon_status.json', 'runtime/router_daemon.lock', 'runtime/controller_action_ledger.json']}
     final_answer_preflight = {
         'final_answer_allowed': final_answer_allowed,
         'controller_stop_allowed': controller_stop_allowed,

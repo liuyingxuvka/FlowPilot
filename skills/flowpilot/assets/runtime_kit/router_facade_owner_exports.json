@@ -796,6 +796,10 @@
             "target": "_control_blocker_error_code"
           },
           {
+            "public": "_control_blocker_family_key",
+            "target": "_control_blocker_family_key"
+          },
+          {
             "public": "_control_blocker_followup_target_role",
             "target": "_control_blocker_followup_target_role"
           },
@@ -854,6 +858,10 @@
           {
             "public": "_event_producer_roles",
             "target": "_event_producer_roles"
+          },
+          {
+            "public": "_existing_control_blocker_family_record",
+            "target": "_existing_control_blocker_family_record"
           },
           {
             "public": "_existing_event_producer_evidence",
@@ -3194,6 +3202,14 @@
           {
             "public": "_role_recovery_ready_context",
             "target": "_role_recovery_ready_context"
+          },
+          {
+            "public": "_reclaim_resume_rehydration_postcondition_from_report",
+            "target": "_reclaim_resume_rehydration_postcondition_from_report"
+          },
+          {
+            "public": "_resume_rehydration_report_candidates",
+            "target": "_resume_rehydration_report_candidates"
           },
           {
             "public": "_role_recovery_replacement_action",

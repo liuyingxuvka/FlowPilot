@@ -312,6 +312,28 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
         if entry.get('router_reconciliation_status') == 'blocked':
             postcondition = _pending_action_postcondition(action)
             action_type = str(action.get('action_type') or entry.get('action_type') or '')
+            if action_type == 'rehydrate_role_agents' or postcondition == 'resume_roles_restored':
+                applied = router._reclaim_resume_rehydration_postcondition_from_report(project_root, run_root, run_state, source='blocked_controller_action_resume_rehydration_report_reclaim')
+                if applied.get('applied') and (not postcondition or _pending_action_postcondition_satisfied(run_state, postcondition)):
+                    now = utc_now()
+                    entry['router_reconciliation_recovered_from_blocked_state'] = True
+                    _commit_controller_action_reconciliation(
+                        router,
+                        project_root,
+                        run_root,
+                        run_state,
+                        action_path,
+                        entry,
+                        action=action,
+                        reconciliation=applied,
+                        scheduler_state='reconciled',
+                        resolve_blockers=True,
+                        clear_pending_apply_required=False,
+                        now=now,
+                    )
+                    changed = True
+                    reconciled += 1
+                    continue
             if action_type == 'recover_role_agents' or postcondition == 'role_recovery_roles_restored':
                 applied = router._reclaim_role_recovery_postcondition_from_report(project_root, run_root, run_state, source='blocked_controller_action_role_recovery_report_reclaim')
                 if applied.get('applied') and (not postcondition or _pending_action_postcondition_satisfied(run_state, postcondition)):

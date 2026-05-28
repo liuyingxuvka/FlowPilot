@@ -209,6 +209,30 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(status_summary["foreground_exit_policy"]["controller_stop_allowed"])
         self.assertFalse(status_summary["foreground_exit_policy"]["final_answer_preflight"]["final_answer_allowed"])
 
+    def test_router_daemon_status_projects_protocol_dead_end_terminal_boundary(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_controller(root)
+        state = read_json(router.run_state_path(run_root))
+        state["status"] = "protocol_dead_end"
+        state["phase"] = "terminal"
+        state.setdefault("flags", {})["control_blocker_protocol_dead_end_declared"] = True
+        state["daemon_mode_enabled"] = True
+        router.save_run_state(run_root, state)
+
+        daemon_status = router._write_router_daemon_status(  # type: ignore[attr-defined]
+            root,
+            run_root,
+            state,
+            lifecycle_status="daemon_active",
+        )
+
+        self.assertEqual(daemon_status["lifecycle_status"], "terminal_stopped")
+        self.assertEqual(daemon_status["run_lifecycle_status"], "protocol_dead_end")
+        self.assertEqual(daemon_status["control_projection"]["projection_kind"], "protocol_dead_end")
+        self.assertTrue(daemon_status["control_projection"]["controller_stop_allowed"])
+        self.assertFalse(daemon_status["control_projection"]["work_chain_liveness_claimed"])
+        self.assertTrue(daemon_status["control_projection"]["heartbeat_is_launcher_only"])
+
     def test_foreground_receipt_defers_scheduler_fold_to_live_daemon(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

@@ -7,6 +7,7 @@ from types import ModuleType
 from typing import Any
 
 import flowpilot_router_role_output_bridge_events as _parent
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -103,6 +104,7 @@ def _record_package_disposition_authority_split(
         "recorded_at": router.utc_now(),
         "split_path": router.project_relative(project_root, path),
     }
+    assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_package_disposition_authority_split")
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(summary, sort_keys=True) + "\n")

@@ -37,6 +37,13 @@ def build_parser() -> argparse.ArgumentParser:
     patch_cmd.add_argument("--touched-path", action="append", default=[])
     patch_cmd.add_argument("--validation", action="append", default=[])
 
+    validation_cmd = sub.add_parser("record-patch-validation")
+    validation_cmd.add_argument("--patch-id", required=True)
+    validation_cmd.add_argument("--command", dest="validation_command", required=True)
+    validation_cmd.add_argument("--result", required=True)
+    validation_cmd.add_argument("--summary", required=True)
+    validation_cmd.add_argument("--evidence-path", default=None)
+
     finalize_patch_cmd = sub.add_parser("finalize-patch")
     finalize_patch_cmd.add_argument("--patch-id", required=True)
     finalize_patch_cmd.add_argument("--disposition", required=True)
@@ -116,6 +123,16 @@ def main(argv: list[str] | None = None) -> int:
             reason=args.reason,
             touched_paths=args.touched_path,
             validation=args.validation,
+        )
+    elif args.command == "record-patch-validation":
+        result = core.record_patch_validation(
+            project_root,
+            run_root,
+            patch_id=args.patch_id,
+            command=args.validation_command,
+            result=args.result,
+            summary=args.summary,
+            evidence_path=args.evidence_path,
         )
     elif args.command == "finalize-patch":
         result = core.finalize_patch(project_root, run_root, patch_id=args.patch_id, disposition=args.disposition)

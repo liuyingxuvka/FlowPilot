@@ -23,6 +23,7 @@ REQUIRED_LABELS = tuple(
     + [f"accept_{name}" for name in model.VALID_SCENARIOS]
     + [f"reject_{name}" for name in model.NEGATIVE_SCENARIOS]
     + [f"record_patch_{name}" for name in model.PATCH_SCENARIOS]
+    + [f"record_patch_validation_{name}" for name in model.PATCH_SCENARIOS]
 )
 
 HAZARD_EXPECTED_FAILURES = {
@@ -31,7 +32,10 @@ HAZARD_EXPECTED_FAILURES = {
     "missing_normal_lane_check": "normal repair lanes were checked",
     "missing_playbook_read": "without reading the playbook",
     "missing_incident_record": "without an incident record",
+    "missing_recovery_transaction": "lacked a recovery transaction",
     "missing_patch_record": "without a patch record",
+    "missing_patch_validation": "without closed validation",
+    "patch_validation_not_run": "validation stayed not_run",
     "missing_return_to_normal": "did not return to normal Controller flow",
     "missing_final_disclosure": "not disclosed in final reporting",
     "controller_reads_sealed_body": "read a sealed packet or result body",

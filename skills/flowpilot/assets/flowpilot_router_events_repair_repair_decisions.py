@@ -286,21 +286,58 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
         resolved['resolution_status'] = 'repair_transaction_terminal_stop'
         resolved['resolved_at'] = utc_now()
         resolved['terminal_reason'] = execution_plan.get('terminal_reason')
+        resolved['family_key'] = active.get('family_key') or active_record.get('family_key')
         run_state.setdefault('resolved_control_blockers', []).append(resolved)
         if active_path.exists():
             terminal_record = read_json(active_path)
             terminal_record['resolution_status'] = 'repair_transaction_terminal_stop'
             terminal_record['resolved_at'] = resolved['resolved_at']
             terminal_record['terminal_reason'] = execution_plan.get('terminal_reason')
+            terminal_record['family_key'] = terminal_record.get('family_key') or resolved.get('family_key')
             write_json(active_path, terminal_record)
+        terminal_family_key = str(resolved.get('family_key') or active.get('attempt_key') or '')
+        if terminal_family_key:
+            run_state.setdefault('control_blocker_family_terminal_dispositions', {})[terminal_family_key] = {
+                'blocker_id': blocker_id,
+                'resolution_status': 'repair_transaction_terminal_stop',
+                'recovery_option': recovery_option,
+                'terminal_reason': execution_plan.get('terminal_reason'),
+                'recorded_at': resolved['resolved_at'],
+            }
         run_state['active_control_blocker'] = None
         run_state['latest_control_blocker_path'] = None
+        flags = run_state.setdefault('flags', {})
+        flags['control_blocker_terminal_stop_declared'] = True
         if recovery_option == 'protocol_dead_end':
             run_state['status'] = 'protocol_dead_end'
-            run_state.setdefault('flags', {})['startup_protocol_dead_end_declared'] = True
+            run_state['phase'] = 'terminal'
+            run_state['pending_action'] = None
+            flags['control_blocker_protocol_dead_end_declared'] = True
+            flags['startup_protocol_dead_end_declared'] = True
+            dead_end_path = run_root / 'lifecycle' / 'control_blocker_protocol_dead_end.json'
+            write_json(
+                dead_end_path,
+                {
+                    'schema_version': 'flowpilot.control_blocker_protocol_dead_end.v1',
+                    'run_id': run_state['run_id'],
+                    'blocker_id': blocker_id,
+                    'repair_transaction_id': transaction_id,
+                    'terminal_reason': execution_plan.get('terminal_reason'),
+                    'recovery_option': recovery_option,
+                    'pm_repair_decision_path': decision_rel,
+                    'declared_at': resolved['resolved_at'],
+                    'controller_may_continue_route_work': False,
+                    'controller_may_spawn_new_role_work': False,
+                },
+            )
+            run_state['control_blocker_protocol_dead_end'] = {
+                'path': project_relative(project_root, dead_end_path),
+                'blocker_id': blocker_id,
+                'repair_transaction_id': transaction_id,
+            }
         elif recovery_option == 'user_stop':
             run_state['status'] = 'stopped_by_user'
-            run_state.setdefault('flags', {})['run_stopped_by_user'] = True
+            flags['run_stopped_by_user'] = True
     router._sync_control_plane_indexes(project_root, run_root, run_state)
 
 __all__ = (

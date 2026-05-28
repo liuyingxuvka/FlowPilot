@@ -9,6 +9,7 @@ boundaries.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
@@ -20,6 +21,7 @@ from flowguard import (
     DEFECT_CASE_ROLE_SAME_CLASS_GENERALIZED,
     DEFECT_FAMILY_DECISION_FULL,
     DEFECT_FAMILY_DECISION_SCOPED,
+    LEGACY_PATH_BLOCKED,
     RISK_CONFIDENCE_BLOCKED,
     RISK_CONFIDENCE_FULL,
     RISK_CONFIDENCE_SCOPED,
@@ -27,6 +29,8 @@ from flowguard import (
     DefectFamilyEvidence,
     DefectFamilyGate,
     DefectFamilyGatePlan,
+    LegacyPathDisposition,
+    ProofArtifactRef,
     RiskEvidenceLedgerPlan,
     RiskEvidenceProof,
     RiskEvidenceRow,
@@ -37,6 +41,23 @@ from flowguard import (
 
 PASS_STATUSES = {"passed"}
 PRIMARY_ROLE = "primary_known_friction_gate"
+ROOT = Path(__file__).resolve().parents[1]
+SIM_ROOT = Path(__file__).resolve().parent
+
+SCRIPT_RESULT_PATHS = {
+    "run_flowpilot_control_plane_friction_checks.py": "simulations/flowpilot_control_plane_friction_checks_results.json",
+    "run_flowpilot_repair_transaction_checks.py": "simulations/flowpilot_repair_transaction_checks_results.json",
+    "run_flowpilot_event_idempotency_checks.py": "simulations/flowpilot_event_idempotency_results.json",
+    "run_flowpilot_model_test_alignment_checks.py": "simulations/flowpilot_model_test_alignment_results.json",
+    "run_flowpilot_card_envelope_checks.py": "simulations/flowpilot_card_envelope_results.json",
+    "run_flowpilot_runtime_closure_checks.py": "simulations/flowpilot_runtime_closure_results.json",
+    "run_flowpilot_role_output_runtime_checks.py": "simulations/flowpilot_role_output_runtime_results.json",
+    "run_flowpilot_resume_checks.py": "simulations/flowpilot_resume_results.json",
+    "run_flowpilot_terminal_state_monotonicity_checks.py": "simulations/flowpilot_terminal_state_monotonicity_results.json",
+    "run_flowpilot_controller_break_glass_checks.py": "simulations/flowpilot_controller_break_glass_results.json",
+    "run_flowpilot_daemon_liveness_checks.py": "simulations/flowpilot_daemon_liveness_results.json",
+    "run_flowpilot_daemon_terminal_projection_checks.py": "simulations/flowpilot_daemon_terminal_projection_results.json",
+}
 
 REQUIRED_FRICTION_IDS = {
     "known_friction.worker_self_check_failure",
@@ -46,6 +67,12 @@ REQUIRED_FRICTION_IDS = {
     "known_friction.status_projection_stale",
     "known_friction.ack_false_blocker",
     "known_friction.controlled_stop_reconciliation",
+    "known_friction.local_fixed_router_event_receipt_only",
+    "known_friction.resume_rehydration_postcondition_replay_miss",
+    "known_friction.control_blocker_same_family_storm",
+    "known_friction.protocol_dead_end_reopened_by_resume",
+    "known_friction.break_glass_patch_limbo",
+    "known_friction.heartbeat_diagnostic_only_resume",
 }
 
 REQUIRED_SOURCE_CLASSES = {
@@ -56,6 +83,12 @@ REQUIRED_SOURCE_CLASSES = {
     "user_visible_status_projection",
     "ack_completion_conflation",
     "daemon_lifecycle_stop_boundary",
+    "local_role_output_receipt_without_router_event",
+    "resume_rehydration_postcondition_replay",
+    "same_family_control_blocker_repetition",
+    "protocol_dead_end_resume_reactivation",
+    "break_glass_unvalidated_patch_closure",
+    "heartbeat_resume_diagnostic_only_loop",
 }
 
 REQUIRED_GLOBAL_GATES = {
@@ -330,6 +363,206 @@ KNOWN_FRICTION_ROWS: tuple[dict[str, Any], ...] = (
         "full_confidence_boundary": "Covers controlled stop reconciliation for current pointer, daemon, and pending work authority; does not prove external scheduler delivery.",
         "live_ai_semantic_quality_proven": False,
     },
+    {
+        "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+        "priority": "P0",
+        "source_class": "local_role_output_receipt_without_router_event",
+        "historical_bad_case": "run-20260527-212331 recorded repeated PM control-blocker repair receipts through the local submit-output entrypoint, but the fixed Router event was not recorded as the authoritative state transition.",
+        "trigger_state": "A formal role-output contract has a fixed Router event and the role tries to close the obligation through a local receipt path.",
+        "expected_safe_behavior": "Local-only submission is rejected for fixed-event outputs; the role must use the Router-directed runtime path that records both receipt and Router event evidence before any blocker can close.",
+        "model_obligation": "role_output_runtime.accepted_outputs_submit_directly_to_router",
+        "model_check": "python simulations/run_flowpilot_role_output_runtime_checks.py",
+        "runtime_surface": "role_output_runtime submit-output / submit-output-to-router boundary + Router event recorder",
+        "runtime_test": "tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_fixed_router_event_output_requires_router_directed_submission",
+        "replay_fixture": "run-20260527-212331.pm_control_blocker_repair_receipt_without_router_event",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "role_output_runtime_matrix",
+        ],
+        "global_gates": [
+            "repo_source_to_installed_skill_sync",
+            "copied_runtime_kit_freshness",
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "treat_local_receipt_as_router_event",
+            "close_control_blocker_before_fixed_router_event_records",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers fixed Router-event output transaction boundaries and local-only rejection; does not prove semantic correctness of the PM decision body.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+        "priority": "P0",
+        "source_class": "resume_rehydration_postcondition_replay",
+        "historical_bad_case": "run-20260527-212331 had a valid six-role rehydration report, but a later receipt replay did not restore resume_roles_restored and reopened a mechanical control blocker.",
+        "trigger_state": "Heartbeat/manual resume sees a done rehydrate_role_agents receipt or report while run-state flags are stale or incomplete.",
+        "expected_safe_behavior": "Router validates the current-run crew rehydration report, reclaims the resume postcondition idempotently, and only opens a blocker when current-run evidence is absent or invalid.",
+        "model_obligation": "resume.resume_rehydration_obligations_replayed_mechanically",
+        "model_check": "python simulations/run_flowpilot_resume_checks.py",
+        "runtime_surface": "startup resume binding reports + Controller scheduler receipt reconciliation",
+        "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+        "replay_fixture": "run-20260527-212331.crew_rehydration_report_ready_but_resume_flags_false",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "resume_rehydration_replay",
+        ],
+        "global_gates": [
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "ignore_current_run_crew_rehydration_report",
+            "open_rehydrate_blocker_before_replay_scan",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers current-run six-role report replay and invalid-report blocking; does not prove host agents stay alive forever after rehydration.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.control_blocker_same_family_storm",
+        "priority": "P0",
+        "source_class": "same_family_control_blocker_repetition",
+        "historical_bad_case": "run-20260527-212331 accumulated hundreds of blockers with the same mechanical_control_plane_reissue family key instead of preserving one active PM/control repair state.",
+        "trigger_state": "The same responsible role, action type, stage, postcondition, and error class fails repeatedly during heartbeat/manual resume.",
+        "expected_safe_behavior": "Router computes a same-family key before writing, reuses active or PM-pending family records, and still materializes distinct blockers for distinct causes.",
+        "model_obligation": "control_plane_friction.control_blocker_action_identity_bound_to_artifact + control_blocker.family_key_coalescing",
+        "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+        "runtime_surface": "control blocker write path, active index summaries, PM repair decision terminal disposition",
+        "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
+        "replay_fixture": "run-20260527-212331.repeated_mechanical_control_plane_reissue_family",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "control_blocker_family_runtime",
+        ],
+        "global_gates": [
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "write_new_blocker_for_same_family_pending_pm",
+            "swallow_distinct_blocker_with_old_family_record",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers same-family blocker coalescing and distinct-cause materialization for the audited control paths; does not prove every future blocker schema has a perfect family key.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+        "priority": "P0",
+        "source_class": "protocol_dead_end_resume_reactivation",
+        "historical_bad_case": "run-20260527-212331 recorded PM protocol-dead-end / terminal-stop decisions, but heartbeat/manual resume could still reopen the same blocker family instead of surfacing the terminal protocol boundary.",
+        "trigger_state": "A same-family control blocker already has a terminal protocol-dead-end disposition and a resume tick replays the old failure.",
+        "expected_safe_behavior": "Router writes durable protocol-dead-end lifecycle evidence, marks the run state terminal/protocol-dead-end, and suppresses same-family reopen during resume.",
+        "model_obligation": "control_plane_friction.control_blocker_done_receipt_applies_delivery_postcondition + control_blocker.protocol_dead_end_terminal_disposition",
+        "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+        "runtime_surface": "PM repair decision handler + control blocker family lookup + daemon terminal projection",
+        "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+        "replay_fixture": "run-20260527-212331.protocol_dead_end_decision_reopened_by_heartbeat",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "terminal_state_monotonicity",
+        ],
+        "global_gates": [
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "reopen_protocol_dead_end_family_on_resume",
+            "report_terminal_protocol_state_as_live_work",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers same-family protocol-dead-end suppression and terminal status projection; does not prove the PM chose the right protocol-dead-end disposition semantically.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.break_glass_patch_limbo",
+        "priority": "P0",
+        "source_class": "break_glass_unvalidated_patch_closure",
+        "historical_bad_case": "run-20260527-212331 left a break-glass incident open with a patch listed as validation not_run and no durable recovery transaction or blocked/quarantined closure path.",
+        "trigger_state": "Controller uses the break-glass lane for a FlowPilot control-plane defect and records a patch or recovery transaction.",
+        "expected_safe_behavior": "Break-glass closure requires normal-lane exclusion, incident/recovery linkage, validation evidence for permanent fixes, or an explicit blocked/quarantined disposition that keeps permanent_fix_needed visible.",
+        "model_obligation": "flowpilot_controller_break_glass.patch_validation_before_return_to_normal",
+        "model_check": "python simulations/run_flowpilot_controller_break_glass_checks.py",
+        "runtime_surface": "controller_break_glass incident index + recovery transaction + patch validation/finalization",
+        "runtime_test": "tests.test_flowpilot_controller_break_glass.FlowPilotControllerBreakGlassTests.test_break_glass_close_rejects_unvalidated_permanent_patch",
+        "replay_fixture": "run-20260527-212331.break_glass_open_patch_validation_not_run",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "controller_break_glass_model",
+        ],
+        "global_gates": [
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "close_permanent_fix_with_not_run_validation",
+            "hide_open_break_glass_incident_as_normal_standby",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers break-glass patch validation, quarantine, blocked, and recovery-link closure paths; does not authorize Controller to perform target-project work.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+        "priority": "P0",
+        "source_class": "heartbeat_resume_diagnostic_only_loop",
+        "historical_bad_case": "run-20260527-212331 heartbeat wakes recorded diagnostic or launcher work but did not stay attached to current daemon/action-ledger evidence long enough to expose real Controller work or a terminal boundary.",
+        "trigger_state": "Heartbeat/manual resume fires after daemon heartbeat is stale, old chat state still looks active, or wait-agent timeout is tempting to treat as liveness.",
+        "expected_safe_behavior": "Heartbeat records the wake, then Controller checks current daemon process/lock/status and action ledger, attaches or restores only after that check, and never claims work-chain liveness from old route state or wait-agent timeout.",
+        "model_obligation": "daemon_liveness.controller_checks_delayed_heartbeat + resume.resume_wake_recorded_to_router",
+        "model_check": "python simulations/run_flowpilot_daemon_liveness_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+        "runtime_surface": "router daemon status control_projection + heartbeat/manual resume attach/recover path",
+        "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
+        "replay_fixture": "run-20260527-212331.heartbeat_wake_without_current_daemon_authority",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "current_transcript_regression",
+            "daemon_liveness_model",
+        ],
+        "global_gates": [
+            "historical_live_run_replay",
+            "current_transcript_regression",
+            "background_final_artifact_contract",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "treat_wait_agent_timeout_as_live_agent",
+            "start_second_router_writer_while_live_lock_exists",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers stale-heartbeat attach/recover authority and status projection boundaries; does not prove host scheduler delivery under all Codex desktop failures.",
+        "live_ai_semantic_quality_proven": False,
+    },
 )
 
 
@@ -343,6 +576,83 @@ def _defect_family_id(friction_id: str) -> str:
 
 def _proof_evidence_id(defect_family_id: str) -> str:
     return "proof:" + defect_family_id
+
+
+def _artifact_id(defect_family_id: str) -> str:
+    return "artifact:" + defect_family_id
+
+
+def _proof_artifact_result_paths(command: str) -> tuple[str, ...]:
+    paths = [
+        result_path
+        for script_name, result_path in SCRIPT_RESULT_PATHS.items()
+        if script_name in command
+    ]
+    return tuple(dict.fromkeys(paths))
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return "sha256:" + digest.hexdigest()
+
+
+def _artifact_status_for_path(path: Path) -> tuple[str, tuple[str, ...]]:
+    if not path.exists():
+        return "not_run", ("missing_result_artifact",)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return "error", ("unreadable_result_artifact",)
+    if payload.get("ok") is not True:
+        return "failed", ("result_artifact_not_ok",)
+    return "passed", ()
+
+
+def _proof_artifact_from_row(row: dict[str, Any], proof_id: str) -> ProofArtifactRef:
+    command = f"{row.get('model_check')}; {row.get('runtime_test')}"
+    result_paths = _proof_artifact_result_paths(str(row.get("model_check") or ""))
+    fingerprints: dict[str, str] = {}
+    gap_codes: list[str] = []
+    status = "passed"
+    for result_path in result_paths:
+        absolute_path = ROOT / result_path
+        path_status, path_gaps = _artifact_status_for_path(absolute_path)
+        if path_status != "passed" and status == "passed":
+            status = path_status
+        gap_codes.extend(path_gaps)
+        if absolute_path.exists():
+            fingerprints[result_path] = _sha256(absolute_path)
+    if not result_paths:
+        status = "not_run"
+        gap_codes.append("missing_result_artifact_mapping")
+    if row.get("evidence_status") != "passed" and status == "passed":
+        status = str(row.get("evidence_status") or "not_run")
+    current = row.get("evidence_current") is True and not gap_codes
+    return ProofArtifactRef(
+        _artifact_id(str(row.get("defect_family_id") or "")),
+        producer_route="known_friction_regression_matrix",
+        command=command,
+        result_path=";".join(result_paths),
+        result_status=status,
+        exit_code=0 if status == "passed" else 1,
+        artifact_fingerprints=fingerprints,
+        covered_obligation_ids=(
+            str(row.get("model_obligation") or ""),
+            proof_id,
+            str(row.get("friction_id") or ""),
+        ),
+        assertion_scope="external_contract",
+        current=current,
+        route_evidence_current=current,
+        route_gap_codes=tuple(gap_codes),
+        metadata={
+            "friction_id": str(row.get("friction_id") or ""),
+            "result_paths": list(result_paths),
+        },
+    )
 
 
 def _row_with_defect_family(row: dict[str, Any]) -> dict[str, Any]:
@@ -535,7 +845,12 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     return findings
 
 
-def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) -> DefectFamilyGatePlan:
+def build_defect_family_gate_plan(
+    rows: Sequence[dict[str, Any]] | None = None,
+    *,
+    require_proof_artifacts: bool = True,
+    include_proof_artifacts: bool = True,
+) -> DefectFamilyGatePlan:
     """Build the upgraded FlowGuard recurring defect-family gate plan."""
 
     rows = list(rows) if rows is not None else build_rows()
@@ -547,6 +862,7 @@ def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) 
         same_class_id = f"{defect_family_id}:same_class"
         holdout_id = f"{defect_family_id}:holdout"
         proof_id = _proof_evidence_id(defect_family_id)
+        artifact = _proof_artifact_from_row(row, proof_id) if include_proof_artifacts else None
         proof_evidence.append(
             DefectFamilyEvidence(
                 proof_id,
@@ -556,6 +872,7 @@ def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) 
                 producer_route="known_friction_regression_matrix",
                 command=f"{row.get('model_check')}; {row.get('runtime_test')}",
                 summary=str(row.get("full_confidence_boundary") or ""),
+                proof_artifact=artifact,
                 metadata={
                     "friction_id": str(row.get("friction_id") or ""),
                     "child_evidence_ids": list(row.get("child_evidence_ids") or ()),
@@ -598,6 +915,15 @@ def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) 
                 same_class_generalized_case_id=same_class_id,
                 historical_holdout_case_id=holdout_id,
                 proof_evidence_ids=(proof_id,),
+                legacy_path_dispositions=(
+                    LegacyPathDisposition(
+                        f"{row.get('friction_id')}:legacy-forbidden-shortcuts",
+                        disposition=LEGACY_PATH_BLOCKED,
+                        rationale="Forbidden historical shortcuts remain blocked by the current proof artifact.",
+                        repaired_contract_id=str(row.get("model_obligation") or ""),
+                        proof_artifact=artifact,
+                    ),
+                ),
                 metadata={"friction_id": str(row.get("friction_id") or "")},
             )
         )
@@ -606,14 +932,27 @@ def build_defect_family_gate_plan(rows: Sequence[dict[str, Any]] | None = None) 
         gates=tuple(gates),
         proof_evidence=tuple(proof_evidence),
         allow_scoped_confidence=True,
+        require_proof_artifacts=require_proof_artifacts,
+        require_legacy_path_dispositions=True,
     )
 
 
-def build_defect_family_risk_ledger_plan(rows: Sequence[dict[str, Any]] | None = None) -> RiskEvidenceLedgerPlan:
+def build_defect_family_risk_ledger_plan(
+    rows: Sequence[dict[str, Any]] | None = None,
+    *,
+    require_proof_artifacts: bool = True,
+    include_proof_artifacts: bool = True,
+) -> RiskEvidenceLedgerPlan:
     """Build the final confidence ledger rows that consume defect-family gates."""
 
     rows = list(rows) if rows is not None else build_rows()
-    gate_report = review_defect_family_gates(build_defect_family_gate_plan(rows))
+    gate_report = review_defect_family_gates(
+        build_defect_family_gate_plan(
+            rows,
+            require_proof_artifacts=require_proof_artifacts,
+            include_proof_artifacts=include_proof_artifacts,
+        )
+    )
     full_ids = set(gate_report.passed_gate_ids)
     scoped_ids = set(gate_report.scoped_gate_ids)
     proof_evidence: list[RiskEvidenceProof] = []
@@ -621,6 +960,7 @@ def build_defect_family_risk_ledger_plan(rows: Sequence[dict[str, Any]] | None =
     for row in rows:
         defect_family_id = str(row.get("defect_family_id") or _defect_family_id(str(row.get("friction_id") or "")))
         proof_id = _proof_evidence_id(defect_family_id)
+        artifact = _proof_artifact_from_row(row, proof_id) if include_proof_artifacts else None
         gate_current = defect_family_id in full_ids or defect_family_id in scoped_ids
         if defect_family_id in full_ids:
             gate_confidence = RISK_CONFIDENCE_FULL
@@ -641,6 +981,7 @@ def build_defect_family_risk_ledger_plan(rows: Sequence[dict[str, Any]] | None =
                 producer_route="known_friction_regression_matrix",
                 command=f"{row.get('model_check')}; {row.get('runtime_test')}",
                 summary=str(row.get("full_confidence_boundary") or ""),
+                proof_artifact=artifact,
             )
         )
         ledger_rows.append(
@@ -664,14 +1005,28 @@ def build_defect_family_risk_ledger_plan(rows: Sequence[dict[str, Any]] | None =
         proof_evidence=tuple(proof_evidence),
         require_code_contracts=False,
         allow_scoped_confidence=True,
+        require_proof_artifacts=require_proof_artifacts,
     )
 
 
-def build_defect_family_report(rows: Sequence[dict[str, Any]] | None = None) -> dict[str, Any]:
+def build_defect_family_report(
+    rows: Sequence[dict[str, Any]] | None = None,
+    *,
+    require_proof_artifacts: bool = True,
+    include_proof_artifacts: bool = True,
+) -> dict[str, Any]:
     rows = list(rows) if rows is not None else build_rows()
-    gate_plan = build_defect_family_gate_plan(rows)
+    gate_plan = build_defect_family_gate_plan(
+        rows,
+        require_proof_artifacts=require_proof_artifacts,
+        include_proof_artifacts=include_proof_artifacts,
+    )
     gate_report = review_defect_family_gates(gate_plan)
-    ledger_plan = build_defect_family_risk_ledger_plan(rows)
+    ledger_plan = build_defect_family_risk_ledger_plan(
+        rows,
+        require_proof_artifacts=require_proof_artifacts,
+        include_proof_artifacts=include_proof_artifacts,
+    )
     ledger_report = review_risk_evidence_ledger(ledger_plan)
     return {
         "ok": gate_report.ok and ledger_report.ok,

@@ -2,76 +2,16 @@
   "coverage_boundary": "Matrix rows prove declared control-flow, runtime, model-test, and background-artifact coverage ownership. Synthetic or fixture rows do not prove live AI semantic quality or live completion.",
   "findings": [],
   "full_diagnostic": {
-    "actionable_summary": [
-      {
-        "dedupe_key": "flowpilot_router_protocol_work_contracts|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_protocol_work_contracts has 322 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_protocol_work_contracts.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_protocol_work_contracts"
-        ],
-        "surface_owner": "flowpilot_router_protocol_work_contracts"
-      },
-      {
-        "dedupe_key": "flowpilot_router_work_packets_pm_role_writes_decisions|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_work_packets_pm_role_writes_decisions has 512 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_work_packets_pm_role_writes_decisions"
-        ],
-        "surface_owner": "flowpilot_router_work_packets_pm_role_writes_decisions"
-      }
-    ],
+    "actionable_summary": [],
     "blocking_actionable_findings": [],
-    "deferred_structure_split_findings": [
-      {
-        "code": "full_diagnostic_actionable_finding",
-        "message": "flowpilot_router_protocol_work_contracts has 322 lines, above the 320 line diagnostic threshold",
-        "path": "skills/flowpilot/assets/flowpilot_router_protocol_work_contracts.py",
-        "repair_type": "defer_structure_split",
-        "source_code": "needs_structure_split",
-        "surface_id": "asset:flowpilot_router_protocol_work_contracts"
-      },
-      {
-        "code": "full_diagnostic_actionable_finding",
-        "message": "flowpilot_router_work_packets_pm_role_writes_decisions has 512 lines, above the 450 line diagnostic threshold",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions.py",
-        "repair_type": "defer_structure_split",
-        "source_code": "needs_structure_split",
-        "surface_id": "asset:flowpilot_router_work_packets_pm_role_writes_decisions"
-      }
-    ],
-    "full_coverage_ok": false,
-    "gap_counts": {
-      "needs_structure_split": 2
-    },
+    "deferred_structure_split_findings": [],
+    "full_coverage_ok": true,
+    "gap_counts": {},
     "ok": true,
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 67,
+  "required_cell_count": 75,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -344,6 +284,54 @@
       "obligation_id": "router_loop.known_friction_regression_gate"
     },
     {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_repair_owned_role_output_replay"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_repair_owned_role_output_replay"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_repair_owned_daemon_replay"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_repair_owned_daemon_replay"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_role_output_replay"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_role_output_replay"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_daemon_replay"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "router loop/daemon",
+      "model_id": "router_loop_daemon",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_daemon_replay"
+    },
+    {
       "branch_kind": "happy_path",
       "family": "router loop/daemon",
       "model_id": "router_loop_daemon",
@@ -477,7 +465,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 92,
+  "row_count": 100,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -1738,6 +1726,230 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "test_known_bad_cases_are_rejected"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_repair_owned_replay.edge.role_output",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_repair_owned_role_output_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k package_disposition_conflict",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_repair_owned_replay.edge.daemon_tick",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_repair_owned_daemon_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_daemon_tick_quarantines_repair_owned_package_conflict_without_erasing_wait"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m pytest tests/test_flowpilot_control_plane_contracts.py -k pm_package_disposition",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_repair_owned_replay.negative.classifier",
+      "evidence_owner": "test_flowpilot_control_plane_contracts",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_repair_owned_role_output_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_control_plane_contracts.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m pytest tests/test_flowpilot_control_plane_contracts.py -k pm_package_disposition",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_repair_owned_replay.negative.classifier",
+      "evidence_owner": "test_flowpilot_control_plane_contracts",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_repair_owned_daemon_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_control_plane_contracts.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k stale_unowned_package_disposition",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_stale_unowned_replay.edge.role_output",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_role_output_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_stale_unowned_package_disposition_replay_preserves_canonical_body"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k stale_unowned_package",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_stale_unowned_replay.edge.daemon_tick",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_daemon_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k stale_unowned_package_disposition",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_stale_unowned_replay.negative.reject_old_body",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_role_output_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_stale_unowned_package_disposition_replay_preserves_canonical_body"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m pytest tests/test_flowpilot_role_output_reconciliation.py -k stale_unowned_package",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "router_loop.package_disposition_stale_unowned_replay.negative.no_daemon_error",
+      "evidence_owner": "test_flowpilot_role_output_reconciliation",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "router loop/daemon",
+      "live_completion_allowed": false,
+      "model_id": "router_loop_daemon",
+      "non_replayable_reason": "",
+      "obligation_id": "router_loop.package_disposition_stale_unowned_daemon_replay",
+      "obligation_type": "hazard",
+      "path": "tests/test_flowpilot_role_output_reconciliation.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body"
     },
     {
       "branch_kind": "happy_path",
@@ -3062,7 +3274,7 @@
   "rows_by_coverage_kind": {
     "background_artifact": 3,
     "fixture_trace": 1,
-    "ordinary_runtime": 67,
+    "ordinary_runtime": 75,
     "synthetic_trace": 21
   },
   "rows_by_family": {
@@ -3074,7 +3286,7 @@
     "repair transactions": 8,
     "role/output contracts": 7,
     "route mutation": 6,
-    "router loop/daemon": 26,
+    "router loop/daemon": 34,
     "startup": 4,
     "terminal/closure/resume": 11,
     "test tiering/slow-test contracts": 6

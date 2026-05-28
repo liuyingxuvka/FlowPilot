@@ -1,0 +1,1560 @@
+{
+  "approved_gateway_modules": {
+    "card_runtime_io.py": "flowpilot.card_runtime_gateway",
+    "flowpilot_controller_break_glass.py": "flowpilot.break_glass_gateway",
+    "flowpilot_router_daemon_runtime.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_event_dispatcher.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_io_json.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_io_locks.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_lifecycle_requests_blockers.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_resume.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_role_output_bridge.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_role_output_bridge_events.py": "flowpilot.router_json_gateway",
+    "flowpilot_router_role_output_bridge_events_replay.py": "flowpilot.router_json_gateway",
+    "flowpilot_user_flow_source.py": "flowpilot.user_flow_gateway",
+    "packet_runtime_active_holder_core.py": "flowpilot.packet_runtime_gateway",
+    "packet_runtime_schema.py": "flowpilot.packet_runtime_gateway",
+    "role_output_runtime_schema_io.py": "flowpilot.role_output_gateway"
+  },
+  "coverage_boundary": "All direct production write sites in skills/flowpilot/assets are statically inventoried. Critical state writes must be inside approved runtime gateway modules that call assert_runtime_gateway_write, then FlowGuard runtime-gateway adoption checks require current gateway observations for every declared critical state surface.",
+  "critical_write_site_count": 19,
+  "critical_write_sites": [
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.card_runtime_gateway",
+      "line": 50,
+      "path": "skills\\flowpilot\\assets\\card_runtime_io.py",
+      "source": "path.write_text(json.dumps(payload, indent=2, sort_keys=True) + \"\\n\", encoding=\"utf-8\")",
+      "symbol": "write_json"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.break_glass_gateway",
+      "line": 60,
+      "path": "skills\\flowpilot\\assets\\flowpilot_controller_break_glass.py",
+      "source": "path.write_text(json.dumps(payload, indent=2, sort_keys=True) + \"\\n\", encoding=\"utf-8\")",
+      "symbol": "write_json"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 35,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_daemon_runtime.py",
+      "source": "path.open('a', encoding='utf-8')",
+      "symbol": "_append_router_daemon_event"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 46,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_daemon_runtime.py",
+      "source": "path.open('x', encoding='utf-8')",
+      "symbol": "_acquire_router_daemon_lock"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 119,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_event_dispatcher.py",
+      "source": "path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_quarantine_direct_scoped_event_conflict"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 39,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_io_json.py",
+      "source": "tmp_path.open(\"w\", encoding=\"utf-8\", newline=\"\\n\")",
+      "symbol": "write_json_atomic"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 168,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_io_locks.py",
+      "source": "log_path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_record_json_write_lock_takeover"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 201,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_io_locks.py",
+      "source": "log_path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_record_json_write_lock_cleanup_failure"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 328,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_io_locks.py",
+      "source": "os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)",
+      "symbol": "_acquire_json_write_lock"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 81,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_lifecycle_requests_blockers.py",
+      "source": "failure_path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_try_write_control_blocker_for_exception"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 92,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_resume.py",
+      "source": "ticks_path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "append_heartbeat_tick"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 328,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_role_output_bridge.py",
+      "source": "path.write_bytes(source_path.read_bytes())",
+      "symbol": "write_role_output_envelope"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 310,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_role_output_bridge_events.py",
+      "source": "path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_record_role_output_replay_quarantine"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.router_json_gateway",
+      "line": 109,
+      "path": "skills\\flowpilot\\assets\\flowpilot_router_role_output_bridge_events_replay.py",
+      "source": "path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_record_package_disposition_authority_split"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.user_flow_gateway",
+      "line": 106,
+      "path": "skills\\flowpilot\\assets\\flowpilot_user_flow_source.py",
+      "source": "path.write_text(json.dumps(payload, indent=2, sort_keys=True) + \"\\n\", encoding=\"utf-8\")",
+      "symbol": "_write_json"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.packet_runtime_gateway",
+      "line": 80,
+      "path": "skills\\flowpilot\\assets\\packet_runtime_active_holder_core.py",
+      "source": "event_path.open(\"a\", encoding=\"utf-8\")",
+      "symbol": "_append_active_holder_event"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.packet_runtime_gateway",
+      "line": 261,
+      "path": "skills\\flowpilot\\assets\\packet_runtime_schema.py",
+      "source": "os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)",
+      "symbol": "_acquire_json_write_lock"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.packet_runtime_gateway",
+      "line": 306,
+      "path": "skills\\flowpilot\\assets\\packet_runtime_schema.py",
+      "source": "tmp_path.open(\"wb\")",
+      "symbol": "_write_bytes_atomic"
+    },
+    {
+      "approved": true,
+      "critical": true,
+      "gateway_id": "flowpilot.role_output_gateway",
+      "line": 33,
+      "path": "skills\\flowpilot\\assets\\role_output_runtime_schema_io.py",
+      "source": "tmp_path.write_bytes(_json_bytes(payload))",
+      "symbol": "_write_json"
+    }
+  ],
+  "flowguard_report": {
+    "artifact_type": "runtime_gateway_adoption_report",
+    "decision": "runtime_gateway_adoption_green",
+    "findings": [],
+    "ok": true,
+    "plan": {
+      "complete_inventory_evidence_ids": [
+        "flowpilot_runtime_gateway_static_writer_inventory"
+      ],
+      "gateways": [
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "description": "Router-owned JSON gateway for run, route, controller, scheduler, daemon, lifecycle, and repair state.",
+          "gateway_id": "flowpilot.router_json_gateway",
+          "managed_surface_ids": [
+            "flowpilot_current_pointer",
+            "flowpilot_run_state",
+            "flowpilot_execution_frontier",
+            "flowpilot_route_and_capability_state",
+            "flowpilot_controller_action_state",
+            "flowpilot_router_scheduler_state",
+            "flowpilot_daemon_state",
+            "flowpilot_control_blocker_state",
+            "flowpilot_break_glass_state",
+            "flowpilot_role_output_state",
+            "flowpilot_packet_state",
+            "flowpilot_card_state",
+            "flowpilot_lifecycle_state",
+            "flowpilot_runtime_event_log",
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              9
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        },
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.packet_runtime_active_holder_core",
+            "skills.flowpilot.assets.packet_runtime_schema"
+          ],
+          "description": "Packet runtime gateway for packet envelopes, bodies, ledgers, sessions, leases, and holder events.",
+          "gateway_id": "flowpilot.packet_runtime_gateway",
+          "managed_surface_ids": [
+            "flowpilot_packet_state",
+            "flowpilot_runtime_event_log",
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              2
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        },
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.role_output_runtime_schema_io"
+          ],
+          "description": "Role-output runtime gateway for local output receipts, ledgers, statuses, and sessions.",
+          "gateway_id": "flowpilot.role_output_gateway",
+          "managed_surface_ids": [
+            "flowpilot_role_output_state",
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              1
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        },
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.card_runtime_io"
+          ],
+          "description": "Card runtime gateway for card ledgers, ACKs, receipts, and return events.",
+          "gateway_id": "flowpilot.card_runtime_gateway",
+          "managed_surface_ids": [
+            "flowpilot_card_state",
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              1
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        },
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_controller_break_glass"
+          ],
+          "description": "Break-glass gateway for incidents, patches, recovery transactions, and blocker ledgers.",
+          "gateway_id": "flowpilot.break_glass_gateway",
+          "managed_surface_ids": [
+            "flowpilot_control_blocker_state",
+            "flowpilot_break_glass_state",
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              1
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        },
+        {
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_user_flow_source"
+          ],
+          "description": "User-flow display evidence gateway for route-sign display artifacts.",
+          "gateway_id": "flowpilot.user_flow_gateway",
+          "managed_surface_ids": [
+            "flowpilot_generic_run_json_state"
+          ],
+          "metadata": [
+            [
+              "approved_module_count",
+              1
+            ]
+          ],
+          "requires_atomic_commit": true,
+          "requires_code_boundary_binding": true,
+          "requires_proof_artifact": true,
+          "requires_replay_observation": true,
+          "requires_step_contract_binding": true,
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ]
+        }
+      ],
+      "metadata": [
+        [
+          "approved_gateway_modules",
+          {
+            "card_runtime_io.py": "flowpilot.card_runtime_gateway",
+            "flowpilot_controller_break_glass.py": "flowpilot.break_glass_gateway",
+            "flowpilot_router_daemon_runtime.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_event_dispatcher.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_io_json.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_io_locks.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_lifecycle_requests_blockers.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_resume.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_role_output_bridge.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_role_output_bridge_events.py": "flowpilot.router_json_gateway",
+            "flowpilot_router_role_output_bridge_events_replay.py": "flowpilot.router_json_gateway",
+            "flowpilot_user_flow_source.py": "flowpilot.user_flow_gateway",
+            "packet_runtime_active_holder_core.py": "flowpilot.packet_runtime_gateway",
+            "packet_runtime_schema.py": "flowpilot.packet_runtime_gateway",
+            "role_output_runtime_schema_io.py": "flowpilot.role_output_gateway"
+          }
+        ],
+        [
+          "source_root",
+          "skills\\flowpilot\\assets"
+        ]
+      ],
+      "project_id": "flowpilot",
+      "require_complete_inventory": true,
+      "require_observed_writer_for_critical_surfaces": true,
+      "state_surfaces": [
+        {
+          "critical": true,
+          "description": "Active-run current/index pointers under .flowpilot.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            ".flowpilot/current.json",
+            ".flowpilot/index.json"
+          ],
+          "surface_id": "flowpilot_current_pointer"
+        },
+        {
+          "critical": true,
+          "description": "Per-run Router state and bootstrap state.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "router_state.json",
+            "startup/bootstrap_state.json"
+          ],
+          "surface_id": "flowpilot_run_state"
+        },
+        {
+          "critical": true,
+          "description": "Current route/node execution frontier.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "execution_frontier.json"
+          ],
+          "surface_id": "flowpilot_execution_frontier"
+        },
+        {
+          "critical": true,
+          "description": "Route, route mutation, and capability planning artifacts.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "routes/**/flow.json",
+            "capabilities.json",
+            "route_mutations.json"
+          ],
+          "surface_id": "flowpilot_route_and_capability_state"
+        },
+        {
+          "critical": true,
+          "description": "Controller action rows, receipts, and action ledgers.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "runtime/controller_actions/*.json",
+            "runtime/controller_receipts/*.json",
+            "runtime/controller_action_ledger.json"
+          ],
+          "surface_id": "flowpilot_controller_action_state"
+        },
+        {
+          "critical": true,
+          "description": "Router scheduler rows, ledgers, and ownership ledgers.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "runtime/router_scheduler_ledger.json",
+            "runtime/router_ownership_ledger.json"
+          ],
+          "surface_id": "flowpilot_router_scheduler_state"
+        },
+        {
+          "critical": true,
+          "description": "Router daemon lock, status, and event-log state.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "runtime/router_daemon.lock",
+            "runtime/router_daemon_status.json",
+            "runtime/router_daemon_events.jsonl"
+          ],
+          "surface_id": "flowpilot_daemon_state"
+        },
+        {
+          "critical": true,
+          "description": "Control blockers, repair transactions, repair decisions, and gate decisions.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway",
+            "flowpilot.break_glass_gateway"
+          ],
+          "paths": [
+            "control_blocks/**/*.json",
+            "repair_transactions/**/*.json",
+            "gate_decisions/**/*.json"
+          ],
+          "surface_id": "flowpilot_control_blocker_state"
+        },
+        {
+          "critical": true,
+          "description": "Controller break-glass incidents, patches, recovery transactions, and indexes.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.break_glass_gateway",
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "controller_break_glass/**/*.json"
+          ],
+          "surface_id": "flowpilot_break_glass_state"
+        },
+        {
+          "critical": true,
+          "description": "Role-output ledgers, receipts, local output bodies, and status/session state.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.role_output_gateway",
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "role_outputs/**/*.json",
+            "runtime/role_output_*.json",
+            "runtime/role_outputs/**/*.json"
+          ],
+          "surface_id": "flowpilot_role_output_state"
+        },
+        {
+          "critical": true,
+          "description": "Packet/result envelopes, packet ledgers, active-holder leases, and packet runtime sessions.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.packet_runtime_gateway",
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "packets/**/*.json",
+            "packet_ledger.json",
+            "material/**/*packet*.json",
+            "research/**/*packet*.json"
+          ],
+          "surface_id": "flowpilot_packet_state"
+        },
+        {
+          "critical": true,
+          "description": "Card ledgers, card return ledgers, receipts, ACKs, and card envelopes.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.card_runtime_gateway",
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "card_ledger.json",
+            "return_event_ledger.json",
+            "cards/**/*.json"
+          ],
+          "surface_id": "flowpilot_card_state"
+        },
+        {
+          "critical": true,
+          "description": "Lifecycle stop, terminal reconciliation, closure, and continuation state.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway"
+          ],
+          "paths": [
+            "lifecycle/**/*.json",
+            "closure/**/*.json",
+            "continuation/**/*.json"
+          ],
+          "surface_id": "flowpilot_lifecycle_state"
+        },
+        {
+          "critical": true,
+          "description": "Append-only runtime JSONL event logs that affect replay or liveness.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway",
+            "flowpilot.packet_runtime_gateway"
+          ],
+          "paths": [
+            "**/*events.jsonl",
+            "**/*ticks.jsonl",
+            "**/*failures.jsonl"
+          ],
+          "surface_id": "flowpilot_runtime_event_log"
+        },
+        {
+          "critical": true,
+          "description": "Any other JSON control artifact under a FlowPilot run root.",
+          "metadata": [
+            [
+              "inventory_evidence_id",
+              "flowpilot_runtime_gateway_static_writer_inventory"
+            ]
+          ],
+          "owner_gateway_ids": [
+            "flowpilot.router_json_gateway",
+            "flowpilot.packet_runtime_gateway",
+            "flowpilot.role_output_gateway",
+            "flowpilot.card_runtime_gateway",
+            "flowpilot.break_glass_gateway",
+            "flowpilot.user_flow_gateway"
+          ],
+          "paths": [
+            ".flowpilot/runs/**/*.json"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state"
+        }
+      ],
+      "target_level": "runtime_gateway",
+      "write_observations": [
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_current_pointer",
+          "path": ".flowpilot/current.json;.flowpilot/index.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_current_pointer",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_run_state",
+          "path": "router_state.json;startup/bootstrap_state.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_run_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_execution_frontier",
+          "path": "execution_frontier.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_execution_frontier",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_route_and_capability_state",
+          "path": "routes/**/flow.json;capabilities.json;route_mutations.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_route_and_capability_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_controller_action_state",
+          "path": "runtime/controller_actions/*.json;runtime/controller_receipts/*.json;runtime/controller_action_ledger.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_controller_action_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_router_scheduler_state",
+          "path": "runtime/router_scheduler_ledger.json;runtime/router_ownership_ledger.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_router_scheduler_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_daemon_state",
+          "path": "runtime/router_daemon.lock;runtime/router_daemon_status.json;runtime/router_daemon_events.jsonl",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_daemon_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_control_blocker_state",
+          "path": "control_blocks/**/*.json;repair_transactions/**/*.json;gate_decisions/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_control_blocker_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_break_glass_state",
+          "path": "controller_break_glass/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_break_glass_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_role_output_state",
+          "path": "role_outputs/**/*.json;runtime/role_output_*.json;runtime/role_outputs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_role_output_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_packet_state",
+          "path": "packets/**/*.json;packet_ledger.json;material/**/*packet*.json;research/**/*packet*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_packet_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_card_state",
+          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_card_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_lifecycle_state",
+          "path": "lifecycle/**/*.json;closure/**/*.json;continuation/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_lifecycle_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_runtime_event_log",
+          "path": "**/*events.jsonl;**/*ticks.jsonl;**/*failures.jsonl",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_runtime_event_log",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_router_daemon_runtime",
+            "skills.flowpilot.assets.flowpilot_router_event_dispatcher",
+            "skills.flowpilot.assets.flowpilot_router_io_json",
+            "skills.flowpilot.assets.flowpilot_router_io_locks",
+            "skills.flowpilot.assets.flowpilot_router_lifecycle_requests_blockers",
+            "skills.flowpilot.assets.flowpilot_router_resume",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events",
+            "skills.flowpilot.assets.flowpilot_router_role_output_bridge_events_replay"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.router_json_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.router_json_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.router_json_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.packet_runtime_active_holder_core",
+            "skills.flowpilot.assets.packet_runtime_schema"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.packet_runtime_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.packet_runtime_gateway:flowpilot_packet_state",
+          "path": "packets/**/*.json;packet_ledger.json;material/**/*packet*.json;research/**/*packet*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_packet_state",
+          "symbol": "flowpilot.packet_runtime_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.packet_runtime_active_holder_core",
+            "skills.flowpilot.assets.packet_runtime_schema"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.packet_runtime_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.packet_runtime_gateway:flowpilot_runtime_event_log",
+          "path": "**/*events.jsonl;**/*ticks.jsonl;**/*failures.jsonl",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_runtime_event_log",
+          "symbol": "flowpilot.packet_runtime_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.packet_runtime_active_holder_core",
+            "skills.flowpilot.assets.packet_runtime_schema"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.packet_runtime_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.packet_runtime_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.packet_runtime_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.role_output_runtime_schema_io"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.role_output_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.role_output_gateway:flowpilot_role_output_state",
+          "path": "role_outputs/**/*.json;runtime/role_output_*.json;runtime/role_outputs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_role_output_state",
+          "symbol": "flowpilot.role_output_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.role_output_runtime_schema_io"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.role_output_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.role_output_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.role_output_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.card_runtime_io"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.card_runtime_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.card_runtime_gateway:flowpilot_card_state",
+          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_card_state",
+          "symbol": "flowpilot.card_runtime_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.card_runtime_io"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.card_runtime_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.card_runtime_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.card_runtime_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_controller_break_glass"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.break_glass_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.break_glass_gateway:flowpilot_control_blocker_state",
+          "path": "control_blocks/**/*.json;repair_transactions/**/*.json;gate_decisions/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_control_blocker_state",
+          "symbol": "flowpilot.break_glass_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_controller_break_glass"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.break_glass_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.break_glass_gateway:flowpilot_break_glass_state",
+          "path": "controller_break_glass/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_break_glass_state",
+          "symbol": "flowpilot.break_glass_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_controller_break_glass"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.break_glass_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.break_glass_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.break_glass_gateway",
+          "write_kind": "gateway"
+        },
+        {
+          "action_id": "flowpilot-runtime-gateway-adoption",
+          "code_boundary_ids": [
+            "skills.flowpilot.assets.flowpilot_user_flow_source"
+          ],
+          "current": true,
+          "gateway_id": "flowpilot.user_flow_gateway",
+          "legacy_bypass_reason": "",
+          "metadata": [
+            [
+              "inventory",
+              "static_writer_scan"
+            ]
+          ],
+          "observation_id": "flowpilot.user_flow_gateway:flowpilot_generic_run_json_state",
+          "path": ".flowpilot/runs/**/*.json",
+          "proof_artifact_ids": [
+            "tests.test_flowpilot_runtime_gateway_adoption",
+            "flowpilot_runtime_gateway_static_writer_inventory"
+          ],
+          "result_status": "passed",
+          "step_contract_ids": [
+            "harden-flowpilot-control-plane-recovery.runtime_gateway_adoption"
+          ],
+          "surface_id": "flowpilot_generic_run_json_state",
+          "symbol": "flowpilot.user_flow_gateway",
+          "write_kind": "gateway"
+        }
+      ]
+    },
+    "summary": "runtime_gateway_adoption_green: surfaces=15 gateways=6 observations=26 errors=0 warnings=0"
+  },
+  "gatewayed_critical_write_site_count": 19,
+  "ok": true,
+  "result_type": "flowpilot_runtime_gateway_adoption",
+  "static_findings": [],
+  "static_inventory_evidence_id": "flowpilot_runtime_gateway_static_writer_inventory",
+  "static_write_site_count": 25
+}

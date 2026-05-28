@@ -10,6 +10,7 @@ from typing import Any
 
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 import flowpilot_router_io_locks as io_locks
+from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 
 
 def _read_json_for_runtime_scan(path: Path) -> dict[str, Any] | None:
@@ -28,6 +29,7 @@ def _read_json_for_runtime_scan(path: Path) -> dict[str, Any] | None:
 
 
 def write_json_atomic(path: Path, payload: dict[str, Any], *, sort_keys: bool = True, verify: bool = True) -> None:
+    assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="write_json_atomic")
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = io_locks._acquire_json_write_lock(path)
     tmp_path = path.with_name(f".tmp-{os.getpid()}-{time.time_ns():x}.json")

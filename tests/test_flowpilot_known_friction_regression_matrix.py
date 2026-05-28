@@ -37,13 +37,13 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
         self.assertEqual({row["friction_id"] for row in report["rows"]}, matrix.REQUIRED_FRICTION_IDS)
         self.assertEqual({row["source_class"] for row in report["rows"]}, matrix.REQUIRED_SOURCE_CLASSES)
         self.assertEqual(report["row_count"], report["required_friction_count"])
-        self.assertEqual(report["rows_by_priority"]["P0"], 5)
+        self.assertEqual(report["rows_by_priority"]["P0"], 11)
         self.assertIn("historically recurring FlowPilot", report["coverage_boundary"])
         self.assertIn("defect-family gate", report["coverage_boundary"])
         self.assertIn("do not prove arbitrary live AI semantic quality", report["coverage_boundary"])
         self.assertTrue(report["defect_family_gate_ok"], report["defect_family_gate_report"])
 
-    def test_known_friction_rows_cover_six_accepted_surfaces(self) -> None:
+    def test_known_friction_rows_cover_current_audit_surfaces(self) -> None:
         self.test_known_friction_rows_cover_required_historical_failures()
 
     def test_rows_bind_child_evidence_to_real_runtime_surfaces(self) -> None:
@@ -83,10 +83,30 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
     def test_p0_rows_require_current_transcript_regression(self) -> None:
         p0_rows = [row for row in matrix.build_rows() if row["priority"] == "P0"]
 
-        self.assertEqual(len(p0_rows), 5)
+        self.assertEqual(len(p0_rows), 11)
         for row in p0_rows:
             with self.subTest(friction_id=row["friction_id"]):
                 self.assertIn("current_transcript_regression", row["global_gates"])
+
+    def test_current_audit_rows_are_promoted_to_parent_gate(self) -> None:
+        rows = {row["friction_id"]: row for row in matrix.build_rows()}
+        current_audit_ids = {
+            "known_friction.local_fixed_router_event_receipt_only",
+            "known_friction.resume_rehydration_postcondition_replay_miss",
+            "known_friction.control_blocker_same_family_storm",
+            "known_friction.protocol_dead_end_reopened_by_resume",
+            "known_friction.break_glass_patch_limbo",
+            "known_friction.heartbeat_diagnostic_only_resume",
+        }
+
+        self.assertLessEqual(current_audit_ids, set(rows))
+        for friction_id in current_audit_ids:
+            row = rows[friction_id]
+            with self.subTest(friction_id=friction_id):
+                self.assertIn("run-20260527-212331", row["historical_bad_case"])
+                self.assertIn("current_transcript_regression", row["global_gates"])
+                self.assertIn("historical_live_run_replay_matrix", row["child_evidence_ids"])
+                self.assertTrue(row["defect_family_promoted"])
 
     def test_known_bad_cases_are_rejected(self) -> None:
         for case in matrix.known_bad_cases():
@@ -114,6 +134,41 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
         self.assertEqual(family_report["risk_ledger_report"]["confidence"], RISK_CONFIDENCE_FULL)
         self.assertEqual(family_report["gate_report"]["findings"], [])
         self.assertEqual(family_report["risk_ledger_report"]["findings"], [])
+
+    def test_defect_family_gate_requires_artifact_backed_evidence(self) -> None:
+        row = matrix.build_rows()[0]
+        report = matrix.build_defect_family_report((row,), include_proof_artifacts=False)
+        gate_codes = {
+            finding["code"]
+            for finding in report["gate_report"]["findings"]
+        }
+        ledger_codes = {
+            finding["code"]
+            for finding in report["risk_ledger_report"]["findings"]
+        }
+
+        self.assertFalse(report["ok"])
+        self.assertIn("missing_defect_family_proof_artifact", gate_codes)
+        self.assertIn("legacy_path_missing_proof_artifact", gate_codes)
+        self.assertIn("missing_proof_evidence_artifact", ledger_codes)
+
+    def test_proof_artifacts_bind_to_current_result_files(self) -> None:
+        gate_plan = matrix.build_defect_family_gate_plan()
+
+        self.assertTrue(gate_plan.require_proof_artifacts)
+        self.assertTrue(gate_plan.require_legacy_path_dispositions)
+        for evidence in gate_plan.proof_evidence:
+            with self.subTest(evidence_id=evidence.evidence_id):
+                artifact = evidence.proof_artifact
+                self.assertIsNotNone(artifact)
+                self.assertEqual(artifact.result_status, "passed")
+                self.assertEqual(artifact.exit_code, 0)
+                self.assertTrue(artifact.result_path)
+                self.assertTrue(artifact.artifact_fingerprints)
+                for result_path, fingerprint in artifact.artifact_fingerprints.items():
+                    self.assertTrue((matrix.ROOT / result_path).exists(), result_path)
+                    self.assertTrue(fingerprint.startswith("sha256:"))
+                self.assertIn(evidence.evidence_id, artifact.covered_obligation_ids)
 
     def test_defect_family_known_bad_cases_are_rejected(self) -> None:
         checks = {case["name"]: case for case in matrix.defect_family_known_bad_cases()}

@@ -96,6 +96,84 @@ def _write_resume_role_rehydration_report(router: ModuleType, project_root: Path
     if not memory_complete:
         run_state['flags']['resume_state_ambiguous'] = True
 
+def _resume_rehydration_report_candidates(router: ModuleType, project_root: Path, run_root: Path, payload: dict[str, Any] | None = None) -> list[Path]:
+    _bind_router(router)
+    candidates: list[Path] = []
+    payload = payload if isinstance(payload, dict) else {}
+    for key in ('crew_rehydration_report_path', 'report_path', 'rehydration_report_path'):
+        raw = payload.get(key)
+        if isinstance(raw, str) and raw.strip():
+            candidates.append(resolve_project_path(project_root, raw))
+    candidates.append(run_root / 'continuation' / 'crew_rehydration_report.json')
+    unique: list[Path] = []
+    seen: set[str] = set()
+    for path in candidates:
+        marker = str(path.resolve()) if path.exists() else str(path)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        unique.append(path)
+    return unique
+
+def _reclaim_resume_rehydration_postcondition_from_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, source: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    _bind_router(router)
+    expected_roles = set(CREW_ROLE_KEYS)
+    last_reason = 'crew_rehydration_report_missing'
+    for report_path in router._resume_rehydration_report_candidates(project_root, run_root, payload):
+        report = read_json_if_exists(report_path)
+        if not report:
+            last_reason = 'crew_rehydration_report_missing'
+            continue
+        if report.get('schema_version') != 'flowpilot.crew_rehydration_report.v1':
+            last_reason = 'crew_rehydration_report_schema_mismatch'
+            continue
+        if str(report.get('run_id') or '') != str(run_state.get('run_id') or ''):
+            last_reason = 'crew_rehydration_report_wrong_run'
+            continue
+        records = report.get('role_records') if isinstance(report.get('role_records'), list) else []
+        role_keys = {str(record.get('role_key') or '') for record in records if isinstance(record, dict)}
+        if role_keys != expected_roles:
+            last_reason = 'crew_rehydration_report_role_set_incomplete'
+            continue
+        if report.get('all_six_roles_ready') is not True:
+            last_reason = 'crew_rehydration_report_roles_not_ready'
+            continue
+        if report.get('current_run_memory_complete') is not True:
+            last_reason = 'crew_rehydration_report_memory_incomplete'
+            continue
+        liveness = report.get('liveness_preflight') if isinstance(report.get('liveness_preflight'), dict) else {}
+        if liveness.get('wait_agent_timeout_treated_as_active') is not False:
+            last_reason = 'crew_rehydration_report_timeout_classified_alive'
+            continue
+        if report.get('sealed_body_reads_allowed') is not False:
+            last_reason = 'crew_rehydration_report_boundary_not_confirmed'
+            continue
+        flags = run_state.setdefault('flags', {})
+        flags['resume_roles_restored'] = True
+        flags['resume_role_agents_rehydrated'] = True
+        flags['crew_rehydration_report_written'] = True
+        flags['resume_state_loaded'] = True
+        flags['resume_reentry_requested'] = True
+        relpath = project_relative(project_root, report_path)
+        append_history(
+            run_state,
+            'router_reclaimed_resume_rehydration_report_postcondition',
+            {
+                'source': source,
+                'crew_rehydration_report_path': relpath,
+                'role_keys': sorted(role_keys),
+                'current_run_memory_complete': True,
+            },
+        )
+        return {
+            'applied': True,
+            'source': source,
+            'postcondition': 'resume_roles_restored',
+            'crew_rehydration_report_path': relpath,
+            'role_keys': sorted(role_keys),
+        }
+    return {'applied': False, 'reason': last_reason, 'postcondition': 'resume_roles_restored'}
+
 def _stable_resume_launcher_contract(router: ModuleType) -> dict[str, Any]:
     _bind_router(router)
     return {'event': 'heartbeat_or_manual_resume_requested', 'wake_sources': ['heartbeat', 'manual_resume'], 'resume_action': 'load_resume_state', 'role_liveness_action': 'rehydrate_role_agents', 'router_reentry_required_on_every_wake': True, 'heartbeat_and_manual_resume_share_path': True, 'self_keepalive_allowed': False, 'diagnostic_work_chain_status_only': True, 'controller_only': True, 'sealed_body_reads_allowed': False}
@@ -110,6 +188,8 @@ def _write_initial_continuation_binding(router: ModuleType, project_root: Path, 
 
 __all__ = (
     '_write_resume_role_rehydration_report',
+    '_resume_rehydration_report_candidates',
+    '_reclaim_resume_rehydration_postcondition_from_report',
     '_stable_resume_launcher_contract',
     '_write_initial_continuation_binding',
 )
