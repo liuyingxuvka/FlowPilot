@@ -133,8 +133,15 @@ def _current_node_packet_records(router: ModuleType, project_root: Path, run_sta
 def _current_node_results_complete(router: ModuleType, project_root: Path, run_state: dict[str, Any]) -> bool:
     _bind_router(router)
     for record in router._current_node_packet_records(project_root, run_state):
-        result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
-        if not result_path.exists():
+        result_exists, result_path = router._parallel_batch_record_result_exists(project_root, run_state, record)
+        if not result_exists:
+            return False
+        result_valid, _details = router._parallel_batch_record_result_is_valid(
+            project_root,
+            result_path,
+            expected_next_recipient='project_manager',
+        )
+        if not result_valid:
             return False
     return True
 
@@ -142,9 +149,19 @@ def _current_node_missing_result_roles(router: ModuleType, project_root: Path, r
     _bind_router(router)
     missing: list[str] = []
     for record in router._current_node_packet_records(project_root, run_state):
-        result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
-        if not result_path.exists():
+        result_exists, result_path = router._parallel_batch_record_result_exists(project_root, run_state, record)
+        if result_exists:
+            result_valid, _details = router._parallel_batch_record_result_is_valid(
+                project_root,
+                result_path,
+                expected_next_recipient='project_manager',
+            )
+            if result_valid:
+                continue
+        else:
             missing.append(str(record.get('to_role') or record.get('packet_id') or 'unknown'))
+            continue
+        missing.append(str(record.get('to_role') or record.get('packet_id') or 'unknown'))
     return sorted(set(missing))
 
 def _active_child_skill_bindings_from_plan(router: ModuleType, plan: dict[str, Any]) -> list[dict[str, Any]]:

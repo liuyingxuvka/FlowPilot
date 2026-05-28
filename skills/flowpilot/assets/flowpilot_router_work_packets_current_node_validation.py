@@ -234,14 +234,23 @@ def _role_output_status_packet_path_for_wait(router: ModuleType, project_root: P
 def _try_reconcile_current_node_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
     _bind_router(router)
     flags = run_state.get('flags') if isinstance(run_state.get('flags'), dict) else {}
-    if flags.get('current_node_worker_result_returned') or not flags.get('current_node_packet_relayed'):
+    if not flags.get('current_node_packet_relayed'):
         return False
-    changed = False
+    summary = router._refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, 'current_node')
+    changed = bool(summary.get('changed'))
+    already_recorded_packet_ids = {
+        str(item.get('payload', {}).get('packet_id') or '')
+        for item in run_state.get('events', [])
+        if isinstance(item, dict) and item.get('event') == 'worker_current_node_result_returned' and isinstance(item.get('payload'), dict)
+    }
     for record in router._current_node_packet_records(project_root, run_state):
+        packet_id = str(record.get('packet_id') or '')
+        if packet_id in already_recorded_packet_ids:
+            continue
         result_exists, result_path = router._parallel_batch_record_result_exists(project_root, run_state, record)
         if not result_exists:
             continue
-        payload = {'packet_id': str(record.get('packet_id') or ''), 'result_envelope_path': project_relative(project_root, result_path), 'result_envelope_hash': packet_runtime.sha256_file(result_path), 'reconciled_from_result_envelope': True}
+        payload = {'packet_id': packet_id, 'result_envelope_path': project_relative(project_root, result_path), 'result_envelope_hash': packet_runtime.sha256_file(result_path), 'reconciled_from_result_envelope': True}
         try:
             router._validate_current_node_result_event(project_root, run_state, payload)
         except (RouterError, packet_runtime.PacketRuntimeError):

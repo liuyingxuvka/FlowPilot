@@ -36,7 +36,7 @@ Before the daemon is started or attached, the assistant is only the FlowPilot bo
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. Legacy equivalent: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation`.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. Compatibility-only alias retained for older automation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation`; do not choose it for new operator instructions when `start` is available.
 
 Manual diagnostic/repair commands:
 

@@ -217,6 +217,15 @@ FAST_COMMANDS = (
         description="FlowGuard TestMesh contract checks for semantic parent/child slow-test splits.",
     ),
     TierCommand(
+        name="flowguard_packet_result_family_parity",
+        command=_py(
+            "simulations/run_flowpilot_packet_result_family_parity_checks.py",
+            "--json-out",
+            "simulations/flowpilot_packet_result_family_parity_results.json",
+        ),
+        description="FlowGuard obligation-family parity checks for packet-result durable-envelope reconciliation.",
+    ),
+    TierCommand(
         name="flowguard_model_test_alignment",
         command=_py(
             "simulations/run_flowpilot_model_test_alignment_checks.py",

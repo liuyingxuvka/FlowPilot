@@ -37,6 +37,7 @@ from flowguard import (
     review_defect_family_gates,
     review_risk_evidence_ledger,
 )
+from flowpilot_packet_result_family_parity_model import build_report as build_packet_result_family_parity_report
 
 
 PASS_STATUSES = {"passed"}
@@ -1182,6 +1183,7 @@ def build_report() -> dict[str, Any]:
     rows = build_rows()
     findings = validate_rows(rows)
     defect_family_report = build_defect_family_report(rows)
+    packet_result_family_parity = build_packet_result_family_parity_report()
     if not defect_family_report["ok"]:
         findings.append(
             {
@@ -1189,6 +1191,14 @@ def build_report() -> dict[str, Any]:
                 "message": "one or more known-friction defect-family gates failed",
                 "gate_report": defect_family_report["gate_report"],
                 "risk_ledger_report": defect_family_report["risk_ledger_report"],
+            }
+        )
+    if not packet_result_family_parity["ok"]:
+        findings.append(
+            {
+                "code": "packet_result_family_parity_failed",
+                "message": "packet-result obligation-family parity is required before durable-result reconciliation can support known-friction confidence",
+                "packet_result_family_parity": packet_result_family_parity,
             }
         )
     rows_by_priority = Counter(str(row["priority"]) for row in rows)
@@ -1219,6 +1229,8 @@ def build_report() -> dict[str, Any]:
         "row_count": len(rows),
         "defect_family_gate_ok": defect_family_report["ok"],
         "defect_family_gate_report": defect_family_report,
+        "packet_result_family_parity_ok": packet_result_family_parity["ok"],
+        "packet_result_family_parity": packet_result_family_parity,
         "rows_by_priority": dict(sorted(rows_by_priority.items())),
         "required_global_gates": sorted(REQUIRED_GLOBAL_GATES),
         "observed_global_gates": observed_global_gates,

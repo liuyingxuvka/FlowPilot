@@ -35,6 +35,11 @@ ROLE_OUTPUT_EVENT_FOLDS_TO_ROUTER_STATE_AND_CLEARS_WAIT = (
 )
 RESOLVED_WAIT_INVALIDATES_PENDING_PROJECTION = "resolved_wait_invalidates_pending_projection"
 UNIFIED_RECONCILER_ROOT_FIX = "unified_reconciler_root_fix"
+RESEARCH_BATCH_RESULT_RECONCILES_EVENT_AND_PM_RELAY = (
+    "research_batch_result_reconciles_event_and_pm_relay"
+)
+DAEMON_RECOVERY_USES_RUN_RUNTIME_KIT_AUTHORITY = "daemon_recovery_uses_run_runtime_kit_authority"
+STOP_SCOPE_DECLARATION_MATCHES_HOST_CLEANUP = "stop_scope_declaration_matches_host_cleanup"
 
 OBSERVED_RECEIPT_FLAG_WITHOUT_BATCH_LIFECYCLE = "observed_receipt_flag_without_batch_lifecycle"
 OBSERVED_SUPERSEDED_OLD_REQUEST_STILL_OPEN = "observed_superseded_old_request_still_open"
@@ -52,6 +57,12 @@ SUPERSEDE_ONLY_FIX_LEAVES_PROJECTION_DRIFT = "supersede_only_fix_leaves_projecti
 CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER = "case_patches_claim_root_fix_without_reconciler"
 ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER = "root_fix_without_role_output_event_reconciler"
 NO_CAS_FIX_LOSES_FOREGROUND_EVENT = "no_cas_fix_loses_foreground_event"
+OBSERVED_RESEARCH_BATCH_JOINED_WITHOUT_RETURN_EVENT = (
+    "observed_research_batch_joined_without_return_event"
+)
+REMINDER_SENT_AFTER_RESEARCH_BATCH_JOINED = "reminder_sent_after_research_batch_joined"
+DAEMON_RECOVERY_USES_MUTABLE_SOURCE_PROMPT = "daemon_recovery_uses_mutable_source_prompt"
+GLOBAL_STOP_CLAIM_WITH_ACTIVE_HOST_AUTOMATIONS = "global_stop_claim_with_active_host_automations"
 
 VALID_SCENARIOS = (
     RECEIPT_FOLD_UPDATES_ALL_VIEWS,
@@ -63,6 +74,9 @@ VALID_SCENARIOS = (
     ROLE_OUTPUT_EVENT_FOLDS_TO_ROUTER_STATE_AND_CLEARS_WAIT,
     RESOLVED_WAIT_INVALIDATES_PENDING_PROJECTION,
     UNIFIED_RECONCILER_ROOT_FIX,
+    RESEARCH_BATCH_RESULT_RECONCILES_EVENT_AND_PM_RELAY,
+    DAEMON_RECOVERY_USES_RUN_RUNTIME_KIT_AUTHORITY,
+    STOP_SCOPE_DECLARATION_MATCHES_HOST_CLEANUP,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -80,6 +94,10 @@ NEGATIVE_SCENARIOS = (
     CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER,
     ROOT_FIX_WITHOUT_ROLE_OUTPUT_EVENT_RECONCILER,
     NO_CAS_FIX_LOSES_FOREGROUND_EVENT,
+    OBSERVED_RESEARCH_BATCH_JOINED_WITHOUT_RETURN_EVENT,
+    REMINDER_SENT_AFTER_RESEARCH_BATCH_JOINED,
+    DAEMON_RECOVERY_USES_MUTABLE_SOURCE_PROMPT,
+    GLOBAL_STOP_CLAIM_WITH_ACTIVE_HOST_AUTOMATIONS,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -143,6 +161,14 @@ class State:
     router_event_flag_synced: bool = False
     material_review_projection_synced: bool = False
     material_insufficient_pm_repair_branch_exposed: bool = False
+    packet_batch_family: str = "none"  # none | material_scan | research | current_node | pm_role_work
+    packet_batch_results_joined: bool = False
+    packet_batch_all_results_returned: bool = False
+    packet_batch_missing_roles: int = 0
+    packet_batch_next_recipient: str = "none"  # none | project_manager | reviewer
+    packet_batch_reconciler_covers_family: bool = False
+    worker_result_return_event_recorded: bool = False
+    packet_batch_result_relayed_to_pm: bool = False
     controller_wait_row_status: str = "none"  # none | waiting | done
     scheduler_wait_row_status: str = "none"  # none | waiting | reconciled
     pending_action_references_wait: bool = False
@@ -153,6 +179,19 @@ class State:
 
     shared_reconcile_before_next_action: bool = False
     next_action_from_reconciled_state: bool = False
+    daemon_recovery_attempted: bool = False
+    active_run_runtime_kit_prompt_manifest_present: bool = False
+    source_runtime_kit_prompt_changed_after_run_start: bool = False
+    daemon_recovery_reads_run_runtime_kit_prompt: bool = False
+    daemon_recovery_reads_mutable_source_prompt: bool = False
+    prompt_hash_mismatch_blocks_daemon_recovery: bool = False
+    daemon_recovery_status_write_succeeds: bool = False
+    stop_scope: str = "none"  # none | flowpilot_run | all_codex_host
+    flowpilot_daemon_stopped: bool = False
+    flowpilot_heartbeat_stopped: bool = False
+    flowpilot_role_agents_stopped: bool = False
+    unrelated_host_automations_active: bool = False
+    global_host_cleanup_claimed: bool = False
     root_fix_claimed: bool = False
     terminal_reason: str = "none"
 
@@ -263,6 +302,50 @@ def _resolved_wait_good() -> dict[str, object]:
     }
 
 
+def _research_batch_good() -> dict[str, object]:
+    return {
+        "packet_batch_family": "research",
+        "packet_batch_results_joined": True,
+        "packet_batch_all_results_returned": True,
+        "packet_batch_missing_roles": 0,
+        "packet_batch_next_recipient": "project_manager",
+        "packet_batch_reconciler_covers_family": True,
+        "worker_result_return_event_recorded": True,
+        "router_event_flag_synced": True,
+        "packet_batch_result_relayed_to_pm": True,
+        "controller_wait_row_status": "done",
+        "scheduler_wait_row_status": "reconciled",
+        "pending_action_references_wait": True,
+        "pending_action_validated_against_wait_ledgers": True,
+        "pending_action_cleared_after_wait_resolution": True,
+        "current_work_from_pending_action": False,
+        "stale_wait_reminder_created": False,
+    }
+
+
+def _daemon_recovery_prompt_good() -> dict[str, object]:
+    return {
+        "daemon_recovery_attempted": True,
+        "active_run_runtime_kit_prompt_manifest_present": True,
+        "source_runtime_kit_prompt_changed_after_run_start": True,
+        "daemon_recovery_reads_run_runtime_kit_prompt": True,
+        "daemon_recovery_reads_mutable_source_prompt": False,
+        "prompt_hash_mismatch_blocks_daemon_recovery": False,
+        "daemon_recovery_status_write_succeeds": True,
+    }
+
+
+def _stop_scope_good() -> dict[str, object]:
+    return {
+        "stop_scope": "flowpilot_run",
+        "flowpilot_daemon_stopped": True,
+        "flowpilot_heartbeat_stopped": True,
+        "flowpilot_role_agents_stopped": True,
+        "unrelated_host_automations_active": True,
+        "global_host_cleanup_claimed": False,
+    }
+
+
 def _root_fix_good() -> dict[str, object]:
     return {
         "shared_reconcile_before_next_action": True,
@@ -298,10 +381,19 @@ def scenario_state(scenario: str) -> State:
             _reminder_good(),
             _self_check_good(),
             _role_output_event_good(),
+            _research_batch_good(),
+            _daemon_recovery_prompt_good(),
+            _stop_scope_good(),
             _root_fix_good(),
         ):
             changes.update(fragment)
         return _accepted(scenario, **changes)
+    if scenario == RESEARCH_BATCH_RESULT_RECONCILES_EVENT_AND_PM_RELAY:
+        return _accepted(scenario, **_research_batch_good())
+    if scenario == DAEMON_RECOVERY_USES_RUN_RUNTIME_KIT_AUTHORITY:
+        return _accepted(scenario, **_daemon_recovery_prompt_good())
+    if scenario == STOP_SCOPE_DECLARATION_MATCHES_HOST_CLEANUP:
+        return _accepted(scenario, **_stop_scope_good())
 
     if scenario == OBSERVED_RECEIPT_FLAG_WITHOUT_BATCH_LIFECYCLE:
         return _rejected(
@@ -480,6 +572,55 @@ def scenario_state(scenario: str) -> State:
             }
         )
         return _rejected(scenario, **changes)
+    if scenario == OBSERVED_RESEARCH_BATCH_JOINED_WITHOUT_RETURN_EVENT:
+        return _rejected(
+            scenario,
+            packet_batch_family="research",
+            packet_batch_results_joined=True,
+            packet_batch_all_results_returned=True,
+            packet_batch_missing_roles=0,
+            packet_batch_next_recipient="project_manager",
+            packet_batch_reconciler_covers_family=False,
+            worker_result_return_event_recorded=False,
+            router_event_flag_synced=False,
+            packet_batch_result_relayed_to_pm=False,
+            controller_wait_row_status="waiting",
+            scheduler_wait_row_status="waiting",
+            pending_action_references_wait=True,
+            current_work_from_pending_action=True,
+        )
+    if scenario == REMINDER_SENT_AFTER_RESEARCH_BATCH_JOINED:
+        changes = dict(_research_batch_good())
+        changes.update(
+            {
+                "pending_action_validated_against_wait_ledgers": False,
+                "pending_action_cleared_after_wait_resolution": False,
+                "current_work_from_pending_action": True,
+                "stale_wait_reminder_created": True,
+            }
+        )
+        return _rejected(scenario, **changes)
+    if scenario == DAEMON_RECOVERY_USES_MUTABLE_SOURCE_PROMPT:
+        return _rejected(
+            scenario,
+            daemon_recovery_attempted=True,
+            active_run_runtime_kit_prompt_manifest_present=True,
+            source_runtime_kit_prompt_changed_after_run_start=True,
+            daemon_recovery_reads_run_runtime_kit_prompt=False,
+            daemon_recovery_reads_mutable_source_prompt=True,
+            prompt_hash_mismatch_blocks_daemon_recovery=True,
+            daemon_recovery_status_write_succeeds=False,
+        )
+    if scenario == GLOBAL_STOP_CLAIM_WITH_ACTIVE_HOST_AUTOMATIONS:
+        return _rejected(
+            scenario,
+            stop_scope="all_codex_host",
+            flowpilot_daemon_stopped=True,
+            flowpilot_heartbeat_stopped=True,
+            flowpilot_role_agents_stopped=True,
+            unrelated_host_automations_active=True,
+            global_host_cleanup_claimed=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -651,6 +792,44 @@ def consistency_failures(state: State) -> list[str]:
     if _wait_row_is_resolved(state) and state.stale_wait_reminder_created:
         failures.append("wait reminder was created for an already reconciled wait row")
 
+    if (
+        state.packet_batch_results_joined
+        and state.packet_batch_all_results_returned
+        and state.packet_batch_missing_roles == 0
+    ):
+        if not state.packet_batch_reconciler_covers_family:
+            failures.append("joined packet batch had no durable family reconciler")
+        if state.packet_batch_family == "research" and not state.worker_result_return_event_recorded:
+            failures.append("research batch results_joined did not synthesize worker_research_report_returned")
+        if state.packet_batch_next_recipient == "project_manager" and not state.packet_batch_result_relayed_to_pm:
+            failures.append("joined packet batch result was not relayed to project_manager")
+        if state.stale_wait_reminder_created:
+            failures.append("wait reminder was created after joined packet batch result already satisfied the wait")
+
+    if state.daemon_recovery_attempted:
+        if not state.active_run_runtime_kit_prompt_manifest_present:
+            failures.append("daemon recovery had no active-run runtime_kit prompt manifest authority")
+        if (
+            state.source_runtime_kit_prompt_changed_after_run_start
+            and state.daemon_recovery_reads_mutable_source_prompt
+            and not state.daemon_recovery_reads_run_runtime_kit_prompt
+        ):
+            failures.append("daemon recovery read mutable source prompt instead of active run runtime_kit")
+        if state.prompt_hash_mismatch_blocks_daemon_recovery:
+            failures.append("prompt hash drift blocked daemon recovery or status write")
+        if not state.daemon_recovery_status_write_succeeds:
+            failures.append("daemon recovery did not finish its status write")
+
+    if state.stop_scope == "flowpilot_run" and not (
+        state.flowpilot_daemon_stopped
+        and state.flowpilot_heartbeat_stopped
+        and state.flowpilot_role_agents_stopped
+    ):
+        failures.append("FlowPilot run stop did not reconcile daemon, heartbeat, and role agents")
+
+    if state.global_host_cleanup_claimed and state.unrelated_host_automations_active:
+        failures.append("global host stop was claimed while unrelated host automations remained active")
+
     if state.root_fix_claimed and not state.shared_reconcile_before_next_action:
         failures.append("root fix was claimed without a shared durable reconciliation barrier before next action")
 
@@ -662,6 +841,15 @@ def consistency_failures(state: State) -> list[str]:
 
     if state.root_fix_claimed and not state.pending_action_validated_against_wait_ledgers:
         failures.append("root fix was claimed without validating pending_action against durable wait ledgers")
+
+    if state.root_fix_claimed and not state.packet_batch_reconciler_covers_family:
+        failures.append("root fix was claimed without packet-family batch reconciliation")
+
+    if state.root_fix_claimed and not state.daemon_recovery_reads_run_runtime_kit_prompt:
+        failures.append("root fix was claimed without active-run runtime_kit prompt authority")
+
+    if state.root_fix_claimed and state.global_host_cleanup_claimed and state.unrelated_host_automations_active:
+        failures.append("root fix overclaimed global host cleanup")
 
     return failures
 
@@ -748,6 +936,27 @@ def repair_candidate_states() -> dict[str, State]:
         pending_action_cleared_after_wait_resolution=True,
     )
     case_patches = scenario_state(CASE_PATCHES_CLAIM_ROOT_FIX_WITHOUT_RECONCILER)
+    batch_family_only = _rejected(
+        "candidate_batch_family_reconciler_only",
+        **_research_batch_good(),
+        shared_reconcile_before_next_action=True,
+        next_action_from_reconciled_state=True,
+        root_fix_claimed=True,
+    )
+    run_prompt_only = _rejected(
+        "candidate_run_prompt_authority_only",
+        **_daemon_recovery_prompt_good(),
+        shared_reconcile_before_next_action=True,
+        next_action_from_reconciled_state=True,
+        root_fix_claimed=True,
+    )
+    stop_scope_only = _rejected(
+        "candidate_stop_scope_only",
+        **_stop_scope_good(),
+        shared_reconcile_before_next_action=True,
+        next_action_from_reconciled_state=True,
+        root_fix_claimed=True,
+    )
     unified_root = scenario_state(UNIFIED_RECONCILER_ROOT_FIX)
     return {
         "receipt_only": receipt_only,
@@ -755,7 +964,10 @@ def repair_candidate_states() -> dict[str, State]:
         "role_output_event_reconciler_only": role_output_event_only,
         "pending_clear_only": pending_clear_only,
         "case_patches_without_shared_reconciler": case_patches,
-        "unified_reconciler_with_event_fold_pending_authority_cas_and_true_holder_gate": unified_root,
+        "batch_family_reconciler_only": batch_family_only,
+        "run_prompt_authority_only": run_prompt_only,
+        "stop_scope_only": stop_scope_only,
+        "unified_reconciler_with_event_fold_pending_authority_cas_true_holder_batch_prompt_and_stop_scope": unified_root,
     }
 
 

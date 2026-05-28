@@ -175,6 +175,8 @@ def _try_reconcile_material_scan_body_delivery(project_root: Path, run_root: Pat
     return flowpilot_router_work_packets._try_reconcile_material_scan_body_delivery(_bound_router(), project_root, run_root, run_state)
 def _try_reconcile_material_scan_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
     return flowpilot_router_work_packets._try_reconcile_material_scan_results(_bound_router(), project_root, run_root, run_state)
+def _try_reconcile_research_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
+    return flowpilot_router_work_packets._try_reconcile_research_results(_bound_router(), project_root, run_root, run_state)
 def _try_reconcile_current_node_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
     return flowpilot_router_work_packets._try_reconcile_current_node_results(_bound_router(), project_root, run_root, run_state)
 def _try_reconcile_pm_role_work_results(project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
@@ -184,6 +186,7 @@ __all__ = (
     "_record_router_reconciled_external_event",
     "_try_reconcile_material_scan_body_delivery",
     "_try_reconcile_material_scan_results",
+    "_try_reconcile_research_results",
     "_try_reconcile_current_node_results",
     "_try_reconcile_pm_role_work_results",
 )

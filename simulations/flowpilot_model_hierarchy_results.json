@@ -296,7 +296,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-27T21:12:03.026992+00:00",
+            "created_at": "2026-05-28T21:09:08.102224+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -324,7 +324,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-27T21:12:03.026992+00:00",
+          "created_at": "2026-05-28T21:09:08.102224+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -346,7 +346,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-28T07:59:12.431509+00:00",
+            "created_at": "2026-05-28T21:09:10.177071+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -382,7 +382,7 @@
             "valid": false
           },
           "proof": {
-            "created_at": "2026-05-27T21:02:26.115088+00:00",
+            "created_at": "2026-05-28T21:09:12.033940+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "legacy_monolith_required": false,
@@ -410,7 +410,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-27T21:02:26.115088+00:00",
+          "created_at": "2026-05-28T21:09:12.033940+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "legacy_monolith_required": false,
@@ -432,7 +432,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-28T07:59:12.411911+00:00",
+            "created_at": "2026-05-28T21:09:13.973366+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1359,7 +1359,7 @@
       {
         "edge_count": 1201,
         "model_id": "flowpilot_daemon_reconciliation",
-        "ok": false,
+        "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
         "role": "child_evidence",

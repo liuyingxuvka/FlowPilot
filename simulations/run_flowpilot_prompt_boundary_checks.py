@@ -193,18 +193,37 @@ def _source_text(path: str) -> str:
     return (PROJECT_ROOT / path).read_text(encoding="utf-8")
 
 
+def _source_bundle(*paths: str) -> str:
+    return "\n".join(_source_text(path) for path in paths)
+
+
 def _actual_prompt_source_report() -> dict[str, object]:
     skill = _source_text("skills/flowpilot/SKILL.md")
     controller = _source_text("skills/flowpilot/assets/runtime_kit/cards/roles/controller.md")
     startup_fact_card = _source_text("skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md")
     packet_body_template = _source_text("templates/flowpilot/packets/packet_body.template.md")
     packet_runtime = _source_text("skills/flowpilot/assets/packet_runtime.py")
-    router = _source_text("skills/flowpilot/assets/flowpilot_router.py")
+    router = _source_bundle(
+        "skills/flowpilot/assets/flowpilot_router.py",
+        "skills/flowpilot/assets/flowpilot_router_action_factory_envelope.py",
+        "skills/flowpilot/assets/flowpilot_router_controller_reconciliation.py",
+        "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+        "skills/flowpilot/assets/flowpilot_router_protocol_startup_catalog.py",
+        "skills/flowpilot/assets/flowpilot_router_startup_intake_ui.py",
+        "skills/flowpilot/assets/runtime_kit/prompts/cards/post_ack_policy.md",
+        "skills/flowpilot/assets/runtime_kit/prompts/cards/next_step_source_policy.md",
+        "skills/flowpilot/assets/runtime_kit/prompts/startup/heartbeat_resume.md",
+    )
     heartbeat_template = _source_text("templates/flowpilot/heartbeats/hb.template.md")
 
     checks: dict[str, bool] = {
         "skill_no_broad_wait_boundary_prefer_run_until_wait": (
             "After applying a wait-boundary action, prefer `run-until-wait`" not in skill
+        ),
+        "skill_start_alias_is_compatibility_only": (
+            "Legacy equivalent:" not in skill
+            and "Compatibility-only alias retained for older automation" in skill
+            and "do not choose it for new operator instructions" in skill
         ),
         "skill_heartbeat_no_return_to_router": (
             "record `heartbeat_or_manual_resume_requested` and return to the router" not in skill
@@ -230,7 +249,12 @@ def _actual_prompt_source_report() -> dict[str, object]:
         ),
         "router_table_prompt_forbids_router_commands_between_rows": _contains_all(
             router,
-            ("Do not call `next`, `apply`, or `run-until-wait` between rows", "row action plus Controller receipt"),
+            (
+                "diagnostic_router_reentry_policy",
+                "not normal progress",
+                "controller-receipt",
+                "Controller action ledger",
+            ),
         ),
         "router_projects_controller_rows_to_receipt_metadata": _contains_all(
             router,
@@ -282,6 +306,11 @@ def _actual_prompt_source_report() -> dict[str, object]:
         ),
         "router_startup_intake_no_direct_apply_wording": (
             "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path." not in router
+        ),
+        "router_startup_catalog_clarifies_compatibility_receipt_repair": (
+            "Legacy recovery:" not in router
+            and "Compatibility receipt repair" in router
+            and "not retired external recovery authority" in router
         ),
         "work_card_ack_continues_and_waits_for_router_output": _contains_all(
             startup_fact_card,

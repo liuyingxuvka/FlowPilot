@@ -170,7 +170,7 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "inject_role_core_prompts",
         "flag": "role_core_prompts_injected",
         "label": "role_core_prompts_injected_from_copied_kit",
-        "summary": "Legacy recovery: deliver each role only its role core card from the copied runtime kit when an older bootstrap state still lacks the delivery receipt.",
+        "summary": "Compatibility receipt repair: deliver each role only its role core card from the copied runtime kit when an older bootstrap state still lacks the delivery receipt; this is not retired external recovery authority.",
         "actor": "bootloader",
     },
 )

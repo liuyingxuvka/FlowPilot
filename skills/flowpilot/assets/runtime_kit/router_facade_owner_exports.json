@@ -1618,6 +1618,10 @@
             "target": "_try_reconcile_material_scan_results"
           },
           {
+            "public": "_try_reconcile_research_results",
+            "target": "_try_reconcile_research_results"
+          },
+          {
             "public": "_try_reconcile_pm_role_work_results",
             "target": "_try_reconcile_pm_role_work_results"
           }
@@ -3747,6 +3751,10 @@
           {
             "public": "_parallel_batch_record_result_exists",
             "target": "_parallel_batch_record_result_exists"
+          },
+          {
+            "public": "_parallel_batch_record_result_is_valid",
+            "target": "_parallel_batch_record_result_is_valid"
           },
           {
             "public": "_parallel_packet_batch_member_summary",

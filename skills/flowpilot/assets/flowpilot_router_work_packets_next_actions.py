@@ -39,6 +39,22 @@ _MATERIAL_PM_RELAYED_STATUSES = {
     'complete',
 }
 
+_PACKET_FAMILY_RESULT_RECONCILIATION = {
+    'material_scan': {
+        'event': 'worker_scan_results_returned',
+        'index_label': 'material scan',
+        'relayed_flag': 'material_scan_packets_relayed',
+        'next_recipient': 'project_manager',
+    },
+    'research': {
+        'event': 'worker_research_report_returned',
+        'index_label': 'research',
+        'relayed_flag': 'research_packet_relayed',
+        'required_flag': 'worker_research_report_card_delivered',
+        'next_recipient': 'project_manager',
+    },
+}
+
 
 def _bind_router(router: ModuleType) -> None:
     current = globals()
@@ -212,30 +228,81 @@ def _try_reconcile_material_scan_body_delivery(router: ModuleType, project_root:
         return False
     return _record_router_reconciled_external_event(project_root, run_root, run_state, 'worker_scan_packet_bodies_delivered_after_dispatch', {'packet_ids': [record.get('packet_id') for record in material_index['packets'] if isinstance(record, dict)], 'reconciled_from_packet_receipts': True})
 
-def _try_reconcile_material_scan_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
+def _packet_family_index_path(router: ModuleType, run_root: Path, batch_kind: str) -> Path:
     _bind_router(router)
+    if batch_kind == 'material_scan':
+        return router._material_scan_index_path(run_root)
+    if batch_kind == 'research':
+        return router._research_packet_index_path(run_root)
+    raise RouterError(f'unsupported packet family result reconciliation kind: {batch_kind}')
+
+def _reconciled_packet_family_result_payload(batch_kind: str, index: dict[str, Any], summary: dict[str, Any]) -> dict[str, Any]:
+    packets = [record for record in index.get('packets') or [] if isinstance(record, dict)]
+    payload: dict[str, Any] = {
+        'packet_ids': [record.get('packet_id') for record in packets],
+        'batch_id': summary.get('batch_id') or index.get('batch_id'),
+        'results_returned': summary.get('results_returned'),
+        'reconciled_from_result_envelopes': True,
+    }
+    if batch_kind == 'research':
+        completed_roles = sorted({str(record.get('to_role')) for record in packets if record.get('to_role')})
+        payload.update({
+            'completed_by_roles': completed_roles,
+            'completed_by_role': ','.join(completed_roles),
+            'answers_decision_question': True,
+            'answers_decision_question_source': 'durable_result_envelope_returned_pm_review_required',
+        })
+    return payload
+
+def _try_reconcile_packet_family_results(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    batch_kind: str,
+) -> bool:
+    _bind_router(router)
+    config = _PACKET_FAMILY_RESULT_RECONCILIATION[batch_kind]
     flags = run_state.get('flags') if isinstance(run_state.get('flags'), dict) else {}
-    if flags.get('worker_scan_results_returned') or not flags.get('material_scan_packets_relayed'):
+    event = str(config['event'])
+    event_flag = str(EXTERNAL_EVENTS[event]['flag'])
+    if flags.get(event_flag) or not flags.get(str(config['relayed_flag'])):
         return False
-    material_index = router._load_packet_index(router._material_scan_index_path(run_root), label='material scan')
-    summary = router._refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, 'material_scan')
+    required_flag = str(config.get('required_flag') or '')
+    if required_flag and not flags.get(required_flag):
+        return False
+    index = router._load_packet_index(_packet_family_index_path(router, run_root, batch_kind), label=str(config['index_label']))
+    summary = router._refresh_parallel_packet_batch_from_durable_results(project_root, run_root, run_state, batch_kind)
     if not summary.get('all_results_returned'):
         return bool(summary.get('changed'))
-    router._try_reconcile_material_scan_body_delivery(project_root, run_root, run_state)
-    if not run_state['flags'].get('worker_packets_delivered'):
-        return bool(summary.get('changed'))
+    if batch_kind == 'material_scan':
+        router._try_reconcile_material_scan_body_delivery(project_root, run_root, run_state)
+        if not run_state['flags'].get('worker_packets_delivered'):
+            return bool(summary.get('changed'))
     try:
-        router._validate_results_exist_for_packets(project_root, run_state, material_index['packets'], next_recipient='project_manager')
+        router._validate_results_exist_for_packets(project_root, run_state, index['packets'], next_recipient=str(config['next_recipient']))
     except (RouterError, packet_runtime.PacketRuntimeError):
         return bool(summary.get('changed'))
-    payload = {'packet_ids': [record.get('packet_id') for record in material_index['packets'] if isinstance(record, dict)], 'batch_id': summary.get('batch_id'), 'results_returned': summary.get('results_returned'), 'reconciled_from_result_envelopes': True}
-    return _record_router_reconciled_external_event(project_root, run_root, run_state, 'worker_scan_results_returned', payload) or bool(summary.get('changed'))
+    payload = _reconciled_packet_family_result_payload(batch_kind, index, summary)
+    if batch_kind == 'research':
+        try:
+            router._write_worker_research_report(project_root, run_root, run_state, payload)
+        except (RouterError, packet_runtime.PacketRuntimeError):
+            return bool(summary.get('changed'))
+    return _record_router_reconciled_external_event(project_root, run_root, run_state, event, payload) or bool(summary.get('changed'))
+
+def _try_reconcile_material_scan_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
+    return _try_reconcile_packet_family_results(router, project_root, run_root, run_state, 'material_scan')
+
+def _try_reconcile_research_results(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> bool:
+    return _try_reconcile_packet_family_results(router, project_root, run_root, run_state, 'research')
 
 __all__ = (
     '_next_material_packet_action',
     '_next_research_packet_action',
     '_try_reconcile_material_scan_body_delivery',
     '_try_reconcile_material_scan_results',
+    '_try_reconcile_research_results',
 )
 
 _LOCAL_NAMES = set(globals())

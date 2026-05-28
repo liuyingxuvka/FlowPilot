@@ -391,6 +391,15 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             ),
         ),
         _evidence(
+            "source.runtime_owner.runtime_gateway_negative",
+            test_name="test_gateway_classifies_and_blocks_wrong_owner_for_critical_state",
+            path="tests/test_flowpilot_runtime_gateway_adoption.py",
+            command="python -m unittest tests.test_flowpilot_runtime_gateway_adoption.FlowPilotRuntimeGatewayAdoptionTests.test_gateway_classifies_and_blocks_wrong_owner_for_critical_state",
+            test_kind=NEGATIVE,
+            covers=("runtime_owner.high_priority_owner_contracts",),
+            code_contracts=("runtime_gateway.assert_runtime_gateway_write",),
+        ),
+        _evidence(
             "source.runtime_owner.small_helpers_happy",
             test_name="test_small_runtime_owner_helpers_return_stable_external_shapes",
             path="tests/test_flowpilot_runtime_owner_contracts.py",
@@ -490,6 +499,15 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
                 "card_delivery.next_card_delivery_attempt",
                 "controller_ledger.prepare_router_scheduled_action",
             ),
+        ),
+        _evidence(
+            "source.router_owner.controller_wait_audit_edge",
+            test_name="test_audit_marks_formal_return_ready_when_next_notice_exists",
+            path="tests/test_flowpilot_controller_wait_receipt_audit.py",
+            command="python -m unittest tests.test_flowpilot_controller_wait_receipt_audit.ControllerWaitReceiptAuditUnitTests.test_audit_marks_formal_return_ready_when_next_notice_exists",
+            test_kind=EDGE,
+            covers=("runtime_owner.router_owner_external_contracts",),
+            code_contracts=("controller_wait_audit.controller_wait_receipt_audit",),
         ),
         _evidence(
             "source.router_owner.action_handlers_negative",

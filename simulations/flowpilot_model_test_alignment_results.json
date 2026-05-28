@@ -5009,7 +5009,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 363,
+        "line_count": 373,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_prompt_boundary_checks",
@@ -13650,7 +13650,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 468,
+        "line_count": 478,
         "max_severity": "none",
         "model_binding": "coverage_sweep_runner",
         "name": "run_flowguard_coverage_sweep",
@@ -16286,7 +16286,74 @@
         "tier": "all"
       },
       {
-        "background_recommended": false,
+        "background_evidence": {
+          "inspected": [
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/flowguard_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "incomplete",
+              "exit_code": null,
+              "meta_status": null,
+              "name": "router_packet_result_family",
+              "ok": false,
+              "progress_seen": false,
+              "proof_scope": "full",
+              "reasons": [
+                "missing_meta",
+                "missing_exit"
+              ],
+              "status": "incomplete"
+            },
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/test_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
+              "name": "router_packet_result_family",
+              "ok": true,
+              "progress_seen": true,
+              "proof_scope": "full",
+              "reasons": [],
+              "status": "passed"
+            }
+          ],
+          "selected": {
+            "artifact_name": "router_packet_result_family",
+            "artifact_root": "tmp/test_background",
+            "artifacts": {
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+            },
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "router_packet_result_family",
+            "ok": true,
+            "progress_seen": true,
+            "proof_scope": "full",
+            "reasons": [],
+            "status": "passed"
+          }
+        },
+        "background_recommended": true,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
@@ -16304,11 +16371,12 @@
         "has_test": true,
         "kind": "test_tier_command",
         "line_count": 1,
-        "long_running": false,
+        "long_running": true,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "router_packet_result_family",
         "path": "scripts/run_test_tier.py",
+        "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],
@@ -21346,7 +21414,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-28T20:37:23.558863+00:00",
+            "created_at": "2026-05-28T21:09:12.033940+00:00",
             "edge_count": 16,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -21501,7 +21569,7 @@
         "kind": "test_tier_command",
         "legacy_full_reclassification": {
           "layered_full_status": {
-            "created_at": "2026-05-28T20:37:19.155664+00:00",
+            "created_at": "2026-05-28T21:09:08.102224+00:00",
             "edge_count": 20,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
@@ -22585,7 +22653,74 @@
         "tier": "router-packets"
       },
       {
-        "background_recommended": false,
+        "background_evidence": {
+          "inspected": [
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/flowguard_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "incomplete",
+              "exit_code": null,
+              "meta_status": null,
+              "name": "router_packet_result_family",
+              "ok": false,
+              "progress_seen": false,
+              "proof_scope": "full",
+              "reasons": [
+                "missing_meta",
+                "missing_exit"
+              ],
+              "status": "incomplete"
+            },
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/test_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
+              "name": "router_packet_result_family",
+              "ok": true,
+              "progress_seen": true,
+              "proof_scope": "full",
+              "reasons": [],
+              "status": "passed"
+            }
+          ],
+          "selected": {
+            "artifact_name": "router_packet_result_family",
+            "artifact_root": "tmp/test_background",
+            "artifacts": {
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+            },
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "router_packet_result_family",
+            "ok": true,
+            "progress_seen": true,
+            "proof_scope": "full",
+            "reasons": [],
+            "status": "passed"
+          }
+        },
+        "background_recommended": true,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
@@ -22603,11 +22738,12 @@
         "has_test": true,
         "kind": "test_tier_command",
         "line_count": 1,
-        "long_running": false,
+        "long_running": true,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "router_packet_result_family",
         "path": "scripts/run_test_tier.py",
+        "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],
@@ -25925,7 +26061,74 @@
         "tier": "router"
       },
       {
-        "background_recommended": false,
+        "background_evidence": {
+          "inspected": [
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/flowguard_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "incomplete",
+              "exit_code": null,
+              "meta_status": null,
+              "name": "router_packet_result_family",
+              "ok": false,
+              "progress_seen": false,
+              "proof_scope": "full",
+              "reasons": [
+                "missing_meta",
+                "missing_exit"
+              ],
+              "status": "incomplete"
+            },
+            {
+              "artifact_name": "router_packet_result_family",
+              "artifact_root": "tmp/test_background",
+              "artifacts": {
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+              },
+              "execution_status": "passed",
+              "exit_code": 0,
+              "meta_status": "passed",
+              "name": "router_packet_result_family",
+              "ok": true,
+              "progress_seen": true,
+              "proof_scope": "full",
+              "reasons": [],
+              "status": "passed"
+            }
+          ],
+          "selected": {
+            "artifact_name": "router_packet_result_family",
+            "artifact_root": "tmp/test_background",
+            "artifacts": {
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\router_packet_result_family.out.txt"
+            },
+            "execution_status": "passed",
+            "exit_code": 0,
+            "meta_status": "passed",
+            "name": "router_packet_result_family",
+            "ok": true,
+            "progress_seen": true,
+            "proof_scope": "full",
+            "reasons": [],
+            "status": "passed"
+          }
+        },
+        "background_recommended": true,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
@@ -25943,11 +26146,12 @@
         "has_test": true,
         "kind": "test_tier_command",
         "line_count": 1,
-        "long_running": false,
+        "long_running": true,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "router_packet_result_family",
         "path": "scripts/run_test_tier.py",
+        "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],

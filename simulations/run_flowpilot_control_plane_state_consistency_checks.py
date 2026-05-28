@@ -66,6 +66,18 @@ HAZARD_EXPECTED_FAILURES = {
     model.NO_CAS_FIX_LOSES_FOREGROUND_EVENT: (
         "daemon stale snapshot save erased newer foreground evidence"
     ),
+    model.OBSERVED_RESEARCH_BATCH_JOINED_WITHOUT_RETURN_EVENT: (
+        "research batch results_joined did not synthesize worker_research_report_returned"
+    ),
+    model.REMINDER_SENT_AFTER_RESEARCH_BATCH_JOINED: (
+        "wait reminder was created after joined packet batch result already satisfied the wait"
+    ),
+    model.DAEMON_RECOVERY_USES_MUTABLE_SOURCE_PROMPT: (
+        "daemon recovery read mutable source prompt instead of active run runtime_kit"
+    ),
+    model.GLOBAL_STOP_CLAIM_WITH_ACTIVE_HOST_AUTOMATIONS: (
+        "global host stop was claimed while unrelated host automations remained active"
+    ),
 }
 
 
@@ -92,12 +104,26 @@ def _state_id(state: model.State) -> str:
         f"{state.role_output_event_folded_to_router_state},{state.router_event_flag_synced},"
         f"{state.material_review_projection_synced},"
         f"{state.material_insufficient_pm_repair_branch_exposed}|"
+        f"packet_batch={state.packet_batch_family},{state.packet_batch_results_joined},"
+        f"{state.packet_batch_all_results_returned},{state.packet_batch_missing_roles},"
+        f"{state.packet_batch_next_recipient},{state.packet_batch_reconciler_covers_family},"
+        f"{state.worker_result_return_event_recorded},{state.packet_batch_result_relayed_to_pm}|"
         f"wait_rows={state.controller_wait_row_status},{state.scheduler_wait_row_status},"
         f"{state.pending_action_references_wait},"
         f"{state.pending_action_validated_against_wait_ledgers},"
         f"{state.pending_action_cleared_after_wait_resolution},"
         f"{state.current_work_from_pending_action},"
         f"{state.stale_wait_reminder_created}|"
+        f"daemon_recovery={state.daemon_recovery_attempted},"
+        f"{state.active_run_runtime_kit_prompt_manifest_present},"
+        f"{state.source_runtime_kit_prompt_changed_after_run_start},"
+        f"{state.daemon_recovery_reads_run_runtime_kit_prompt},"
+        f"{state.daemon_recovery_reads_mutable_source_prompt},"
+        f"{state.prompt_hash_mismatch_blocks_daemon_recovery},"
+        f"{state.daemon_recovery_status_write_succeeds}|"
+        f"stop={state.stop_scope},{state.flowpilot_daemon_stopped},"
+        f"{state.flowpilot_heartbeat_stopped},{state.flowpilot_role_agents_stopped},"
+        f"{state.unrelated_host_automations_active},{state.global_host_cleanup_claimed}|"
         f"root={state.shared_reconcile_before_next_action},"
         f"{state.next_action_from_reconciled_state},{state.root_fix_claimed}|"
         f"reason={state.terminal_reason}"
@@ -243,7 +269,7 @@ def _repair_candidate_report() -> dict[str, object]:
             passing.append(name)
     return {
         "ok": passing == [
-            "unified_reconciler_with_event_fold_pending_authority_cas_and_true_holder_gate"
+            "unified_reconciler_with_event_fold_pending_authority_cas_true_holder_batch_prompt_and_stop_scope"
         ],
         "passing_candidates": passing,
         "candidates": candidates,

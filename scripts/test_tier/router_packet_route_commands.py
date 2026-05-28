@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .command_builders import _unittest, _unittest_k
+from .command_builders import TierCommand, _py, _unittest, _unittest_k
 
 ROUTER_PACKET_COMMANDS = (
     _unittest(
@@ -75,6 +75,13 @@ ROUTER_PACKET_COMMANDS = (
             "current_node_packet_rejects_unresolved",
         ),
         description="Packet batch reconciliation and write-grant guard slice.",
+    ),
+    TierCommand(
+        name="router_packet_result_family",
+        command=_py("-m", "unittest", "-v", "tests.router_runtime.packet_result_family"),
+        description="Packet-result family durable-envelope reconciliation slice.",
+        long_running=True,
+        background_recommended=True,
     ),
     _unittest(
         "router_cards",

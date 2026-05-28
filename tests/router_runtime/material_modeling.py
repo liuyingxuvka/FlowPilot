@@ -369,12 +369,10 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state_after_research_packet["ledger_check_requests"], ledger_requests_before_research + 1)
         self.assertFalse(state_after_research_packet.get("ledger_check_requested"))
         self.open_packets_and_write_results(root, research_index_path, result_text="research report result")
-        router.record_external_event(
-            root,
-            "worker_research_report_returned",
-            {"completed_by_role": "worker_a", "answers_decision_question": True},
-        )
         action = router.next_action(root)
+        state_after_research_reconcile = read_json(router.run_state_path(run_root))
+        self.assertTrue(state_after_research_reconcile["flags"]["worker_research_report_returned"])
+        self.assertTrue((run_root / "research" / "worker_research_report.json").exists())
         self.assertEqual(action["action_type"], "relay_research_result_to_pm")
         self.assertTrue(action["combined_ledger_check_and_relay"])
         self.assertTrue(action["ledger_check_receipt_required"])

@@ -492,6 +492,13 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("project_root",),
         ),
         _contract(
+            "runtime_gateway.assert_runtime_gateway_write",
+            path="skills/flowpilot/assets/flowpilot_runtime_gateway.py",
+            symbol="assert_runtime_gateway_write",
+            implements=("runtime_owner.high_priority_owner_contracts",),
+            external_inputs=("path", "gateway_id", "operation"),
+        ),
+        _contract(
             "prompt_store.load_prompt_text",
             path="skills/flowpilot/assets/flowpilot_prompt_store.py",
             symbol="load_prompt_text",
@@ -634,6 +641,14 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="prepare_router_scheduled_action",
             implements=("runtime_owner.router_owner_external_contracts",),
             external_inputs=("run_root", "run_state", "action"),
+        ),
+        _contract(
+            "controller_wait_audit.controller_wait_receipt_audit",
+            path="skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+            symbol="controller_wait_receipt_audit",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("project_root", "run_root", "current_wait"),
+            side_effects=("update",),
         ),
         _contract(
             "router_cli.parse_args",
