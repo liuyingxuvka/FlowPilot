@@ -15,6 +15,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- If the block involves FlowGuard-backed judgement, record `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, skipped/progress-only status, and the repair path for the report or work order.
 
 
 Reviewer blocked dispatch, result acceptance, route activation, or replay.
@@ -33,3 +34,6 @@ unless that worker is unavailable, the issue shows a fundamental
 misunderstanding, or the repair has become separable new work.
 
 The blocked gate remains incomplete until the same required review class passes.
+If the root cause is missing, stale, wrongly scoped, skipped, progress-only, or
+unaccepted FlowGuard evidence, PM must repair or rerun the FlowGuard Work Order
+and get the same review class recheck before advancing the gate.

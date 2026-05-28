@@ -52,6 +52,11 @@ Pass requires:
   test kind must have a PM `test_obligation_matrix` disposition. Treat
   undispositioned, failed, not-run, or progress-only test rows as gaps, not
   closure evidence.
+- FlowGuard-backed gates cite the active FlowGuard Work Order and FlowGuard
+  Report with `flowguard_work_order_id`, `flowguard_report_id`,
+  `flowguard_route_used`, `flowguard_report_freshness`, and
+  `flowguard_pm_acceptance`. Missing, stale, wrongly scoped, skipped without
+  reason, progress-only, or unaccepted FlowGuard reports block pass.
 - if the gate cites long/background tests, `background_artifact_completion`
   must include log root, stdout, stderr, combined, exit, and meta paths, exit
   code, latest update time, completion status, and valid proof reuse. Running

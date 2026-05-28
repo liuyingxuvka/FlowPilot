@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial final-ledger, model-coverage, validation, evidence-freshness, terminal-replay, or completion-readiness judgement, cite FlowGuard Work Order and FlowGuard Report ids with freshness and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Build the final route-wide gate ledger from the current route, not the initial
@@ -57,6 +58,10 @@ Resolve:
   families, merge/skip reasons, and unresolved model-family count. Completion
   is blocked if any planned product or process family is missing, unresolved,
   stale, or closed only by child-skill manifest prose;
+  include every active `flowguard_work_order_id`, `flowguard_report_id`,
+  `flowguard_route_used`, `flowguard_report_freshness`, skipped-check reason,
+  progress-only status, and `flowguard_pm_acceptance`; unresolved, stale,
+  blocked, or unaccepted FlowGuard reports keep the ledger open;
 - effective and superseded nodes;
 - every major node, parent/module, child subtree, promoted former leaf, repair
   node, and supplemental node in the current route. Before project completion,

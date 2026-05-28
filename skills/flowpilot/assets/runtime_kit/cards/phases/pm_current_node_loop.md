@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
+- For non-trivial current-node dispatch, acceptance-slice, validation, evidence-freshness, or packet-obligation judgement, cite FlowGuard Work Order and FlowGuard Report ids with freshness and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 For each active route node:
@@ -62,6 +63,12 @@ Every current-node worker packet must include the registry `output_contract`
 envelope and packet body's `Output Contract` section. The contract must match
 the active node id, recipient role, acceptance plan, required verification, and
 reviewer block conditions.
+When the node acceptance plan assigns FlowGuard-derived obligations, copy the
+originating `flowguard_work_order_id`, `flowguard_report_id`,
+`flowguard_report_freshness`, and packet-scoped `FlowGuard Obligation
+Coverage` rows into the packet. Workers return only packet-scoped coverage;
+broader FlowGuard gaps return to PM for a new work order, TestMesh,
+Model-Test Alignment, StructureMesh, repair, deferral, or waiver.
 Do not create a current-node worker packet for a parent/module node, for a leaf
 whose readiness gate is missing or failed, or for a node whose acceptance plan
 still says the worker must decide the decomposition.

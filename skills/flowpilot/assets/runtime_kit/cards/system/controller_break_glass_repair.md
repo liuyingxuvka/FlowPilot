@@ -21,6 +21,14 @@ Use normal FlowPilot repair whenever it is available. Break-glass is an escape
 hatch for the control plane, not a shortcut around PM, Reviewer, Worker, or
 FlowGuard authority.
 
+Break-glass closure that depends on non-trivial control-plane repair judgement
+must cite a current FlowGuard Work Order and FlowGuard Report, or a scoped
+`flowguard_not_required_reason` for purely mechanical repair. Controller may
+record ids, paths, hashes, freshness status, and PM/Recovery Supervisor
+acceptance metadata only. A break-glass record is not route evidence, and a
+FlowGuard report does not let Controller approve gates, mutate routes, close
+nodes, read sealed bodies, or replace PM/Reviewer/Officer authority.
+
 For severe failures, break-glass has two identities:
 
 - **ordinary Controller break-glass** records the incident, diagnoses

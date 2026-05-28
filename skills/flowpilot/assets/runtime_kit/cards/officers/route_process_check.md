@@ -15,6 +15,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 - When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.
 - Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
+- This card's model output is a FlowGuard Report. Cite `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_route_used`, `flowguard_report_freshness`, skipped checks, progress-only evidence status, and PM decision impact.
 
 
 Submit the process route model for the PM route draft as the Process FlowGuard

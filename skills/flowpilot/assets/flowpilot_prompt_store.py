@@ -17,6 +17,7 @@ CARD_BOUNDARY_POLICY_PROMPT_IDS = (
     "cards.next_step_source_policy",
     "cards.runtime_context_policy",
     "cards.role_scope_policy",
+    "cards.flowguard_work_order_policy",
 )
 
 

@@ -110,6 +110,18 @@ needs broader TestMesh, Model-Test Alignment, route mutation, new dependencies,
 or another role's authority, return `blocked`, `needs_pm`, or a PM Suggestion
 Item instead of silently expanding scope.
 
+If the source packet declares `flowguard_work_order_id`, `flowguard_report_id`,
+or packet-scoped FlowGuard obligations, return a `FlowGuard Obligation
+Coverage` section in the sealed result body. Include one row per assigned
+obligation with the originating work-order/report ids, required evidence,
+changed or inspected paths, command or replay evidence, freshness status,
+skipped or failed checks, and out-of-scope gaps. These rows are packet-scoped
+evidence only. They do not approve gates, mutate routes, close nodes, waive
+FlowGuard reports, or replace PM/Reviewer decisions. If the gap needs broad
+FlowGuard work, TestMesh, Model-Test Alignment, StructureMesh, route mutation,
+or another role's authority, return `blocked`, `needs_pm`, or a PM Suggestion
+Item.
+
 In the sealed result body, include a soft `PM Note` with exactly these labels:
 `In-scope quality choice` and `PM consideration`. Use `none` when there is no
 useful note. The note is PM decision-support and does not authorize route

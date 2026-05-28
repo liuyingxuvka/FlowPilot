@@ -45,6 +45,14 @@ paths, PM suggestion ledger state, and any consultation request/result state.
 Do not treat ACKs, leases, liveness records, or old role activity as proof that
 the formal artifact was produced, reviewed, or dispositioned.
 
+Also preserve FlowGuard Work Order and FlowGuard Report state across resume.
+Load only Controller-visible ids, paths, hashes, freshness flags, owner roles,
+pending/blocking/stale status, and PM acceptance metadata. Do not interpret
+FlowGuard reports, decide whether the model is sufficient, approve gates,
+mutate routes, close nodes, waive missing reports, or read sealed report
+bodies. If a resume or recovery decision depends on missing, stale, blocked,
+or unaccepted FlowGuard status, surface that state for PM or Router recovery.
+
 Also check continuation authority:
 
 - startup answers allow heartbeat or manual resume for this run;

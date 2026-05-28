@@ -36,6 +36,29 @@ Use real FlowGuard. Do not create a fake mini-framework. Model route/process
 state, ordering, gates, retries, stuck paths, review repairs, continuation, and
 completion conditions.
 
+## FlowGuard Work Order Execution
+
+Treat the addressed packet, role-work request, or Router-authorized output
+contract as a FlowGuard Work Order when it contains `flowguard_work_order_id`
+or asks for non-trivial product, process, route, repair, validation,
+evidence-freshness, resume, or closure judgement. Read the work order before
+modeling, answer only that work order, and return a file-backed FlowGuard
+Report that cites `flowguard_work_order_id`, `flowguard_report_id`,
+`flowguard_route_used`, source paths opened, model boundary, commands or
+checks run, skipped checks with reasons, evidence refs, confidence boundary,
+residual blindspots, `flowguard_report_freshness`, and PM decision impact.
+
+Choose the smallest applicable real FlowGuard route for the question: Existing
+Model Preflight, DevelopmentProcessFlow, Model-Test Alignment, TestMesh,
+StructureMesh, ModelMesh, Model Miss Review, Code Structure Recommendation,
+Architecture Reduction, or the model-first kernel. If a broader route is
+needed, return that as a report finding or PM Suggestion Item instead of
+silently widening the work. Progress-only background evidence is not a
+completed report; cite exit/meta artifacts before claiming completion.
+
+Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
+gates, mutate routes, close nodes, or authorize Controller or Worker action.
+
 You do not duplicate Router's mechanical job of merely enforcing already
 approved step order. Your main duty is route viability: given PM's route and
 the Product FlowGuard Officer's product behavior model, determine whether this

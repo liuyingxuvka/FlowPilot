@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial node, acceptance, proof, validation, test-obligation, repair-return, or evidence-freshness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Before issuing a current-node work packet, write the active node acceptance
@@ -45,6 +46,9 @@ route-memory prior path context. The plan must state:
   for the exact FlowGuard child skill or satellite route PM selected, such as
   Existing Model Preflight, DevelopmentProcessFlow, Model-Test Alignment, or
   TestMesh;
+  each FlowGuard-derived row must retain originating `flowguard_work_order_id`,
+  `flowguard_report_id`, `flowguard_report_freshness`, and PM disposition so
+  stale, skipped, progress-only, or unaccepted reports cannot close the node;
 - the product behavior model segment this node covers, or the reason this node
   is process-only;
 - final-user intent and product usefulness self-check for this node when

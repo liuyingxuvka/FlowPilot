@@ -18,9 +18,17 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
+- Officer modeling requests are FlowGuard Work Orders. Every non-trivial request must carry `flowguard_work_order_id`, expected `flowguard_report_id` or report path, `flowguard_report_freshness`, affected gate, and PM acceptance expectations.
 
 
 Use FlowGuard officers through bounded request and report packets.
+
+This loop is the common FlowGuard Work Order / FlowGuard Report mechanism for
+formal product, process, validation, model-test, TestMesh, StructureMesh,
+Model Miss Review, repair, resume, and closure-readiness questions. Do not let
+separate phase prose replace the work-order id, report id, report freshness,
+route used, skipped-check reasoning, background completion evidence, or PM
+acceptance record.
 
 Each officer request packet must include the registry `output_contract`
 `flowpilot.output_contract.officer_model_report.v1` in both the packet envelope
@@ -79,6 +87,10 @@ The officer report body must include these fields exactly:
 {
   "schema_version": "flowpilot.officer_model_report.v1",
   "run_id": "<current run id>",
+  "flowguard_work_order_id": "<work-order id>",
+  "flowguard_report_id": "<report id>",
+  "flowguard_route_used": "<FlowGuard route or satellite skill>",
+  "flowguard_report_freshness": "<current, stale, blocked, skipped, or progress_only>",
   "modeled_boundary": "<scope modeled>",
   "commands_run": [],
   "counterexamples_or_absence": "<counterexample summary or explicit absence>",

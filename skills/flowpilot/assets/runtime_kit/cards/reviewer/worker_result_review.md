@@ -53,6 +53,14 @@ absorption, and Controller no-body-read signatures. Do not use Router proof as
 node acceptance, result quality, product usefulness, freshness, or final-user
 fit evidence.
 
+When the PM package, node acceptance plan, source packet, or result cites a
+FlowGuard Work Order or FlowGuard Report, review those references as hard
+evidence surfaces. Check `flowguard_work_order_id`, `flowguard_report_id`,
+`flowguard_report_freshness`, `flowguard_route_used`, scope fit, skipped
+checks, progress-only evidence, and `flowguard_pm_acceptance`. Missing, stale,
+wrongly scoped, skipped without reason, progress-only, or unaccepted FlowGuard
+reports block pass or require PM repair.
+
 When Router provides `batch_id`, `packet_ids`, or a packet index, verify that PM
 opened each relayed result body through the runtime and recorded a PM
 disposition before this gate. The sealed review body must identify `batch_id`,
@@ -94,6 +102,11 @@ Check:
   Missing, stale, skipped, failed, not-run, progress-only, unsupported, or
   undispositioned test rows block pass. Officer `missing_test_kinds` must be
   converted into PM dispositions; residual prose is not closure evidence;
+- when the source packet declares FlowGuard-derived obligations, the result
+  body includes `FlowGuard Obligation Coverage` rows for every packet-scoped
+  obligation. Missing originating work-order/report ids, missing freshness,
+  stale evidence, skipped checks without reason, or worker attempts to close
+  broad FlowGuard gaps as packet-local work block pass;
 - when the source packet declares active child-skill bindings, the result body
   includes `Child Skill Use Evidence` rows showing the worker opened the source
   `SKILL.md` or required reference paths, used the current-node slice directly,

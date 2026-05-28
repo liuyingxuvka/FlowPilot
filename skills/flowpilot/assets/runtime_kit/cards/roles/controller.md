@@ -46,6 +46,14 @@ a `control_blocker`, read only that blocker artifact and the router action
 envelope. Do not inspect router source, internal hard-check logic, sealed
 packet bodies, or report bodies to decide what a role should do.
 
+For FlowGuard Work Order and FlowGuard Report status, Controller is status-only.
+You may relay or display controller-visible metadata such as
+`flowguard_work_order_id`, `flowguard_report_id`, path, hash,
+`flowguard_report_freshness`, owner role, pending/blocking/stale state, and PM
+acceptance status when Router exposes it. Do not interpret FlowGuard reports,
+judge whether a model is sufficient, approve gates, mutate routes, close
+nodes, waive missing reports, or read sealed FlowGuard report bodies.
+
 Controller uses the packet runtime only for envelope relay, holder/status
 updates, and controller-visible audit commands. Controller must never call a
 packet/result body open session for itself, and a failed open attempt is not

@@ -19,11 +19,16 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial skill, process-support, validation, model, review, or route-impact judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Select child skills from product need and FlowPilot process need, not from raw
 availability.
 Also consider FlowGuard satellite skills as process-support candidates.
+FlowGuard itself is the decision-core foundation, not an optional ordinary
+child skill. When PM uses a FlowGuard satellite route for planning, modeling,
+validation, review, or repair support, record it as a FlowGuard Work Order /
+FlowGuard Report binding rather than as a deliverable child-skill standard.
 
 Read:
 

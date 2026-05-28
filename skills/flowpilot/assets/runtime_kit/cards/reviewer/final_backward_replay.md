@@ -73,6 +73,12 @@ Check backward from the delivered product or final output:
   `conformance_boundary`, and `residual_blindspots`. Missing required test
   kinds, stale ordinary tests, or conformance gaps must remain blockers or
   explicit PM dispositions.
+- every FlowGuard-backed ledger row preserves FlowGuard Work Order and
+  FlowGuard Report traceability: `flowguard_work_order_id`,
+  `flowguard_report_id`, `flowguard_route_used`, `flowguard_report_freshness`,
+  skipped-check reason, progress-only status, and `flowguard_pm_acceptance`.
+  Missing, stale, wrongly scoped, skipped without reason, progress-only, or
+  unaccepted FlowGuard reports block terminal replay.
 - every cited long/background test has `background_artifact_completion` with
   log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
   update time, completion status, and valid proof reuse. Progress logs alone

@@ -63,6 +63,13 @@
       "template_variables": []
     },
     {
+      "id": "cards.flowguard_work_order_policy",
+      "path": "prompts/cards/flowguard_work_order_policy.md",
+      "sha256": "ceaaf8ac3f1530e23b5012b37f4e5719931d7575be5d50e3d27d30e9c16c3b5a",
+      "strip_trailing_newline": true,
+      "template_variables": []
+    },
+    {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
       "sha256": "af6d38dc19d3580ebb3d3925f3fcf58d1a6da6e4d52a16583e5f4c169b7ffaef",

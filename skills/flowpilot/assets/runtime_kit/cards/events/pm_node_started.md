@@ -16,6 +16,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- If node entry depends on FlowGuard-backed acceptance, validation, evidence freshness, or route viability, carry `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance into the node packet or record a scoped `flowguard_not_required_reason`.
 
 
 A current route node has started.
@@ -28,5 +29,8 @@ The packet must include the registry `output_contract`
 `flowpilot.output_contract.worker_current_node_result.v1` in both the packet
 envelope and packet body's `Output Contract` section, and the contract must
 match the current node and target worker role.
+When FlowGuard-derived obligations apply, the packet must require
+`FlowGuard Obligation Coverage` rows. Worker coverage is packet-scoped only and
+does not close broad FlowGuard report gaps.
 
 Do not include downstream route work unless the current node explicitly owns it.

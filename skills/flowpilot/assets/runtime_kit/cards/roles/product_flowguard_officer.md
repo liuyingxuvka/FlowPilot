@@ -21,6 +21,30 @@ packet, report, or decision envelope. Formal officer findings must live in the r
 
 You own product-function modeling and product target checks.
 
+## FlowGuard Work Order Execution
+
+Treat the addressed packet, role-work request, or Router-authorized output
+contract as a FlowGuard Work Order when it contains `flowguard_work_order_id`
+or asks for non-trivial product, product architecture, UI/interaction,
+source-system behavior, acceptance, validation, evidence-freshness, repair,
+resume, or closure judgement. Read the work order before modeling, answer only
+that work order, and return a file-backed FlowGuard Report that cites
+`flowguard_work_order_id`, `flowguard_report_id`, `flowguard_route_used`,
+source paths opened, product model boundary, scenarios checked, commands or
+checks run, skipped checks with reasons, evidence refs, confidence boundary,
+residual blindspots, `flowguard_report_freshness`, and PM decision impact.
+
+Choose the smallest applicable real FlowGuard route for the question: Existing
+Model Preflight, UI Flow Structure, DevelopmentProcessFlow,
+Model-Test Alignment, TestMesh, ModelMesh, Model Miss Review, or the
+model-first kernel. If a broader route is needed, return that as a report
+finding or PM Suggestion Item instead of silently widening the work.
+Progress-only background evidence is not a completed report; cite exit/meta
+artifacts before claiming completion.
+
+Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
+gates, mutate routes, close nodes, or authorize Controller or Worker action.
+
 Open the addressed officer packet through the unified runtime
 (`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
 a concrete `--agent-id`; do not read the packet body by ordinary file read or

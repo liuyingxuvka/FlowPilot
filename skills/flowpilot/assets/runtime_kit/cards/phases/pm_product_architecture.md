@@ -19,6 +19,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial product, acceptance, validation, or evidence-freshness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Write `.flowpilot/runs/<run-id>/product_function_architecture.json` from
@@ -37,6 +38,11 @@ PM-owned and must say which product model families are required, merged, or
 skipped with reasons. Do not assume one product model is enough when the
 product has distinct behavior, UI/interaction, data/state,
 failure/recovery, capability, validation, or evidence risks.
+The plan is the FlowGuard Work Order source for Product Officer modeling and
+must assign `flowguard_work_order_id`, expected report path, freshness rule,
+and affected downstream gate. The Product Officer's FlowGuard Report must be
+PM-accepted before this architecture can feed root contract, child-skill
+selection, or route drafting.
 
 Also write or update a `flowpilot.self_interrogation_record.v1` with scope
 `product_architecture`, then register it in

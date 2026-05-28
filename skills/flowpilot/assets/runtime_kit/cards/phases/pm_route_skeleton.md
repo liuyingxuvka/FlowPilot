@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial route, decomposition, process, validation, repair-return, child-skill conformance, or closure-readiness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Draft the route from reviewed material and product understanding.
@@ -36,6 +37,11 @@ process model family, including route hierarchy, serial execution order,
 leaf-readiness, repair/mutation return paths, child-skill conformance,
 validation/evidence freshness, terminal closure, and any PM-approved
 merge/skip reasons.
+The Process Modeling Plan is the FlowGuard Work Order source for route
+viability. It must assign `flowguard_work_order_id`, expected report path,
+freshness rule, affected gate, and the FlowGuard route PM expects the Process
+Officer to consider. Route activation may use the Process Officer's FlowGuard
+Report only after PM records `flowguard_pm_acceptance`.
 
 Route requirements:
 

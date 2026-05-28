@@ -18,9 +18,15 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial closure, lifecycle, model-coverage, validation, evidence-freshness, or final-user outcome judgement, cite FlowGuard Work Order and FlowGuard Report ids with freshness and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Close only after final ledger and backward replay pass.
+Closure also requires all active FlowGuard Work Orders to be closed by current
+FlowGuard Reports that PM accepted, or explicitly dispositioned by PM with a
+scoped waiver, deferral, quarantine, or user stop. Missing, stale, skipped,
+progress-only, blocked, or unaccepted FlowGuard reports block terminal
+closure.
 Read the latest route-memory prior path context before closure. Closure must
 not rely on a stale view of completed nodes, superseded nodes, stale evidence,
 route mutations, terminal replay, or lifecycle state.

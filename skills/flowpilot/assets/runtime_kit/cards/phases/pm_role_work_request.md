@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial role-work requests that affect product, process, route, review, repair, validation, evidence freshness, resume, or closure judgement, include FlowGuard Work Order and FlowGuard Report ids or a scoped `flowguard_not_required_reason`.
 
 
 This is the generic channel for PM to ask another FlowPilot role to do bounded
@@ -37,6 +38,14 @@ explicitly carry the advisory result forward through the current runtime
 contract. The channel is generic; do not special-case
 `product_flowguard_officer`, `process_flowguard_officer`, reviewer, or worker
 requests.
+
+When `request_kind` asks a role to answer a FlowGuard question, the role-work
+request is the FlowGuard Work Order. Include `flowguard_work_order_id`,
+expected `flowguard_report_id` or result path, `flowguard_route_used` when PM
+has selected a route, `flowguard_report_freshness`, affected output/gate, and
+PM acceptance expectations. Officers return FlowGuard Reports; Reviewers check
+whether reports support a gate; Workers return packet-scoped FlowGuard
+Obligation Coverage.
 
 The request must include:
 

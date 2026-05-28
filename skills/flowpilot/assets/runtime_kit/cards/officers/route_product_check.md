@@ -21,6 +21,7 @@ Reviewer route challenge cover the default route draft path.
 
 - When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.
 - Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
+- This card's model output is a FlowGuard Report. Cite `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_route_used`, `flowguard_report_freshness`, skipped checks, progress-only evidence status, and PM decision impact.
 
 
 Review the PM route draft as the product FlowGuard officer after the process

@@ -18,6 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial repair, model-miss, validation, stale-evidence, route-mutation, or return-path judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Current state contains a reviewer block.
@@ -34,6 +35,9 @@ model-miss obligation. For a modelable bug class, the PM decision must cite an
 officer report covering same-class findings and a minimal sufficient repair
 recommendation. For an out-of-scope bug class, the PM decision must record why
 FlowGuard cannot model it.
+The cited officer report must answer the active FlowGuard Work Order and carry
+current `flowguard_report_freshness`; progress-only, stale, skipped, or
+unaccepted reports cannot justify repair closure or route mutation.
 
 If the repair phase was entered because Controller delivered a router
 `control_blocker`, read the blocker artifact first. Treat

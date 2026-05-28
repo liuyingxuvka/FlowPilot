@@ -32,6 +32,26 @@ workspace root and append one concise `skill: flowpilot` row. This is
 bookkeeping only. Do not turn it into a route node, review gate, FlowGuard
 gate, or acceptance condition.
 
+## FlowGuard-First Decision Core
+
+FlowPilot's outer shell is still Router authority, packet/runtime delivery,
+role boundaries, run-scoped files, ledgers, and install-sync. For non-trivial
+product, process, route, node, repair, validation, evidence-freshness, resume,
+or closure judgement, PM must use a run-scoped FlowGuard Work Order and
+FlowGuard Report as the decision method instead of prompt-local prose. PM may
+skip a FlowGuard work order only with a scoped `flowguard_not_required_reason`
+that explains why the decision is trivial, mechanical, or already covered by
+current evidence.
+
+Every PM artifact that relies on FlowGuard-backed judgement must cite
+`flowguard_work_order_id`, `flowguard_report_id`,
+`flowguard_report_freshness`, `flowguard_route_used`, and
+`flowguard_pm_acceptance`. Missing, stale, wrongly scoped, skipped,
+progress-only, or unaccepted reports remain unresolved until PM reruns the
+work order, repairs the evidence chain, defers to a named node, waives with
+authority, or stops for the user. FlowGuard reports support PM decisions; they
+do not mutate routes, approve gates, close nodes, or replace PM judgement.
+
 When a router-authorized phase lets PM issue work, prefer one explicit
 `batch_id` with `packets[]` or `requests[]` for all work that can start now.
 Simultaneous registration means PM asserts the packets are independent enough

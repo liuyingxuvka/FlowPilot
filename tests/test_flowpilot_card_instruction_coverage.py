@@ -299,6 +299,96 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("pm suggestion", text)
             self.assertIn("pm_suggestion", text)
 
+    def test_flowguard_work_order_protocol_reaches_core_cards(self) -> None:
+        prompt_policy = (
+            RUNTIME_KIT / "prompts" / "cards" / "flowguard_work_order_policy.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("FlowGuard Work Order", prompt_policy)
+        self.assertIn("FlowGuard Report", prompt_policy)
+        self.assertIn("flowguard_work_order_id", prompt_policy)
+        self.assertIn("flowguard_report_id", prompt_policy)
+        self.assertIn("progress-only", prompt_policy)
+
+        manifest = json.loads((RUNTIME_KIT / "prompts" / "manifest.json").read_text(encoding="utf-8"))
+        prompt_ids = {entry.get("id") for entry in manifest.get("prompts", []) if isinstance(entry, dict)}
+        self.assertIn("cards.flowguard_work_order_policy", prompt_ids)
+
+        required_cards = _card_paths_by_id(
+            "startup_banner",
+            "controller.core",
+            "controller.resume_reentry",
+            "controller.break_glass_repair",
+            "pm.core",
+            "pm.product_architecture",
+            "pm.child_skill_selection",
+            "pm.child_skill_gate_manifest",
+            "pm.route_skeleton",
+            "pm.node_acceptance_plan",
+            "pm.officer_request_report_loop",
+            "pm.current_node_loop",
+            "pm.role_work_request",
+            "pm.review_repair",
+            "pm.final_ledger",
+            "pm.closure",
+            "pm.resume_decision",
+            "process_officer.core",
+            "product_officer.core",
+            "reviewer.core",
+            "reviewer.worker_result_review",
+            "reviewer.strict_gate_obligation_review",
+            "reviewer.final_backward_replay",
+            "worker_a.core",
+            "worker_b.core",
+            "worker.research_report",
+            "pm.event.node_started",
+            "pm.event.reviewer_report",
+            "pm.event.reviewer_blocked",
+        )
+        for path in required_cards:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8")
+                self.assertIn("FlowGuard", text)
+                self.assertTrue(
+                    "flowguard_work_order_id" in text or "FlowGuard Work Order" in text,
+                    f"{path} lacks work-order traceability",
+                )
+                self.assertTrue(
+                    "flowguard_report_id" in text or "FlowGuard Report" in text,
+                    f"{path} lacks report traceability",
+                )
+
+    def test_flowguard_work_order_language_preserves_role_authority(self) -> None:
+        controller_text = " ".join(_card_path_by_id("controller.core").read_text(encoding="utf-8").lower().split())
+        self.assertIn("controller is status-only", controller_text)
+        self.assertIn("do not interpret flowguard reports", controller_text)
+        self.assertIn("approve gates", controller_text)
+        self.assertIn("mutate routes", controller_text)
+        self.assertIn("read sealed flowguard report bodies", controller_text)
+
+        for card_id in ("process_officer.core", "product_officer.core"):
+            text = " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+            with self.subTest(card_id=card_id):
+                self.assertIn("your flowguard report supports pm and reviewer decisions", text)
+                self.assertIn("does not approve gates", text)
+                self.assertIn("mutate routes", text)
+                self.assertIn("close nodes", text)
+
+        for card_id in ("worker_a.core", "worker_b.core", "worker.research_report"):
+            text = " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+            with self.subTest(card_id=card_id):
+                self.assertIn("flowguard obligation coverage", text)
+                self.assertIn("packet-scoped", text)
+                self.assertTrue(
+                    "does not approve gates" in text or "do not approve gates" in text
+                )
+                self.assertIn("mutate routes", text)
+                self.assertIn("replace pm", text)
+
+        reviewer_text = " ".join(_card_path_by_id("reviewer.core").read_text(encoding="utf-8").lower().split())
+        self.assertIn("you do not have to rerun all flowguard modeling", reviewer_text)
+        self.assertIn("unless pm routes that work", reviewer_text)
+        self.assertIn("whether the cited flowguard evidence can support this gate", reviewer_text)
+
     def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

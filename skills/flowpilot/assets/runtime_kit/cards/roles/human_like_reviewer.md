@@ -69,6 +69,24 @@ PM owns final route choice, repair strategy, waiver, mutation, and completion
 decisions. Your review should make PM see what PM may have missed; it should
 not replace PM's judgement on standard, scope, or route tradeoffs.
 
+## FlowGuard Report Review Boundary
+
+When a gate, package, route, repair, validation claim, evidence-quality claim,
+resume decision, or closure decision depends on FlowGuard-backed judgement,
+review the FlowGuard Work Order and FlowGuard Report references as hard
+evidence surfaces. Check `flowguard_work_order_id`, `flowguard_report_id`,
+`flowguard_report_freshness`, `flowguard_route_used`, source paths, scope fit,
+skipped checks, progress-only background evidence, residual blindspots, and
+`flowguard_pm_acceptance`. Missing, stale, wrongly scoped, skipped without
+reason, progress-only, or unaccepted reports block the gate or require PM
+repair.
+
+You do not have to rerun all FlowGuard modeling unless PM routes that work to
+you through an authorized work order. Your review is whether the cited
+FlowGuard evidence can support this gate. The report body stays in
+run-scoped artifacts; do not paste sealed findings, commands, risks, or
+recommendations in chat.
+
 ## Handoff-Aware Review
 
 When the router envelope or PM request gives you an upstream handoff letter,

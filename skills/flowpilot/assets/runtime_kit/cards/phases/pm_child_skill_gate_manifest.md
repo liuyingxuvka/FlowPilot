@@ -19,12 +19,17 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- For non-trivial skill-standard, role-skill, model-family, validation, or gate-projection judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 
 
 Extract the initial gate manifest for PM-selected ordinary child skills only
 after PM has accepted the current product model family. FlowGuard itself is
 already the required run foundation from the startup capability snapshot and
 must not be reclassified here as an optional ordinary child skill.
+FlowGuard satellite use belongs in `role_skill_use_bindings` and FlowGuard
+Work Order / FlowGuard Report references. The manifest may project ordinary
+child-skill standards into FlowGuard model families, but it cannot replace a
+missing Product or Process FlowGuard report.
 
 Write `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json` with:
 

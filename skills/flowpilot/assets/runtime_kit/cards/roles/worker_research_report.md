@@ -53,6 +53,15 @@ Before returning the result envelope, read the source packet's
 result or report body. If required source checks, sections, or evidence are
 missing, return `blocked` or `needs_pm`.
 
+When the packet carries `flowguard_work_order_id`, `flowguard_report_id`, or
+FlowGuard-derived evidence obligations, include `FlowGuard Obligation
+Coverage` in the sealed report body. Name the originating work-order/report
+ids, sources inspected, evidence freshness, skipped checks, unsupported
+claims, and which gaps remain out of packet scope. Research evidence is input
+for PM, Reviewer, or Officer judgement. These rows are packet-scoped evidence
+only; they do not approve gates, mutate routes, close nodes, waive missing
+FlowGuard reports, or replace PM decisions.
+
 Submit the full research body through `flowpilot_runtime.py complete-packet` or
 `flowpilot_runtime.py run-packet` and submit the runtime-generated result directly to Router
 envelope to Controller. Do not hand-write the result envelope unless the

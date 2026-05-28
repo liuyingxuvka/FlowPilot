@@ -8,6 +8,7 @@ post_ack: ACK is receipt only; ACK is not completion. This is a work item when i
 work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
 runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+flowguard_decision_core: FlowPilot keeps Router, packets, role authority, ledgers, and install/runtime boundaries as the shell. Non-trivial product, process, route, node, repair, validation, evidence-freshness, resume, or closure judgement must use a run-scoped FlowGuard Work Order and FlowGuard Report, or a scoped flowguard_not_required_reason.
 -->
 ```text
 ✦━━━━━━━━━━━━━━━━━━━━✦
