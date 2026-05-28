@@ -628,7 +628,9 @@
           "paths": [
             "card_ledger.json",
             "return_event_ledger.json",
-            "cards/**/*.json"
+            "cards/**/*.json",
+            "mailbox/outbox/card_acks/**/*.json",
+            "runtime_receipts/card_reads/**/*.json"
           ],
           "surface_id": "flowpilot_card_state"
         },
@@ -1115,7 +1117,7 @@
             ]
           ],
           "observation_id": "flowpilot.router_json_gateway:flowpilot_card_state",
-          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json",
+          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json;mailbox/outbox/card_acks/**/*.json;runtime_receipts/card_reads/**/*.json",
           "proof_artifact_ids": [
             "tests.test_flowpilot_runtime_gateway_adoption",
             "flowpilot_runtime_gateway_static_writer_inventory"
@@ -1394,7 +1396,7 @@
             ]
           ],
           "observation_id": "flowpilot.card_runtime_gateway:flowpilot_card_state",
-          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json",
+          "path": "card_ledger.json;return_event_ledger.json;cards/**/*.json;mailbox/outbox/card_acks/**/*.json;runtime_receipts/card_reads/**/*.json",
           "proof_artifact_ids": [
             "tests.test_flowpilot_runtime_gateway_adoption",
             "flowpilot_runtime_gateway_static_writer_inventory"

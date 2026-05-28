@@ -42,6 +42,14 @@ class FlowPilotRuntimeGatewayAdoptionTests(unittest.TestCase):
         break_glass_index = Path(".flowpilot/runs/run-test/controller_break_glass/index.json")
         role_output_body = Path(".flowpilot/runs/run-test/continuation/pm_resume_runtime_body.json")
         gate_output_body = Path(".flowpilot/runs/run-test/gate_decisions/gate_decision-1.json")
+        card_read_receipt = Path(
+            ".flowpilot/runs/run-test/runtime_receipts/card_reads/"
+            "pm_parent_segment_decision-delivery-001-attempt-001.receipt.json"
+        )
+        card_ack = Path(
+            ".flowpilot/runs/run-test/mailbox/outbox/card_acks/"
+            "pm_parent_segment_decision-delivery-001-attempt-001.ack.json"
+        )
 
         self.assertEqual(
             runtime_gateway.classify_runtime_state_surface(break_glass_index).surface_id,
@@ -54,6 +62,14 @@ class FlowPilotRuntimeGatewayAdoptionTests(unittest.TestCase):
         self.assertEqual(
             runtime_gateway.classify_runtime_state_surface(gate_output_body).surface_id,
             "flowpilot_role_output_state",
+        )
+        self.assertEqual(
+            runtime_gateway.classify_runtime_state_surface(card_read_receipt).surface_id,
+            "flowpilot_card_state",
+        )
+        self.assertEqual(
+            runtime_gateway.classify_runtime_state_surface(card_ack).surface_id,
+            "flowpilot_card_state",
         )
         runtime_gateway.assert_runtime_gateway_write(
             break_glass_index,
@@ -69,6 +85,16 @@ class FlowPilotRuntimeGatewayAdoptionTests(unittest.TestCase):
             gate_output_body,
             runtime_gateway.GATEWAY_ROLE_OUTPUT,
             operation="test_gate_output_body_write",
+        )
+        runtime_gateway.assert_runtime_gateway_write(
+            card_read_receipt,
+            runtime_gateway.GATEWAY_CARD_RUNTIME,
+            operation="test_card_read_receipt_write",
+        )
+        runtime_gateway.assert_runtime_gateway_write(
+            card_ack,
+            runtime_gateway.GATEWAY_CARD_RUNTIME,
+            operation="test_card_ack_write",
         )
 
     def test_low_level_runtime_writers_are_gatewayed(self) -> None:

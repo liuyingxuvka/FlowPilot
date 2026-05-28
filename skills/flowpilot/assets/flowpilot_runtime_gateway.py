@@ -105,7 +105,13 @@ CRITICAL_RUNTIME_SURFACES: dict[str, dict[str, Any]] = {
     },
     "flowpilot_card_state": {
         "description": "Card ledgers, card return ledgers, receipts, ACKs, and card envelopes.",
-        "paths": ("card_ledger.json", "return_event_ledger.json", "cards/**/*.json"),
+        "paths": (
+            "card_ledger.json",
+            "return_event_ledger.json",
+            "cards/**/*.json",
+            "mailbox/outbox/card_acks/**/*.json",
+            "runtime_receipts/card_reads/**/*.json",
+        ),
         "owner_gateway_ids": (GATEWAY_CARD_RUNTIME, GATEWAY_ROUTER_JSON),
     },
     "flowpilot_lifecycle_state": {
@@ -212,6 +218,10 @@ def classify_runtime_state_surface(path: Path | str) -> RuntimeGatewayTarget:
         return _target("flowpilot_daemon_state", "router daemon state")
     if "/controller_break_glass/" in joined:
         return _target("flowpilot_break_glass_state", "controller break-glass state")
+    if "/runtime_receipts/card_reads/" in joined:
+        return _target("flowpilot_card_state", "card read receipt")
+    if "/mailbox/outbox/card_acks/" in joined:
+        return _target("flowpilot_card_state", "card ACK envelope")
     if _is_role_output_body_file(name):
         return _target("flowpilot_role_output_state", "role output body file")
     if "/control_blocks/" in joined or "/repair_transactions/" in joined or "/gate_decisions/" in joined:
