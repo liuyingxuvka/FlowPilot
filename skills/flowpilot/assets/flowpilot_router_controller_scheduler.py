@@ -49,16 +49,19 @@ import flowpilot_router_controller_scheduler_ledgers as _owner_child_0
 import flowpilot_router_controller_scheduler_receipts as _owner_child_1
 import flowpilot_router_controller_scheduler_waits as _owner_child_2
 import flowpilot_router_controller_scheduler_standby as _owner_child_3
+import flowpilot_router_controller_wait_audit as _owner_child_4
 from flowpilot_router_controller_scheduler_ledgers import *
 from flowpilot_router_controller_scheduler_receipts import *
 from flowpilot_router_controller_scheduler_waits import *
 from flowpilot_router_controller_scheduler_standby import *
+from flowpilot_router_controller_wait_audit import *
 
 _OWNER_CHILD_MODULES = (
     _owner_child_0,
     _owner_child_1,
     _owner_child_2,
     _owner_child_3,
+    _owner_child_4,
 )
 
 _LOCAL_NAMES = set(globals())

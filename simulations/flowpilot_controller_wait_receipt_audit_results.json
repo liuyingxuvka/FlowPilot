@@ -1,0 +1,200 @@
+{
+  "checked_at": "2026-05-28T16:28:41.091403+00:00",
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=1 initial_states=1 traces=12",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "failures": [],
+    "hazards": {
+      "aside_releases_wait": {
+        "detected": true,
+        "expected_failure": "controller_aside released a formal wait",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "controller_aside released a formal wait"
+        ],
+        "state": {
+          "aside_claims_done": true,
+          "audit_judges_work_quality": false,
+          "audit_reads_sealed_body": false,
+          "classification": "formal_return_ready",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": false,
+          "formal_return_seen": false,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": false,
+          "scenario": "aside_releases_wait",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": true,
+          "wait_released_by_formal_surface": false
+        }
+      },
+      "audit_approves_quality": {
+        "detected": true,
+        "expected_failure": "wait audit judged work quality",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "wait audit judged work quality"
+        ],
+        "state": {
+          "aside_claims_done": false,
+          "audit_judges_work_quality": true,
+          "audit_reads_sealed_body": false,
+          "classification": "formal_return_ready",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": false,
+          "formal_return_seen": true,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": false,
+          "scenario": "audit_approves_quality",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": false,
+          "wait_released_by_formal_surface": false
+        }
+      },
+      "audit_reads_sealed_body": {
+        "detected": true,
+        "expected_failure": "wait audit read sealed body content",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "wait audit read sealed body content"
+        ],
+        "state": {
+          "aside_claims_done": false,
+          "audit_judges_work_quality": false,
+          "audit_reads_sealed_body": true,
+          "classification": "formal_return_ready",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": false,
+          "formal_return_seen": true,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": false,
+          "scenario": "audit_reads_sealed_body",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": false,
+          "wait_released_by_formal_surface": false
+        }
+      },
+      "formal_return_without_notice_marked_ready": {
+        "detected": true,
+        "expected_failure": "result envelope without next-action notice was marked ready",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "result envelope without next-action notice was marked ready"
+        ],
+        "state": {
+          "aside_claims_done": false,
+          "audit_judges_work_quality": false,
+          "audit_reads_sealed_body": false,
+          "classification": "formal_return_ready",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": false,
+          "formal_return_seen": true,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": true,
+          "scenario": "formal_return_without_notice_marked_ready",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": false,
+          "wait_released_by_formal_surface": true
+        }
+      },
+      "malformed_return_marked_ready": {
+        "detected": true,
+        "expected_failure": "malformed formal return was marked ready",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "malformed formal return was marked ready"
+        ],
+        "state": {
+          "aside_claims_done": false,
+          "audit_judges_work_quality": false,
+          "audit_reads_sealed_body": false,
+          "classification": "formal_return_ready",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": true,
+          "formal_return_seen": true,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": false,
+          "scenario": "malformed_return_marked_ready",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": false,
+          "wait_released_by_formal_surface": true
+        }
+      },
+      "stale_control_plane_silently_waits": {
+        "detected": true,
+        "expected_failure": "formal return was hidden as ordinary waiting",
+        "failures": [
+          "accepted a known-bad wait-audit scenario",
+          "formal return was hidden as ordinary waiting"
+        ],
+        "state": {
+          "aside_claims_done": false,
+          "audit_judges_work_quality": false,
+          "audit_reads_sealed_body": false,
+          "classification": "no_formal_return_seen",
+          "controller_ledger_ready": false,
+          "current_wait_active": true,
+          "formal_return_malformed": false,
+          "formal_return_seen": true,
+          "next_action_notice_seen": false,
+          "result_envelope_seen": false,
+          "scenario": "stale_control_plane_silently_waits",
+          "status": "accepted",
+          "user_message_required": false,
+          "wait_released_by_aside": false,
+          "wait_released_by_formal_surface": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_boundary": "focused Controller wait receipt audit model; runtime tests remain required for file-surface and standby integration confidence",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0
+  },
+  "safe_graph": {
+    "accepted_scenarios": [
+      "aside_claim_without_formal_return_keeps_wait",
+      "formal_return_ready_reenters_ledger",
+      "formal_return_seen_wait_not_released_classified_stuck",
+      "malformed_formal_return_classified_repair",
+      "no_formal_return_waits",
+      "result_envelope_no_notice_classified_stuck"
+    ],
+    "edge_count": 12,
+    "invariant_failure_count": 0,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "aside_releases_wait",
+      "audit_approves_quality",
+      "audit_reads_sealed_body",
+      "formal_return_without_notice_marked_ready",
+      "malformed_return_marked_ready",
+      "stale_control_plane_silently_waits"
+    ],
+    "state_count": 13
+  }
+}
