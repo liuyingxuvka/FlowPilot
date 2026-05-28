@@ -77,7 +77,7 @@ def _rebuild_controller_action_ledger(router: ModuleType, project_root: Path, ru
                     entries.append(summary)
                 else:
                     passive_waits.append(summary)
-    ledger = {'schema_version': CONTROLLER_ACTION_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'updated_at': utc_now(), 'controller_table_prompt': _controller_table_prompt(), 'actions': entries, 'passive_waits': passive_waits, 'counts': _controller_action_counts(entries), 'passive_wait_count': len(passive_waits), 'controller_must_clear_pending_actions': True, 'controller_actions_are_executable_only': True, 'passive_waits_projected_via_status_not_work_board': True, 'router_must_not_mark_done_without_controller_receipt': True}
+    ledger = {'schema_version': CONTROLLER_ACTION_LEDGER_SCHEMA, 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'updated_at': utc_now(), 'controller_table_prompt': _controller_table_prompt(run_root / 'runtime_kit'), 'actions': entries, 'passive_waits': passive_waits, 'counts': _controller_action_counts(entries), 'passive_wait_count': len(passive_waits), 'controller_must_clear_pending_actions': True, 'controller_actions_are_executable_only': True, 'passive_waits_projected_via_status_not_work_board': True, 'router_must_not_mark_done_without_controller_receipt': True}
     router._write_controller_action_ledger(_controller_action_ledger_path(run_root), ledger)
     run_state['controller_action_ledger_path'] = project_relative(project_root, _controller_action_ledger_path(run_root))
     return ledger

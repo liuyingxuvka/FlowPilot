@@ -40,6 +40,11 @@ HAZARD_EXPECTED_FAILURES = {
     "continue_patrol_without_rerun": "continue_patrol did not instruct Controller to rerun the patrol command",
     "continue_patrol_without_wait_next_output": "continue_patrol did not instruct Controller to wait for the next output",
     "continue_patrol_completes_standby": "continuous standby completed before terminal stop allowance",
+    "continue_patrol_user_chatter": "quiet continue_patrol emitted a user-visible message",
+    "quiet_patrol_still_ten_seconds": "quiet standby patrol default was not sixty seconds",
+    "patrol_changes_daemon_tick": "patrol cadence changed the Router daemon tick",
+    "patrol_changes_heartbeat_window": "patrol cadence changed daemon heartbeat check window",
+    "internal_patrol_work_user_message": "Controller emitted user-visible message for internal-only patrol work",
     "rerun_without_waiting": "Controller reran patrol command without waiting for next output",
     "separate_monitor_used": "patrol timer used a separate monitor instead of the existing daemon monitor",
     "router_next_used_as_metronome": "Controller used router next/apply/run-until-wait as the patrol metronome",
@@ -66,6 +71,9 @@ def _state_id(state: model.State) -> str:
         f"rerun_started={state.next_command_rerun_started},"
         f"waiting={state.waiting_for_next_output}|closed={state.foreground_closed}|"
         f"stop_allowed={state.controller_stop_allowed},status_update={state.user_status_update_allowed},"
+        f"user_msg={state.user_visible_message_emitted},meaningful_user_change={state.meaningful_user_visible_change},"
+        f"patrol_interval={state.patrol_interval_seconds},daemon_tick={state.router_daemon_tick_seconds},"
+        f"heartbeat_check={state.heartbeat_check_seconds},"
         f"patrol_required={state.controller_patrol_required},final_answer={state.final_answer_allowed}|"
         f"summary_display_only={state.current_status_summary_display_only},"
         f"stale_next={state.stale_next_step_projection},summary_stop={state.status_summary_used_as_stop_authority}|"

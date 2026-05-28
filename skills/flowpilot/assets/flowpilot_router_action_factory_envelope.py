@@ -41,10 +41,30 @@ def _controller_user_reporting_policy() -> dict[str, Any]:
     return {
         "schema_version": CONTROLLER_USER_REPORTING_POLICY_SCHEMA,
         "plain_language_required": True,
+        "speak_only_when_user_value": True,
         "reminder": (
-            "If this action is mentioned to the user, explain it in plain "
-            "language instead of copying internal action names or metadata."
+            "First decide whether this action needs a user-visible message. "
+            "Quiet patrol, receipts, ledger cleanup, relay bookkeeping, and "
+            "process-only asides are silent by default. If this action is "
+            "mentioned to the user, explain it in plain language instead of "
+            "copying internal action names or metadata."
         ),
+        "silent_by_default_for": [
+            "quiet_patrol_continue",
+            "controller_receipts",
+            "ledger_cleanup",
+            "relay_bookkeeping",
+            "routine_process_asides",
+            "no_new_controller_work",
+        ],
+        "report_when": [
+            "user_action_required",
+            "blocker_or_recovery",
+            "terminal_stop_or_completion",
+            "user_relevant_wait_target_changed",
+            "required_display_text",
+            "explicit_user_status_request",
+        ],
         "allowed_user_report_points": [
             "what_is_happening_now",
             "what_flowpilot_is_waiting_for",

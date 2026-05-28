@@ -12,6 +12,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from flowpilot_router_controller_wait_audit import FORMAL_RETURN_READY, controller_wait_receipt_audit
 from flowpilot_router_errors import RouterError
 from flowpilot_router_controller_scheduler_standby_policy import *
 
@@ -41,15 +42,78 @@ def _continuous_standby_watch_label(router: ModuleType, current_wait: dict[str, 
 
 def _continuous_standby_release_conditions(router: ModuleType) -> list[str]:
     _bind_router(router)
-    return ['controller_action_ready', 'wait_target_check_due', 'wait_target_blocker_required', 'terminal', 'user_input_required', 'daemon_liveness_check_required', 'daemon_stale_or_missing', 'explicit_host_stop']
+    return ['controller_action_ready', 'formal_return_ready', 'wait_receipt_audit_control_plane_stuck', 'wait_target_check_due', 'wait_target_blocker_required', 'terminal', 'user_input_required', 'daemon_liveness_check_required', 'daemon_stale_or_missing', 'explicit_host_stop']
 
 def _continuous_standby_task_payload(router: ModuleType, project_root: Path, run_root: Path, current_wait: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     wait_class = str(current_wait.get('wait_class') or 'none')
     patrol_command = _controller_patrol_timer_command()
     break_glass = _controller_break_glass_reminder()
-    wait_policy: dict[str, Any] = {'wait_class': wait_class, 'next_due': current_wait.get('next_due') or {}, 'strict_wait_until_router_release_condition': True, 'ack_reminder_seconds': WAIT_TARGET_ACK_REMINDER_SECONDS, 'ack_blocker_seconds': WAIT_TARGET_ACK_BLOCKER_SECONDS, 'report_reminder_and_liveness_seconds': WAIT_TARGET_REPORT_REMINDER_SECONDS}
-    return {'task_kind': 'continuous_controller_standby', 'task_type': 'foreground_keepalive_waiting_patrol', 'status': 'in_progress', 'purpose': 'Prevent Controller from accidentally exiting the foreground chat while FlowPilot is still running.', 'required_command': patrol_command, 'patrol_timer_seconds': CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS, 'loop_rule': 'Run required_command and wait for its output. If it returns continue_patrol, immediately run required_command again and wait for the next output. Starting or restarting the command is not completion.', 'monitor_source': 'existing_router_daemon_monitor', 'watching': router._continuous_standby_watch_label(current_wait), 'monitor_sources': {'router_daemon_status_path': project_relative(project_root, _router_daemon_status_path(run_root)), 'controller_action_ledger_path': project_relative(project_root, _controller_action_ledger_path(run_root)), 'controller_receipts_dir': project_relative(project_root, _controller_receipts_dir(run_root))}, 'current_wait': {'action_type': current_wait.get('action_type'), 'label': current_wait.get('label'), 'waiting_for_role': current_wait.get('waiting_for_role'), 'wait_class': wait_class, 'target_role': current_wait.get('target_role'), 'elapsed_seconds': current_wait.get('elapsed_seconds'), 'expected_return_path': current_wait.get('expected_return_path'), 'next_due': current_wait.get('next_due')}, 'codex_plan_sync': {'required': True, 'plan_item': f"FlowPilot continuous standby: this is the final fallback row when all ordinary Controller rows are complete but FlowPilot is still running. Keep this row in progress as a continuous monitoring duty and foreground anti-exit patrol duty. Run the patrol timer command, wait for its output, and if it returns continue_patrol, rerun the same command and wait for the next output. Keep the foreground Controller attached, sync the visible Codex plan from the Controller action ledger and receipts, and when Router exposes new Controller work, update the table and return to top-to-bottom row processing. {break_glass['text']}", 'plan_status': 'in_progress', 'sync_after_each_controller_row': True, 'check_for_missed_rows_and_receipts_before_sleep': True, 'new_controller_work_returns_to_top_down_processing': True}, 'break_glass_reminder': break_glass, 'wait_policy': wait_policy, 'do_not_mark_complete_on': ['command_started', 'command_restarted', 'timer_finished', 'monitor_checked_once', 'one_monitor_poll', 'timeout_still_waiting', 'target_role_alive', 'target_role_still_working', 'no_new_controller_action_yet', 'no_new_controller_work', 'continue_patrol'], 'completion_allowed_only_when': 'terminal_return_and_controller_stop_allowed_true', 'release_conditions': router._continuous_standby_release_conditions(), 'release_condition_meaning': 'switch duty or process new work, not foreground closure while FlowPilot is running', 'controller_must_not_exit_foreground': True, 'foreground_close_allowed_while_flowpilot_running': False, 'new_controller_work_requires_ledger_update_and_top_down_reentry': True, 'controller_must_not_use_router_next_as_metronome': True, 'metadata_only': True, 'sealed_body_reads_allowed': False}
+    wait_receipt_audit = controller_wait_receipt_audit(project_root, run_root, current_wait)
+    wait_policy: dict[str, Any] = {
+        'wait_class': wait_class,
+        'next_due': current_wait.get('next_due') or {},
+        'strict_wait_until_router_release_condition': True,
+        'ack_reminder_seconds': WAIT_TARGET_ACK_REMINDER_SECONDS,
+        'ack_blocker_seconds': WAIT_TARGET_ACK_BLOCKER_SECONDS,
+        'report_reminder_and_liveness_seconds': WAIT_TARGET_REPORT_REMINDER_SECONDS,
+        'receipt_audit_before_each_wait_wakeup': True,
+    }
+    return {
+        'task_kind': 'continuous_controller_standby',
+        'task_type': 'foreground_keepalive_waiting_patrol',
+        'status': 'in_progress',
+        'purpose': 'Prevent Controller from accidentally exiting the foreground chat while FlowPilot is still running.',
+        'required_command': patrol_command,
+        'patrol_timer_seconds': CONTROLLER_PATROL_TIMER_DEFAULT_SECONDS,
+        'loop_rule': 'Run required_command and wait for its output. If it returns continue_patrol, immediately run required_command again and wait for the next output. Starting or restarting the command is not completion.',
+        'monitor_source': 'existing_router_daemon_monitor_and_wait_receipt_audit',
+        'watching': router._continuous_standby_watch_label(current_wait),
+        'monitor_sources': {
+            'router_daemon_status_path': project_relative(project_root, _router_daemon_status_path(run_root)),
+            'controller_action_ledger_path': project_relative(project_root, _controller_action_ledger_path(run_root)),
+            'controller_receipts_dir': project_relative(project_root, _controller_receipts_dir(run_root)),
+            'wait_receipt_audit': 'controller-visible formal return metadata only',
+        },
+        'current_wait': {
+            'action_type': current_wait.get('action_type'),
+            'label': current_wait.get('label'),
+            'waiting_for_role': current_wait.get('waiting_for_role'),
+            'wait_class': wait_class,
+            'target_role': current_wait.get('target_role'),
+            'elapsed_seconds': current_wait.get('elapsed_seconds'),
+            'expected_return_path': current_wait.get('expected_return_path'),
+            'next_due': current_wait.get('next_due'),
+            'wait_receipt_audit': wait_receipt_audit,
+        },
+        'codex_plan_sync': {
+            'required': True,
+            'plan_item': f"FlowPilot continuous standby: this is the final fallback row when all ordinary Controller rows are complete but FlowPilot is still running. Keep this row in progress as a continuous monitoring duty and foreground anti-exit patrol duty. Run the patrol timer command, wait for its output, and before each continued wait check Controller-visible formal return metadata. Do not read sealed bodies, judge work quality, or treat controller_aside notes as completion proof. If formal return metadata exists but Router has not released the wait or exposed a next step, report the control-plane stuck status. If the command returns continue_patrol, rerun the same command and wait for the next output. Keep quiet patrol internal by default; only update the user when a real user action, blocker, recovery, terminal result, required display, control-plane stuck status, or user-relevant waiting target change occurs. Keep the foreground Controller attached, sync the visible Codex plan from the Controller action ledger and receipts, and when Router exposes new Controller work, update the table and return to top-to-bottom row processing. {break_glass['text']}",
+            'plan_status': 'in_progress',
+            'sync_after_each_controller_row': True,
+            'check_for_missed_rows_and_receipts_before_sleep': True,
+            'check_formal_return_metadata_before_sleep': True,
+            'new_controller_work_returns_to_top_down_processing': True,
+        },
+        'break_glass_reminder': break_glass,
+        'wait_policy': wait_policy,
+        'wait_receipt_audit': wait_receipt_audit,
+        'quiet_user_reporting_policy': {
+            'continue_patrol_user_visible_message_required': False,
+            'silent_by_default_for': ['quiet_patrol_continue', 'no_new_controller_work', 'routine_process_asides', 'receipt_or_ledger_housekeeping'],
+            'report_when': ['user_action_required', 'blocker_or_recovery', 'control_plane_stuck_from_wait_receipt_audit', 'terminal_stop_or_completion', 'user_relevant_wait_target_changed', 'required_display_text', 'explicit_user_status_request'],
+        },
+        'do_not_mark_complete_on': ['command_started', 'command_restarted', 'timer_finished', 'monitor_checked_once', 'one_monitor_poll', 'timeout_still_waiting', 'target_role_alive', 'target_role_still_working', 'controller_aside_claim', 'no_new_controller_action_yet', 'no_new_controller_work', 'continue_patrol'],
+        'completion_allowed_only_when': 'terminal_return_and_controller_stop_allowed_true',
+        'release_conditions': router._continuous_standby_release_conditions(),
+        'release_condition_meaning': 'switch duty, report stuck control-plane metadata, or process new work; not foreground closure while FlowPilot is running',
+        'controller_must_not_exit_foreground': True,
+        'foreground_close_allowed_while_flowpilot_running': False,
+        'new_controller_work_requires_ledger_update_and_top_down_reentry': True,
+        'controller_must_not_use_router_next_as_metronome': True,
+        'metadata_only': True,
+        'sealed_body_reads_allowed': False,
+    }
 
 def _current_action_is_ordinary_controller_work(router: ModuleType, current_action: dict[str, Any] | None) -> bool:
     _bind_router(router)
@@ -114,6 +178,8 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
         for key in ('action_type', 'label', 'to_role', 'waiting_for_role', 'allowed_external_events', 'expected_return_path', 'next_due'):
             if current_wait.get(key) in (None, '', []) and daemon_wait.get(key) not in (None, '', []):
                 current_wait[key] = daemon_wait.get(key)
+    wait_receipt_audit = controller_wait_receipt_audit(project_root, run_root, current_wait, run_state=run_state)
+    current_wait['wait_receipt_audit'] = wait_receipt_audit
     current_work = router._derive_current_work(project_root, run_root, run_state, current_wait=current_wait, current_action=daemon_status.get('current_action') if isinstance(daemon_status.get('current_action'), dict) else None, controller_ledger=router._controller_action_ledger_summary(run_root))
     current_action = daemon_status.get('current_action') if isinstance(daemon_status.get('current_action'), dict) else {}
     continuous_standby_task = daemon_status.get('continuous_standby_task') if isinstance(daemon_status.get('continuous_standby_task'), dict) else router._continuous_standby_task_payload(project_root, run_root, current_wait)
@@ -128,13 +194,16 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
         pending_action_ids=pending_action_ids,
         current_wait=current_wait,
     )
+    if wait_receipt_audit.get('classification') == FORMAL_RETURN_READY and wait_receipt_audit.get('controller_should_reenter_ledger'):
+        standby_state = 'controller_action_ready'
     standby_policy = _foreground_standby_policy(standby_state)
     controller_must_continue_standby = bool(standby_policy['controller_must_continue_standby'])
     controller_must_process_pending_action = bool(standby_policy['controller_must_process_pending_action'])
     controller_stop_allowed = bool(standby_policy['controller_stop_allowed'])
     wait_target_action_ready = bool(standby_policy['wait_target_action_ready'])
     foreground_turn_return_allowed = bool(standby_policy['foreground_turn_return_allowed'])
-    user_status_update_allowed = foreground_turn_return_allowed
+    wait_receipt_audit_user_visible = bool(wait_receipt_audit.get('user_visible_message_required'))
+    user_status_update_allowed = bool(foreground_turn_return_allowed or wait_receipt_audit_user_visible)
     controller_patrol_required = bool(standby_policy['controller_patrol_required'])
     foreground_required_mode = str(standby_policy['foreground_required_mode'])
     elapsed = max(0.0, time.monotonic() - start_monotonic)
@@ -157,6 +226,8 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
         'user_status_update_is_not_stop_permission': True,
         'status_projection_is_not_stop_authority': True,
         'authority_source': 'router_daemon_status_and_controller_action_ledger',
+        'wait_receipt_audit_classification': wait_receipt_audit.get('classification'),
+        'wait_receipt_audit_control_plane_stuck': bool(wait_receipt_audit.get('control_plane_stuck')),
     }
     if not final_answer_allowed:
         if not controller_stop_allowed:
@@ -165,7 +236,7 @@ def _build_foreground_controller_standby_snapshot(router: ModuleType, project_ro
             final_answer_preflight['blocked_reason'] = 'pending_controller_actions_remain'
         else:
             final_answer_preflight['blocked_reason'] = 'continuous_standby_or_duty_still_active'
-    return {'schema_version': FOREGROUND_CONTROLLER_STANDBY_SCHEMA, 'ok': True, 'command': 'controller-standby', 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'started_at': started_at, 'observed_at': utc_now(), 'elapsed_seconds': round(elapsed, 3), 'max_seconds': max_seconds, 'poll_seconds': poll_seconds, 'poll_count': poll_count, 'standby_state': standby_state, 'controller_must_continue_standby': controller_must_continue_standby, 'controller_must_process_pending_action_before_exit': controller_must_process_pending_action, 'controller_must_process_wait_target_before_exit': wait_target_action_ready, 'foreground_exit_allowed': controller_stop_allowed, 'foreground_turn_return_allowed': foreground_turn_return_allowed, 'foreground_turn_return_is_not_controller_stop': True, 'user_status_update_allowed': user_status_update_allowed, 'controller_patrol_required': controller_patrol_required, 'foreground_required_mode': foreground_required_mode, 'controller_stop_allowed': controller_stop_allowed, 'nonterminal_controller_must_stay_attached': not controller_stop_allowed, 'final_answer_preflight': final_answer_preflight, 'normal_router_progress_source': 'router_daemon_status_and_controller_action_ledger', 'diagnostic_router_reentry_commands': ['next', 'run-until-wait'], 'diagnostic_router_reentry_policy': 'diagnostic/test/explicit-repair only; not normal progress while daemon status and the Controller action ledger own the active run', 'break_glass_reminder': _controller_break_glass_reminder(), 'standby_does_not_drive_router_progress': True, 'metadata_only': True, 'sealed_body_reads_allowed': False, 'router_daemon': {'lock_path': project_relative(project_root, lock_path), 'status_path': project_relative(project_root, status_path), 'lock_exists': lock_path.exists(), 'lock_live': lock_live, 'lock_status': lock.get('status'), 'lock_last_tick_at': lock.get('last_tick_at'), 'status_exists': status_path.exists(), 'status_ok': status_ok, 'daemon_live': daemon_live, 'active_owner_live': _router_daemon_lock_has_live_owner(lock_liveness), 'heartbeat_status': heartbeat_monitor['status'], 'heartbeat_age_seconds': heartbeat_monitor['age_seconds'], 'heartbeat_check_after_seconds': heartbeat_monitor['check_after_seconds'], 'heartbeat_reasons': heartbeat_monitor['reasons'], 'controller_liveness_check_required': heartbeat_monitor['controller_liveness_check_required'], 'monitor_can_decide_recovery': heartbeat_monitor['monitor_can_decide_recovery'], 'controller_instruction': heartbeat_monitor['controller_instruction'], 'lifecycle_status': daemon_status.get('lifecycle_status'), 'last_tick_at': daemon_status.get('last_tick_at'), 'tick_interval_seconds': daemon_status.get('tick_interval_seconds')}, 'controller_action_ledger': {'path': project_relative(project_root, ledger_path), 'exists': ledger_path.exists(), 'schema_ok': ledger_ok, 'updated_at': ledger.get('updated_at'), 'counts': ledger.get('counts') if ledger_ok else _controller_action_counts([]), 'passive_wait_count': int(ledger.get('passive_wait_count') or 0) if ledger_ok else 0, 'passive_waits_projected_via_status_not_work_board': bool(ledger.get('passive_waits_projected_via_status_not_work_board')) if ledger_ok else False, 'pending_action_ids': pending_action_ids, 'waiting_action_ids': waiting_action_ids}, 'current_work': current_work, 'current_wait': {'action_type': current_wait.get('action_type'), 'label': current_wait.get('label'), 'waiting_for_role': current_wait.get('waiting_for_role'), 'wait_class': current_wait.get('wait_class'), 'target_role': current_wait.get('target_role'), 'wait_reason': current_wait.get('wait_reason'), 'started_at': current_wait.get('started_at'), 'elapsed_seconds': current_wait.get('elapsed_seconds'), 'allowed_external_events': current_wait.get('allowed_external_events') or [], 'expected_return_path': current_wait.get('expected_return_path'), 'expected_evidence': current_wait.get('expected_evidence'), 'reminder': current_wait.get('reminder'), 'liveness_probe': current_wait.get('liveness_probe'), 'controller_local_self_audit': current_wait.get('controller_local_self_audit'), 'next_due': current_wait.get('next_due'), 'reissue': current_wait.get('reissue'), 'blocker': current_wait.get('blocker')}, 'continuous_standby_task': continuous_standby_task, 'current_action': {'action_type': current_action.get('action_type'), 'label': current_action.get('label'), 'controller_action_id': current_action.get('controller_action_id'), 'controller_projection_kind': current_action.get('controller_projection_kind') or _controller_action_projection_kind(current_action), 'ordinary_controller_work_row': not _action_is_passive_wait_status(current_action), 'apply_required': current_action.get('apply_required')} if current_action else None, 'exit_policy': {'returns_on_controller_action': True, 'returns_on_terminal': True, 'returns_on_user_required': True, 'returns_on_daemon_liveness_check_required': True, 'returns_on_bounded_timeout': True, 'bounded_timeout_is_diagnostic_only': True, 'returns_on_wait_target_check_due': True, 'returns_on_wait_target_blocker_required': True, 'returns_on_wait_target_reissue_required': True, 'controller_action_ready_blocks_foreground_exit': True, 'live_daemon_wait_requires_standby': True, 'controller_stop_requires_terminal_run': True, 'user_status_update_is_not_controller_stop': True, 'status_projection_is_not_stop_authority': True, 'nonterminal_modes': ['process_controller_action', 'watch_router_daemon', 'check_liveness', 'return_for_user_input', 'process_wait_target_check', 'record_wait_target_blocker', 'record_wait_target_no_output_reissue']}}
+    return {'schema_version': FOREGROUND_CONTROLLER_STANDBY_SCHEMA, 'ok': True, 'command': 'controller-standby', 'run_id': run_state.get('run_id'), 'run_root': project_relative(project_root, run_root), 'started_at': started_at, 'observed_at': utc_now(), 'elapsed_seconds': round(elapsed, 3), 'max_seconds': max_seconds, 'poll_seconds': poll_seconds, 'poll_count': poll_count, 'standby_state': standby_state, 'controller_must_continue_standby': controller_must_continue_standby, 'controller_must_process_pending_action_before_exit': controller_must_process_pending_action, 'controller_must_process_wait_target_before_exit': wait_target_action_ready, 'foreground_exit_allowed': controller_stop_allowed, 'foreground_turn_return_allowed': foreground_turn_return_allowed, 'foreground_turn_return_is_not_controller_stop': True, 'user_status_update_allowed': user_status_update_allowed, 'controller_patrol_required': controller_patrol_required, 'foreground_required_mode': foreground_required_mode, 'controller_stop_allowed': controller_stop_allowed, 'nonterminal_controller_must_stay_attached': not controller_stop_allowed, 'final_answer_preflight': final_answer_preflight, 'normal_router_progress_source': 'router_daemon_status_controller_action_ledger_and_wait_receipt_audit', 'diagnostic_router_reentry_commands': ['next', 'run-until-wait'], 'diagnostic_router_reentry_policy': 'diagnostic/test/explicit-repair only; not normal progress while daemon status and the Controller action ledger own the active run', 'break_glass_reminder': _controller_break_glass_reminder(), 'standby_does_not_drive_router_progress': True, 'metadata_only': True, 'sealed_body_reads_allowed': False, 'wait_receipt_audit': wait_receipt_audit, 'router_daemon': {'lock_path': project_relative(project_root, lock_path), 'status_path': project_relative(project_root, status_path), 'lock_exists': lock_path.exists(), 'lock_live': lock_live, 'lock_status': lock.get('status'), 'lock_last_tick_at': lock.get('last_tick_at'), 'status_exists': status_path.exists(), 'status_ok': status_ok, 'daemon_live': daemon_live, 'active_owner_live': _router_daemon_lock_has_live_owner(lock_liveness), 'heartbeat_status': heartbeat_monitor['status'], 'heartbeat_age_seconds': heartbeat_monitor['age_seconds'], 'heartbeat_check_after_seconds': heartbeat_monitor['check_after_seconds'], 'heartbeat_reasons': heartbeat_monitor['reasons'], 'controller_liveness_check_required': heartbeat_monitor['controller_liveness_check_required'], 'monitor_can_decide_recovery': heartbeat_monitor['monitor_can_decide_recovery'], 'controller_instruction': heartbeat_monitor['controller_instruction'], 'lifecycle_status': daemon_status.get('lifecycle_status'), 'last_tick_at': daemon_status.get('last_tick_at'), 'tick_interval_seconds': daemon_status.get('tick_interval_seconds')}, 'controller_action_ledger': {'path': project_relative(project_root, ledger_path), 'exists': ledger_path.exists(), 'schema_ok': ledger_ok, 'updated_at': ledger.get('updated_at'), 'counts': ledger.get('counts') if ledger_ok else _controller_action_counts([]), 'passive_wait_count': int(ledger.get('passive_wait_count') or 0) if ledger_ok else 0, 'passive_waits_projected_via_status_not_work_board': bool(ledger.get('passive_waits_projected_via_status_not_work_board')) if ledger_ok else False, 'pending_action_ids': pending_action_ids, 'waiting_action_ids': waiting_action_ids}, 'current_work': current_work, 'current_wait': {'action_type': current_wait.get('action_type'), 'label': current_wait.get('label'), 'waiting_for_role': current_wait.get('waiting_for_role'), 'wait_class': current_wait.get('wait_class'), 'target_role': current_wait.get('target_role'), 'wait_reason': current_wait.get('wait_reason'), 'started_at': current_wait.get('started_at'), 'elapsed_seconds': current_wait.get('elapsed_seconds'), 'allowed_external_events': current_wait.get('allowed_external_events') or [], 'expected_return_path': current_wait.get('expected_return_path'), 'expected_evidence': current_wait.get('expected_evidence'), 'reminder': current_wait.get('reminder'), 'liveness_probe': current_wait.get('liveness_probe'), 'controller_local_self_audit': current_wait.get('controller_local_self_audit'), 'next_due': current_wait.get('next_due'), 'reissue': current_wait.get('reissue'), 'blocker': current_wait.get('blocker'), 'wait_receipt_audit': wait_receipt_audit}, 'continuous_standby_task': continuous_standby_task, 'current_action': {'action_type': current_action.get('action_type'), 'label': current_action.get('label'), 'controller_action_id': current_action.get('controller_action_id'), 'controller_projection_kind': current_action.get('controller_projection_kind') or _controller_action_projection_kind(current_action), 'ordinary_controller_work_row': not _action_is_passive_wait_status(current_action), 'apply_required': current_action.get('apply_required')} if current_action else None, 'exit_policy': {'returns_on_controller_action': True, 'returns_on_terminal': True, 'returns_on_user_required': True, 'returns_on_daemon_liveness_check_required': True, 'returns_on_bounded_timeout': True, 'bounded_timeout_is_diagnostic_only': True, 'returns_on_wait_target_check_due': True, 'returns_on_wait_target_blocker_required': True, 'returns_on_wait_target_reissue_required': True, 'returns_on_wait_receipt_audit_control_plane_stuck': True, 'controller_action_ready_blocks_foreground_exit': True, 'live_daemon_wait_requires_standby': True, 'controller_stop_requires_terminal_run': True, 'user_status_update_is_not_controller_stop': True, 'status_projection_is_not_stop_authority': True, 'nonterminal_modes': ['process_controller_action', 'watch_router_daemon', 'check_liveness', 'return_for_user_input', 'process_wait_target_check', 'record_wait_target_blocker', 'record_wait_target_no_output_reissue', 'report_wait_receipt_audit_control_plane_stuck']}}
 
 def foreground_controller_standby(router: ModuleType, project_root: Path, *, max_seconds: float=_DEFAULT_SENTINEL, poll_seconds: float=_DEFAULT_SENTINEL, bounded_diagnostic: bool=False) -> dict[str, Any]:
     _bind_router(router)
@@ -213,7 +284,8 @@ def foreground_controller_standby(router: ModuleType, project_root: Path, *, max
             snapshot['foreground_exit_allowed'] = False
             snapshot['foreground_turn_return_allowed'] = not bool(snapshot['controller_must_continue_standby'])
             snapshot['foreground_turn_return_is_not_controller_stop'] = True
-            snapshot['user_status_update_allowed'] = bool(snapshot['foreground_turn_return_allowed'])
+            snapshot_audit = snapshot.get('wait_receipt_audit') if isinstance(snapshot.get('wait_receipt_audit'), dict) else {}
+            snapshot['user_status_update_allowed'] = bool(snapshot['foreground_turn_return_allowed'] or snapshot_audit.get('user_visible_message_required'))
             snapshot['controller_patrol_required'] = bool(snapshot['controller_must_continue_standby'])
             snapshot['controller_stop_allowed'] = False
             snapshot['nonterminal_controller_must_stay_attached'] = True
@@ -229,7 +301,9 @@ def foreground_controller_standby(router: ModuleType, project_root: Path, *, max
                 'continuous_standby_status': 'in_progress' if snapshot['controller_must_continue_standby'] else 'not_active',
                 'user_status_update_is_not_stop_permission': True,
                 'status_projection_is_not_stop_authority': True,
-                'authority_source': 'router_daemon_status_and_controller_action_ledger',
+                'authority_source': 'router_daemon_status_controller_action_ledger_and_wait_receipt_audit',
+                'wait_receipt_audit_classification': snapshot_audit.get('classification'),
+                'wait_receipt_audit_control_plane_stuck': bool(snapshot_audit.get('control_plane_stuck')),
                 'blocked_reason': 'timeout_still_waiting_nonterminal',
             }
             snapshot['bounded_timeout_is_diagnostic_only'] = True
@@ -249,6 +323,7 @@ def controller_patrol_timer(router: ModuleType, project_root: Path, *, seconds: 
     next_command = _controller_patrol_timer_command(seconds)
     standby_state = str(snapshot.get('standby_state') or '')
     foreground_mode = str(snapshot.get('foreground_required_mode') or '')
+    wait_receipt_audit = snapshot.get('wait_receipt_audit') if isinstance(snapshot.get('wait_receipt_audit'), dict) else {}
     controller_stop_allowed = bool(snapshot.get('controller_stop_allowed'))
     must_continue = bool(snapshot.get('controller_must_continue_standby'))
     pending_ids = (snapshot.get('controller_action_ledger') or {}).get('pending_action_ids') if isinstance(snapshot.get('controller_action_ledger'), dict) else []
@@ -265,6 +340,10 @@ def controller_patrol_timer(router: ModuleType, project_root: Path, *, seconds: 
         anti_exit_reminder = 'This patrol exists to prevent Controller from accidentally exiting the foreground chat while FlowPilot is still running.'
         router_daemon = snapshot.get('router_daemon') if isinstance(snapshot.get('router_daemon'), dict) else {}
         controller_instruction = str(router_daemon.get('controller_instruction') or 'Daemon heartbeat needs a Controller liveness check. If the daemon is alive, stay attached and continue. If it is dead, recover the current-run Router daemon without starting a second live writer.')
+    elif wait_receipt_audit.get('control_plane_stuck'):
+        patrol_result = 'control_plane_stuck'
+        anti_exit_reminder = 'This patrol found formal return metadata while FlowPilot is still nonterminal; Controller must stay attached and report or repair the stuck control-plane status.'
+        controller_instruction = 'Formal return metadata is visible, but Router has not exposed the expected next step. Do not read sealed bodies or judge work quality. Report the control-plane stuck status with the wait receipt audit classification, then follow the configured repair path.'
     elif must_continue or foreground_mode == 'watch_router_daemon':
         patrol_result = 'continue_patrol'
         anti_exit_reminder = 'This patrol exists to prevent Controller from accidentally exiting the foreground chat while FlowPilot is still running.'
@@ -285,11 +364,13 @@ def controller_patrol_timer(router: ModuleType, project_root: Path, *, seconds: 
         'continuous_controller_standby_status': str(snapshot_preflight.get('continuous_standby_status') or ('released' if final_answer_allowed else 'in_progress')),
         'user_status_update_is_not_stop_permission': True,
         'status_projection_is_not_stop_authority': True,
-        'authority_source': 'router_daemon_status_and_controller_action_ledger',
+        'authority_source': 'router_daemon_status_controller_action_ledger_and_wait_receipt_audit',
+        'wait_receipt_audit_classification': wait_receipt_audit.get('classification'),
+        'wait_receipt_audit_control_plane_stuck': bool(wait_receipt_audit.get('control_plane_stuck')),
     }
     if not final_answer_allowed:
         final_answer_preflight['blocked_reason'] = 'patrol_result_is_nonterminal'
-    return {'schema_version': CONTROLLER_PATROL_TIMER_SCHEMA, 'ok': True, 'command': 'controller-patrol-timer', 'seconds': float(seconds), 'patrol_result': patrol_result, 'foreground_required_mode': foreground_mode, 'controller_stop_allowed': controller_stop_allowed, 'final_answer_preflight': final_answer_preflight, 'anti_exit_reminder': anti_exit_reminder, 'break_glass_reminder': _controller_break_glass_reminder(), 'controller_instruction': controller_instruction, 'next_command': next_command if patrol_result == 'continue_patrol' else None, 'standby_status_after_rerun': 'continuous_controller_standby remains in_progress until the next command output' if patrol_result == 'continue_patrol' else None, 'completion_allowed_only_when': 'terminal_return_and_controller_stop_allowed_true', 'command_start_is_completion': False, 'command_restart_is_completion': False, 'monitor_source': 'existing_router_daemon_monitor', 'normal_progress_source': 'router_daemon_status_and_controller_action_ledger', 'display_projection_is_stop_authority': False, 'standby_snapshot': snapshot}
+    return {'schema_version': CONTROLLER_PATROL_TIMER_SCHEMA, 'ok': True, 'command': 'controller-patrol-timer', 'seconds': float(seconds), 'patrol_result': patrol_result, 'foreground_required_mode': foreground_mode, 'controller_stop_allowed': controller_stop_allowed, 'final_answer_preflight': final_answer_preflight, 'anti_exit_reminder': anti_exit_reminder, 'break_glass_reminder': _controller_break_glass_reminder(), 'controller_instruction': controller_instruction, 'next_command': next_command if patrol_result == 'continue_patrol' else None, 'standby_status_after_rerun': 'continuous_controller_standby remains in_progress until the next command output' if patrol_result == 'continue_patrol' else None, 'completion_allowed_only_when': 'terminal_return_and_controller_stop_allowed_true', 'command_start_is_completion': False, 'command_restart_is_completion': False, 'monitor_source': 'existing_router_daemon_monitor_and_wait_receipt_audit', 'normal_progress_source': 'router_daemon_status_controller_action_ledger_and_wait_receipt_audit', 'display_projection_is_stop_authority': False, 'wait_receipt_audit': wait_receipt_audit, 'user_visible_message_required': patrol_result in {'terminal_return', 'control_plane_stuck'}, 'quiet_patrol_user_visible_message_required': False if patrol_result == 'continue_patrol' else None, 'user_reporting_policy': {'silent_by_default_for': ['continue_patrol', 'no_new_controller_work', 'routine_housekeeping'], 'report_when': ['terminal_return', 'user_required', 'blocker_or_recovery', 'control_plane_stuck_from_wait_receipt_audit', 'required_display_text', 'explicit_user_status_request']}, 'standby_snapshot': snapshot}
 
 __all__ = (
     '_continuous_standby_watch_label',

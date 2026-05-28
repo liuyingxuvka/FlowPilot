@@ -25,6 +25,7 @@ HAZARD_EXPECTED_FAILURES = {
     "worker_to_worker_aside": "worker process aside became Worker-to-Worker communication",
     "missing_aside_blocks_flow": "missing optional process aside blocked formal flow",
     "controller_reports_formal_content_from_aside": "Controller used process aside as formal content",
+    "routine_aside_relayed_to_user": "routine process aside was automatically relayed to the user",
 }
 
 
@@ -42,7 +43,9 @@ def _state_id(state: model.State) -> str:
         f"{state.router_event_derived_from_aside}|"
         f"controller={state.controller_reads_aside},"
         f"{state.controller_uses_aside_for_operational_status},"
-        f"{state.controller_uses_aside_for_formal_content}|"
+        f"{state.controller_uses_aside_for_formal_content},"
+        f"user_msg={state.user_visible_message_emitted_from_aside},"
+        f"formal_visible={state.formal_state_independently_user_visible}|"
         f"worker={state.worker_aside_controller_only},"
         f"{state.worker_aside_visible_to_sibling_worker}|"
         f"missing_blocks={state.missing_aside_blocks_flow}"

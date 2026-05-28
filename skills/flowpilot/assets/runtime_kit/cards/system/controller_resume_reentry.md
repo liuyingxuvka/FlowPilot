@@ -116,13 +116,22 @@ the daemon is live, treat
 `continuous_controller_standby` as the active foreground duty, not a completed
 or finishable checklist item: sync the visible Codex plan from the Controller
 action ledger and receipts, keep that item `in_progress`, check for missed rows
-and receipts, and run the patrol timer command
-`python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`
+and receipts, check Controller-visible formal return metadata, and run the patrol timer command
+`python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`
 as long as FlowPilot is still running. Wait for that command's output. If it
 returns `continue_patrol`, immediately run the same command again and wait for
 the next output. Starting or restarting the command is not completion. If
 Router exposes new Controller work while standby is active, update or reread
 the action ledger and return to top-to-bottom row processing.
+"Nothing changed" patrol outputs, receipts, ledger cleanup, relay bookkeeping,
+and process-only asides are internal by default; do not turn them into
+user-visible messages unless the user asks for status or a real user-facing
+state change occurs.
+"Done" comments, chat notes, and `controller_aside` fields are not wait
+completion proof. If the patrol output's `wait_receipt_audit` says formal
+return metadata exists but Router has not released the wait or exposed a next
+Controller step, report the control-plane stuck status instead of continuing to
+wait silently.
 "Nothing for Controller this second", one monitor poll, a live target role, or
 `timeout_still_waiting` is not a stop condition. A Controller receipt proves
 Controller's local relay/display/wait action only; Router still owns the

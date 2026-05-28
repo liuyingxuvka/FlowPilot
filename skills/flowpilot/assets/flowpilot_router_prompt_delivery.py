@@ -101,9 +101,12 @@ def controller_break_glass_reminder() -> dict[str, Any]:
     }
 
 
-def controller_table_prompt() -> dict[str, Any]:
+def controller_table_prompt(runtime_kit_root: Path | None = None) -> dict[str, Any]:
     patrol_command = _controller_patrol_timer_command()
     break_glass = controller_break_glass_reminder()
+    prompt_runtime_kit_root = runtime_kit_root
+    if prompt_runtime_kit_root is not None and not (prompt_runtime_kit_root / "prompts" / "manifest.json").exists():
+        prompt_runtime_kit_root = None
     return {
         "language": "en",
         "prompt_kind": "controller_action_ledger_table_prompt",
@@ -113,6 +116,7 @@ def controller_table_prompt() -> dict[str, Any]:
                 "break_glass_text": break_glass["text"],
                 "patrol_command": patrol_command,
             },
+            prompt_runtime_kit_root,
         ),
         "applies_to": ["runtime/controller_action_ledger.json"],
         "break_glass_reminder": break_glass,

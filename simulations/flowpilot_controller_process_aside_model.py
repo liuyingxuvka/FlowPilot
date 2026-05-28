@@ -21,6 +21,7 @@ VALID_SCENARIOS = (
     "aside_with_valid_formal_output",
     "aside_omitted_formal_output_ok",
     "controller_uses_aside_for_operational_status",
+    "routine_aside_kept_controller_only",
 )
 
 NEGATIVE_SCENARIOS = (
@@ -31,6 +32,7 @@ NEGATIVE_SCENARIOS = (
     "worker_to_worker_aside",
     "missing_aside_blocks_flow",
     "controller_reports_formal_content_from_aside",
+    "routine_aside_relayed_to_user",
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -69,6 +71,8 @@ class State:
     controller_reads_aside: bool = False
     controller_uses_aside_for_operational_status: bool = False
     controller_uses_aside_for_formal_content: bool = False
+    user_visible_message_emitted_from_aside: bool = False
+    formal_state_independently_user_visible: bool = False
     worker_aside_controller_only: bool = True
     worker_aside_visible_to_sibling_worker: bool = False
     missing_aside_blocks_flow: bool = False
@@ -126,6 +130,19 @@ def scenario_state(scenario: str) -> State:
             router_preserved_aside=True,
             controller_reads_aside=True,
             controller_uses_aside_for_operational_status=True,
+        )
+    if scenario == "routine_aside_kept_controller_only":
+        return _accepted(
+            scenario,
+            aside_present=True,
+            aside_labeled_process_only=True,
+            aside_marked_not_formal_evidence=True,
+            aside_marked_no_progress_authority=True,
+            router_preserved_aside=True,
+            controller_reads_aside=True,
+            controller_uses_aside_for_operational_status=True,
+            user_visible_message_emitted_from_aside=False,
+            formal_state_independently_user_visible=False,
         )
     if scenario == "aside_satisfies_formal_wait":
         return _rejected(
@@ -192,6 +209,19 @@ def scenario_state(scenario: str) -> State:
             controller_reads_aside=True,
             controller_uses_aside_for_formal_content=True,
         )
+    if scenario == "routine_aside_relayed_to_user":
+        return _rejected(
+            scenario,
+            aside_present=True,
+            aside_labeled_process_only=True,
+            aside_marked_not_formal_evidence=True,
+            aside_marked_no_progress_authority=True,
+            router_preserved_aside=True,
+            controller_reads_aside=True,
+            controller_uses_aside_for_operational_status=True,
+            user_visible_message_emitted_from_aside=True,
+            formal_state_independently_user_visible=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -255,6 +285,12 @@ def process_aside_failures(state: State) -> list[str]:
         failures.append("Router derived a formal event from process aside text")
     if state.status == "accepted" and state.controller_uses_aside_for_formal_content:
         failures.append("Controller used process aside as formal content")
+    if (
+        state.status == "accepted"
+        and state.user_visible_message_emitted_from_aside
+        and not state.formal_state_independently_user_visible
+    ):
+        failures.append("routine process aside was automatically relayed to the user")
     if state.status == "accepted" and state.worker_aside_visible_to_sibling_worker:
         failures.append("worker process aside became Worker-to-Worker communication")
     if state.status == "accepted" and state.missing_aside_blocks_flow:
@@ -302,6 +338,10 @@ INVARIANTS = (
     _invariant(
         "controller_process_aside_has_no_formal_authority",
         "Process asides must not satisfy waits, replace bodies, create events, or become evidence.",
+    ),
+    _invariant(
+        "routine_process_asides_are_not_user_messages",
+        "Routine process asides must stay Controller-only unless formal state separately justifies a user-visible message.",
     ),
 )
 

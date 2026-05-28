@@ -66,6 +66,11 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
         self.assertEqual(action["next_step_contract"]["recipient_role"], "human_like_reviewer")
         self.assertFalse(action["next_step_contract"]["sealed_body_reads_allowed"])
         self.assertTrue(action["controller_user_reporting_policy"]["plain_language_required"])
+        self.assertTrue(action["controller_user_reporting_policy"]["speak_only_when_user_value"])
+        self.assertIn(
+            "quiet_patrol_continue",
+            action["controller_user_reporting_policy"]["silent_by_default_for"],
+        )
         self.assertEqual(
             action_factory_dispatch._dispatch_gate_output_events_for_card_id("reviewer.startup_fact_check"),
             ["reviewer_reports_startup_facts"],

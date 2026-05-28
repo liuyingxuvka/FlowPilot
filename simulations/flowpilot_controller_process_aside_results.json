@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-05-21T07:24:35.717335+00:00",
+  "checked_at": "2026-05-28T16:00:22.025801+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=1 initial_states=1 traces=10",
+    "summary": "sequences=1 initial_states=1 traces=12",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -31,6 +31,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": true,
           "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": true,
           "missing_aside_blocks_flow": false,
@@ -39,6 +40,7 @@
           "router_semantically_inspected_aside": false,
           "scenario": "aside_becomes_evidence",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -63,6 +65,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": false,
           "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": false,
           "missing_aside_blocks_flow": false,
@@ -71,6 +74,7 @@
           "router_semantically_inspected_aside": true,
           "scenario": "aside_drives_router_event",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -94,6 +98,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": false,
           "formal_output_validated": true,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": false,
           "missing_aside_blocks_flow": false,
@@ -102,6 +107,7 @@
           "router_semantically_inspected_aside": false,
           "scenario": "aside_replaces_formal_body",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -123,6 +129,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": false,
           "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": true,
           "formal_wait_satisfied_by_formal_output": false,
           "missing_aside_blocks_flow": false,
@@ -131,6 +138,7 @@
           "router_semantically_inspected_aside": false,
           "scenario": "aside_satisfies_formal_wait",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -153,6 +161,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": true,
           "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": true,
           "missing_aside_blocks_flow": false,
@@ -161,6 +170,7 @@
           "router_semantically_inspected_aside": false,
           "scenario": "controller_reports_formal_content_from_aside",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -182,6 +192,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": true,
           "formal_output_validated": true,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": false,
           "missing_aside_blocks_flow": true,
@@ -190,6 +201,38 @@
           "router_semantically_inspected_aside": false,
           "scenario": "missing_aside_blocks_flow",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
+          "worker_aside_controller_only": true,
+          "worker_aside_visible_to_sibling_worker": false
+        }
+      },
+      "routine_aside_relayed_to_user": {
+        "detected": true,
+        "expected_failure": "routine process aside was automatically relayed to the user",
+        "failures": [
+          "accepted a known-bad process-aside scenario",
+          "routine process aside was automatically relayed to the user"
+        ],
+        "state": {
+          "aside_labeled_process_only": true,
+          "aside_marked_no_progress_authority": true,
+          "aside_marked_not_formal_evidence": true,
+          "aside_present": true,
+          "controller_reads_aside": true,
+          "controller_uses_aside_for_formal_content": false,
+          "controller_uses_aside_for_operational_status": true,
+          "formal_output_present": false,
+          "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
+          "formal_wait_satisfied_by_aside": false,
+          "formal_wait_satisfied_by_formal_output": false,
+          "missing_aside_blocks_flow": false,
+          "router_event_derived_from_aside": false,
+          "router_preserved_aside": true,
+          "router_semantically_inspected_aside": false,
+          "scenario": "routine_aside_relayed_to_user",
+          "status": "accepted",
+          "user_visible_message_emitted_from_aside": true,
           "worker_aside_controller_only": true,
           "worker_aside_visible_to_sibling_worker": false
         }
@@ -213,6 +256,7 @@
           "controller_uses_aside_for_operational_status": false,
           "formal_output_present": false,
           "formal_output_validated": false,
+          "formal_state_independently_user_visible": false,
           "formal_wait_satisfied_by_aside": false,
           "formal_wait_satisfied_by_formal_output": false,
           "missing_aside_blocks_flow": false,
@@ -221,6 +265,7 @@
           "router_semantically_inspected_aside": false,
           "scenario": "worker_to_worker_aside",
           "status": "accepted",
+          "user_visible_message_emitted_from_aside": false,
           "worker_aside_controller_only": false,
           "worker_aside_visible_to_sibling_worker": true
         }
@@ -240,9 +285,10 @@
     "accepted_scenarios": [
       "aside_omitted_formal_output_ok",
       "aside_with_valid_formal_output",
-      "controller_uses_aside_for_operational_status"
+      "controller_uses_aside_for_operational_status",
+      "routine_aside_kept_controller_only"
     ],
-    "edge_count": 10,
+    "edge_count": 12,
     "invariant_failure_count": 0,
     "invariant_failures": [],
     "missing_labels": [],
@@ -254,8 +300,9 @@
       "aside_satisfies_formal_wait",
       "controller_reports_formal_content_from_aside",
       "missing_aside_blocks_flow",
+      "routine_aside_relayed_to_user",
       "worker_to_worker_aside"
     ],
-    "state_count": 11
+    "state_count": 13
   }
 }

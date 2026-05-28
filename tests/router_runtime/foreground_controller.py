@@ -897,8 +897,13 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("no_new_controller_action_yet", standby_task["do_not_mark_complete_on"])
         self.assertEqual(
             standby_task["required_command"],
-            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10",
+            "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60",
         )
+        self.assertEqual(standby_task["patrol_timer_seconds"], 60.0)
+        quiet_policy = standby_task["quiet_user_reporting_policy"]
+        self.assertFalse(quiet_policy["continue_patrol_user_visible_message_required"])
+        self.assertIn("quiet_patrol_continue", quiet_policy["silent_by_default_for"])
+        self.assertIn("explicit_user_status_request", quiet_policy["report_when"])
         self.assertIn("continue_patrol", standby_task["do_not_mark_complete_on"])
         self.assertIn("wait for the next output", standby_task["loop_rule"])
         self.assertEqual(standby_task["completion_allowed_only_when"], "terminal_return_and_controller_stop_allowed_true")
@@ -938,6 +943,10 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             result["next_command"],
             "python skills\\flowpilot\\assets\\flowpilot_router.py --root . --json controller-patrol-timer --seconds 0",
         )
+        self.assertFalse(result["user_visible_message_required"])
+        self.assertFalse(result["quiet_patrol_user_visible_message_required"])
+        self.assertIn("continue_patrol", result["user_reporting_policy"]["silent_by_default_for"])
+        self.assertIn("explicit_user_status_request", result["user_reporting_policy"]["report_when"])
         self.assertEqual(
             result["standby_status_after_rerun"],
             "continuous_controller_standby remains in_progress until the next command output",
@@ -1201,6 +1210,9 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         policy = action["controller_user_reporting_policy"]
         self.assertEqual(policy["schema_version"], router.CONTROLLER_USER_REPORTING_POLICY_SCHEMA)
         self.assertTrue(policy["plain_language_required"])
+        self.assertTrue(policy["speak_only_when_user_value"])
+        self.assertIn("quiet_patrol_continue", policy["silent_by_default_for"])
+        self.assertIn("explicit_user_status_request", policy["report_when"])
         self.assertIn("plain language", policy["reminder"])
         self.assertEqual(action["next_step_contract"]["controller_user_reporting_policy"], policy)
         self.assertEqual(action["native_plan_projection"]["items"][0]["id"], "await_pm_route")

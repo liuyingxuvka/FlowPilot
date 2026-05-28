@@ -56,6 +56,9 @@ class State:
     existing_monitor_read: bool = False
     separate_monitor_used: bool = False
     patrol_command_named_in_prompt: bool = False
+    patrol_interval_seconds: int = 60
+    router_daemon_tick_seconds: int = 1
+    heartbeat_check_seconds: int = 30
     patrol_command_started: bool = False
     patrol_timer_elapsed: bool = False
     patrol_result: str = "none"  # none | continue_patrol | new_controller_work | terminal_return
@@ -70,6 +73,8 @@ class State:
     foreground_closed: bool = False
     controller_stop_allowed: bool = False
     user_status_update_allowed: bool = False
+    user_visible_message_emitted: bool = False
+    meaningful_user_visible_change: bool = False
     controller_patrol_required: bool = False
     current_status_summary_display_only: bool = True
     stale_next_step_projection: bool = False
@@ -315,6 +320,24 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("continue_patrol did not instruct Controller to wait for the next output")
         if state.continuous_standby_status != "in_progress":
             failures.append("continue_patrol did not keep continuous standby in progress")
+        if state.user_visible_message_emitted:
+            failures.append("quiet continue_patrol emitted a user-visible message")
+
+    if state.patrol_interval_seconds != 60:
+        failures.append("quiet standby patrol default was not sixty seconds")
+
+    if state.router_daemon_tick_seconds != 1:
+        failures.append("patrol cadence changed the Router daemon tick")
+
+    if state.heartbeat_check_seconds != 30:
+        failures.append("patrol cadence changed daemon heartbeat check window")
+
+    if state.user_visible_message_emitted and not (
+        state.meaningful_user_visible_change
+        or (state.patrol_result == "terminal_return" and state.controller_stop_allowed)
+        or state.user_status_update_allowed
+    ):
+        failures.append("Controller emitted user-visible message for internal-only patrol work")
 
     if state.next_command_rerun_started and not state.waiting_for_next_output:
         failures.append("Controller reran patrol command without waiting for next output")
@@ -386,6 +409,11 @@ INVARIANTS = (
     _invariant("continue_patrol_instructs_rerun", "continue_patrol did not instruct Controller to rerun the patrol command"),
     _invariant("continue_patrol_instructs_wait_next_output", "continue_patrol did not instruct Controller to wait for the next output"),
     _invariant("continue_patrol_keeps_standby_in_progress", "continue_patrol did not keep continuous standby in progress"),
+    _invariant("quiet_continue_patrol_stays_silent", "quiet continue_patrol emitted a user-visible message"),
+    _invariant("quiet_patrol_default_sixty_seconds", "quiet standby patrol default was not sixty seconds"),
+    _invariant("patrol_does_not_change_daemon_tick", "patrol cadence changed the Router daemon tick"),
+    _invariant("patrol_does_not_change_heartbeat_window", "patrol cadence changed daemon heartbeat check window"),
+    _invariant("internal_patrol_work_stays_silent", "Controller emitted user-visible message for internal-only patrol work"),
     _invariant("rerun_waits_for_next_output", "Controller reran patrol command without waiting for next output"),
     _invariant("new_work_requires_ready_action", "patrol reported new Controller work when no action was ready"),
     _invariant("new_work_switches_foreground_mode", "new Controller work did not switch foreground mode to process_controller_action"),
@@ -452,6 +480,28 @@ def hazard_states() -> dict[str, State]:
             rerun_instruction=True,
             wait_next_output_instruction=True,
             continuous_standby_status="complete",
+        ),
+        "continue_patrol_user_chatter": replace(
+            base,
+            patrol_result="continue_patrol",
+            anti_exit_reminder=True,
+            next_command_named=True,
+            rerun_instruction=True,
+            wait_next_output_instruction=True,
+            user_visible_message_emitted=True,
+        ),
+        "quiet_patrol_still_ten_seconds": replace(base, patrol_interval_seconds=10),
+        "patrol_changes_daemon_tick": replace(base, router_daemon_tick_seconds=60),
+        "patrol_changes_heartbeat_window": replace(base, heartbeat_check_seconds=60),
+        "internal_patrol_work_user_message": replace(
+            base,
+            patrol_result="continue_patrol",
+            anti_exit_reminder=True,
+            next_command_named=True,
+            rerun_instruction=True,
+            wait_next_output_instruction=True,
+            user_visible_message_emitted=True,
+            meaningful_user_visible_change=False,
         ),
         "rerun_without_waiting": replace(
             base,

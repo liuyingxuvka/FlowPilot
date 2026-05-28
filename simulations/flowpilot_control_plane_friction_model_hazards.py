@@ -157,6 +157,10 @@ def _safe_base(**changes: object) -> State:
             controller_user_reporting_policy_present=True,
             router_action_user_reporting_reminder_present=True,
             controller_table_prompt_user_language_guidance_present=True,
+            controller_reporting_budget_present=True,
+            quiet_internal_progress_silent=True,
+            routine_process_aside_relayed_to_user=False,
+            user_report_limited_to_meaningful_change=True,
             user_report_plain_language=True,
             user_report_internal_metadata_exposed=False,
             router_action_user_reporting_reminder_displayed_to_user=False,
@@ -633,6 +637,18 @@ def hazard_states() -> dict[str, State]:
         ),
         "controller_table_prompt_user_language_guidance_missing": _safe_base(
             controller_table_prompt_user_language_guidance_present=False,
+        ),
+        "controller_reporting_budget_missing": _safe_base(
+            controller_reporting_budget_present=False,
+        ),
+        "quiet_internal_progress_user_chatter": _safe_base(
+            quiet_internal_progress_silent=False,
+        ),
+        "routine_aside_relayed_to_user": _safe_base(
+            routine_process_aside_relayed_to_user=True,
+        ),
+        "user_report_not_limited_to_meaningful_change": _safe_base(
+            user_report_limited_to_meaningful_change=False,
         ),
         "controller_user_report_internal_metadata_exposed": _safe_base(
             user_report_internal_metadata_exposed=True,

@@ -1090,6 +1090,15 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["required_render_target"], "user_dialog")
         self.assertEqual(action["requires_payload"], "display_confirmation")
         self.assertTrue(action["controller_user_reporting_policy"]["plain_language_required"])
+        self.assertTrue(action["controller_user_reporting_policy"]["speak_only_when_user_value"])
+        self.assertIn(
+            "routine_process_asides",
+            action["controller_user_reporting_policy"]["silent_by_default_for"],
+        )
+        self.assertIn(
+            "explicit_user_status_request",
+            action["controller_user_reporting_policy"]["report_when"],
+        )
         self.assertEqual(
             action["next_step_contract"]["controller_user_reporting_policy"],
             action["controller_user_reporting_policy"],

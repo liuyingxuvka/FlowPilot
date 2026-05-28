@@ -32,12 +32,14 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
             "controller.action_ledger_table",
             {
                 "break_glass_text": "Break glass only for router control-plane faults.",
-                "patrol_command": "python skills/flowpilot/assets/flowpilot_router.py --root . --json controller-patrol-timer --seconds 10",
+                "patrol_command": "python skills/flowpilot/assets/flowpilot_router.py --root . --json controller-patrol-timer --seconds 60",
             },
         )
 
         self.assertIn("You are Controller only", text)
         self.assertIn("continuous_controller_standby", text)
+        self.assertIn("user-visible message is needed", text)
+        self.assertIn("Quiet patrol", text)
         self.assertIn("Break glass only", text)
         self.assertNotIn("${", text)
 

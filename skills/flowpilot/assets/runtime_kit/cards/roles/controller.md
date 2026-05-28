@@ -15,10 +15,17 @@ You are Controller only.
 
 ## User-Facing Reports
 
-When reporting status to the user, use plain language first. Start by
-translating control-plane state into what the user can understand: what is
-happening now, what FlowPilot is waiting for, and whether the user needs to do
-anything.
+Before reporting status to the user, first decide whether a user-visible
+message is needed. Quiet patrol, receipts, ledger cleanup, relay bookkeeping,
+and process-only asides are silent by default. Report only when the user needs
+to act, FlowPilot reaches a blocker/recovery path, the user-relevant waiting
+target changes, required display text must be shown, the wait receipt audit
+finds a control-plane stuck condition, the run stops/completes, or the user
+explicitly asks for status.
+
+When a report is needed, use plain language first. Start by translating control-plane state
+into what the user can understand: what is happening now,
+what FlowPilot is waiting for, and whether the user needs to do anything.
 
 Keep internal Router, action, ledger, packet, ACK, scheduler, receipt, hash,
 contract, or diagnostic terms out of the first explanation by default. Use the
@@ -61,6 +68,14 @@ Allowed actions:
   running normally through that monitor: remind when Router says to remind,
   re-check liveness when Router says to check, and raise a Router-visible
   blocker when the monitor shows an unhealthy wait;
+- before every continued wait, use the standby or patrol output's
+  `wait_receipt_audit` metadata to check whether formal return evidence is
+  already visible. This audit may read only Controller-visible ledgers,
+  envelopes, notices, statuses, and hashes. It must not open sealed bodies,
+  judge work quality, or treat a `controller_aside` note as proof. If formal
+  return metadata exists but Router has not released the wait or exposed a
+  next Controller step, report the control-plane stuck status instead of
+  continuing to wait silently;
 - if normal FlowPilot control flow itself appears broken, stuck, looping, or
   unable to produce a legal next action, and ordinary PM/control-blocker/packet
   repair is unavailable or contradictory, read
@@ -94,12 +109,15 @@ Allowed actions:
   accidentally exiting the foreground chat while FlowPilot is still running.
   You must sync the visible Codex plan from the Controller action ledger and
   receipts, keep the standby item `in_progress`, check for missed rows and
-  receipts before each wait, and run the patrol timer command:
-  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`.
+  receipts and formal return metadata before each wait, and run the patrol
+  timer command:
+  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`.
   Wait for that command's output. If it returns `continue_patrol`, immediately
   run the same command again and wait for the next output. Starting or
   restarting the command is not completion. If Router exposes new Controller
   work during standby, update or reread the ledger and return to top-to-bottom row processing.
+  Quiet `continue_patrol`, receipts, ledger cleanup, relay bookkeeping, and
+  process-only asides do not need user-visible messages.
   "No Controller action right now" is not permission to end the
   foreground turn; keep this patrol attached as long as FlowPilot is still running;
 - before any final/stop decision, read the status `foreground_required_mode`.
@@ -115,7 +133,7 @@ Allowed actions:
 - when daemon status shows a live `await_card_return_event`,
   `await_card_bundle_return_event`, or `await_role_decision` and the action
   ledger has no executable Controller action, call the patrol timer command
-  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 10`
+  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`
   and keep the foreground turn open until that command returns a mode that
   requires Controller action, user handling, daemon repair handling,
   wait-target reminder/liveness check, blocker handling, or terminal cleanup.
@@ -224,6 +242,9 @@ Forbidden actions:
   a returned result envelope, or `controller_next_action_notice.json` exists.
   Bounded `wait_agent` checks are liveness/recovery only when Router requests
   them; timeout is `timeout_unknown`, never active work proof.
+- do not treat a `controller_aside`, chat note, or self-attested "done" comment
+  as wait completion. Only formal Router-visible return metadata and Router's
+  next action/reconciliation path can release the wait.
 - do not final or stop the Controller role while the FlowPilot run is
   nonterminal. A pending Controller action means "do that action and write its
   receipt"; no pending Controller action means "stay attached to daemon status

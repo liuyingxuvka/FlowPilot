@@ -271,6 +271,10 @@ class State:
     controller_user_reporting_policy_present: bool = False
     router_action_user_reporting_reminder_present: bool = False
     controller_table_prompt_user_language_guidance_present: bool = False
+    controller_reporting_budget_present: bool = False
+    quiet_internal_progress_silent: bool = True
+    routine_process_aside_relayed_to_user: bool = False
+    user_report_limited_to_meaningful_change: bool = True
     user_report_plain_language: bool = True
     user_report_internal_metadata_exposed: bool = False
     router_action_user_reporting_reminder_displayed_to_user: bool = False

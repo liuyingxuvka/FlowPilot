@@ -800,6 +800,14 @@ def controller_user_reporting_policy_is_plain(state: State, trace) -> InvariantR
         return InvariantResult.fail("Router action lacked Controller plain-language user reporting reminder")
     if state.status != "new" and not state.controller_table_prompt_user_language_guidance_present:
         return InvariantResult.fail("Controller table prompt lacked plain-language user reporting guidance")
+    if state.status != "new" and not state.controller_reporting_budget_present:
+        return InvariantResult.fail("Controller user reporting policy lacked speak/silence budget")
+    if not state.quiet_internal_progress_silent:
+        return InvariantResult.fail("Controller quiet internal progress was user-visible chatter")
+    if state.routine_process_aside_relayed_to_user:
+        return InvariantResult.fail("Controller routine process aside was relayed to user")
+    if not state.user_report_limited_to_meaningful_change:
+        return InvariantResult.fail("Controller user report was not limited to meaningful user-facing changes")
     if state.controller_user_reporting_policy_present and not state.user_report_plain_language:
         return InvariantResult.fail("Controller user reporting policy did not require plain language")
     if state.user_report_internal_metadata_exposed:
