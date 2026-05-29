@@ -1,8 +1,4 @@
-"""Compatibility facade for route-artifact helpers.
-
-Implementation lives in focused child modules. Public private-helper exports and
-router binding behavior remain stable for legacy imports.
-"""
+"""Facade for route-artifact helpers."""
 
 from __future__ import annotations
 
@@ -44,7 +40,6 @@ OWNER_MODULE = "flowpilot_router_route_artifacts"
 __all__ = (
     '_write_product_function_architecture',
     '_write_role_gate_report',
-    '_write_compatibility_alias_artifact',
     '_write_product_behavior_model_report',
     '_write_pm_model_decision',
     '_write_pm_product_behavior_model_decision',
@@ -55,7 +50,6 @@ __all__ = (
     '_clear_active_gate_outcome_block_for_pass',
     '_write_route_process_pass_report',
     '_write_route_process_issue_report',
-    '_write_route_product_pass_report',
 )
 
 _LOCAL_NAMES = set(globals())

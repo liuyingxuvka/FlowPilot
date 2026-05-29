@@ -39,8 +39,7 @@ role setup.
 
 The same freshness rule applies to mid-run role recovery. If Controller reports
 a role liveness fault, require the router-written `role_recovery_report.json`
-or its compatibility `crew_rehydration_report.json` before allowing normal
-work to continue. The report must show current-run memory/context injection,
+before allowing normal work to continue. The report must show current-run memory/context injection,
 packet ownership reconciliation, and stale/superseded agent output quarantine
 for any restored, replaced, or recycled role.
 

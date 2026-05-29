@@ -1,6 +1,6 @@
 """startup intake materialization and deterministic seed helpers for ``flowpilot_router_startup_intake``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -101,11 +101,7 @@ def _deterministic_bootstrap_seed_evidence_path(router: ModuleType, run_root: Pa
 
 def _write_startup_answers_record(router: ModuleType, project_root: Path, run_root: Path, state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
-    interpretation = state.get('startup_answer_interpretation') if isinstance(state.get('startup_answer_interpretation'), dict) else None
-    interpretation_path = run_root / 'startup_answer_interpretation.json'
-    if interpretation:
-        write_json(interpretation_path, interpretation)
-    record = {'schema_version': 'flowpilot.startup_answers.v1', 'run_id': state['run_id'], 'answers': state.get('startup_answers') or {}, 'startup_answer_interpretation_path': project_relative(project_root, interpretation_path) if interpretation else None, 'recorded_at': utc_now()}
+    record = {'schema_version': 'flowpilot.startup_answers.v1', 'run_id': state['run_id'], 'answers': state.get('startup_answers') or {}, 'recorded_at': utc_now()}
     write_json(run_root / 'startup_answers.json', record)
     return record
 
@@ -136,10 +132,7 @@ def _record_startup_user_request_ref(router: ModuleType, project_root: Path, run
         state['startup_intake_record_path'] = intake_record['record_path']
         state['user_request_ref'] = user_request
     else:
-        user_request = state.get('user_request')
-        if not isinstance(user_request, dict):
-            raise RouterError('deterministic startup seed requires confirmed startup intake or user_request')
-        user_request_record = {'schema_version': 'flowpilot.user_request.v1', 'run_id': state['run_id'], 'user_request': user_request, 'recorded_at': utc_now()}
+        raise RouterError('deterministic startup seed requires confirmed native startup intake')
     user_request_path = run_root / 'user_request.json'
     write_json(user_request_path, user_request_record)
     state['user_request'] = user_request
@@ -155,7 +148,7 @@ def _write_startup_user_intake_scaffold(router: ModuleType, project_root: Path, 
         body_text = router._build_user_intake_body_from_ref(project_root, user_request, state.get('startup_answers') or {})
         user_intake = packet_runtime.create_user_intake_packet(project_root, run_id=str(state['run_id']), packet_id='user_intake', node_id='startup', body_text=body_text, startup_options=state.get('startup_answers') or {}, source='startup_intake_ui', body_visibility=packet_runtime.SEALED_BODY_VISIBILITY, startup_intake_ref=user_request, router_owned_startup_material=True)
     else:
-        user_intake = packet_runtime.create_user_intake_packet(project_root, run_id=str(state['run_id']), packet_id='user_intake', node_id='startup', body_text=json.dumps({'user_request': user_request, 'user_request_path': state.get('user_request_path'), 'startup_answers': state.get('startup_answers') or {}, 'startup_answers_path': project_relative(project_root, run_root / 'startup_answers.json'), 'startup_answer_interpretation_path': project_relative(project_root, run_root / 'startup_answer_interpretation.json') if isinstance(state.get('startup_answer_interpretation'), dict) else None}, indent=2, sort_keys=True), startup_options=state.get('startup_answers') or {}, body_visibility=packet_runtime.SEALED_BODY_VISIBILITY, router_owned_startup_material=True)
+        raise RouterError('user_intake scaffold requires native startup intake user_request_ref')
     user_intake_path = run_root / 'mailbox' / 'outbox' / 'user_intake.json'
     write_json(user_intake_path, user_intake)
     return {'path': project_relative(project_root, user_intake_path), 'body_visibility': user_intake.get('body_visibility'), 'startup_owner': 'router', 'release_condition': 'pm_system_card_bundle_ack_resolved', 'controller_may_read_body': False}

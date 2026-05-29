@@ -145,17 +145,17 @@ def _script_model_binding(stem: str) -> str | None:
 
 def _surface_kind_for_asset(stem: str, summary: dict[str, Any]) -> str:
     if stem in ASSET_FACADE_MODULES:
-        return "compatibility_facade"
+        return "public_facade"
     local_imports = summary.get("local_imports", [])
     if summary.get("all_exports_count", 0) >= 6 and len(local_imports) >= 2:
-        return "compatibility_facade"
+        return "public_facade"
     return "owner_module"
 
 
 def _surface_threshold(kind: str) -> int:
     if kind == "model_check_runner_helper":
         return SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD
-    if kind == "compatibility_facade":
+    if kind == "public_facade":
         return FACADE_STRUCTURE_SPLIT_LINE_THRESHOLD
     if kind == "script_entrypoint":
         return SCRIPT_STRUCTURE_SPLIT_LINE_THRESHOLD
@@ -183,8 +183,8 @@ def _default_structure_split_deferral(
             "safe_split_class": "validation_entrypoint",
             "recommended_next_action": "split_runner_after_claim_with_cli_parity_tests",
         }
-    if kind == "compatibility_facade":
-        safe_class = "compatibility_facade"
+    if kind == "public_facade":
+        safe_class = "public_facade"
     elif stem.startswith(("flowpilot_router_protocol_", "flowpilot_router_facade_export_")):
         safe_class = "declarative_protocol_table"
     else:
@@ -263,10 +263,6 @@ def _diagnostic_release_relevance(surface: dict[str, Any]) -> str:
     kind = str(surface.get("kind", "unknown"))
     path = str(surface.get("path", ""))
     stem = Path(path).stem if path else str(surface.get("name", ""))
-    if surface.get("tier") == "legacy-full" or str(surface.get("name", "")).startswith(
-        ("meta_legacy", "capability_legacy")
-    ):
-        return "legacy_validation"
     release_scripts = {
         "audit_local_install_sync",
         "check_install",
@@ -278,7 +274,7 @@ def _diagnostic_release_relevance(surface: dict[str, Any]) -> str:
         return "release_gate"
     if kind in {"test_tier", "test_tier_command", "model_check_runner", "model_check_runner_helper"}:
         return "validation_gate"
-    if kind in {"compatibility_facade", "owner_module"}:
+    if kind in {"public_facade", "owner_module"}:
         return "runtime_contract"
     if kind == "script_entrypoint":
         return "public_cli"
@@ -349,7 +345,7 @@ def _diagnostic_severity(code: str, surface: dict[str, Any]) -> str:
     if code == "missing_test" and relevance in {"release_gate", "validation_gate"}:
         return "high"
     if code in {"missing_model", "internal_only_test"} and kind in {
-        "compatibility_facade",
+        "public_facade",
         "owner_module",
         "script_entrypoint",
     }:
@@ -379,7 +375,6 @@ def _diagnostic_priority_score(code: str, surface: dict[str, Any]) -> int:
         "runtime_contract": 4,
         "public_cli": 6,
         "maintenance": 8,
-        "legacy_validation": 12,
     }.get(relevance, 8)
     return (
         DIAGNOSTIC_SEVERITY_SCORE.get(severity, 99)
@@ -605,42 +600,6 @@ def _background_evidence_for_command(
     }
 
 
-def _legacy_full_reclassification(command_name: str) -> dict[str, Any] | None:
-    parent = LEGACY_FULL_LAYERED_PARENT.get(command_name)
-    if parent is None:
-        return None
-    try:
-        thin_parent_checks = _load_module_from_path(
-            "flowpilot_alignment_thin_parent_checks",
-            ROOT / "simulations" / "flowpilot_thin_parent_checks.py",
-        )
-    except Exception as exc:  # pragma: no cover - defensive import fallback
-        return {
-            "ok": False,
-            "reason": "layered_full_status_unavailable",
-            "error": str(exc),
-            "legacy_monolith_required_for_release": True,
-        }
-    layered = thin_parent_checks.layered_full_status(parent)
-    if not layered.get("valid"):
-        return {
-            "ok": False,
-            "reason": str(layered.get("reason") or "layered_full_not_current"),
-            "layered_full_status": layered,
-            "legacy_monolith_required_for_release": True,
-        }
-    return {
-        "ok": True,
-        "reason": (
-            "legacy monolithic full graph is retained as a historical "
-            "compatibility oracle; current release confidence comes from the "
-            "layered full parent proof"
-        ),
-        "layered_full_status": layered,
-        "legacy_monolith_required_for_release": False,
-    }
-
-
 def _test_tier_command_surfaces(
     *,
     model_text: str,
@@ -687,9 +646,6 @@ def _test_tier_command_surfaces(
                     tier=tier,
                 )
                 evidence_status = str(background_evidence["selected"]["status"])
-                legacy_reclassification = _legacy_full_reclassification(command.name)
-                if legacy_reclassification and legacy_reclassification["ok"]:
-                    evidence_status = "legacy_full_reclassified"
             has_validation_target = _command_contains_test_target(command.command) or _command_contains_model_runner(command.command)
             surface = {
                 "surface_id": f"tier-command:{tier}:{command.name}",
@@ -714,9 +670,6 @@ def _test_tier_command_surfaces(
             if background_evidence is not None:
                 surface["background_evidence"] = background_evidence
                 surface["proof_scope"] = background_evidence["selected"].get("proof_scope", "unknown")
-                legacy_reclassification = _legacy_full_reclassification(command.name)
-                if legacy_reclassification is not None:
-                    surface["legacy_full_reclassification"] = legacy_reclassification
             surfaces.append(_finalize_surface(surface))
     return surfaces
 
@@ -751,7 +704,7 @@ def _asset_surfaces(
             split_repair.setdefault("recent_owner_context", list(RECENT_OWNER_MODULE_POLISH_COMMITS))
             split_repair.setdefault("structure_split_status", "deferred")
         model_binding = _asset_model_binding(stem)
-        aggregate_facade_contract = aggregate_asset_contract_test_exists and kind == "compatibility_facade"
+        aggregate_facade_contract = aggregate_asset_contract_test_exists and kind == "public_facade"
         has_external_contract = (
             rel_path in source_contract_paths
             or surface_id in FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS
@@ -935,7 +888,7 @@ def _full_diagnostic_known_bad_cases() -> list[dict[str, Any]]:
             "expected_codes": ["internal_only_test"],
             "surface": {
                 "surface_id": "synthetic:wrapper_only",
-                "kind": "compatibility_facade",
+                "kind": "public_facade",
                 "name": "wrapper_only",
                 "path": "skills/flowpilot/assets/wrapper_only.py",
                 "has_model": True,

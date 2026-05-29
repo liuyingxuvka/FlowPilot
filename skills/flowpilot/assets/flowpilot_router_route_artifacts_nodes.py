@@ -1,7 +1,7 @@
-"""Compatibility facade for route-artifact helpers.
+"""Public facade for route-artifact helpers.
 
 Implementation lives in focused child modules. Public private-helper exports and
-router binding behavior remain stable for legacy imports.
+router binding behavior remain stable for current imports.
 """
 
 from __future__ import annotations

@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-28T21:09:13.962369+00:00",
+  "created_at": "2026-05-29T01:28:16.116736+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -7,14 +7,13 @@
     "ok": true,
     "state_count": 8
   },
-  "legacy_full_regression": {
+  "layered_full_regression": {
     "current": true,
-    "required_for_release": false,
+    "required_for_release": true,
     "status": {
-      "created_at": "2026-05-28T21:09:12.033940+00:00",
+      "created_at": "2026-05-29T01:28:13.713630+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
-      "legacy_monolith_required": false,
       "proof_file": "simulations/capability_layered_full_results.proof.json",
       "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
@@ -309,17 +308,17 @@
       {
         "evidence": [
           {
-            "edge_count": 81,
+            "edge_count": 74,
             "failures": [],
             "missing": false,
             "model_id": "user_flow_diagram",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/user_flow_diagram_results.json",
-            "result_fingerprint": "c15692bdd49f49923fb60ef1774a5df264779087ba88c9094b4d99b5481bc3b5",
+            "result_fingerprint": "cd50e068feb1aa364fbbf403f9c632b6333db7f396986159d83f57ee71c1325a",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 82
+            "state_count": 75
           },
           {
             "edge_count": 39,
@@ -465,17 +464,17 @@
             "state_count": 53
           },
           {
-            "edge_count": 52,
+            "edge_count": 50,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_control_transaction_registry",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
-            "result_fingerprint": "efb5d358250bb10d45fdf3582fa6b4ffd6256d2fcaab84acf02538f51bdfd025",
+            "result_fingerprint": "2ab78feeec159e96e7b88748e218fb84d0ddb311923b6cbebb0db9d922282554",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 53
+            "state_count": 51
           },
           {
             "edge_count": 38,

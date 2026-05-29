@@ -1,4 +1,4 @@
-"""Compatibility reset flag exports derived from the gate registry."""
+"""Reset flag exports derived from the gate registry."""
 
 from __future__ import annotations
 

@@ -2,19 +2,16 @@
 
 ## Scope
 
-This change replaces the current chat-based three-question FlowPilot startup
-boundary with the native startup intake UI. The UI is a bootloader surface, not
-a Controller surface.
+This change uses the native startup intake UI as the only formal FlowPilot
+startup boundary. The UI is a bootloader surface, not a Controller surface.
 
 The current bootloader sequence starts with:
 
-| Current order | Existing action | Replacement intent |
+| Current order | Current action | Intent |
 | --- | --- | --- |
-| 1 | `ask_startup_questions` | Replace with `open_startup_intake_ui` |
-| 2 | `write_startup_awaiting_answers_state` | Coalesced by UI confirm/cancel result |
-| 3 | `stop_for_startup_answers` | Coalesced by modal UI wait boundary |
-| 4 | `record_startup_answers` | Coalesced by UI result validation |
-| 5+ | `emit_startup_banner` and later boot actions | Reused after UI confirm |
+| 1 | `open_startup_intake_ui` | Launch native startup intake and wait for result |
+| 2 | UI result validation | Confirm/cancel, receipt, envelope, hash, and body-boundary validation |
+| 3+ | `emit_startup_banner` and later boot actions | Continue after confirmed UI result |
 
 The post-answer startup sequence should continue to reuse the existing
 bootloader flow: startup banner, run shell, current pointer, index, runtime kit,
@@ -26,9 +23,9 @@ mailbox, user intake packet, role slots, and Controller core.
 | --- | --- | --- | --- |
 | 1 | Add a focused FlowGuard model for UI startup intake replacement before production edits. | `simulations/flowpilot_startup_intake_ui_model.py`, runner, results | Safe path passes and known-bad mutations fail. |
 | 2 | Promote the WPF preview into a repo-owned startup intake UI asset. | `skills/flowpilot/assets/ui/startup_intake/` | UI writes receipt, envelope, body, and result files without printing body text. |
-| 3 | Replace the first bootloader wait boundary. | `skills/flowpilot/assets/flowpilot_router.py` | Router returns `open_startup_intake_ui` instead of chat three-question prompt. |
+| 3 | Enforce the first bootloader wait boundary. | `skills/flowpilot/assets/flowpilot_router.py` | Router returns `open_startup_intake_ui` and accepts only native UI result payloads. |
 | 4 | Validate UI result as the source of startup answers. | `flowpilot_router.py` | Confirm maps toggles to existing startup answer enums; cancel terminates startup. |
-| 5 | Preserve startup answer compatibility. | `flowpilot_router.py`, tests | Existing post-answer boot actions still see `startup_answers` and skip old chat wait actions. |
+| 5 | Preserve current startup answer consumers. | `flowpilot_router.py`, tests | Post-intake boot actions still see `startup_answers` from the native UI result. |
 | 6 | Seal the user request body before Controller starts. | `flowpilot_router.py`, `packet_runtime.py` | Controller-visible state stores body path/hash only, not body text. |
 | 7 | Make reviewer startup fact-check and live review use UI records. | reviewer startup card, startup model/tests | Reviewer checks UI result/receipt/envelope/hash and no longer searches chat for answers. |
 | 8 | Update prompt and install checks. | `SKILL.md`, `scripts/check_install.py`, tests | Local install self-check covers the UI startup path. |

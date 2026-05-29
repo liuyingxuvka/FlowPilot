@@ -1,6 +1,6 @@
 """Prepare, validate, and submit FlowPilot role-output envelopes.
 
-This module remains the public compatibility facade. Implementation details are
+This module remains the public facade. Implementation details are
 split across focused role_output_runtime_* helpers while preserving imports, CLI
 behavior, output keys, and JSON shape.
 """
@@ -21,11 +21,11 @@ for _module in (_schema, _contracts, _progress, _envelopes, _cli):
 
 
 def update_output_progress(*args, **kwargs):
-    """Compatibility wrapper for Controller-visible progress updates."""
+    """Public wrapper for Controller-visible progress updates."""
     return _progress.update_output_progress(*args, **kwargs)
 
 
-# Source-check compatibility markers:
+# Source-check markers:
 # progress_written_by_runtime
 # "submitted_to": "router"
 

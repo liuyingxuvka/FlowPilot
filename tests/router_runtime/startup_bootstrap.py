@@ -263,40 +263,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
         self.assertEqual(scheduler_row["router_state"], "reconciled")
         self.assertEqual(scheduler_row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
-    def test_legacy_startup_daemon_postcondition_owner_canonicalizes_to_receipt_owner(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_router_daemon_start(root)
-        router.apply_action(root, "start_router_daemon")
-        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-
-        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-        intake_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "open_startup_intake_ui")
-        action_path = run_root / "runtime" / "controller_actions" / f"{intake_row['action_id']}.json"
-        entry = read_json(action_path)
-        entry["router_reconciliation"]["source"] = "startup_daemon_bootloader_postcondition"
-        entry["router_pending_apply_required"] = True
-        entry["action"]["router_pending_apply_required"] = True
-        router.write_json(action_path, entry)
-        scheduler_path = run_root / "runtime" / "router_scheduler_ledger.json"
-        scheduler = read_json(scheduler_path)
-        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
-        scheduler_row["reconciliation"]["source"] = "startup_daemon_bootloader_postcondition"
-        router.write_json(scheduler_path, scheduler)
-
-        state = read_json(router.run_state_path(run_root))
-        result = router._reconcile_scheduled_controller_action_receipts(root, run_root, state)  # type: ignore[attr-defined]
-
-        self.assertTrue(result["changed"])
-        refreshed = read_json(action_path)
-        self.assertEqual(refreshed["router_reconciliation"]["source"], "startup_bootloader_controller_receipt")
-        self.assertEqual(
-            refreshed["router_reconciliation"]["canonicalized_from"],
-            "startup_daemon_bootloader_postcondition",
-        )
-        self.assertFalse(refreshed["router_pending_apply_required"])
-        scheduler = read_json(scheduler_path)
-        scheduler_row = next(item for item in scheduler["rows"] if item.get("row_id") == intake_row["router_scheduler_row_id"])
-        self.assertEqual(scheduler_row["reconciliation"]["source"], "startup_bootloader_controller_receipt")
     def test_load_controller_core_receipt_reconciles_startup_postcondition(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root)
@@ -683,16 +649,16 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(bootstrap["startup_state"], "answers_complete")
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertIsNone(bootstrap.get("pending_action"))
-        self.assertTrue(bootstrap["flags"]["startup_questions_asked"])
-        self.assertTrue(bootstrap["flags"]["startup_state_written_awaiting_answers"])
-        self.assertTrue(bootstrap["flags"]["dialog_stopped_for_answers"])
+        self.assertTrue(bootstrap["flags"]["startup_intake_ui_completed"])
+        self.assertTrue(bootstrap["flags"]["startup_intake_result_recorded"])
+        self.assertTrue(bootstrap["flags"]["startup_intake_body_boundary_enforced"])
         self.assertTrue(bootstrap["flags"]["startup_answers_recorded"])
         self.assertTrue((run_root / "startup_answers.json").exists())
 
         run_state = read_json(router.run_state_path(run_root))
-        self.assertTrue(run_state["flags"]["startup_questions_asked"])
-        self.assertTrue(run_state["flags"]["startup_state_written_awaiting_answers"])
-        self.assertTrue(run_state["flags"]["dialog_stopped_for_answers"])
+        self.assertTrue(run_state["flags"]["startup_intake_ui_completed"])
+        self.assertTrue(run_state["flags"]["startup_intake_result_recorded"])
+        self.assertTrue(run_state["flags"]["startup_intake_body_boundary_enforced"])
         self.assertTrue(run_state["flags"]["startup_answers_recorded"])
         action_record = read_json(run_root / "runtime" / "controller_actions" / f"{action_id}.json")
         self.assertEqual(action_record["router_reconciliation_status"], "reconciled")
@@ -744,87 +710,13 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(schedule["scheduled"])
         self.assertEqual(schedule["action"]["action_type"], "load_controller_core")
         queued = [item["action_type"] for item in schedule["queued_actions"]]
-        self.assertNotIn("record_startup_answers", queued)
+        self.assertEqual(queued, ["load_controller_core"])
         bootstrap = self.bootstrap_state(root)
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertTrue(bootstrap["flags"]["startup_answers_recorded"])
         self.assertTrue(bootstrap["flags"]["deterministic_bootstrap_seed_completed"])
         control_blocks = run_root / "control_blocks"
         self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
-
-    def test_record_startup_answers_receipt_replay_is_idempotent_and_conflicts_do_not_overwrite(self) -> None:
-        root = self.make_project()
-        router.run_until_wait(root, new_invocation=True)
-        run_root = self.run_root_for(root)
-        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-        run_state = read_json(router.run_state_path(run_root))
-        bootstrap_rel = self.rel(root, router.bootstrap_state_path(root))
-        action = router.make_action(
-            action_type="record_startup_answers",
-            actor="bootloader",
-            label="test_record_startup_answers_replay",
-            summary="Replay startup answer recording after deterministic seed completion.",
-            allowed_reads=[bootstrap_rel],
-            allowed_writes=[bootstrap_rel],
-            extra={
-                "scope_kind": "startup",
-                "scope_id": "startup",
-                "startup_daemon_scheduled": True,
-                "scheduled_by_router_daemon": True,
-                "requires_payload": "startup_answers",
-                "postcondition": "startup_answers_recorded",
-            },
-        )
-        entry = router._write_controller_action_entry(root, run_root, run_state, action)  # type: ignore[attr-defined]
-
-        result = router.record_controller_action_receipt(
-            root,
-            action_id=entry["action_id"],
-            status="done",
-            payload={"startup_answers": STARTUP_ANSWERS},
-        )
-
-        self.assertTrue(result["ok"])
-        reconciled = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
-        self.assertEqual(reconciled["router_reconciliation_status"], "reconciled")
-        self.assertTrue(reconciled["router_reconciliation"]["startup_answers_replay_confirmed"])
-
-        conflict_root = self.make_project()
-        router.run_until_wait(conflict_root, new_invocation=True)
-        conflict_run_root = self.run_root_for(conflict_root)
-        router.apply_action(conflict_root, "open_startup_intake_ui", self.startup_intake_payload(conflict_root))
-        conflict_state = read_json(router.run_state_path(conflict_run_root))
-        conflict_bootstrap_rel = self.rel(conflict_root, router.bootstrap_state_path(conflict_root))
-        conflict_action = router.make_action(
-            action_type="record_startup_answers",
-            actor="bootloader",
-            label="test_record_startup_answers_conflict",
-            summary="Conflicting startup answer receipt must not overwrite durable answers.",
-            allowed_reads=[conflict_bootstrap_rel],
-            allowed_writes=[conflict_bootstrap_rel],
-            extra={
-                "scope_kind": "startup",
-                "scope_id": "startup",
-                "startup_daemon_scheduled": True,
-                "scheduled_by_router_daemon": True,
-                "requires_payload": "startup_answers",
-                "postcondition": "startup_answers_recorded",
-            },
-        )
-        conflict_entry = router._write_controller_action_entry(conflict_root, conflict_run_root, conflict_state, conflict_action)  # type: ignore[attr-defined]
-        conflicting_answers = {**STARTUP_ANSWERS, "display_surface": "cockpit"}
-
-        conflict_result = router.record_controller_action_receipt(
-            conflict_root,
-            action_id=conflict_entry["action_id"],
-            status="done",
-            payload={"startup_answers": conflicting_answers},
-        )
-
-        self.assertTrue(conflict_result["ok"])
-        conflict_record = read_json(conflict_run_root / "runtime" / "controller_actions" / f"{conflict_entry['action_id']}.json")
-        self.assertNotEqual(conflict_record.get("router_reconciliation_status"), "reconciled")
-        self.assertEqual(self.bootstrap_state(conflict_root)["startup_answers"], STARTUP_ANSWERS)
     def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -1052,8 +944,8 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         bootstrap = self.bootstrap_state(root)
         self.assertEqual(bootstrap["startup_state"], "none")
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
-        self.assertFalse(bootstrap["flags"]["startup_state_written_awaiting_answers"])
-        self.assertFalse(bootstrap["flags"]["dialog_stopped_for_answers"])
+        self.assertFalse(bootstrap["flags"].get("startup_intake_result_recorded", False))
+        self.assertFalse(bootstrap["flags"].get("startup_intake_body_boundary_enforced", False))
         self.assertIsNone(bootstrap["startup_answers"])
         self.assertIsNotNone(bootstrap["run_id"])
         self.assertTrue(bootstrap["flags"]["run_shell_created"])
@@ -1172,18 +1064,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         body = (run_root / "packets" / "user_intake" / "packet_body.md").read_text(encoding="utf-8")
         self.assertIn(USER_REQUEST["text"], body)
         self.assertIn("startup_intake_record_path", body)
-    def test_legacy_startup_answer_boundary_records_answers(self) -> None:
-        root = self.make_project()
-        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-
-        self.enter_legacy_startup_answer_boundary(root)
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "record_startup_answers")
-        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
-        bootstrap = self.bootstrap_state(root)
-        self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
-        self.assertEqual(bootstrap["startup_state"], "answers_complete")
-        self.assertEqual(router.next_action(root)["action_type"], "create_run_shell")
     def test_new_invocation_creates_fresh_run_scoped_bootstrap_over_stale_state(self) -> None:
         root = self.make_project()
         old_run_root = root / ".flowpilot" / "runs" / "run-old-stopped"
@@ -1229,74 +1109,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsNone(bootstrap["startup_answers"])
         self.assertFalse(bootstrap["flags"]["startup_answers_recorded"])
         self.assertEqual(action["allowed_reads"], [current["startup_bootstrap_path"]])
-    def test_record_startup_answers_rejects_naked_inferred_or_invalid_values(self) -> None:
-        root = self.make_project()
-        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.enter_legacy_startup_answer_boundary(root)
-        self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
-
-        naked_answers = {key: value for key, value in STARTUP_ANSWERS.items() if key != "provenance"}
-        with self.assertRaisesRegex(router.RouterError, "provenance=explicit_user_reply"):
-            router.apply_action(root, "record_startup_answers", {"startup_answers": naked_answers})
-
-        inferred_answers = {**STARTUP_ANSWERS, "provenance": "inferred_by_assistant"}
-        with self.assertRaisesRegex(router.RouterError, "provenance=explicit_user_reply"):
-            router.apply_action(root, "record_startup_answers", {"startup_answers": inferred_answers})
-
-        prose_answers = {
-            **STARTUP_ANSWERS,
-            "background_agents": "No additional background subagents because the assistant inferred a default.",
-        }
-        with self.assertRaisesRegex(router.RouterError, "background_agents"):
-            router.apply_action(root, "record_startup_answers", {"startup_answers": prose_answers})
-
-        extra_answers = {**STARTUP_ANSWERS, "objective": "assistant-filled task summary"}
-        with self.assertRaisesRegex(router.RouterError, "unsupported fields"):
-            router.apply_action(root, "record_startup_answers", {"startup_answers": extra_answers})
-
-        router.apply_action(root, "record_startup_answers", {"startup_answers": STARTUP_ANSWERS})
-        bootstrap = self.bootstrap_state(root)
-        self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
-    def test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt(self) -> None:
-        root = self.make_project()
-        self.assertEqual(self.next_and_apply(root)["applied"], "load_router")
-        self.enter_legacy_startup_answer_boundary(root)
-        self.assertEqual(router.next_action(root)["action_type"], "record_startup_answers")
-
-        with self.assertRaisesRegex(router.RouterError, "startup_answer_interpretation"):
-            router.apply_action(root, "record_startup_answers", {"startup_answers": AI_INTERPRETED_STARTUP_ANSWERS})
-
-        ambiguous_receipt = {**self.startup_answer_interpretation(), "ambiguity_status": "ambiguous"}
-        with self.assertRaisesRegex(router.RouterError, "ambiguous startup answers"):
-            router.apply_action(
-                root,
-                "record_startup_answers",
-                {
-                    "startup_answers": AI_INTERPRETED_STARTUP_ANSWERS,
-                    "startup_answer_interpretation": ambiguous_receipt,
-                },
-            )
-
-        router.apply_action(
-            root,
-            "record_startup_answers",
-            {
-                "startup_answers": AI_INTERPRETED_STARTUP_ANSWERS,
-                "startup_answer_interpretation": self.startup_answer_interpretation(),
-            },
-        )
-        bootstrap = self.bootstrap_state(root)
-        self.assertEqual(bootstrap["startup_answers"], AI_INTERPRETED_STARTUP_ANSWERS)
-        self.assertEqual(bootstrap["startup_answer_interpretation"]["raw_user_reply_text"], "Use background agents, manual resume, and chat route signs.")
-
-        while router.next_action(root)["action_type"] != "record_user_request":
-            action = router.next_action(root)
-            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
-        run_root = self.run_root_for(root)
-        startup_answers = read_json(run_root / "startup_answers.json")
-        self.assertTrue(startup_answers["startup_answer_interpretation_path"].endswith("startup_answer_interpretation.json"))
-        receipt = read_json(root / startup_answers["startup_answer_interpretation_path"])
-        self.assertEqual(receipt["interpreted_answers"]["display_surface"], "chat")
     def test_reviewer_startup_report_preconsumes_pre_review_pm_bundle_ack(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)

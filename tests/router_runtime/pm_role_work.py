@@ -145,18 +145,17 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "request_id": "gate-modelability-followup-001",
                 "decision": "absorbed",
                 "decision_reason": "PM reviewed the officer result and maps it to the gate pass event.",
-                "mapped_gate_event": "product_officer_passes_product_architecture_modelability",
+                "mapped_gate_event": "product_officer_submits_product_behavior_model",
             },
         )
 
         state = read_json(state_path)
         self.assertTrue(state["flags"]["product_behavior_model_submitted"])
-        self.assertTrue(state["flags"]["product_architecture_modelability_passed"])
         self.assertTrue((run_root / "flowguard" / "product_behavior_model.json").exists())
-        self.assertTrue((run_root / "flowguard" / "product_architecture_modelability.json").exists())
+        self.assertFalse((run_root / "flowguard" / "product_architecture_modelability.json").exists())
         self.assertTrue(
             any(
-                item.get("event") == "product_officer_passes_product_architecture_modelability"
+                item.get("event") == "product_officer_submits_product_behavior_model"
                 and item.get("payload", {}).get("mapped_from_event") == "pm_records_role_work_result_decision"
                 for item in state["events"]
                 if isinstance(item, dict)

@@ -49,24 +49,22 @@ illegal duplicate authority inside one scope, including daemon writers, active
 packet holders, PM package dispositions, route replacement, material progress
 generation, ACK/output waits, and final closure evidence.
 
-As of version 0.9.14, the active maintenance convergence baseline is recorded in
-`docs/flowpilot_maintenance_convergence_20260527.md`. Completed OpenSpec
-changes were archived, runtime retention and validation-artifact cleanup stayed
-read-only, and the latest generated maintenance map reports no runtime owner
-module above the 450-line threshold. New compatibility-preserving child modules
-own PM role-work package disposition helpers, external event data by phase, and
-process-contract policy data. The latest model-test-code alignment report
-covers 857 surfaces with 0 gaps and 0 deferred structure splits.
+As of the new-only FlowPilot contract, the active maintenance baseline is
+recorded in `docs/flowpilot_maintenance_convergence_20260527.md` and the
+current new-only surface-removal change. Completed OpenSpec changes were archived,
+runtime retention and validation-artifact cleanup stayed read-only, and current
+runtime/prompt/install surfaces must not teach old protocol inputs as usable
+paths. Focused child modules own PM role-work package disposition helpers,
+external event data by phase, and process-contract policy data. The latest
+model-test-code alignment report is current when its generated result artifact
+matches the source tree.
 
 It covers two ownership surfaces:
 
 - planned router split ownership, where `flowpilot_router.py` remains the
-  compatibility facade and root state coordinator;
-- split FlowGuard model scripts, where `prompt_isolation_model.py`,
-  `flowpilot_cross_plane_friction_model.py`, and
-  `flowpilot_persistent_router_daemon_model.py` remain import-compatible
-  facades backed by focused state, transition, invariant, hazard, audit, and
-  strategy helpers as applicable.
+  current public root state coordinator;
+- split FlowGuard model scripts backed by focused state, transition,
+  invariant, hazard, audit, and strategy helpers as applicable.
 
 The latest singleton-authority pass keeps the model-test-code alignment report
 at `867` covered surfaces with `0` gaps and `0` deferred structure splits.
@@ -78,8 +76,8 @@ PromptStore manifest/hash behavior, prompt-delivery ownership, card-delivery
 ownership, Controller action-ledger helper ownership, role-output protocol
 helper ownership, coarse runtime/startup/controller/work-packet/event/repair/
 route/terminal ownership, upgraded StructureMesh target-structure evidence,
-and compatibility-facade preservation. The coarse owner modules currently added
-for this gate are:
+and public-entrypoint preservation. The coarse owner modules currently added for
+this gate are:
 
 - `flowpilot_router_runtime_state.py` for bootstrap/run state and low-level
   runtime factories;
@@ -125,8 +123,8 @@ material/modeling domains.
 The route domain is also split internally: `router-route` runs focused
 route-mutation child suites for draft activation, model-miss triage, acceptance
 repair, preconditions, repair transactions, topology, sibling replacement, and
-parent backward replay. `tests.router_runtime.route_mutation` remains only as
-an explicit compatibility aggregate.
+parent backward replay. Aggregate route-mutation coverage is historical
+evidence only and is not a new runtime contract.
 
 Known-bad variants for missing owners, duplicate state ownership, missing
 facades, removed entrypoints, stale parity, insufficient release evidence,
@@ -527,11 +525,11 @@ FlowGuard caught and fixed these design issues:
   activation also rejects active nodes that are not present in the reviewed
   route draft. The policy is modeled in
   `simulations/flowpilot_route_replanning_policy_model.py`.
-- `docs/flowpilot_clean_rebuild_plan.md` and
-  `docs/legacy_to_router_equivalence.json` are the current rebuild plan and
-  old-protocol equivalence checklist. `scripts/check_install.py` verifies both
-  documents, the runtime card manifest, packet schema alignment, resume model
-  results, and router-loop model results.
+- `docs/flowpilot_clean_rebuild_plan.md` is retained as historical planning
+  context. Current install readiness no longer depends on old-protocol
+  equivalence checklists; `scripts/check_install.py` verifies the current
+  runtime card manifest, packet schema alignment, model result artifacts, and
+  repository-owned install surfaces.
 - FlowGuard coverage now includes prompt isolation, heartbeat/manual resume,
   and current-node/router-loop models:
   `simulations/prompt_isolation_model.py`,
@@ -553,8 +551,8 @@ FlowGuard caught and fixed these design issues:
   `skills/flowpilot/assets/runtime_kit/control_transaction_registry.json`
   is the unified registry for route progression, packet dispatch, result
   absorption, reviewer gates, control-blocker repair, control-plane reissue,
-  route mutation, and legacy reconcile commits.
-- The second legacy FlowPilot backup lives under
+  and route mutation commits.
+- The preserved historical FlowPilot backup lives under
   `backups/flowpilot-20260504-second-backup-20260504-195841/` with matching
   zip archive. It is marked as a preserved backup and must not be deleted by
   cleanup.
@@ -584,9 +582,9 @@ FlowGuard caught and fixed these design issues:
   recheck. The focused model and checker are
   `simulations/flowpilot_route_mutation_activation_model.py` and
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
-- The v0.9.7 Python structure simplification passes keep public entrypoints and
+- The Python structure simplification passes keep current public entrypoints and
   protocol semantics stable while reducing several heavy active files.
-  `flowpilot_router.py` remains the compatibility facade, while event dispatch,
+  `flowpilot_router.py` remains the public Router entrypoint, while event dispatch,
   event finalization, event intake, Controller action providers, Controller
   action handlers, route activation/mutation, and heartbeat/resume helpers now
   live in focused modules:
@@ -617,7 +615,7 @@ FlowGuard caught and fixed these design issues:
 - `role_output_runtime.py` remains the public facade and delegates schema,
   contract, progress, envelope, and CLI responsibilities to
   `role_output_runtime_*` helper modules.
-- `scripts/check_install.py` remains the compatibility entrypoint and delegates
+- `scripts/check_install.py` remains the install self-check entrypoint and delegates
   check groups to `scripts/install_checks/`.
 - The Meta and Capability FlowGuard parent models now keep short `apply`
   orchestration methods and move their previous monolithic bodies into phase
@@ -625,8 +623,7 @@ FlowGuard caught and fixed these design issues:
   bounded thin-parent evidence for routine confidence, `--full` validates a
   fast layered full-parent proof recorded in
   `simulations/meta_layered_full_results.json` or
-  `simulations/capability_layered_full_results.json`, and `--legacy-full`
-  remains the explicit old monolithic compatibility oracle. Long legacy runs
+  `simulations/capability_layered_full_results.json`. Long full regressions
   should use the background artifacts under
   `tmp/flowguard_background/run_meta_checks.*` and
   `tmp/flowguard_background/run_capability_checks.*`.
@@ -634,9 +631,8 @@ FlowGuard caught and fixed these design issues:
   runtime tests exactly once, including resume, cards, packets, route mutation,
   startup daemon, dispatch gate, Controller, ACK/return, terminal, closure,
   bootstrap/CLI, foreground, PM role work, material/modeling, control blockers,
-  and quality gates. The legacy aggregate
-  `tests/test_flowpilot_router_runtime.py` remains available as the source of
-  the shared test case class.
+  and quality gates. `tests/test_flowpilot_router_runtime.py` remains available
+  as the source of the shared test case class.
 - `scripts/run_test_tier.py` hides Windows subprocess windows for both
   background children and foreground child commands. Use the background
   artifact files for completion evidence instead of relying on visible console
@@ -644,8 +640,7 @@ FlowGuard caught and fixed these design issues:
 - Child FlowGuard models that still produced high maintenance friction now keep
   facade entrypoints while delegating state, transitions, invariants, hazards,
   and audit helpers to focused modules. This pass covered control-plane
-  friction, router-loop, and daemon reconciliation. The persistent router daemon
-  keeps its compatibility full-scope model, while the parent hierarchy now
+  friction, router-loop, and daemon reconciliation. The parent hierarchy now
   consumes thin child evidence for daemon startup/locks, Controller actions,
   waits/liveness, and terminal/projection contracts.
 - A v0.9.7 behavior repair discovered during simplification validates explicit

@@ -85,7 +85,7 @@ def plan_for_tier(tier: str, *, background_dir: Path) -> dict[str, Any]:
         ),
         "background_contract": [f"<name>.{suffix}.txt" for suffix in ARTIFACT_SUFFIXES if suffix != "meta"]
         + ["<name>.meta.json"],
-        "release_obligation_visible": tier not in {"release", "legacy-full"},
+        "release_obligation_visible": tier != "release",
     }
 
 

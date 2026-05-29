@@ -1,7 +1,7 @@
 """Internal router owner helpers extracted from flowpilot_router.
 
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
+The public router names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so private helper lookups remain
 stable while the implementation body lives outside the facade.
 """
 from __future__ import annotations
@@ -53,52 +53,6 @@ def _bound_router() -> ModuleType:
 OWNER_MODULE = "flowpilot_router_payload_contracts"
 from flowpilot_router_payload_contracts_core import _payload_contract
 
-def _startup_answers_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="startup_answers_with_optional_ai_interpretation_receipt",
-        required_object="payload.startup_answers",
-        required_fields=["background_agents", "scheduled_continuation", "display_surface", "provenance"],
-        optional_fields=["payload.startup_answer_interpretation"],
-        allowed_values={
-            "startup_answers.background_agents": sorted(STARTUP_ANSWER_ENUMS["background_agents"]),
-            "startup_answers.scheduled_continuation": sorted(STARTUP_ANSWER_ENUMS["scheduled_continuation"]),
-            "startup_answers.display_surface": sorted(STARTUP_ANSWER_ENUMS["display_surface"]),
-            "startup_answers.provenance": [
-                STARTUP_ANSWER_PROVENANCE,
-                STARTUP_ANSWER_INTERPRETATION_PROVENANCE,
-            ],
-            "startup_answer_interpretation.schema_version": [STARTUP_ANSWER_INTERPRETATION_SCHEMA],
-            "startup_answer_interpretation.interpreted_by": ["controller", "bootloader"],
-            "startup_answer_interpretation.interpretation_provenance": [STARTUP_ANSWER_INTERPRETATION_PROVENANCE],
-            "startup_answer_interpretation.ambiguity_status": ["none"],
-            "startup_answer_interpretation.interpreted_answers.background_agents": sorted(
-                STARTUP_ANSWER_ENUMS["background_agents"]
-            ),
-            "startup_answer_interpretation.interpreted_answers.scheduled_continuation": sorted(
-                STARTUP_ANSWER_ENUMS["scheduled_continuation"]
-            ),
-            "startup_answer_interpretation.interpreted_answers.display_surface": sorted(
-                STARTUP_ANSWER_ENUMS["display_surface"]
-            ),
-        },
-        conditional_required_fields={
-            "when startup_answers.provenance=ai_interpreted_from_explicit_user_reply": [
-                "startup_answer_interpretation.schema_version",
-                "startup_answer_interpretation.raw_user_reply_text",
-                "startup_answer_interpretation.interpreted_by",
-                "startup_answer_interpretation.interpretation_provenance",
-                "startup_answer_interpretation.ambiguity_status",
-                "startup_answer_interpretation.interpreted_answers.background_agents",
-                "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
-                "startup_answer_interpretation.interpreted_answers.display_surface",
-            ],
-        },
-        description=(
-            "Pass canonical enum answers. If the user's reply was natural language, the AI may interpret it into "
-            "these fields only with a startup_answer_interpretation receipt that preserves the raw user reply and "
-            "states ambiguity_status=none."
-        ),
-    )
 def _terminal_summary_payload_contract() -> dict[str, Any]:
     return _payload_contract(
         name="terminal_summary_markdown_and_user_display_receipt",
@@ -298,14 +252,13 @@ def _resume_role_rehydration_payload_contract(
             "missing, cancelled, completed, unknown, or timeout_unknown host liveness must spawn a replacement from current-run memory instead of continuing to wait on the old role.",
         ],
         optional_fields=[
-            "rehydrated_role_agents[].spawned_after_resume_state_loaded",
+            "rehydrated_role_agents[].replacement_spawned_after_resume_state_loaded",
         ],
         description="Refresh or replace all six FlowPilot role bindings from current-run memory before PM resume decision, reusing active agents and spawning only failed replacements.",
         reviewer_check="PM and reviewer checks use the written crew_rehydration_report before resume decisions.",
     )
 __all__ = (
     "_payload_contract",
-    "_startup_answers_payload_contract",
     "_terminal_summary_payload_contract",
     "_display_surface_receipt_payload_contract",
     "_role_slots_payload_contract",

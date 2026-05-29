@@ -32,7 +32,7 @@ long-form public explanation lives in `docs/protocol.md`.
    is UI focus/default-target metadata; a daemon, heartbeat, or explicit
    runtime command that already has a `run_id`/`run_root` must load that bound
    run directly and must not re-resolve a different run from the current
-   pointer. Old top-level state files are legacy evidence only and must not
+   pointer. Old top-level state files are archival evidence only and must not
    silently override an active run. Continuing prior
    work still creates a new run and writes a
    `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
@@ -229,7 +229,7 @@ long-form public explanation lives in `docs/protocol.md`.
     is not enough when the native tool exists.
 36. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
     is startup, a new major `flow.json` route-node entry, parent/module or leaf
-    route-node entry, PM current-node work brief, legacy key node change, route
+    route-node entry, PM current-node work brief, route
     mutation, review/validation failure return, completion review, or user
     request, unless Cockpit UI is open and showing the same graph. Major node
     means an effective node in the current route/mainline, not an internal
@@ -255,7 +255,7 @@ long-form public explanation lives in `docs/protocol.md`.
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
-    legacy-only, or quarantined and is not being used as current state. It
+    archival-only, or quarantined and is not being used as current state. It
     must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
     route heartbeat automation at one minute when scheduled continuation is
@@ -753,7 +753,7 @@ Repeat until complete or blocked:
    active node, continuation mode, last heartbeat or manual-resume record,
    lifecycle evidence, and last checkpoint.
    `.flowpilot/current.json` is not daemon authority after a run binding exists;
-   top-level legacy state is import or quarantine evidence only and must not
+   top-level archival state is import or quarantine evidence only and must not
    override the bound run.
 2. Rehydrate all six role identities and work memories before PM runway work.
    Stored agent ids may be resumed only when they belong to the same active
@@ -862,7 +862,7 @@ history with replacement reasons and checkpoint/failure evidence.
 
 If Cockpit UI is not open, the chat Mermaid block is mandatory at startup,
 major route-node entry, parent/module or leaf route-node entry, PM current-node
-work brief, legacy key node change, route mutation, review or validation
+work brief, route mutation, review or validation
 failure returns, completion review, and explicit user requests. The route sign
 must show a visible
 `returns for repair` edge when review, validation, or route mutation sends the
@@ -886,8 +886,8 @@ when required. A file-only check does not pass the gate.
 
 When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
 route-sign hook: generate chat Markdown with
-`--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
-trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
+`--markdown --trigger <trigger> --write` (`major_node_entry` is the trigger
+for ordinary route-node entry),
 paste that exact clean user-visible block into chat when required, then record
 the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,

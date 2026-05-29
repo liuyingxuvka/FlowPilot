@@ -332,16 +332,12 @@ def validate_result_ready_for_reviewer_relay(
     result_envelope: dict[str, Any],
     agent_role_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    audit = validate_result_ready_for_recipient_relay(
+    return validate_result_ready_for_recipient_relay(
         project_root,
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,
         agent_role_map=agent_role_map,
     )
-    legacy_audit = dict(audit)
-    legacy_audit["schema_version"] = "flowpilot.result_ready_for_reviewer_relay_audit.v1"
-    legacy_audit["recipient_neutral_schema_version"] = audit["schema_version"]
-    return legacy_audit
 
 
 def verify_router_startup_release(

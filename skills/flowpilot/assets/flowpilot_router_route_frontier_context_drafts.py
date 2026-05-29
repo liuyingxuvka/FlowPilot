@@ -1,4 +1,4 @@
-"""Cohesive child helpers for FlowPilot route-frontier compatibility facades."""
+"""Cohesive child helpers for FlowPilot route-frontier state."""
 
 from __future__ import annotations
 
@@ -97,29 +97,15 @@ def _product_behavior_model_report_path(router: ModuleType, run_root: Path) -> P
     return run_root / 'flowguard' / 'product_behavior_model.json'
 
 
-def _product_behavior_model_compatibility_report_path(router: ModuleType, run_root: Path) -> Path:
-    _bind_router(router)
-    return run_root / 'flowguard' / 'product_architecture_modelability.json'
-
-
 def _require_product_behavior_model_report(router: ModuleType, project_root: Path, run_root: Path) -> Path:
     _bind_router(router)
     path = router._product_behavior_model_report_path(run_root)
-    if not path.exists():
-        compatibility_path = router._product_behavior_model_compatibility_report_path(run_root)
-        if compatibility_path.exists():
-            path = compatibility_path
     if not path.exists():
         raise RouterError('route draft requires Product Officer product behavior model report')
     report = read_json(path)
     if report.get('passed') is not True:
         raise RouterError('route draft requires passed Product Officer product behavior model report')
     return path
-
-
-def _route_process_check_path(router: ModuleType, run_root: Path) -> Path:
-    _bind_router(router)
-    return run_root / 'flowguard' / 'route_process_check.json'
 
 
 def _process_route_model_report_path(router: ModuleType, run_root: Path) -> Path:
@@ -131,20 +117,11 @@ def _require_process_route_model_report(router: ModuleType, project_root: Path, 
     _bind_router(router)
     path = router._process_route_model_report_path(run_root)
     if not path.exists():
-        compatibility_path = router._route_process_check_path(run_root)
-        if compatibility_path.exists():
-            path = compatibility_path
-    if not path.exists():
         raise RouterError('route activation requires process route model report')
     report = read_json(path)
     if report.get('passed') is not True or report.get('process_viability_verdict') != 'pass':
         raise RouterError('route activation requires Process Officer process route model pass')
     return path
-
-
-def _route_product_check_path(router: ModuleType, run_root: Path) -> Path:
-    _bind_router(router)
-    return run_root / 'flowguard' / 'route_product_check.json'
 
 
 def _require_route_process_pass(router: ModuleType, project_root: Path, run_root: Path) -> Path:
@@ -191,17 +168,6 @@ def _supersede_active_current_node_packet_for_route_mutation(router: ModuleType,
     write_json(ledger_path, ledger)
 
 
-def _require_route_product_pass(router: ModuleType, project_root: Path, run_root: Path) -> Path:
-    _bind_router(router)
-    path = router._route_product_check_path(run_root)
-    if not path.exists():
-        raise RouterError('route activation requires route_product_check.json')
-    report = read_json(path)
-    if report.get('passed') is not True or report.get('route_model_review_verdict') != 'pass':
-        raise RouterError('route activation requires passed product-model route review')
-    return path
-
-
 def _current_route_draft_path(router: ModuleType, run_root: Path) -> Path:
     _bind_router(router)
     route_root = run_root / 'routes'
@@ -218,15 +184,11 @@ __all__ = (
     '_reset_route_review_after_route_draft_repair',
     '_reset_route_hard_gate_approvals_for_recheck',
     '_product_behavior_model_report_path',
-    '_product_behavior_model_compatibility_report_path',
     '_require_product_behavior_model_report',
-    '_route_process_check_path',
     '_process_route_model_report_path',
     '_require_process_route_model_report',
-    '_route_product_check_path',
     '_require_route_process_pass',
     '_supersede_active_current_node_packet_for_route_mutation',
-    '_require_route_product_pass',
     '_current_route_draft_path',
 )
 

@@ -43,8 +43,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("startup.questions.pause_before_work",),
             ),
             _evidence(
-                "startup.happy.answer_boundary",
-                test_name="test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt",
+                "startup.happy.native_intake_boundary",
+                test_name="test_startup_intake_controller_receipt_folds_native_ui_result",
                 path="tests/router_runtime/startup_bootstrap.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
                 test_kind=HAPPY,
@@ -545,7 +545,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "router_loop.shadow_launcher_chaos_regression",
                 obligation_type="scenario",
-                description="Shadow launcher chaos regressions drive fake AI packages through an installed launcher copy, real Router/daemon state, recovery, peer isolation, legacy pointer loading, malformed package rejection, and bounded cleanup loops.",
+                description="Shadow launcher chaos regressions drive fake AI packages through an installed launcher copy, real Router/daemon state, recovery, peer isolation, current-pointer loading, malformed package rejection, and bounded cleanup loops.",
                 required_test_kinds=(HAPPY, EDGE, NEGATIVE),
             ),
             _obligation(
@@ -593,7 +593,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "daemon.parent_child_mesh",
                 obligation_type="contract",
-                description="Parent hierarchy consumes thin daemon child evidence for startup/lock, Controller actions, waits/liveness, and terminal/projection while retaining the compatibility full daemon model.",
+                description="Parent hierarchy consumes thin daemon child evidence for startup/lock, Controller actions, waits/liveness, and terminal/projection while retaining the layered full daemon model.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
         ),
@@ -842,8 +842,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("daemon.parent_child_mesh",),
             ),
             _evidence(
-                "daemon.negative.parent_no_longer_consumes_large_compat_model",
-                test_name="test_parent_ledger_consumes_split_daemon_children_not_large_compat_model",
+                "daemon.negative.parent_no_longer_consumes_large_monolith_model",
+                test_name="test_parent_ledger_consumes_split_daemon_children_not_large_monolith_model",
                 path="tests/test_flowpilot_daemon_child_mesh.py",
                 command="python -m unittest tests.test_flowpilot_daemon_child_mesh",
                 test_kind=NEGATIVE,
@@ -868,9 +868,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
-                "repair_transactions.legacy_replay_requires_existing_producer",
+                "repair_transactions.retired_event_replay_rejected",
                 obligation_type="hazard",
-                description="A repair transaction cannot replay a legacy event unless the current run has a matching existing producer for that event.",
+                description="A repair transaction cannot use the retired event_replay plan kind; current repair plans need a registered producer/action/handler/terminal stop.",
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
@@ -910,12 +910,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("repair_transactions.material_rework_requires_fresh_producer",),
             ),
             _evidence(
-                "repair_transactions.negative.legacy_replay_no_producer",
-                test_name="test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer",
+                "repair_transactions.negative.retired_event_replay_plan_kind",
+                test_name="test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
                 path="tests/router_runtime/control_blockers.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
                 test_kind=NEGATIVE,
-                covers=("repair_transactions.legacy_replay_requires_existing_producer",),
+                covers=("repair_transactions.retired_event_replay_rejected",),
             ),
             _evidence(
                 "repair_transactions.negative.empty_followup_wait_fallback",
@@ -961,7 +961,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "test_tiering.foreground_fast_scope",
                 obligation_type="contract",
-                description="Fast/router tiers are scoped, foreground-safe, and exclude release-only, coverage sweep, and legacy full regressions.",
+                description="Fast/router tiers are scoped, foreground-safe, and exclude release-only, coverage sweep, and full parent regressions.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
@@ -980,7 +980,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         test_evidence=(
             _evidence(
                 "tiering.happy.fast_scope",
-                test_name="test_fast_tier_excludes_release_coverage_and_legacy_full",
+                test_name="test_fast_tier_excludes_release_coverage_and_full_regression",
                 path="tests/test_flowpilot_test_tiers.py",
                 command="python -m unittest tests.test_flowpilot_test_tiers",
                 test_kind=HAPPY,
@@ -1033,7 +1033,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "capability_parent.proof_reuse_and_fast_boundary",
                 obligation_type="contract",
-                description="Capability parent evidence rejects stale proof reuse and keeps fast smoke on the non-legacy path.",
+                description="Capability parent evidence rejects stale proof reuse and keeps fast smoke on the current path.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
@@ -1053,8 +1053,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("meta_parent.thin_default_and_layered_full_boundary",),
             ),
             _evidence(
-                "meta_parent.negative.legacy_explicit_only",
-                test_name="test_legacy_full_meta_runner_preserves_monolithic_path",
+                "meta_parent.negative.layered_explicit_only",
+                test_name="test_full_meta_runner_uses_layered_parent_without_full_graph",
                 path="tests/test_flowpilot_thin_parent_checks.py",
                 command="python -m unittest tests.test_flowpilot_thin_parent_checks",
                 test_kind=NEGATIVE,
@@ -1069,7 +1069,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("capability_parent.proof_reuse_and_fast_boundary",),
             ),
             _evidence(
-                "capability_parent.negative.fast_smoke_no_legacy",
+                "capability_parent.negative.fast_smoke_current_path",
                 test_name="test_smoke_fast_only_marks_slow_model_checks_fast",
                 path="tests/test_flowguard_result_proof.py",
                 command="python -m unittest tests.test_flowguard_result_proof",

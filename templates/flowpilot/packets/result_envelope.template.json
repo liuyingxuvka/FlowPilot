@@ -134,18 +134,5 @@
     "missing_controller_relay_signature_blocks_body_open": true,
     "controller_read_or_execute_body_requires_sender_reissue": true,
     "private_role_to_role_delivery_blocks_body_open": true
-  },
-  "barrier_bundle": {
-    "schema_version": "flowpilot.barrier_bundle.v1",
-    "bundle_id": "<bundle-id-or-null>",
-    "barrier_id": "<barrier-id-or-null>",
-    "equivalence_mode": "preserve_existing_packet_semantics",
-    "member_packet_ids": [
-      "<packet-id>"
-    ],
-    "metadata_only": true,
-    "preserves_result_body_isolation": true,
-    "controller_may_read_or_summarize_bundled_bodies": false,
-    "controller_may_approve_bundled_gates": false
   }
 }

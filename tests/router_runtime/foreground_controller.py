@@ -241,7 +241,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_controller_boundary_done_receipt_reclaims_router_postcondition(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
@@ -264,7 +264,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_controller_boundary_projection_reclaims_stale_flags_without_pending_action(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
@@ -1388,7 +1388,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             output_path="role_outputs/route_process_check.json",
             body={"reviewed_by_role": "process_flowguard_officer", "passed": True},
-            event_name="process_officer_passes_route_check",
+            event_name="process_officer_submits_process_route_model",
             from_role="process_flowguard_officer",
         )
 
@@ -1661,7 +1661,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "action_type": "await_role_decision",
             "actor": "controller",
             "label": "controller_waits_for_expected_event_capability_evidence_synced",
-            "summary": "Legacy stale wait for Router-owned capability evidence sync.",
+            "summary": "Stale wait for Router-owned capability evidence sync.",
             "allowed_external_events": ["capability_evidence_synced"],
             "to_role": "controller",
         }
@@ -1758,7 +1758,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
@@ -1793,7 +1793,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         self.assertEqual(action["action_type"], "confirm_controller_core_boundary")
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router._write_controller_boundary_confirmation(root, run_root, state)  # type: ignore[attr-defined]
@@ -1818,7 +1818,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         body = router._controller_boundary_confirmation_body(root, run_root, state)  # type: ignore[attr-defined]
         router.write_json(run_root / "startup" / "controller_boundary_confirmation.json", body)
@@ -1840,7 +1840,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]
@@ -1870,7 +1870,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]
@@ -1916,7 +1916,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]

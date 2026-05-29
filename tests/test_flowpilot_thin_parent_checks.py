@@ -70,7 +70,7 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
         self.assertEqual(result["routine_confidence"], "current")
         self.assertLess(result["graph"]["state_count"], thin_parent_checks.HEAVYWEIGHT_STATE_THRESHOLD)
         self.assertTrue(result["thin_parent"]["full_regression_release_partitions"])
-        self.assertIn("status", result["legacy_full_regression"])
+        self.assertIn("status", result["layered_full_regression"])
         self.assertIn(
             result["release_confidence"],
             {
@@ -115,7 +115,7 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
                 run_meta_checks.PROOF_PATH = tmp / "meta_thin_parent_results.proof.json"
 
                 def fail_if_called():
-                    raise AssertionError("default runner expanded the legacy full graph")
+                    raise AssertionError("default runner expanded the full graph")
 
                 run_meta_checks._run_sharded_graph_checks = fail_if_called
                 with contextlib.redirect_stdout(io.StringIO()):
@@ -142,7 +142,7 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
                 run_meta_checks.PROOF_PATH = tmp / "meta_thin_parent_results.proof.json"
 
                 def fail_if_called():
-                    raise AssertionError("layered full runner expanded the legacy full graph")
+                    raise AssertionError("layered full runner expanded the monolithic graph")
 
                 run_meta_checks._run_sharded_graph_checks = fail_if_called
                 with contextlib.redirect_stdout(io.StringIO()):
@@ -155,34 +155,6 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
                 run_meta_checks.LAYERED_PROOF_PATH = old_layered_proof
                 run_meta_checks.RESULTS_PATH = old_results
                 run_meta_checks.PROOF_PATH = old_proof
-                run_meta_checks._run_sharded_graph_checks = old_graph
-
-    def test_legacy_full_meta_runner_preserves_monolithic_path(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="flowpilot-full-runner-") as tmp_name:
-            tmp = Path(tmp_name)
-            old_results = run_meta_checks.LEGACY_RESULTS_PATH
-            old_proof = run_meta_checks.LEGACY_PROOF_PATH
-            old_graph = run_meta_checks._run_sharded_graph_checks
-            try:
-                run_meta_checks.LEGACY_RESULTS_PATH = tmp / "results.json"
-                run_meta_checks.LEGACY_PROOF_PATH = tmp / "results.proof.json"
-
-                def small_full_graph():
-                    return (
-                        {"ok": True, "state_count": 1, "edge_count": 0},
-                        {"ok": True, "stuck_state_count": 0},
-                        {"ok": True, "nonterminating_component_count": 0},
-                    )
-
-                run_meta_checks._run_sharded_graph_checks = small_full_graph
-                with contextlib.redirect_stdout(io.StringIO()):
-                    self.assertEqual(run_meta_checks.main(["--legacy-full", "--force"]), 0)
-                payload = json.loads(run_meta_checks.LEGACY_RESULTS_PATH.read_text(encoding="utf-8"))
-                self.assertEqual(payload["result_type"], "legacy_full_parent")
-                self.assertTrue(run_meta_checks.LEGACY_PROOF_PATH.exists())
-            finally:
-                run_meta_checks.LEGACY_RESULTS_PATH = old_results
-                run_meta_checks.LEGACY_PROOF_PATH = old_proof
                 run_meta_checks._run_sharded_graph_checks = old_graph
 
 

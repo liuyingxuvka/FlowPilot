@@ -1,6 +1,6 @@
 """startup intake payload validation helpers for ``flowpilot_router_startup_intake``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -181,61 +181,25 @@ def _apply_startup_intake_result_to_bootstrap(router: ModuleType, project_root: 
         state['pending_action'] = None
         return result_extra
     state['startup_answers'] = startup_intake['startup_answers']
-    state['startup_answer_interpretation'] = None
     state['startup_state'] = 'answers_complete'
-    state['flags']['startup_state_written_awaiting_answers'] = True
-    state['flags']['dialog_stopped_for_answers'] = True
+    state['flags']['startup_intake_result_recorded'] = True
+    state['flags']['startup_intake_body_boundary_enforced'] = True
     state['flags']['startup_answers_recorded'] = True
     seed_proof = router._run_deterministic_startup_bootstrap_seed(project_root, state)
     result_extra['deterministic_bootstrap_seed'] = {'evidence_path': state.get('deterministic_bootstrap_seed_evidence_path'), 'artifact_keys': sorted((seed_proof.get('artifacts') or {}).keys())}
     return result_extra
 
-def _validate_startup_answer_interpretation(router: ModuleType, payload: dict[str, Any], answers: dict[str, str]) -> dict[str, Any] | None:
-    _bind_router(router)
-    provenance = answers.get('provenance')
-    if provenance == STARTUP_ANSWER_PROVENANCE:
-        if payload.get('startup_answer_interpretation') is not None:
-            raise RouterError('startup_answer_interpretation is only allowed with ai_interpreted_from_explicit_user_reply provenance')
-        return None
-    receipt = payload.get('startup_answer_interpretation')
-    if not isinstance(receipt, dict):
-        raise RouterError('AI-interpreted startup answers require payload.startup_answer_interpretation receipt')
-    if receipt.get('schema_version') != STARTUP_ANSWER_INTERPRETATION_SCHEMA:
-        raise RouterError(f'startup_answer_interpretation requires schema_version={STARTUP_ANSWER_INTERPRETATION_SCHEMA}')
-    raw_text = receipt.get('raw_user_reply_text')
-    if not isinstance(raw_text, str) or not raw_text.strip():
-        raise RouterError("startup_answer_interpretation.raw_user_reply_text must preserve the user's non-empty reply")
-    interpreted_by = receipt.get('interpreted_by')
-    if interpreted_by not in {'controller', 'bootloader'}:
-        raise RouterError('startup_answer_interpretation.interpreted_by must be controller or bootloader')
-    if receipt.get('interpretation_provenance') != STARTUP_ANSWER_INTERPRETATION_PROVENANCE:
-        raise RouterError('startup_answer_interpretation.interpretation_provenance must match the AI-interpreted startup answer provenance')
-    if receipt.get('ambiguity_status') != 'none':
-        raise RouterError('ambiguous startup answers must be returned to the user instead of applied')
-    interpreted_answers = receipt.get('interpreted_answers')
-    if not isinstance(interpreted_answers, dict):
-        raise RouterError('startup_answer_interpretation.interpreted_answers must be an object')
-    expected = {key: answers[key] for key in STARTUP_ANSWER_ENUMS}
-    got = {key: interpreted_answers.get(key) for key in STARTUP_ANSWER_ENUMS}
-    if got != expected:
-        raise RouterError('startup_answer_interpretation.interpreted_answers must match payload.startup_answers')
-    allowed_keys = {'schema_version', 'raw_user_reply_text', 'interpreted_by', 'interpretation_provenance', 'ambiguity_status', 'interpreted_answers', 'reviewer_must_check_raw_reply_alignment', 'notes'}
-    extra = sorted(set(receipt) - allowed_keys)
-    if extra:
-        raise RouterError(f"startup_answer_interpretation contains unsupported fields: {', '.join(extra)}")
-    interpretation = {'schema_version': STARTUP_ANSWER_INTERPRETATION_SCHEMA, 'raw_user_reply_text': raw_text.strip(), 'interpreted_by': interpreted_by, 'interpretation_provenance': STARTUP_ANSWER_INTERPRETATION_PROVENANCE, 'ambiguity_status': 'none', 'interpreted_answers': expected, 'notes': receipt.get('notes'), 'recorded_at': utc_now()}
-    if 'reviewer_must_check_raw_reply_alignment' in receipt:
-        interpretation['reviewer_must_check_raw_reply_alignment'] = bool(receipt.get('reviewer_must_check_raw_reply_alignment'))
-    return interpretation
-
 def _validate_startup_answers(router: ModuleType, payload: dict[str, Any]) -> dict[str, str]:
     _bind_router(router)
+    extra_payload = sorted(set(payload) - {'startup_answers'})
+    if extra_payload:
+        raise RouterError(f"startup answers payload contains unsupported fields: {', '.join(extra_payload)}")
     answers = payload.get('startup_answers')
     if not isinstance(answers, dict):
-        raise RouterError('record_startup_answers requires payload.startup_answers object')
+        raise RouterError('startup intake result requires a startup_answers object')
     provenance = answers.get('provenance')
-    if provenance not in {STARTUP_ANSWER_PROVENANCE, STARTUP_ANSWER_INTERPRETATION_PROVENANCE}:
-        raise RouterError('startup answers require provenance=explicit_user_reply or ai_interpreted_from_explicit_user_reply')
+    if provenance != STARTUP_ANSWER_PROVENANCE:
+        raise RouterError('startup answers require provenance=explicit_user_reply from the native startup intake UI')
     allowed_keys = set(STARTUP_ANSWER_ENUMS) | {'provenance'}
     extra = sorted(set(answers) - allowed_keys)
     if extra:
@@ -248,28 +212,7 @@ def _validate_startup_answers(router: ModuleType, payload: dict[str, Any]) -> di
             raise RouterError(f'startup answer {answer_id} must be one of: {allowed}')
         validated[answer_id] = value
     validated['provenance'] = provenance
-    router._validate_startup_answer_interpretation(payload, validated)
     return validated
-
-def _validate_user_request(router: ModuleType, payload: dict[str, Any]) -> dict[str, str]:
-    _bind_router(router)
-    request = payload.get('user_request')
-    if not isinstance(request, dict):
-        raise RouterError('record_user_request requires payload.user_request object')
-    provenance = request.get('provenance')
-    if provenance != USER_REQUEST_PROVENANCE:
-        raise RouterError('user request requires provenance=explicit_user_request')
-    text = request.get('text')
-    if not isinstance(text, str) or not text.strip():
-        raise RouterError('user_request.text must contain the exact non-empty user task')
-    allowed_keys = {'text', 'provenance', 'source'}
-    extra = sorted(set(request) - allowed_keys)
-    if extra:
-        raise RouterError(f"user request contains unsupported fields: {', '.join(extra)}")
-    source = request.get('source') or 'flowpilot_activation_or_user_reply'
-    if not isinstance(source, str) or not source.strip():
-        raise RouterError('user_request.source must be a non-empty string when supplied')
-    return {'text': text.strip(), 'provenance': USER_REQUEST_PROVENANCE, 'source': source.strip()}
 
 __all__ = (
     '_forbidden_startup_intake_body_fields',
@@ -279,9 +222,7 @@ __all__ = (
     '_require_interactive_startup_intake_artifact',
     '_validate_startup_intake_result_payload',
     '_apply_startup_intake_result_to_bootstrap',
-    '_validate_startup_answer_interpretation',
     '_validate_startup_answers',
-    '_validate_user_request',
 )
 
 _LOCAL_NAMES = set(globals())

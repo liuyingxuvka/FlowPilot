@@ -82,7 +82,7 @@ Decision:
 
 ## FlowGuard Hotspot Contraction
 
-Compatibility-preserving splits:
+Public-entrypoint-preserving splits:
 
 - `flowpilot_router_work_packets_pm_role_writes_decisions.py` remains the
   import facade. The role-result, formal-gate, packet-outcome, and package
@@ -139,7 +139,7 @@ Scoped live-run limitation:
 - This active run appears peer-owned and is still being used by parallel AI
   work. It was not mutated, repaired, deleted, or rolled back in this pass.
 - The failed live audit is treated as a concurrency/runtime-state boundary, not
-  proof that the compatibility-preserving code split changed behavior.
+  proof that the public-entrypoint-preserving code split changed behavior.
 
 Background model regressions:
 

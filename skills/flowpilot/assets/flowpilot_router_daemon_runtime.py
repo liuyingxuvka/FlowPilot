@@ -1,6 +1,6 @@
 """Router daemon runtime helpers for FlowPilot router.
 
-The public CLI and compatibility names stay in `flowpilot_router`.  This module
+The public CLI and router names stay in `flowpilot_router`.  This module
 owns bounded daemon loop/status/lock lifecycle while using the router facade for
 shared state writers, controller scheduling, and startup-driver decisions.
 """

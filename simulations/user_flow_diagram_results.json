@@ -768,7 +768,7 @@
   },
   "ok": true,
   "safe_graph": {
-    "edge_count": 81,
+    "edge_count": 74,
     "invariant_failures": [],
     "labels": [
       "chat_mermaid_displayed",
@@ -782,7 +782,6 @@
       "route_frontier_loaded",
       "router_returned_chat_mermaid_display_text",
       "trigger_completion_chat_required",
-      "trigger_key_node_change_chat_required",
       "trigger_leaf_node_entry_chat_required",
       "trigger_major_node_entry_chat_required",
       "trigger_parent_node_entry_chat_required",
@@ -795,6 +794,6 @@
     ],
     "missing_labels": [],
     "ok": true,
-    "state_count": 82
+    "state_count": 75
   }
 }

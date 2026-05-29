@@ -10,7 +10,7 @@ Risk intent brief:
   writes, post-user-request intake writes, wait-boundary return, candidate fold
   classification, runtime binding checks, and high-risk fold rejection.
 - Hard invariants: accepted startup paths must apply `load_router` exactly once
-  before returning `ask_startup_questions`; accepted bootloader paths must stop
+  before returning `open_startup_intake_ui`; accepted bootloader paths must stop
   before `record_user_request`; accepted intake paths must stop before
   `start_role_slots`; enabled folds must have binding and CLI smoke evidence;
   generic card, relay, ledger, final replay, host, startup fact-card, and
@@ -420,7 +420,7 @@ def accepted_startup_matches_unfolded_baseline(state: State, _trace) -> Invarian
         if not state.load_router_applied:
             return InvariantResult.fail("accepted startup path did not apply load_router")
         if not state.startup_questions_returned:
-            return InvariantResult.fail("accepted startup path did not return startup questions")
+            return InvariantResult.fail("accepted startup path did not return startup intake options")
     return InvariantResult.pass_()
 
 
@@ -531,7 +531,7 @@ def terminal_decisions_are_explicit(state: State, _trace) -> InvariantResult:
 INVARIANTS = (
     Invariant(
         name="accepted_startup_matches_unfolded_baseline",
-        description="Accepted startup paths apply load_router once and return startup questions without crossing boundaries.",
+        description="Accepted startup paths apply load_router once and return startup intake options without crossing boundaries.",
         predicate=accepted_startup_matches_unfolded_baseline,
     ),
     Invariant(

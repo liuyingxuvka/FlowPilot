@@ -64,5 +64,5 @@ reused.
 | Meta layered full | `python simulations/run_meta_checks.py --full` | Run through `tmp/flowguard_background/run_meta_checks.*`; inspect exit code and metadata |
 | Capability layered full | `python simulations/run_capability_checks.py --full` | Run through `tmp/flowguard_background/run_capability_checks.*`; inspect exit code and metadata |
 
-The old `--legacy-full` parent checks are compatibility oracles only. They are
-not routine completion evidence for this pass unless explicitly requested.
+Historical monolithic checks are not active completion evidence.
+Use only the current layered full Meta/Capability commands for this matrix.

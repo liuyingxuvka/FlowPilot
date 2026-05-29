@@ -174,7 +174,7 @@ def _startup_route_sign_payload(router: ModuleType, project_root: Path, *, write
 
 def _route_map_route_sign_payload(router: ModuleType, project_root: Path, *, write: bool, mark_chat_displayed: bool) -> dict[str, Any]:
     _bind_router(router)
-    return router._route_sign_payload(project_root, write=write, trigger='key_node_change', mark_chat_displayed=mark_chat_displayed)
+    return router._route_sign_payload(project_root, write=write, trigger='major_node_entry', mark_chat_displayed=mark_chat_displayed)
 
 def _route_sign_has_canonical_route(router: ModuleType, payload: dict[str, Any]) -> bool:
     _bind_router(router)

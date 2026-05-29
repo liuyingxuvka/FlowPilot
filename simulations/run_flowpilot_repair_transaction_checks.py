@@ -59,7 +59,7 @@ HAZARD_EXPECTED_FAILURES = {
     "out_of_scope_repair_without_reason": "PM out-of-scope repair decision lacked FlowGuard incapability reason",
     "reissue_spec_outside_transaction": "PM repair wrote replacement artifacts outside a repair transaction",
     "await_existing_event_without_producer": "await_existing_event repair transaction lacked an existing producer",
-    "legacy_event_replay_without_producer": "legacy event_replay transaction lacked an existing producer compatibility alias",
+    "retired_event_replay_plan_kind": "repair transaction used unsupported executable plan kind",
     "operation_replay_without_safe_recorded_operation": "operation_replay repair transaction did not queue a safe recorded operation replay",
     "controller_repair_packet_without_boundaries": "controller_repair_work_packet transaction lacked bounded work packet and queued action",
     "role_reissue_without_event_producer": "role_reissue repair transaction lacked a concrete event producer",
@@ -112,8 +112,7 @@ def _state_id(state: model.State) -> str:
         f"{state.replay_operation_safe},{state.concrete_repair_action_queued},"
         f"role_producer={state.role_reissue_event_producer_bound},"
         f"{state.existing_event_producer_found},{state.controller_repair_packet_bounded},"
-        f"{state.router_internal_handler_found},{state.terminal_stop_recorded},"
-        f"legacy={state.legacy_event_replay_alias}|"
+        f"{state.router_internal_handler_found},{state.terminal_stop_recorded}|"
         f"stage={state.replacement_spec_written},{state.packet_files_staged},"
         f"{state.ledger_entries_staged},{state.dispatch_index_staged},"
         f"{state.router_resolution_table_staged},commit={state.transaction_committed_atomically},"

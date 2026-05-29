@@ -462,11 +462,11 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
         self.ack_system_card_action(root, action)
         with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "product_officer_passes_product_architecture_modelability", {"passed": True})
+            router.record_external_event(root, "product_officer_submits_product_behavior_model", {"passed": True})
         self.assertTrue(self.handle_pending_control_blocker(root))
         router.record_external_event(
             root,
-            "product_officer_passes_product_architecture_modelability",
+            "product_officer_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
                 "flowguard/product_architecture_modelability",
@@ -572,7 +572,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(
                 root,
-                "process_officer_passes_route_check",
+                "process_officer_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check",
@@ -581,7 +581,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             )
         self.complete_route_checks(root)
         router.record_external_event(root, "pm_activates_reviewed_route")
-    def test_legacy_product_officer_model_report_does_not_close_modelability_gate(self) -> None:
+    def test_unknown_product_officer_model_report_is_rejected(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -612,32 +612,32 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
         self.assertEqual(wait["gate_contract"]["gate_id"], "product_behavior_model")
-        self.assertIn("product_officer_passes_product_architecture_modelability", wait["allowed_external_events"])
-        self.assertIn("product_officer_blocks_product_architecture_modelability", wait["allowed_external_events"])
+        self.assertIn("product_officer_submits_product_behavior_model", wait["allowed_external_events"])
+        self.assertIn("product_officer_blocks_product_behavior_model", wait["allowed_external_events"])
         self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
 
-        router.record_external_event(root, "product_officer_model_report", {"legacy_status": "received"})
+        with self.assertRaisesRegex(router.RouterError, "unknown external event"):
+            router.record_external_event(root, "product_officer_model_report", {"status": "received"})
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["legacy_product_officer_model_report_received"])
-        self.assertFalse(state["flags"]["product_architecture_modelability_passed"])
+        self.assertFalse(state["flags"].get("product_behavior_model_submitted", False))
 
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
-        self.assertIn("product_officer_passes_product_architecture_modelability", wait["allowed_external_events"])
+        self.assertIn("product_officer_submits_product_behavior_model", wait["allowed_external_events"])
         self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
 
         router.record_external_event(
             root,
-            "product_officer_passes_product_architecture_modelability",
+            "product_officer_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
-                "flowguard/product_architecture_modelability",
+                "flowguard/product_behavior_model",
                 {"reviewed_by_role": "product_flowguard_officer", "passed": True},
             ),
         )
         action = self.deliver_expected_card(root, "pm.product_behavior_model_decision")
         self.assertEqual(action["card_id"], "pm.product_behavior_model_decision")
-    def test_process_route_model_canonical_event_writes_compatibility_alias(self) -> None:
+    def test_process_route_model_canonical_event_writes_canonical_artifact_only(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -661,7 +661,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(wait["action_type"], "await_role_decision")
         self.assertEqual(wait["gate_contract"]["gate_id"], "process_route_model")
         self.assertIn("process_officer_submits_process_route_model", wait["allowed_external_events"])
-        self.assertIn("process_officer_passes_route_check", wait["allowed_external_events"])
+        self.assertNotIn("process_officer_passes_route_check", wait["allowed_external_events"])
 
         router.record_external_event(
             root,
@@ -670,9 +670,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["process_route_model_submitted"])
-        self.assertTrue(state["flags"]["process_officer_route_check_passed"])
         self.assertTrue((run_root / "flowguard" / "process_route_model.json").exists())
-        self.assertTrue((run_root / "flowguard" / "route_process_check.json").exists())
+        self.assertFalse((run_root / "flowguard" / "route_process_check.json").exists())
 
         action = self.deliver_expected_card(root, "pm.process_route_model_decision")
         self.assertEqual(action["card_id"], "pm.process_route_model_decision")

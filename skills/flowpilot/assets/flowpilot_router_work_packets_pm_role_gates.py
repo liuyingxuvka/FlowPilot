@@ -83,19 +83,6 @@ def _pm_role_work_gate_mapping_artifact_path(router: ModuleType, run_root: Path,
     return run_root / 'flowguard' / f'{router._safe_packet_id_component(gate_id)}_pm_role_work_gate_mapping.json'
 
 
-def _pm_role_work_gate_mapping_alias_specs(router: ModuleType, run_root: Path, gate_contract: dict[str, Any], mapped_event: str) -> list[tuple[Path, str, str]]:
-    _bind_router(router)
-    gate_id = str(gate_contract.get('gate_id') or 'gate')
-    if gate_id == 'product_behavior_model':
-        if mapped_event in set(gate_contract.get('pass_events') or []):
-            return [(run_root / 'flowguard' / 'product_architecture_modelability.json', 'flowpilot.product_architecture_modelability.v1', 'product_architecture_modelability')]
-        if mapped_event in set(gate_contract.get('block_events') or []):
-            return [(run_root / 'flowguard' / 'product_architecture_modelability_block.json', 'flowpilot.product_architecture_modelability_block.v1', 'product_architecture_modelability_block')]
-    if gate_id == 'process_route_model':
-        return [(run_root / 'flowguard' / 'route_process_check.json', 'flowpilot.route_process_check.v1', 'route_process_check')]
-    return []
-
-
 def _pm_role_work_gate_mappings_for_decision(router: ModuleType, decision_payload: dict[str, Any], records: list[dict[str, Any]], *, decision: str) -> list[dict[str, Any]]:
     _bind_router(router)
     if decision != 'absorbed':
@@ -139,9 +126,7 @@ def _apply_pm_role_work_gate_mappings(router: ModuleType, project_root: Path, ru
             else:
                 artifact['process_viability_verdict'] = 'blocked'
         write_json(artifact_path, artifact)
-        for alias_path, schema_version, alias_kind in router._pm_role_work_gate_mapping_alias_specs(run_root, gate_contract, mapped_event):
-            _write_compatibility_alias_artifact(project_root, artifact_path, alias_path, schema_version=schema_version, alias_kind=alias_kind)
-        _sync_model_gate_alias_flags(run_state, mapped_event)
+        _sync_model_gate_flags(run_state, mapped_event)
         run_state.setdefault('events', []).append({'event': mapped_event, 'summary': meta['summary'], 'payload': {'mapped_from_event': PM_ROLE_WORK_RESULT_DECISION_EVENT, 'pm_role_work_request_id': mapping.get('request_id'), 'packet_id': mapping.get('packet_id'), 'target_gate_id': gate_contract.get('gate_id'), 'gate_mapping_artifact_path': project_relative(project_root, artifact_path), 'sealed_result_body_read_by_controller': False}, 'recorded_at': decision_record['recorded_at']})
 
 
@@ -168,7 +153,6 @@ __all__ = (
     '_pm_role_work_target_gate_contract',
     '_pm_role_work_gate_mapping_candidates',
     '_pm_role_work_gate_mapping_artifact_path',
-    '_pm_role_work_gate_mapping_alias_specs',
     '_pm_role_work_gate_mappings_for_decision',
     '_apply_pm_role_work_gate_mappings',
     '_pm_role_work_result_decision_payload_contract',

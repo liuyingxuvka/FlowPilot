@@ -1,4 +1,4 @@
-"""Compatibility entrypoint for the FlowPilot install self-check."""
+"""FlowPilot install self-check entrypoint."""
 
 from __future__ import annotations
 

@@ -1,9 +1,4 @@
-"""Internal router owner helpers extracted from flowpilot_router.
-
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
-stable while the implementation body lives outside the facade.
-"""
+"""Internal router owner helpers extracted from flowpilot_router."""
 
 from __future__ import annotations
 
@@ -106,13 +101,6 @@ def _write_route_process_pass_report(
             **_role_output_envelope_record(payload),
         },
     )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _route_process_check_path(run_root),
-        schema_version="flowpilot.route_process_check.v1",
-        alias_kind="route_process_check",
-    )
 
 def _write_route_process_issue_report(
     project_root: Path,
@@ -158,13 +146,6 @@ def _write_route_process_issue_report(
             **_role_output_envelope_record(payload),
         },
     )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _route_process_check_path(run_root),
-        schema_version="flowpilot.route_process_check.v1",
-        alias_kind="route_process_check",
-    )
     for flag in (
         "route_draft_written_by_pm",
         "process_officer_route_check_card_delivered",
@@ -188,55 +169,9 @@ def _write_route_process_issue_report(
         "reported_at": utc_now(),
     }
 
-def _write_route_product_pass_report(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    payload: dict[str, Any],
-) -> None:
-    payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "product_flowguard_officer":
-        raise RouterError("route product check must be reviewed_by_role=product_flowguard_officer")
-    if payload.get("passed") is not True or payload.get("route_model_review_verdict") != "pass":
-        raise RouterError("route product check requires route_model_review_verdict=pass")
-    required_true = (
-        "product_behavior_model_checked",
-        "route_maps_to_product_behavior_model",
-    )
-    missing = [field for field in required_true if payload.get(field) is not True]
-    if missing:
-        raise RouterError("route product check requires " + ", ".join(f"{field}=true" for field in missing))
-    checked_paths = [
-        _current_route_draft_path(run_root),
-        _require_product_behavior_model_report(project_root, run_root),
-        run_root / "root_acceptance_contract.json",
-        _require_process_route_model_report(project_root, run_root),
-        run_root / "flowguard" / "process_route_model_pm_decision.json",
-    ]
-    missing_paths = [project_relative(project_root, item) for item in checked_paths if not item.exists()]
-    if missing_paths:
-        raise RouterError(f"route product check is missing source paths: {', '.join(missing_paths)}")
-    write_json(
-        _route_product_check_path(run_root),
-        {
-            "schema_version": "flowpilot.route_product_check.v1",
-            "run_id": run_state["run_id"],
-            "reviewed_by_role": "product_flowguard_officer",
-            "passed": True,
-            "route_model_review_verdict": "pass",
-            "product_behavior_model_checked": True,
-            "route_maps_to_product_behavior_model": True,
-            "source_paths": [project_relative(project_root, item) for item in checked_paths],
-            "residual_blindspots": payload.get("residual_blindspots") or [],
-            "reported_at": utc_now(),
-            **_role_output_envelope_record(payload),
-        },
-    )
-
 __all__ = (
     '_write_route_process_pass_report',
     '_write_route_process_issue_report',
-    '_write_route_product_pass_report',
 )
 
 _LOCAL_NAMES = set(globals())

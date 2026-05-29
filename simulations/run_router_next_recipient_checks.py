@@ -120,7 +120,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         "blocked_state_count": sum(1 for state in states if state.status == "blocked"),
         "missing_obligations_at_completion": missing_obligations,
         "missing_recipient_edges": missing_recipients,
-        "legacy_obligation_count": len(model.LEGACY_OBLIGATIONS),
+        "router_obligation_count": len(model.ROUTER_OBLIGATIONS),
         "invariant_failures": graph["invariant_failures"],
     }
 

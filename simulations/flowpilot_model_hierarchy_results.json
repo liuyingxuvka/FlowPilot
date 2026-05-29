@@ -274,60 +274,31 @@
     "heavy_parent_full_regression_obligations": [],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
-    "legacy_monolith_commands": {
-      "capability": "python simulations/run_capability_checks.py --legacy-full",
-      "meta": "python simulations/run_meta_checks.py --legacy-full"
-    },
     "missing_child_results": [],
     "ok": true,
     "parents": [
       {
         "edge_count": 18,
-        "full_state_count": 1949768,
-        "legacy_full_regression": {
+        "layered_full_regression": {
           "current": true,
-          "legacy_monolith_status": {
-            "created_at": "2026-05-16T11:44:29.842028+00:00",
-            "edge_count": 2010665,
-            "proof_file": "simulations/results.proof.json",
-            "reason": "full proof fingerprint mismatch",
-            "result_file": "simulations/results.json",
-            "state_count": 1949768,
-            "valid": false
-          },
           "proof": {
-            "created_at": "2026-05-28T21:09:08.102224+00:00",
+            "created_at": "2026-05-29T01:28:13.781628+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
-            "legacy_monolith_required": false,
             "proof_file": "simulations/meta_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
             "valid": true
-          },
-          "required_for_release": false,
-          "result": {
-            "edge_count": 2010665,
-            "model_id": "meta",
-            "ok": true,
-            "release_confidence": null,
-            "result_file": "simulations/results.json",
-            "result_type": "legacy_full_parent",
-            "routine_confidence": null,
-            "state_count": 1949768,
-            "tier": "huge"
           }
         },
-        "legacy_monolith_command": "python simulations/run_meta_checks.py --legacy-full",
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-28T21:09:08.102224+00:00",
+          "created_at": "2026-05-29T01:28:13.781628+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
-          "legacy_monolith_required": false,
           "proof_file": "simulations/meta_layered_full_results.proof.json",
           "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
@@ -346,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-28T21:09:10.177071+00:00",
+            "created_at": "2026-05-29T01:28:16.209264+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -369,51 +340,26 @@
       },
       {
         "edge_count": 14,
-        "full_state_count": 1959064,
-        "legacy_full_regression": {
+        "layered_full_regression": {
           "current": true,
-          "legacy_monolith_status": {
-            "created_at": "2026-05-16T11:49:11.742612+00:00",
-            "edge_count": 2036030,
-            "proof_file": "simulations/capability_results.proof.json",
-            "reason": "full proof fingerprint mismatch",
-            "result_file": "simulations/capability_results.json",
-            "state_count": 1959064,
-            "valid": false
-          },
           "proof": {
-            "created_at": "2026-05-28T21:09:12.033940+00:00",
+            "created_at": "2026-05-29T01:28:13.713630+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
-            "legacy_monolith_required": false,
             "proof_file": "simulations/capability_layered_full_results.proof.json",
             "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
             "state_count": 10,
             "valid": true
-          },
-          "required_for_release": false,
-          "result": {
-            "edge_count": 2036030,
-            "model_id": "capability",
-            "ok": true,
-            "release_confidence": null,
-            "result_file": "simulations/capability_results.json",
-            "result_type": "legacy_full_parent",
-            "routine_confidence": null,
-            "state_count": 1959064,
-            "tier": "huge"
           }
         },
-        "legacy_monolith_command": "python simulations/run_capability_checks.py --legacy-full",
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-28T21:09:12.033940+00:00",
+          "created_at": "2026-05-29T01:28:13.713630+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
-          "legacy_monolith_required": false,
           "proof_file": "simulations/capability_layered_full_results.proof.json",
           "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
@@ -432,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-28T21:09:13.973366+00:00",
+            "created_at": "2026-05-29T01:28:16.132736+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1317,13 +1263,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 52,
+        "edge_count": 50,
         "model_id": "flowpilot_control_transaction_registry",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
         "role": "child_evidence",
-        "state_count": 53,
+        "state_count": 51,
         "tier": "small"
       },
       {
@@ -1657,13 +1603,13 @@
         "tier": "medium"
       },
       {
-        "edge_count": 81,
+        "edge_count": 74,
         "model_id": "user_flow_diagram",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/user_flow_diagram_results.json",
         "role": "child_evidence",
-        "state_count": 82,
+        "state_count": 75,
         "tier": "small"
       }
     ],

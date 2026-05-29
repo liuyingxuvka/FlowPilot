@@ -38,48 +38,48 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         yield _step(
             state,
-            label="startup_three_questions_asked",
-            action="ask background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before capability startup",
-            startup_questions_asked=True,
+            label="startup_intake_ui_completed",
+            action="open the native startup intake UI for background-agent, continuation, and display-surface options",
+            startup_intake_ui_completed=True,
         )
         return
 
-    if not state.startup_dialog_stopped_for_answers:
+    if not state.startup_intake_result_recorded:
         yield _step(
             state,
-            label="startup_dialog_stopped_for_user_answers",
-            action="end the assistant response after asking startup questions and wait for the user's reply",
-            startup_dialog_stopped_for_answers=True,
+            label="startup_intake_result_recorded",
+            action="record the confirmed native startup intake result without accepting chat-body substitutes",
+            startup_intake_result_recorded=True,
         )
         return
 
-    if not state.startup_background_agents_answered:
+    if not state.startup_background_agent_option_recorded:
         yield _step(
             state,
-            label="startup_background_agents_answered",
-            action="record explicit user answer for live background agents versus single-agent continuity",
-            startup_background_agents_answered=True,
+            label="startup_background_agent_option_recorded",
+            action="record the startup intake background-agent option for live background agents versus single-agent continuity",
+            startup_background_agent_option_recorded=True,
         )
         return
 
-    if not state.startup_scheduled_continuation_answered:
+    if not state.startup_continuation_option_recorded:
         yield _step(
             state,
-            label="startup_scheduled_continuation_answered",
-            action="record explicit user answer for heartbeat/automation versus manual resume",
-            startup_scheduled_continuation_answered=True,
+            label="startup_continuation_option_recorded",
+            action="record the startup intake continuation option for heartbeat/automation versus manual resume",
+            startup_continuation_option_recorded=True,
         )
         return
 
-    if not state.startup_display_surface_answered:
+    if not state.startup_display_surface_option_recorded:
         yield _step(
             state,
-            label="startup_display_surface_answered",
-            action="record explicit user answer for opening Cockpit UI immediately versus using chat route signs",
-            startup_display_surface_answered=True,
+            label="startup_display_surface_option_recorded",
+            action="record the startup intake display-surface option for Cockpit UI versus chat route signs",
+            startup_display_surface_option_recorded=True,
             startup_answer_values_valid=True,
             startup_answer_provenance="explicit_user_reply",
         )
@@ -200,12 +200,12 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.top_level_control_state_absent_or_quarantined:
+    if not state.prior_control_state_quarantined:
         yield _step(
             state,
-            label="top_level_control_state_absent_or_quarantined",
-            action="verify legacy top-level control state is absent, legacy-only, or quarantined before capability work continues",
-            top_level_control_state_absent_or_quarantined=True,
+            label="prior_control_state_quarantined",
+            action="verify prior top-level control state is absent, retired-only, or quarantined before capability work continues",
+            prior_control_state_quarantined=True,
         )
         return
 

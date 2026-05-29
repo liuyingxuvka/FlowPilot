@@ -1,6 +1,6 @@
-"""Compatibility facade for Controller scheduler receipt helpers.
+"""Public facade for Controller scheduler receipt helpers.
 
-This compatibility facade preserves the original import path while focused
+This public facade preserves the original import path while focused
 child modules own the implementation groups.
 """
 
@@ -65,7 +65,6 @@ __all__ = (
     '_reconcile_pending_controller_action_receipt',
     '_scheduler_row_reconciliation_for_entry',
     '_backfill_scheduler_row_from_reconciled_controller_action',
-    '_canonicalize_legacy_startup_daemon_reconciliation',
     '_clear_pending_controller_action_if_matches',
     '_reconcile_scheduled_controller_action_receipts',
 )

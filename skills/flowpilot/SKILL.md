@@ -36,7 +36,7 @@ Before the daemon is started or attached, the assistant is only the FlowPilot bo
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. Compatibility-only alias retained for older automation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait --new-invocation`; do not choose it for new operator instructions when `start` is available.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. `start` is the only current entrypoint for a new formal FlowPilot invocation.
 
 Manual diagnostic/repair commands:
 
@@ -46,7 +46,7 @@ python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json 
 python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait
 ```
 
-`next` and `run-until-wait` without `--new-invocation` are existing-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
+`next` and `run-until-wait` are existing-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
 
 Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
 
@@ -68,7 +68,7 @@ The startup banner and FlowPilot Route Sign are user-facing display text. When a
 
 When no Cockpit/UI surface is open, show the router's public route sign together with the current status summary. Use only `current_status_summary.json` and public route-display text for that summary; do not show evidence tables, source fields, hashes, or sealed packet/result body details. Treat the status summary as display-only: it can explain what the user sees, but it never authorizes Controller stop and stale `next_step` projection never overrides Router daemon status plus `runtime/controller_action_ledger.json`. When the Cockpit/UI surface is open, let the UI render the same status summary and keep chat updates short.
 
-When the router returns `record_user_request` after a native startup intake result, apply it with no payload; the router will materialize the sealed UI record into the run and create the PM-bound `user_intake` packet. Only use the legacy `payload.user_request.text` path when the action envelope explicitly requires `requires_payload: user_request`.
+When the router returns `record_user_request` after a native startup intake result, apply it with no payload; the router will materialize the sealed UI record into the run and create the PM-bound `user_intake` packet. Do not provide chat-body startup text; startup authority comes from the sealed native UI record.
 
 When the router returns `start_role_slots` with `requires_host_spawn: true`, spawn all six requested role agents before completing the action. For a direct pending action, apply it with the required payload. For a Controller ledger row, write `controller-receipt` with one current `agent_id` per requested role, `model_policy: strongest_available`, `reasoning_effort_policy: highest_available`, `spawn_result: spawned_fresh_for_task`, `spawned_after_startup_answers: true`, and current `spawned_for_run_id` in the receipt payload. Every background role agent must be explicitly requested with the strongest available host model and the highest available reasoning effort; do not rely on inheriting the foreground/Controller model. Do not treat empty role slots, prior-route agent IDs, or later on-demand subagents as startup success.
 
@@ -112,4 +112,4 @@ The active prompt content lives in the copied runtime kit and prompt manifest, n
 - `assets/packet_runtime.py`
 - `assets/role_output_runtime.py`
 
-Old long-form protocol material is legacy source material only. Formal FlowPilot runs receive prompt content through the router and manifest.
+Old long-form protocol material is source-history material only. Formal FlowPilot runs receive prompt content through the router and manifest.

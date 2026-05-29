@@ -24,7 +24,7 @@ the smallest scoped fix and matching OpenSpec/FlowGuard evidence.
 
 | File | Approx. Lines | Main Maintenance Concern |
 | --- | ---: | --- |
-| `skills/flowpilot/assets/flowpilot_router.py` | 38,058 | event/action hotspots remain in a large compatibility facade |
+| `skills/flowpilot/assets/flowpilot_router.py` | 38,058 | event/action hotspots remain in a large public Router entrypoint |
 | `tests/test_flowpilot_router_runtime.py` | 15,226 | aggregate runtime tests remain difficult to navigate |
 | `simulations/capability_model.py` | 8,148 | phase helpers remain large |
 | `simulations/meta_model.py` | 7,075 | phase helpers remain large |
@@ -37,7 +37,7 @@ the smallest scoped fix and matching OpenSpec/FlowGuard evidence.
 - Prefer git history for authoritative rollback.
 - Use the local backup directory for manual diff/recovery during this pass.
 - Do not add tracked full-file backups of large Python modules.
-- Keep original public facades until a future explicit compatibility-removal
+- Keep original public facades until a future explicit public-entrypoint
   change.
 
 ## Required Validation Shape
@@ -67,8 +67,7 @@ python simulations\run_capability_checks.py --full
 
 The default Meta/Capability commands validate thin-parent routine confidence.
 `--full` validates the fast layered full-parent proof and refreshes
-`simulations/*_layered_full_results.json`. Use `--legacy-full` only for the old
-monolithic compatibility oracle. For background checks, use
+`simulations/*_layered_full_results.json`. For background checks, use
 `tmp/flowguard_background/` and inspect stdout, stderr, combined, exit, and
 metadata artifacts before claiming completion.
 
@@ -77,8 +76,8 @@ metadata artifacts before claiming completion.
 - Source version advanced to `0.9.7` for the local structure simplification
   pass. No tag, remote push, GitHub Release, deploy, or package publication is
   part of this change.
-- `scripts/flowpilot_user_flow_diagram.py` is now a thin compatibility wrapper.
-- `scripts/check_install.py` is now a thin compatibility entrypoint backed by
+- `scripts/flowpilot_user_flow_diagram.py` is now a thin public wrapper.
+- `scripts/check_install.py` is now a thin public entrypoint backed by
   `scripts/install_checks/`.
 - `skills/flowpilot/assets/packet_runtime.py` remains the public facade and
   delegates schema, path, contract, ledger, relay, active-holder, session, and
@@ -86,9 +85,8 @@ metadata artifacts before claiming completion.
 - `simulations/meta_model.py` and `simulations/capability_model.py` remain the
   parent model entrypoints and delegate phase bodies to focused phase modules.
 - Meta and Capability regression evidence is layered. Thin-parent results carry
-  routine confidence, layered full-parent results carry release confidence, and
-  the old monolithic graph remains available through explicit `--legacy-full`
-  compatibility runs. The current background `run_meta_checks` and
+  routine confidence, and layered full-parent results carry release confidence.
+  The current background `run_meta_checks` and
   `run_capability_checks` artifacts both completed with exit `0` from the
   layered `--full` commands.
 - Router external-event intake helpers and selected controller action handlers

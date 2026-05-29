@@ -1,6 +1,6 @@
 """startup mechanical audit actions and context helpers for ``flowpilot_router_startup_fact_boundary``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 

@@ -1,6 +1,6 @@
 """Coarse runtime state owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """
@@ -80,7 +80,7 @@ def _merge_stale_run_state_save(existing: dict[str, Any], current: dict[str, Any
 
 def new_bootstrap_state(router: ModuleType, run_id: str | None=None, run_root_rel: str | None=None) -> dict[str, Any]:
     _bind_router(router)
-    return {'schema_version': BOOTSTRAP_STATE_SCHEMA, 'status': 'new', 'bootstrap_scope': 'run_scoped' if run_id and run_root_rel else 'legacy', 'router_loaded': False, 'startup_state': 'none', 'bootloader_actions': 0, 'router_action_requests': 0, 'pending_action': None, 'startup_answers': None, 'user_request': None, 'run_id': run_id, 'run_root': run_root_rel, 'flags': {action['flag']: False for action in BOOT_ACTIONS}, 'history': []}
+    return {'schema_version': BOOTSTRAP_STATE_SCHEMA, 'status': 'new', 'bootstrap_scope': 'run_scoped' if run_id and run_root_rel else 'pre_run', 'router_loaded': False, 'startup_state': 'none', 'bootloader_actions': 0, 'router_action_requests': 0, 'pending_action': None, 'startup_answers': None, 'user_request': None, 'run_id': run_id, 'run_root': run_root_rel, 'flags': {action['flag']: False for action in BOOT_ACTIONS}, 'history': []}
 
 def _create_startup_bootstrap_state(router: ModuleType, project_root: Path) -> dict[str, Any]:
     _bind_router(router)
@@ -132,7 +132,6 @@ def load_bootstrap_state(router: ModuleType, project_root: Path, *, create_if_mi
     state.setdefault('pending_action', None)
     state.setdefault('router_action_requests', 0)
     state.setdefault('bootloader_actions', 0)
-    router._normalize_startup_question_stop_boundary(state)
     return state
 
 def save_bootstrap_state(router: ModuleType, project_root: Path, state: dict[str, Any]) -> None:

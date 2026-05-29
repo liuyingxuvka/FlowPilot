@@ -36,56 +36,56 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             flowpilot_enabled=True,
             run_scoped_startup_bootstrap_created=True,
             heartbeat_active=True,
-            active_node="ask_startup_questions",
+            active_node="open_startup_intake_ui",
         )
         return
 
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         yield _step(
             state,
-            label="startup_three_questions_asked",
-            action="ask background-agent permission, scheduled-continuation permission, and whether to open Cockpit UI before banner",
-            startup_questions_asked=True,
-            active_node="stop_for_startup_answers",
+            label="startup_intake_ui_completed",
+            action="open the native startup intake UI for background-agent, continuation, and display-surface options",
+            startup_intake_ui_completed=True,
+            active_node="await_startup_intake_result",
         )
         return
 
-    if not state.startup_dialog_stopped_for_answers:
+    if not state.startup_intake_result_recorded:
         yield _step(
             state,
-            label="startup_dialog_stopped_for_user_answers",
-            action="end the assistant response after asking startup questions and wait for the user's reply",
-            startup_dialog_stopped_for_answers=True,
-            active_node="await_background_agent_answer",
+            label="startup_intake_result_recorded",
+            action="record the confirmed native startup intake result without accepting chat-body substitutes",
+            startup_intake_result_recorded=True,
+            active_node="record_startup_background_agent_option",
         )
         return
 
-    if not state.startup_background_agents_answered:
+    if not state.startup_background_agent_option_recorded:
         yield _step(
             state,
-            label="startup_background_agents_answered",
-            action="record explicit user answer for six background subagents versus single-agent continuity",
-            startup_background_agents_answered=True,
-            active_node="await_scheduled_continuation_answer",
+            label="startup_background_agent_option_recorded",
+            action="record the startup intake background-agent option for six background subagents versus single-agent continuity",
+            startup_background_agent_option_recorded=True,
+            active_node="record_startup_continuation_option",
         )
         return
 
-    if not state.startup_scheduled_continuation_answered:
+    if not state.startup_continuation_option_recorded:
         yield _step(
             state,
-            label="startup_scheduled_continuation_answered",
-            action="record explicit user answer for heartbeat/automation versus manual resume",
-            startup_scheduled_continuation_answered=True,
-            active_node="await_display_surface_answer",
+            label="startup_continuation_option_recorded",
+            action="record the startup intake continuation option for heartbeat/automation versus manual resume",
+            startup_continuation_option_recorded=True,
+            active_node="record_startup_display_surface_option",
         )
         return
 
-    if not state.startup_display_surface_answered:
+    if not state.startup_display_surface_option_recorded:
         yield _step(
             state,
-            label="startup_display_surface_answered",
-            action="record explicit user answer for opening Cockpit UI immediately versus using chat route signs",
-            startup_display_surface_answered=True,
+            label="startup_display_surface_option_recorded",
+            action="record the startup intake display-surface option for Cockpit UI versus chat route signs",
+            startup_display_surface_option_recorded=True,
             startup_answer_values_valid=True,
             startup_answer_provenance="explicit_user_reply",
             active_node="create_run_directory",
@@ -206,16 +206,16 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             label="control_state_written_under_run_root",
             action="write state, frontier, route, crew, and review control artifacts only under the current run directory",
             control_state_written_under_run_root=True,
-            active_node="quarantine_legacy_top_level_control_state",
+            active_node="quarantine_prior_top_level_control_state",
         )
         return
 
-    if not state.top_level_control_state_absent_or_quarantined:
+    if not state.prior_control_state_quarantined:
         yield _step(
             state,
-            label="top_level_control_state_absent_or_quarantined",
-            action="verify legacy top-level control state is absent, legacy-only, or quarantined before current work continues",
-            top_level_control_state_absent_or_quarantined=True,
+            label="prior_control_state_quarantined",
+            action="verify prior top-level control state is absent, retired-only, or quarantined before current work continues",
+            prior_control_state_quarantined=True,
             active_node="clear_preflow_visible_plan",
         )
         return

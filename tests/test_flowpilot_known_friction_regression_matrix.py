@@ -149,14 +149,12 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
 
         self.assertFalse(report["ok"])
         self.assertIn("missing_defect_family_proof_artifact", gate_codes)
-        self.assertIn("legacy_path_missing_proof_artifact", gate_codes)
         self.assertIn("missing_proof_evidence_artifact", ledger_codes)
 
     def test_proof_artifacts_bind_to_current_result_files(self) -> None:
         gate_plan = matrix.build_defect_family_gate_plan()
 
         self.assertTrue(gate_plan.require_proof_artifacts)
-        self.assertTrue(gate_plan.require_legacy_path_dispositions)
         for evidence in gate_plan.proof_evidence:
             with self.subTest(evidence_id=evidence.evidence_id):
                 artifact = evidence.proof_artifact

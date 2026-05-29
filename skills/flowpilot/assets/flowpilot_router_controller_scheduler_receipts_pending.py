@@ -1,7 +1,7 @@
 """Pending Controller receipt reconciliation helpers.
 
 Receives the router facade explicitly so shared state writers and
-public entrypoints keep the bound-router compatibility contract.
+public entrypoints keep the bound-router contract.
 """
 
 from __future__ import annotations

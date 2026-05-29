@@ -1,4 +1,4 @@
-"""Compatibility wrapper for the canonical router facade export registry."""
+"""Public wrapper for the canonical router facade export registry."""
 
 from __future__ import annotations
 

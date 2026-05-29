@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parent
 LEDGER_PATH = ROOT / "flowpilot_parent_responsibility_ledger.json"
 PROOF_SCHEMA = 1
 HEAVYWEIGHT_STATE_THRESHOLD = 10_000
-ALLOWED_OWNER_TYPES = {"child", "shared_kernel", "parent_only", "legacy_full_only", "out_of_scope"}
+ALLOWED_OWNER_TYPES = {"child", "shared_kernel", "parent_only", "out_of_scope"}
 THIN_RESULT_PATHS = {
     "meta": ROOT / "meta_thin_parent_results.json",
     "capability": ROOT / "capability_thin_parent_results.json",
@@ -30,23 +30,7 @@ LAYERED_FULL_PROOF_PATHS = {
     "meta": ROOT / "meta_layered_full_results.proof.json",
     "capability": ROOT / "capability_layered_full_results.proof.json",
 }
-LEGACY_RESULT_PATHS = {
-    "meta": ROOT / "results.json",
-    "capability": ROOT / "capability_results.json",
-}
-LEGACY_PROOF_PATHS = {
-    "meta": ROOT / "results.proof.json",
-    "capability": ROOT / "capability_results.proof.json",
-}
-LEGACY_MODEL_PATHS = {
-    "meta": ROOT / "meta_model.py",
-    "capability": ROOT / "capability_model.py",
-}
-LEGACY_MODEL_HELPER_PATTERNS = {
-    "meta": "meta_model_*_phase.py",
-    "capability": "capability_model_*_phase.py",
-}
-LEGACY_RUNNER_PATHS = {
+RUNNER_PATHS = {
     "meta": ROOT / "run_meta_checks.py",
     "capability": ROOT / "run_capability_checks.py",
 }
@@ -266,59 +250,6 @@ def _evidence_contract(model_id: str, row: dict[str, Any] | None) -> dict[str, A
     }
 
 
-def legacy_input_fingerprint(parent: str) -> str:
-    model_paths = (
-        LEGACY_MODEL_PATHS[parent],
-        *sorted(ROOT.glob(LEGACY_MODEL_HELPER_PATTERNS[parent])),
-    )
-    payload = {
-        "flowguard_schema_version": _flowguard_schema_version(),
-        "mode": "legacy_full_parent",
-        "model": {path.name: file_sha256(path) for path in model_paths},
-        "runner": file_sha256(LEGACY_RUNNER_PATHS[parent]),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return _sha256_bytes(encoded)
-
-
-def legacy_full_status(parent: str) -> dict[str, Any]:
-    result_path = LEGACY_RESULT_PATHS[parent]
-    proof_path = LEGACY_PROOF_PATHS[parent]
-    proof = read_json(proof_path)
-    if not isinstance(proof, Mapping):
-        return {
-            "valid": False,
-            "reason": "proof missing or invalid",
-            "result_file": result_path.relative_to(ROOT.parent).as_posix(),
-            "proof_file": proof_path.relative_to(ROOT.parent).as_posix(),
-        }
-    if not result_path.exists():
-        return {
-            "valid": False,
-            "reason": "result missing",
-            "result_file": result_path.relative_to(ROOT.parent).as_posix(),
-            "proof_file": proof_path.relative_to(ROOT.parent).as_posix(),
-        }
-    expected = legacy_input_fingerprint(parent)
-    result_fingerprint = file_sha256(result_path)
-    valid = (
-        proof.get("schema") == PROOF_SCHEMA
-        and proof.get("check") == parent
-        and proof.get("ok") is True
-        and proof.get("input_fingerprint") == expected
-        and proof.get("result_fingerprint") == result_fingerprint
-    )
-    return {
-        "valid": valid,
-        "reason": "valid full proof" if valid else "full proof fingerprint mismatch",
-        "result_file": result_path.relative_to(ROOT.parent).as_posix(),
-        "proof_file": proof_path.relative_to(ROOT.parent).as_posix(),
-        "created_at": proof.get("created_at"),
-        "state_count": _walk_counts(read_json(result_path)).get("state_count"),
-        "edge_count": _walk_counts(read_json(result_path)).get("edge_count"),
-    }
-
-
 def layered_full_input_fingerprint(parent: str, runner_path: Path) -> str:
     rows = result_index()
     parent_data = _ledger().get("parents", {}).get(parent, {})
@@ -405,7 +336,7 @@ def _write_layered_full_proof(
 def layered_full_status(parent: str) -> dict[str, Any]:
     result_path = LAYERED_FULL_RESULT_PATHS[parent]
     proof_path = LAYERED_FULL_PROOF_PATHS[parent]
-    runner_path = LEGACY_RUNNER_PATHS[parent]
+    runner_path = RUNNER_PATHS[parent]
     valid, reason = valid_layered_full_proof(
         parent=parent,
         runner_path=runner_path,
@@ -439,18 +370,9 @@ def layered_full_status(parent: str) -> dict[str, Any]:
 
 def release_regression_status(parent: str) -> dict[str, Any]:
     layered = layered_full_status(parent)
-    if layered.get("valid"):
-        return {
-            **layered,
-            "kind": "layered_full_parent",
-            "legacy_monolith_required": False,
-        }
-    legacy = legacy_full_status(parent)
     return {
-        **legacy,
-        "kind": "legacy_full_parent",
-        "legacy_monolith_required": True,
-        "layered_status": layered,
+        **layered,
+        "kind": "layered_full_parent",
     }
 
 
@@ -615,8 +537,8 @@ def build_thin_parent_result(parent: str) -> dict[str, Any]:
             "failures": failures,
             "full_regression_release_partitions": full_release_obligations,
         },
-        "legacy_full_regression": {
-            "required_for_release": bool(release_status.get("legacy_monolith_required")),
+        "layered_full_regression": {
+            "required_for_release": bool(full_release_obligations),
             "current": bool(release_status.get("valid")),
             "status": release_status,
         },
@@ -649,8 +571,6 @@ def thin_input_fingerprint(parent: str, runner_path: Path) -> str:
         for evidence_id in evidence_ids
         if evidence_id in rows
     }
-    legacy_result = LEGACY_RESULT_PATHS[parent]
-    legacy_proof = LEGACY_PROOF_PATHS[parent]
     layered_result = LAYERED_FULL_RESULT_PATHS[parent]
     layered_proof = LAYERED_FULL_PROOF_PATHS[parent]
     payload = {
@@ -661,8 +581,6 @@ def thin_input_fingerprint(parent: str, runner_path: Path) -> str:
         "runner": file_sha256(runner_path),
         "ledger": file_sha256(LEDGER_PATH),
         "evidence": evidence,
-        "legacy_result": file_sha256(legacy_result) if legacy_result.exists() else None,
-        "legacy_proof": file_sha256(legacy_proof) if legacy_proof.exists() else None,
         "layered_full_result": file_sha256(layered_result) if layered_result.exists() else None,
         "layered_full_proof": file_sha256(layered_proof) if layered_proof.exists() else None,
     }
@@ -772,12 +690,6 @@ def run_layered_full_parent(
             "ledger_file": thin_payload.get("thin_parent", {}).get("ledger_file"),
             "partition_count": thin_payload.get("thin_parent", {}).get("partition_count"),
             "covered_release_partitions": full_release_partitions,
-            "legacy_monolith": {
-                "required_for_release": False,
-                "available_as_explicit_compatibility_check": True,
-                "command": f"python simulations/run_{parent}_checks.py --legacy-full",
-                "status": legacy_full_status(parent),
-            },
         },
         "progress": {
             "ok": ok,

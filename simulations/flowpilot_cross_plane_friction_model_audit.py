@@ -323,7 +323,7 @@ def _material_packet_findings(
     if lineage_split:
         findings.append(
             _finding(
-                code="legacy_material_packet_lineage_split",
+                code="retired_material_packet_lineage_split",
                 severity="warning",
                 summary="Repair material packets record replacement lineage only in metadata, not in the canonical field.",
                 matched_invariant="material_dispatch_contract_is_explicit",
@@ -809,9 +809,9 @@ def _audit_source_policy(project_root: Path) -> list[dict[str, object]]:
     audit_text = audit_path.read_text(encoding="utf-8") if audit_path.exists() else ""
     cockpit_present = (project_root / "flowpilot_cockpit").exists()
     if cockpit_present and (
-        "legacy_cockpit_source_absent_from_main_tree" in audit_text
+        "retired_cockpit_source_absent_from_main_tree" in audit_text
         or '"flowpilot_cockpit"' in audit_text
-        and "LEGACY_COCKPIT_SOURCE_PATHS" in audit_text
+        and "RETIRED_COCKPIT_SOURCE_PATHS" in audit_text
     ):
         findings.append(
             _finding(
@@ -997,8 +997,8 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
         state = replace(state, material_output_contract_role_scoped=False)
     if "material_dispatch_write_target_missing" in codes:
         state = replace(state, material_dispatch_write_target_explicit=False)
-    if "legacy_material_packet_lineage_split" in codes:
-        state = replace(state, material_legacy_packets_quarantined_or_migrated=False)
+    if "retired_material_packet_lineage_split" in codes:
+        state = replace(state, retired_material_packets_rejected=False)
     if "terminal_authority_mismatch" in codes:
         state = replace(
             state,

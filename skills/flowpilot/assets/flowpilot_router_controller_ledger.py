@@ -83,8 +83,6 @@ def router_scheduler_progress_class(
         return "phase_handoff"
     if action_type in {
         "open_startup_intake_ui",
-        "stop_for_startup_answers",
-        "record_startup_answers",
         "record_user_request",
         "await_current_scope_reconciliation",
         "await_role_decision",

@@ -16,15 +16,10 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_router_action_contract_results.json"
 
 HAZARD_EXPECTED_FAILURES = {
-    model.CONTRACT_MISSING_INTERPRETATION_SCHEMA: (
-        "internal required fields absent from payload_contract"
-    ),
-    model.PAYLOAD_MISSING_INTERPRETATION_SCHEMA: (
-        "payload without schema_version"
-    ),
-    model.CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS: (
-        "internal required fields absent from payload_contract"
-    ),
+    model.CONTRACT_MISSING_RESULT_PATH: "result_path absent from payload_contract",
+    model.PAYLOAD_MISSING_RESULT_PATH: "payload without result_path",
+    model.RESULT_HEADLESS: "without native interactive proof",
+    model.RESULT_BODY_TEXT_EXPOSED: "exposed body text to Controller",
     model.DISPLAY_TEMPLATE_MISSING_HASH: (
         "complete display_confirmation payload_template"
     ),
@@ -38,9 +33,12 @@ def _state_id(state: model.State) -> str:
         f"family={state.action_family}|"
         f"published={state.payload_contract_published}|"
         f"payload={state.payload_built_from_contract},"
-        f"interpretation={state.payload_includes_interpretation}|"
-        f"contract_missing={sorted(model.INTERPRETATION_REQUIRED_FIELDS - state.contract.required_nested_fields)}|"
-        f"payload_missing={sorted(state.internal_interpretation_required_fields - state.payload_interpretation_fields)}|"
+        f"contract_missing={sorted(model.STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS - state.contract.required_fields)}|"
+        f"payload_missing={sorted(model.STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS - state.payload_startup_intake_fields)}|"
+        f"result_status={state.startup_result_status}|"
+        f"result_missing={sorted(model.STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS - state.startup_result_fields)}|"
+        f"headless={state.startup_result_headless}|"
+        f"body_text={state.startup_result_body_text_included}|"
         f"display_template_missing={sorted(model.DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.display_payload_template_fields)}|"
         f"display_payload_missing={sorted(model.DISPLAY_CONFIRMATION_REQUIRED_FIELDS - state.payload_display_confirmation_fields)}|"
         f"router={state.router_decision}:{state.router_rejection_reason}"
@@ -94,8 +92,8 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
     rejected_scenarios = sorted(state.scenario for state in rejected)
     expected_accepted = sorted(
         [
-            model.VALID_EXPLICIT_STARTUP,
-            model.VALID_AI_INTERPRETED_STARTUP,
+            model.VALID_CONFIRMED_STARTUP_INTAKE,
+            model.VALID_CANCELLED_STARTUP_INTAKE,
             model.VALID_DISPLAY_CONFIRMATION,
         ]
     )
@@ -130,8 +128,8 @@ def _check_expected_scenarios(graph: dict[str, object]) -> dict[str, object]:
     failures: list[str] = []
 
     for scenario in (
-        model.VALID_EXPLICIT_STARTUP,
-        model.VALID_AI_INTERPRETED_STARTUP,
+        model.VALID_CONFIRMED_STARTUP_INTAKE,
+        model.VALID_CANCELLED_STARTUP_INTAKE,
         model.VALID_DISPLAY_CONFIRMATION,
     ):
         terminal = terminal_by_scenario.get(scenario)
@@ -235,14 +233,16 @@ def _check_hazards() -> dict[str, object]:
                 "action_family": state.action_family,
                 "scenario": state.scenario,
                 "status": state.status,
-                "contract_required_nested_fields": sorted(
-                    state.contract.required_nested_fields
+                "contract_required_fields": sorted(state.contract.required_fields),
+                "payload_startup_intake_fields": sorted(
+                    state.payload_startup_intake_fields
                 ),
+                "startup_result_status": state.startup_result_status,
+                "startup_result_fields": sorted(state.startup_result_fields),
+                "startup_result_headless": state.startup_result_headless,
+                "startup_result_body_text_included": state.startup_result_body_text_included,
                 "display_payload_template_fields": sorted(
                     state.display_payload_template_fields
-                ),
-                "payload_interpretation_fields": sorted(
-                    state.payload_interpretation_fields
                 ),
                 "payload_display_confirmation_fields": sorted(
                     state.payload_display_confirmation_fields
@@ -289,7 +289,7 @@ def run_checks() -> dict[str, object]:
         "missing_labels": safe_graph["missing_labels"],
         "risk_boundary": (
             "abstract next_action payload_contract visibility for "
-            "record_startup_answers and display_confirmation payload templates; "
+            "open_startup_intake_ui and display_confirmation payload templates; "
             "no filesystem replay or production router "
             "mutation in this allowed write scope"
         ),
@@ -302,8 +302,8 @@ def run_checks() -> dict[str, object]:
         "adoption_note": {
             "flowguard_used": True,
             "workflow_or_risk_modeled": (
-                "router action payload_contract exposure for startup answer "
-                "interpretation nested required fields and copyable display "
+                "router action payload_contract exposure for native startup "
+                "intake result references, body isolation, and copyable display "
                 "confirmation payload templates"
             ),
             "commands_expected": [

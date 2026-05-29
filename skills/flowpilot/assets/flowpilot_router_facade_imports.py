@@ -1,7 +1,7 @@
-"""Compatibility import surface for ``flowpilot_router``.
+"""Public import surface for ``flowpilot_router``.
 
-This module centralizes the facade's import and alias wiring so
-``flowpilot_router.py`` can stay focused on compatibility constants and the
+This module centralizes the facade's import wiring so
+``flowpilot_router.py`` can stay focused on public constants and the
 main entrypoint.
 """
 
@@ -182,7 +182,6 @@ from flowpilot_router_io import (
     _run_foreground_with_runtime_writer_settlement,
     _without_role_output_envelope,
     bootstrap_state_path,
-    legacy_bootstrap_state_path,
     project_relative,
     read_daemon_critical_json_if_exists,
     read_json,

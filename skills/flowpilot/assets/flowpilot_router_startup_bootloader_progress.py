@@ -1,6 +1,6 @@
 """startup bootloader progress selection helpers for ``flowpilot_router_startup_bootloader``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -168,8 +168,6 @@ def compute_bootloader_action(router: ModuleType, project_root: Path, state: dic
         extra_fields.update(router._startup_intake_ui_action_extra(project_root, state))
     if boot_action['action_type'] == 'emit_startup_banner':
         extra_fields.update(router._startup_banner_display())
-    if boot_action['action_type'] == 'record_startup_answers':
-        extra_fields['payload_contract'] = _startup_answers_payload_contract()
     if boot_action['action_type'] == 'record_user_request' and router._confirmed_startup_intake(state) is not None:
         extra_fields['requires_user'] = False
         extra_fields['requires_payload'] = None

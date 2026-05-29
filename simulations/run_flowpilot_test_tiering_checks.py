@@ -25,7 +25,7 @@ REQUIRED_LABELS = {
     "select_valid_release_background_tier",
     "accept_valid_release_background_tier",
     "reject_root_pytest_scans_backup_tests",
-    "reject_foreground_legacy_full_regression",
+    "reject_foreground_full_regression",
     "reject_public_release_in_fast_tier",
     "reject_coverage_sweep_blocks_fast_tier",
     "reject_missing_child_owner",
@@ -45,7 +45,7 @@ REQUIRED_LABELS = {
 
 EXPECTED_HAZARD_FAILURES = {
     "root_pytest_scans_backup_tests": {"pytest_collection_not_scoped"},
-    "foreground_legacy_full_regression": {"fast_tier_not_foreground_safe"},
+    "foreground_full_regression": {"fast_tier_not_foreground_safe"},
     "public_release_in_fast_tier": {"public_release_check_in_fast_tier"},
     "coverage_sweep_blocks_fast_tier": {"coverage_sweep_blocks_fast_tier"},
     "missing_child_owner": {"child_owner_missing"},

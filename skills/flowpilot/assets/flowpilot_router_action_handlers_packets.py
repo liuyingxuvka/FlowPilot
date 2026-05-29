@@ -1,4 +1,4 @@
-"""Compatibility facade for packet relay controller-action handlers."""
+"""Public facade for packet relay controller-action handlers."""
 
 from __future__ import annotations
 

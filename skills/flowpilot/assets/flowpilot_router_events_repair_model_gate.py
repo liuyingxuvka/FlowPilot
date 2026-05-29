@@ -1,7 +1,7 @@
-"""Compatibility facade for model-miss repair and gate-decision helpers.
+"""Public facade for model-miss repair and gate-decision helpers.
 
 The behavior lives in focused child modules, while this module preserves the
-legacy private import surface used by ``flowpilot_router`` and direct imports.
+router binding surface used by ``flowpilot_router`` and direct imports.
 """
 
 from __future__ import annotations

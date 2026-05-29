@@ -8,12 +8,12 @@ from .common import JSON_FILES, OPTIONAL_RUNTIME_JSON_FILES, RETIRED_PATHS, ROOT
 
 
 def run_checks(result: dict[str, object]) -> None:
-    legacy_skill_dir = ROOT / "skills/flowguard-project-autopilot"
-    legacy_absent = not legacy_skill_dir.exists()
+    retired_skill_dir = ROOT / "skills/flowguard-project-autopilot"
+    retired_absent = not retired_skill_dir.exists()
     result["checks"].append(
-        {"name": "legacy_skill_dir_absent", "ok": legacy_absent}
+        {"name": "retired_autopilot_skill_dir_absent", "ok": retired_absent}
     )
-    if not legacy_absent:
+    if not retired_absent:
         result["ok"] = False
 
     for relpath in RETIRED_PATHS:

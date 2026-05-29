@@ -1,4 +1,4 @@
-"""PM role-work request/result writer compatibility facade."""
+"""PM role-work request/result writer public facade."""
 
 from __future__ import annotations
 

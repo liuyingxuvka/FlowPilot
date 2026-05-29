@@ -142,12 +142,14 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(parsed.command, "next")
         self.assertTrue(parsed.json)
 
-        parsed = router.parse_args(
-            ["--root", "C:/tmp/project", "run-until-wait", "--new-invocation", "--json"]
-        )
+        parsed = router.parse_args(["--root", "C:/tmp/project", "run-until-wait", "--json"])
         self.assertEqual(parsed.command, "run-until-wait")
-        self.assertTrue(parsed.new_invocation)
         self.assertTrue(parsed.json)
+
+        with self.assertRaises(SystemExit):
+            router.parse_args(["--root", "C:/tmp/project", "run-until-wait", "--new-invocation", "--json"])
+        with self.assertRaises(SystemExit):
+            router.parse_args(["--root", "C:/tmp/project", "next", "--new-invocation", "--json"])
 
         parsed = router.parse_args(["--root", "C:/tmp/project", "start", "--json"])
         self.assertEqual(parsed.command, "start")

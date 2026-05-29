@@ -26,7 +26,7 @@ module ownership and validation commands.
 
 | File | Lines | Main Maintenance Concern |
 | --- | ---: | --- |
-| `skills/flowpilot/assets/flowpilot_router.py` | 35,828 | large compatibility facade with long event/action functions |
+| `skills/flowpilot/assets/flowpilot_router.py` | 35,828 | large public Router entrypoint with long event/action functions |
 | `tests/test_flowpilot_router_runtime.py` | 13,979 | aggregate implementation source for 304 router runtime tests |
 | `skills/flowpilot/assets/role_output_runtime.py` | 1,715 | schema, contract, progress, envelope, and CLI responsibilities share one file |
 | `skills/flowpilot/assets/packet_runtime.py` | 1,364 | remaining packet CLI/audit responsibilities may still warrant a focused split |
@@ -40,11 +40,10 @@ module ownership and validation commands.
 - Preserve public imports, CLI commands, event names, persisted JSON shapes,
   output keys, packet authority, wait semantics, and role boundaries unless a
   real validation-backed bug repair is found.
-- Keep compatibility facades in place. This change may move bodies behind
-  existing entrypoints; it must not remove the entrypoints.
+- Keep current public entrypoints in place. This change may move bodies behind
+  existing entrypoints; it must remove only public-entrypoint preservation surfaces.
 - Keep the current layered Meta and Capability `--full` checks as the
-  release-grade parent evidence path. Do not run the old `--legacy-full` path
-  unless it is explicitly requested.
+  release-grade parent evidence path.
 - No remote push, tag, release, deployment, binary build, or public publication
   is part of this pass.
 - Do not treat background progress logs as completion. Long checks complete
@@ -74,11 +73,11 @@ At minimum, final completion must include:
 
 ## Final Structure Outcome
 
-- `tests/test_flowpilot_router_runtime.py` is now a 304-test compatibility
+- `tests/test_flowpilot_router_runtime.py` is now a 304-test aggregate
   loader; domain-owned test bodies live under `tests/router_runtime/`.
 - `role_output_runtime.py` is now a public facade backed by schema, contract,
   progress, envelope, and CLI helper modules.
-- `flowpilot_router.py` remains the compatibility facade. This pass moved
+- `flowpilot_router.py` remains the public Router entrypoint. This pass moved
   additional Controller action bodies and the common external-event finalization
   tail behind focused helper modules without changing event names or persisted
   state shape.
@@ -95,12 +94,12 @@ runtime behavior and adds an executable StructureMesh/TestMesh gate for future
 maintenance. It also completes the lower-risk child-model splits that were
 left visible by the final convergence baseline:
 
-- `prompt_isolation_model.py` is now a 53-line compatibility facade backed by
+- `prompt_isolation_model.py` is now a 53-line public entrypoint backed by
   state, transition, invariant, and hazard modules.
-- `flowpilot_cross_plane_friction_model.py` is now an 89-line compatibility
+- `flowpilot_cross_plane_friction_model.py` is now an 89-line public
   facade backed by state, transition, invariant, hazard, live-audit, and repair
   strategy modules.
-- `flowpilot_persistent_router_daemon_model.py` is now a 110-line compatibility
+- `flowpilot_persistent_router_daemon_model.py` is now a 110-line public
   facade backed by state, transition, invariant, and hazard modules.
 - `flowpilot_structure_maintenance_model.py` now checks both planned router
   structure ownership and the actual child model facade/owner split. Known-bad

@@ -10,7 +10,7 @@ from typing import Any
 
 
 REQUIRED_OUTPUT_TYPES = {
-    "pm_resume_recovery_decision",
+    "pm_resume_decision",
     "pm_control_blocker_repair_decision",
     "gate_decision",
     "reviewer_review_report",
@@ -113,7 +113,6 @@ def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object
 
     contracts_by_id = {str(item.get("contract_id")): item for item in contracts}
     declared_output_types: set[str] = set()
-    declared_aliases: set[str] = set()
 
     for contract in bound_contracts:
         contract_id = str(contract.get("contract_id") or "")
@@ -167,15 +166,6 @@ def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object
             if getattr(spec, "event_name", None) != expected_event:
                 failures.append(f"{contract_id}: runtime event_name differs from registry router_event binding")
 
-        for alias in contract.get("output_type_aliases") or []:
-            alias = str(alias)
-            declared_aliases.add(alias)
-            alias_spec = specs.get(alias)
-            if alias_spec is None:
-                failures.append(f"{contract_id}: runtime missing alias output_type {alias!r}")
-            elif getattr(alias_spec, "contract_id", None) != contract_id:
-                failures.append(f"{contract_id}: alias output_type {alias!r} points at wrong contract")
-
     declared_contract_ids = {str(item.get("contract_id")) for item in bound_contracts}
     for output_type, spec in specs.items():
         output_type = str(output_type)
@@ -186,8 +176,8 @@ def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object
         if contract_id not in declared_contract_ids:
             failures.append(f"{output_type}: runtime contract {contract_id!r} is not declared runtime-backed")
             continue
-        if output_type not in declared_output_types and output_type not in declared_aliases:
-            failures.append(f"{output_type}: runtime output_type is not declared by registry or aliases")
+        if output_type not in declared_output_types:
+            failures.append(f"{output_type}: runtime output_type is not declared by registry")
 
     return {
         "ok": not failures,
@@ -195,7 +185,6 @@ def _binding_source_report(project_root: Path, runtime: Any) -> dict[str, object
         "facts": {
             "bound_contract_count": len(bound_contracts),
             "declared_output_types": sorted(declared_output_types),
-            "declared_aliases": sorted(declared_aliases),
         },
     }
 

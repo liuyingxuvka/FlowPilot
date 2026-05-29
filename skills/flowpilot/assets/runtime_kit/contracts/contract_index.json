@@ -1061,11 +1061,7 @@
         "router_internal_reconcile",
         "await_existing_event",
         "route_mutation",
-        "terminal_stop",
-        "event_replay"
-      ],
-      "deprecated_repair_transaction_plan_kind_values": [
-        "event_replay"
+        "terminal_stop"
       ],
       "repair_transaction_plan_kind_rules": {
         "execution_authority": "repair_transaction.plan_kind",
@@ -1080,8 +1076,7 @@
           "work_packet.forbidden_actions",
           "work_packet.success_evidence"
         ],
-        "await_existing_event_requires_existing_producer": true,
-        "event_replay_compatibility": "deprecated alias for await_existing_event only when an existing producer is already present"
+        "await_existing_event_requires_existing_producer": true
       },
       "outcome_table_owned_by_router": true,
       "packet_reissue_requires_atomic_generation_commit": true,
@@ -1168,9 +1163,6 @@
       "contract_self_check_required": true,
       "runtime_channel": "role_output_runtime",
       "output_type": "pm_resume_decision",
-      "output_type_aliases": [
-        "pm_resume_recovery_decision"
-      ],
       "body_schema_version": "flowpilot.pm_resume_decision.v1",
       "default_subdir": "continuation",
       "default_filename_prefix": "pm_resume_decision",

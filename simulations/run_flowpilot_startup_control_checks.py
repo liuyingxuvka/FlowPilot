@@ -56,7 +56,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|holder={state.holder}|"
-        f"questions={state.startup_questions_asked}|waiting={state.waiting_for_user_text}|"
+        f"questions={state.startup_intake_ui_completed}|waiting={state.waiting_for_user_text}|"
         f"user_text={state.user_text_recorded}|contract={state.startup_task_contract_recorded},"
         f"auth_gate={state.user_authenticity_gate_required},{state.user_authenticity_gate_demoted}|"
         f"lifecycle={state.formal_lifecycle_signal}|"

@@ -14,11 +14,8 @@ from flowguard import Explorer
 import flowpilot_model_hierarchy_model as model
 from flowpilot_model_hierarchy_checks_runner_inventory import (
     _base_from_result_path,
-    _file_sha256,
-    _flowguard_schema_version,
     _owner_label,
     _partition_contracts_from_ledger,
-    _proof_status,
     _read_json,
     _result_index,
     _result_row_from_path,

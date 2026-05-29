@@ -86,7 +86,7 @@
     "current_pointer_written": false,
     "run_index_updated": false,
     "prior_work_import_packet_written_when_continuing": false,
-    "top_level_control_state_absent_or_quarantined": false,
+    "prior_control_state_quarantined": false,
     "canonical_state_written": false,
     "execution_frontier_written": false,
     "crew_ledger_current": false,

@@ -901,7 +901,7 @@ ROUTER_STRUCTURE_MODULES = (
     ModuleStructureEvidence(
         "terminal_ledger_recovery",
         path="skills/flowpilot/assets/flowpilot_router_terminal_ledger_recovery.py",
-        owns_functions=("reconcile_current_run", "_repair_legacy_material_packet_contracts"),
+        owns_functions=("reconcile_current_run",),
         owns_side_effects=("terminal_reconciliation_write",),
         dependencies=("terminal_ledger", "router_facade"),
         behavior_contracts=("terminal status recovery and legacy material packet repair",),
@@ -943,7 +943,7 @@ ROUTER_STRUCTURE_MODULES = (
     ModuleStructureEvidence(
         "packet_runtime_audit",
         path="skills/flowpilot/assets/packet_runtime_audit.py",
-        owns_functions=("audit_barrier_bundles", "audit_packet_chain"),
+        owns_functions=("audit_packet_chain",),
         owns_state=("packet_runtime_audit",),
         dependencies=("packet_runtime_paths", "packet_runtime_ledger"),
         behavior_contracts=("packet chain audit", "replacement-chain audit"),

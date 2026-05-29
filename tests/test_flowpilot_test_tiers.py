@@ -226,7 +226,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(local["status"], "release_local_only")
             self.assertEqual(local["proof_scope"], "local_only")
 
-    def test_fast_tier_excludes_release_coverage_and_legacy_full(self) -> None:
+    def test_fast_tier_excludes_release_coverage_and_full_regression(self) -> None:
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
         self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
@@ -254,7 +254,6 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("tests/test_flowpilot_cli_entrypoints.py", text)
         self.assertNotIn("check_public_release.py", text)
         self.assertNotIn("run_flowguard_coverage_sweep.py", text)
-        self.assertNotIn("--legacy-full", text)
         self.assertNotIn("--full", text)
 
     def test_fast_tier_descriptions_name_multiround_repair_rehearsals(self) -> None:
@@ -311,7 +310,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
             "shadow_launcher_shadow_start_tests",
             "shadow_launcher_crash_recovery_tests",
             "shadow_launcher_peer_conflict_tests",
-            "shadow_launcher_legacy_assets_tests",
+            "shadow_launcher_current_assets_tests",
             "shadow_launcher_malformed_package_tests",
             "shadow_launcher_bounded_soak_tests",
         }
@@ -614,13 +613,13 @@ class FlowPilotTestTierTests(unittest.TestCase):
     def test_background_artifact_contract_uses_stable_paths(self) -> None:
         paths = run_test_tier.artifact_paths(
             ROOT / "tmp" / "test_background",
-            "meta legacy/full",
+            "meta full",
         )
-        self.assertEqual(paths["out"].name, "meta_legacy_full.out.txt")
-        self.assertEqual(paths["err"].name, "meta_legacy_full.err.txt")
-        self.assertEqual(paths["combined"].name, "meta_legacy_full.combined.txt")
-        self.assertEqual(paths["exit"].name, "meta_legacy_full.exit.txt")
-        self.assertEqual(paths["meta"].name, "meta_legacy_full.meta.json")
+        self.assertEqual(paths["out"].name, "meta_full.out.txt")
+        self.assertEqual(paths["err"].name, "meta_full.err.txt")
+        self.assertEqual(paths["combined"].name, "meta_full.combined.txt")
+        self.assertEqual(paths["exit"].name, "meta_full.exit.txt")
+        self.assertEqual(paths["meta"].name, "meta_full.meta.json")
 
     def test_background_launch_clears_stale_artifacts_before_rerun(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-tier-artifacts-") as tmp_name:
@@ -724,22 +723,16 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(flags, 0)
             self.assertEqual(run_test_tier._hidden_process_kwargs(), {})
 
-    def test_release_and_legacy_tiers_mark_long_background_recommended_commands(self) -> None:
+    def test_release_tier_marks_long_background_recommended_commands(self) -> None:
         release_commands = run_test_tier.commands_for_tier("release")
         release_long = [
             command.name
             for command in release_commands
             if command.long_running and command.background_recommended
         ]
-        legacy_long = [
-            command.name
-            for command in run_test_tier.commands_for_tier("legacy-full")
-            if command.long_running and command.background_recommended
-        ]
         self.assertIn("public_release_check", release_long)
         self.assertIn("meta_full", release_long)
         self.assertIn("capability_full", release_long)
-        self.assertEqual(legacy_long, ["meta_legacy_full", "capability_legacy_full"])
         release_stages = {command.name: command.background_stage for command in release_commands}
         self.assertEqual(release_stages["release_tooling"], 0)
         self.assertEqual(release_stages["meta_full"], 0)

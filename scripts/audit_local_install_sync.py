@@ -1,4 +1,4 @@
-"""Audit repository source, local Codex skill installs, and legacy UI cleanup."""
+"""Audit repository source, local Codex skill installs, and retired UI cleanup."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import install_flowpilot
 
 ROOT = Path(__file__).resolve().parents[1]
 
-LEGACY_COCKPIT_SOURCE_PATHS = [
+RETIRED_COCKPIT_SOURCE_PATHS = [
     "flowpilot_cockpit",
     "tests/test_flowpilot_cockpit_i18n.py",
     "tests/test_flowpilot_cockpit_state_reader.py",
@@ -142,25 +142,25 @@ def main() -> int:
         result["ok"] = False
     else:
         add_check(checks, name="git_tracked_files_available", ok=True, count=len(tracked))
-        present = [path for path in LEGACY_COCKPIT_SOURCE_PATHS if path in tracked]
+        present = [path for path in RETIRED_COCKPIT_SOURCE_PATHS if path in tracked]
         add_check(
             checks,
-            name="legacy_cockpit_source_not_tracked",
+            name="retired_cockpit_source_not_tracked",
             ok=not present,
             present=present,
-            expected_absent=LEGACY_COCKPIT_SOURCE_PATHS,
+            expected_absent=RETIRED_COCKPIT_SOURCE_PATHS,
         )
         if present:
             result["ok"] = False
 
-    legacy_cockpit_present_on_disk = [path for path in LEGACY_COCKPIT_SOURCE_PATHS if (ROOT / path).exists()]
+    retired_cockpit_present_on_disk = [path for path in RETIRED_COCKPIT_SOURCE_PATHS if (ROOT / path).exists()]
     add_check(
         checks,
-        name="legacy_cockpit_source_absent_from_main_tree",
-        ok=not legacy_cockpit_present_on_disk,
-        present=legacy_cockpit_present_on_disk,
+        name="retired_cockpit_source_absent_from_main_tree",
+        ok=not retired_cockpit_present_on_disk,
+        present=retired_cockpit_present_on_disk,
     )
-    if legacy_cockpit_present_on_disk:
+    if retired_cockpit_present_on_disk:
         result["ok"] = False
 
     retired_present_on_disk = [path for path in RETIRED_CONTINUATION_PATHS if (ROOT / path).exists()]

@@ -1,6 +1,6 @@
 """External-event intake helpers for FlowPilot router.
 
-This module keeps the public router entrypoint and private compatibility
+This module keeps the public router entrypoint and private router
 function names in `flowpilot_router`, while moving the ACK preconsume and
 pre-ACK quarantine mechanics out of the large facade.
 """

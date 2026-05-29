@@ -22,8 +22,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("router next-action requests and completed bootloader actions are out of sync")
     if state.bootloader_actions > expected_boot_facts:
         failures.append("bootloader action was recorded without the matching startup fact")
-    if state.startup_questions_asked and not state.router_loaded:
-        failures.append("startup questions were asked without loading the bootloader router")
+    if state.startup_intake_ui_completed and not state.router_loaded:
+        failures.append("startup intake options were asked without loading the bootloader router")
     if state.router_loaded and not state.run_scoped_bootstrap_created:
         failures.append("new invocation loaded router without a run-scoped bootstrap")
     if state.stale_top_level_bootstrap_reused and (
@@ -33,20 +33,20 @@ def invariant_failures(state: State) -> list[str]:
         or state.controller_core_loaded
     ):
         failures.append("new invocation reused stale top-level bootstrap as current startup state")
-    if state.startup_questions_asked and not (
-        state.startup_state_written_awaiting_answers
-        and state.dialog_stopped_for_answers
+    if state.startup_intake_ui_completed and not (
+        state.startup_intake_result_recorded
+        and state.startup_intake_body_boundary_enforced
     ):
-        failures.append("startup questions did not atomically record the waiting stop boundary")
+        failures.append("startup intake options did not atomically record the waiting stop boundary")
     if (
-        state.startup_questions_asked
+        state.startup_intake_ui_completed
         and not state.startup_answers_recorded
         and state.startup_state != "awaiting_answers_stopped"
     ):
         failures.append("startup waiting stop boundary did not hold before answers were recorded")
-    if (state.startup_state_written_awaiting_answers or state.dialog_stopped_for_answers) and not state.startup_questions_asked:
-        failures.append("startup waiting stop boundary appeared before startup questions")
-    if state.startup_answers_recorded and not state.dialog_stopped_for_answers:
+    if (state.startup_intake_result_recorded or state.startup_intake_body_boundary_enforced) and not state.startup_intake_ui_completed:
+        failures.append("startup waiting stop boundary appeared before startup intake options")
+    if state.startup_answers_recorded and not state.startup_intake_body_boundary_enforced:
         failures.append("startup answers were recorded before the waiting stop boundary")
     if state.startup_answers_recorded and not (
         state.startup_answer_values_valid
@@ -54,7 +54,7 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("startup answers were recorded without legal enum values and explicit user reply provenance")
     if state.banner_emitted and not (
-        state.startup_answers_recorded and state.dialog_stopped_for_answers
+        state.startup_answers_recorded and state.startup_intake_body_boundary_enforced
     ):
         failures.append("startup banner emitted before explicit answers after a stopped dialog")
     if state.banner_emitted and not state.startup_banner_user_visible:

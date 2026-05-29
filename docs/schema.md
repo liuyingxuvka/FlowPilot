@@ -179,7 +179,7 @@ chunks until this block and the matching frontier block show:
 - canonical route files, current-run `state.json`, and
   `execution_frontier.json` are
   written for the same active nonterminal route;
-- legacy top-level control state is absent, legacy-only, or quarantined and is
+- prior top-level control state is absent, retired-only, or quarantined and is
   not used as the current run state;
 - continuing prior work has a current-run prior-work import packet;
 - `crew_ledger_current: true`;

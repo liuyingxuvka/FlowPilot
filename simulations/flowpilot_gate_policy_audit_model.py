@@ -73,7 +73,7 @@ class State:
     formal_flowpilot_started: bool = False
     six_role_crew_started: bool = False
 
-    startup_questions_asked: bool = False
+    startup_intake_ui_completed: bool = False
     startup_wait_boundary_recorded: bool = False
     startup_explanatory_text_emitted: bool = False
     startup_side_effects_before_answers: bool = False
@@ -245,12 +245,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         yield Transition(
             "startup_questions_record_wait_without_side_effects",
             _step(
                 state,
-                startup_questions_asked=True,
+                startup_intake_ui_completed=True,
                 startup_wait_boundary_recorded=True,
                 startup_explanatory_text_emitted=True,
             ),
@@ -623,7 +623,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "startup_text_invalidated_without_side_effect": replace(
             base,
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             startup_wait_boundary_recorded=True,
             startup_explanatory_text_emitted=True,
             startup_boundary_invalidated_for_text=True,
@@ -631,7 +631,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "startup_side_effects_before_answers": replace(
             base,
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             startup_wait_boundary_recorded=True,
             startup_side_effects_before_answers=True,
         ),

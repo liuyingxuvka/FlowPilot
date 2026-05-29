@@ -1,4 +1,4 @@
-"""Compatibility view for terminal/work router facade exports."""
+"""public view for terminal/work router facade exports."""
 
 from __future__ import annotations
 

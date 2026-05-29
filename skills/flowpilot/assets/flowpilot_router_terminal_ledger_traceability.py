@@ -1,7 +1,7 @@
 """Final ledger and traceability helpers for the FlowPilot router.
 
 Receives the router facade explicitly so shared state writers and
-public entrypoints keep the bound-router compatibility contract.
+public entrypoints keep the bound-router contract.
 """
 
 from __future__ import annotations

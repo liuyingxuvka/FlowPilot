@@ -1,6 +1,6 @@
 """Coarse route frontier owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """

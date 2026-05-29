@@ -13,7 +13,6 @@ DISPLAY_TRIGGERS = {
     "parent_node_entry",
     "leaf_node_entry",
     "pm_work_brief",
-    "key_node_change",
     "route_mutation",
     "review_failure",
     "validation_failure",

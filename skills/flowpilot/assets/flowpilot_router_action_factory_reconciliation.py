@@ -1,7 +1,7 @@
 """Reconciliation and ACK-preflight helpers for router action construction.
 
 This child module is bound to the router facade before execution so moved
-helpers can keep using router-owned state readers and compatibility exports.
+helpers can keep using router-owned state readers and current public exports.
 """
 
 from __future__ import annotations

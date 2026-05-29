@@ -12,7 +12,7 @@ import startup_pm_review_model as model
 ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "startup_pm_review_results.json"
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
+    "startup_intake_ui_completed",
     "startup_dialog_stopped_for_user_answers",
     "background_agents_allowed",
     "background_agents_declined_single_agent",
@@ -29,7 +29,7 @@ REQUIRED_LABELS = (
     "continue_previous_work_selected",
     "prior_work_import_packet_written",
     "control_state_written_under_run_root",
-    "top_level_control_state_absent_or_quarantined",
+    "prior_control_state_quarantined",
     "route_file_written",
     "canonical_state_written",
     "execution_frontier_written",

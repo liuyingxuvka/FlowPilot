@@ -1,6 +1,6 @@
 """Dispatch-recipient gate helpers for router action construction.
 
-This compatibility facade keeps the historical module import path stable while
+This public facade keeps the router module import path stable while
 card classification, blocker detection, wait-action construction, and gate
 orchestration live in focused child modules.
 """

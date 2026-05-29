@@ -73,7 +73,7 @@ def _validate_role_work_result_process_binding(router: ModuleType, project_root:
         return result
     if strict_process_contract_binding:
         raise RouterError('role-work result next_recipient must match process binding')
-    result['legacy_pm_role_work_result_recipient_normalization'] = True
+    result['pm_role_work_result_recipient_normalization'] = True
     return router._normalize_pm_role_work_result_recipient(project_root, result_path, result)
 
 

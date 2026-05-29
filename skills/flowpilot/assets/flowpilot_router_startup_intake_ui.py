@@ -1,6 +1,6 @@
 """startup intake UI action contract helpers for ``flowpilot_router_startup_intake``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -54,32 +54,6 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_startup_intake'
 
-def _normalize_startup_question_stop_boundary(router: ModuleType, state: dict[str, Any]) -> bool:
-    _bind_router(router)
-    if state.get('status') == 'startup_cancelled' or state.get('startup_state') == 'startup_cancelled':
-        return False
-    flags = state.setdefault('flags', {})
-    if not flags.get('startup_questions_asked'):
-        return False
-    if flags.get('startup_answers_recorded') or state.get('startup_answers'):
-        return False
-    changed = False
-    if not flags.get('startup_state_written_awaiting_answers'):
-        flags['startup_state_written_awaiting_answers'] = True
-        changed = True
-    if not flags.get('dialog_stopped_for_answers'):
-        flags['dialog_stopped_for_answers'] = True
-        changed = True
-    if state.get('startup_state') != 'awaiting_answers_stopped':
-        state['startup_state'] = 'awaiting_answers_stopped'
-        changed = True
-    pending = state.get('pending_action')
-    if isinstance(pending, dict) and pending.get('action_type') in {'write_startup_awaiting_answers_state', 'stop_for_startup_answers'}:
-        state['pending_action'] = None
-        append_history(state, 'startup_question_stop_boundary_normalized', {'cleared_pending_action': pending.get('action_type')})
-        changed = True
-    return changed
-
 def _startup_intake_ui_launcher_ref(router: ModuleType, project_root: Path) -> str:
     _bind_router(router)
     launcher = Path(__file__).resolve().parent / 'ui' / 'startup_intake' / 'flowpilot_startup_intake.ps1'
@@ -113,7 +87,6 @@ def _confirmed_startup_intake(router: ModuleType, state: dict[str, Any]) -> dict
     return None
 
 __all__ = (
-    '_normalize_startup_question_stop_boundary',
     '_startup_intake_ui_launcher_ref',
     '_startup_intake_output_dir_ref',
     '_startup_intake_result_payload_contract',

@@ -1,6 +1,6 @@
 """Coarse events repair owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """
@@ -45,7 +45,7 @@ def _bind_router(router: ModuleType) -> None:
 def _control_blocker_repair_origin(router: ModuleType, active: dict[str, Any], *, rerun_target: str, requested_plan_kind: str, run_root: Path, run_state: dict[str, Any]) -> str:
     _bind_router(router)
     originating_event = str(active.get('originating_event') or '')
-    if requested_plan_kind == 'packet_reissue' or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS or originating_event in MATERIAL_REPAIR_OUTCOME_EVENTS or (originating_event in {'reviewer_blocks_material_scan_dispatch', 'reviewer_blocks_material_scan_dispatch_recheck'}):
+    if requested_plan_kind == 'packet_reissue' or rerun_target in MATERIAL_REPAIR_OUTCOME_EVENTS or originating_event in MATERIAL_REPAIR_OUTCOME_EVENTS:
         return 'material_dispatch'
     if rerun_target in PARENT_REPAIR_SAFE_EVENTS or originating_event in PARENT_REPAIR_SAFE_EVENTS or run_state.get('flags', {}).get('parent_backward_replay_blocked'):
         return 'parent_backward_replay'
@@ -60,7 +60,7 @@ def _control_blocker_repair_origin(router: ModuleType, active: dict[str, Any], *
 
 def _repair_outcome_table(router: ModuleType, rerun_target: str, *, repair_origin: str='none') -> dict[str, dict[str, Any]]:
     _bind_router(router)
-    if rerun_target in {'router_direct_material_scan_dispatch_recheck_passed', 'reviewer_allows_material_scan_dispatch'}:
+    if rerun_target == 'router_direct_material_scan_dispatch_recheck_passed':
         return {'success': {'event': 'router_direct_material_scan_dispatch_recheck_passed', 'terminal': 'complete'}, 'blocker': {'event': 'router_direct_material_scan_dispatch_recheck_blocked', 'terminal': 'blocked'}, 'protocol_blocker': {'event': 'router_protocol_blocker_material_scan_dispatch_recheck', 'terminal': 'blocked'}}
     if repair_origin == 'parent_backward_replay':
         if rerun_target not in PARENT_REPAIR_SAFE_EVENTS:
@@ -107,7 +107,7 @@ def _repair_packet_specs_from_decision(router: ModuleType, project_root: Path, r
     if isinstance(raw_packets, list) and raw_packets:
         return (raw_packets, {'source': 'decision_inline', 'packet_count': len(raw_packets)})
     raw_path = transaction.get('replacement_packet_specs_path') or transaction.get('packet_reissue_spec_path') or decision.get('replacement_packet_specs_path') or decision.get('packet_reissue_spec_path')
-    if not raw_path and rerun_target in {'router_direct_material_scan_dispatch_recheck_passed', 'reviewer_allows_material_scan_dispatch'}:
+    if not raw_path and rerun_target == 'router_direct_material_scan_dispatch_recheck_passed':
         default_path = run_root / 'material' / 'pm_material_scan_packet_specs_reissue.project_manager.json'
         if default_path.exists():
             raw_path = project_relative(project_root, default_path)

@@ -156,14 +156,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_role_block_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=_active_node_root(run_root, frontier) / 'reviews' / 'node_acceptance_plan_block.json', schema_version='flowpilot.node_acceptance_plan_block.v1', checked_paths=[_active_node_acceptance_plan_path(run_root, frontier), run_root / 'execution_frontier.json'])
         run_state['flags']['node_acceptance_plan_reviewer_passed'] = False
         run_state['flags']['node_acceptance_plan_revised_by_pm'] = False
-    elif event == 'reviewer_blocks_current_node_dispatch':
-        frontier = router._active_frontier(run_root)
-        packet_id = str(frontier.get('active_packet_id') or run_state.get('current_node_packet_id') or '')
-        checked_paths = [_active_node_acceptance_plan_path(run_root, frontier), run_root / 'execution_frontier.json']
-        if packet_id:
-            checked_paths.append(run_root / 'packets' / packet_id / 'packet_envelope.json')
-        _write_role_block_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=_active_node_root(run_root, frontier) / 'reviews' / 'current_node_dispatch_block.json', schema_version='flowpilot.current_node_dispatch_block.v1', checked_paths=checked_paths)
-        run_state['flags']['current_node_dispatch_allowed'] = False
     elif event == 'reviewer_reports_startup_facts':
         router._write_startup_fact_report(project_root, run_root, run_state, payload)
     elif event == 'pm_approves_startup_activation':
@@ -174,12 +166,10 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         router._write_startup_protocol_dead_end(project_root, run_root, run_state, payload)
     elif event == 'pm_issues_material_and_capability_scan_packets':
         router._write_material_scan_packets(project_root, run_root, run_state, payload)
-    elif event == 'reviewer_blocks_material_scan_dispatch':
-        router._write_material_dispatch_block_report(project_root, run_root, run_state, payload)
-    elif event in {'reviewer_blocks_material_scan_dispatch_recheck', 'router_direct_material_scan_dispatch_recheck_blocked'}:
+    elif event == 'router_direct_material_scan_dispatch_recheck_blocked':
         router._write_material_dispatch_block_report(project_root, run_root, run_state, payload)
         router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
-    elif event in {'reviewer_protocol_blocker_material_scan_dispatch_recheck', 'router_protocol_blocker_material_scan_dispatch_recheck'}:
+    elif event == 'router_protocol_blocker_material_scan_dispatch_recheck':
         router._write_material_dispatch_recheck_protocol_blocker(project_root, run_root, run_state, payload, event_name=event)
         router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
     elif event == 'worker_scan_packet_bodies_delivered_after_dispatch':
@@ -232,7 +222,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_product_function_architecture(project_root, run_root, run_state, payload)
     elif event == 'reviewer_passes_product_architecture':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'product_architecture_challenge.json', schema_version='flowpilot.product_architecture_review.v1', checked_paths=[run_root / 'product_function_architecture.json', router._require_product_behavior_model_report(project_root, run_root), run_root / 'flowguard' / 'product_behavior_model_pm_decision.json'])
-    elif event in {'product_officer_submits_product_behavior_model', 'product_officer_passes_product_architecture_modelability'}:
+    elif event == 'product_officer_submits_product_behavior_model':
         _write_product_behavior_model_report(project_root, run_root, run_state, payload)
     elif event == 'pm_accepts_product_behavior_model':
         _write_pm_product_behavior_model_decision(project_root, run_root, run_state, payload, accepted=True)
@@ -242,8 +232,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_root_acceptance_contract(project_root, run_root, run_state, payload)
     elif event == 'reviewer_passes_root_acceptance_contract':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'root_contract_challenge.json', schema_version='flowpilot.root_contract_review.v1', checked_paths=[run_root / 'root_acceptance_contract.json', run_root / 'standard_scenario_pack.json'])
-    elif event == 'product_officer_passes_root_acceptance_contract_modelability':
-        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='product_flowguard_officer', path=run_root / 'flowguard' / 'root_contract_modelability.json', schema_version='flowpilot.root_contract_modelability.v1', checked_paths=[run_root / 'root_acceptance_contract.json', run_root / 'standard_scenario_pack.json', run_root / 'reviews' / 'root_contract_challenge.json'])
     elif event == 'pm_freezes_root_acceptance_contract':
         _freeze_root_acceptance_contract(project_root, run_root, run_state)
     elif event == 'pm_records_dependency_policy':
@@ -257,10 +245,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     elif event == 'reviewer_passes_child_skill_gate_manifest':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'child_skill_gate_manifest_review.json', schema_version='flowpilot.child_skill_gate_manifest_review.v1', checked_paths=[run_root / 'child_skill_gate_manifest.json', run_root / 'pm_child_skill_selection.json', run_root / 'capabilities.json'])
         _sync_child_skill_manifest_review_approval(project_root, run_root)
-    elif event == 'process_officer_passes_child_skill_conformance_model':
-        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='process_flowguard_officer', path=run_root / 'flowguard' / 'child_skill_conformance_model.json', schema_version='flowpilot.child_skill_conformance_model.v1', checked_paths=[run_root / 'child_skill_gate_manifest.json', run_root / 'reviews' / 'child_skill_gate_manifest_review.json'])
-    elif event == 'product_officer_passes_child_skill_product_fit':
-        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='product_flowguard_officer', path=run_root / 'flowguard' / 'child_skill_product_fit.json', schema_version='flowpilot.child_skill_product_fit.v1', checked_paths=[run_root / 'child_skill_gate_manifest.json', run_root / 'flowguard' / 'child_skill_conformance_model.json', run_root / 'product_function_architecture.json', run_root / 'root_acceptance_contract.json'])
     elif event == 'pm_approves_child_skill_manifest_for_route':
         _approve_child_skill_manifest_for_route(project_root, run_root, run_state, payload)
     elif event == 'capability_evidence_synced':
@@ -269,18 +253,16 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         if run_state['flags'].get(flag) and (not run_state['flags'].get('route_activated_by_pm')):
             router._reset_route_review_after_route_draft_repair(run_state)
         router._write_route_draft(project_root, run_root, run_state, payload)
-    elif event in {'process_officer_submits_process_route_model', 'process_officer_passes_route_check'}:
+    elif event == 'process_officer_submits_process_route_model':
         _write_route_process_pass_report(project_root, run_root, run_state, payload)
     elif event == 'pm_accepts_process_route_model':
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=True)
     elif event == 'pm_requests_process_route_model_rebuild':
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=False)
-    elif event in {'process_officer_requests_process_route_model_repair', 'process_officer_requires_route_repair'}:
+    elif event == 'process_officer_requests_process_route_model_repair':
         _write_route_process_issue_report(project_root, run_root, run_state, payload, expected_verdict='repair_required')
-    elif event in {'process_officer_blocks_process_route_model', 'process_officer_blocks_route_check'}:
+    elif event == 'process_officer_blocks_process_route_model':
         _write_route_process_issue_report(project_root, run_root, run_state, payload, expected_verdict='blocked')
-    elif event == 'product_officer_passes_route_check':
-        _write_route_product_pass_report(project_root, run_root, run_state, payload)
     elif event == 'reviewer_passes_route_check':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'route_challenge.json', schema_version='flowpilot.route_review.v1', checked_paths=[router._current_route_draft_path(run_root), router._require_product_behavior_model_report(project_root, run_root), router._require_process_route_model_report(project_root, run_root), run_root / 'flowguard' / 'process_route_model_pm_decision.json'])
     elif event == 'pm_registers_current_node_packet':

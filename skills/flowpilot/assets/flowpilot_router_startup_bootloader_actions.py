@@ -1,6 +1,6 @@
 """startup bootloader action application helpers for ``flowpilot_router_startup_bootloader``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -77,30 +77,11 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         router._set_boot_flag(project_root, state, 'router_loaded', 'bootloader_router_loaded')
         return {'ok': True, 'applied': action_type}
     action_meta = next((item for item in BOOT_ACTIONS if item['action_type'] == action_type), None)
-    if action_meta is None and action_type == 'ask_startup_questions':
-        action_meta = {'action_type': 'ask_startup_questions', 'flag': 'startup_questions_asked', 'label': 'legacy_startup_questions_asked_from_router'}
     if action_meta is None:
         raise RouterError(f'unknown bootloader action: {action_type}')
     flag = str(action_meta['flag'])
     if action_type == 'open_startup_intake_ui':
         result_extra.update(router._apply_startup_intake_result_to_bootstrap(project_root, state, payload))
-    elif action_type == 'ask_startup_questions':
-        state['startup_state'] = 'awaiting_answers_stopped'
-        state['flags']['startup_state_written_awaiting_answers'] = True
-        state['flags']['dialog_stopped_for_answers'] = True
-    elif action_type == 'write_startup_awaiting_answers_state':
-        state['startup_state'] = 'awaiting_answers'
-    elif action_type == 'stop_for_startup_answers':
-        state['startup_state'] = 'awaiting_answers_stopped'
-    elif action_type == 'record_startup_answers':
-        startup_answers = router._validate_startup_answers(payload)
-        state['startup_answers'] = startup_answers
-        interpretation = router._validate_startup_answer_interpretation(payload, startup_answers)
-        if interpretation:
-            state['startup_answer_interpretation'] = interpretation
-        else:
-            state['startup_answer_interpretation'] = None
-        state['startup_state'] = 'answers_complete'
     elif action_type == 'emit_startup_banner':
         banner = router._startup_banner_display()
         confirmation = router._display_confirmation_for_action(payload, pending)
@@ -115,7 +96,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         run_root.mkdir(parents=True, exist_ok=True)
         state['run_id'] = run_id
         state['run_root'] = project_relative(project_root, run_root)
-        write_json(run_root / 'run.json', {'schema_version': 'flowpilot.run.v1', 'run_id': run_id, 'created_at': utc_now(), 'startup_model': 'prompt_isolated_router', 'legacy_backup_required': True})
+        write_json(run_root / 'run.json', {'schema_version': 'flowpilot.run.v1', 'run_id': run_id, 'created_at': utc_now(), 'startup_model': 'prompt_isolated_router'})
     elif action_type == 'write_current_pointer':
         if not state.get('run_id') or not state.get('run_root'):
             raise RouterError('cannot write current pointer before run shell exists')
@@ -136,11 +117,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
         _copy_runtime_kit_into_run_root(run_root)
     elif action_type == 'fill_runtime_placeholders':
         run_root = project_root / str(state['run_root'])
-        interpretation = state.get('startup_answer_interpretation') if isinstance(state.get('startup_answer_interpretation'), dict) else None
-        interpretation_path = run_root / 'startup_answer_interpretation.json'
-        if interpretation:
-            write_json(interpretation_path, interpretation)
-        write_json(run_root / 'startup_answers.json', {'schema_version': 'flowpilot.startup_answers.v1', 'run_id': state['run_id'], 'answers': state.get('startup_answers') or {}, 'startup_answer_interpretation_path': project_relative(project_root, interpretation_path) if interpretation else None, 'recorded_at': utc_now()})
+        write_json(run_root / 'startup_answers.json', {'schema_version': 'flowpilot.startup_answers.v1', 'run_id': state['run_id'], 'answers': state.get('startup_answers') or {}, 'recorded_at': utc_now()})
         snapshot = router._write_flowguard_capability_snapshot(project_root, run_root, state)
         result_extra['flowguard_capability_snapshot_path'] = snapshot['path']
         result_extra['flowguard_capability_snapshot_skill_route_count'] = snapshot['skill_route_count']
@@ -163,8 +140,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
             state['startup_intake_record_path'] = intake_record['record_path']
             state['user_request_ref'] = user_request
         else:
-            user_request = router._validate_user_request(payload)
-            user_request_record = {'schema_version': 'flowpilot.user_request.v1', 'run_id': state['run_id'], 'user_request': user_request, 'recorded_at': utc_now()}
+            raise RouterError('record_user_request requires a confirmed native startup intake UI record; direct chat-body user_request payloads are unsupported')
         write_json(run_root / 'user_request.json', user_request_record)
         state['user_request'] = user_request
         state['user_request_path'] = project_relative(project_root, run_root / 'user_request.json')
@@ -184,8 +160,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
             result = {'ok': True, 'applied': action_type, 'postcondition': flag}
             result.update(result_extra)
             return result
-        user_intake = packet_runtime.create_user_intake_packet(project_root, run_id=str(state['run_id']), packet_id='user_intake', node_id='startup', body_text=json.dumps({'user_request': user_request, 'user_request_path': state.get('user_request_path'), 'startup_answers': state.get('startup_answers') or {}, 'startup_answers_path': project_relative(project_root, run_root / 'startup_answers.json'), 'startup_answer_interpretation_path': project_relative(project_root, run_root / 'startup_answer_interpretation.json') if isinstance(state.get('startup_answer_interpretation'), dict) else None}, indent=2, sort_keys=True), startup_options=state.get('startup_answers') or {}, body_visibility=packet_runtime.SEALED_BODY_VISIBILITY, router_owned_startup_material=True)
-        write_json(run_root / 'mailbox' / 'outbox' / 'user_intake.json', user_intake)
+        raise RouterError('write_user_intake requires native startup intake user_request_ref; direct user_request payloads are unsupported')
     elif action_type == 'start_role_slots':
         run_root = project_root / str(state['run_root'])
         role_slots = router._normalize_role_agent_records(state, payload)

@@ -22,9 +22,6 @@
       "binding_report": {
         "facts": {
           "bound_contract_count": 18,
-          "declared_aliases": [
-            "pm_resume_recovery_decision"
-          ],
           "declared_output_types": [
             "controller_boundary_confirmation",
             "current_node_result_review_pass",
@@ -71,7 +68,6 @@
         "pm_package_result_disposition",
         "pm_parent_segment_decision",
         "pm_resume_decision",
-        "pm_resume_recovery_decision",
         "pm_startup_activation_approval",
         "pm_startup_protocol_dead_end",
         "pm_startup_repair_request",

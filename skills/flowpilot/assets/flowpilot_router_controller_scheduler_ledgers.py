@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot router controller scheduler ledgers."""
+"""Public facade for FlowPilot router controller scheduler ledgers."""
 
 from __future__ import annotations
 

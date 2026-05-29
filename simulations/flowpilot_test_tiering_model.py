@@ -127,8 +127,8 @@ SCENARIOS: dict[str, State] = {
         pytest_scoped_to_tests=False,
         backup_tmp_excluded=False,
     ),
-    "foreground_legacy_full_regression": replace(
-        _valid_fast("foreground_legacy_full_regression"),
+    "foreground_full_regression": replace(
+        _valid_fast("foreground_full_regression"),
         long_regression_in_fast_tier=True,
         fast_tier_foreground_safe=False,
     ),

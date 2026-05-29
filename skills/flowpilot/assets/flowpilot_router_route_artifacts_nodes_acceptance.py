@@ -1,7 +1,7 @@
 """Internal router owner helpers extracted from flowpilot_router.
 
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
+The public router names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so private helper lookups remain
 stable while the implementation body lives outside the facade.
 """
 
@@ -151,7 +151,7 @@ def _write_node_acceptance_plan(
     else:
         leaf_readiness_gate = {
             "status": "pass",
-            "legacy_inferred_from_reviewed_node_plan": True,
+            "inferred_from_reviewed_node_plan": True,
             "single_outcome": True,
             "worker_executable_without_replanning": True,
             "proof_defined": bool(experiment_plan),
@@ -186,7 +186,7 @@ def _write_node_acceptance_plan(
             "all_covered_requirements_must_close_or_be_triaged": True,
             "closure_by_report_only_forbidden": True,
             "external_spec_material_advisory_until_pm_imported": True,
-            "legacy_trace_defaults_inferred_by_router": "requirement_traceability" not in payload,
+            "trace_defaults_inferred_by_router": "requirement_traceability" not in payload,
         },
         "prior_path_context_review": prior_review,
         "node_structure": {

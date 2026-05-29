@@ -27,13 +27,13 @@ The runner has three layers:
   Python `CodeContract` rows, then verifies that selected tests directly call
   those public contract symbols and assert the external contract boundary.
 - Full model-test-code diagnostics: a repository-wide coverage-accounting pass
-  inventories owner modules, compatibility facades, script entrypoints,
+  inventories owner modules, public facades, script entrypoints,
   model-check runners, and test tiers, then reports missing-model,
   missing-test, extra-code, internal-only-test, stale-evidence, and
   needs-structure-split gaps with owner, severity, release relevance, repair
   type, dedupe, and priority metadata.
 
-The public runner file is now a compatibility facade. The implementation is
+The public runner file is now a small entrypoint. The implementation is
 split into focused `flowpilot_model_test_alignment_*` modules for common
 declarations, family plans, source contracts, known-bad cases, and full
 diagnostic surface inventory. The public command and importable helper names
@@ -61,7 +61,7 @@ without rereading every large script. The key fields are:
 - `surface_owner`: the module, script, tier, or model runner that owns the
   repair.
 - `release_relevance`: whether the gap blocks release tooling, validation,
-  runtime contracts, public CLI behavior, legacy validation, or maintenance
+  runtime contracts, public CLI behavior, retired-input validation, or maintenance
   only.
 - `repair_type`: the next repair class, such as adding external-contract tests,
   completing background evidence, rerunning public release evidence, or
@@ -89,11 +89,9 @@ One table-only StructureMesh candidate is separately recorded as
 `unresolved_non_deferred_gap_count` is zero and `release_convergence_ok` remains
 true.
 
-The `legacy-full` tier is kept visible as legacy validation history but is not
-ranked as the current release gate. When current layered full Meta/Capability
-proofs are valid, failed or still-running legacy monolithic artifacts are
-reclassified as `legacy_full_reclassified`: visible as raw background evidence,
-but not counted as stale release evidence.
+The current release gate is the layered full Meta/Capability evidence path.
+Historical monolithic artifacts are no longer part of the active
+test tier inventory or release-evidence classifier.
 
 For source-audited evidence, `TestEvidence.path` points to the file containing
 the real test function or class definition. The `command` may still be a public
@@ -102,14 +100,14 @@ when that is the supported command users run.
 
 | Family | Model checks represented | Obligations in the alignment table | Ordinary test evidence | Boundary |
 | --- | --- | --- | --- | --- |
-| Startup | `run_flowpilot_startup_control_checks.py`, `run_flowpilot_deterministic_startup_bootstrap_checks.py` | Three-question pause before work, prompt-isolated run state, reviewer facts, and PM startup activation. | Startup daemon/runtime tests for answer waiting, prompt-isolated run creation, answer acceptance, and activation blocking. | Does not run UI smoke or parent Meta/Capability graphs. |
+| Startup | `run_flowpilot_startup_control_checks.py`, `run_flowpilot_deterministic_startup_bootstrap_checks.py` | Native startup intake boundary before work, prompt-isolated run state, reviewer facts, and PM startup activation. | Startup daemon/runtime tests for native intake result folding, prompt-isolated run creation, and activation blocking. | Does not run UI smoke or parent Meta/Capability graphs. |
 | Packet/card/ACK | Packet lifecycle, card envelope, and event-contract model checks. | Packet body separation, card/bundle ACK identity, and ACK/return wait preconsumption. | Packet runtime tests, card runtime tests, and ACK/return runtime tests. | ACK evidence stays mechanical; it is not semantic review or PM approval. |
-| Route mutation | `run_flowpilot_route_mutation_activation_checks.py` | Mutation topology, process/product recheck, old packet supersession, sibling replacement, stale evidence, and route-sign projection. | Route-mutation parent contract tests, focused route-mutation runtime child suites, and user-flow diagram tests. | Covers ordinary route mutation behavior through split child-suite evidence; the legacy aggregate runtime module is a compatibility oracle, not the routine tier command. |
+| Route mutation | `run_flowpilot_route_mutation_activation_checks.py` | Mutation topology, process/product recheck, old packet supersession, sibling replacement, stale evidence, and route-sign projection. | Route-mutation parent contract tests, focused route-mutation runtime child suites, and user-flow diagram tests. | Covers ordinary route mutation behavior through split child-suite evidence; aggregate runtime evidence is historical, not the routine tier command. |
 | Terminal/closure/resume | Runtime closure, recursive closure reconciliation, and resume checks. | Final ledger, backward replay, dirty-ledger closure blocking, and current-run resume re-entry. | Terminal, closure, and resume runtime tests. | This is not a production replay adapter. |
 | Role/output contracts | Output contract and role-output runtime checks. | Registry-backed role outputs, current wait authority, packet output-contract binding, and wrong-recipient rejection. | Role-output runtime tests and output-contract tests. | Checks mechanics only; task semantic quality is outside this runner. |
 | Router loop/daemon | Router-loop and persistent-daemon checks. | Current-node packet/result loop, direct-dispatch preflight, daemon lock/status ownership, and queue progress. | Router packet runtime tests and startup daemon runtime tests. | Does not run long daemon soak tests. |
 | Test tiering/slow-test contracts | Test-tiering and slow-test contract model checks. | Fast/router tier scope, release-only exclusion, complete background artifacts, and parent/child slow-test ownership. | Test-tier runner tests and slow-test contract tests. | Progress output alone is never counted as pass evidence. |
-| Meta/capability parents | Meta and Capability thin/layered parent commands. | Thin-parent default evidence, explicit layered/legacy boundary, stale proof rejection, and abstract confidence boundary. | Thin-parent tests, FlowGuard proof tests, smoke fast-path tests, and control-gate unit tests. | Parent results are abstract model confidence, not ordinary production conformance. |
+| Meta/capability parents | Meta and Capability thin/layered parent commands. | Thin-parent default evidence, explicit layered/full boundary, stale proof rejection, and abstract confidence boundary. | Thin-parent tests, FlowGuard proof tests, smoke fast-path tests, and control-gate unit tests. | Parent results are abstract model confidence, not ordinary production conformance. |
 
 ## JSON Shape
 

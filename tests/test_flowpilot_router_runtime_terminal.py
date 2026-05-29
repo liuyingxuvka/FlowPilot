@@ -21,7 +21,7 @@ TEST_NAMES = (
     "test_final_ledger_records_frozen_contract_replay_source_paths",
     "test_final_ledger_rejects_dirty_self_interrogation_index",
     "test_final_ledger_rejects_dirty_pm_suggestion_ledger",
-    "test_reconcile_recovers_legacy_terminal_closure_state",
+    "test_reconcile_recovers_prior_terminal_closure_state",
 )
 
 

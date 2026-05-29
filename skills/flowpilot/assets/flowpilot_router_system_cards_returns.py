@@ -1,7 +1,7 @@
 """Internal router owner helpers extracted from flowpilot_router.
 
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
+The public router names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so private helper lookups remain
 stable while the implementation body lives outside the facade.
 """
 
@@ -219,7 +219,7 @@ def _quarantine_missing_ack_report_before_external_event(
 def _record_card_return_event_from_external_entrypoint(project_root: Path, event: str) -> dict[str, Any]:
     del project_root
     raise RouterError(
-        f"{event} is a system-card ACK return event, and the legacy record-event ACK path is disabled. "
+        f"{event} is a system-card ACK return event, and the retired record-event ACK path is disabled. "
         "The addressed role must run the card check-in command from the envelope so the ACK is submitted "
         "directly to Router with its direct Router ACK token."
     )

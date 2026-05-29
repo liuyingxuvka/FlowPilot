@@ -49,14 +49,6 @@ def external_event_phase(event: str) -> str:
     return EXTERNAL_EVENT_PHASE_BY_NAME[event]
 
 
-def legacy_external_events() -> frozenset[str]:
-    return frozenset(
-        event_name
-        for event_name, contract in EXTERNAL_EVENTS.items()
-        if contract.get("legacy") is True
-    )
-
-
 __all__ = (
     "ExternalEventPhase",
     "EXTERNAL_EVENT_PHASES",
@@ -65,5 +57,4 @@ __all__ = (
     "external_events_for_phase",
     "external_event_contract",
     "external_event_phase",
-    "legacy_external_events",
 )

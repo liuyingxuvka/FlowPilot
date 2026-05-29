@@ -1,6 +1,6 @@
 """Explicit owner-export installer for the FlowPilot router skeleton.
 
-This module replaces hundreds of hand-written compatibility wrappers in
+This module replaces hundreds of hand-written public wrappers in
 ``flowpilot_router.py`` with one auditable registry installer. The registry data
 lives in ``flowpilot_router_facade_export_manifest`` so this module stays focused
 on resolving and installing owner exports.

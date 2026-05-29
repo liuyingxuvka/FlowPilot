@@ -1,7 +1,7 @@
-"""Compatibility facade for startup helpers split from ``flowpilot_router_startup_flow``.
+"""Public facade for startup helpers split from ``flowpilot_router_startup_flow``.
 
 The implementation lives in focused child modules. This facade preserves
-the historical import path, public/private helper names, and router-binding
+the router import path, public/private helper names, and router-binding
 handoff used by the router skeleton.
 """
 

@@ -9,7 +9,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import barrier_bundle
 from packet_runtime_active_holder import (
     _load_active_holder_lease,
     _require_concrete_agent_id,
@@ -36,7 +35,6 @@ from packet_runtime_ledger import (
     _empty_packet_ledger,
     _packet_ledger_record,
     _update_packet_record,
-    _upsert_barrier_bundle_record,
     _upsert_packet_record,
     packet_ledger_record_for_envelope,
 )
@@ -69,7 +67,6 @@ from packet_runtime_reviewer import validate_for_reviewer
 from packet_runtime_schema import (
     ACTIVE_HOLDER_EVENT_SCHEMA,
     ACTIVE_HOLDER_LEASE_SCHEMA,
-    BARRIER_BUNDLE_SCHEMA,
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
@@ -141,107 +138,6 @@ def _load_ledger(project_root: Path, run_id: str | None = None) -> tuple[dict[st
     if not ledger_path.exists():
         raise PacketRuntimeError(f"packet ledger does not exist: {ledger_path}")
     return read_json(ledger_path), ledger_path, resolved_run_id
-
-def audit_barrier_bundles(
-    project_root: Path,
-    *,
-    run_id: str | None = None,
-    node_id: str | None = None,
-    bundle_id: str | None = None,
-) -> dict[str, Any]:
-    try:
-        ledger, ledger_path, resolved_run_id = _load_ledger(project_root, run_id)
-    except PacketRuntimeError:
-        return {
-            "schema_version": "flowpilot.barrier_bundle_audit.v1",
-            "run_id": run_id,
-            "node_id": node_id,
-            "bundle_id": bundle_id,
-            "ledger_missing": True,
-            "checked_bundle_count": 0,
-            "blockers": [],
-            "passed": True,
-            "created_at": utc_now(),
-        }
-
-    records = [item for item in ledger.get("packets", []) if isinstance(item, dict)]
-    packet_node = {
-        str(record.get("packet_id")): record.get("node_id")
-        for record in records
-        if record.get("packet_id")
-    }
-    bundles: list[dict[str, Any]] = []
-    seen: set[str] = set()
-
-    def add_bundle(raw: Any) -> None:
-        if not isinstance(raw, dict):
-            return
-        key = str(raw.get("bundle_id") or f"{raw.get('barrier_id', 'unknown')}:{len(seen)}")
-        if key in seen:
-            return
-        seen.add(key)
-        bundles.append(raw)
-
-    for raw_bundle in ledger.get("barrier_bundles", []):
-        add_bundle(raw_bundle)
-    for record in records:
-        add_bundle(record.get("barrier_bundle"))
-
-    scoped_bundles: list[dict[str, Any]] = []
-    for raw_bundle in bundles:
-        if bundle_id and raw_bundle.get("bundle_id") != bundle_id:
-            continue
-        if node_id:
-            bundle_node = raw_bundle.get("node_id")
-            member_nodes = {
-                packet_node.get(str(packet_id))
-                for packet_id in raw_bundle.get("member_packet_ids", [])
-            }
-            if bundle_node != node_id and node_id not in member_nodes:
-                continue
-        scoped_bundles.append(raw_bundle)
-
-    blockers: list[dict[str, Any]] = []
-    cumulative_obligations: list[str] = []
-    for raw_bundle in scoped_bundles:
-        report = barrier_bundle.validate_barrier_bundle(
-            raw_bundle,
-            cumulative_obligations=cumulative_obligations,
-        )
-        if report["ok"]:
-            cumulative_obligations.extend(barrier_bundle.passed_obligation_ids(raw_bundle))
-            continue
-        blockers.append(
-            {
-                "bundle_id": raw_bundle.get("bundle_id"),
-                "barrier_id": raw_bundle.get("barrier_id"),
-                "node_id": raw_bundle.get("node_id"),
-                "member_packet_ids": list(raw_bundle.get("member_packet_ids") or []),
-                "code": "barrier_bundle_invalid",
-                "failures": report["failures"],
-                "missing_obligations": report["missing_obligations"],
-                "missing_role_slices": report["missing_role_slices"],
-            }
-        )
-
-    audit = {
-        "schema_version": "flowpilot.barrier_bundle_audit.v1",
-        "run_id": resolved_run_id,
-        "node_id": node_id,
-        "bundle_id": bundle_id,
-        "ledger_path": project_relative(project_root, ledger_path),
-        "checked_bundle_count": len(scoped_bundles),
-        "blockers": blockers,
-        "passed": not blockers,
-        "created_at": utc_now(),
-    }
-    audit_path = ledger_path.with_name("barrier_bundle_audit.json")
-    write_json_atomic(audit_path, audit)
-    ledger["latest_barrier_bundle_audit_path"] = project_relative(project_root, audit_path)
-    ledger["latest_barrier_bundle_audit_passed"] = audit["passed"]
-    ledger["latest_barrier_bundle_audit_at"] = audit["created_at"]
-    write_json_atomic(ledger_path, ledger)
-    return audit
 
 def _replacement_exists(records: list[dict[str, Any]], packet_id: str) -> bool:
     for record in records:

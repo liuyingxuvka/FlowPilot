@@ -54,7 +54,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         root = self.make_project()
         envelope = role_output_runtime.submit_output(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-001",
             body={
@@ -99,7 +99,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         self.assertEqual(body["prior_path_context_review"]["completed_nodes_considered"], [])
         self.assertTrue(body["contract_self_check"]["all_required_fields_present"])
         ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "role_output_ledger.json")
-        self.assertEqual(ledger["outputs"][0]["output_type"], "pm_resume_recovery_decision")
+        self.assertEqual(ledger["outputs"][0]["output_type"], "pm_resume_decision")
 
     def test_registry_backed_output_types_are_preparable(self) -> None:
         root = self.make_project()
@@ -107,20 +107,19 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         for contract in registry["contracts"]:
             if contract.get("runtime_channel") != "role_output_runtime":
                 continue
-            output_types = [contract["output_type"], *contract.get("output_type_aliases", [])]
             expected_event = contract.get("router_event") if contract.get("router_event_mode") == "fixed" else None
-            for output_type in output_types:
-                session = role_output_runtime.prepare_output_session(
-                    root,
-                    output_type=output_type,
-                    role=contract["recipient_roles"][0],
-                    agent_id=f"agent-{output_type}",
-                )
-                self.assertEqual(session["output_type"], output_type)
-                self.assertEqual(session["output_contract_id"], contract["contract_id"])
-                self.assertEqual(session["event_name"], expected_event)
-                self.assertEqual(session["path_key"], contract["path_key"])
-                self.assertEqual(session["hash_key"], contract["hash_key"])
+            output_type = contract["output_type"]
+            session = role_output_runtime.prepare_output_session(
+                root,
+                output_type=output_type,
+                role=contract["recipient_roles"][0],
+                agent_id=f"agent-{output_type}",
+            )
+            self.assertEqual(session["output_type"], output_type)
+            self.assertEqual(session["output_contract_id"], contract["contract_id"])
+            self.assertEqual(session["event_name"], expected_event)
+            self.assertEqual(session["path_key"], contract["path_key"])
+            self.assertEqual(session["hash_key"], contract["hash_key"])
 
     def test_role_output_owner_modules_expose_direct_external_contracts(self) -> None:
         root = self.make_project()
@@ -247,7 +246,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         root = self.make_project()
         authority = role_output_runtime.validate_direct_router_submission_authority(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-fixed-authority",
         )
@@ -292,8 +291,8 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                     "action_type": "await_role_decision",
                     "to_role": "product_flowguard_officer",
                     "allowed_external_events": [
-                        "product_officer_passes_product_architecture_modelability",
-                        "product_officer_blocks_product_architecture_modelability",
+                        "product_officer_submits_product_behavior_model",
+                        "product_officer_blocks_product_behavior_model",
                     ],
                 }
             },
@@ -303,7 +302,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 root,
                 output_type="officer_model_report",
                 role="product_flowguard_officer",
-                agent_id="agent-product-officer-legacy-event",
+                agent_id="agent-product-officer-unknown-event",
                 event_name="product_officer_model_report",
             )
         authority = role_output_runtime.validate_direct_router_submission_authority(
@@ -311,7 +310,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             output_type="officer_model_report",
             role="product_flowguard_officer",
             agent_id="agent-product-officer-current-wait",
-            event_name="product_officer_blocks_product_architecture_modelability",
+            event_name="product_officer_blocks_product_behavior_model",
         )
         self.assertTrue(authority["ok"])
         self.assertEqual(authority["authority_source"], "current_router_wait")
@@ -443,7 +442,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         root = self.make_project()
         envelope = role_output_runtime.submit_output(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-002",
             body={
@@ -479,7 +478,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "decision"):
             role_output_runtime.submit_output(
                 root,
-                output_type="pm_resume_recovery_decision",
+                output_type="pm_resume_decision",
                 role="project_manager",
                 agent_id="agent-pm-003",
                 body={
@@ -496,7 +495,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "may be submitted only"):
             role_output_runtime.submit_output(
                 root,
-                output_type="pm_resume_recovery_decision",
+                output_type="pm_resume_decision",
                 role="controller",
                 agent_id="agent-controller-001",
                 body={"decision": "continue_current_packet_loop"},
@@ -760,7 +759,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         root = self.make_project()
         session = role_output_runtime.prepare_output_session(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-progress",
         )
@@ -789,7 +788,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
 
         progress = role_output_runtime.update_output_progress(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-progress",
             progress=40,
@@ -816,7 +815,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "sealed body details"):
             role_output_runtime.update_output_progress(
                 root,
-                output_type="pm_resume_recovery_decision",
+                output_type="pm_resume_decision",
                 role="project_manager",
                 agent_id="agent-pm-progress",
                 progress=50,
@@ -826,7 +825,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
 
         envelope = role_output_runtime.submit_output(
             root,
-            output_type="pm_resume_recovery_decision",
+            output_type="pm_resume_decision",
             role="project_manager",
             agent_id="agent-pm-progress",
             session_path=session["session_path"],
@@ -855,7 +854,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "controller_aside"):
             role_output_runtime.update_output_progress(
                 root,
-                output_type="pm_resume_recovery_decision",
+                output_type="pm_resume_decision",
                 role="project_manager",
                 agent_id="agent-pm-progress",
                 progress=60,

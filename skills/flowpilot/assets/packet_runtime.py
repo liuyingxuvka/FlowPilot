@@ -1,4 +1,4 @@
-"""Compatibility facade for physical FlowPilot packet envelope/body handoffs."""
+"""Public facade for physical FlowPilot packet envelope/body handoffs."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from packet_runtime_active_holder import (
     active_holder_submit_result,
     issue_active_holder_lease,
 )
-from packet_runtime_audit import _load_ledger, _replacement_exists, audit_barrier_bundles, audit_packet_chain
+from packet_runtime_audit import _load_ledger, _replacement_exists, audit_packet_chain
 from packet_runtime_cli import _read_text_arg, main, parse_args
 from packet_runtime_creation import (
     build_controller_handoff,
@@ -100,7 +100,6 @@ __all__ = [
     "load_envelope",
     "write_result",
     "read_result_body_for_role",
-    "audit_barrier_bundles",
     "audit_packet_chain",
     "controller_relay_envelope",
     "validate_packet_ready_for_direct_relay",

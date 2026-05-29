@@ -587,7 +587,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         relayed_result = packet_runtime.load_envelope(root, result_path)
         self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "project_manager")
         self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
-    def test_current_node_packet_and_result_accept_safe_envelope_aliases(self) -> None:
+    def test_current_node_packet_and_result_reject_envelope_aliases(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
         self.complete_pre_route_gates(root)
@@ -610,10 +610,15 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         packet_envelope["packet_body_hash"] = packet_envelope.pop("body_hash")
         packet_file.write_text(json.dumps(packet_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+        with self.assertRaises(Exception):
+            router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-aliases", "packet_envelope_path": packet_path})
+
+        packet_envelope["body_path"] = packet_envelope.pop("packet_body_path")
+        packet_envelope["body_hash"] = packet_envelope.pop("packet_body_hash")
+        packet_file.write_text(json.dumps(packet_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": "node-packet-aliases", "packet_envelope_path": packet_path})
         self.apply_until_action(root, "relay_current_node_packet")
-        relayed_packet = packet_runtime.load_envelope(root, packet_path)
-        self.assertIn("body_path", relayed_packet)
+
         agent_id, result_path = self.submit_current_node_result_via_active_holder(
             root,
             result_body_text="reviewable result",
@@ -626,12 +631,15 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         result_envelope["to_role"] = result_envelope.pop("next_recipient")
         result_file.write_text(json.dumps(result_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
+        with self.assertRaises(Exception):
+            router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-aliases", "result_envelope_path": result_path})
+        result_envelope["result_body_path"] = result_envelope.pop("body_path")
+        result_envelope["result_body_hash"] = result_envelope.pop("body_hash")
+        result_envelope["next_recipient"] = result_envelope.pop("to_role")
+        result_file.write_text(json.dumps(result_envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         router.record_external_event(root, "worker_current_node_result_returned", {"packet_id": "node-packet-aliases", "result_envelope_path": result_path})
         self.absorb_current_node_results_with_pm(root, [result_path])
         self.deliver_expected_card(root, "reviewer.worker_result_review")
-        relayed_result = packet_runtime.load_envelope(root, result_path)
-        self.assertIn("result_body_path", relayed_result)
-        self.assertEqual(relayed_result["next_recipient"], "project_manager")
 
         router.record_external_event(
             root,

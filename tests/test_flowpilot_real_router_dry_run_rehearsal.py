@@ -30,8 +30,6 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             applied_payload = self.payload_for_action(action, payload)
         elif action_type == "open_startup_intake_ui":
             applied_payload = self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS)
-        elif action_type == "record_startup_answers":
-            applied_payload = {"startup_answers": STARTUP_ANSWERS}
         elif action_type == "record_user_request" and action.get("requires_payload") == "user_request":
             applied_payload = {"user_request": USER_REQUEST}
         elif action_type == "start_role_slots":

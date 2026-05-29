@@ -29,17 +29,12 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
         "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
         "pass_events": (
             "product_officer_submits_product_behavior_model",
-            "product_officer_passes_product_architecture_modelability",
         ),
         "block_events": (
             "product_officer_blocks_product_behavior_model",
-            "product_officer_blocks_product_architecture_modelability",
         ),
-        "legacy_non_completion_events": ("product_officer_model_report",),
         "completion_rule": "pass_or_block_event_required",
-        "legacy_event_policy": "registered_metadata_only_not_gate_completion",
         "canonical_artifact": "flowguard/product_behavior_model.json",
-        "compatibility_artifact": "flowguard/product_architecture_modelability.json",
     },
     "process_route_model": {
         "schema_version": GATE_CONTRACT_SCHEMA,
@@ -51,26 +46,17 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
         "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
         "pass_events": (
             "process_officer_submits_process_route_model",
-            "process_officer_passes_route_check",
         ),
         "block_events": (
             "process_officer_requests_process_route_model_repair",
             "process_officer_blocks_process_route_model",
-            "process_officer_requires_route_repair",
-            "process_officer_blocks_route_check",
         ),
-        "legacy_non_completion_events": (),
         "completion_rule": "pass_repair_or_block_event_required",
-        "legacy_event_policy": "compatibility_aliases_satisfy_canonical_flags",
         "canonical_artifact": "flowguard/process_route_model.json",
-        "compatibility_artifact": "flowguard/route_process_check.json",
     },
 }
 
-GATE_CONTRACT_ALIASES = {
-    "product_architecture_modelability": "product_behavior_model",
-    "route_process_check": "process_route_model",
-}
+GATE_CONTRACT_ALIASES: dict[str, str] = {}
 
 GATE_CONTRACTS_BY_CARD = {
     str(contract["card_id"]): gate_id
@@ -83,7 +69,6 @@ GATE_CONTRACTS_BY_EVENT = {
     for event in (
         *contract.get("pass_events", ()),
         *contract.get("block_events", ()),
-        *contract.get("legacy_non_completion_events", ()),
     )
 }
 
@@ -91,7 +76,7 @@ def _public_gate_contract(contract: dict[str, Any] | None) -> dict[str, Any] | N
     if not isinstance(contract, dict):
         return None
     public = dict(contract)
-    for key in ("pass_events", "block_events", "legacy_non_completion_events"):
+    for key in ("pass_events", "block_events"):
         public[key] = list(public.get(key) or [])
     return public
 
@@ -122,7 +107,7 @@ def _gate_contract_for_events(events: Iterable[str]) -> dict[str, Any] | None:
     return None
 
 def _event_is_terminal_gate_outcome(event: str, meta: dict[str, Any]) -> bool:
-    if meta.get("legacy") or meta.get("terminal_gate_outcome") is False:
+    if meta.get("terminal_gate_outcome") is False:
         return False
     contract = _gate_contract_for_event(event)
     if contract is None:
@@ -142,35 +127,30 @@ def _gate_completion_wait_group(group: list[tuple[str, dict[str, Any]]]) -> list
 PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS = frozenset(
     {
         "product_officer_submits_product_behavior_model",
-        "product_officer_passes_product_architecture_modelability",
     }
 )
 
 PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS = frozenset(
     {
         "product_officer_blocks_product_behavior_model",
-        "product_officer_blocks_product_architecture_modelability",
     }
 )
 
 PROCESS_ROUTE_MODEL_PASS_EVENTS = frozenset(
     {
         "process_officer_submits_process_route_model",
-        "process_officer_passes_route_check",
     }
 )
 
 PROCESS_ROUTE_MODEL_REPAIR_EVENTS = frozenset(
     {
         "process_officer_requests_process_route_model_repair",
-        "process_officer_requires_route_repair",
     }
 )
 
 PROCESS_ROUTE_MODEL_BLOCK_EVENTS = frozenset(
     {
         "process_officer_blocks_process_route_model",
-        "process_officer_blocks_route_check",
     }
 )
 

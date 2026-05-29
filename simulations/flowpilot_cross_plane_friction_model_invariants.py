@@ -29,8 +29,8 @@ def material_dispatch_contract_is_explicit(state: State, _trace: object) -> Inva
         missing.append("role-scoped output contract")
     if not state.material_dispatch_write_target_explicit:
         missing.append("explicit result write target")
-    if not state.material_legacy_packets_quarantined_or_migrated:
-        missing.append("legacy packet migration/quarantine")
+    if not state.retired_material_packets_rejected:
+        missing.append("retired packet rejection")
     if missing:
         return _fail(
             "material-scan dispatch lacks "

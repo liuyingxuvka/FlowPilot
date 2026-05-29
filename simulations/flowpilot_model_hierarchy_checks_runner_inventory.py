@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -10,10 +9,8 @@ from typing import Any, Mapping
 import flowpilot_model_hierarchy_model as model
 from flowpilot_thin_parent_checks import (
     LEDGER_PATH,
-    LEGACY_RESULT_PATHS,
     THIN_PROOF_PATHS,
     THIN_RESULT_PATHS,
-    legacy_full_status,
     release_regression_status,
     read_json,
     thin_input_fingerprint,
@@ -147,60 +144,6 @@ def _size_tier(state_count: int | None) -> str:
     return "small"
 
 
-def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _proof_status(parent: str) -> dict[str, Any]:
-    if parent == "meta":
-        result_path = SIMULATIONS / "results.json"
-        proof_path = SIMULATIONS / "results.proof.json"
-        model_path = SIMULATIONS / "meta_model.py"
-        runner_path = SIMULATIONS / "run_meta_checks.py"
-        check_name = "meta"
-    elif parent == "capability":
-        result_path = SIMULATIONS / "capability_results.json"
-        proof_path = SIMULATIONS / "capability_results.proof.json"
-        model_path = SIMULATIONS / "capability_model.py"
-        runner_path = SIMULATIONS / "run_capability_checks.py"
-        check_name = "capability"
-    else:
-        return {"valid": False, "reason": "unknown parent"}
-
-    proof = _read_json(proof_path)
-    if not isinstance(proof, Mapping):
-        return {
-            "valid": False,
-            "reason": "proof missing or invalid",
-            "proof_file": proof_path.relative_to(ROOT).as_posix(),
-        }
-    if not result_path.exists():
-        return {"valid": False, "reason": "result missing"}
-    payload = {
-        "flowguard_schema_version": _flowguard_schema_version(),
-        "model": _file_sha256(model_path),
-        "runner": _file_sha256(runner_path),
-    }
-    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    input_fingerprint = hashlib.sha256(encoded).hexdigest()
-    result_fingerprint = _file_sha256(result_path)
-    valid = (
-        proof.get("schema") == 1
-        and proof.get("check") == check_name
-        and proof.get("ok") is True
-        and proof.get("input_fingerprint") == input_fingerprint
-        and proof.get("result_fingerprint") == result_fingerprint
-    )
-    reason = "valid proof" if valid else "proof fingerprint mismatch"
-    return {
-        "valid": valid,
-        "reason": reason,
-        "proof_file": proof_path.relative_to(ROOT).as_posix(),
-        "result_file": result_path.relative_to(ROOT).as_posix(),
-        "created_at": proof.get("created_at"),
-    }
-
-
 def _thin_proof_status(parent: str) -> dict[str, Any]:
     if parent == "meta":
         runner_path = SIMULATIONS / "run_meta_checks.py"
@@ -233,15 +176,6 @@ def _thin_proof_status(parent: str) -> dict[str, Any]:
         row["created_at"] = proof.get("created_at")
         row["result_type"] = proof.get("result_type")
     return row
-
-
-def _flowguard_schema_version() -> str:
-    try:
-        import flowguard
-
-        return str(flowguard.SCHEMA_VERSION)
-    except Exception:
-        return "unavailable"
 
 
 def _owner_label(parent: str, owner_type: str) -> str:
@@ -351,27 +285,20 @@ def build_inventory_report() -> dict[str, Any]:
     parent_rows: list[dict[str, Any]] = []
     for parent in model.PARENT_MODELS:
         thin_row = _result_row_from_path(THIN_RESULT_PATHS[parent], parent)
-        full_row = _result_row_from_path(LEGACY_RESULT_PATHS[parent], parent)
         release_status = release_regression_status(parent)
-        legacy_status = legacy_full_status(parent)
         thin_proof = _thin_proof_status(parent)
-        row = dict(thin_row or full_row or results.get(parent, {"model_id": parent, "tier": "unknown"}))
+        row = dict(thin_row or results.get(parent, {"model_id": parent, "tier": "unknown"}))
         row["role"] = "thin_parent" if thin_row else "heavyweight_parent"
         row["thin_parent"] = {
             "result": thin_row,
             "proof": thin_proof,
         }
-        row["legacy_full_regression"] = {
-            "result": full_row,
+        row["layered_full_regression"] = {
             "proof": release_status,
-            "required_for_release": bool(release_status.get("legacy_monolith_required")),
             "current": bool(release_status.get("valid")),
-            "legacy_monolith_status": legacy_status,
         }
-        row["full_state_count"] = full_row.get("state_count") if full_row else None
         row["split_review_required"] = (
-            (full_row is not None and (full_row.get("state_count") or 0) >= HEAVYWEIGHT_STATE_THRESHOLD)
-            or row.get("role") == "thin_parent"
+            row.get("role") == "thin_parent"
         )
         row["proof"] = release_status
         row["release_confidence"] = (
@@ -380,7 +307,6 @@ def build_inventory_report() -> dict[str, Any]:
         )
         row["routine_validation_command"] = f"python simulations/run_{parent}_checks.py --fast"
         row["release_validation_command"] = f"python simulations/run_{parent}_checks.py --full"
-        row["legacy_monolith_command"] = f"python simulations/run_{parent}_checks.py --legacy-full"
         parent_rows.append(row)
 
     child_ids = sorted(
@@ -408,7 +334,7 @@ def build_inventory_report() -> dict[str, Any]:
     heavy_parent_obligations = [
         parent["model_id"]
         for parent in parent_rows
-        if not parent.get("legacy_full_regression", {}).get("current")
+        if not parent.get("layered_full_regression", {}).get("current")
     ]
     thin_parent_obligations = [
         parent["model_id"]
@@ -441,10 +367,6 @@ def build_inventory_report() -> dict[str, Any]:
         "release_validation_commands": {
             "meta": "python simulations/run_meta_checks.py --full",
             "capability": "python simulations/run_capability_checks.py --full",
-        },
-        "legacy_monolith_commands": {
-            "meta": "python simulations/run_meta_checks.py --legacy-full",
-            "capability": "python simulations/run_capability_checks.py --legacy-full",
         },
         "parents": parent_rows,
         "registered_child_count": len(child_rows),

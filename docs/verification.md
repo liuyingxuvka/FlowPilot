@@ -38,7 +38,7 @@ FlowGuard model obligations and ordinary test evidence. A green alignment report
 means each declared obligation has current passing evidence for the required
 test kinds; it is not a substitute for the model runner or production replay.
 
-The tier runner can execute the router domain suites without loading the legacy
+The tier runner can execute the router domain suites without loading the retired
 aggregate implementation file as the routine source of truth:
 
 ```powershell
@@ -48,8 +48,8 @@ python scripts/run_test_tier.py --tier router --background --background-dir tmp/
 
 `router-route` composes focused route-mutation runtime child suites for draft
 activation, model-miss triage, acceptance repair, preconditions, transactions,
-topology, sibling replacement, and parent backward replay. The legacy
-`tests.router_runtime.route_mutation` module remains an explicit compatibility
+topology, sibling replacement, and parent backward replay. The aggregate
+`tests.router_runtime.route_mutation` module remains an explicit historical
 aggregate, not routine parent evidence.
 
 On Windows, the tier runner starts background children and foreground child
@@ -121,7 +121,7 @@ Expected:
 - repository-owned installed skills are source-fresh;
 - installed skill names are unique, so stale backup skills cannot shadow the
   active FlowPilot skill;
-- the legacy Cockpit prototype is absent from the active source tree before a
+- the retired Cockpit prototype is absent from the active source tree before a
   from-scratch UI restart.
 - If local `.flowpilot/` runtime state exists, its main JSON files parse.
 
@@ -190,7 +190,7 @@ Expected:
 - current-run `state.json`, `execution_frontier.json`, and
   `routes/<active-route>/flow.json`
   agree on the same active nonterminal route;
-- old top-level control state is absent, legacy-only, or quarantined and is
+- old top-level control state is absent, retired-only, or quarantined and is
   not used as current state;
 - continuing prior work has a current-run prior-work import packet;
 - `crew_ledger.json` is current for that route and all six role memory packets

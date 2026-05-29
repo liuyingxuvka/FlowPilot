@@ -5,8 +5,8 @@ Risk intent brief:
   registered transaction authority.
 - Protected harms: route or packet state moving from only contract validity,
   only event validity, unchecked packet authority, collapsed repair outcomes,
-  parent repair leaf-event reuse, partial state commits, and old invalid repair
-  transactions being treated as current permission.
+  parent repair leaf-event reuse, partial state commits, and retired repair
+  transaction names being treated as current permission.
 - Hard invariant: a FlowPilot control write is safe only when the transaction
   type is registered and its referenced contract, event capability, packet
   authority, repair transaction, outcome policy, and commit targets agree.
@@ -31,7 +31,6 @@ VALID_REVIEWER_GATE_RESULT = "valid_reviewer_gate_result"
 VALID_CONTROL_BLOCKER_REPAIR = "valid_control_blocker_repair"
 VALID_CONTROL_PLANE_REISSUE = "valid_control_plane_reissue"
 VALID_ROUTE_MUTATION = "valid_route_mutation"
-VALID_LEGACY_QUARANTINE = "valid_legacy_quarantine"
 
 UNREGISTERED_TRANSACTION_TYPE = "unregistered_transaction_type"
 CONTRACT_PASS_EVENT_CAPABILITY_MISSING = "contract_pass_event_capability_missing"
@@ -43,7 +42,7 @@ REPAIR_WITHOUT_TRANSACTION = "repair_without_transaction"
 PARENT_REPAIR_LEAF_EVENT = "parent_repair_leaf_event"
 PARTIAL_COMMIT_TARGETS = "partial_commit_targets"
 ACTIVE_BLOCKER_MARKED_GREEN = "active_blocker_marked_green"
-LEGACY_BAD_TRANSACTION_CONTINUES = "legacy_bad_transaction_continues"
+RETIRED_RECONCILE_TRANSACTION_CONTINUES = "retired_reconcile_transaction_continues"
 REGISTRY_REFERENCE_MISSING = "registry_reference_missing"
 ROUTE_MUTATION_WITHOUT_STALE_POLICY = "route_mutation_without_stale_policy"
 REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT = "reviewer_non_success_uses_success_event"
@@ -60,7 +59,6 @@ VALID_SCENARIOS = (
     VALID_CONTROL_BLOCKER_REPAIR,
     VALID_CONTROL_PLANE_REISSUE,
     VALID_ROUTE_MUTATION,
-    VALID_LEGACY_QUARANTINE,
 )
 NEGATIVE_SCENARIOS = (
     UNREGISTERED_TRANSACTION_TYPE,
@@ -73,7 +71,7 @@ NEGATIVE_SCENARIOS = (
     PARENT_REPAIR_LEAF_EVENT,
     PARTIAL_COMMIT_TARGETS,
     ACTIVE_BLOCKER_MARKED_GREEN,
-    LEGACY_BAD_TRANSACTION_CONTINUES,
+    RETIRED_RECONCILE_TRANSACTION_CONTINUES,
     REGISTRY_REFERENCE_MISSING,
     ROUTE_MUTATION_WITHOUT_STALE_POLICY,
     REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT,
@@ -91,7 +89,6 @@ REGISTERED_TRANSACTION_TYPES = {
     "control_blocker_repair",
     "control_plane_reissue",
     "route_mutation",
-    "legacy_reconcile",
 }
 COMMIT_TARGETS = {
     "frontier",
@@ -115,7 +112,6 @@ REQUIRED_TARGETS_BY_TYPE = {
     "control_blocker_repair": frozenset({"repair_transaction", "blocker_index", "run_state", "status_summary"}),
     "control_plane_reissue": frozenset({"blocker_index", "run_state", "status_summary"}),
     "route_mutation": frozenset({"route", "frontier", "stale_evidence", "run_state", "status_summary"}),
-    "legacy_reconcile": frozenset({"blocker_index", "repair_transaction_index", "status_summary"}),
 }
 
 
@@ -155,9 +151,7 @@ class State:
     atomic_commit_declared: bool = True
     active_blocker_present: bool = False
     safe_to_continue_claimed: bool = False
-    legacy_transaction: bool = False
-    legacy_transaction_invalid: bool = False
-    legacy_quarantined: bool = False
+    retired_transaction_name: bool = False
     route_mutation: bool = False
     stale_evidence_policy_applied: bool = False
     control_plane_reissue: bool = False
@@ -252,19 +246,6 @@ def _scenario_state(scenario: str) -> State:
             stale_evidence_policy_applied=True,
             commit_targets=("route", "frontier", "stale_evidence", "run_state", "status_summary"),
         )
-    if scenario == VALID_LEGACY_QUARANTINE:
-        return State(
-            status="selected",
-            scenario=scenario,
-            transaction_type="legacy_reconcile",
-            registry_row_present=True,
-            contract_required=False,
-            legacy_transaction=True,
-            legacy_transaction_invalid=True,
-            legacy_quarantined=True,
-            active_blocker_present=True,
-            commit_targets=("blocker_index", "repair_transaction_index", "status_summary"),
-        )
     if scenario == UNREGISTERED_TRANSACTION_TYPE:
         return replace(_scenario_state(VALID_ROUTE_PROGRESSION), scenario=scenario, transaction_type="ad_hoc_next_step")
     if scenario == CONTRACT_PASS_EVENT_CAPABILITY_MISSING:
@@ -300,11 +281,13 @@ def _scenario_state(scenario: str) -> State:
             active_blocker_present=True,
             safe_to_continue_claimed=True,
         )
-    if scenario == LEGACY_BAD_TRANSACTION_CONTINUES:
+    if scenario == RETIRED_RECONCILE_TRANSACTION_CONTINUES:
         return replace(
-            _scenario_state(VALID_LEGACY_QUARANTINE),
+            _scenario_state(VALID_CONTROL_BLOCKER_REPAIR),
             scenario=scenario,
-            legacy_quarantined=False,
+            transaction_type="legacy_reconcile",
+            registry_row_present=False,
+            retired_transaction_name=True,
             safe_to_continue_claimed=True,
         )
     if scenario == REGISTRY_REFERENCE_MISSING:
@@ -373,8 +356,6 @@ def control_transaction_failures(state: State) -> list[str]:
         failures.append("atomic commit target is missing")
     if state.active_blocker_present and state.safe_to_continue_claimed:
         failures.append("active blocker cannot be marked safe to continue")
-    if state.legacy_transaction and state.legacy_transaction_invalid and not state.legacy_quarantined:
-        failures.append("invalid legacy transaction was not quarantined")
     if state.route_mutation and not state.stale_evidence_policy_applied:
         failures.append("route mutation omitted stale-evidence policy")
     return failures

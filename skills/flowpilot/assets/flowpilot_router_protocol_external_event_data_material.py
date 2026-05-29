@@ -18,16 +18,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                          'summary': 'Router direct-dispatch repair '
                                                                     'recheck passed for material '
                                                                     'scan packets.'},
- 'reviewer_allows_material_scan_dispatch': {'flag': 'reviewer_dispatch_allowed',
-                                            'requires_flag': 'reviewer_dispatch_card_delivered',
-                                            'legacy': True,
-                                            'summary': 'Legacy reviewer dispatch approval event '
-                                                       'retained for old run records only.'},
- 'reviewer_blocks_material_scan_dispatch': {'flag': 'material_scan_dispatch_blocked',
-                                            'requires_flag': 'reviewer_dispatch_card_delivered',
-                                            'legacy': True,
-                                            'summary': 'Legacy reviewer dispatch block event '
-                                                       'retained for old run records only.'},
  'router_direct_material_scan_dispatch_recheck_blocked': {'flag': 'material_scan_dispatch_recheck_blocked',
                                                           'requires_flag': 'pm_control_blocker_repair_decision_recorded',
                                                           'summary': 'Router direct-dispatch '
@@ -38,12 +28,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                             'summary': 'Router direct-dispatch '
                                                                        'repair recheck found a '
                                                                        'protocol blocker.'},
- 'reviewer_allows_current_node_dispatch': {'flag': 'current_node_dispatch_allowed',
-                                           'requires_flag': 'reviewer_current_node_dispatch_card_delivered',
-                                           'legacy': True,
-                                           'summary': 'Legacy current-node reviewer dispatch '
-                                                      'approval event retained for old run records '
-                                                      'only.'},
  'worker_scan_packet_bodies_delivered_after_dispatch': {'flag': 'worker_packets_delivered',
                                                         'requires_flag': 'material_scan_packets_relayed',
                                                         'summary': 'Worker packet bodies were '
@@ -127,14 +111,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                           'requires_flag': 'reviewer_product_architecture_card_delivered',
                                           'summary': 'Reviewer blocked the PM product-function '
                                                      'architecture challenge.'},
- 'product_officer_passes_product_architecture_modelability': {'flag': 'product_architecture_modelability_passed',
-                                                              'requires_flag': 'product_officer_product_architecture_card_delivered',
-                                                              'gate_id': 'product_behavior_model',
-                                                              'terminal_gate_outcome': True,
-                                                              'summary': 'Compatibility alias: '
-                                                                         'Product FlowGuard '
-                                                                         'Officer submitted the '
-                                                                         'product behavior model.'},
  'product_officer_submits_product_behavior_model': {'flag': 'product_behavior_model_submitted',
                                                     'requires_flag': 'product_officer_product_architecture_card_delivered',
                                                     'gate_id': 'product_behavior_model',
@@ -142,14 +118,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                     'summary': 'Product FlowGuard Officer '
                                                                'submitted the canonical product '
                                                                'behavior model.'},
- 'product_officer_model_report': {'flag': 'legacy_product_officer_model_report_received',
-                                  'requires_flag': 'product_officer_product_architecture_card_delivered',
-                                  'gate_id': 'product_behavior_model',
-                                  'legacy': True,
-                                  'terminal_gate_outcome': False,
-                                  'summary': 'Legacy Product FlowGuard model-report status event '
-                                             'retained only so old run artifacts remain registered '
-                                             'in the event taxonomy.'},
  'pm_accepts_product_behavior_model': {'flag': 'pm_product_behavior_model_accepted',
                                        'requires_flag': 'pm_product_behavior_model_decision_card_delivered',
                                        'summary': 'PM accepted the Product FlowGuard product '
@@ -161,14 +129,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                            'behavior model and requested product '
                                                            'architecture/model rebuild before '
                                                            'reviewer challenge.'},
- 'product_officer_blocks_product_architecture_modelability': {'flag': 'product_architecture_modelability_blocked',
-                                                              'requires_flag': 'product_officer_product_architecture_card_delivered',
-                                                              'gate_id': 'product_behavior_model',
-                                                              'terminal_gate_outcome': True,
-                                                              'summary': 'Compatibility alias: '
-                                                                         'Product FlowGuard '
-                                                                         'Officer blocked the '
-                                                                         'product behavior model.'},
  'product_officer_blocks_product_behavior_model': {'flag': 'product_behavior_model_blocked',
                                                    'requires_flag': 'product_officer_product_architecture_card_delivered',
                                                    'gate_id': 'product_behavior_model',
@@ -188,20 +148,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                               'requires_flag': 'reviewer_root_contract_card_delivered',
                                               'summary': 'Reviewer blocked the root acceptance '
                                                          'contract challenge.'},
- 'product_officer_passes_root_acceptance_contract_modelability': {'flag': 'root_contract_modelability_passed',
-                                                                  'requires_flag': 'product_officer_root_contract_card_delivered',
-                                                                  'legacy': True,
-                                                                  'summary': 'Product FlowGuard '
-                                                                             'Officer passed root '
-                                                                             'contract '
-                                                                             'modelability.'},
- 'product_officer_blocks_root_acceptance_contract_modelability': {'flag': 'root_contract_modelability_blocked',
-                                                                  'requires_flag': 'product_officer_root_contract_card_delivered',
-                                                                  'legacy': True,
-                                                                  'summary': 'Product FlowGuard '
-                                                                             'Officer blocked root '
-                                                                             'contract '
-                                                                             'modelability.'},
  'pm_freezes_root_acceptance_contract': {'flag': 'root_contract_frozen_by_pm',
                                          'requires_flag': 'root_contract_reviewer_passed',
                                          'summary': 'PM froze the reviewed root acceptance '
@@ -228,28 +174,6 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                'requires_flag': 'reviewer_child_skill_gate_manifest_card_delivered',
                                                'summary': 'Reviewer blocked child-skill gate '
                                                           'manifest review.'},
- 'process_officer_passes_child_skill_conformance_model': {'flag': 'child_skill_process_officer_passed',
-                                                          'requires_flag': 'process_officer_child_skill_card_delivered',
-                                                          'legacy': True,
-                                                          'summary': 'Process FlowGuard Officer '
-                                                                     'passed child-skill '
-                                                                     'conformance model review.'},
- 'process_officer_blocks_child_skill_conformance_model': {'flag': 'child_skill_process_officer_blocked',
-                                                          'requires_flag': 'process_officer_child_skill_card_delivered',
-                                                          'legacy': True,
-                                                          'summary': 'Process FlowGuard Officer '
-                                                                     'blocked child-skill '
-                                                                     'conformance model review.'},
- 'product_officer_passes_child_skill_product_fit': {'flag': 'child_skill_product_officer_passed',
-                                                    'requires_flag': 'product_officer_child_skill_card_delivered',
-                                                    'legacy': True,
-                                                    'summary': 'Product FlowGuard Officer passed '
-                                                               'child-skill product fit review.'},
- 'product_officer_blocks_child_skill_product_fit': {'flag': 'child_skill_product_officer_blocked',
-                                                    'requires_flag': 'product_officer_child_skill_card_delivered',
-                                                    'legacy': True,
-                                                    'summary': 'Product FlowGuard Officer blocked '
-                                                               'child-skill product fit review.'},
  'pm_approves_child_skill_manifest_for_route': {'flag': 'child_skill_manifest_pm_approved_for_route',
                                                 'requires_flag': 'child_skill_manifest_reviewer_passed',
                                                 'summary': 'PM approved the child-skill manifest '

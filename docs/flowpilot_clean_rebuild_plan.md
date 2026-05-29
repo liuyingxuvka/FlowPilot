@@ -30,11 +30,10 @@ user request explicitly asks for it.
 
 ## Work Items
 
-1. Record the legacy-to-router equivalence map.
-   - Output: `docs/legacy_to_router_equivalence.md`.
-   - Output: `docs/legacy_to_router_equivalence.json`.
-   - Check: `scripts/check_install.py` verifies the JSON exists, parses, and
-     all required old obligations are accounted for.
+1. Keep the new-only runtime contract executable.
+   - Output: `simulations/flowpilot_new_only_runtime_results.json`.
+   - Check: `scripts/check_install.py` verifies the new-only model result
+     exists, parses, and rejects retired compatibility entrypoints.
 
 2. Repair the adoption log for the first clean-rebuild pass.
    - Record the background capability-model result that completed after the

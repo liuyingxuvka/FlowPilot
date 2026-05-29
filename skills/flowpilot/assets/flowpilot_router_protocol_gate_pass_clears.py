@@ -1,4 +1,4 @@
-"""Compatibility gate pass-clear mappings derived from the gate registry."""
+"""Gate pass-clear mappings derived from the gate registry."""
 
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 """startup bootloader bootstrap/run-state synchronization helpers for ``flowpilot_router_startup_bootloader``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -90,7 +90,7 @@ def _sync_startup_bootstrap_flags_to_run_state(router: ModuleType, bootstrap_sta
     _bind_router(router)
     bootstrap_flags = bootstrap_state.get('flags') if isinstance(bootstrap_state.get('flags'), dict) else {}
     run_flags = run_state.setdefault('flags', {})
-    for flag in ('startup_state_written_awaiting_answers', 'dialog_stopped_for_answers', 'startup_answers_recorded', 'banner_emitted', 'flowguard_capability_snapshot_written', 'roles_started', 'role_core_prompts_injected', 'continuation_binding_recorded'):
+    for flag in ('startup_intake_result_recorded', 'startup_intake_body_boundary_enforced', 'startup_answers_recorded', 'banner_emitted', 'flowguard_capability_snapshot_written', 'roles_started', 'role_core_prompts_injected', 'continuation_binding_recorded'):
         if bootstrap_flags.get(flag):
             run_flags[flag] = True
 

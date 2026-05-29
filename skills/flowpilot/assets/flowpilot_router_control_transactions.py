@@ -90,10 +90,6 @@ CONTROL_TRANSACTION_OUTCOME_POLICIES = {
     "three_distinct_outcomes",
     "quarantine_invalid",
 }
-CONTROL_TRANSACTION_LEGACY_POLICIES = {
-    "block_if_invalid",
-    "quarantine_invalid",
-}
 CONTROL_TRANSACTION_PACKET_AUTHORITY_POLICIES = {
     True,
     False,
@@ -183,7 +179,7 @@ def _control_transaction_registry_issues(run_root: Path | None = None) -> list[s
                 issues.append(f"{context}: {field} must be a list")
 
         producer_roles = row.get("producer_roles") if isinstance(row.get("producer_roles"), list) else []
-        if transaction_type != "legacy_reconcile" and not [role for role in producer_roles if str(role).strip()]:
+        if not [role for role in producer_roles if str(role).strip()]:
             issues.append(f"{context}: producer_roles must be non-empty")
 
         output_contract_ids = row.get("output_contract_ids") if isinstance(row.get("output_contract_ids"), list) else []
@@ -223,9 +219,6 @@ def _control_transaction_registry_issues(run_root: Path | None = None) -> list[s
             issues.append(f"{context}: unsupported repair_transaction_required policy")
         if row.get("outcome_policy") not in CONTROL_TRANSACTION_OUTCOME_POLICIES:
             issues.append(f"{context}: unsupported outcome_policy")
-        if row.get("legacy_policy") not in CONTROL_TRANSACTION_LEGACY_POLICIES:
-            issues.append(f"{context}: unsupported legacy_policy")
-
     return issues
 
 def _validate_control_transaction_registry(run_root: Path | None = None) -> None:
@@ -300,7 +293,6 @@ def _validate_control_transaction_requirements(
         "packet_authority_required": row.get("packet_authority_required"),
         "repair_transaction_required": row.get("repair_transaction_required"),
         "outcome_policy": row.get("outcome_policy"),
-        "legacy_policy": row.get("legacy_policy"),
         "registry_path": "runtime_kit/control_transaction_registry.json",
     }
 

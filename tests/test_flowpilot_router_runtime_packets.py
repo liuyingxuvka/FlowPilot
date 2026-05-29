@@ -20,7 +20,7 @@ TEST_NAMES = (
     "test_current_node_completion_requires_reviewer_passed_packet_audit",
     "test_unready_leaf_cannot_receive_current_node_packet",
     "test_current_node_result_relay_combines_ledger_check_with_relay",
-    "test_current_node_packet_and_result_accept_safe_envelope_aliases",
+    "test_current_node_packet_and_result_reject_envelope_aliases",
     "test_current_node_result_decision_requires_review_card_after_result_relay",
     "test_router_packet_audit_rejection_routes_pm_repair_decision",
     "test_controller_repair_work_packet_queues_bounded_controller_action",

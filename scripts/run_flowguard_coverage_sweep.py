@@ -61,7 +61,6 @@ SPECIALIZED = {
     "user_flow_diagram",
 }
 SUPPORTING_COVERAGE = {
-    "barrier_equivalence",
     "command_refinement",
     "flowpilot_card_envelope",
     "flowpilot_control_plane_ledger_consolidation",

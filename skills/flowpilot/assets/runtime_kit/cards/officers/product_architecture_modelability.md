@@ -18,8 +18,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 
 Submit the root product behavior model for the PM product-function
-architecture. The old modelability name is only a compatibility label; this
-gate's real output is the product behavior model that PM must accept before
+architecture. This gate's output is the product behavior model that PM must accept before
 reviewer challenge and route planning use it.
 
 Before modeling, read:
@@ -62,8 +61,4 @@ Router hard gate fields:
 - To submit the model, return event
   `product_officer_submits_product_behavior_model` with
   `reviewed_by_role: "product_flowguard_officer"` and `passed: true`.
-- Old event `product_officer_passes_product_architecture_modelability` remains
-  a compatibility alias and must mean the same submission.
-- If blocking, return `product_officer_blocks_product_behavior_model`; old
-  event `product_officer_blocks_product_architecture_modelability` remains a
-  compatibility alias.
+- If blocking, return `product_officer_blocks_product_behavior_model`.

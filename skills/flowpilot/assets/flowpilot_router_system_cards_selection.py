@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot router system-card selection helpers."""
+"""Public facade for FlowPilot router system-card selection helpers."""
 
 from __future__ import annotations
 

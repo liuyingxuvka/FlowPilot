@@ -78,11 +78,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     start_parser.add_argument("--max-steps", type=int, default=50)
     start_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     next_parser = sub.add_parser("next", help="Return the next router-authorized action for an existing run")
-    next_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation")
     next_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     run_wait_parser = sub.add_parser("run-until-wait", help="Apply safe internal router actions and return the next wait-boundary action")
     run_wait_parser.add_argument("--max-steps", type=int, default=50)
-    run_wait_parser.add_argument("--new-invocation", action="store_true", help="Start a fresh formal FlowPilot invocation")
     run_wait_parser.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help=argparse.SUPPRESS)
     daemon_parser = sub.add_parser("daemon", help="Run the persistent Router daemon loop for the current run")
     daemon_parser.add_argument("--max-ticks", type=int, default=None, help="Stop after this many one-second daemon ticks")
@@ -152,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "next":
             result = _run_foreground_with_runtime_writer_settlement(
-                lambda: next_action(root, new_invocation=bool(getattr(args, "new_invocation", False))),
+                lambda: next_action(root),
                 command_name=args.command,
             )
         elif args.command == "run-until-wait":
@@ -160,7 +158,6 @@ def main(argv: list[str] | None = None) -> int:
                 lambda: run_until_wait(
                     root,
                     max_steps=int(args.max_steps),
-                    new_invocation=bool(getattr(args, "new_invocation", False)),
                 ),
                 command_name=args.command,
             )

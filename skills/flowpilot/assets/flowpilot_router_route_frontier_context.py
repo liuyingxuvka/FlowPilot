@@ -1,4 +1,4 @@
-"""Compatibility facade for route-frontier helpers."""
+"""Facade for route-frontier helpers."""
 
 from __future__ import annotations
 
@@ -46,15 +46,11 @@ __all__ = (
     '_reset_route_review_after_route_draft_repair',
     '_reset_route_hard_gate_approvals_for_recheck',
     '_product_behavior_model_report_path',
-    '_product_behavior_model_compatibility_report_path',
     '_require_product_behavior_model_report',
-    '_route_process_check_path',
     '_process_route_model_report_path',
     '_require_process_route_model_report',
-    '_route_product_check_path',
     '_require_route_process_pass',
     '_supersede_active_current_node_packet_for_route_mutation',
-    '_require_route_product_pass',
     '_current_route_draft_path',
 )
 

@@ -21,7 +21,6 @@ from flowguard import (
     DEFECT_CASE_ROLE_SAME_CLASS_GENERALIZED,
     DEFECT_FAMILY_DECISION_FULL,
     DEFECT_FAMILY_DECISION_SCOPED,
-    LEGACY_PATH_BLOCKED,
     RISK_CONFIDENCE_BLOCKED,
     RISK_CONFIDENCE_FULL,
     RISK_CONFIDENCE_SCOPED,
@@ -29,7 +28,6 @@ from flowguard import (
     DefectFamilyEvidence,
     DefectFamilyGate,
     DefectFamilyGatePlan,
-    LegacyPathDisposition,
     ProofArtifactRef,
     RiskEvidenceLedgerPlan,
     RiskEvidenceProof,
@@ -916,15 +914,6 @@ def build_defect_family_gate_plan(
                 same_class_generalized_case_id=same_class_id,
                 historical_holdout_case_id=holdout_id,
                 proof_evidence_ids=(proof_id,),
-                legacy_path_dispositions=(
-                    LegacyPathDisposition(
-                        f"{row.get('friction_id')}:legacy-forbidden-shortcuts",
-                        disposition=LEGACY_PATH_BLOCKED,
-                        rationale="Forbidden historical shortcuts remain blocked by the current proof artifact.",
-                        repaired_contract_id=str(row.get("model_obligation") or ""),
-                        proof_artifact=artifact,
-                    ),
-                ),
                 metadata={"friction_id": str(row.get("friction_id") or "")},
             )
         )
@@ -934,7 +923,6 @@ def build_defect_family_gate_plan(
         proof_evidence=tuple(proof_evidence),
         allow_scoped_confidence=True,
         require_proof_artifacts=require_proof_artifacts,
-        require_legacy_path_dispositions=True,
     )
 
 

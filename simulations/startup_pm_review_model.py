@@ -22,7 +22,7 @@ REQUIRED_ROLE_MEMORY_PACKETS = 6
 
 @dataclass(frozen=True)
 class State:
-    startup_questions_asked: bool = False
+    startup_intake_ui_completed: bool = False
     dialog_stopped_for_user_answers: bool = False
     background_agents_answer: str = "unknown"  # unknown | allow | single-agent | pause
     scheduled_continuation_answer: str = "unknown"  # unknown | allow | manual | pause
@@ -42,7 +42,7 @@ class State:
     prior_work_mode: str = "unknown"  # unknown | new | continue
     prior_work_import_packet_written: bool = False
     control_state_written_under_run_root: bool = False
-    top_level_control_state_absent_or_quarantined: bool = False
+    prior_control_state_quarantined: bool = False
     old_control_state_reused_as_current: bool = False
     route_file_written: bool = False
     canonical_state_written: bool = False
@@ -130,7 +130,7 @@ def initial_state() -> State:
 
 def startup_answers_complete(state: State) -> bool:
     return (
-        state.startup_questions_asked
+        state.startup_intake_ui_completed
         and state.dialog_stopped_for_user_answers
         and state.background_agents_answer in {"allow", "single-agent"}
         and state.scheduled_continuation_answer in {"allow", "manual"}
@@ -248,7 +248,7 @@ def run_isolation_ready(state: State) -> bool:
         and state.run_index_updated
         and prior_work_resolved
         and state.control_state_written_under_run_root
-        and state.top_level_control_state_absent_or_quarantined
+        and state.prior_control_state_quarantined
         and not state.old_control_state_reused_as_current
     )
 
@@ -354,8 +354,8 @@ def work_started(state: State) -> bool:
 
 
 def next_safe_states(state: State) -> Iterable[Transition]:
-    if not state.startup_questions_asked:
-        yield Transition("startup_three_questions_asked", replace(state, startup_questions_asked=True))
+    if not state.startup_intake_ui_completed:
+        yield Transition("startup_intake_ui_completed", replace(state, startup_intake_ui_completed=True))
         return
     if not state.dialog_stopped_for_user_answers:
         yield Transition("startup_dialog_stopped_for_user_answers", replace(state, dialog_stopped_for_user_answers=True))
@@ -404,8 +404,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.control_state_written_under_run_root:
         yield Transition("control_state_written_under_run_root", replace(state, control_state_written_under_run_root=True))
         return
-    if not state.top_level_control_state_absent_or_quarantined:
-        yield Transition("top_level_control_state_absent_or_quarantined", replace(state, top_level_control_state_absent_or_quarantined=True))
+    if not state.prior_control_state_quarantined:
+        yield Transition("prior_control_state_quarantined", replace(state, prior_control_state_quarantined=True))
         return
     if not state.route_file_written:
         yield Transition("route_file_written", replace(state, route_file_written=True))
@@ -969,7 +969,7 @@ def invariant_failures(state: State) -> list[str]:
 
 def _ready_base(**changes: object) -> State:
     base = State(
-        startup_questions_asked=True,
+        startup_intake_ui_completed=True,
         dialog_stopped_for_user_answers=True,
         background_agents_answer="allow",
         scheduled_continuation_answer="allow",
@@ -982,7 +982,7 @@ def _ready_base(**changes: object) -> State:
         run_index_updated=True,
         prior_work_mode="new",
         control_state_written_under_run_root=True,
-        top_level_control_state_absent_or_quarantined=True,
+        prior_control_state_quarantined=True,
         route_file_written=True,
         canonical_state_written=True,
         execution_frontier_written=True,
@@ -1036,9 +1036,9 @@ def _ready_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
-        "banner_before_three_answers": State(startup_questions_asked=True, banner_emitted=True),
+        "banner_before_three_answers": State(startup_intake_ui_completed=True, banner_emitted=True),
         "answers_recorded_without_dialog_stop": State(
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             background_agents_answer="allow",
             scheduled_continuation_answer="allow",
             display_surface_answer="cockpit",
@@ -1046,7 +1046,7 @@ def hazard_states() -> dict[str, State]:
             startup_answer_provenance="explicit_user_reply",
         ),
         "answers_recorded_with_inferred_provenance": State(
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
             background_agents_answer="allow",
             scheduled_continuation_answer="manual",
@@ -1055,7 +1055,7 @@ def hazard_states() -> dict[str, State]:
             startup_answer_provenance="inferred",
         ),
         "answers_recorded_with_naked_provenance": State(
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
             background_agents_answer="allow",
             scheduled_continuation_answer="manual",
@@ -1064,7 +1064,7 @@ def hazard_states() -> dict[str, State]:
             startup_answer_provenance="naked",
         ),
         "answers_recorded_with_illegal_value": State(
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
             background_agents_answer="assistant-default-long-text",
             scheduled_continuation_answer="manual",

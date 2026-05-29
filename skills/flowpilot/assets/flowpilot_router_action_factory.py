@@ -1,7 +1,7 @@
-"""Compatibility facade for router action construction helpers.
+"""Public facade for router action construction helpers.
 
 The behavior lives in focused child modules, but this owner facade keeps the
-legacy import surface stable for ``flowpilot_router`` and direct imports.
+router import surface stable for ``flowpilot_router`` and direct imports.
 """
 
 from __future__ import annotations

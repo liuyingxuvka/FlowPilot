@@ -73,7 +73,6 @@ EXECUTABLE_REPAIR_PLAN_KINDS = {
     "await_existing_event",
     "route_mutation",
     "terminal_stop",
-    "event_replay",
 }
 EVENT_NODE_KIND_COMPATIBILITY = {
     event: {"leaf", "repair"}
@@ -145,7 +144,6 @@ class State:
     controller_repair_packet_bounded: bool = False
     router_internal_handler_found: bool = False
     terminal_stop_recorded: bool = False
-    legacy_event_replay_alias: bool = False
 
     replacement_spec_written: bool = False
     packet_files_staged: bool = False
@@ -789,12 +787,6 @@ def repair_transaction_plan_is_executable(state: State, trace) -> InvariantResul
         return InvariantResult.fail("terminal_stop repair transaction lacked an explicit terminal stop")
     if state.transaction_plan_kind == "await_existing_event" and not state.existing_event_producer_found:
         return InvariantResult.fail("await_existing_event repair transaction lacked an existing producer")
-    if state.transaction_plan_kind == "event_replay" and not (
-        state.legacy_event_replay_alias and state.existing_event_producer_found
-    ):
-        return InvariantResult.fail(
-            "legacy event_replay transaction lacked an existing producer compatibility alias"
-        )
     return InvariantResult.pass_()
 
 
@@ -1241,9 +1233,8 @@ def hazard_states() -> dict[str, State]:
             transaction_plan_kind="await_existing_event",
             existing_event_producer_found=False,
         ),
-        "legacy_event_replay_without_producer": _safe_base(
+        "retired_event_replay_plan_kind": _safe_base(
             transaction_plan_kind="event_replay",
-            legacy_event_replay_alias=False,
             existing_event_producer_found=False,
         ),
         "operation_replay_without_safe_recorded_operation": _safe_base(

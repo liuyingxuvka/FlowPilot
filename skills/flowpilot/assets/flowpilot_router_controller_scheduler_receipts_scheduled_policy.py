@@ -76,61 +76,6 @@ def _backfill_scheduler_row_from_reconciled_controller_action(
     return {"changed": True, "row_id": row_id, "reconciliation": reconciliation}
 
 
-def _canonicalize_legacy_startup_daemon_reconciliation(
-    router: ModuleType,
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-    entry: dict[str, Any],
-    action: dict[str, Any],
-    receipt: dict[str, Any],
-) -> dict[str, Any]:
-    _bind_router(router)
-    current = entry.get("router_reconciliation") if isinstance(entry.get("router_reconciliation"), dict) else {}
-    source = current.get("source")
-    if source == "startup_bootloader_controller_receipt" and current.get("postcondition"):
-        return {"applied": False, "reason": "startup_receipt_owner_already_complete"}
-    if source not in {"startup_daemon_bootloader_postcondition", "startup_bootloader_controller_receipt"}:
-        return {"applied": False, "reason": "not_legacy_startup_daemon_owner"}
-    if receipt.get("schema_version") != CONTROLLER_RECEIPT_SCHEMA or receipt.get("status") != "done":
-        return {"applied": False, "reason": "startup_receipt_missing_or_not_done"}
-    if not router._daemon_scheduled_bootloader_action(action):
-        return {"applied": False, "reason": "not_daemon_scheduled_bootloader_action"}
-    action_type = str(action.get("action_type") or entry.get("action_type") or "")
-    action_meta = router._boot_action_meta(action_type)
-    if action_meta is None:
-        return {"applied": False, "reason": "not_bootloader_action"}
-    bootstrap = router.load_bootstrap_state(project_root, create_if_missing=False)
-    flag = str(action_meta.get("flag") or _pending_action_postcondition(action) or "")
-    bootstrap_flags = bootstrap.get("flags") if isinstance(bootstrap.get("flags"), dict) else {}
-    run_flags = run_state.setdefault("flags", {})
-    if flag and (not (bootstrap_flags.get(flag) or run_flags.get(flag))):
-        return {
-            "applied": False,
-            "reason": "legacy_startup_postcondition_not_satisfied",
-            "postcondition": flag,
-            "action_type": action_type,
-        }
-    if flag:
-        run_flags[flag] = True
-    canonical = dict(current)
-    canonical.update(
-        {
-            "applied": True,
-            "source": "startup_bootloader_controller_receipt",
-            "canonicalized_from": source,
-            "controller_receipt_path": project_relative(
-                project_root,
-                _controller_receipt_path(run_root, str(receipt.get("action_id") or entry.get("action_id") or "")),
-            ),
-            "postcondition": flag,
-            "bootstrap_postcondition": current.get("bootstrap_postcondition") or flag,
-            "bootstrap_flag_satisfied": True,
-        }
-    )
-    return canonical
-
-
 def _clear_pending_controller_action_if_matches(
     router: ModuleType,
     run_state: dict[str, Any],
@@ -278,7 +223,6 @@ def _clear_matching_controller_pending_and_save(
 __all__ = (
     "_scheduler_row_reconciliation_for_entry",
     "_backfill_scheduler_row_from_reconciled_controller_action",
-    "_canonicalize_legacy_startup_daemon_reconciliation",
     "_clear_pending_controller_action_if_matches",
     "_commit_controller_action_reconciliation",
     "_scheduled_controller_receipt_apply_result_case",

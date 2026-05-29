@@ -116,7 +116,7 @@ class FlowPilotAssetSurfaceContractTests(unittest.TestCase):
     def test_facade_modules_delegate_to_owner_modules(self) -> None:
         for path in sorted(ASSET_ROOT.glob("*.py")):
             text = path.read_text(encoding="utf-8")
-            if "Compatibility facade" not in text:
+            if "owner facade" not in text:
                 continue
             with self.subTest(path=path.name):
                 tree = ast.parse(text)

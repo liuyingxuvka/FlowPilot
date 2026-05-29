@@ -1385,7 +1385,7 @@ def _router_limits_legacy_recipient_normalization(router_source: str) -> bool:
     segment = _function_segment(router_source, "_validate_role_work_result_process_binding")
     normalization_segment = _function_segment(router_source, "_normalize_pm_role_work_result_recipient")
     return (
-        "legacy_pm_role_work_result_recipient_normalization" in segment
+        "pm_role_work_result_recipient_normalization" in segment
         and "strict_process_contract_binding" in segment
         and "recipient_normalization" in normalization_segment
     )

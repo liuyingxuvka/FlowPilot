@@ -14,7 +14,7 @@
     "user_authorization_vs_state",
     "route_state_frontier_consistency",
     "run_directory_and_pointer_consistency",
-    "top_level_control_state_absent_or_quarantined",
+    "prior_control_state_quarantined",
     "prior_work_import_boundary",
     "old_route_and_asset_reuse_boundary",
     "heartbeat_or_manual_resume_evidence",

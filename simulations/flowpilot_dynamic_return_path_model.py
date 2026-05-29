@@ -10,13 +10,12 @@ Risk intent brief:
   concrete return lease, a role guessing an event name, a registered event being
   unavailable in the current wait state, and green role-output validation being
   mistaken for permission to continue.
-- Protect gate-bearing phases from accepting a legacy/general report or repair
+- Protect gate-bearing phases from accepting a retired/general report or repair
   follow-up that is recorded but does not satisfy the current gate flag.
 - Treat the Product FlowGuard Officer product-architecture gate as a product
   behavior model submission, and treat the Process FlowGuard Officer route
-  gate as a process route model submission. Keep old `modelability` and
-  `route_process_check` names only as compatibility aliases for older events
-  and artifacts.
+  gate as a process route model submission. Older event names are rejected as
+  non-completing retired inputs rather than mirrored into current artifacts.
 - Hard invariants: router-supplied contracts require a concrete event from the
   current Router wait or a PM role-work packet result contract; system cards do
   not authorize formal output by themselves; mechanical output validation cannot
@@ -46,8 +45,8 @@ VALID_ACTIVE_HOLDER_PACKET_RESULT = "valid_active_holder_packet_result"
 VALID_FIXED_EVENT_CONTRACT = "valid_fixed_event_contract"
 VALID_CURRENT_GATE_EVENT_SATISFIES_FLAG = "valid_current_gate_event_satisfies_flag"
 VALID_PM_ROLE_WORK_RESULT_MAPPED_TO_CURRENT_GATE = "valid_pm_role_work_result_mapped_to_current_gate"
-VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_COMPAT_ALIAS = "valid_product_behavior_model_submission_with_compat_alias"
-VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_COMPAT_ALIAS = "valid_process_route_model_submission_with_compat_alias"
+VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT = "valid_product_behavior_model_submission_with_canonical_artifact"
+VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT = "valid_process_route_model_submission_with_canonical_artifact"
 
 SYSTEM_CARD_ONLY_ROUTER_SUPPLIED_REPORT = "system_card_only_router_supplied_report"
 TASK_CARD_WITHOUT_WORK_AUTHORITY = "task_card_without_work_authority"
@@ -56,33 +55,25 @@ ROLE_GUESSES_UNKNOWN_EVENT = "role_guesses_unknown_event"
 REGISTERED_EVENT_NOT_CURRENTLY_ALLOWED = "registered_event_not_currently_allowed"
 MECHANICAL_GREEN_USED_AS_ROUTER_ACCEPTANCE = "mechanical_green_used_as_router_acceptance"
 STATIC_CARD_GUIDANCE_USED_AS_DYNAMIC_LEASE = "static_card_guidance_used_as_dynamic_lease"
-LEGACY_DIRECT_EVENT_COMPETES_WITH_PM_PACKET = "legacy_direct_event_competes_with_pm_packet"
+RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET = "retired_direct_event_competes_with_pm_packet"
 PM_ROLE_WORK_WRONG_RECIPIENT = "pm_role_work_wrong_recipient"
 WRONG_ROLE_USES_WORK_AUTHORITY = "wrong_role_uses_work_authority"
 WRONG_CONTRACT_USES_WORK_AUTHORITY = "wrong_contract_uses_work_authority"
 STALE_WORK_AUTHORITY_USED = "stale_work_authority_used"
 GATE_CARD_WITHOUT_COMPLETION_CONTRACT = "gate_card_without_completion_contract"
-LEGACY_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG = "legacy_event_accepted_without_required_gate_flag"
+RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG = "retired_event_accepted_without_required_gate_flag"
 PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT = "pm_repair_resolves_blocker_without_gate_event"
 PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE = "pm_role_work_result_not_mapped_to_current_gate"
 PRODUCT_BEHAVIOR_MODEL_GATE_USES_MODELABILITY_AS_CANONICAL_COMPLETION = (
     "product_behavior_model_gate_uses_modelability_as_canonical_completion"
 )
-PRODUCT_BEHAVIOR_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS = (
-    "product_behavior_model_alias_does_not_set_compatibility_flags"
-)
 PRODUCT_BEHAVIOR_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE = "product_behavior_model_submission_skips_pm_acceptance"
 PRODUCT_BEHAVIOR_MODEL_MISSING_CANONICAL_ARTIFACT = "product_behavior_model_missing_canonical_artifact"
-PRODUCT_BEHAVIOR_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE = "product_behavior_model_block_alias_flags_diverge"
 PROCESS_ROUTE_MODEL_GATE_USES_ROUTE_CHECK_AS_CANONICAL_COMPLETION = (
     "process_route_model_gate_uses_route_check_as_canonical_completion"
 )
-PROCESS_ROUTE_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS = (
-    "process_route_model_alias_does_not_set_compatibility_flags"
-)
 PROCESS_ROUTE_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE = "process_route_model_submission_skips_pm_acceptance"
 PROCESS_ROUTE_MODEL_MISSING_CANONICAL_ARTIFACT = "process_route_model_missing_canonical_artifact"
-PROCESS_ROUTE_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE = "process_route_model_block_alias_flags_diverge"
 
 VALID_SCENARIOS = (
     VALID_IDENTITY_CARD_ACK_ONLY,
@@ -93,8 +84,8 @@ VALID_SCENARIOS = (
     VALID_FIXED_EVENT_CONTRACT,
     VALID_CURRENT_GATE_EVENT_SATISFIES_FLAG,
     VALID_PM_ROLE_WORK_RESULT_MAPPED_TO_CURRENT_GATE,
-    VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_COMPAT_ALIAS,
-    VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_COMPAT_ALIAS,
+    VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT,
+    VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT,
 )
 NEGATIVE_SCENARIOS = (
     SYSTEM_CARD_ONLY_ROUTER_SUPPLIED_REPORT,
@@ -104,25 +95,21 @@ NEGATIVE_SCENARIOS = (
     REGISTERED_EVENT_NOT_CURRENTLY_ALLOWED,
     MECHANICAL_GREEN_USED_AS_ROUTER_ACCEPTANCE,
     STATIC_CARD_GUIDANCE_USED_AS_DYNAMIC_LEASE,
-    LEGACY_DIRECT_EVENT_COMPETES_WITH_PM_PACKET,
+    RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET,
     PM_ROLE_WORK_WRONG_RECIPIENT,
     WRONG_ROLE_USES_WORK_AUTHORITY,
     WRONG_CONTRACT_USES_WORK_AUTHORITY,
     STALE_WORK_AUTHORITY_USED,
     GATE_CARD_WITHOUT_COMPLETION_CONTRACT,
-    LEGACY_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG,
+    RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG,
     PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT,
     PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE,
     PRODUCT_BEHAVIOR_MODEL_GATE_USES_MODELABILITY_AS_CANONICAL_COMPLETION,
-    PRODUCT_BEHAVIOR_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS,
     PRODUCT_BEHAVIOR_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE,
     PRODUCT_BEHAVIOR_MODEL_MISSING_CANONICAL_ARTIFACT,
-    PRODUCT_BEHAVIOR_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE,
     PROCESS_ROUTE_MODEL_GATE_USES_ROUTE_CHECK_AS_CANONICAL_COMPLETION,
-    PROCESS_ROUTE_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS,
     PROCESS_ROUTE_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE,
     PROCESS_ROUTE_MODEL_MISSING_CANONICAL_ARTIFACT,
-    PROCESS_ROUTE_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -151,17 +138,9 @@ PRODUCT_BEHAVIOR_MODEL_CANONICAL_GATE_EVENTS = frozenset(
         "product_officer_blocks_product_behavior_model",
     }
 )
-PRODUCT_BEHAVIOR_MODEL_COMPATIBILITY_GATE_EVENTS = frozenset(
-    {
-        "product_officer_passes_product_architecture_modelability",
-        "product_officer_blocks_product_architecture_modelability",
-    }
-)
-PRODUCT_BEHAVIOR_MODEL_GATE_EVENTS = (
-    PRODUCT_BEHAVIOR_MODEL_CANONICAL_GATE_EVENTS | PRODUCT_BEHAVIOR_MODEL_COMPATIBILITY_GATE_EVENTS
-)
+PRODUCT_BEHAVIOR_MODEL_GATE_EVENTS = PRODUCT_BEHAVIOR_MODEL_CANONICAL_GATE_EVENTS
 PRODUCT_ARCHITECTURE_GATE_EVENTS = PRODUCT_BEHAVIOR_MODEL_GATE_EVENTS
-PRODUCT_ARCHITECTURE_LEGACY_EVENTS = frozenset({"product_officer_model_report"})
+PRODUCT_ARCHITECTURE_RETIRED_EVENTS = frozenset({"product_officer_model_report"})
 PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS = frozenset(
     {
         "process_officer_submits_process_route_model",
@@ -169,14 +148,7 @@ PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS = frozenset(
         "process_officer_blocks_process_route_model",
     }
 )
-PROCESS_ROUTE_MODEL_COMPATIBILITY_GATE_EVENTS = frozenset(
-    {
-        "process_officer_passes_route_check",
-        "process_officer_requires_route_repair",
-        "process_officer_blocks_route_check",
-    }
-)
-PROCESS_ROUTE_MODEL_GATE_EVENTS = PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS | PROCESS_ROUTE_MODEL_COMPATIBILITY_GATE_EVENTS
+PROCESS_ROUTE_MODEL_GATE_EVENTS = PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS
 
 
 @dataclass(frozen=True)
@@ -223,7 +195,7 @@ class State:
     pm_role_work_result_contract_present: bool = False
     pm_role_work_result_maps_to_current_gate: bool = True
     direct_router_wait_present: bool = False
-    legacy_direct_event_present: bool = False
+    retired_direct_event_present: bool = False
 
     current_gate_active: bool = False
     current_gate_name: str = "none"
@@ -233,20 +205,14 @@ class State:
     current_gate_flag_satisfied: bool = True
     control_blocker_resolved: bool = False
     repair_followup_event_satisfies_current_gate: bool = True
-    compatibility_alias_sets_required_flags: bool = True
     pm_acceptance_required_after_submission: bool = False
     pm_acceptance_completed: bool = True
     downstream_product_flow_allowed: bool = False
     canonical_product_behavior_model_artifact_written: bool = True
-    compatibility_product_model_artifact_written: bool = True
-    block_alias_flags_aligned: bool = True
-    process_compatibility_alias_sets_required_flags: bool = True
     pm_process_acceptance_required_after_submission: bool = False
     pm_process_acceptance_completed: bool = True
     downstream_route_challenge_flow_allowed: bool = False
     canonical_process_route_model_artifact_written: bool = True
-    compatibility_process_route_check_artifact_written: bool = True
-    process_block_alias_flags_aligned: bool = True
 
     router_accepted_event: bool = False
     current_run_allowed_to_continue: bool = False
@@ -334,7 +300,7 @@ def _scenario_state(scenario: str) -> State:
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
         )
-    if scenario == VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_COMPAT_ALIAS:
+    if scenario == VALID_PRODUCT_BEHAVIOR_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT:
         return State(
             status="running",
             scenario=scenario,
@@ -356,17 +322,14 @@ def _scenario_state(scenario: str) -> State:
             current_gate_required_flag="product_behavior_model_submitted",
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
-            compatibility_alias_sets_required_flags=True,
             pm_acceptance_required_after_submission=True,
             pm_acceptance_completed=False,
             downstream_product_flow_allowed=False,
             canonical_product_behavior_model_artifact_written=True,
-            compatibility_product_model_artifact_written=True,
-            block_alias_flags_aligned=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
         )
-    if scenario == VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_COMPAT_ALIAS:
+    if scenario == VALID_PROCESS_ROUTE_MODEL_SUBMISSION_WITH_CANONICAL_ARTIFACT:
         return State(
             status="running",
             scenario=scenario,
@@ -388,13 +351,10 @@ def _scenario_state(scenario: str) -> State:
             current_gate_required_flag="process_route_model_submitted",
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
-            process_compatibility_alias_sets_required_flags=True,
             pm_process_acceptance_required_after_submission=True,
             pm_process_acceptance_completed=False,
             downstream_route_challenge_flow_allowed=False,
             canonical_process_route_model_artifact_written=True,
-            compatibility_process_route_check_artifact_written=True,
-            process_block_alias_flags_aligned=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
         )
@@ -620,7 +580,7 @@ def _scenario_state(scenario: str) -> State:
             router_accepted_event=False,
             current_run_allowed_to_continue=False,
         )
-    if scenario == LEGACY_DIRECT_EVENT_COMPETES_WITH_PM_PACKET:
+    if scenario == RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET:
         return State(
             status="running",
             scenario=scenario,
@@ -637,7 +597,7 @@ def _scenario_state(scenario: str) -> State:
             return_event_currently_allowed=False,
             pm_role_work_packet_present=True,
             pm_role_work_result_contract_present=True,
-            legacy_direct_event_present=True,
+            retired_direct_event_present=True,
             router_accepted_event=False,
             current_run_allowed_to_continue=False,
         )
@@ -747,7 +707,7 @@ def _scenario_state(scenario: str) -> State:
             router_accepted_event=False,
             current_run_allowed_to_continue=False,
         )
-    if scenario == LEGACY_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG:
+    if scenario == RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG:
         return State(
             status="running",
             scenario=scenario,
@@ -769,7 +729,7 @@ def _scenario_state(scenario: str) -> State:
             current_gate_required_flag="product_architecture_modelability_passed",
             return_event_satisfies_current_gate=False,
             current_gate_flag_satisfied=False,
-            legacy_direct_event_present=True,
+            retired_direct_event_present=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=False,
         )
@@ -851,31 +811,6 @@ def _scenario_state(scenario: str) -> State:
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
         )
-    if scenario == PRODUCT_BEHAVIOR_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS:
-        return State(
-            status="running",
-            scenario=scenario,
-            assignment_surface=ASSIGNMENT_DIRECT_ROUTER_WAIT,
-            contract_event_mode=EVENT_MODE_ROUTER_SUPPLIED,
-            formal_output_requested=True,
-            router_registered_work_authority_present=True,
-            static_card_guidance_present=True,
-            mechanical_role_output_valid=True,
-            semantic_report_meaningful=True,
-            concrete_return_event_present=True,
-            return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_submits_product_behavior_model",
-            return_event_registered=True,
-            return_event_currently_allowed=True,
-            current_gate_active=True,
-            current_gate_name="product_behavior_model",
-            current_gate_required_flag="product_behavior_model_submitted",
-            return_event_satisfies_current_gate=True,
-            current_gate_flag_satisfied=True,
-            compatibility_alias_sets_required_flags=False,
-            router_accepted_event=True,
-            current_run_allowed_to_continue=True,
-        )
     if scenario == PRODUCT_BEHAVIOR_MODEL_SUBMISSION_SKIPS_PM_ACCEPTANCE:
         return State(
             status="running",
@@ -925,34 +860,8 @@ def _scenario_state(scenario: str) -> State:
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
             canonical_product_behavior_model_artifact_written=False,
-            compatibility_product_model_artifact_written=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
-        )
-    if scenario == PRODUCT_BEHAVIOR_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE:
-        return State(
-            status="running",
-            scenario=scenario,
-            assignment_surface=ASSIGNMENT_DIRECT_ROUTER_WAIT,
-            contract_event_mode=EVENT_MODE_ROUTER_SUPPLIED,
-            formal_output_requested=True,
-            router_registered_work_authority_present=True,
-            static_card_guidance_present=True,
-            mechanical_role_output_valid=True,
-            semantic_report_meaningful=True,
-            concrete_return_event_present=True,
-            return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_blocks_product_behavior_model",
-            return_event_registered=True,
-            return_event_currently_allowed=True,
-            current_gate_active=True,
-            current_gate_name="product_behavior_model",
-            current_gate_required_flag="product_behavior_model_blocked",
-            return_event_satisfies_current_gate=True,
-            current_gate_flag_satisfied=True,
-            block_alias_flags_aligned=False,
-            router_accepted_event=True,
-            current_run_allowed_to_continue=False,
         )
     if scenario == PROCESS_ROUTE_MODEL_GATE_USES_ROUTE_CHECK_AS_CANONICAL_COMPLETION:
         return State(
@@ -975,31 +884,6 @@ def _scenario_state(scenario: str) -> State:
             current_gate_required_flag="process_officer_route_check_passed",
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
-            router_accepted_event=True,
-            current_run_allowed_to_continue=True,
-        )
-    if scenario == PROCESS_ROUTE_MODEL_ALIAS_DOES_NOT_SET_COMPATIBILITY_FLAGS:
-        return State(
-            status="running",
-            scenario=scenario,
-            assignment_surface=ASSIGNMENT_DIRECT_ROUTER_WAIT,
-            contract_event_mode=EVENT_MODE_ROUTER_SUPPLIED,
-            formal_output_requested=True,
-            router_registered_work_authority_present=True,
-            static_card_guidance_present=True,
-            mechanical_role_output_valid=True,
-            semantic_report_meaningful=True,
-            concrete_return_event_present=True,
-            return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_submits_process_route_model",
-            return_event_registered=True,
-            return_event_currently_allowed=True,
-            current_gate_active=True,
-            current_gate_name="process_route_model",
-            current_gate_required_flag="process_route_model_submitted",
-            return_event_satisfies_current_gate=True,
-            current_gate_flag_satisfied=True,
-            process_compatibility_alias_sets_required_flags=False,
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
         )
@@ -1052,34 +936,8 @@ def _scenario_state(scenario: str) -> State:
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
             canonical_process_route_model_artifact_written=False,
-            compatibility_process_route_check_artifact_written=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=True,
-        )
-    if scenario == PROCESS_ROUTE_MODEL_BLOCK_ALIAS_FLAGS_DIVERGE:
-        return State(
-            status="running",
-            scenario=scenario,
-            assignment_surface=ASSIGNMENT_DIRECT_ROUTER_WAIT,
-            contract_event_mode=EVENT_MODE_ROUTER_SUPPLIED,
-            formal_output_requested=True,
-            router_registered_work_authority_present=True,
-            static_card_guidance_present=True,
-            mechanical_role_output_valid=True,
-            semantic_report_meaningful=True,
-            concrete_return_event_present=True,
-            return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_blocks_process_route_model",
-            return_event_registered=True,
-            return_event_currently_allowed=True,
-            current_gate_active=True,
-            current_gate_name="process_route_model",
-            current_gate_required_flag="process_route_model_blocked",
-            return_event_satisfies_current_gate=True,
-            current_gate_flag_satisfied=True,
-            process_block_alias_flags_aligned=False,
-            router_accepted_event=True,
-            current_run_allowed_to_continue=False,
         )
     raise ValueError(f"Unknown scenario: {scenario}")
 
@@ -1135,8 +993,8 @@ def return_path_failures(state: State) -> list[str]:
         failures.append("Router accepted an event that was not currently allowed")
     if state.mechanical_role_output_valid and state.current_run_allowed_to_continue and not state.router_accepted_event:
         failures.append("mechanical role-output validation was treated as Router acceptance")
-    if state.legacy_direct_event_present and state.pm_role_work_packet_present:
-        failures.append("legacy direct officer event competes with PM role-work result contract")
+    if state.retired_direct_event_present and state.pm_role_work_packet_present:
+        failures.append("retired direct officer event competes with PM role-work result contract")
     if state.pm_role_work_packet_present and not state.pm_role_work_result_contract_present:
         failures.append("PM role-work packet has no result contract")
     if state.current_gate_active:
@@ -1163,8 +1021,6 @@ def return_path_failures(state: State) -> list[str]:
             and not state.current_gate_flag_satisfied
         ):
             failures.append("PM role-work result was not mapped to the current gate")
-        if not state.compatibility_alias_sets_required_flags:
-            failures.append("product behavior model compatibility alias did not set required flags")
         if (
             state.downstream_product_flow_allowed
             and state.pm_acceptance_required_after_submission
@@ -1173,12 +1029,6 @@ def return_path_failures(state: State) -> list[str]:
             failures.append("product behavior model submission allowed downstream flow before PM acceptance")
         if state.return_event_satisfies_current_gate and not state.canonical_product_behavior_model_artifact_written:
             failures.append("product behavior model submission did not write canonical artifact")
-        if not state.compatibility_product_model_artifact_written:
-            failures.append("product behavior model submission did not write compatibility artifact")
-        if not state.block_alias_flags_aligned:
-            failures.append("product behavior model block alias flags diverged")
-        if not state.process_compatibility_alias_sets_required_flags:
-            failures.append("process route model compatibility alias did not set required flags")
         if (
             state.downstream_route_challenge_flow_allowed
             and state.pm_process_acceptance_required_after_submission
@@ -1187,10 +1037,6 @@ def return_path_failures(state: State) -> list[str]:
             failures.append("process route model submission allowed downstream flow before PM acceptance")
         if state.return_event_satisfies_current_gate and not state.canonical_process_route_model_artifact_written:
             failures.append("process route model submission did not write canonical artifact")
-        if not state.compatibility_process_route_check_artifact_written:
-            failures.append("process route model submission did not write compatibility artifact")
-        if not state.process_block_alias_flags_aligned:
-            failures.append("process route model block alias flags diverged")
     return failures
 
 
@@ -1482,7 +1328,7 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
                 projection["current_findings"].append(finding)
 
     if (
-        flags.get("legacy_product_officer_model_report_received")
+        flags.get("retired_product_officer_model_report_received")
         and flags.get("product_architecture_modelability_passed")
         and any(
             item.get("kind") == "resolved_no_legal_next_action_without_gate_event"
@@ -1491,13 +1337,13 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
     ):
         projection["historical_gate_alignment_findings"].append(
             {
-                "kind": "legacy_product_officer_report_preceded_gate_specific_resolution",
-                "legacy_events": sorted(PRODUCT_ARCHITECTURE_LEGACY_EVENTS),
+                "kind": "retired_product_officer_report_preceded_gate_specific_resolution",
+                "retired_events": sorted(PRODUCT_ARCHITECTURE_RETIRED_EVENTS),
                 "gate_events": sorted(PRODUCT_ARCHITECTURE_GATE_EVENTS),
-                "legacy_flag": "legacy_product_officer_model_report_received",
+                "retired_flag": "retired_product_officer_model_report_received",
                 "gate_flag": "product_architecture_modelability_passed",
                 "model_meaning": (
-                    "The run recovered, but it shows the exact class this model protects: a legacy/general "
+                    "The run recovered, but it shows the exact class this model protects: a retired/general "
                     "officer report was recorded before the concrete gate event that actually satisfied "
                     "product_architecture_modelability."
                 ),

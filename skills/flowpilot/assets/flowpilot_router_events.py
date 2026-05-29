@@ -161,7 +161,7 @@ def finalize_external_event_record(
         "recorded_at": router.utc_now(),
     }
     run_state["flags"][flag] = True
-    router._sync_model_gate_alias_flags(run_state, event)
+    router._sync_model_gate_flags(run_state, event)
     if event == "pm_accepts_product_behavior_model":
         run_state["flags"]["pm_product_behavior_model_rebuild_requested"] = False
     elif event == "pm_accepts_process_route_model":
@@ -215,7 +215,7 @@ def finalize_external_event_record(
         payload=payload,
         source="record_external_event",
     )
-    if event in {"router_direct_material_scan_dispatch_recheck_passed", "reviewer_allows_material_scan_dispatch"}:
+    if event == "router_direct_material_scan_dispatch_recheck_passed":
         router._finalize_repair_transaction_outcome(project_root, run_root, run_state, event=event, payload=payload)
         run_state["flags"]["material_scan_dispatch_blocked"] = False
         run_state["material_dispatch_block"] = None

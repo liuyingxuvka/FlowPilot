@@ -1,6 +1,6 @@
 """role recovery agent records helpers for ``flowpilot_router_startup_role_transactions``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 

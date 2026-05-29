@@ -1,8 +1,7 @@
-"""Compatibility facade for startup helpers split from ``flowpilot_router_startup_flow``.
+"""Public facade for startup helpers split from ``flowpilot_router_startup_flow``.
 
-The implementation lives in focused child modules. This facade preserves
-the historical import path, public/private helper names, and router-binding
-handoff used by the router skeleton.
+The implementation lives in focused child modules and keeps router-binding
+handoff explicit for the startup fact boundary.
 """
 
 from __future__ import annotations
@@ -52,7 +51,7 @@ from flowpilot_router_startup_fact_boundary_controller import (
     _run_manifest_path,
     _controller_boundary_sources,
     _controller_boundary_constraints,
-    _legacy_pm_reset_boundary_confirmed,
+    _pm_reset_boundary_confirmed,
     _controller_boundary_confirmation_body,
     _controller_boundary_runtime_evidence_context,
     _write_controller_boundary_confirmation,

@@ -1,4 +1,4 @@
-"""Compatibility facade for role-output runtime schema helpers."""
+"""Public facade for role-output runtime schema helpers."""
 
 from __future__ import annotations
 

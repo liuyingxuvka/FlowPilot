@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot system-card runtime operations.
+"""Public facade for FlowPilot system-card runtime operations.
 
 The focused owner modules keep I/O, ledgers, envelope validation, single-card
 ACK handling, and bundle handling separate while this module preserves the

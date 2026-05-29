@@ -63,39 +63,26 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_model_gate_state'
 
-def _sync_model_gate_alias_flags(run_state: dict[str, Any], event: str) -> None:
+def _sync_model_gate_flags(run_state: dict[str, Any], event: str) -> None:
     flags = run_state.setdefault("flags", {})
     if event in PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS:
         flags["product_behavior_model_submitted"] = True
-        flags["product_architecture_modelability_passed"] = True
         flags["product_behavior_model_blocked"] = False
-        flags["product_architecture_modelability_blocked"] = False
     elif event in PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS:
         flags["product_behavior_model_submitted"] = False
-        flags["product_architecture_modelability_passed"] = False
         flags["product_behavior_model_blocked"] = True
-        flags["product_architecture_modelability_blocked"] = True
     elif event in PROCESS_ROUTE_MODEL_PASS_EVENTS:
         flags["process_route_model_submitted"] = True
-        flags["process_officer_route_check_passed"] = True
         flags["process_route_model_repair_required"] = False
-        flags["process_officer_route_repair_required"] = False
         flags["process_route_model_blocked"] = False
-        flags["process_officer_route_check_blocked"] = False
     elif event in PROCESS_ROUTE_MODEL_REPAIR_EVENTS:
         flags["process_route_model_submitted"] = False
-        flags["process_officer_route_check_passed"] = False
         flags["process_route_model_repair_required"] = True
-        flags["process_officer_route_repair_required"] = True
         flags["process_route_model_blocked"] = False
-        flags["process_officer_route_check_blocked"] = False
     elif event in PROCESS_ROUTE_MODEL_BLOCK_EVENTS:
         flags["process_route_model_submitted"] = False
-        flags["process_officer_route_check_passed"] = False
         flags["process_route_model_repair_required"] = False
-        flags["process_officer_route_repair_required"] = False
         flags["process_route_model_blocked"] = True
-        flags["process_officer_route_check_blocked"] = True
 
 def _active_model_miss_review_block_flags(run_state: dict[str, Any]) -> tuple[str, ...]:
     flags = run_state.get("flags", {})

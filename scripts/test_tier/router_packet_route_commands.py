@@ -31,7 +31,7 @@ ROUTER_PACKET_COMMANDS = (
         "tests.router_runtime.packets",
         patterns=(
             "current_node_direct",
-            "packet_and_result_accept_safe_envelope_aliases",
+            "packet_and_result_reject_envelope_aliases",
         ),
         description="Current-node direct relay and alias guard slice.",
     ),

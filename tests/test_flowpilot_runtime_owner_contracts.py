@@ -12,7 +12,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
-import barrier_bundle  # noqa: E402
 import flowpilot_controller_break_glass as break_glass  # noqa: E402
 import flowpilot_paths  # noqa: E402
 import flowpilot_prompt_store as prompt_store  # noqa: E402
@@ -32,83 +31,6 @@ def write_json(path: Path, payload: dict) -> None:
 
 
 class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
-    def test_barrier_bundle_contract_validates_required_obligations_and_roles(self) -> None:
-        pending = barrier_bundle.make_pending_bundle(
-            bundle_id="bundle-startup",
-            barrier_id="startup",
-            member_packet_ids=("packet-1",),
-            node_id="node-start",
-            route_version=2,
-        )
-        blocked = barrier_bundle.validate_barrier_bundle(pending)
-
-        self.assertFalse(blocked["ok"])
-        self.assertEqual(blocked["bundle_id"], "bundle-startup")
-        self.assertIn("missing_required_obligations", blocked["failures"])
-        self.assertIn("missing_required_role_slices", blocked["failures"])
-
-        complete = dict(pending)
-        complete["obligations"] = {
-            obligation: "passed"
-            for obligation in barrier_bundle.required_obligation_ids("startup")
-        }
-        complete["role_slices"] = {
-            role: {"status": "approved"}
-            for role in barrier_bundle._BARRIER_BY_ID["startup"].required_role_slices
-        }
-        passed = barrier_bundle.validate_barrier_bundle(complete)
-        summary = barrier_bundle.barrier_bundle_summary(complete)
-
-        self.assertTrue(passed["ok"])
-        self.assertEqual(summary["status"], "passed")
-        self.assertEqual(
-            set(barrier_bundle.passed_obligation_ids(complete)),
-            set(barrier_bundle.required_obligation_ids("startup")),
-        )
-
-        final_bundle = barrier_bundle.make_pending_bundle(
-            bundle_id="bundle-final",
-            barrier_id="final_closure",
-            member_packet_ids=("packet-final",),
-            node_id="node-final",
-            route_version=2,
-        )
-        final_bundle["obligations"] = {
-            obligation: "passed"
-            for obligation in barrier_bundle.required_obligation_ids("final_closure")
-        }
-        final_bundle["role_slices"] = {
-            role: {"status": "approved"}
-            for role in barrier_bundle._BARRIER_BY_ID["final_closure"].required_role_slices
-        }
-        final_bundle["final_ledger_clean"] = True
-        final_bundle["terminal_backward_replay_passed"] = True
-        cumulative = {
-            obligation: "passed"
-            for obligation in barrier_bundle.all_legacy_obligation_ids()
-        }
-        missing_cumulative = dict(cumulative)
-        missing_cumulative.pop("packet_ledger_mail_delivery")
-
-        blocked_final = barrier_bundle.validate_barrier_bundle(
-            final_bundle,
-            cumulative_obligations=missing_cumulative,
-        )
-        passed_final = barrier_bundle.validate_barrier_bundle(
-            final_bundle,
-            cumulative_obligations=cumulative,
-        )
-
-        self.assertIn(
-            "final_closure_missing_cumulative_legacy_obligations",
-            blocked_final["failures"],
-        )
-        self.assertEqual(
-            blocked_final["missing_cumulative_obligations"],
-            ["packet_ledger_mail_delivery"],
-        )
-        self.assertTrue(passed_final["ok"])
-
     def test_break_glass_contract_records_controller_only_incident_patch_and_close(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-break-glass-") as tmp:
             project_root = Path(tmp)
@@ -240,23 +162,6 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                 project_root,
                 ".flowpilot/runs/run-test/packets/packet-1/packet_envelope.json",
             )
-            audit = packet_runtime_audit.audit_barrier_bundles(project_root, run_id="run-missing")
-
-            complete_bundle = barrier_bundle.make_pending_bundle(
-                bundle_id="bundle-startup",
-                barrier_id="startup",
-                member_packet_ids=("packet-1",),
-                node_id="node-1",
-                route_version=1,
-            )
-            complete_bundle["obligations"] = {
-                obligation: "passed"
-                for obligation in barrier_bundle.required_obligation_ids("startup")
-            }
-            complete_bundle["role_slices"] = {
-                role: {"status": "approved"}
-                for role in barrier_bundle._BARRIER_BY_ID["startup"].required_role_slices
-            }
             write_json(
                 run_root / "packet_ledger.json",
                 {
@@ -265,19 +170,10 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                         {
                             "packet_id": "packet-1",
                             "node_id": "node-1",
-                            "barrier_bundle": complete_bundle,
                         }
                     ],
-                    "barrier_bundles": [],
                 },
             )
-            written_audit = packet_runtime_audit.audit_barrier_bundles(
-                project_root,
-                run_id="run-test",
-                node_id="node-1",
-                bundle_id="bundle-startup",
-            )
-            updated_ledger = json.loads((run_root / "packet_ledger.json").read_text(encoding="utf-8"))
 
             self.assertEqual(contract["recipient_role"], "worker_a")
             self.assertEqual(packet_runtime_contracts.output_contract_id(contract), "custom.contract.v1")
@@ -289,15 +185,6 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                     ".flowpilot/runs/run-test/packets/packet-1/packet_body.md",
                     packet_runtime_schema.sha256_file(body),
                 )
-            )
-            self.assertTrue(audit["passed"])
-            self.assertTrue(audit["ledger_missing"])
-            self.assertTrue(written_audit["passed"])
-            self.assertEqual(written_audit["checked_bundle_count"], 1)
-            self.assertTrue((run_root / "barrier_bundle_audit.json").exists())
-            self.assertEqual(
-                updated_ledger["latest_barrier_bundle_audit_path"],
-                ".flowpilot/runs/run-test/barrier_bundle_audit.json",
             )
 
     def test_small_runtime_owner_helpers_return_stable_external_shapes(self) -> None:

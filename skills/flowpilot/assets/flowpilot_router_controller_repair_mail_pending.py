@@ -1,7 +1,7 @@
 """Internal router owner helpers extracted from flowpilot_router.
 
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
+The public router names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so private helper lookups remain
 stable while the implementation body lives outside the facade.
 """
 

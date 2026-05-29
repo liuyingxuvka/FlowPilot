@@ -635,7 +635,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         root = self.make_project()
         self.boot_to_controller(root)
 
-        run_root, state, action = self.legacy_controller_boundary_action(root)
+        run_root, state, action = self.controller_boundary_recovery_action(root)
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         state["pending_action"] = action
         router._write_controller_receipt(  # type: ignore[attr-defined]

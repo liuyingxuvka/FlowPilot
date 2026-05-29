@@ -1,6 +1,6 @@
 """controller boundary confirmation records helpers for ``flowpilot_router_startup_fact_boundary``.
 
-This child module is imported by the compatibility facade and keeps
+This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
 """
 
@@ -84,7 +84,7 @@ def _controller_boundary_constraints(router: ModuleType) -> dict[str, Any]:
     _bind_router(router)
     return role_output_runtime.controller_boundary_constraints()
 
-def _legacy_pm_reset_boundary_confirmed(router: ModuleType, run_state: dict[str, Any]) -> bool:
+def _pm_reset_boundary_confirmed(router: ModuleType, run_state: dict[str, Any]) -> bool:
     _bind_router(router)
     flags = run_state.get('flags') if isinstance(run_state.get('flags'), dict) else {}
     return bool(flags.get('controller_role_confirmed') and flags.get('pm_controller_reset_card_delivered') and flags.get('pm_controller_reset_decision_returned'))
@@ -198,7 +198,7 @@ def _next_controller_boundary_confirmation_action(router: ModuleType, project_ro
         return None
     if router._controller_action_open_for(run_root, action_type='confirm_controller_core_boundary', postcondition='controller_role_confirmed'):
         return None
-    if router._legacy_pm_reset_boundary_confirmed(run_state):
+    if router._pm_reset_boundary_confirmed(run_state):
         return None
     if not flags.get('controller_boundary_recovery_requested'):
         return None
@@ -210,7 +210,7 @@ __all__ = (
     '_run_manifest_path',
     '_controller_boundary_sources',
     '_controller_boundary_constraints',
-    '_legacy_pm_reset_boundary_confirmed',
+    '_pm_reset_boundary_confirmed',
     '_controller_boundary_confirmation_body',
     '_controller_boundary_runtime_evidence_context',
     '_write_controller_boundary_confirmation',

@@ -22,7 +22,6 @@ CARD_PHASE_BY_ID = {
     "pm.route_skeleton": "route_skeleton",
     "process_officer.route_process_check": "route_skeleton",
     "pm.process_route_model_decision": "route_skeleton",
-    "product_officer.route_product_check": "route_skeleton",
     "reviewer.route_challenge": "route_skeleton",
 }
 
@@ -138,16 +137,6 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
         "product_modeling_plan": "flowguard/product_modeling_plan.json",
         "process_modeling_plan": "flowguard/process_modeling_plan.json",
-        "process_route_model": "flowguard/process_route_model.json",
-        "route_process_check": "flowguard/route_process_check.json",
-    },
-    "product_officer.route_product_check": {
-        "root_acceptance_contract": "root_acceptance_contract.json",
-        "child_skill_gate_manifest": "child_skill_gate_manifest.json",
-        "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
-        "product_modeling_plan": "flowguard/product_modeling_plan.json",
-        "process_modeling_plan": "flowguard/process_modeling_plan.json",
-        "pm_process_route_model_decision": "flowguard/process_route_model_pm_decision.json",
         "process_route_model": "flowguard/process_route_model.json",
         "route_process_check": "flowguard/route_process_check.json",
     },

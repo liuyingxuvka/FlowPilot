@@ -53,8 +53,8 @@ Write the decision body to a run-scoped decision JSON file and return only a
 runtime-generated role-output envelope with `body_ref` and
 `runtime_receipt_ref`. Do not include the decision body in chat. Use
 `flowpilot_runtime.py prepare-output` and `flowpilot_runtime.py submit-output-to-router`
-for new submissions; legacy `decision_path`/`decision_hash` envelopes are
-not the live handoff path.
+for submissions; plain `decision_path`/`decision_hash` envelopes are not the
+live handoff path.
 
 Copy this body shape exactly. Use the current run id and current route-memory
 paths from the router delivery envelope.

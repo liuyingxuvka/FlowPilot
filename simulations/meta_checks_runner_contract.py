@@ -6,13 +6,13 @@ import meta_model as model
 
 
 REQUIRED_LABELS = (
-    "startup_three_questions_asked",
+    "startup_intake_ui_completed",
     "startup_dialog_stopped_for_user_answers",
-    "startup_display_surface_answered",
+    "startup_display_surface_option_recorded",
     "startup_display_entry_action_done",
     "startup_banner_emitted_after_controller_core",
-    "startup_background_agents_answered",
-    "startup_scheduled_continuation_answered",
+    "startup_background_agent_option_recorded",
+    "startup_continuation_option_recorded",
     "run_directory_created",
     "current_pointer_written",
     "run_index_updated",
@@ -20,7 +20,7 @@ REQUIRED_LABELS = (
     "continue_previous_work_selected",
     "prior_work_import_packet_written",
     "control_state_written_under_run_root",
-    "top_level_control_state_absent_or_quarantined",
+    "prior_control_state_quarantined",
     "showcase_floor_committed",
     "visible_self_interrogation_completed",
     "startup_self_interrogation_record_written",
@@ -298,7 +298,7 @@ def _state_id(state: model.State) -> str:
         f"{state.run_index_updated},{state.prior_work_mode},"
         f"{state.prior_work_import_packet_written},"
         f"{state.control_state_written_under_run_root},"
-        f"{state.top_level_control_state_absent_or_quarantined},"
+        f"{state.prior_control_state_quarantined},"
         f"{state.old_control_state_reused_as_current}|"
         f"showcase={state.showcase_floor_committed}|"
         f"visible_self_q={state.visible_self_interrogation_done},"

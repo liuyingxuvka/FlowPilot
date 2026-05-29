@@ -63,22 +63,3 @@ RELEASE_COMMANDS = (
         background_stage=1,
     ),
 )
-
-LEGACY_FULL_COMMANDS = (
-    TierCommand(
-        name="meta_legacy_full",
-        command=_py("simulations/run_meta_checks.py", "--legacy-full"),
-        description="Legacy full Meta graph regression.",
-        release_only=True,
-        long_running=True,
-        background_recommended=True,
-    ),
-    TierCommand(
-        name="capability_legacy_full",
-        command=_py("simulations/run_capability_checks.py", "--legacy-full"),
-        description="Legacy full Capability graph regression.",
-        release_only=True,
-        long_running=True,
-        background_recommended=True,
-    ),
-)

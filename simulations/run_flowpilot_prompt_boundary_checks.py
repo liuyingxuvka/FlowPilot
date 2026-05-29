@@ -220,10 +220,12 @@ def _actual_prompt_source_report() -> dict[str, object]:
         "skill_no_broad_wait_boundary_prefer_run_until_wait": (
             "After applying a wait-boundary action, prefer `run-until-wait`" not in skill
         ),
-        "skill_start_alias_is_compatibility_only": (
+        "skill_has_only_current_start_entrypoint": (
             "Legacy equivalent:" not in skill
-            and "Compatibility-only alias retained for older automation" in skill
-            and "do not choose it for new operator instructions" in skill
+            and "Compatibility-only alias retained for older automation" not in skill
+            and "--new-invocation" not in skill
+            and "run-until-wait --new-invocation" not in skill
+            and "next --new-invocation" not in skill
         ),
         "skill_heartbeat_no_return_to_router": (
             "record `heartbeat_or_manual_resume_requested` and return to the router" not in skill
@@ -307,10 +309,11 @@ def _actual_prompt_source_report() -> dict[str, object]:
         "router_startup_intake_no_direct_apply_wording": (
             "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path." not in router
         ),
-        "router_startup_catalog_clarifies_compatibility_receipt_repair": (
+        "router_startup_catalog_uses_current_receipt_repair": (
             "Legacy recovery:" not in router
-            and "Compatibility receipt repair" in router
-            and "not retired external recovery authority" in router
+            and "Compatibility receipt repair" not in router
+            and "Receipt repair:" in router
+            and "not external recovery authority" in router
         ),
         "work_card_ack_continues_and_waits_for_router_output": _contains_all(
             startup_fact_card,

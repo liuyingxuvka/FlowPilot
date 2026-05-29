@@ -75,7 +75,7 @@ Required checks:
 - continuation mode is recorded from the user's startup answer and matched to
   heartbeat or manual-resume evidence for this run;
 - display surface is recorded from the user's startup answer;
-- old top-level control state is absent or quarantined from current authority.
+- prior top-level control state is absent or quarantined from current authority.
 
 Your report body must include `external_fact_review` with:
 

@@ -59,7 +59,6 @@ def _relay_packet_records(router: ModuleType, project_root: Path, run_state: dic
         audit = packet_runtime.validate_packet_ready_for_direct_relay(project_root, packet_envelope=envelope, envelope_path=envelope_path)
         if not audit.get('passed'):
             raise RouterError(f"packet envelope is not ready for direct relay: {audit.get('blockers')}")
-        router._ensure_barrier_bundles_ready(project_root, node_id=str(envelope.get('node_id') or ''))
         packet_runtime.controller_relay_envelope(project_root, envelope=envelope, envelope_path=envelope_path, controller_agent_id=controller_agent_id, received_from_role=str(envelope.get('from_role') or 'project_manager'), relayed_to_role=str(envelope.get('to_role')))
         relayed_ids.append(str(envelope['packet_id']))
     return relayed_ids
@@ -82,7 +81,6 @@ def _relay_result_records(router: ModuleType, project_root: Path, run_state: dic
         audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
         if not audit.get('passed'):
             raise RouterError(f"result envelope is not ready for recipient relay: {audit.get('blockers')}")
-        router._ensure_barrier_bundles_ready(project_root, node_id=str(result.get('node_id') or ''))
         packet_runtime.controller_relay_envelope(project_root, envelope=result, envelope_path=result_path, controller_agent_id=controller_agent_id, received_from_role=str(result.get('completed_by_role') or 'unknown'), relayed_to_role=to_role)
         relayed_ids.append(str(result['packet_id']))
     return relayed_ids

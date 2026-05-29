@@ -21,7 +21,7 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-LEGACY_OBLIGATIONS = (
+ROUTER_OBLIGATIONS = (
     "controller_boundary",
     "pm_route_draft",
     "process_officer_route_check",
@@ -36,7 +36,7 @@ LEGACY_OBLIGATIONS = (
     "repair_marks_stale_and_rewrites_frontier",
     "ui_snapshot_from_active_canonical_sources",
 )
-OBLIGATION_BITS = {name: 1 << index for index, name in enumerate(LEGACY_OBLIGATIONS)}
+OBLIGATION_BITS = {name: 1 << index for index, name in enumerate(ROUTER_OBLIGATIONS)}
 ALL_OBLIGATIONS = sum(OBLIGATION_BITS.values())
 
 REQUIRED_LABELS = (
@@ -558,7 +558,7 @@ __all__ = [
     "ALL_OBLIGATIONS",
     "EXTERNAL_INPUTS",
     "INVARIANTS",
-    "LEGACY_OBLIGATIONS",
+    "ROUTER_OBLIGATIONS",
     "MAX_SEQUENCE_LENGTH",
     "REQUIRED_LABELS",
     "State",

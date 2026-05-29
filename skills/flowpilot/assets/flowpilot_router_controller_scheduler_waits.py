@@ -1,4 +1,4 @@
-"""Compatibility facade for controller scheduler wait helpers."""
+"""Public facade for controller scheduler wait helpers."""
 
 from __future__ import annotations
 

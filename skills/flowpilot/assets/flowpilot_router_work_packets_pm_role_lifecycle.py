@@ -1,4 +1,4 @@
-"""PM role-work request index and officer lifecycle compatibility facade."""
+"""PM role-work request index and officer lifecycle public facade."""
 
 from __future__ import annotations
 

@@ -28,7 +28,7 @@ structure-split repair work.
 | Total diagnostic surfaces | 732 |
 | Covered surfaces | 720 |
 | Surfaces with one or more gaps | 12 |
-| Compatibility facades | 109 |
+| Public facades | 109 |
 | Owner modules | 235 |
 | Script entrypoints | 19 |
 | Model-check runners | 96 |
@@ -65,7 +65,7 @@ missing-test backlog:
    keep explicit `peer_safety_status`,
    `deferred_split_reason`, `safe_split_class`, and
    `recommended_next_action` metadata.
-2. `run_flowpilot_model_test_alignment_checks.py` is now a small compatibility
+2. `run_flowpilot_model_test_alignment_checks.py` is now a small public
    runner facade. Its common declarations, family plans, source-contract plan,
    known-bad cases, and full diagnostic surface inventory live in focused
    `flowpilot_model_test_alignment_*` modules.
@@ -74,11 +74,9 @@ missing-test backlog:
 4. `public_release_check` now has current URL-probing evidence from
    `python scripts\check_public_release.py --json --skip-validation`; it is no
    longer counted as local-only release proof.
-5. `meta_legacy_full` and `capability_legacy_full` are reclassified as
-   historical compatibility oracles. Current release confidence comes from
-   reused valid layered full parent proofs. The failed/running legacy artifacts
-   stay visible in `background_evidence` but do not block
-   `release_convergence_ok`.
+5. Current release confidence comes from valid layered full parent proofs.
+   Historical monolithic artifacts are not active release
+   evidence and are not part of the current background-evidence classifier.
 
 ## Newly Strengthened Contract Coverage
 
@@ -96,7 +94,7 @@ This pass added or strengthened external-contract evidence for:
   gates, action handler outcome/error paths, artifact validation, card delivery
   ledgers, child-skill capability sync/approval, and controller scheduler
   ledger projection, exercised by `tests/test_flowpilot_router_owner_contracts.py`.
-- `flowpilot_router_protocol_boot_cards.py` as a compatibility aggregation
+- `flowpilot_router_protocol_boot_cards.py` as a public aggregation
   layer. It dropped from 684 lines before this change to 64 lines after the
   latest split.
 - New declarative protocol modules:
@@ -146,11 +144,9 @@ Progress-only evidence is never a pass. Release validation with
 proof uses `--skip-validation` only, so URL probing still runs while avoiding a
 duplicate nested full validation pass.
 
-Legacy monolithic Meta/Capability full graphs are no longer the release proof
-source. They remain inspectable compatibility oracles; when the current
-layered full parent proof is valid, the diagnostic records
-`legacy_full_reclassified` instead of counting old monolithic failure as stale
-release evidence.
+Layered Meta/Capability full graphs are the release proof source. Historical
+monolithic historical artifacts are outside the current diagnostic surface
+and do not participate in stale-evidence classification.
 
 ## Structure-Split Repair Planning
 

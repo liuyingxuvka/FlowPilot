@@ -19,8 +19,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 
 
 Submit the process route model for the PM route draft as the Process FlowGuard
-Officer. The old route process check name is only a compatibility label; this
-gate's real output is the serial process route model that PM must accept before
+Officer. This gate's output is the serial process route model that PM must accept before
 Reviewer route challenge uses it.
 
 Before modeling, read:
@@ -104,18 +103,12 @@ Router hard gate fields:
   `all_effective_nodes_reachable_in_order: true`, and
   `recursive_child_routes_serialized: true`, then return event
   `process_officer_submits_process_route_model`.
-- Old event `process_officer_passes_route_check` remains a compatibility alias
-  and must mean the same process route model submission.
 - If the route needs PM repair, return event
   `process_officer_requests_process_route_model_repair` with
   `process_viability_verdict: "repair_required"` and a concrete
   `recommended_resolution`.
-- Old event `process_officer_requires_route_repair` remains a compatibility
-  alias and must mean the same repair request.
 - If the route cannot safely proceed without a larger PM/user decision, return
   event `process_officer_blocks_process_route_model` with
   `process_viability_verdict: "blocked"` and the blocking reason.
-- Old event `process_officer_blocks_route_check` remains a compatibility alias
-  and must mean the same block.
 - Do not approve a repair or mutation path unless the report checks where it
   rejoins the mainline and which product/process checks must rerun.

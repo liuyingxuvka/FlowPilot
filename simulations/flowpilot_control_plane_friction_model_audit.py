@@ -54,28 +54,6 @@ def _delivery_source_values(delivery: dict[str, Any] | None) -> set[str]:
         values = ()
     return {str(value).replace("\\", "/") for value in values if isinstance(value, str)}
 
-def _legacy_route_challenge_missing_sources(
-    *,
-    card_id: str,
-    run_id: str,
-    missing: list[str],
-    source_values: set[str],
-    project_root: Path,
-) -> list[str]:
-    if card_id != "reviewer.route_challenge":
-        return missing
-    run_prefix = f".flowpilot/runs/{run_id}"
-    product_model_path = f"{run_prefix}/flowguard/product_behavior_model.json"
-    legacy_route_product_path = f"{run_prefix}/flowguard/route_product_check.json"
-    if (
-        product_model_path in missing
-        and legacy_route_product_path in source_values
-        and (project_root / product_model_path).exists()
-        and (project_root / legacy_route_product_path).exists()
-    ):
-        return [path for path in missing if path != product_model_path]
-    return missing
-
 def _read_text(path: Path) -> tuple[str, str | None]:
     try:
         return path.read_text(encoding="utf-8"), None
@@ -362,14 +340,6 @@ def _audit_material_scan_dispatch_integrity(
         run_root / "material" / "pm_material_scan_packet_specs.project_manager.json"
     )
     packet_ledger, _packet_ledger_error = _read_json(run_root / "packet_ledger.json")
-    legacy_migration, _legacy_migration_error = _read_json(
-        run_root / "material" / "legacy_material_packet_migration.json"
-    )
-    migrated_packet_ids = {
-        str(packet.get("packet_id"))
-        for packet in (legacy_migration.get("packets") if isinstance(legacy_migration, dict) else []) or []
-        if isinstance(packet, dict) and packet.get("packet_id")
-    }
     envelope_paths = _material_packet_envelope_paths(run_root, material_scan_packets)
     requested = bool(envelope_paths) or (
         isinstance(material_scan_packets, dict)
@@ -431,15 +401,7 @@ def _audit_material_scan_dispatch_integrity(
         role_unique = _contract_uniquely_matches_role(
             envelope_contract, to_role
         ) and _contract_uniquely_matches_role(body_contract, to_role)
-        legacy_contract_migrated = (
-            packet_id in migrated_packet_ids
-            and isinstance(envelope_contract, dict)
-            and isinstance(body_contract, dict)
-            and str(envelope_contract.get("contract_id") or "")
-            == str(body_contract.get("contract_id") or "")
-            and _contract_uniquely_matches_role(envelope_contract, to_role)
-        )
-        packet_contract_ok = (contracts_same and role_unique) or legacy_contract_migrated
+        packet_contract_ok = contracts_same and role_unique
         contract_ok = contract_ok and packet_contract_ok
 
         ledger_result_body_path = str(
@@ -492,7 +454,6 @@ def _audit_material_scan_dispatch_integrity(
                 "body_contract_error": body_contract_error,
                 "contracts_same": contracts_same,
                 "contract_uniquely_matches_to_role": role_unique,
-                "legacy_contract_migrated": legacy_contract_migrated,
                 "ledger_result_body_path": ledger_result_body_path or None,
                 "envelope_result_body_path": envelope_result_body_path or None,
                 "body_mentions_result_body_path": body_mentions_result_path,
@@ -2054,13 +2015,6 @@ def _audit_card_delivery_context(
         delivered_any = True
         source_values = _delivery_source_values(delivery)
         missing = [path for path in required_paths if path not in source_values]
-        missing = _legacy_route_challenge_missing_sources(
-            card_id=card_id,
-            run_id=run_id,
-            missing=missing,
-            source_values=source_values,
-            project_root=project_root,
-        )
         if missing:
             missing_sources.append(
                 {

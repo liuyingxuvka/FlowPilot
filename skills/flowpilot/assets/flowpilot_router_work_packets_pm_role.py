@@ -1,4 +1,4 @@
-"""PM role-work owner compatibility facade for the FlowPilot router.
+"""PM role-work owner public facade for the FlowPilot router.
 
 The behavior is split into gate mappings, request/result writes, request index
 and officer lifecycle, and next-action reconciliation helpers. Public import
@@ -43,7 +43,6 @@ __all__ = (
     '_pm_role_work_target_gate_contract',
     '_pm_role_work_gate_mapping_candidates',
     '_pm_role_work_gate_mapping_artifact_path',
-    '_pm_role_work_gate_mapping_alias_specs',
     '_pm_role_work_gate_mappings_for_decision',
     '_apply_pm_role_work_gate_mappings',
     '_pm_role_work_result_decision_payload_contract',

@@ -1,6 +1,6 @@
 """Coarse events repair owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """
@@ -29,14 +29,12 @@ def _bind_router(router: ModuleType) -> None:
             continue
         current[name] = value
 
-def _repair_transaction_normalized_plan_kind(router: ModuleType, raw_plan_kind: str) -> tuple[str, str | None]:
+def _repair_transaction_normalized_plan_kind(router: ModuleType, raw_plan_kind: str) -> str:
     _bind_router(router)
     requested = raw_plan_kind.strip()
-    if requested in REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES:
-        return (REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES[requested], requested)
     if requested in REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS:
-        return (requested, None)
-    allowed = sorted(REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS | set(REPAIR_TRANSACTION_LEGACY_PLAN_KIND_ALIASES))
+        return requested
+    allowed = sorted(REPAIR_TRANSACTION_EXECUTABLE_PLAN_KINDS)
     raise RouterError(f"repair_transaction.plan_kind must be one of: {', '.join(allowed)}")
 
 def _event_already_recorded(router: ModuleType, run_state: dict[str, Any], event: str) -> bool:
@@ -95,7 +93,7 @@ def _list_field(router: ModuleType, value: Any, *, field: str, required: bool=Tr
         raise RouterError(f'{field} must be a non-empty list')
     return [str(item) for item in value if str(item or '').strip()]
 
-def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], active: dict[str, Any], request: dict[str, Any], *, requested_plan_kind: str, legacy_plan_kind: str | None, rerun_target: str, repair_origin: str, packet_specs: list[dict[str, Any]]) -> dict[str, Any]:
+def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], active: dict[str, Any], request: dict[str, Any], *, requested_plan_kind: str, rerun_target: str, repair_origin: str, packet_specs: list[dict[str, Any]]) -> dict[str, Any]:
     _bind_router(router)
     if requested_plan_kind == 'packet_reissue':
         if not packet_specs:
@@ -108,10 +106,8 @@ def _repair_transaction_execution_plan(router: ModuleType, project_root: Path, r
             raise RouterError('material dispatch repair transaction cannot use await_existing_event; use packet_reissue, operation_replay, controller_repair_work_packet, or terminal_stop')
         evidence = router._existing_event_producer_evidence(run_root, run_state, rerun_target)
         if evidence is None:
-            if legacy_plan_kind == 'event_replay':
-                raise RouterError('legacy event_replay repair transaction requires an existing producer for rerun_target')
             raise RouterError('await_existing_event repair transaction requires an existing producer for rerun_target')
-        return {'mode': 'await_existing_event', 'validated': True, 'queued_action': False, 'existing_event_producer': evidence, 'legacy_plan_kind': legacy_plan_kind}
+        return {'mode': 'await_existing_event', 'validated': True, 'queued_action': False, 'existing_event_producer': evidence}
     if requested_plan_kind in {'role_reissue', 'route_mutation'}:
         target_role = str(request.get('target_role') or router._control_blocker_followup_target_role([rerun_target], 'project_manager')).strip()
         router._validate_wait_event_producer_binding([rerun_target], to_role=target_role, context=f'{requested_plan_kind} repair transaction')
@@ -178,7 +174,7 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
     if not isinstance(repair_transaction_request, dict):
         raise RouterError('control blocker repair decision requires repair_transaction')
     raw_requested_plan_kind = str(repair_transaction_request.get('plan_kind') or '').strip()
-    requested_plan_kind, legacy_plan_kind = router._repair_transaction_normalized_plan_kind(raw_requested_plan_kind)
+    requested_plan_kind = router._repair_transaction_normalized_plan_kind(raw_requested_plan_kind)
     raw_rerun_target = decision.get('rerun_target')
     rerun_target = router._control_resolution_event_name(raw_rerun_target)
     if requested_plan_kind != 'terminal_stop':
@@ -229,12 +225,12 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
     transaction_id = router._repair_transaction_id(blocker_id)
     packet_generation_id = f'{transaction_id}-gen-001'
     packet_specs, packet_spec_source = router._repair_packet_specs_from_decision(project_root, run_root, decision, rerun_target=rerun_target)
-    execution_plan = router._repair_transaction_execution_plan(project_root, run_root, post_decision_state, active, repair_transaction_request, requested_plan_kind=requested_plan_kind, legacy_plan_kind=legacy_plan_kind, rerun_target=rerun_target, repair_origin=repair_origin, packet_specs=packet_specs)
+    execution_plan = router._repair_transaction_execution_plan(project_root, run_root, post_decision_state, active, repair_transaction_request, requested_plan_kind=requested_plan_kind, rerun_target=rerun_target, repair_origin=repair_origin, packet_specs=packet_specs)
     plan_kind = requested_plan_kind
-    if packet_specs and rerun_target not in {'router_direct_material_scan_dispatch_recheck_passed', 'reviewer_allows_material_scan_dispatch'}:
+    if packet_specs and rerun_target != 'router_direct_material_scan_dispatch_recheck_passed':
         raise RouterError('repair transaction packet reissue is currently supported only for material scan dispatch')
     run_state.setdefault('flags', {})['pm_control_blocker_repair_decision_recorded'] = True
-    output = {'schema_version': 'flowpilot.control_blocker_repair_decision.v1', 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'decided_by_role': 'project_manager', 'decision': decision['decision'], 'repair_transaction_id': transaction_id, 'prior_path_context_review': prior_path_context_review, 'repair_action': repair_action, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'blocker_family': active_record.get('blocker_family'), 'repair_origin': repair_origin, 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'legacy_plan_kind': legacy_plan_kind, 'execution_plan': execution_plan, 'control_transaction': control_transaction, 'blockers': blockers, 'contract_self_check': contract_self_check, 'recorded_at': utc_now(), **_role_output_envelope_record(decision)}
+    output = {'schema_version': 'flowpilot.control_blocker_repair_decision.v1', 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'decided_by_role': 'project_manager', 'decision': decision['decision'], 'repair_transaction_id': transaction_id, 'prior_path_context_review': prior_path_context_review, 'repair_action': repair_action, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'blocker_family': active_record.get('blocker_family'), 'repair_origin': repair_origin, 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'execution_plan': execution_plan, 'control_transaction': control_transaction, 'blockers': blockers, 'contract_self_check': contract_self_check, 'recorded_at': utc_now(), **_role_output_envelope_record(decision)}
     decision_path = run_root / 'control_blocks' / f'{blocker_id}.pm_repair_decision.json'
     write_json(decision_path, output)
     generation_commit: dict[str, Any] | None = None
@@ -242,7 +238,7 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
         generation_commit = router._commit_material_scan_repair_generation(project_root, run_root, run_state, transaction_id=transaction_id, packet_generation_id=packet_generation_id, packet_specs=packet_specs)
         router._set_pre_route_frontier_phase(run_root, str(run_state['run_id']), 'material_scan')
         run_state['phase'] = 'material_scan'
-    transaction = {'schema_version': REPAIR_TRANSACTION_SCHEMA, 'transaction_id': transaction_id, 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'originating_event': active.get('originating_event'), 'originating_action_type': active.get('originating_action_type'), 'status': 'blocked' if requested_plan_kind == 'terminal_stop' else 'committed', 'plan_kind': plan_kind, 'legacy_plan_kind': legacy_plan_kind, 'execution_plan': execution_plan, 'packet_generation_id': packet_generation_id if generation_commit else None, 'packet_spec_source': packet_spec_source, 'generation_commit': generation_commit, 'pm_repair_decision_path': project_relative(project_root, decision_path), 'repair_origin': repair_origin, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'control_transaction': control_transaction, 'allowed_resolution_events': allowed_resolution_events, 'opened_at': output['recorded_at'], 'committed_at': utc_now()}
+    transaction = {'schema_version': REPAIR_TRANSACTION_SCHEMA, 'transaction_id': transaction_id, 'run_id': run_state['run_id'], 'blocker_id': blocker_id, 'originating_event': active.get('originating_event'), 'originating_action_type': active.get('originating_action_type'), 'status': 'blocked' if requested_plan_kind == 'terminal_stop' else 'committed', 'plan_kind': plan_kind, 'execution_plan': execution_plan, 'packet_generation_id': packet_generation_id if generation_commit else None, 'packet_spec_source': packet_spec_source, 'generation_commit': generation_commit, 'pm_repair_decision_path': project_relative(project_root, decision_path), 'repair_origin': repair_origin, 'recovery_option': recovery_option, 'return_gate': return_gate, 'policy_row_id': active_record.get('policy_row_id'), 'rerun_target': rerun_target, 'outcome_table': outcome_table, 'control_transaction': control_transaction, 'allowed_resolution_events': allowed_resolution_events, 'opened_at': output['recorded_at'], 'committed_at': utc_now()}
     write_json(router._repair_transaction_path(run_root, transaction_id), transaction)
     active_path = resolve_project_path(project_root, str(active.get('blocker_artifact_path') or ''))
     decision_rel = project_relative(project_root, decision_path)
@@ -260,7 +256,6 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
         record['repair_transaction_path'] = project_relative(project_root, router._repair_transaction_path(run_root, transaction_id))
         record['repair_outcome_table'] = outcome_table
         record['repair_transaction_plan_kind'] = plan_kind
-        record['repair_transaction_legacy_plan_kind'] = legacy_plan_kind
         record['repair_transaction_execution_plan'] = execution_plan
         record['control_transaction'] = control_transaction
         record['allowed_resolution_events'] = allowed_resolution_events
@@ -277,7 +272,6 @@ def _write_control_blocker_repair_decision(router: ModuleType, project_root: Pat
     active['repair_transaction_path'] = project_relative(project_root, router._repair_transaction_path(run_root, transaction_id))
     active['repair_outcome_table'] = outcome_table
     active['repair_transaction_plan_kind'] = plan_kind
-    active['repair_transaction_legacy_plan_kind'] = legacy_plan_kind
     active['repair_transaction_execution_plan'] = execution_plan
     active['control_transaction'] = control_transaction
     active['allowed_resolution_events'] = allowed_resolution_events

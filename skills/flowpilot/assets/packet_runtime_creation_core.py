@@ -9,7 +9,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import barrier_bundle
 from controller_process_aside import controller_process_aside_contract
 from packet_runtime_active_holder import (
     _load_active_holder_lease,
@@ -37,7 +36,6 @@ from packet_runtime_ledger import (
     _empty_packet_ledger,
     _packet_ledger_record,
     _update_packet_record,
-    _upsert_barrier_bundle_record,
     _upsert_packet_record,
     packet_ledger_record_for_envelope,
 )
@@ -70,7 +68,6 @@ from packet_runtime_reviewer import validate_for_reviewer
 from packet_runtime_schema import (
     ACTIVE_HOLDER_EVENT_SCHEMA,
     ACTIVE_HOLDER_LEASE_SCHEMA,
-    BARRIER_BUNDLE_SCHEMA,
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
@@ -158,7 +155,6 @@ def create_packet(
     replacement_for: str | None = None,
     supersedes: list[str] | None = None,
     metadata: dict[str, Any] | None = None,
-    barrier_bundle: dict[str, Any] | None = None,
     output_contract: dict[str, Any] | None = None,
     initial_holder: str = "controller",
     initial_ledger_status: str = "packet-with-controller",
@@ -244,8 +240,6 @@ def create_packet(
             **envelope["metadata"],
             "output_contract_id": output_contract_id(output_contract),
         }
-    if barrier_bundle is not None:
-        envelope["barrier_bundle"] = barrier_bundle
     write_json_atomic(packet_envelope_path, envelope)
 
     write_controller_status_packet(
@@ -358,8 +352,6 @@ def create_packet(
         },
         "controller_origin_evidence_allowed": False,
     }
-    if barrier_bundle is not None:
-        record["barrier_bundle"] = barrier_bundle
     if output_contract is not None:
         record["output_contract"] = output_contract
         record["packet_envelope"]["output_contract"] = output_contract

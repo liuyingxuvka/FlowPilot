@@ -1,7 +1,7 @@
 """Pending-action resolution helpers for scheduler current-work projection.
 
 Receives the router facade explicitly so controller-ledger and scheduler-row
-authority stay under the existing router-owned compatibility boundary.
+authority stay under the existing router-owned boundary.
 """
 
 from __future__ import annotations

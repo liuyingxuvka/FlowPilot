@@ -69,13 +69,13 @@ class State:
     flowpilot_enabled: bool = False
     run_scoped_startup_bootstrap_created: bool = False
     stale_top_level_bootstrap_reused: bool = False
-    startup_questions_asked: bool = False
-    startup_dialog_stopped_for_answers: bool = False
+    startup_intake_ui_completed: bool = False
+    startup_intake_result_recorded: bool = False
     startup_banner_emitted: bool = False
     startup_banner_user_dialog_confirmed: bool = False
-    startup_background_agents_answered: bool = False
-    startup_scheduled_continuation_answered: bool = False
-    startup_display_surface_answered: bool = False
+    startup_background_agent_option_recorded: bool = False
+    startup_continuation_option_recorded: bool = False
+    startup_display_surface_option_recorded: bool = False
     startup_answer_values_valid: bool = False
     startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     startup_display_entry_action_done: bool = False
@@ -85,7 +85,7 @@ class State:
     prior_work_mode: str = "unknown"  # unknown | new | continue
     prior_work_import_packet_written: bool = False
     control_state_written_under_run_root: bool = False
-    top_level_control_state_absent_or_quarantined: bool = False
+    prior_control_state_quarantined: bool = False
     preflow_visible_plan_cleared: bool = False
     old_control_state_reused_as_current: bool = False
     showcase_floor_committed: bool = False
@@ -760,11 +760,11 @@ def _lightweight_self_check_ready(*, total_questions: int, scope_id: str) -> boo
 
 def _startup_questions_complete(state: State) -> bool:
     return (
-        state.startup_questions_asked
-        and state.startup_dialog_stopped_for_answers
-        and state.startup_background_agents_answered
-        and state.startup_scheduled_continuation_answered
-        and state.startup_display_surface_answered
+        state.startup_intake_ui_completed
+        and state.startup_intake_result_recorded
+        and state.startup_background_agent_option_recorded
+        and state.startup_continuation_option_recorded
+        and state.startup_display_surface_option_recorded
         and state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
     )
@@ -895,7 +895,7 @@ def _run_isolation_ready(state: State) -> bool:
         and state.run_index_updated
         and prior_work_resolved
         and state.control_state_written_under_run_root
-        and state.top_level_control_state_absent_or_quarantined
+        and state.prior_control_state_quarantined
         and not state.old_control_state_reused_as_current
     )
 
@@ -1081,18 +1081,18 @@ class AutopilotStep:
     reads = (
         "status",
         "flowpilot_enabled",
-        "startup_questions_asked",
-        "startup_dialog_stopped_for_answers",
+        "startup_intake_ui_completed",
+        "startup_intake_result_recorded",
         "startup_banner_emitted",
-        "startup_background_agents_answered",
-        "startup_scheduled_continuation_answered",
+        "startup_background_agent_option_recorded",
+        "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
         "prior_work_mode",
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
-        "top_level_control_state_absent_or_quarantined",
+        "prior_control_state_quarantined",
         "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
@@ -1419,18 +1419,18 @@ class AutopilotStep:
     writes = (
         "status",
         "flowpilot_enabled",
-        "startup_questions_asked",
-        "startup_dialog_stopped_for_answers",
+        "startup_intake_ui_completed",
+        "startup_intake_result_recorded",
         "startup_banner_emitted",
-        "startup_background_agents_answered",
-        "startup_scheduled_continuation_answered",
+        "startup_background_agent_option_recorded",
+        "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
         "prior_work_mode",
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
-        "top_level_control_state_absent_or_quarantined",
+        "prior_control_state_quarantined",
         "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
@@ -1868,7 +1868,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
     if not state.flowpilot_enabled:
         return InvariantResult.fail("final report emitted before FlowPilot was enabled")
     if not _startup_questions_complete(state):
-        return InvariantResult.fail("final report emitted before the three startup questions were answered")
+        return InvariantResult.fail("final report emitted before the native startup intake options were answered")
     if not state.startup_banner_emitted:
         return InvariantResult.fail("final report emitted before FlowPilot startup banner was visible")
     if not (
@@ -2043,11 +2043,11 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
     if state.flowpilot_enabled and not state.run_scoped_startup_bootstrap_created:
         return InvariantResult.fail("new FlowPilot startup did not create a run-scoped bootstrap")
     if (
-        not state.startup_dialog_stopped_for_answers
+        not state.startup_intake_result_recorded
         and (
-            state.startup_background_agents_answered
-            or state.startup_scheduled_continuation_answered
-            or state.startup_display_surface_answered
+            state.startup_background_agent_option_recorded
+            or state.startup_continuation_option_recorded
+            or state.startup_display_surface_option_recorded
             or state.startup_display_entry_action_done
             or state.startup_banner_emitted
         )
@@ -2060,9 +2060,9 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
     if state.startup_banner_emitted and not state.controller_core_loaded:
         return InvariantResult.fail("startup banner emitted before Controller core was loaded")
     if (
-        state.startup_background_agents_answered
-        and state.startup_scheduled_continuation_answered
-        and state.startup_display_surface_answered
+        state.startup_background_agent_option_recorded
+        and state.startup_continuation_option_recorded
+        and state.startup_display_surface_option_recorded
     ) and not (
         state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
@@ -3279,7 +3279,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="startup_question_gate_before_heavy_startup",
-        description="FlowPilot asks the three startup questions, stops for answers, and emits the banner only after all three answers exist.",
+        description="FlowPilot asks the native startup intake options, stops for answers, and emits the banner only after all three answers exist.",
         predicate=startup_question_gate_before_heavy_startup,
     ),
     Invariant(

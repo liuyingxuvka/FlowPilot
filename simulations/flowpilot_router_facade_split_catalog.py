@@ -592,7 +592,7 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "model_gate_state",
         path="skills/flowpilot/assets/flowpilot_router_model_gate_state.py",
-        owns_functions=("_sync_model_gate_alias_flags", "_require_single_active_model_miss_review_block"),
+        owns_functions=("_sync_model_gate_flags", "_require_single_active_model_miss_review_block"),
         owns_state=("model_gate_alias_flags",),
         behavior_contracts=("model gate alias flag sync", "model-miss block uniqueness"),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
@@ -1281,7 +1281,7 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "terminal_ledger_recovery",
         path="skills/flowpilot/assets/flowpilot_router_terminal_ledger_recovery.py",
-        owns_functions=("reconcile_current_run", "_repair_legacy_material_packet_contracts"),
+        owns_functions=("reconcile_current_run",),
         owns_side_effects=("terminal_reconciliation_write",),
         dependencies=("terminal_ledger", "router_facade"),
         behavior_contracts=("terminal status recovery and legacy material packet repair",),

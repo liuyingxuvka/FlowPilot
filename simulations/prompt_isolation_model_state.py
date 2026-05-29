@@ -24,9 +24,9 @@ class State:
     event: str = "none"
 
     router_loaded: bool = False
-    startup_questions_asked: bool = False
-    startup_state_written_awaiting_answers: bool = False
-    dialog_stopped_for_answers: bool = False
+    startup_intake_ui_completed: bool = False
+    startup_intake_result_recorded: bool = False
+    startup_intake_body_boundary_enforced: bool = False
     run_scoped_bootstrap_created: bool = False
     stale_top_level_bootstrap_reused: bool = False
     startup_answer_values_valid: bool = False

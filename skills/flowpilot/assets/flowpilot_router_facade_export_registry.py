@@ -1,8 +1,8 @@
 """Canonical router facade export registry.
 
 The row data lives in ``runtime_kit/router_facade_owner_exports.json`` so the
-Python surface stays small. Legacy ``flowpilot_router_facade_export_manifest*``
-modules import these constants as compatibility views.
+Python surface stays small. ``flowpilot_router_facade_export_manifest*`` modules
+import these constants as public views.
 """
 
 from __future__ import annotations

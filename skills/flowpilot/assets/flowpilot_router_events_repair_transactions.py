@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot router repair transaction helpers."""
+"""Public facade for FlowPilot router repair transaction helpers."""
 
 from __future__ import annotations
 

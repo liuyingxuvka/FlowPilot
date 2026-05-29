@@ -1,7 +1,7 @@
 """Internal router owner helpers extracted from flowpilot_router.
 
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
+The public router names stay in flowpilot_router. This module is bound to
+that facade before moved helpers execute so private helper lookups remain
 stable while the implementation body lives outside the facade.
 """
 
@@ -66,7 +66,6 @@ def _bound_router() -> ModuleType:
 
 from flowpilot_router_payload_contracts_startup import (
     _payload_contract,
-    _startup_answers_payload_contract,
     _terminal_summary_payload_contract,
     _display_surface_receipt_payload_contract,
     _role_slots_payload_contract,

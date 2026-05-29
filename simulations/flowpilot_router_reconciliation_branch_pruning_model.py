@@ -36,7 +36,7 @@ BACKGROUND_VALIDATION_SURFACE = "background_validation"
 
 SCHEDULED_NO_ACTION_DIR = "scheduled_no_action_dir"
 SCHEDULED_INVALID_SCHEMA = "scheduled_invalid_schema"
-SCHEDULED_LEGACY_STARTUP_CANONICAL = "scheduled_legacy_startup_canonical"
+SCHEDULED_RETIRED_STARTUP_CANONICAL = "scheduled_legacy_startup_canonical"
 SCHEDULED_ROW_RECONCILIATION = "scheduled_row_reconciliation"
 SCHEDULED_CURRENT_SCOPE_RESOLVED = "scheduled_current_scope_resolved"
 SCHEDULED_CARD_RETURN_RESOLVED = "scheduled_card_return_resolved"
@@ -72,7 +72,7 @@ PROGRESS_ONLY_VALIDATION = "progress_only_validation"
 VALID_SCENARIOS = (
     SCHEDULED_NO_ACTION_DIR,
     SCHEDULED_INVALID_SCHEMA,
-    SCHEDULED_LEGACY_STARTUP_CANONICAL,
+    SCHEDULED_RETIRED_STARTUP_CANONICAL,
     SCHEDULED_ROW_RECONCILIATION,
     SCHEDULED_CURRENT_SCOPE_RESOLVED,
     SCHEDULED_CARD_RETURN_RESOLVED,
@@ -226,7 +226,7 @@ def _scenario_state(scenario: str) -> State:
         return _scheduled_state(scenario, "noop", subcase="no_action_directory", contraction_allowed=True)
     if scenario == SCHEDULED_INVALID_SCHEMA:
         return _scheduled_state(scenario, "noop", subcase="invalid_action_schema", contraction_allowed=True)
-    if scenario == SCHEDULED_LEGACY_STARTUP_CANONICAL:
+    if scenario == SCHEDULED_RETIRED_STARTUP_CANONICAL:
         return _scheduled_state(
             scenario,
             "reconciled",

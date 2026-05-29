@@ -1,4 +1,4 @@
-"""Compatibility wrapper for FlowPilot path helpers.
+"""Repository entrypoint for FlowPilot path helpers.
 
 The source of truth lives in `skills/flowpilot/assets/flowpilot_paths.py` so
 the packaged skill and repository helper imports cannot drift apart.

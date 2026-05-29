@@ -1,22 +1,23 @@
 """FlowGuard model for FlowPilot router action payload contracts.
 
 Risk intent brief:
-- Prevent ``next_action.payload_contract`` from hiding fields that the router's
-  internal ``record_startup_answers`` validator requires.
-- Protect the Controller from trial-and-error payload repair when startup
-  answers are AI-interpreted from an explicit user reply.
-- Model-critical state: action contract publication, required top-level
-  startup answers, optional interpretation receipt contract, Controller payload
-  construction from the published contract, and internal router validation.
-- Adversarial branches include a contract that omits the hidden
-  ``startup_answer_interpretation.schema_version`` requirement, a payload that
-  omits that schema version despite a complete contract, and a contract that
-  allows the interpretation receipt without listing all required nested fields.
-- Hard invariants: accepted actions must have complete visible contracts,
-  interpreted payloads must include every internally required receipt field,
-  display actions must publish a copyable confirmation payload template,
-  valid scenarios must be accepted, and negative scenarios must be rejected with
-  explicit reasons.
+- Prevent ``open_startup_intake_ui`` from hiding the native startup intake
+  result path or allowing Controller to synthesize startup answers directly.
+- Protect the Controller from body-text leakage: startup intake can expose
+  paths, hashes, status, and startup options, but not the user's work-request
+  body.
+- Model-critical state: action contract publication, Controller payload
+  construction from the contract, native-interactive startup result evidence,
+  display-confirmation payload templates, and router validation.
+- Adversarial branches include a contract that omits the required result path,
+  a payload that omits the result path, a headless startup result, a result
+  that exposes body text to Controller, and a display template without a hash.
+- Hard invariants: accepted startup intake actions must publish a complete
+  visible contract, accepted startup intake results must be native-interactive,
+  accepted startup intake must keep body text out of Controller-visible
+  payloads, display actions must publish a copyable confirmation payload
+  template, valid scenarios must be accepted, and negative scenarios must be
+  rejected with explicit reasons.
 - Blindspot: this is an abstract action-contract model, not a replay adapter
   for concrete router files or filesystem writes.
 """
@@ -29,58 +30,65 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-VALID_EXPLICIT_STARTUP = "valid_explicit_startup_answers"
-VALID_AI_INTERPRETED_STARTUP = "valid_ai_interpreted_startup_answers"
+VALID_CONFIRMED_STARTUP_INTAKE = "valid_confirmed_startup_intake_result"
+VALID_CANCELLED_STARTUP_INTAKE = "valid_cancelled_startup_intake_result"
 VALID_DISPLAY_CONFIRMATION = "valid_display_confirmation_action"
-CONTRACT_MISSING_INTERPRETATION_SCHEMA = (
-    "contract_missing_interpretation_schema_version"
-)
-PAYLOAD_MISSING_INTERPRETATION_SCHEMA = (
-    "payload_missing_interpretation_schema_version"
-)
-CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS = (
-    "contract_incomplete_interpretation_required_fields"
-)
+CONTRACT_MISSING_RESULT_PATH = "contract_missing_startup_intake_result_path"
+PAYLOAD_MISSING_RESULT_PATH = "payload_missing_startup_intake_result_path"
+RESULT_HEADLESS = "startup_intake_result_headless"
+RESULT_BODY_TEXT_EXPOSED = "startup_intake_result_exposes_body_text"
 DISPLAY_TEMPLATE_MISSING_HASH = "display_confirmation_template_missing_hash"
 
 NEGATIVE_SCENARIOS = (
-    CONTRACT_MISSING_INTERPRETATION_SCHEMA,
-    PAYLOAD_MISSING_INTERPRETATION_SCHEMA,
-    CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS,
+    CONTRACT_MISSING_RESULT_PATH,
+    PAYLOAD_MISSING_RESULT_PATH,
+    RESULT_HEADLESS,
+    RESULT_BODY_TEXT_EXPOSED,
     DISPLAY_TEMPLATE_MISSING_HASH,
 )
 
 SCENARIOS = (
-    VALID_EXPLICIT_STARTUP,
-    VALID_AI_INTERPRETED_STARTUP,
+    VALID_CONFIRMED_STARTUP_INTAKE,
+    VALID_CANCELLED_STARTUP_INTAKE,
     VALID_DISPLAY_CONFIRMATION,
     *NEGATIVE_SCENARIOS,
 )
 
-STARTUP_REQUIRED_FIELDS = frozenset(
+STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS = frozenset(
+    {"startup_intake_result.result_path"}
+)
+
+STARTUP_INTAKE_CANCELLED_RESULT_REQUIRED_FIELDS = frozenset(
     {
-        "startup_answers.background_agents",
-        "startup_answers.scheduled_continuation",
-        "startup_answers.display_surface",
-        "startup_answers.provenance",
+        "result.schema_version",
+        "result.status",
+        "result.launch_mode",
+        "result.headless",
+        "result.formal_startup_allowed",
+        "result.receipt_path",
     }
 )
 
-INTERPRETATION_REQUIRED_FIELDS = frozenset(
+STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS = frozenset(
     {
-        "startup_answer_interpretation.schema_version",
-        "startup_answer_interpretation.raw_user_reply_text",
-        "startup_answer_interpretation.interpreted_by",
-        "startup_answer_interpretation.interpretation_provenance",
-        "startup_answer_interpretation.ambiguity_status",
-        "startup_answer_interpretation.interpreted_answers",
-        "startup_answer_interpretation.interpreted_answers.background_agents",
-        "startup_answer_interpretation.interpreted_answers.scheduled_continuation",
-        "startup_answer_interpretation.interpreted_answers.display_surface",
+        *STARTUP_INTAKE_CANCELLED_RESULT_REQUIRED_FIELDS,
+        "result.envelope_path",
+        "result.body_path",
+        "result.body_hash",
+        "result.startup_answers",
+        "result.controller_may_read_body",
+        "result.body_text_included",
     }
 )
 
-SCHEMA_FIELD = "startup_answer_interpretation.schema_version"
+STARTUP_INTAKE_INTERACTIVE_FIELDS = frozenset(
+    {
+        "result.launch_mode",
+        "result.headless",
+        "result.formal_startup_allowed",
+    }
+)
+
 DISPLAY_HASH_FIELD = "display_confirmation.display_text_sha256"
 
 DISPLAY_CONFIRMATION_REQUIRED_FIELDS = frozenset(
@@ -94,28 +102,25 @@ DISPLAY_CONFIRMATION_REQUIRED_FIELDS = frozenset(
 )
 
 NEGATIVE_EXPECTED_REJECTIONS = {
-    CONTRACT_MISSING_INTERPRETATION_SCHEMA: "hidden_schema_version_not_exposed_by_payload_contract",
-    PAYLOAD_MISSING_INTERPRETATION_SCHEMA: "payload_missing_interpretation_schema_version",
-    CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS: "payload_contract_incomplete_interpretation_required_fields",
+    CONTRACT_MISSING_RESULT_PATH: "payload_contract_missing_startup_intake_result_path",
+    PAYLOAD_MISSING_RESULT_PATH: "payload_missing_startup_intake_result_path",
+    RESULT_HEADLESS: "startup_intake_result_not_native_interactive",
+    RESULT_BODY_TEXT_EXPOSED: "startup_intake_result_exposes_body_text",
     DISPLAY_TEMPLATE_MISSING_HASH: "display_confirmation_payload_template_missing_required_fields",
 }
 
 
 @dataclass(frozen=True)
 class PayloadContract:
-    name: str = "startup_answers_with_optional_ai_interpretation_receipt"
-    action_type: str = "record_startup_answers"
-    required_object: str = "payload.startup_answers"
-    required_fields: frozenset[str] = STARTUP_REQUIRED_FIELDS
-    optional_fields: frozenset[str] = frozenset(
-        {"payload.startup_answer_interpretation"}
-    )
-    required_nested_fields: frozenset[str] = INTERPRETATION_REQUIRED_FIELDS
+    name: str = "startup_intake_result_path"
+    action_type: str = "open_startup_intake_ui"
+    required_object: str = "payload.startup_intake_result"
+    required_fields: frozenset[str] = STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS
     controller_may_fill_missing_fields: bool = False
 
     @property
-    def exposes_interpretation(self) -> bool:
-        return "payload.startup_answer_interpretation" in self.optional_fields
+    def exposes_result_path(self) -> bool:
+        return STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS.issubset(self.required_fields)
 
 
 @dataclass(frozen=True)
@@ -132,18 +137,19 @@ class Action:
 class State:
     status: str = "new"  # new | running | accepted | rejected
     scenario: str = "unset"
-    action_family: str = "unset"  # startup_answers | display_confirmation
+    action_family: str = "unset"  # startup_intake | display_confirmation
     contract: PayloadContract = field(default_factory=PayloadContract)
     payload_contract_published: bool = False
     payload_built_from_contract: bool = False
-    payload_startup_fields: frozenset[str] = field(default_factory=frozenset)
-    payload_includes_interpretation: bool = False
-    payload_interpretation_fields: frozenset[str] = field(default_factory=frozenset)
+    payload_startup_intake_fields: frozenset[str] = field(default_factory=frozenset)
+    startup_result_status: str = "unset"  # unset | confirmed | cancelled
+    startup_result_fields: frozenset[str] = field(default_factory=frozenset)
+    startup_result_headless: bool = False
+    startup_result_formal_allowed: bool = True
+    startup_result_body_text_included: bool = False
+    startup_result_controller_may_read_body: bool = False
     display_payload_template_fields: frozenset[str] = field(default_factory=frozenset)
     payload_display_confirmation_fields: frozenset[str] = field(default_factory=frozenset)
-    internal_interpretation_required_fields: frozenset[str] = (
-        INTERPRETATION_REQUIRED_FIELDS
-    )
     validator_checked: bool = False
     router_decision: str = "none"  # none | accept | reject
     router_rejection_reason: str = "none"
@@ -155,14 +161,14 @@ class Transition(NamedTuple):
 
 
 class RouterActionContractStep:
-    """Model one ``record_startup_answers`` action-contract transition.
+    """Model one ``open_startup_intake_ui`` action-contract transition.
 
     Input x State -> Set(Output x State)
     reads: scenario, published payload contract, payload fields, validator state
-    writes: contract publication, Controller-built payload, router terminal
-    decision
-    idempotency: repeated ticks do not republish contracts, rebuild payloads, or
-    duplicate terminal router decisions.
+    writes: contract publication, Controller-built payload, validator check,
+    router terminal decision
+    idempotency: repeated ticks do not republish contracts, rebuild payloads,
+    or duplicate terminal router decisions.
     """
 
     name = "RouterActionContractStep"
@@ -170,7 +176,7 @@ class RouterActionContractStep:
         "scenario",
         "payload_contract",
         "payload_fields",
-        "internal_validator_requirements",
+        "native_startup_intake_requirements",
         "router_decision",
     )
     writes = (
@@ -198,29 +204,15 @@ def initial_state() -> State:
 
 
 def _contract_for(scenario: str) -> PayloadContract:
-    if scenario == CONTRACT_MISSING_INTERPRETATION_SCHEMA:
-        return PayloadContract(
-            required_nested_fields=INTERPRETATION_REQUIRED_FIELDS
-            - frozenset({SCHEMA_FIELD})
-        )
-    if scenario == CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS:
-        return PayloadContract(
-            required_nested_fields=INTERPRETATION_REQUIRED_FIELDS
-            - frozenset(
-                {
-                    "startup_answer_interpretation.interpreted_by",
-                    "startup_answer_interpretation.interpreted_answers",
-                    "startup_answer_interpretation.interpreted_answers.display_surface",
-                }
-            )
-        )
+    if scenario == CONTRACT_MISSING_RESULT_PATH:
+        return PayloadContract(required_fields=frozenset())
     return PayloadContract()
 
 
 def _action_family_for(scenario: str) -> str:
     if scenario in {VALID_DISPLAY_CONFIRMATION, DISPLAY_TEMPLATE_MISSING_HASH}:
         return "display_confirmation"
-    return "startup_answers"
+    return "startup_intake"
 
 
 def _display_template_fields_for(scenario: str) -> frozenset[str]:
@@ -231,48 +223,75 @@ def _display_template_fields_for(scenario: str) -> frozenset[str]:
     return frozenset()
 
 
-def _payload_fields_for(scenario: str, contract: PayloadContract) -> tuple[bool, frozenset[str]]:
-    if scenario == VALID_EXPLICIT_STARTUP:
-        return False, frozenset()
-    if scenario == PAYLOAD_MISSING_INTERPRETATION_SCHEMA:
-        return True, INTERPRETATION_REQUIRED_FIELDS - frozenset({SCHEMA_FIELD})
-    if scenario in {
-        VALID_AI_INTERPRETED_STARTUP,
-        CONTRACT_MISSING_INTERPRETATION_SCHEMA,
-        CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS,
-    }:
-        return True, contract.required_nested_fields
-    return False, frozenset()
+def _startup_result_for(
+    scenario: str,
+) -> tuple[frozenset[str], str, frozenset[str], bool, bool, bool, bool]:
+    payload_fields = STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS
+    result_status = "confirmed"
+    result_fields = STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS
+    headless = False
+    formal_allowed = True
+    body_text_included = False
+    controller_may_read_body = False
+    if scenario == VALID_CANCELLED_STARTUP_INTAKE:
+        result_status = "cancelled"
+        result_fields = STARTUP_INTAKE_CANCELLED_RESULT_REQUIRED_FIELDS
+    elif scenario == PAYLOAD_MISSING_RESULT_PATH:
+        payload_fields = frozenset()
+    elif scenario == RESULT_HEADLESS:
+        headless = True
+        formal_allowed = False
+    elif scenario == RESULT_BODY_TEXT_EXPOSED:
+        body_text_included = True
+        controller_may_read_body = True
+    return (
+        payload_fields,
+        result_status,
+        result_fields,
+        headless,
+        formal_allowed,
+        body_text_included,
+        controller_may_read_body,
+    )
 
 
 def _missing_contract_fields(contract: PayloadContract) -> frozenset[str]:
-    if not contract.exposes_interpretation:
-        return INTERPRETATION_REQUIRED_FIELDS
-    return INTERPRETATION_REQUIRED_FIELDS - contract.required_nested_fields
+    return STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS - contract.required_fields
 
 
 def _contract_rejection_reason(contract: PayloadContract) -> str:
     missing = _missing_contract_fields(contract)
-    if SCHEMA_FIELD in missing:
-        return "hidden_schema_version_not_exposed_by_payload_contract"
-    if missing:
-        return "payload_contract_incomplete_interpretation_required_fields"
+    if "startup_intake_result.result_path" in missing:
+        return "payload_contract_missing_startup_intake_result_path"
     return "none"
 
 
+def _required_result_fields_for(status: str) -> frozenset[str]:
+    if status == "cancelled":
+        return STARTUP_INTAKE_CANCELLED_RESULT_REQUIRED_FIELDS
+    return STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS
+
+
 def _validator_rejection_reason(state: State) -> str:
-    missing_startup = STARTUP_REQUIRED_FIELDS - state.payload_startup_fields
-    if missing_startup:
-        return "payload_missing_startup_answers_required_fields"
-    if not state.payload_includes_interpretation:
-        return "none"
-    missing_interpretation = (
-        state.internal_interpretation_required_fields - state.payload_interpretation_fields
+    missing_payload = (
+        STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS - state.payload_startup_intake_fields
     )
-    if SCHEMA_FIELD in missing_interpretation:
-        return "payload_missing_interpretation_schema_version"
-    if missing_interpretation:
-        return "payload_missing_interpretation_required_fields"
+    if missing_payload:
+        return "payload_missing_startup_intake_result_path"
+    missing_result = _required_result_fields_for(state.startup_result_status) - state.startup_result_fields
+    if missing_result:
+        return "startup_intake_result_missing_required_fields"
+    if (
+        state.startup_result_headless
+        or not state.startup_result_formal_allowed
+        or not STARTUP_INTAKE_INTERACTIVE_FIELDS.issubset(state.startup_result_fields)
+    ):
+        return "startup_intake_result_not_native_interactive"
+    if state.startup_result_status == "confirmed" and (
+        state.startup_result_body_text_included
+        or state.startup_result_controller_may_read_body
+    ):
+        return "startup_intake_result_exposes_body_text"
     return "none"
 
 
@@ -286,7 +305,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             label = (
                 "router_selects_display_confirmation_action_template"
                 if family == "display_confirmation"
-                else "router_selects_record_startup_answers_action_contract"
+                else "router_selects_startup_intake_ui_action_contract"
             )
             yield Transition(
                 label,
@@ -367,16 +386,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.payload_contract_published:
         contract_reason = _contract_rejection_reason(state.contract)
         if contract_reason != "none":
-            label = {
-                "hidden_schema_version_not_exposed_by_payload_contract": (
-                    "router_rejects_payload_contract_missing_interpretation_schema_version"
-                ),
-                "payload_contract_incomplete_interpretation_required_fields": (
-                    "router_rejects_payload_contract_incomplete_interpretation_required_fields"
-                ),
-            }[contract_reason]
             yield Transition(
-                label,
+                "router_rejects_payload_contract_missing_startup_intake_result_path",
                 replace(
                     state,
                     status="rejected",
@@ -387,30 +398,40 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             )
             return
         yield Transition(
-            "router_publishes_complete_payload_contract",
+            "router_publishes_startup_intake_result_path_contract",
             replace(state, payload_contract_published=True),
         )
         return
 
     if not state.payload_built_from_contract:
-        includes_interpretation, interpretation_fields = _payload_fields_for(
-            state.scenario, state.contract
-        )
+        (
+            payload_fields,
+            result_status,
+            result_fields,
+            headless,
+            formal_allowed,
+            body_text_included,
+            controller_may_read_body,
+        ) = _startup_result_for(state.scenario)
         label = {
-            VALID_EXPLICIT_STARTUP: "controller_submits_explicit_startup_answers_without_interpretation",
-            VALID_AI_INTERPRETED_STARTUP: "controller_submits_ai_interpreted_startup_answers_with_full_receipt",
-            PAYLOAD_MISSING_INTERPRETATION_SCHEMA: (
-                "controller_submits_ai_interpreted_startup_answers_without_schema_version"
-            ),
+            VALID_CONFIRMED_STARTUP_INTAKE: "controller_submits_confirmed_startup_intake_result_path",
+            VALID_CANCELLED_STARTUP_INTAKE: "controller_submits_cancelled_startup_intake_result_path",
+            PAYLOAD_MISSING_RESULT_PATH: "controller_submits_startup_intake_payload_without_result_path",
+            RESULT_HEADLESS: "controller_submits_headless_startup_intake_result",
+            RESULT_BODY_TEXT_EXPOSED: "controller_submits_startup_intake_result_with_body_text_visible",
         }[state.scenario]
         yield Transition(
             label,
             replace(
                 state,
                 payload_built_from_contract=True,
-                payload_startup_fields=STARTUP_REQUIRED_FIELDS,
-                payload_includes_interpretation=includes_interpretation,
-                payload_interpretation_fields=interpretation_fields,
+                payload_startup_intake_fields=payload_fields,
+                startup_result_status=result_status,
+                startup_result_fields=result_fields,
+                startup_result_headless=headless,
+                startup_result_formal_allowed=formal_allowed,
+                startup_result_body_text_included=body_text_included,
+                startup_result_controller_may_read_body=controller_may_read_body,
             ),
         )
         return
@@ -429,8 +450,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 ),
             )
             return
+        label = (
+            "router_validator_accepts_cancelled_startup_intake_result"
+            if state.startup_result_status == "cancelled"
+            else "router_validator_accepts_native_startup_intake_result"
+        )
         yield Transition(
-            "router_validator_accepts_contract_visible_payload",
+            label,
             replace(
                 state,
                 status="accepted",
@@ -453,55 +479,56 @@ def is_success(state: State) -> bool:
     return is_terminal(state)
 
 
-def accepted_actions_have_complete_visible_contract(state: State, trace) -> InvariantResult:
+def accepted_startup_intake_actions_have_result_path_contract(
+    state: State, trace
+) -> InvariantResult:
     del trace
-    if state.status != "accepted" or state.action_family != "startup_answers":
+    if state.status != "accepted" or state.action_family != "startup_intake":
         return InvariantResult.pass_()
-    missing = _missing_contract_fields(state.contract)
-    if missing:
+    if _missing_contract_fields(state.contract):
         return InvariantResult.fail(
-            "router accepted action with internal required fields absent from payload_contract"
+            "router accepted startup intake with result_path absent from payload_contract"
         )
-    if not STARTUP_REQUIRED_FIELDS.issubset(state.contract.required_fields):
+    if not STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS.issubset(
+        state.payload_startup_intake_fields
+    ):
         return InvariantResult.fail(
-            "router accepted action without exposing all startup_answers required fields"
+            "router accepted startup intake payload without result_path"
         )
     if state.contract.controller_may_fill_missing_fields:
         return InvariantResult.fail("router accepted contract that allowed Controller field guessing")
     return InvariantResult.pass_()
 
 
-def accepted_ai_interpretations_include_schema_version(state: State, trace) -> InvariantResult:
+def accepted_startup_intake_payloads_are_native_interactive(
+    state: State, trace
+) -> InvariantResult:
     del trace
-    if (
-        state.status != "accepted"
-        or state.action_family != "startup_answers"
-        or not state.payload_includes_interpretation
-    ):
+    if state.status != "accepted" or state.action_family != "startup_intake":
         return InvariantResult.pass_()
-    if SCHEMA_FIELD not in state.contract.required_nested_fields:
+    if (
+        state.startup_result_headless
+        or not state.startup_result_formal_allowed
+        or not STARTUP_INTAKE_INTERACTIVE_FIELDS.issubset(state.startup_result_fields)
+    ):
         return InvariantResult.fail(
-            "router accepted AI interpretation without schema_version in payload_contract"
-        )
-    if SCHEMA_FIELD not in state.payload_interpretation_fields:
-        return InvariantResult.fail(
-            "router accepted AI interpretation payload without schema_version"
+            "router accepted startup intake result without native interactive proof"
         )
     return InvariantResult.pass_()
 
 
-def accepted_ai_interpretations_satisfy_internal_validator(state: State, trace) -> InvariantResult:
+def accepted_startup_intake_keeps_body_out_of_controller_payload(
+    state: State, trace
+) -> InvariantResult:
     del trace
-    if (
-        state.status != "accepted"
-        or state.action_family != "startup_answers"
-        or not state.payload_includes_interpretation
-    ):
+    if state.status != "accepted" or state.action_family != "startup_intake":
         return InvariantResult.pass_()
-    missing = state.internal_interpretation_required_fields - state.payload_interpretation_fields
-    if missing:
+    if state.startup_result_status == "confirmed" and (
+        state.startup_result_body_text_included
+        or state.startup_result_controller_may_read_body
+    ):
         return InvariantResult.fail(
-            "router accepted AI interpretation missing internal validator required fields"
+            "router accepted startup intake result that exposed body text to Controller"
         )
     return InvariantResult.pass_()
 
@@ -545,19 +572,19 @@ def terminal_decisions_are_explicit(state: State, trace) -> InvariantResult:
 
 INVARIANTS = (
     Invariant(
-        name="accepted_actions_have_complete_visible_contract",
-        description="Router acceptance requires every internal startup-answer validator requirement to be visible in the payload contract.",
-        predicate=accepted_actions_have_complete_visible_contract,
+        name="accepted_startup_intake_actions_have_result_path_contract",
+        description="Router acceptance requires startup intake result_path to be visible in the payload contract and payload.",
+        predicate=accepted_startup_intake_actions_have_result_path_contract,
     ),
     Invariant(
-        name="accepted_ai_interpretations_include_schema_version",
-        description="AI-interpreted startup answers require schema_version in both the contract and payload receipt.",
-        predicate=accepted_ai_interpretations_include_schema_version,
+        name="accepted_startup_intake_payloads_are_native_interactive",
+        description="Accepted startup intake results carry native interactive launch proof.",
+        predicate=accepted_startup_intake_payloads_are_native_interactive,
     ),
     Invariant(
-        name="accepted_ai_interpretations_satisfy_internal_validator",
-        description="Accepted interpretation receipts satisfy all internal validator-required nested fields.",
-        predicate=accepted_ai_interpretations_satisfy_internal_validator,
+        name="accepted_startup_intake_keeps_body_out_of_controller_payload",
+        description="Accepted startup intake results keep user body text out of Controller-visible payloads.",
+        predicate=accepted_startup_intake_keeps_body_out_of_controller_payload,
     ),
     Invariant(
         name="accepted_display_actions_publish_copyable_payload_template",
@@ -579,19 +606,23 @@ INVARIANTS = (
 EXTERNAL_INPUTS = (Tick(),)
 MAX_SEQUENCE_LENGTH = 5
 REQUIRED_LABELS = (
-    "router_selects_record_startup_answers_action_contract",
+    "router_selects_startup_intake_ui_action_contract",
     "router_selects_display_confirmation_action_template",
-    "router_publishes_complete_payload_contract",
+    "router_publishes_startup_intake_result_path_contract",
     "router_publishes_display_confirmation_payload_template",
-    "controller_submits_explicit_startup_answers_without_interpretation",
-    "controller_submits_ai_interpreted_startup_answers_with_full_receipt",
-    "controller_submits_ai_interpreted_startup_answers_without_schema_version",
+    "controller_submits_confirmed_startup_intake_result_path",
+    "controller_submits_cancelled_startup_intake_result_path",
+    "controller_submits_startup_intake_payload_without_result_path",
+    "controller_submits_headless_startup_intake_result",
+    "controller_submits_startup_intake_result_with_body_text_visible",
     "controller_submits_display_confirmation_from_payload_template",
-    "router_validator_accepts_contract_visible_payload",
+    "router_validator_accepts_native_startup_intake_result",
+    "router_validator_accepts_cancelled_startup_intake_result",
     "router_validator_accepts_display_confirmation_payload",
-    "router_validator_rejects_payload_missing_interpretation_schema_version",
-    "router_rejects_payload_contract_missing_interpretation_schema_version",
-    "router_rejects_payload_contract_incomplete_interpretation_required_fields",
+    "router_validator_rejects_payload_missing_startup_intake_result_path",
+    "router_validator_rejects_startup_intake_result_not_native_interactive",
+    "router_validator_rejects_startup_intake_result_exposes_body_text",
+    "router_rejects_payload_contract_missing_startup_intake_result_path",
     "router_rejects_display_confirmation_payload_template_missing_hash",
 )
 
@@ -613,17 +644,17 @@ def terminal_predicate(_input_obj, state: State, _trace) -> bool:
     return is_terminal(state)
 
 
-def _accepted_base(**changes: object) -> State:
+def _accepted_startup_base(**changes: object) -> State:
     base = State(
         status="accepted",
-        scenario=VALID_AI_INTERPRETED_STARTUP,
-        action_family="startup_answers",
+        scenario=VALID_CONFIRMED_STARTUP_INTAKE,
+        action_family="startup_intake",
         contract=PayloadContract(),
         payload_contract_published=True,
         payload_built_from_contract=True,
-        payload_startup_fields=STARTUP_REQUIRED_FIELDS,
-        payload_includes_interpretation=True,
-        payload_interpretation_fields=INTERPRETATION_REQUIRED_FIELDS,
+        payload_startup_intake_fields=STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS,
+        startup_result_status="confirmed",
+        startup_result_fields=STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS,
         validator_checked=True,
         router_decision="accept",
     )
@@ -647,22 +678,25 @@ def _accepted_display_base(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
-        CONTRACT_MISSING_INTERPRETATION_SCHEMA: _accepted_base(
-            scenario=CONTRACT_MISSING_INTERPRETATION_SCHEMA,
-            contract=_contract_for(CONTRACT_MISSING_INTERPRETATION_SCHEMA),
-            payload_interpretation_fields=INTERPRETATION_REQUIRED_FIELDS
-            - frozenset({SCHEMA_FIELD}),
+        CONTRACT_MISSING_RESULT_PATH: _accepted_startup_base(
+            scenario=CONTRACT_MISSING_RESULT_PATH,
+            contract=_contract_for(CONTRACT_MISSING_RESULT_PATH),
         ),
-        PAYLOAD_MISSING_INTERPRETATION_SCHEMA: _accepted_base(
-            scenario=PAYLOAD_MISSING_INTERPRETATION_SCHEMA,
-            payload_interpretation_fields=INTERPRETATION_REQUIRED_FIELDS
-            - frozenset({SCHEMA_FIELD}),
+        PAYLOAD_MISSING_RESULT_PATH: _accepted_startup_base(
+            scenario=PAYLOAD_MISSING_RESULT_PATH,
+            payload_startup_intake_fields=frozenset(),
         ),
-        CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS: _accepted_base(
-            scenario=CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS,
-            contract=_contract_for(CONTRACT_INCOMPLETE_INTERPRETATION_REQUIRED_FIELDS),
+        RESULT_HEADLESS: _accepted_startup_base(
+            scenario=RESULT_HEADLESS,
+            startup_result_headless=True,
+            startup_result_formal_allowed=False,
         ),
-        "controller_may_fill_missing_fields": _accepted_base(
+        RESULT_BODY_TEXT_EXPOSED: _accepted_startup_base(
+            scenario=RESULT_BODY_TEXT_EXPOSED,
+            startup_result_body_text_included=True,
+            startup_result_controller_may_read_body=True,
+        ),
+        "controller_may_fill_missing_fields": _accepted_startup_base(
             contract=PayloadContract(controller_may_fill_missing_fields=True)
         ),
         DISPLAY_TEMPLATE_MISSING_HASH: _accepted_display_base(
@@ -680,15 +714,18 @@ __all__ = [
     "DISPLAY_CONFIRMATION_REQUIRED_FIELDS",
     "DISPLAY_HASH_FIELD",
     "DISPLAY_TEMPLATE_MISSING_HASH",
-    "INTERPRETATION_REQUIRED_FIELDS",
     "INVARIANTS",
     "MAX_SEQUENCE_LENGTH",
     "NEGATIVE_EXPECTED_REJECTIONS",
     "NEGATIVE_SCENARIOS",
     "REQUIRED_LABELS",
     "SCENARIOS",
-    "SCHEMA_FIELD",
-    "STARTUP_REQUIRED_FIELDS",
+    "STARTUP_INTAKE_CANCELLED_RESULT_REQUIRED_FIELDS",
+    "STARTUP_INTAKE_CONFIRMED_RESULT_REQUIRED_FIELDS",
+    "STARTUP_INTAKE_INTERACTIVE_FIELDS",
+    "STARTUP_INTAKE_PAYLOAD_REQUIRED_FIELDS",
+    "VALID_CANCELLED_STARTUP_INTAKE",
+    "VALID_CONFIRMED_STARTUP_INTAKE",
     "VALID_DISPLAY_CONFIRMATION",
     "Action",
     "PayloadContract",

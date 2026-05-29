@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import barrier_bundle
 from flowpilot_runtime_gateway import GATEWAY_PACKET_RUNTIME, assert_runtime_gateway_write
 
 
@@ -28,7 +27,6 @@ PACKET_LEDGER_SCHEMA = "flowpilot.packet_ledger.v2"
 ACTIVE_HOLDER_LEASE_SCHEMA = "flowpilot.active_holder_lease.v1"
 ACTIVE_HOLDER_EVENT_SCHEMA = "flowpilot.active_holder_event.v1"
 CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA = "flowpilot.controller_next_action_notice.v1"
-BARRIER_BUNDLE_SCHEMA = barrier_bundle.BARRIER_BUNDLE_SCHEMA
 OUTPUT_CONTRACT_SCHEMA = "flowpilot.output_contract.v1"
 PACKET_IDENTITY_MARKER = "FLOWPILOT_PACKET_IDENTITY_BOUNDARY_V1"
 RESULT_IDENTITY_MARKER = "FLOWPILOT_RESULT_IDENTITY_BOUNDARY_V1"

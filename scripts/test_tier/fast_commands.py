@@ -178,10 +178,10 @@ SHADOW_LAUNCHER_CHAOS_REPLAY_SHARDS = (
         description="Single-scenario shadow launcher replay shard for peer conflict authority.",
     ),
     _pytest_k(
-        "shadow_launcher_legacy_assets_tests",
+        "shadow_launcher_current_assets_tests",
         SHADOW_LAUNCHER_CHAOS_REPLAY_PATH,
-        "test_legacy_pointer_and_installed_assets_resolve_to_current_standard_state",
-        description="Single-scenario shadow launcher replay shard for legacy pointer and installed assets.",
+        "test_current_pointer_and_installed_assets_resolve_to_current_standard_state",
+        description="Single-scenario shadow launcher replay shard for current pointer and installed assets.",
     ),
     _pytest_k(
         "shadow_launcher_malformed_package_tests",

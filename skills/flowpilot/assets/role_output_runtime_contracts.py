@@ -54,7 +54,7 @@ def _default_for_required_field(
     if field_path == "prior_path_context_review":
         return _prior_path_context(project_root, run_root)
     if field_path == "repair_transaction":
-        choices = contract.get("allowed_repair_transaction_plan_kind_values") or ["event_replay"]
+        choices = contract.get("allowed_repair_transaction_plan_kind_values") or []
         return {
             "plan_kind": _choose_placeholder("repair_transaction.plan_kind", [str(item) for item in choices]),
             "replacement_packet_specs_path": None,

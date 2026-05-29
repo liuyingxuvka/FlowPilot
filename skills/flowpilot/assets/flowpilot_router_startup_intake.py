@@ -1,7 +1,7 @@
-"""Compatibility facade for startup helpers split from ``flowpilot_router_startup_flow``.
+"""Public facade for startup helpers split from ``flowpilot_router_startup_flow``.
 
 The implementation lives in focused child modules. This facade preserves
-the historical import path, public/private helper names, and router-binding
+the router import path, public/private helper names, and router-binding
 handoff used by the router skeleton.
 """
 
@@ -38,7 +38,6 @@ OWNER_MODULE = 'flowpilot_router_startup_intake'
 
 import flowpilot_router_startup_intake_ui as _flowpilot_router_startup_intake_ui
 from flowpilot_router_startup_intake_ui import (
-    _normalize_startup_question_stop_boundary,
     _startup_intake_ui_launcher_ref,
     _startup_intake_output_dir_ref,
     _startup_intake_result_payload_contract,
@@ -54,9 +53,7 @@ from flowpilot_router_startup_intake_validation import (
     _require_interactive_startup_intake_artifact,
     _validate_startup_intake_result_payload,
     _apply_startup_intake_result_to_bootstrap,
-    _validate_startup_answer_interpretation,
     _validate_startup_answers,
-    _validate_user_request,
 )
 import flowpilot_router_startup_intake_materialization as _flowpilot_router_startup_intake_materialization
 from flowpilot_router_startup_intake_materialization import (

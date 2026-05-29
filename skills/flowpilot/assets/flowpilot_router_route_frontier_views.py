@@ -1,4 +1,4 @@
-"""Compatibility facade for route frontier view helpers."""
+"""Public facade for route frontier view helpers."""
 
 from __future__ import annotations
 

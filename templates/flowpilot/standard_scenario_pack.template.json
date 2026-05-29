@@ -117,7 +117,7 @@
       "selection_or_skip_reason": "<reason>"
     },
     {
-      "scenario_id": "legacy_or_old_asset_present",
+      "scenario_id": "prior_or_old_asset_present",
       "risk_family": "source_contamination",
       "description": "Historical route state, screenshots, generated assets, or old agent IDs exist but must not become current evidence unless explicitly imported as read-only input.",
       "default_required_when": [

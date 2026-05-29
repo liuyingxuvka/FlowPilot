@@ -707,9 +707,9 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(result["classification"], "canonical_package_authority_stale_conflict")
         after = read_json(router.run_state_path(run_root))
         self.assertEqual(read_json(canonical_path)["source_body_hash"], canonical_hash)
-        self.assertEqual(len(after.get("direct_event_replay_quarantine", [])), 1)
+        self.assertEqual(len(after.get("direct_event_quarantine", [])), 1)
         self.assertEqual(after["events"], before["events"])
-        self.assertTrue((run_root / "runtime" / "direct_event_replay_quarantine.jsonl").exists())
+        self.assertTrue((run_root / "runtime" / "direct_event_quarantine.jsonl").exists())
 
     def test_role_output_ledger_recorded_package_without_canonical_authority_repairs_domain_commit(self) -> None:
         root = self.make_project()

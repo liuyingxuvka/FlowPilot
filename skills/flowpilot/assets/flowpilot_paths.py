@@ -1,4 +1,4 @@
-"""Resolve FlowPilot project paths across legacy and run-scoped layouts."""
+"""Resolve FlowPilot project paths for run-scoped layouts."""
 
 from __future__ import annotations
 
@@ -47,9 +47,8 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
 def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
     """Return canonical paths for the active FlowPilot run.
 
-    New FlowPilot runs are stored below `.flowpilot/runs/<run-id>/`. Legacy
-    projects without `.flowpilot/current.json` still resolve to the old
-    `.flowpilot/` root so existing evidence can be inspected and migrated.
+    FlowPilot runs are stored below `.flowpilot/runs/<run-id>/`; a current
+    pointer is required before runtime paths are authoritative.
     """
 
     root = project_root.resolve()
@@ -68,30 +67,26 @@ def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
     if run_root is None and run_id:
         run_root = flowpilot_root / "runs" / str(run_id)
 
-    layout = "run_scoped" if run_root is not None else "legacy"
-    active_root = run_root or flowpilot_root
+    layout = "run_scoped"
+    active_root = run_root or (flowpilot_root / "runs" / "__missing_current_pointer__")
     path_findings: list[str] = []
-    active_run_root_valid = True
-    if current_declares_run:
-        layout = "run_scoped"
-        active_root = run_root or (flowpilot_root / "runs" / "__invalid_current_pointer__")
-        active_run_root_valid = False
-        if run_root is None:
-            path_findings.append(".flowpilot/current.json declares an active/current run without a usable run root or run id.")
-        elif not _is_relative_to(run_root, flowpilot_root / "runs"):
-            path_findings.append(
-                f".flowpilot/current.json points outside .flowpilot/runs: {run_root}"
-            )
-        elif not run_root.exists():
-            path_findings.append(f"Active FlowPilot run root is missing: {run_root}")
-        elif not run_root.is_dir():
-            path_findings.append(f"Active FlowPilot run root is not a directory: {run_root}")
-        else:
-            active_run_root_valid = True
+    active_run_root_valid = False
+    if not current_declares_run:
+        path_findings.append(".flowpilot/current.json does not declare a current run.")
+    elif run_root is None:
+        path_findings.append(".flowpilot/current.json declares an active/current run without a usable run root or run id.")
+    elif not _is_relative_to(run_root, flowpilot_root / "runs"):
+        path_findings.append(
+            f".flowpilot/current.json points outside .flowpilot/runs: {run_root}"
+        )
+    elif not run_root.exists():
+        path_findings.append(f"Active FlowPilot run root is missing: {run_root}")
+    elif not run_root.is_dir():
+        path_findings.append(f"Active FlowPilot run root is not a directory: {run_root}")
+    else:
+        active_run_root_valid = True
 
-    path_status = "ok"
-    if current_declares_run and not active_run_root_valid:
-        path_status = "blocked"
+    path_status = "ok" if active_run_root_valid else "blocked"
 
     return {
         "project_root": root,

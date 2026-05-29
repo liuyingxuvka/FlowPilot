@@ -1,4 +1,4 @@
-"""Compatibility external event exports derived from the event registry."""
+"""External event exports derived from the event registry."""
 
 from __future__ import annotations
 

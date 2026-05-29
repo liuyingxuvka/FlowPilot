@@ -2,16 +2,160 @@
   "coverage_boundary": "Matrix rows prove declared control-flow, runtime, model-test, and background-artifact coverage ownership. Synthetic or fixture rows do not prove live AI semantic quality or live completion.",
   "findings": [],
   "full_diagnostic": {
-    "actionable_summary": [],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_controller_break_glass.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_controller_break_glass"
+        ],
+        "surface_owner": "flowpilot_controller_break_glass"
+      },
+      {
+        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_scheduler_standby"
+        ],
+        "surface_owner": "flowpilot_router_controller_scheduler_standby"
+      },
+      {
+        "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_controller_wait_audit"
+        ],
+        "surface_owner": "flowpilot_router_controller_wait_audit"
+      },
+      {
+        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_daemon_runtime"
+        ],
+        "surface_owner": "flowpilot_router_daemon_runtime"
+      },
+      {
+        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/role_output_runtime_envelopes.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:role_output_runtime_envelopes"
+        ],
+        "surface_owner": "role_output_runtime_envelopes"
+      }
+    ],
     "blocking_actionable_findings": [],
-    "deferred_structure_split_findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
+    "deferred_structure_split_findings": [
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_controller_break_glass"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_standby"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_router_controller_wait_audit"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_router_daemon_runtime"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:role_output_runtime_envelopes"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 5
+    },
     "ok": true,
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 75,
+  "required_cell_count": 87,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -78,6 +222,78 @@
       "family": "packet/card/ack",
       "model_id": "packet_card_ack",
       "obligation_id": "packet_control_plane.facade_split_integrity"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.material_scan.durable_event_fold"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.material_scan.partial_member_wait"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.material_scan.recipient_and_sealed_boundary"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.research.durable_event_fold"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.research.partial_member_wait"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.research.recipient_and_sealed_boundary"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.current_node.durable_event_fold"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.current_node.partial_member_wait"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.current_node.recipient_and_sealed_boundary"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.pm_role_work.durable_event_fold"
+    },
+    {
+      "branch_kind": "edge_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.pm_role_work.partial_member_wait"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "packet result family",
+      "model_id": "packet_result_family",
+      "obligation_id": "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
     },
     {
       "branch_kind": "happy_path",
@@ -377,7 +593,7 @@
       "branch_kind": "negative_path",
       "family": "repair transactions",
       "model_id": "repair_transactions",
-      "obligation_id": "repair_transactions.legacy_replay_requires_existing_producer"
+      "obligation_id": "repair_transactions.retired_event_replay_rejected"
     },
     {
       "branch_kind": "negative_path",
@@ -465,7 +681,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 100,
+  "row_count": 112,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -530,7 +746,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "startup.happy.answer_boundary",
+      "evidence_id": "startup.happy.native_intake_boundary",
       "evidence_owner": "startup_bootstrap",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -549,7 +765,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_record_startup_answers_accepts_ai_interpretation_with_reviewer_receipt"
+      "test_name": "test_startup_intake_controller_receipt_folds_native_ui_result"
     },
     {
       "branch_kind": "failure_path",
@@ -774,6 +990,342 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "run_packet_control_plane_checks"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_existing_results_reconcile_before_stale_wait",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.happy.material_scan_full",
+      "evidence_owner": "packets",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.material_scan.durable_event_fold",
+      "obligation_type": "transition",
+      "path": "tests/router_runtime/packets.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_material_scan_existing_results_reconcile_before_stale_wait"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.edge.material_scan_partial",
+      "evidence_owner": "packets",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.material_scan.partial_member_wait",
+      "obligation_type": "scenario",
+      "path": "tests/router_runtime/packets.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_material_scan_partial_batch_status_names_missing_role"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.negative.material_scan_wrong_recipient",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.material_scan.recipient_and_sealed_boundary",
+      "obligation_type": "hazard",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_material_scan_wrong_recipient_envelope_is_not_counted_as_family_result"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.happy.research_full",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.research.durable_event_fold",
+      "obligation_type": "transition",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_research_full_batch_reconciles_from_durable_results_without_manual_event"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.edge.research_partial",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.research.partial_member_wait",
+      "obligation_type": "scenario",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_research_partial_batch_waits_only_for_missing_durable_result_member"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.negative.research_wrong_recipient",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.research.recipient_and_sealed_boundary",
+      "obligation_type": "hazard",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_wrong_recipient_envelope_is_not_counted_as_family_result"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.happy.current_node_full",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.current_node.durable_event_fold",
+      "obligation_type": "transition",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_current_node_full_batch_reconciles_from_durable_results_without_manual_events"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.edge.current_node_mixed",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.current_node.partial_member_wait",
+      "obligation_type": "scenario",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_current_node_mixed_manual_and_durable_members_records_remaining_event"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.negative.current_node_wrong_recipient",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.current_node.recipient_and_sealed_boundary",
+      "obligation_type": "hazard",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_current_node_wrong_recipient_envelope_is_not_counted_as_family_result"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.happy.pm_role_work_full",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.pm_role_work.durable_event_fold",
+      "obligation_type": "transition",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_pm_role_work_full_batch_reconciles_from_durable_results_without_manual_events"
+    },
+    {
+      "branch_kind": "edge_path",
+      "command": "python -m unittest tests.router_runtime.packet_result_family",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.edge.pm_role_work_partial",
+      "evidence_owner": "packet_result_family",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.pm_role_work.partial_member_wait",
+      "obligation_type": "scenario",
+      "path": "tests/router_runtime/packet_result_family.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_pm_role_work_partial_batch_waits_only_for_missing_member"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.router_runtime.pm_role_work.PmRoleWorkRuntimeTests.test_strict_pm_role_work_result_rejects_wrong_next_recipient",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "packet_result_family.negative.pm_role_work_wrong_recipient",
+      "evidence_owner": "pm_role_work",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "packet result family",
+      "live_completion_allowed": false,
+      "model_id": "packet_result_family",
+      "non_replayable_reason": "",
+      "obligation_id": "packet_result_family.pm_role_work.recipient_and_sealed_boundary",
+      "obligation_type": "hazard",
+      "path": "tests/router_runtime/pm_role_work.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_strict_pm_role_work_result_rejects_wrong_next_recipient"
     },
     {
       "branch_kind": "happy_path",
@@ -2042,7 +2594,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "daemon.negative.parent_no_longer_consumes_large_compat_model",
+      "evidence_id": "daemon.negative.parent_no_longer_consumes_large_monolith_model",
       "evidence_owner": "test_flowpilot_daemon_child_mesh",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2061,7 +2613,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_parent_ledger_consumes_split_daemon_children_not_large_compat_model"
+      "test_name": "test_parent_ledger_consumes_split_daemon_children_not_large_monolith_model"
     },
     {
       "branch_kind": "happy_path",
@@ -2126,7 +2678,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "repair_transactions.negative.legacy_replay_no_producer",
+      "evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
       "evidence_owner": "control_blockers",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2134,7 +2686,7 @@
       "live_completion_allowed": false,
       "model_id": "repair_transactions",
       "non_replayable_reason": "",
-      "obligation_id": "repair_transactions.legacy_replay_requires_existing_producer",
+      "obligation_id": "repair_transactions.retired_event_replay_rejected",
       "obligation_type": "hazard",
       "path": "tests/router_runtime/control_blockers.py",
       "recovery_loop": "",
@@ -2145,7 +2697,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer"
+      "test_name": "test_pm_repair_decision_rejects_retired_event_replay_plan_kind"
     },
     {
       "branch_kind": "negative_path",
@@ -2313,7 +2865,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_fast_tier_excludes_release_coverage_and_legacy_full"
+      "test_name": "test_fast_tier_excludes_release_coverage_and_full_regression"
     },
     {
       "branch_kind": "negative_path",
@@ -2462,7 +3014,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "meta_parent.negative.legacy_explicit_only",
+      "evidence_id": "meta_parent.negative.layered_explicit_only",
       "evidence_owner": "test_flowpilot_thin_parent_checks",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2481,7 +3033,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_legacy_full_meta_runner_preserves_monolithic_path"
+      "test_name": "test_full_meta_runner_uses_layered_parent_without_full_graph"
     },
     {
       "branch_kind": "happy_path",
@@ -2518,7 +3070,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "capability_parent.negative.fast_smoke_no_legacy",
+      "evidence_id": "capability_parent.negative.fast_smoke_current_path",
       "evidence_owner": "test_flowguard_result_proof",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -3274,7 +3826,7 @@
   "rows_by_coverage_kind": {
     "background_artifact": 3,
     "fixture_trace": 1,
-    "ordinary_runtime": 75,
+    "ordinary_runtime": 87,
     "synthetic_trace": 21
   },
   "rows_by_family": {
@@ -3282,6 +3834,7 @@
     "foreground controller": 1,
     "material modeling": 2,
     "meta/capability parents": 5,
+    "packet result family": 12,
     "packet/card/ack": 10,
     "repair transactions": 8,
     "role/output contracts": 7,

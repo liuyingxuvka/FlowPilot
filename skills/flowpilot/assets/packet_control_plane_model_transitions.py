@@ -1,4 +1,4 @@
-"""Compatibility facade for packet control-plane transition definitions."""
+"""Public facade for packet control-plane transition definitions."""
 
 from __future__ import annotations
 

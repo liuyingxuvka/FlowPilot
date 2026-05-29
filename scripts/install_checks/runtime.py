@@ -46,28 +46,27 @@ def _role_output_runtime_binding_issues(protocol_catalog, role_output_runtime):
                 issues.append(f"{contract_id}: fixed router_event is not registered: {router_event}")
         elif item.get("router_event_mode") != "router_supplied":
             issues.append(f"{contract_id}: router_event_mode must be fixed or router_supplied")
-        output_types = [item.get("output_type"), *item.get("output_type_aliases", [])]
-        for output_type in [str(value) for value in output_types if value]:
-            spec = runtime_specs.get(output_type)
-            if spec is None:
-                issues.append(f"{contract_id}: runtime missing output_type {output_type}")
-                continue
-            comparisons = {
-                "contract_id": contract_id,
-                "body_schema_version": item.get("body_schema_version"),
-                "path_key": item.get("path_key"),
-                "hash_key": item.get("hash_key"),
-                "default_subdir": item.get("default_subdir"),
-                "default_filename_prefix": item.get("default_filename_prefix"),
-            }
-            for attr, expected in comparisons.items():
-                if getattr(spec, attr, None) != expected:
-                    issues.append(f"{contract_id}: {output_type}.{attr} does not match registry")
-            if tuple(str(role) for role in item.get("recipient_roles", [])) != getattr(spec, "allowed_roles", ()):
-                issues.append(f"{contract_id}: {output_type}.allowed_roles does not match registry")
-            expected_event = item.get("router_event") if item.get("router_event_mode") == "fixed" else None
-            if getattr(spec, "event_name", None) != expected_event:
-                issues.append(f"{contract_id}: {output_type}.event_name does not match registry")
+        output_type = str(item.get("output_type") or "")
+        spec = runtime_specs.get(output_type)
+        if spec is None:
+            issues.append(f"{contract_id}: runtime missing output_type {output_type}")
+            continue
+        comparisons = {
+            "contract_id": contract_id,
+            "body_schema_version": item.get("body_schema_version"),
+            "path_key": item.get("path_key"),
+            "hash_key": item.get("hash_key"),
+            "default_subdir": item.get("default_subdir"),
+            "default_filename_prefix": item.get("default_filename_prefix"),
+        }
+        for attr, expected in comparisons.items():
+            if getattr(spec, attr, None) != expected:
+                issues.append(f"{contract_id}: {output_type}.{attr} does not match registry")
+        if tuple(str(role) for role in item.get("recipient_roles", [])) != getattr(spec, "allowed_roles", ()):
+            issues.append(f"{contract_id}: {output_type}.allowed_roles does not match registry")
+        expected_event = item.get("router_event") if item.get("router_event_mode") == "fixed" else None
+        if getattr(spec, "event_name", None) != expected_event:
+            issues.append(f"{contract_id}: {output_type}.event_name does not match registry")
     return issues
 
 
@@ -103,7 +102,7 @@ def run_checks(result: dict[str, object]) -> None:
                 result["ok"] = False
             role_output_runtime_ok = bool(
                 getattr(role_output_runtime, "ROLE_OUTPUT_RUNTIME_SCHEMA", None)
-                and "pm_resume_recovery_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
+                and "pm_resume_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and "pm_startup_activation_approval" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and "pm_startup_repair_request" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and "pm_startup_protocol_dead_end" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
@@ -162,7 +161,7 @@ def run_checks(result: dict[str, object]) -> None:
             cli_cases = [
                 ["--root", str(ROOT), "start", "--json"],
                 ["--root", str(ROOT), "next", "--json"],
-                ["--root", str(ROOT), "run-until-wait", "--new-invocation", "--json"],
+                ["--root", str(ROOT), "run-until-wait", "--json"],
                 ["--root", str(ROOT), "apply", "--action-type", "load_router", "--json"],
                 ["--root", str(ROOT), "record-event", "--event", "pm_first_decision_resets_controller", "--json"],
                 ["--root", str(ROOT), "role-output-envelope", "--output-path", "role_outputs/sample.json", "--json"],

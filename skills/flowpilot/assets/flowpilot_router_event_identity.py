@@ -1,6 +1,6 @@
 """External event identity and payload helpers for FlowPilot router.
 
-This compatibility facade keeps the historical module import path stable while
+This public facade keeps the router module import path stable while
 payload, scoped identity, and replay helpers live in focused child modules.
 """
 

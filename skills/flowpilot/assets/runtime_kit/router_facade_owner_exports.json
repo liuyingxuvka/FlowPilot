@@ -1168,10 +1168,6 @@
             "target": "_build_foreground_controller_standby_snapshot"
           },
           {
-            "public": "_canonicalize_legacy_startup_daemon_reconciliation",
-            "target": "_canonicalize_legacy_startup_daemon_reconciliation"
-          },
-          {
             "public": "_clear_pending_after_reconciled_controller_receipt",
             "target": "_clear_pending_after_reconciled_controller_receipt"
           },
@@ -1639,12 +1635,12 @@
             "target": "_active_model_miss_review_block_flags"
           },
           {
-            "public": "_require_single_active_model_miss_review_block",
-            "target": "_require_single_active_model_miss_review_block"
+            "public": "_sync_model_gate_flags",
+            "target": "_sync_model_gate_flags"
           },
           {
-            "public": "_sync_model_gate_alias_flags",
-            "target": "_sync_model_gate_alias_flags"
+            "public": "_require_single_active_model_miss_review_block",
+            "target": "_require_single_active_model_miss_review_block"
           }
         ],
         "inject_router": false,
@@ -1696,10 +1692,6 @@
           {
             "public": "_role_slots_payload_contract",
             "target": "_role_slots_payload_contract"
-          },
-          {
-            "public": "_startup_answers_payload_contract",
-            "target": "_startup_answers_payload_contract"
           },
           {
             "public": "_terminal_summary_payload_contract",
@@ -1770,10 +1762,6 @@
           {
             "public": "_write_child_skill_selection",
             "target": "_write_child_skill_selection"
-          },
-          {
-            "public": "_write_compatibility_alias_artifact",
-            "target": "_write_compatibility_alias_artifact"
           },
           {
             "public": "_write_dependency_policy",
@@ -1870,10 +1858,6 @@
           {
             "public": "_write_route_process_pass_report",
             "target": "_write_route_process_pass_report"
-          },
-          {
-            "public": "_write_route_product_pass_report",
-            "target": "_write_route_product_pass_report"
           }
         ],
         "inject_router": false,
@@ -2178,10 +2162,6 @@
             "target": "_process_route_model_report_path"
           },
           {
-            "public": "_product_behavior_model_compatibility_report_path",
-            "target": "_product_behavior_model_compatibility_report_path"
-          },
-          {
             "public": "_product_behavior_model_report_path",
             "target": "_product_behavior_model_report_path"
           },
@@ -2216,10 +2196,6 @@
           {
             "public": "_require_route_process_pass",
             "target": "_require_route_process_pass"
-          },
-          {
-            "public": "_require_route_product_pass",
-            "target": "_require_route_product_pass"
           },
           {
             "public": "_reset_route_hard_gate_approvals_for_recheck",
@@ -2320,14 +2296,6 @@
           {
             "public": "_route_nodes",
             "target": "_route_nodes"
-          },
-          {
-            "public": "_route_process_check_path",
-            "target": "_route_process_check_path"
-          },
-          {
-            "public": "_route_product_check_path",
-            "target": "_route_product_check_path"
           },
           {
             "public": "_route_progress_completed_ids",
@@ -2846,8 +2814,8 @@
             "target": "_controller_boundary_sources"
           },
           {
-            "public": "_legacy_pm_reset_boundary_confirmed",
-            "target": "_legacy_pm_reset_boundary_confirmed"
+            "public": "_pm_reset_boundary_confirmed",
+            "target": "_pm_reset_boundary_confirmed"
           },
           {
             "public": "_next_controller_boundary_confirmation_action",
@@ -2965,10 +2933,6 @@
             "target": "_materialize_startup_intake_record"
           },
           {
-            "public": "_normalize_startup_question_stop_boundary",
-            "target": "_normalize_startup_question_stop_boundary"
-          },
-          {
             "public": "_record_startup_user_request_ref",
             "target": "_record_startup_user_request_ref"
           },
@@ -3013,20 +2977,12 @@
             "target": "_user_request_ref_from_startup_intake"
           },
           {
-            "public": "_validate_startup_answer_interpretation",
-            "target": "_validate_startup_answer_interpretation"
-          },
-          {
             "public": "_validate_startup_answers",
             "target": "_validate_startup_answers"
           },
           {
             "public": "_validate_startup_intake_result_payload",
             "target": "_validate_startup_intake_result_payload"
-          },
-          {
-            "public": "_validate_user_request",
-            "target": "_validate_user_request"
           },
           {
             "public": "_write_flowguard_capability_snapshot",
@@ -3482,10 +3438,6 @@
             "target": "_recover_terminal_status_from_run_authorities"
           },
           {
-            "public": "_repair_legacy_material_packet_contracts",
-            "target": "_repair_legacy_material_packet_contracts"
-          },
-          {
             "public": "_requirement_trace_closure_from_root_replay",
             "target": "_requirement_trace_closure_from_root_replay"
           },
@@ -3635,10 +3587,6 @@
           {
             "public": "_empty_pm_role_work_request_index",
             "target": "_empty_pm_role_work_request_index"
-          },
-          {
-            "public": "_ensure_barrier_bundles_ready",
-            "target": "_ensure_barrier_bundles_ready"
           },
           {
             "public": "_issue_current_node_active_holder_leases",

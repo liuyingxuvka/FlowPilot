@@ -38,11 +38,6 @@ HEARTBEAT_STARTUP_ANSWERS = {
     "scheduled_continuation": "allow",
 }
 
-AI_INTERPRETED_STARTUP_ANSWERS = {
-    **STARTUP_ANSWERS,
-    "provenance": "ai_interpreted_from_explicit_user_reply",
-}
-
 USER_REQUEST = {
     "text": "Use FlowPilot to complete the requested project with PM-owned route control.",
     "provenance": "explicit_user_request",
@@ -780,19 +775,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "heartbeat_bound_to_current_run": True,
             },
         }
-    def startup_answer_interpretation(self, raw_text: str = "Use background agents, manual resume, and chat route signs.") -> dict:
-        return {
-            "schema_version": "flowpilot.startup_answer_interpretation.v1",
-            "raw_user_reply_text": raw_text,
-            "interpreted_by": "controller",
-            "interpretation_provenance": "ai_interpreted_from_explicit_user_reply",
-            "ambiguity_status": "none",
-            "interpreted_answers": {
-                "background_agents": AI_INTERPRETED_STARTUP_ANSWERS["background_agents"],
-                "scheduled_continuation": AI_INTERPRETED_STARTUP_ANSWERS["scheduled_continuation"],
-                "display_surface": AI_INTERPRETED_STARTUP_ANSWERS["display_surface"],
-            },
-        }
     def apply_startup_heartbeat_if_requested(self, root: Path) -> dict | None:
         action = self.next_after_display_sync(root)
         if action["action_type"] != "create_heartbeat_automation":
@@ -1055,8 +1037,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             action_type = str(action["action_type"])
             if action_type == "open_startup_intake_ui":
                 router.apply_action(root, action_type, self.startup_intake_payload(root, startup_answers=startup_answers))
-            elif action_type == "record_startup_answers":
-                router.apply_action(root, action_type, {"startup_answers": startup_answers})
             elif action_type == "record_user_request":
                 if action.get("requires_payload") == "user_request":
                     router.apply_action(root, action_type, {"user_request": USER_REQUEST})
@@ -1074,7 +1054,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 router.apply_action(root, action_type, self.payload_for_action(action))
         current = read_json(root / ".flowpilot" / "current.json")
         return root / current["current_run_root"]
-    def legacy_controller_boundary_action(self, root: Path) -> tuple[Path, dict, dict]:
+    def controller_boundary_recovery_action(self, root: Path) -> tuple[Path, dict, dict]:
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))
         boundary_path = run_root / "startup" / "controller_boundary_confirmation.json"
@@ -1100,8 +1080,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 return self.run_root_for(root)
             if action_type == "open_startup_intake_ui":
                 router.apply_action(root, action_type, self.startup_intake_payload(root, startup_answers=startup_answers))
-            elif action_type == "record_startup_answers":
-                router.apply_action(root, action_type, {"startup_answers": startup_answers})
             elif action_type == "record_user_request":
                 if action.get("requires_payload") == "user_request":
                     router.apply_action(root, action_type, {"user_request": USER_REQUEST})
@@ -1291,22 +1269,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
         result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
-    def enter_legacy_startup_answer_boundary(self, root: Path) -> None:
-        state_path = router.bootstrap_state_path(root)
-        bootstrap = read_json(state_path)
-        bootstrap["pending_action"] = {
-            "action_type": "ask_startup_questions",
-            "label": "legacy_startup_questions_asked_from_router",
-        }
-        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-        self.assertEqual(router.apply_action(root, "ask_startup_questions")["applied"], "ask_startup_questions")
-        bootstrap = read_json(state_path)
-        bootstrap["pending_action"] = {
-            "action_type": "record_startup_answers",
-            "label": "legacy_startup_answers_recorded_by_router",
-            "requires_payload": "startup_answers",
-        }
-        state_path.write_text(json.dumps(bootstrap, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
         startup_answers = startup_answers or STARTUP_ANSWERS
         if startup_answers.get("background_agents") == "single-agent":
@@ -1353,7 +1315,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
                 "rehydrated_after_resume_state_loaded": True,
-                "spawned_after_resume_state_loaded": False,
+                "replacement_spawned_after_resume_state_loaded": False,
                 "core_prompt_path": request["core_prompt_path"],
                 "core_prompt_hash": request["core_prompt_hash"],
             }

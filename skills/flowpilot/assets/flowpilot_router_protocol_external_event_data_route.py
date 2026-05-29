@@ -7,12 +7,6 @@ from typing import Any
 ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft': {'flag': 'route_draft_written_by_pm',
                            'requires_flag': 'pm_route_skeleton_card_delivered',
                            'summary': 'PM wrote the route draft from the frozen root contract.'},
- 'process_officer_passes_route_check': {'flag': 'process_officer_route_check_passed',
-                                        'requires_flag': 'process_officer_route_check_card_delivered',
-                                        'gate_id': 'process_route_model',
-                                        'terminal_gate_outcome': True,
-                                        'summary': 'Compatibility alias: Process FlowGuard Officer '
-                                                   'submitted the process route model.'},
  'process_officer_submits_process_route_model': {'flag': 'process_route_model_submitted',
                                                  'requires_flag': 'process_officer_route_check_card_delivered',
                                                  'gate_id': 'process_route_model',
@@ -28,13 +22,6 @@ ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft':
                                              'summary': 'PM rejected the current process route '
                                                         'model and requested route/model rebuild '
                                                         'before route challenge.'},
- 'process_officer_requires_route_repair': {'flag': 'process_officer_route_repair_required',
-                                           'requires_flag': 'process_officer_route_check_card_delivered',
-                                           'gate_id': 'process_route_model',
-                                           'terminal_gate_outcome': True,
-                                           'summary': 'Compatibility alias: Process FlowGuard '
-                                                      'Officer requested process route model '
-                                                      'repair.'},
  'process_officer_requests_process_route_model_repair': {'flag': 'process_route_model_repair_required',
                                                          'requires_flag': 'process_officer_route_check_card_delivered',
                                                          'gate_id': 'process_route_model',
@@ -43,28 +30,12 @@ ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft':
                                                                     'requested repair of the '
                                                                     'canonical process route '
                                                                     'model.'},
- 'process_officer_blocks_route_check': {'flag': 'process_officer_route_check_blocked',
-                                        'requires_flag': 'process_officer_route_check_card_delivered',
-                                        'gate_id': 'process_route_model',
-                                        'terminal_gate_outcome': True,
-                                        'summary': 'Compatibility alias: Process FlowGuard Officer '
-                                                   'blocked the process route model.'},
  'process_officer_blocks_process_route_model': {'flag': 'process_route_model_blocked',
                                                 'requires_flag': 'process_officer_route_check_card_delivered',
                                                 'gate_id': 'process_route_model',
                                                 'terminal_gate_outcome': True,
                                                 'summary': 'Process FlowGuard Officer blocked the '
                                                            'canonical process route model.'},
- 'product_officer_passes_route_check': {'flag': 'product_officer_route_check_passed',
-                                        'requires_flag': 'product_officer_route_check_card_delivered',
-                                        'legacy': True,
-                                        'summary': 'Compatibility event: Product FlowGuard Officer '
-                                                   'passed the legacy route product check.'},
- 'product_officer_blocks_route_check': {'flag': 'product_officer_route_check_blocked',
-                                        'requires_flag': 'product_officer_route_check_card_delivered',
-                                        'legacy': True,
-                                        'summary': 'Compatibility event: Product FlowGuard Officer '
-                                                   'blocked the legacy route product check.'},
  'reviewer_passes_route_check': {'flag': 'reviewer_route_check_passed',
                                  'requires_flag': 'reviewer_route_check_card_delivered',
                                  'summary': 'Reviewer passed the route challenge.'},
@@ -92,11 +63,6 @@ ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft':
                                           'requires_flag': 'reviewer_node_acceptance_plan_card_delivered',
                                           'summary': 'Reviewer blocked the active node acceptance '
                                                      'plan before worker packet registration.'},
- 'reviewer_blocks_current_node_dispatch': {'flag': 'current_node_dispatch_blocked',
-                                           'requires_flag': 'reviewer_current_node_dispatch_card_delivered',
-                                           'legacy': True,
-                                           'summary': 'Legacy current-node reviewer dispatch block '
-                                                      'event retained for old run records only.'},
  'current_node_reviewer_blocks_result': {'flag': 'node_review_blocked',
                                          'requires_flag': 'reviewer_worker_result_card_delivered',
                                          'summary': 'Reviewer blocked current-node result.'},

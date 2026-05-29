@@ -117,7 +117,7 @@ def _next_required_bootloader_action(state: State) -> str:
 
     if not state.router_loaded:
         return "none"
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         return "boot"
     if not state.startup_answers_recorded:
         return "boot"
@@ -152,9 +152,9 @@ def _bootloader_fact_count(state: State) -> int:
     """Count startup actions that can only be created by router-approved boot actions."""
 
     startup_question_stop_boundary = (
-        state.startup_questions_asked
-        or state.startup_state_written_awaiting_answers
-        or state.dialog_stopped_for_answers
+        state.startup_intake_ui_completed
+        or state.startup_intake_result_recorded
+        or state.startup_intake_body_boundary_enforced
     )
     return sum(
         (
@@ -417,14 +417,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         yield Transition(
-            "startup_questions_asked_from_router",
+            "startup_intake_ui_completed_from_router",
             _boot(
                 state,
-                startup_questions_asked=True,
-                startup_state_written_awaiting_answers=True,
-                dialog_stopped_for_answers=True,
+                startup_intake_ui_completed=True,
+                startup_intake_result_recorded=True,
+                startup_intake_body_boundary_enforced=True,
                 startup_state="awaiting_answers_stopped",
                 holder="user",
             ),

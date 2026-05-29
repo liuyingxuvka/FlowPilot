@@ -15,7 +15,7 @@ RESULTS_PATH = ROOT / "prompt_isolation_results.json"
 REQUIRED_LABELS = (
     "bootloader_router_loaded",
     "router_computed_next_bootloader_action",
-    "startup_questions_asked_from_router",
+    "startup_intake_ui_completed_from_router",
     "startup_answers_recorded_by_router",
     "startup_banner_emitted_after_answers",
     "run_shell_created",
@@ -142,7 +142,7 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|startup={state.startup_state}|holder={state.holder}|"
         f"phase={state.phase}|event={state.event}|"
-        f"router={state.router_loaded}|questions={state.startup_questions_asked}|"
+        f"router={state.router_loaded}|questions={state.startup_intake_ui_completed}|"
         f"answers={state.startup_answers_recorded},{state.startup_answer_values_valid},"
         f"{state.startup_answer_provenance}|bootstrap={state.run_scoped_bootstrap_created},"
         f"{state.stale_top_level_bootstrap_reused}|banner={state.banner_emitted}|"

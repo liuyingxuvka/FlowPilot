@@ -133,7 +133,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "rehydration_result": "rehydrated_from_current_run_memory",
                 "host_liveness_status": "active",
                 "liveness_decision": "spawned_replacement_from_current_run_memory",
-                "spawned_after_resume_state_loaded": True,
+                "replacement_spawned_after_resume_state_loaded": True,
             }
         )
         with self.assertRaisesRegex(router.RouterError, "active host liveness must use live_agent_continuity_confirmed"):
@@ -150,7 +150,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "liveness_decision": "spawned_replacement_from_current_run_memory",
                 "bounded_wait_result": "not_waited",
                 "bounded_wait_ms": 0,
-                "spawned_after_resume_state_loaded": True,
+                "replacement_spawned_after_resume_state_loaded": True,
             }
         )
         router.apply_action(root, "rehydrate_role_agents", payload)
@@ -675,7 +675,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(replacement["status"], "waiting")
         self.assertEqual(replacement["replacement_reason"], "role_no_output_missing_expected_event")
         self.assertEqual(replacement["replaces_controller_action_id"], wait_action["controller_action_id"])
-    def test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery(self) -> None:
+    def test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)

@@ -20,7 +20,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_terminal_replay_summary",
         "tests.router_runtime.terminal",
         patterns=(
-            "test_reconcile_recovers_legacy_terminal_closure_state",
+            "test_reconcile_recovers_prior_terminal_closure_state",
             "test_reconcile_run_recovers_terminal_status_from_current_pointer",
             "test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions",
             "test_terminal_summary_payload_requires_attribution_display_and_run_root_sources",
@@ -102,7 +102,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         patterns=(
             "test_active_agent_lookup_rejects_unknown_recovered_liveness",
             "test_blocked_role_recovery_receipt_reclaims_existing_report",
-            "test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery",
+            "test_completed_liveness_fault_no_output_redirects_to_reissue_not_recovery",
             "test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work",
             "test_role_no_output_escalates_to_pm_after_two_reissues",
             "test_role_no_output_report_reissues_same_work_before_role_recovery",
@@ -136,7 +136,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         patterns=(
             "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
             "test_pm_repair_decision_can_repeat_for_new_control_blocker",
-            "test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer",
+            "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
             "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
             "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
         ),
@@ -159,7 +159,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.control_blockers",
         patterns=(
             "test_control_blocker_reviewer_followup_rejects_pm_origin",
-            "test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision",
+            "test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission",
             "test_fatal_control_blocker_rejects_pm_ordinary_waiver",
         ),
         description="Control-blocker reviewer follow-up and fatal-blocker slice.",
@@ -299,13 +299,13 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
         patterns=(
             "test_research_required_blocks_product_architecture_until_absorbed",
             "test_product_architecture_and_root_contract_gate_route_skeleton",
-            "test_process_route_model_canonical_event_writes_compatibility_alias",
-            "test_legacy_product_officer_model_report_does_not_close_modelability_gate",
+            "test_process_route_model_canonical_event_writes_canonical_artifact_only",
+            "test_unknown_product_officer_model_report_is_rejected",
             "test_pm_repair_transaction_commits_material_reissue_generation",
             "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
             "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
         ),
-        description="Material modelability, architecture, compatibility, and repair slice.",
+        description="Material modelability, architecture, and repair slice.",
     ),
 )
 

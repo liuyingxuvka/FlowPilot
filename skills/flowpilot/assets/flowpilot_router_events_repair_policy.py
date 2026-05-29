@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot router control-blocker policy helpers."""
+"""Public facade for FlowPilot router control-blocker policy helpers."""
 
 from __future__ import annotations
 

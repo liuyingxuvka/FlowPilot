@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot router IO helpers."""
+"""Public facade for FlowPilot router IO helpers."""
 
 from __future__ import annotations
 
@@ -47,7 +47,6 @@ from flowpilot_router_io_paths import (
     _parse_utc_timestamp,
     _project_root_from_run_root,
     bootstrap_state_path,
-    legacy_bootstrap_state_path,
     project_relative,
     run_bootstrap_state_path,
     runtime_kit_source,
@@ -88,7 +87,6 @@ __all__ = (
     "_wait_for_runtime_json_writer_to_settle",
     "_without_role_output_envelope",
     "bootstrap_state_path",
-    "legacy_bootstrap_state_path",
     "project_relative",
     "read_daemon_critical_json_if_exists",
     "read_json",

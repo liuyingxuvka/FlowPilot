@@ -357,14 +357,6 @@
       "source": "system"
     },
     {
-      "audience": "product_flowguard_officer",
-      "id": "product_officer.route_product_check",
-      "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/route_product_check.md",
-      "source": "system"
-    },
-    {
       "audience": "human_like_reviewer",
       "id": "reviewer.route_challenge",
       "issued_by": "router",

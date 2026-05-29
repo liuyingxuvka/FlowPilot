@@ -16,7 +16,7 @@ Reusable assets for FlowPilot live here or in the repository-level
   by focused progress, creation, result, audit, and CLI helpers;
 - `card_runtime.py`, the system-card runtime facade backed by focused IO,
   ledger, envelope, ACK, and bundle helpers;
-- `flowpilot_user_flow_diagram.py`, the user-flow diagram compatibility
+- `flowpilot_user_flow_diagram.py`, the user-flow diagram public
   entrypoint backed by source, tree, stage, Mermaid, and Markdown helpers;
 - `packet_control_plane_model.py`, the packet control-plane model facade backed
   by focused state, transition, and invariant helpers;
@@ -32,8 +32,8 @@ Reusable assets for FlowPilot live here or in the repository-level
 - `flowpilot_router_controller_scheduler_receipts.py`, the Controller receipt
   facade backed by write, receipt-effect, pending, and scheduled
   reconciliation helpers;
-- `flowpilot_router_facade_export_manifest.py`, the legacy export-manifest
-  compatibility aggregator backed by `flowpilot_router_facade_export_registry.py`;
+- `flowpilot_router_facade_export_manifest.py`, the export-manifest public
+  aggregator backed by `flowpilot_router_facade_export_registry.py`;
 - `route_memory/` files generated inside each run by `flowpilot_router.py`:
   `route_history_index.json` and `pm_prior_path_context.json`;
 - `.flowpilot/` template files;

@@ -505,7 +505,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             ["router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision"],
         )
         self.assertNotIn("pm_repair_rerun_target", original)
-    def test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision(self) -> None:
+    def test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
@@ -514,9 +514,9 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="packet group reviewer audit failed: legacy bad control wait",
+            error_message="packet group reviewer audit failed: retired bad control wait",
             event="reviewer_reports_material_sufficient",
-            payload={"report_path": ".flowpilot/runs/test/reviews/legacy.json"},
+            payload={"report_path": ".flowpilot/runs/test/reviews/retired.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
         artifact_path = self.control_blocker_path(root, blocker)
@@ -548,7 +548,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="legacy empty repair transaction has no event producer",
+            error_message="retired empty repair transaction has no event producer",
             event="reviewer_reports_material_sufficient",
             payload={"report_path": ".flowpilot/runs/test/reviews/empty-transaction.json"},
         )
@@ -634,7 +634,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "pm_records_control_blocker_protocol_blocker",
             },
         )
-    def test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer(self) -> None:
+    def test_pm_repair_decision_rejects_retired_event_replay_plan_kind(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
@@ -643,7 +643,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="PM legacy replay has no current producer",
+            error_message="PM submitted a retired replay plan kind",
             action_type="controller_no_legal_next_action",
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
@@ -654,11 +654,11 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         decision["repair_transaction"] = {"plan_kind": "event_replay"}
 
-        with self.assertRaisesRegex(router.RouterError, "legacy event_replay repair transaction requires an existing producer"):
+        with self.assertRaisesRegex(router.RouterError, "repair_transaction.plan_kind must be one of"):
             router.record_external_event(
                 root,
                 "pm_records_control_blocker_repair_decision",
-                self.role_decision_envelope(root, "control_blocks/legacy_event_replay_no_producer", decision),
+                self.role_decision_envelope(root, "control_blocks/retired_event_replay_plan_kind", decision),
             )
     def test_operation_replay_repair_transaction_queues_replay_action(self) -> None:
         root = self.make_project()

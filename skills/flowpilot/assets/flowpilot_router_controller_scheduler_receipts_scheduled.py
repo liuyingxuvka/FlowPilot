@@ -1,7 +1,7 @@
 """Scheduled Controller receipt reconciliation and backfill helpers.
 
 Receives the router facade explicitly so shared state writers and
-public entrypoints keep the bound-router compatibility contract.
+public entrypoints keep the bound-router contract.
 """
 
 from __future__ import annotations
@@ -64,25 +64,6 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
         row_reconciliation = router._scheduler_row_reconciliation_for_entry(run_root, entry)
         action_id = str(entry.get('action_id') or action.get('controller_action_id') or '')
         receipt = read_json_if_exists(_controller_receipt_path(run_root, action_id)) if action_id else {}
-        legacy_startup_canonical = router._canonicalize_legacy_startup_daemon_reconciliation(project_root, run_root, run_state, entry, action, receipt)
-        if legacy_startup_canonical.get('applied'):
-            now = utc_now()
-            _commit_controller_action_reconciliation(
-                router,
-                project_root,
-                run_root,
-                run_state,
-                action_path,
-                entry,
-                action=action,
-                reconciliation=legacy_startup_canonical,
-                scheduler_state='reconciled',
-                resolve_blockers=True,
-                now=now,
-            )
-            changed = True
-            reconciled += 1
-            continue
         if row_reconciliation is not None and (not (entry.get('router_reconciliation_status') == 'reconciled' or entry.get('router_reconciled_at'))):
             _commit_controller_action_reconciliation(
                 router,
@@ -438,7 +419,6 @@ def _reconcile_scheduled_controller_action_receipts(router: ModuleType, project_
 __all__ = (
     '_scheduler_row_reconciliation_for_entry',
     '_backfill_scheduler_row_from_reconciled_controller_action',
-    '_canonicalize_legacy_startup_daemon_reconciliation',
     '_clear_pending_controller_action_if_matches',
     '_reconcile_scheduled_controller_action_receipts',
 )

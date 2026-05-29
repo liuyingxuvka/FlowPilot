@@ -1,4 +1,4 @@
-"""Cohesive child helpers for FlowPilot route-frontier compatibility facades."""
+"""Cohesive child helpers for FlowPilot route-frontier public facades."""
 
 from __future__ import annotations
 

@@ -20,7 +20,7 @@ cases of the registry-driven path.
 | 1 | Add binding fields to the registry | Each runtime-backed `role_output_envelope` contract in `contract_index.json` declares `runtime_channel`, `output_type`, `body_schema_version`, `router_event`, `default_subdir`, `default_filename_prefix`, `path_key`, `hash_key`, and explicit array fields when needed. | A reviewer can read one contract row and know the exact runtime command and Router event. |
 | 2 | Treat registry bindings as the runtime source | `role_output_runtime.py` builds `OUTPUT_TYPE_SPECS` from registry-backed bindings plus narrow built-in fallback metadata needed before a project registry exists. | `prepare-output --output-type <registry output_type>` works for every registry-backed role output. |
 | 3 | Bind startup decisions through the same path | The three startup activation decisions are ordinary registry bindings: approval, repair request, and protocol dead-end. | They are accepted by the runtime because they are in the registry, not because of a special point patch. |
-| 4 | Preserve old compatible names where already public | Existing `pm_resume_recovery_decision` remains supported as an alias for the `pm_resume_decision` contract while the registry declares the canonical binding. | Existing tests and routes using the old name still pass. |
+| 4 | Retire old compatible names where already public | `pm_resume_decision` is the only supported output type for the resume-decision contract. | Tests and install checks reject registry output-type aliases. |
 | 5 | Constrain Router events from the registry | Source checks verify every registry-declared `router_event` exists in Router event metadata or handling code. | A typo or missing Router handler fails before runtime use. |
 | 6 | Make cards cite binding rows, not guessed names | Startup and output catalog cards name the contract id, output type, and Router event for file-backed PM decisions. | A role can copy the card command without inventing a name. |
 | 7 | Add exhaustive source conformance | The role-output runtime check scans the registry and runtime by `contract_id`, verifies roles/events/default paths, and parse-checks every bound output type. | Existing manual subset checks can no longer pass while registry bindings are missing. |
@@ -59,4 +59,3 @@ source scan include:
 
 The upgraded model must first demonstrate hazard detection, then pass on the
 implemented source.
-

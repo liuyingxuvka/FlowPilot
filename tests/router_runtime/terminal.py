@@ -490,12 +490,12 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.deliver_expected_card(root, "pm.final_ledger")
         with self.assertRaisesRegex(router.RouterError, "clean PM suggestion ledger"):
             router.record_external_event(root, "pm_records_final_route_wide_ledger_clean", self.final_ledger_payload(root))
-    def test_reconcile_recovers_legacy_terminal_closure_state(self) -> None:
+    def test_reconcile_recovers_prior_terminal_closure_state(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_pre_route_gates(root)
         self.activate_route(root)
-        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-legacy-terminal-closure")
+        self.complete_leaf_node_with_reviewed_result(root, packet_id="node-packet-prior-terminal-closure")
         self.complete_evidence_quality_package(root)
         self.complete_final_ledger_and_terminal_replay(root)
         self.deliver_expected_card(root, "pm.closure")
@@ -504,7 +504,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "pm_approves_terminal_closure",
             self.role_decision_envelope(
                 root,
-                "closure/pm_legacy_terminal_closure_decision",
+                "closure/pm_prior_terminal_closure_decision",
                 {
                     "approved_by_role": "project_manager",
                     "decision": "approve_terminal_closure",
@@ -523,7 +523,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="router_no_legal_next_action",
-            error_message="Controller has no legal next action after legacy terminal closure.",
+            error_message="Controller has no legal next action after prior terminal closure.",
             action_type="controller_no_legal_next_action",
             payload={"path": self.rel(root, state_path), "role": "controller"},
         )
@@ -545,7 +545,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "write_terminal_summary")
         self.assertEqual(action["run_lifecycle_status"], "closed")
-        self.apply_terminal_summary(root, action, run_root, note="Reconciled legacy terminal closure.")
+        self.apply_terminal_summary(root, action, run_root, note="Reconciled prior terminal closure.")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")

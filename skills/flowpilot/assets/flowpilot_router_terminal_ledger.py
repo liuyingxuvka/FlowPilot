@@ -1,8 +1,4 @@
-"""Compatibility facade for terminal ledger helpers.
-
-This compatibility facade preserves the original import path while focused
-child modules own the implementation groups.
-"""
+"""Facade for terminal ledger helpers."""
 
 from __future__ import annotations
 
@@ -60,7 +56,6 @@ __all__ = (
     '_write_task_completion_projection',
     '_write_terminal_closure_suite',
     '_recover_terminal_status_from_run_authorities',
-    '_repair_legacy_material_packet_contracts',
     'reconcile_current_run',
 )
 

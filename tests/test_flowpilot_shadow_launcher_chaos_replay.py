@@ -184,15 +184,15 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])
         self.assertTrue(read_json(router.run_state_path(run_b))["daemon_mode_enabled"])
 
-    def test_legacy_pointer_and_installed_assets_resolve_to_current_standard_state(self) -> None:
+    def test_current_pointer_and_installed_assets_resolve_to_current_standard_state(self) -> None:
         root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-legacy-pointer")
+        run_root = self.write_minimal_run(root, "run-current-pointer")
         router.write_json(
             root / ".flowpilot" / "current.json",
             {
-                "schema_version": "flowpilot.current.v0",
-                "active_run_id": run_root.name,
-                "active_run_root": router.project_relative(root, run_root),
+                "schema_version": "flowpilot.current.v1",
+                "current_run_id": run_root.name,
+                "current_run_root": router.project_relative(root, run_root),
                 "status": "running",
                 "updated_at": router.utc_now(),
             },
@@ -206,7 +206,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(exit_code, 0, payload)
         self.assertEqual(Path(payload["run_root"]), run_root)
-        self.assertEqual(payload["run_state"]["run_id"], "run-legacy-pointer")
+        self.assertEqual(payload["run_state"]["run_id"], "run-current-pointer")
         self.assertTrue(copied_router.exists())
         self.assertTrue((copied_router.parent / "flowpilot_router_cli.py").exists())
 

@@ -1,4 +1,4 @@
-"""Startup resume binding compatibility facade."""
+"""Startup resume binding public facade."""
 
 from __future__ import annotations
 

@@ -67,11 +67,11 @@ class State:
     flowpilot_enabled: bool = False
     run_scoped_startup_bootstrap_created: bool = False
     stale_top_level_bootstrap_reused: bool = False
-    startup_questions_asked: bool = False
-    startup_dialog_stopped_for_answers: bool = False
-    startup_background_agents_answered: bool = False
-    startup_scheduled_continuation_answered: bool = False
-    startup_display_surface_answered: bool = False
+    startup_intake_ui_completed: bool = False
+    startup_intake_result_recorded: bool = False
+    startup_background_agent_option_recorded: bool = False
+    startup_continuation_option_recorded: bool = False
+    startup_display_surface_option_recorded: bool = False
     startup_answer_values_valid: bool = False
     startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     startup_display_entry_action_done: bool = False
@@ -81,7 +81,7 @@ class State:
     prior_work_mode: str = "unknown"  # unknown | new | continue
     prior_work_import_packet_written: bool = False
     control_state_written_under_run_root: bool = False
-    top_level_control_state_absent_or_quarantined: bool = False
+    prior_control_state_quarantined: bool = False
     preflow_visible_plan_cleared: bool = False
     old_control_state_reused_as_current: bool = False
     showcase_floor_committed: bool = False
@@ -994,7 +994,7 @@ def _run_isolation_ready(state: State) -> bool:
         and state.flowpilot_improvement_live_report_initialized
         and prior_work_resolved
         and state.control_state_written_under_run_root
-        and state.top_level_control_state_absent_or_quarantined
+        and state.prior_control_state_quarantined
         and state.preflow_visible_plan_cleared
         and not state.old_control_state_reused_as_current
     )
@@ -1019,11 +1019,11 @@ def _live_subagent_startup_resolved(state: State) -> bool:
 
 def _startup_questions_complete(state: State) -> bool:
     return (
-        state.startup_questions_asked
-        and state.startup_dialog_stopped_for_answers
-        and state.startup_background_agents_answered
-        and state.startup_scheduled_continuation_answered
-        and state.startup_display_surface_answered
+        state.startup_intake_ui_completed
+        and state.startup_intake_result_recorded
+        and state.startup_background_agent_option_recorded
+        and state.startup_continuation_option_recorded
+        and state.startup_display_surface_option_recorded
         and state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
     )
@@ -1645,17 +1645,17 @@ class CapabilityRouterStep:
         "status",
         "task_kind",
         "flowpilot_enabled",
-        "startup_questions_asked",
-        "startup_dialog_stopped_for_answers",
-        "startup_background_agents_answered",
-        "startup_scheduled_continuation_answered",
+        "startup_intake_ui_completed",
+        "startup_intake_result_recorded",
+        "startup_background_agent_option_recorded",
+        "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
         "prior_work_mode",
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
-        "top_level_control_state_absent_or_quarantined",
+        "prior_control_state_quarantined",
         "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
@@ -2016,17 +2016,17 @@ class CapabilityRouterStep:
         "status",
         "task_kind",
         "flowpilot_enabled",
-        "startup_questions_asked",
-        "startup_dialog_stopped_for_answers",
-        "startup_background_agents_answered",
-        "startup_scheduled_continuation_answered",
+        "startup_intake_ui_completed",
+        "startup_intake_result_recorded",
+        "startup_background_agent_option_recorded",
+        "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
         "prior_work_mode",
         "prior_work_import_packet_written",
         "control_state_written_under_run_root",
-        "top_level_control_state_absent_or_quarantined",
+        "prior_control_state_quarantined",
         "preflow_visible_plan_cleared",
         "old_control_state_reused_as_current",
         "showcase_floor_committed",
@@ -2535,11 +2535,11 @@ def self_interrogation_before_contract(state: State, trace) -> InvariantResult:
 def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> InvariantResult:
     del trace
     if (
-        not state.startup_dialog_stopped_for_answers
+        not state.startup_intake_result_recorded
         and (
-            state.startup_background_agents_answered
-            or state.startup_scheduled_continuation_answered
-            or state.startup_display_surface_answered
+            state.startup_background_agent_option_recorded
+            or state.startup_continuation_option_recorded
+            or state.startup_display_surface_option_recorded
             or state.startup_display_entry_action_done
         )
     ):
@@ -2553,9 +2553,9 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
     if state.flowpilot_enabled and not state.run_scoped_startup_bootstrap_created:
         return InvariantResult.fail("new capability startup did not create a run-scoped bootstrap")
     if (
-        state.startup_background_agents_answered
-        and state.startup_scheduled_continuation_answered
-        and state.startup_display_surface_answered
+        state.startup_background_agent_option_recorded
+        and state.startup_continuation_option_recorded
+        and state.startup_display_surface_option_recorded
     ) and not (
         state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
@@ -4254,7 +4254,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="startup_answers_before_showcase_and_self_interrogation",
-        description="FlowPilot asks only the three startup questions and waits for explicit answers before showcase commitment and self-interrogation.",
+        description="FlowPilot asks only the native startup intake options and waits for explicit answers before showcase commitment and self-interrogation.",
         predicate=mode_choice_before_showcase_and_self_interrogation,
     ),
     Invariant(

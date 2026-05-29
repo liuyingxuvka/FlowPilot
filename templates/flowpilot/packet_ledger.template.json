@@ -135,7 +135,7 @@
       ],
       "router_direct_dispatch_path": "<packet-envelope-path#router_direct_dispatch-or-null>",
       "router_direct_dispatch_decision": "<pending|approved|blocked>",
-      "reviewer_dispatch_path": "<legacy-reviewer-dispatch-evidence-path-or-null>",
+      "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
       "reviewer_dispatch_decision": "not_required",
       "assigned_worker_role": "<worker_a|worker_b|authorized_non_controller|null>",
       "worker_result_path": "<worker-result-envelope-path-or-null>",

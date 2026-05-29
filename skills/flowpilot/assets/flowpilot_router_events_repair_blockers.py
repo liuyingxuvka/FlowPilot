@@ -1,7 +1,7 @@
-"""Compatibility facade for control blocker repair helpers.
+"""Public facade for control blocker repair helpers.
 
 The behavior lives in focused child modules, while this module preserves the
-legacy private import surface used by ``flowpilot_router`` and direct imports.
+router binding surface used by ``flowpilot_router`` and direct imports.
 """
 
 from __future__ import annotations

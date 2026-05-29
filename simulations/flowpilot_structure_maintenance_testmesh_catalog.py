@@ -509,7 +509,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_control_blockers_pm_repair_decisions",
-        command="python -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_legacy_event_replay_without_existing_producer -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
+        command="python -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_retired_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=5,

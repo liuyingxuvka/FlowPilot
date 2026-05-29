@@ -32,7 +32,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.PARENT_REPAIR_LEAF_EVENT: "parent repair targets a leaf-only event",
     model.PARTIAL_COMMIT_TARGETS: "transaction commit targets are incomplete",
     model.ACTIVE_BLOCKER_MARKED_GREEN: "active blocker cannot be marked safe to continue",
-    model.LEGACY_BAD_TRANSACTION_CONTINUES: "invalid legacy transaction was not quarantined",
+    model.RETIRED_RECONCILE_TRANSACTION_CONTINUES: "transaction type is not registered",
     model.REGISTRY_REFERENCE_MISSING: "control transaction registry references missing contract or event",
     model.ROUTE_MUTATION_WITHOUT_STALE_POLICY: "route mutation omitted stale-evidence policy",
     model.REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT: "non-success outcome uses a success-only event",
@@ -53,8 +53,7 @@ def _state_id(state: model.State) -> str:
         f"repair={state.repair_transaction_required},{state.repair_transaction_present},"
         f"{state.outcome_policy},{state.outcome_events_distinct},{state.non_success_uses_success_event}|"
         f"parent={state.parent_repair},{state.repair_target_is_leaf_event}|"
-        f"commit={state.commit_targets}|legacy={state.legacy_transaction},"
-        f"{state.legacy_transaction_invalid},{state.legacy_quarantined}|"
+        f"commit={state.commit_targets}|retired_transaction_name={state.retired_transaction_name}|"
         f"reissue={state.control_plane_reissue},{state.reissue_delivery_authority_present},"
         f"{state.original_event_flag_currently_set}|reason={state.terminal_reason}"
     )
@@ -188,7 +187,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Every FlowPilot control write is a registered transaction.",
             "Contract registry, event capability registry, repair transaction records, and packet authority are sub-registries.",
             "The registry authorizes commits, not only event names.",
-            "Legacy invalid transactions are quarantined instead of replayed.",
+            "Retired transaction names are rejected instead of replayed.",
             "Accepted transactions commit required state surfaces together.",
         ],
         "minimum_runtime_change_set": [
@@ -196,7 +195,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Add source checks that validate transaction rows against existing Router events and contract ids.",
             "Use the registry in the PM control-blocker repair path before writing repair transaction state.",
             "Expose packet authority as a required transaction fact for result absorption.",
-            "Teach the mesh that invalid legacy transactions block current-run continuation.",
+            "Teach the mesh that retired transaction names block current-run continuation.",
         ],
     }
 

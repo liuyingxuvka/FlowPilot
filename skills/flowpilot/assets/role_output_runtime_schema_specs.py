@@ -93,8 +93,8 @@ class OutputTypeSpec:
 
 
 _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
-    "pm_resume_recovery_decision": OutputTypeSpec(
-        output_type="pm_resume_recovery_decision",
+    "pm_resume_decision": OutputTypeSpec(
+        output_type="pm_resume_decision",
         contract_id="flowpilot.output_contract.pm_resume_decision.v1",
         allowed_roles=("project_manager",),
         path_key="decision_path",
@@ -318,8 +318,6 @@ def _load_registry_output_type_specs(path: Path) -> dict[str, OutputTypeSpec]:
         contract_id = _registry_text(item, "contract_id", contract_id="<unknown>")
         output_type = _registry_text(item, "output_type", contract_id=contract_id)
         specs[output_type] = _spec_from_registry_contract(item, output_type=output_type)
-        for alias in _registry_text_list(item, "output_type_aliases"):
-            specs[alias] = _spec_from_registry_contract(item, output_type=alias)
     return specs
 
 

@@ -56,7 +56,7 @@ def active_run_root(project_root: Path, run_id: str | None = None) -> tuple[str,
         return str(resolved_run_id or run_root.name), run_root
     if resolved_run_id:
         return str(resolved_run_id), flowpilot_root / "runs" / str(resolved_run_id)
-    return "legacy", flowpilot_root
+    raise PacketRuntimeError("packet runtime requires a current run-scoped FlowPilot pointer")
 
 
 def packet_paths(project_root: Path, packet_id: str, run_id: str | None = None) -> dict[str, Any]:
@@ -126,14 +126,7 @@ def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any])
 
 
 def normalize_envelope_aliases(envelope: dict[str, Any]) -> dict[str, Any]:
-    """Return a shallow-normalized packet/result envelope.
-
-    FlowPilot's canonical packet runtime uses `body_path`/`body_hash` for work
-    packets and `result_body_path`/`next_recipient` for results. Older or
-    hand-authored role envelopes sometimes use more explicit aliases. Normalize
-    those mechanical aliases here so the router can stay strict about role
-    authority without bouncing safe field-name mismatches back to humans.
-    """
+    """Return a shallow copy of the current packet/result envelope."""
 
     normalized = dict(envelope)
     schema = str(normalized.get("schema_version") or "")
@@ -141,31 +134,8 @@ def normalize_envelope_aliases(envelope: dict[str, Any]) -> dict[str, Any]:
         "completed_by_role" in normalized and "result_body_path" in normalized
     )
     if is_result:
-        if "result_body_path" not in normalized and normalized.get("body_path"):
-            normalized["result_body_path"] = normalized["body_path"]
-        if "result_body_hash" not in normalized and normalized.get("body_hash"):
-            normalized["result_body_hash"] = normalized["body_hash"]
-        if "next_recipient" not in normalized:
-            for key in ("next_holder", "to_role"):
-                if normalized.get(key):
-                    normalized["next_recipient"] = normalized[key]
-                    break
-        if "next_holder" not in normalized and normalized.get("next_recipient"):
-            normalized["next_holder"] = normalized["next_recipient"]
-        if "to_role" not in normalized and normalized.get("next_recipient"):
-            normalized["to_role"] = normalized["next_recipient"]
         return normalized
 
-    if "body_path" not in normalized and normalized.get("packet_body_path"):
-        normalized["body_path"] = normalized["packet_body_path"]
-    if "body_hash" not in normalized and normalized.get("packet_body_hash"):
-        normalized["body_hash"] = normalized["packet_body_hash"]
-    if "packet_body_path" not in normalized and normalized.get("body_path"):
-        normalized["packet_body_path"] = normalized["body_path"]
-    if "packet_body_hash" not in normalized and normalized.get("body_hash"):
-        normalized["packet_body_hash"] = normalized["body_hash"]
-    if "next_holder" not in normalized and normalized.get("to_role"):
-        normalized["next_holder"] = normalized["to_role"]
     return normalized
 
 

@@ -36,7 +36,7 @@ Risk intent brief:
 - Ensure a formal user stop or cancel signal is terminal for future next
   actions.
 
-Modeled state writes: startup questions, user text, answer receipt, receipt
+Modeled state writes: startup intake options, user text, answer receipt, receipt
 review, pending action payload contract, action apply, reviewer fact report,
 PM startup release, next action, router error, sealed repair packet, repair
 result, and formal lifecycle stop/cancel.
@@ -59,7 +59,7 @@ RESPONSIBLE_REPAIR_ROLES = frozenset(
 )
 
 REQUIRED_LABELS = (
-    "startup_questions_asked",
+    "startup_intake_ui_completed",
     "startup_user_text_recorded",
     "formal_user_stop_recorded",
     "formal_user_cancel_recorded",
@@ -112,7 +112,7 @@ class State:
     status: str = "new"  # new | awaiting_user | running | blocked | protocol_dead_end | stopped | cancelled | complete
     holder: str = "controller"
 
-    startup_questions_asked: bool = False
+    startup_intake_ui_completed: bool = False
     waiting_for_user_text: bool = False
     user_text_recorded: bool = False
     startup_task_contract_recorded: bool = False
@@ -306,16 +306,16 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
 
     lifecycle = _formal_lifecycle_transitions(state)
 
-    if not state.startup_questions_asked:
+    if not state.startup_intake_ui_completed:
         return (
             Transition(
-                "startup_questions_asked",
+                "startup_intake_ui_completed",
                 "user",
                 replace(
                     state,
                     status="awaiting_user",
                     holder="user",
-                    startup_questions_asked=True,
+                    startup_intake_ui_completed=True,
                     waiting_for_user_text=True,
                 ),
             ),
@@ -729,8 +729,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
 
-    if state.user_text_recorded and not state.startup_questions_asked:
-        failures.append("startup user text was recorded before startup questions were asked")
+    if state.user_text_recorded and not state.startup_intake_ui_completed:
+        failures.append("startup user text was recorded before startup intake options were asked")
     if state.startup_task_contract_recorded and not state.user_text_recorded:
         failures.append("startup task contract was recorded before user startup text was recorded")
     if state.user_authenticity_gate_required:
@@ -1023,7 +1023,7 @@ def _ready_for_apply(**changes: object) -> State:
     base = State(
         status="running",
         holder="controller",
-        startup_questions_asked=True,
+        startup_intake_ui_completed=True,
         user_text_recorded=True,
         startup_task_contract_recorded=True,
         user_authenticity_gate_demoted=True,
@@ -1067,7 +1067,7 @@ def hazard_states() -> dict[str, State]:
     return {
         "apply_without_task_contract": State(
             status="running",
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             user_text_recorded=True,
             pending_action_type="apply_startup_answers",
             payload_contract_exists=True,
@@ -1075,7 +1075,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "apply_without_payload_contract": State(
             status="running",
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             user_text_recorded=True,
             startup_task_contract_recorded=True,
             user_authenticity_gate_demoted=True,
@@ -1089,7 +1089,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "core_loaded_without_boundary_evidence": State(
             status="running",
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             user_text_recorded=True,
             startup_task_contract_recorded=True,
             user_authenticity_gate_demoted=True,
@@ -1100,7 +1100,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "fact_report_pass_before_apply": State(
             status="running",
-            startup_questions_asked=True,
+            startup_intake_ui_completed=True,
             user_text_recorded=True,
             startup_task_contract_recorded=True,
             user_authenticity_gate_demoted=True,

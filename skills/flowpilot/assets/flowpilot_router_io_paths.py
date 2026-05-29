@@ -51,10 +51,6 @@ def _copy_runtime_kit_into_run_root(run_root: Path) -> None:
     shutil.copytree(source, target, ignore=shutil.ignore_patterns("__pycache__"))
 
 
-def legacy_bootstrap_state_path(project_root: Path) -> Path:
-    return project_root / ".flowpilot" / "bootstrap" / "startup_state.json"
-
-
 def run_bootstrap_state_path(run_root: Path) -> Path:
     return run_root / "bootstrap" / "startup_state.json"
 
@@ -73,7 +69,7 @@ def bootstrap_state_path(project_root: Path, state: dict[str, Any] | None = None
         candidate = run_bootstrap_state_path(project_root / str(raw_root))
         if candidate.exists():
             return candidate
-    return legacy_bootstrap_state_path(project_root)
+    raise RouterError("startup bootstrap path requires a current run-scoped FlowPilot pointer")
 
 
 def project_relative(project_root: Path, path: Path) -> str:

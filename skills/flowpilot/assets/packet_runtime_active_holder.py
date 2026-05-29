@@ -1,4 +1,4 @@
-"""Compatibility facade for packet runtime active-holder helpers."""
+"""Public facade for packet runtime active-holder helpers."""
 
 from __future__ import annotations
 

@@ -33,7 +33,7 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
 
         with self.assertRaises(router.RouterError):
-            router.apply_action(root, "ask_startup_questions")
+            router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_router")
@@ -301,10 +301,6 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
             (
                 "open_startup_intake_ui",
                 {"requires_host_automation": True, "requires_payload": "startup_intake_result"},
-            ),
-            (
-                "record_startup_answers",
-                {"requires_user": True, "requires_payload": "startup_answers"},
             ),
             (
                 "await_card_return_event",

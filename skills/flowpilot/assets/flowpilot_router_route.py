@@ -1,7 +1,7 @@
 """Route-domain writers for FlowPilot router.
 
 The route module owns route activation and route mutation bodies while the
-router facade keeps the historical helper names for compatibility.
+router facade keeps the current helper names bound to focused owners.
 """
 
 from __future__ import annotations

@@ -25,7 +25,7 @@ REPAIR_ACTIONS = {
         "fixes": [
             "material_dispatch_output_contract_mismatch",
             "material_dispatch_write_target_missing",
-            "legacy_material_packet_lineage_split",
+            "retired_material_packet_lineage_split",
         ],
         "scope": (
             "Material-scan packet creation and legacy migration/quarantine only; "

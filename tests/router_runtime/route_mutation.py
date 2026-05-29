@@ -26,7 +26,7 @@ ROUTE_MUTATION_RUNTIME_TEST_CASES = (
 
 
 class RouteMutationRuntimeTests(FlowPilotRouterRuntimeTestBase):
-    """Compatibility aggregate for explicit full route-mutation oracle runs."""
+    """Aggregate for explicit full route-mutation oracle runs."""
 
 
 for _test_case in ROUTE_MUTATION_RUNTIME_TEST_CASES:

@@ -72,34 +72,23 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaisesRegex(router.RouterError, "process_officer_route_check_card_delivered"):
             router.record_external_event(
                 root,
-                "process_officer_passes_route_check",
+                "process_officer_submits_process_route_model",
                 self.role_report_envelope(
                     root,
-                    "flowguard/route_process_check",
+                    "flowguard/process_route_model",
                     self.route_process_pass_body(),
                 ),
             )
         self.deliver_expected_card(root, "process_officer.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_passes_route_check",
+            "process_officer_submits_process_route_model",
             self.role_report_envelope(
                 root,
-                "flowguard/route_process_check",
+                "flowguard/process_route_model",
                 self.route_process_pass_body(),
             ),
         )
-
-        with self.assertRaisesRegex(router.RouterError, "product_officer_route_check_card_delivered"):
-            router.record_external_event(
-                root,
-                "product_officer_passes_route_check",
-                self.role_report_envelope(
-                    root,
-                    "flowguard/route_product_check",
-                    self.route_product_pass_body(),
-                ),
-            )
         self.deliver_expected_card(root, "pm.process_route_model_decision")
         router.record_external_event(root, "pm_accepts_process_route_model", self.process_route_model_decision_body())
 
@@ -166,7 +155,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaisesRegex(router.RouterError, "process_viability_verdict=pass"):
             router.record_external_event(
                 root,
-                "process_officer_passes_route_check",
+                "process_officer_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check_missing_verdict",
@@ -194,7 +183,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaisesRegex(router.RouterError, "product_behavior_model_checked=true"):
             router.record_external_event(
                 root,
-                "process_officer_passes_route_check",
+                "process_officer_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check_missing_product_coverage",
@@ -229,7 +218,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.deliver_expected_card(root, "process_officer.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_requires_route_repair",
+            "process_officer_requests_process_route_model_repair",
             self.role_report_envelope(
                 root,
                 "flowguard/route_process_repair_required",
@@ -432,8 +421,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         non_pass_markers = ("blocks", "blocked", "insufficient", "requires_repair", "requests_repair", "protocol_dead_end")
         groups: dict[str, list[str]] = {}
         for event_name, meta in router.EXTERNAL_EVENTS.items():
-            if meta.get("legacy"):
-                continue
             required_flag = str(meta.get("requires_flag") or "")
             if not required_flag:
                 continue
@@ -982,9 +969,13 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("product_officer.root_contract_modelability", card_ids)
         self.assertIn("reviewer.worker_result_review", card_ids)
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
-        self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_current_node_dispatch"]["flag"], "current_node_dispatch_blocked")
+        self.assertNotIn("reviewer_blocks_current_node_dispatch", router.EXTERNAL_EVENTS)
+        self.assertNotIn("product_officer_model_report", router.EXTERNAL_EVENTS)
+        self.assertEqual(
+            router.EXTERNAL_EVENTS["router_direct_material_scan_dispatch_recheck_blocked"]["flag"],
+            "material_scan_dispatch_recheck_blocked",
+        )
         self.assertEqual(router.EXTERNAL_EVENTS["reviewer_blocks_node_acceptance_plan"]["flag"], "node_acceptance_plan_review_blocked")
-        self.assertTrue(router.EXTERNAL_EVENTS["product_officer_model_report"]["legacy"])
     def test_model_miss_review_block_flags_stay_in_sync(self) -> None:
         expected_flags = set(router.MODEL_MISS_REVIEW_BLOCK_FLAGS)
         event_flags = {

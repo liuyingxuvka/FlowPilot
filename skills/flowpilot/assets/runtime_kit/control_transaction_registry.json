@@ -31,8 +31,7 @@
         "frontier",
         "run_state",
         "status_summary"
-      ],
-      "legacy_policy": "block_if_invalid"
+      ]
     },
     {
       "transaction_type": "packet_dispatch",
@@ -56,8 +55,7 @@
         "packet_ledger",
         "run_state",
         "status_summary"
-      ],
-      "legacy_policy": "block_if_invalid"
+      ]
     },
     {
       "transaction_type": "result_absorption",
@@ -92,8 +90,7 @@
       ],
       "optional_commit_targets": [
         "formal_gate_package"
-      ],
-      "legacy_policy": "block_if_invalid"
+      ]
     },
     {
       "transaction_type": "reviewer_gate_result",
@@ -118,8 +115,7 @@
         "run_state",
         "blocker_index",
         "status_summary"
-      ],
-      "legacy_policy": "block_if_invalid"
+      ]
     },
     {
       "transaction_type": "control_blocker_repair",
@@ -152,8 +148,7 @@
         "packet_ledger",
         "frontier",
         "dispatch_index"
-      ],
-      "legacy_policy": "quarantine_invalid"
+      ]
     },
     {
       "transaction_type": "control_plane_reissue",
@@ -172,8 +167,7 @@
         "blocker_index",
         "run_state",
         "status_summary"
-      ],
-      "legacy_policy": "block_if_invalid"
+      ]
     },
     {
       "transaction_type": "route_mutation",
@@ -199,28 +193,7 @@
         "stale_evidence",
         "run_state",
         "status_summary"
-      ],
-      "legacy_policy": "block_if_invalid"
-    },
-    {
-      "transaction_type": "legacy_reconcile",
-      "producer_roles": [
-        "router"
-      ],
-      "output_contract_ids": [],
-      "router_events": [],
-      "event_usages": [
-        "reconcile"
-      ],
-      "packet_authority_required": "audit_existing_only",
-      "repair_transaction_required": "audit_existing_only",
-      "outcome_policy": "quarantine_invalid",
-      "commit_targets": [
-        "blocker_index",
-        "repair_transaction_index",
-        "status_summary"
-      ],
-      "legacy_policy": "quarantine_invalid"
+      ]
     }
   ]
 }

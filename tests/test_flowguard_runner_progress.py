@@ -37,7 +37,7 @@ run_capability_checks = load_module(
 )
 
 
-class LegacyRunnerProgressTests(unittest.TestCase):
+class RunnerProgressTests(unittest.TestCase):
     def tearDown(self) -> None:
         os.environ.pop("FLOWGUARD_PROGRESS", None)
 

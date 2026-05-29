@@ -1,7 +1,7 @@
 """Startup bootloader receipt policy for Controller scheduler receipts.
 
 Receives the router facade explicitly so startup bootstrap/run-state writes
-stay under the existing router-owned compatibility boundary.
+stay under the existing router-owned boundary.
 """
 
 from __future__ import annotations
@@ -91,25 +91,6 @@ def _apply_startup_bootloader_receipt_effects(
         return result
     if action_type == "open_startup_intake_ui" and str(receipt_payload.get("source") or "") != "startup_daemon_bootloader_apply":
         result.update(router._apply_startup_intake_result_to_bootstrap(project_root, bootstrap, receipt_payload))
-        router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
-    elif action_type == "record_startup_answers":
-        startup_answers = router._validate_startup_answers(receipt_payload)
-        existing_answers = bootstrap.get("startup_answers") if isinstance(bootstrap.get("startup_answers"), dict) else None
-        if existing_answers is not None and existing_answers != startup_answers:
-            return {
-                "applied": False,
-                "reason": "startup_answers_conflict_with_durable_answers",
-                "action_type": action_type,
-                "postcondition": flag,
-            }
-        interpretation = router._validate_startup_answer_interpretation(receipt_payload, startup_answers)
-        if existing_answers is None:
-            bootstrap["startup_answers"] = startup_answers
-            bootstrap["startup_answer_interpretation"] = interpretation
-            bootstrap["startup_state"] = "answers_complete"
-            result["startup_answers_recorded_from_receipt"] = True
-        else:
-            result["startup_answers_replay_confirmed"] = True
         router._sync_startup_bootstrap_flags_to_run_state(bootstrap, run_state)
     elif action_type == "emit_startup_banner":
         banner = router._startup_banner_display()

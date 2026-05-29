@@ -214,7 +214,7 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             catalog["startup_question_ids"],
             tuple(question["id"] for question in startup_catalog.STARTUP_QUESTIONS),
         )
-        self.assertIn("record_startup_answers", catalog["boot_action_types"])
+        self.assertIn("open_startup_intake_ui", catalog["boot_action_types"])
         self.assertEqual(router.BOOT_ACTIONS, startup_catalog.BOOT_ACTIONS)
         self.assertEqual(protocol_catalog.BOOT_ACTIONS, startup_catalog.BOOT_ACTIONS)
         self.assertIn("pm.route_skeleton", startup_catalog.PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS)

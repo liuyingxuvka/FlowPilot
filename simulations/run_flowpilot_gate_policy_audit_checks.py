@@ -69,7 +69,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|scale={state.task_scale}|formal={state.formal_flowpilot_started},"
-        f"six={state.six_role_crew_started}|startup={state.startup_questions_asked},"
+        f"six={state.six_role_crew_started}|startup={state.startup_intake_ui_completed},"
         f"side_effect={state.startup_side_effects_before_answers},"
         f"text_invalid={state.startup_boundary_invalidated_for_text}|risk={state.risk_type},"
         f"method={state.selected_quality_method},decision={state.quality_risk_decision_done},"

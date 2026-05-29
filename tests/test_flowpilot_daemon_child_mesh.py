@@ -49,7 +49,7 @@ class FlowPilotDaemonChildMeshTests(unittest.TestCase):
                 self.assertEqual(report["parent_partition"], "router_daemon_resume")
                 self.assertTrue(report["parent_reattachment"]["parent_consumes_this_child"])
 
-    def test_parent_ledger_consumes_split_daemon_children_not_large_compat_model(self) -> None:
+    def test_parent_ledger_consumes_split_daemon_children_not_large_monolith_model(self) -> None:
         ledger = json.loads(thin_parent_checks.LEDGER_PATH.read_text(encoding="utf-8"))
         meta_partitions = ledger["parents"]["meta"]["partitions"]
         router_partition = next(

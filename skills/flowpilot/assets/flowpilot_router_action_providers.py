@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot controller-action providers."""
+"""Public facade for FlowPilot controller-action providers."""
 
 from __future__ import annotations
 

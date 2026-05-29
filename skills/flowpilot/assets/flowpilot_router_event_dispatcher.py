@@ -1,6 +1,6 @@
 """Coarse event dispatcher owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """
@@ -92,13 +92,13 @@ def _quarantine_direct_scoped_event_conflict(
             payload_hash,
         )
     )
-    rows = run_state.setdefault("direct_event_replay_quarantine", [])
+    rows = run_state.setdefault("direct_event_quarantine", [])
     already_quarantined = any(
         isinstance(row, dict) and row.get("quarantine_key") == quarantine_key
         for row in rows
     )
     record = {
-        "schema_version": "flowpilot.direct_event_replay_quarantine.v1",
+        "schema_version": "flowpilot.direct_event_quarantine.v1",
         "status": "quarantined_audit_only",
         "event": event,
         "classification": classification.get("classification"),
@@ -113,14 +113,14 @@ def _quarantine_direct_scoped_event_conflict(
     }
     if not already_quarantined:
         rows.append(record)
-        path = run_root / "runtime" / "direct_event_replay_quarantine.jsonl"
-        assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_direct_event_replay_quarantine")
+        path = run_root / "runtime" / "direct_event_quarantine.jsonl"
+        assert_runtime_gateway_write(path, GATEWAY_ROUTER_JSON, operation="append_direct_event_quarantine")
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
         append_history(
             run_state,
-            "router_quarantined_direct_package_disposition_conflict_replay",
+            "router_quarantined_direct_package_disposition_conflict",
             record,
         )
         router._refresh_route_memory(project_root, run_root, run_state, trigger=f"after_direct_event_quarantine:{event}")

@@ -1,4 +1,4 @@
-"""Compatibility view for controller lifecycle router facade exports."""
+"""public view for controller lifecycle router facade exports."""
 
 from __future__ import annotations
 

@@ -149,9 +149,9 @@ Choose the executable plan kind deliberately:
 - Use `route_mutation` only for structural route/node/acceptance changes.
 - Use `terminal_stop` for user stop, protocol dead-end, or human escalation.
 
-`event_replay` is deprecated compatibility language. Only use
-`await_existing_event` or `operation_replay`; Router may reject `event_replay`
-when no existing producer is already present.
+Use `await_existing_event` only for an event with an existing current producer;
+use `operation_replay` only for a safe recorded operation replay. Retired replay
+aliases are not valid repair plan kinds.
 
 Do not mark the node complete until repair evidence passes the required review
 and the PM reruns the relevant node, parent, or terminal gate from current
@@ -167,8 +167,8 @@ event.
 
 Write the full PM decision body to the run-scoped decision file requested by
 Router state and submit the runtime-generated envelope directly to Router with
-compact `body_ref` and `runtime_receipt_ref` metadata. Legacy decision
-path/hash-only chat envelopes are not the live handoff path.
+compact `body_ref` and `runtime_receipt_ref` metadata. Path/hash-only chat
+envelopes are not the live handoff path.
 
 Preferred path: use `flowpilot_runtime.py prepare-output --output-type
 pm_control_blocker_repair_decision --role project_manager --agent-id

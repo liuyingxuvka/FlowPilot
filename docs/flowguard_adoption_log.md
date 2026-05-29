@@ -19926,3 +19926,59 @@ adoption work, while preserving active peer-agent work.
   evidence rather than active owner/export ambiguity.
 - No StructureMesh split, GitHub push, tag, release, deploy, or destructive
   cleanup was performed.
+## 2026-05-29 03:40 +02:00 - Remove FlowPilot compatibility surfaces
+
+### Trigger
+
+The user approved executing the full OpenSpec and FlowGuard plan to remove old
+FlowPilot compatibility fields, prompts, flows, and code so future work uses
+only the new FlowPilot workflow.
+
+### Changed Surfaces
+
+- Removed active fresh-invocation aliases, startup chat-payload reconciliation,
+  old event/output/transaction aliases, barrier bundle artifacts, old layout
+  fallback behavior, and legacy release gates.
+- Updated active prompt/card/source checks so they require current startup
+  intake and reject old alias guidance.
+- Updated HANDOFF and current maintenance docs to describe the new-only
+  FlowPilot contract and historical evidence boundary.
+- Synchronized the repository-owned installed FlowPilot skill.
+
+### Commands
+
+- OK: `python simulations/run_new_only_runtime_checks.py --json-out simulations/flowpilot_new_only_runtime_results.json`.
+- OK: `python simulations/run_flowpilot_dynamic_return_path_checks.py --json-out simulations/flowpilot_dynamic_return_path_results.json`.
+- OK: `python simulations/run_flowpilot_model_hierarchy_checks.py --json-out simulations/flowpilot_model_hierarchy_results.json`.
+- OK: `python simulations/run_flowpilot_prompt_boundary_checks.py`.
+- OK: `python simulations/run_flowpilot_test_tiering_checks.py --json-out simulations/flowpilot_test_tiering_results.json`.
+- OK: `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`.
+- OK: `openspec validate remove-flowpilot-compatibility-surfaces --strict`.
+- OK: `openspec validate --all --strict`; 166 items passed.
+- OK: background `tmp/flowguard_background/run_meta_checks.*`; completed, exit code 0, `proof_reused=false`.
+- OK: background `tmp/flowguard_background/run_capability_checks.*`; completed, exit code 0, `proof_reused=false`.
+- OK: `python scripts/install_flowpilot.py --install-missing --sync-repo-owned --force --json`.
+- OK: `python scripts/install_flowpilot.py --check --json`.
+- OK: `python scripts/audit_local_install_sync.py --json`.
+
+### Findings
+
+- Active skill, template, script, and test surfaces no longer expose removed
+  startup aliases, old startup answer actions, output type aliases, barrier
+  bundle artifacts, `route_product_check`, `key_node_change`, or legacy-full
+  release gates.
+- New-only runtime evidence proves current startup/event/output/repair/layout
+  paths complete while retired inputs are rejected rather than accepted,
+  migrated, or canonicalized.
+- Install sync initially exposed a stale self-check field expectation for the
+  new-only result file; the self-check now reads the current `safe_graph` and
+  FlowGuard explorer reports.
+
+### Skipped Or Limited
+
+- No GitHub push, tag, release, deploy, or destructive runtime-data cleanup was
+  performed.
+- Historical archived OpenSpec records and older FlowGuard adoption entries were
+  not rewritten as active runtime behavior.
+- Future StructureMesh splits beyond compatibility-surface contraction remain
+  separate scoped work.

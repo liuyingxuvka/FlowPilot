@@ -5,7 +5,7 @@ from __future__ import annotations
 from .command_builders import TierCommand, _py
 from .fast_commands import FAST_COMMANDS, ROUTER_PARENT_COMMANDS
 from .final_confidence_commands import FINAL_CONFIDENCE_COMMANDS
-from .integration_commands import INTEGRATION_COMMANDS, LEGACY_FULL_COMMANDS, RELEASE_COMMANDS
+from .integration_commands import INTEGRATION_COMMANDS, RELEASE_COMMANDS
 from .router_packet_route_commands import ROUTER_PACKET_COMMANDS, ROUTER_ROUTE_COMMANDS
 from .router_startup_foreground_commands import ROUTER_FOREGROUND_COMMANDS, ROUTER_STARTUP_COMMANDS
 from .router_terminal_commands import (
@@ -36,7 +36,6 @@ def commands_for_tier(tier: str) -> tuple[TierCommand, ...]:
         "integration": INTEGRATION_COMMANDS,
         "release": RELEASE_COMMANDS,
         "final-confidence": FINAL_CONFIDENCE_COMMANDS,
-        "legacy-full": LEGACY_FULL_COMMANDS,
     }
     if tier == "router":
         return (
@@ -73,6 +72,5 @@ def tier_names() -> tuple[str, ...]:
         "integration",
         "release",
         "final-confidence",
-        "legacy-full",
         "all",
     )

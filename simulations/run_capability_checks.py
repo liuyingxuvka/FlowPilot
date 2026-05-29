@@ -1,4 +1,4 @@
-"""Compatibility facade for `run_capability_checks.py`."""
+"""Public runner facade for `run_capability_checks.py`."""
 
 from __future__ import annotations
 
@@ -12,8 +12,6 @@ import capability_checks_runner_impl as _impl
 RESULTS_PATH = getattr(_impl, "RESULTS_PATH", None)
 _IMPL_DIR = Path(__file__).resolve().parent
 _SYNC_NAMES = (
-    "LEGACY_RESULTS_PATH",
-    "LEGACY_PROOF_PATH",
     "RESULTS_PATH",
     "PROOF_PATH",
     "LAYERED_RESULTS_PATH",
@@ -60,14 +58,6 @@ def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
 
 def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
     return _call_impl(_impl._write_proof, ok=ok, input_fingerprint=input_fingerprint)
-
-
-def _valid_legacy_proof(input_fingerprint: str) -> tuple[bool, str]:
-    return _call_impl(_impl._valid_legacy_proof, input_fingerprint)
-
-
-def _write_legacy_proof(*, ok: bool, input_fingerprint: str) -> None:
-    return _call_impl(_impl._write_legacy_proof, ok=ok, input_fingerprint=input_fingerprint)
 
 
 def _valid_layered_proof(input_fingerprint: str) -> tuple[bool, str]:

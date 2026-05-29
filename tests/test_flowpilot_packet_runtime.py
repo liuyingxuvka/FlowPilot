@@ -265,6 +265,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             recipient_role="project_manager",
         )
         self.assertEqual(release["relayed_to_role"], "project_manager")
+        chain_audit = packet_runtime.audit_packet_chain(root, run_id="run-test", node_id="startup-node")
+        self.assertEqual(chain_audit["schema_version"], packet_runtime.CHAIN_AUDIT_SCHEMA)
+        self.assertEqual(chain_audit["checked_packet_count"], 1)
         session_dir = packet_runtime_sessions._runtime_sessions_dir(
             root,
             self.packet_envelope_path(root, "startup-intake-001"),

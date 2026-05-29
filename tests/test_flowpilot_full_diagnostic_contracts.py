@@ -1101,7 +1101,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         run_state = {"flags": {}}
         pass_event = sorted(router.PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS)[0]
-        model_gate_state._sync_model_gate_alias_flags(run_state, pass_event)
+        model_gate_state._sync_model_gate_flags(run_state, pass_event)
         self.assertTrue(run_state["flags"]["product_behavior_model_submitted"])
         self.assertEqual(
             protocol_external_events.external_event_contract("pm_approves_startup_activation")["flag"],
@@ -1151,7 +1151,6 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             external_event_registry.external_event_phase("pm_approves_startup_activation"),
             "startup",
         )
-        self.assertIn("product_officer_model_report", external_event_registry.legacy_external_events())
         self.assertIs(
             gate_outcomes.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
             gate_reset_flags.PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
@@ -1494,8 +1493,11 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             )
             closure_ready = startup_closure._host_heartbeat_binding_ready(router, run_root, run_state)
             constraints = startup_fact_boundary._controller_boundary_constraints(router)
-            normalized = {"startup_questions": {"background_agents": "yes"}}
-            startup_intake._normalize_startup_question_stop_boundary(router, normalized)
+            intake_contract = startup_intake_ui._startup_intake_result_payload_contract(
+                router,
+                project_root,
+                run_state,
+            )
 
             with self.assertRaisesRegex((KeyError, RouterError), "card_id|unknown system card"):
                 system_cards_delivery._commit_system_card_delivery_artifact(
@@ -1524,6 +1526,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertIsInstance(boot_depends, bool)
         self.assertFalse(closure_ready)
         self.assertFalse(constraints["controller_may_read_sealed_bodies"])
+        self.assertEqual(intake_contract["payload_key"], "startup_intake_result")
+        self.assertFalse(intake_contract["formal_launch_provenance"]["headless"])
         self.assertEqual(startup_flow.owner_module_name(), "flowpilot_router_startup_flow")
         self.assertIn("flowpilot_router_startup_role_context", startup_role_recovery.owner_child_module_names())
         self.assertIs(
@@ -1557,10 +1561,6 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertIs(
             startup_fact_boundary._write_startup_fact_report,
             startup_fact_boundary_reports._write_startup_fact_report,
-        )
-        self.assertIs(
-            startup_intake._normalize_startup_question_stop_boundary,
-            startup_intake_ui._normalize_startup_question_stop_boundary,
         )
         self.assertIs(startup_intake._validate_startup_answers, startup_intake_validation._validate_startup_answers)
         self.assertIs(
@@ -1694,10 +1694,6 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         terminal_contract = payload_contracts._terminal_summary_payload_contract()
         self.assertIs(payload_contracts._payload_contract, payload_contracts_startup._payload_contract)
         self.assertIs(payload_contracts._payload_contract, payload_contracts_core._payload_contract)
-        self.assertIs(
-            payload_contracts._startup_answers_payload_contract,
-            payload_contracts_startup._startup_answers_payload_contract,
-        )
         self.assertIs(
             payload_contracts._pm_resume_decision_payload_contract,
             payload_contracts_pm._pm_resume_decision_payload_contract,

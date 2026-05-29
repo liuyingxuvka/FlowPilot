@@ -1,4 +1,4 @@
-"""Compatibility gate block-event specs derived from the gate registry."""
+"""Gate block-event specs derived from the gate registry."""
 
 from __future__ import annotations
 

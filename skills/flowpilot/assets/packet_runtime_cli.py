@@ -1,4 +1,4 @@
-"""Compatibility facade for FlowPilot packet runtime CLI helpers."""
+"""Public facade for FlowPilot packet runtime CLI helpers."""
 
 from __future__ import annotations
 

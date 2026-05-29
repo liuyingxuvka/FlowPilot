@@ -62,7 +62,7 @@ class State:
     material_scan_packets_observed: bool = False
     material_output_contract_role_scoped: bool = True
     material_dispatch_write_target_explicit: bool = True
-    material_legacy_packets_quarantined_or_migrated: bool = True
+    retired_material_packets_rejected: bool = True
 
     terminal_closure_observed: bool = False
     run_lifecycle_record_written: bool = True

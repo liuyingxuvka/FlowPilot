@@ -1,6 +1,6 @@
 """Coarse events repair owner helpers for the FlowPilot router.
 
-The public compatibility names stay in `flowpilot_router`. This module owns a
+The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
 dependency so shared state writers and public entrypoints remain compatible.
 """
@@ -50,7 +50,7 @@ def _clear_successful_repair_lane_state(router: ModuleType, run_state: dict[str,
     if isinstance(flags, dict) and is_material_repair:
         for flag in MATERIAL_REPAIR_RECHECK_FLAGS:
             flags[flag] = False
-        if event in {'router_direct_material_scan_dispatch_recheck_passed', 'reviewer_allows_material_scan_dispatch'}:
+        if event == 'router_direct_material_scan_dispatch_recheck_passed':
             flags['material_scan_dispatch_blocked'] = False
     if is_material_repair:
         run_state['material_dispatch_block'] = None

@@ -1,4 +1,4 @@
-"""Compatibility facade for packet creation, startup intake, and body handoff helpers."""
+"""Public facade for packet creation, startup intake, and body handoff helpers."""
 
 from __future__ import annotations
 

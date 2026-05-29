@@ -57,7 +57,7 @@ CRITICAL_REVIEWER_GATE_REMOVED = "critical_reviewer_gate_removed"
 RESUME_RESULT_DIRECT_TO_REVIEWER = "resume_result_direct_to_reviewer"
 MATERIAL_RESEARCH_DECISION_WITHOUT_GATE = "material_research_decision_without_gate"
 CONTROLLER_READS_SEALED_BODY = "controller_reads_sealed_body"
-LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE = (
+RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE = (
     "legacy_reviewer_relay_used_as_current_acceptance"
 )
 PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER = "pm_forwarded_raw_package_to_reviewer"
@@ -84,7 +84,7 @@ NEGATIVE_SCENARIOS = (
     RESUME_RESULT_DIRECT_TO_REVIEWER,
     MATERIAL_RESEARCH_DECISION_WITHOUT_GATE,
     CONTROLLER_READS_SEALED_BODY,
-    LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE,
+    RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE,
     PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER,
     PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY,
     PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT,
@@ -406,7 +406,7 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == CONTROLLER_READS_SEALED_BODY:
         return replace(_scenario_base(VALID_CURRENT_NODE_PM_GATE), scenario=scenario, controller_read_sealed_body=True)
-    if scenario == LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE:
+    if scenario == RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE:
         return replace(
             _scenario_base(VALID_CURRENT_NODE_PM_GATE),
             scenario=scenario,

@@ -9,7 +9,6 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-import barrier_bundle
 from controller_process_aside import (
     build_controller_aside,
     controller_process_aside_contract,
@@ -40,7 +39,6 @@ from packet_runtime_ledger import (
     _empty_packet_ledger,
     _packet_ledger_record,
     _update_packet_record,
-    _upsert_barrier_bundle_record,
     _upsert_packet_record,
     packet_ledger_record_for_envelope,
 )
@@ -73,7 +71,6 @@ from packet_runtime_reviewer import validate_for_reviewer
 from packet_runtime_schema import (
     ACTIVE_HOLDER_EVENT_SCHEMA,
     ACTIVE_HOLDER_LEASE_SCHEMA,
-    BARRIER_BUNDLE_SCHEMA,
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
@@ -224,8 +221,6 @@ def write_result(
     )
     if aside is not None:
         result_envelope["controller_aside"] = aside
-    if isinstance(packet_envelope.get("barrier_bundle"), dict):
-        result_envelope["barrier_bundle"] = packet_envelope["barrier_bundle"]
     write_json_atomic(result_envelope_path, result_envelope)
 
     write_controller_status_packet(
@@ -269,8 +264,6 @@ def write_result(
     if aside is not None:
         record["controller_aside"] = aside
         record["result_envelope"]["controller_aside"] = aside
-    if isinstance(packet_envelope.get("barrier_bundle"), dict):
-        record["barrier_bundle"] = packet_envelope["barrier_bundle"]
     if output_contract is not None:
         record["output_contract"] = output_contract
         record["result_envelope"]["output_contract"] = output_contract

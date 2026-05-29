@@ -13,7 +13,7 @@ for review.
    formal FlowPilot invocation. The top level keeps only thin catalog files:
    `current.json` points at the active run, and `index.json` lists all runs for
    Cockpit tabs and audit lookup. Resolve the active run from
-   `current.json -> runs/<run-id>`; old top-level state files are legacy
+   `current.json -> runs/<run-id>`; old top-level state files are archival
    evidence only and must not override the active run.
 3. Copy run-scoped templates into the new run directory and replace template
    placeholders such as `<project-name>`, `<task-summary>`, `<run-id>`, and
@@ -22,7 +22,7 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Ask the three startup questions: background-agent permission,
+5. Ask the native startup intake options: background-agent permission,
    scheduled-continuation permission, and whether to open Cockpit UI. Stop immediately after asking and wait
    for a later user reply. Do not emit the banner, create route state, load
    child skills, spawn subagents, probe heartbeat, run image generation, or

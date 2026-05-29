@@ -268,12 +268,6 @@ def _load_packet_index(router: ModuleType, path: Path, *, label: str) -> dict[st
         raise RouterError(f'{label} packet index requires non-empty packets')
     return index
 
-def _ensure_barrier_bundles_ready(router: ModuleType, project_root: Path, *, node_id: str | None=None) -> None:
-    _bind_router(router)
-    audit = packet_runtime.audit_barrier_bundles(project_root, node_id=node_id or None)
-    if not audit.get('passed'):
-        raise RouterError('barrier bundle audit failed before packet relay: ' + json.dumps(audit.get('blockers', []), sort_keys=True))
-
 def _material_scan_index_path(router: ModuleType, run_root: Path) -> Path:
     _bind_router(router)
     return run_root / 'material' / 'material_scan_packets.json'
@@ -300,7 +294,6 @@ __all__ = (
     '_packet_envelope_path_from_record',
     '_result_envelope_path_from_packet_record',
     '_load_packet_index',
-    '_ensure_barrier_bundles_ready',
     '_material_scan_index_path',
     '_research_packet_index_path',
 )

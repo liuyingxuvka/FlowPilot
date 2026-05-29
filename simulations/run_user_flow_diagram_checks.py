@@ -20,7 +20,6 @@ REQUIRED_LABELS = (
     "trigger_parent_node_entry_chat_required",
     "trigger_leaf_node_entry_chat_required",
     "trigger_pm_work_brief_chat_required",
-    "trigger_key_node_change_chat_required",
     "trigger_route_mutation_cockpit_open",
     "trigger_review_failure_chat_required",
     "trigger_validation_failure_chat_required",

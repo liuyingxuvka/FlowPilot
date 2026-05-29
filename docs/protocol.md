@@ -7,7 +7,7 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask three startup questions: background-agent permission,
+2. Ask native startup intake options: background-agent permission,
    scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
    after these questions. Do not inspect files, start tools, create route state,
    launch subagents, probe heartbeat, or show the banner in the same response.
@@ -23,7 +23,7 @@ branches, heartbeat behavior, and any task-local behavior models.
    `.flowpilot/index.json`. These top-level files are only pointers/catalogs.
    Current control state must live under the run directory. The active-run
    resolver is authoritative: read `.flowpilot/current.json`, then load
-   `.flowpilot/runs/<run-id>/`. Old top-level state files are legacy evidence
+   `.flowpilot/runs/<run-id>/`. Old top-level state files are archival evidence
    only and must not silently override an active run. Continuing prior
    work still creates a new run and writes a
    `.flowpilot/runs/<run-id>/prior_work_import_packet.json`; old state,
@@ -183,7 +183,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     is not enough when the native tool exists.
 36. Emit the simplified English FlowPilot Route Sign Mermaid in chat when this
     is startup, a new major `flow.json` route-node entry, parent/module or leaf
-    route-node entry, PM current-node work brief, legacy key node change, route
+    route-node entry, PM current-node work brief, route
     mutation, review/validation failure return, completion review, or user
     request, unless Cockpit UI is open and showing the same graph. Major node
     means an effective node in the current route/mainline, not an internal
@@ -209,7 +209,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     banner-after-answers evidence, live-subagent startup freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
-    legacy-only, or quarantined and is not being used as current state. It
+    retired-only, or quarantined and is not being used as current state. It
     must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
     route heartbeat automation at one minute when scheduled continuation is
@@ -274,13 +274,13 @@ not be reported as a full formal FlowPilot route unless the showcase gates ran.
 The startup banner is a user-visible launch marker, not route evidence; it
 exists so the user can immediately see when the heavy FlowPilot controller has
 started. The banner is illegal in the same assistant response that asks the
-three startup questions.
+native startup intake options.
 
 Recommended explicit invocation for public docs, README examples, and GitHub
 usage:
 
 ```text
-Use FlowPilot. Ask the startup questions first.
+Use FlowPilot. Ask the startup intake options first.
 ```
 
 FlowPilot invocation only opens the three-question startup prompt. It is not
@@ -414,7 +414,7 @@ The project manager also selects
 route-local compensating fixtures or states for high-risk requirements that the
 live project may not naturally contain: multi-run indexes, terminal-complete
 state, blocked gates, stale/conflicting frontier, missing artifacts, long
-localized text, absent host capability, and legacy or old asset contamination.
+localized text, absent host capability, and old asset contamination.
 Unused relevant scenarios require a PM reason. Scenario evidence feeds node
 plans and final replay; it does not complete a route by itself.
 
@@ -856,7 +856,7 @@ before execution when it starts new work.
 
 Until the desktop Cockpit is available, chat is the temporary cockpit. At
 startup, every new major `flow.json` route-node entry, parent/module or leaf
-route-node entry, PM current-node work brief, legacy key node change, route
+route-node entry, PM current-node work brief, route
 mutation, review or validation failure returns, completion review, or explicit
 user request, emit the same simplified English FlowPilot Route Sign Mermaid
 that the Cockpit UI displays. Do not refresh it on every heartbeat or internal
@@ -897,7 +897,7 @@ gate.
 When `scripts/flowpilot_user_flow_diagram.py` is available, it is the standard
 route-sign hook: generate chat Markdown with
 `--markdown --trigger <trigger> --write` (`major_node_entry` is the preferred
-trigger for ordinary route-node entry; `key_node_change` is a legacy alias),
+trigger for ordinary route-node entry),
 paste that exact clean user-visible block into chat when required, then record
 the reviewer gate with
 `--reviewer-check --mark-chat-displayed --write`. If the script is unavailable,
@@ -959,7 +959,7 @@ recorded, it records the rehydration status and asks the project manager for
 the current `PM_DECISION` and next completion-oriented runway.
 The resolver order is mandatory on heartbeat and manual resume:
 `.flowpilot/current.json` to `.flowpilot/runs/<run-id>/` is authoritative, and
-top-level legacy state must be ignored except as import or quarantine evidence.
+top-level archival state must be ignored except as import or quarantine evidence.
 Route mutations, next-node changes, PM runway changes, packet-holder changes,
 and current-mainline plan updates are persisted in files and then reflected in
 chat/plan output; ordinary route changes should not rewrite the heartbeat

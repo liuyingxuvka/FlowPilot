@@ -25,9 +25,9 @@ Rules:
 - Any card, mail, or packet that asks for a report, result, decision, packet
   spec, or blocker remains active after ACK. It is complete only when Router
   records the named output event.
-- Role-output envelopes should use compact `body_ref` and
-  `runtime_receipt_ref` metadata. Legacy top-level path/hash fields are
-  compatibility inputs.
+- Role-output envelopes must use compact `body_ref` and
+  `runtime_receipt_ref` metadata. Top-level path/hash envelope shortcuts are
+  not current inputs.
 - `quality_pack_catalog.json` is route-quality data. The role-output runtime
   validates generic `quality_pack_checks` coverage only; reviewer/officer/PM
   gates own pack-specific quality judgement.

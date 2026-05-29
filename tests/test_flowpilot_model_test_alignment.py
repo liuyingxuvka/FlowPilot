@@ -60,6 +60,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             [
                 "startup",
                 "packet/card/ack",
+                "packet result family",
                 "route mutation",
                 "terminal/closure/resume",
                 "role/output contracts",
@@ -80,7 +81,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertGreater(diagnostic["surface_count"], 100)
         for kind in (
             "owner_module",
-            "compatibility_facade",
+            "public_facade",
             "script_entrypoint",
             "model_check_runner",
             "test_tier",
@@ -212,12 +213,6 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(surface["has_external_contract"], surface)
                 self.assertNotIn("internal_only_test", surface["gap_codes"])
 
-        model_runner = surfaces["model-check:run_barrier_equivalence_checks"]
-        self.assertTrue(model_runner["has_test"], model_runner)
-        self.assertTrue(model_runner["has_external_contract"], model_runner)
-        self.assertNotIn("missing_test", model_runner["gap_codes"])
-        self.assertNotIn("internal_only_test", model_runner["gap_codes"])
-
         for surface_id in (
             "tier:integration",
             "tier-command:integration:smoke_autopilot_fast",
@@ -307,23 +302,6 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("selected", surface["background_evidence"])
         if surface["evidence_status"] == "release_local_only":
             self.assertIn("rerun_public_release_evidence", surface["repair_types"])
-
-    def test_legacy_full_background_failures_are_reclassified_when_layered_full_is_current(self) -> None:
-        diagnostic = alignment_runner.build_report()["full_model_test_code_diagnostic"]
-        surfaces = {surface["surface_id"]: surface for surface in diagnostic["surfaces"]}
-
-        for surface_id in (
-            "tier-command:legacy-full:meta_legacy_full",
-            "tier-command:legacy-full:capability_legacy_full",
-        ):
-            with self.subTest(surface_id=surface_id):
-                surface = surfaces[surface_id]
-                self.assertEqual(surface["evidence_status"], "legacy_full_reclassified")
-                self.assertEqual(surface["gap_codes"], [])
-                reclassification = surface["legacy_full_reclassification"]
-                self.assertTrue(reclassification["ok"], reclassification)
-                self.assertFalse(reclassification["legacy_monolith_required_for_release"])
-                self.assertTrue(reclassification["layered_full_status"]["valid"])
 
     def test_source_audit_binds_code_contracts_to_real_python_sources(self) -> None:
         report = alignment_runner.build_report()

@@ -60,7 +60,7 @@ class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
                 role="product_flowguard_officer",
                 agent_id="agent-product-officer-hard-gate",
                 run_id="run-test",
-                event_name="product_officer_model_report",
+                event_name="product_officer_submits_product_behavior_model",
             )
 
         self.assertFalse((run_root / "role_outputs").exists())

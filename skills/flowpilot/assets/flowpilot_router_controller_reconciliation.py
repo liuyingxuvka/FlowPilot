@@ -225,12 +225,12 @@ def _controller_ledger_action_view(
         )
     if isinstance(view.get("plain_instruction"), str):
         plain = str(view["plain_instruction"])
-        legacy_startup_intake_apply_instruction = (
+        startup_intake_apply_instruction = (
             "After the UI closes, apply "
             "this pending action with only the returned startup_intake_result.result_path."
         )
         plain = plain.replace(
-            legacy_startup_intake_apply_instruction,
+            startup_intake_apply_instruction,
             "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
         )
         view["plain_instruction"] = plain

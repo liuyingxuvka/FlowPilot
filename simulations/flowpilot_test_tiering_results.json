@@ -19,7 +19,7 @@
     "duplicate_child_owner": [
       "duplicate_child_owner"
     ],
-    "foreground_legacy_full_regression": [
+    "foreground_full_regression": [
       "fast_tier_not_foreground_safe"
     ],
     "hidden_skipped_tests": [
@@ -80,7 +80,7 @@
       "reject_background_progress_only_claimed_pass",
       "reject_coverage_sweep_blocks_fast_tier",
       "reject_duplicate_child_owner",
-      "reject_foreground_legacy_full_regression",
+      "reject_foreground_full_regression",
       "reject_hidden_skipped_tests",
       "reject_install_sync_skipped_after_tool_change",
       "reject_missing_child_owner",
@@ -97,7 +97,7 @@
       "select_background_progress_only_claimed_pass",
       "select_coverage_sweep_blocks_fast_tier",
       "select_duplicate_child_owner",
-      "select_foreground_legacy_full_regression",
+      "select_foreground_full_regression",
       "select_hidden_skipped_tests",
       "select_install_sync_skipped_after_tool_change",
       "select_missing_child_owner",
@@ -140,7 +140,7 @@
       "background_progress_only_claimed_pass",
       "coverage_sweep_blocks_fast_tier",
       "duplicate_child_owner",
-      "foreground_legacy_full_regression",
+      "foreground_full_regression",
       "hidden_skipped_tests",
       "install_sync_skipped_after_tool_change",
       "missing_child_owner",

@@ -1,9 +1,4 @@
-"""Internal router owner helpers extracted from flowpilot_router.
-
-The public compatibility names stay in flowpilot_router. This module is bound to
-that facade before moved helpers execute so legacy private helper lookups remain
-stable while the implementation body lives outside the facade.
-"""
+"""Internal router owner helpers extracted from flowpilot_router."""
 
 from __future__ import annotations
 
@@ -94,7 +89,7 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
             "external_tools_required": False,
             "full_protocol_required_when_flowpilot_invoked": True,
             "source_registry": source_registry,
-            "legacy_inferred_from_functional_acceptance_matrix": True,
+            "inferred_from_functional_acceptance_matrix": True,
         }
     architecture = {
         "schema_version": "flowpilot.product_function_architecture.v1",
@@ -160,21 +155,6 @@ def _write_role_gate_report(
         },
     )
 
-def _write_compatibility_alias_artifact(
-    project_root: Path,
-    source_path: Path,
-    alias_path: Path,
-    *,
-    schema_version: str,
-    alias_kind: str,
-) -> None:
-    artifact = read_json(source_path)
-    artifact["schema_version"] = schema_version
-    artifact["compatibility_alias_kind"] = alias_kind
-    artifact["compatibility_alias_for"] = project_relative(project_root, source_path)
-    artifact["compatibility_alias_recorded_at"] = utc_now()
-    write_json(alias_path, artifact)
-
 def _write_product_behavior_model_report(
     project_root: Path,
     run_root: Path,
@@ -191,13 +171,6 @@ def _write_product_behavior_model_report(
         path=canonical_path,
         schema_version="flowpilot.product_behavior_model.v1",
         checked_paths=[run_root / "product_function_architecture.json"],
-    )
-    _write_compatibility_alias_artifact(
-        project_root,
-        canonical_path,
-        _product_behavior_model_compatibility_report_path(run_root),
-        schema_version="flowpilot.product_architecture_modelability.v1",
-        alias_kind="product_architecture_modelability",
     )
 
 def _write_pm_model_decision(
@@ -295,7 +268,6 @@ def _write_pm_process_route_model_decision(
 __all__ = (
     '_write_product_function_architecture',
     '_write_role_gate_report',
-    '_write_compatibility_alias_artifact',
     '_write_product_behavior_model_report',
     '_write_pm_model_decision',
     '_write_pm_product_behavior_model_decision',

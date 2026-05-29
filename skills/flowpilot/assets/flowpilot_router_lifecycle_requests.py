@@ -1,8 +1,8 @@
-"""Lifecycle request owner compatibility facade for the FlowPilot router.
+"""Lifecycle request owner public facade for the FlowPilot router.
 
 The behavior is split into terminal fencing, terminal reconciliation, lifecycle
 record writing, and exception blocker fallback helpers. Public and private
-compatibility names remain available from this module.
+public names remain available from this module.
 """
 
 from __future__ import annotations

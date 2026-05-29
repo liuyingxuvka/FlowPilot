@@ -342,7 +342,7 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
             "skills/flowpilot/assets/flowpilot_router_facade_imports.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
-        "safe_split_class": "compatibility_facade_import_surface",
+        "safe_split_class": "public_facade_import_surface",
         "recommended_next_action": "monitor_router_facade_import_surface_contracts",
     },
     "flowpilot_router_controller_scheduler_receipts_packet_folds": {
@@ -940,13 +940,6 @@ BACKGROUND_ARTIFACT_ROOTS = (
 BACKGROUND_COMMAND_ARTIFACT_ALIASES = {
     "meta_full": ("meta_full", "run_meta_checks"),
     "capability_full": ("capability_full", "run_capability_checks"),
-    "meta_legacy_full": ("meta_legacy_full", "run_meta_checks"),
-    "capability_legacy_full": ("capability_legacy_full", "run_capability_checks"),
-}
-
-LEGACY_FULL_LAYERED_PARENT = {
-    "meta_legacy_full": "meta",
-    "capability_legacy_full": "capability",
 }
 
 STALE_EVIDENCE_STATUSES = {

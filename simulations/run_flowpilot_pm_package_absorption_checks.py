@@ -32,7 +32,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.RESUME_RESULT_DIRECT_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
     model.MATERIAL_RESEARCH_DECISION_WITHOUT_GATE: "critical PM route/node/material/research decision bypassed reviewer gate",
     model.CONTROLLER_READS_SEALED_BODY: "Controller read sealed packet/result body",
-    model.LEGACY_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE: "PM-issued worker result did not return to project_manager",
+    model.RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE: "PM-issued worker result did not return to project_manager",
     model.PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER: "raw PM-issued worker result reached reviewer before PM gate package",
     model.PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY: "reviewer gate started without PM disposition release and formal gate package identity",
     model.PM_DISPOSITION_WITHOUT_RUNTIME_CONTRACT: "PM package disposition was not bound to the role-output runtime contract",
