@@ -47,7 +47,7 @@ routine checks stay fast while release-grade full regressions remain explicit.
 
 #### Scenario: Routine thin parent validation
 - **WHEN** Meta or Capability parent checks are run without an explicit full-regression flag
-- **THEN** the runner validates the thin-parent evidence contract rather than expanding the legacy full graph
+- **THEN** the runner validates the thin-parent evidence contract rather than expanding the release full graph
 
 #### Scenario: Ledger-owned parent partitions
 - **WHEN** the model hierarchy inventory is built

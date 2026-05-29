@@ -19,7 +19,7 @@ The Router SHALL treat Controller display and user-communication work as
 nonblocking soft records unless that work is explicitly classified as
 workflow-critical external action.
 
-#### Scenario: Display sync is missing a compatibility flag
+#### Scenario: Display sync is missing a display-only marker
 - **WHEN** `sync_display_plan` writes public display state but
   `visible_plan_synced` is missing or false
 - **THEN** Router SHALL NOT escalate the display-only condition to PM repair and
@@ -52,7 +52,7 @@ role-output decisions.
 
 #### Scenario: Display action escalates despite being nonblocking
 - **WHEN** a Controller display/status action is routed to PM repair solely
-  because a display-only marker or compatibility flag is missing
+  because a display-only marker is missing
 - **THEN** the FlowGuard control-plane model SHALL classify the path as an
   invalid escalation
 

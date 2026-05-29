@@ -83,5 +83,5 @@ the reduced branch model and makes ownership clearer.
 
 - **WHEN** branch-pruning implementation changes module structure
 - **THEN** existing Router, receipt, role-output, and runtime-state import
-  surfaces remain compatible until StructureMesh parity evidence proves a safe
-  replacement boundary.
+  surfaces keep the current public contract until StructureMesh parity evidence
+  proves a safe replacement boundary.

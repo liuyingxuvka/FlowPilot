@@ -41,7 +41,6 @@ from packet_runtime_ledger import (
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,
@@ -144,7 +143,6 @@ def router_release_startup_user_intake(
     released_to_role: str = "project_manager",
     source: str = "router_return_settlement_finalizer",
 ) -> dict[str, Any]:
-    envelope.update(normalize_envelope_aliases(envelope))
     if envelope.get("packet_type") != "user_intake":
         raise PacketRuntimeError("router startup release is only valid for user_intake packets")
     if envelope.get("to_role") != released_to_role:

@@ -175,7 +175,7 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
         if unresolved_hard_count != 0:
             issues.append(_artifact_issue("unresolved_hard_finding_count", "self-interrogation record has unresolved hard/current findings", str(payload.get("owner_role") or "project_manager")))
     elif artifact_type == "packet_envelope":
-        envelope = packet_runtime.normalize_envelope_aliases(payload)
+        envelope = dict(payload)
         for field in ("schema_version", "packet_id", "from_role", "to_role", "node_id", "body_path", "body_hash", "body_visibility"):
             if field not in envelope or envelope.get(field) in (None, ""):
                 issues.append(_artifact_issue(field, "missing required packet envelope field", str(envelope.get("from_role") or "project_manager")))
@@ -191,7 +191,7 @@ def validate_artifact(project_root: Path, artifact_type: str, artifact_path: str
             for blocker in audit.get("blockers") or []:
                 issues.append(_artifact_issue("direct_dispatch_preflight", str(blocker), str(envelope.get("from_role") or "project_manager")))
     elif artifact_type == "result_envelope":
-        envelope = packet_runtime.normalize_envelope_aliases(payload)
+        envelope = dict(payload)
         for field in ("schema_version", "packet_id", "completed_by_role", "result_body_path", "result_body_hash", "next_recipient", "body_visibility"):
             if field not in envelope or envelope.get(field) in (None, ""):
                 issues.append(_artifact_issue(field, "missing required result envelope field", str(envelope.get("completed_by_role") or "worker")))

@@ -30,6 +30,10 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_CURRENT_NODE_PACKET_REQUIRED_FIELDS = ("body_path", "body_hash")
+_CURRENT_NODE_PACKET_RETIRED_ALIAS_FIELDS = ("packet_body_path", "packet_body_hash")
+_CURRENT_NODE_RESULT_REQUIRED_FIELDS = ("result_body_path", "result_body_hash", "next_recipient")
+_CURRENT_NODE_RESULT_RETIRED_ALIAS_FIELDS = ("body_path", "body_hash", "to_role")
 
 
 def _bind_router(router: ModuleType) -> None:
@@ -42,8 +46,24 @@ def _bind_router(router: ModuleType) -> None:
             continue
         current[name] = value
 
+def _require_current_envelope_fields(envelope: dict[str, Any], *, label: str, required_fields: Iterable[str], retired_alias_fields: Iterable[str]) -> None:
+    missing = [field for field in required_fields if envelope.get(field) in (None, "")]
+    if missing:
+        raise RouterError(f"{label} requires current envelope fields: {', '.join(missing)}")
+    retired = [field for field in retired_alias_fields if field in envelope]
+    if retired:
+        raise RouterError(f"{label} uses retired envelope alias fields: {', '.join(retired)}")
+
 def _validate_current_node_packet_envelope(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], envelope: dict[str, Any], envelope_path: Path, frontier: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
+    if envelope.get('schema_version') != packet_runtime.PACKET_ENVELOPE_SCHEMA:
+        raise RouterError('current-node packet envelope schema_version is invalid')
+    _require_current_envelope_fields(
+        envelope,
+        label='current-node packet envelope',
+        required_fields=_CURRENT_NODE_PACKET_REQUIRED_FIELDS,
+        retired_alias_fields=_CURRENT_NODE_PACKET_RETIRED_ALIAS_FIELDS,
+    )
     active_bindings = router._active_child_skill_bindings_from_plan(plan)
     active_binding_source_paths = router._active_child_skill_source_paths(active_bindings)
     active_node = frontier.get('active_node_id')
@@ -129,6 +149,14 @@ def _validate_current_node_result_event(router: ModuleType, project_root: Path, 
     if not result_path.exists():
         raise RouterError(f'current-node result envelope is missing: {result_path}')
     result = packet_runtime.load_envelope(project_root, result_path)
+    if result.get('schema_version') != packet_runtime.RESULT_ENVELOPE_SCHEMA:
+        raise RouterError('current-node result envelope schema_version is invalid')
+    _require_current_envelope_fields(
+        result,
+        label='current-node result envelope',
+        required_fields=_CURRENT_NODE_RESULT_REQUIRED_FIELDS,
+        retired_alias_fields=_CURRENT_NODE_RESULT_RETIRED_ALIAS_FIELDS,
+    )
     grant_records = grant.get('grants') if isinstance(grant.get('grants'), list) else [grant]
     grant_by_packet_id = {str(item.get('packet_id')): item for item in grant_records if isinstance(item, dict)}
     result_packet_id = str(result.get('packet_id') or '')

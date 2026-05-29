@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from packet_runtime_paths import (
-    normalize_envelope_aliases,
     packet_paths_from_result_envelope,
     project_relative,
     read_json,
@@ -23,8 +22,8 @@ def validate_for_reviewer(
     result_envelope: dict[str, Any],
     agent_role_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    packet_envelope = normalize_envelope_aliases(packet_envelope)
-    result_envelope = normalize_envelope_aliases(result_envelope)
+    packet_envelope = dict(packet_envelope)
+    result_envelope = dict(result_envelope)
     blockers: list[str] = []
     packet_body_hash_matches = verify_body_hash(project_root, packet_envelope["body_path"], packet_envelope["body_hash"])
     result_body_hash_matches = verify_body_hash(

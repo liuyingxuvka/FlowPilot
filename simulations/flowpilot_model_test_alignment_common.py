@@ -138,6 +138,8 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_controller_scheduler_ledgers_ownership",
     "asset:flowpilot_router_controller_scheduler_ledgers_scheduler",
     "asset:flowpilot_router_controller_scheduler_wait_targets",
+    "asset:flowpilot_router_controller_scheduler_standby_task",
+    "asset:flowpilot_router_controller_wait_audit_scanners",
     "asset:flowpilot_router_event_identity",
     "asset:flowpilot_router_event_identity_payload",
     "asset:flowpilot_router_event_identity_replay",
@@ -231,6 +233,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_system_cards_selection_reconcile",
     "asset:flowpilot_router_system_cards_selection_tokens",
     "asset:flowpilot_router_daemon_runtime_diagnostics",
+    "asset:flowpilot_router_daemon_runtime_lock",
     "asset:flowpilot_router_work_packets_current_node",
     "asset:flowpilot_router_work_packets_current_node_paths",
     "asset:flowpilot_router_work_packets_current_node_relay",
@@ -251,6 +254,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_user_flow_diagram_cli",
     "asset:flowpilot_user_flow_diagram_generate",
     "asset:flowpilot_controller_break_glass_cli",
+    "asset:flowpilot_controller_break_glass_core",
     "asset:flowpilot_controller_break_glass_recovery",
     "asset:packet_control_plane_model_invariants_dispatch",
     "asset:packet_control_plane_model_invariants_handoff",
@@ -269,6 +273,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:role_output_runtime_schema_payload",
     "asset:role_output_runtime_schema_quality",
     "asset:role_output_runtime_schema_specs",
+    "asset:role_output_runtime_envelope_receipts",
 }
 
 SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS = {
@@ -291,6 +296,7 @@ ASSET_MODEL_BINDING_PREFIXES = {
 }
 
 ASSET_MODEL_BINDING_STEMS = {
+    "flowpilot_controller_break_glass_core": "controller_break_glass_runtime_contracts",
     "flowpilot_controller_break_glass_cli": "controller_break_glass_runtime_contracts",
     "flowpilot_controller_break_glass_recovery": "recovery_supervisor_contracts",
     "flowpilot_router_daemon_runtime_diagnostics": "router_daemon_runtime_architecture",
@@ -923,6 +929,56 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
         "safe_split_class": "cli_facade",
         "recommended_next_action": "monitor_packet_cli_child_contracts",
+    },
+    "flowpilot_controller_break_glass": {
+        "split_status": "completed_split",
+        "split_reason": "core_data_path_validation_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_controller_break_glass_core.py",
+        ),
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "monitor_break_glass_core_child_contracts",
+    },
+    "flowpilot_router_controller_scheduler_standby": {
+        "split_status": "completed_split",
+        "split_reason": "continuous_standby_task_payload_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby_task.py",
+        ),
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "safe_split_class": "runtime_scheduler_wait_helper",
+        "recommended_next_action": "monitor_standby_task_child_contracts",
+    },
+    "flowpilot_router_controller_wait_audit": {
+        "split_status": "completed_split",
+        "split_reason": "controller_wait_receipt_metadata_scanners_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_controller_wait_audit_scanners.py",
+        ),
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "safe_split_class": "runtime_scheduler_wait_helper",
+        "recommended_next_action": "monitor_wait_audit_scanner_child_contracts",
+    },
+    "flowpilot_router_daemon_runtime": {
+        "split_status": "completed_split",
+        "split_reason": "run_root_resolution_and_daemon_lock_lifecycle_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
+        ),
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "monitor_daemon_lock_child_contracts",
+    },
+    "role_output_runtime_envelopes": {
+        "split_status": "completed_split",
+        "split_reason": "runtime_receipt_validation_and_envelope_lookup_helpers_extracted",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/role_output_runtime_envelope_receipts.py",
+        ),
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "safe_split_class": "stateful_runtime_flow",
+        "recommended_next_action": "monitor_role_output_receipt_child_contracts",
     },
 }
 

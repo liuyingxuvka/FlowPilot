@@ -325,7 +325,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -341,12 +341,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "progress_only",
                     "route_evidence_current": true,
                     "route_gap_codes": [],
@@ -391,7 +391,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -407,12 +407,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "progress_only",
                     "route_evidence_current": true,
                     "route_gap_codes": [],
@@ -435,121 +435,13 @@
               "message": "defect-family gate has no current passing proof evidence",
               "metadata": {},
               "severity": "blocker"
-            },
-            {
-              "code": "legacy_path_proof_artifact_not_passing",
-              "evidence_id": "",
-              "gate_id": "defect_family:worker_self_check_failure",
-              "message": "proof artifact status is progress_only",
-              "metadata": {
-                "legacy_path": {
-                  "code": "legacy_path_proof_artifact_not_passing",
-                  "message": "proof artifact status is progress_only",
-                  "metadata": {
-                    "disposition": "blocked",
-                    "in_scope": true,
-                    "metadata": {},
-                    "out_of_scope_reason": "",
-                    "parent_entry_ids": [],
-                    "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts",
-                    "proof_artifact": {
-                      "artifact_fingerprints": {
-                        "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
-                      },
-                      "artifact_id": "artifact:defect_family:worker_self_check_failure",
-                      "assertion_scope": "external_contract",
-                      "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
-                      "covered_obligation_ids": [
-                        "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
-                        "proof:defect_family:worker_self_check_failure",
-                        "known_friction.worker_self_check_failure"
-                      ],
-                      "current": true,
-                      "exit_code": 1,
-                      "finished_at": "",
-                      "metadata": {
-                        "friction_id": "known_friction.worker_self_check_failure",
-                        "result_paths": [
-                          "simulations/flowpilot_control_plane_friction_checks_results.json"
-                        ]
-                      },
-                      "producer_route": "known_friction_regression_matrix",
-                      "progress_only": false,
-                      "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
-                      "result_status": "progress_only",
-                      "route_evidence_current": true,
-                      "route_gap_codes": [],
-                      "stale_reasons": [],
-                      "started_at": ""
-                    },
-                    "rationale": "Forbidden historical shortcuts remain blocked by the current proof artifact.",
-                    "repaired_contract_id": "control_plane_friction.pm_package_disposition_packet_outcomes_missing"
-                  },
-                  "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts"
-                }
-              },
-              "severity": "blocker"
-            },
-            {
-              "code": "legacy_path_proof_artifact_nonzero_exit",
-              "evidence_id": "",
-              "gate_id": "defect_family:worker_self_check_failure",
-              "message": "proof artifact exit code is 1",
-              "metadata": {
-                "legacy_path": {
-                  "code": "legacy_path_proof_artifact_nonzero_exit",
-                  "message": "proof artifact exit code is 1",
-                  "metadata": {
-                    "disposition": "blocked",
-                    "in_scope": true,
-                    "metadata": {},
-                    "out_of_scope_reason": "",
-                    "parent_entry_ids": [],
-                    "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts",
-                    "proof_artifact": {
-                      "artifact_fingerprints": {
-                        "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
-                      },
-                      "artifact_id": "artifact:defect_family:worker_self_check_failure",
-                      "assertion_scope": "external_contract",
-                      "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
-                      "covered_obligation_ids": [
-                        "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
-                        "proof:defect_family:worker_self_check_failure",
-                        "known_friction.worker_self_check_failure"
-                      ],
-                      "current": true,
-                      "exit_code": 1,
-                      "finished_at": "",
-                      "metadata": {
-                        "friction_id": "known_friction.worker_self_check_failure",
-                        "result_paths": [
-                          "simulations/flowpilot_control_plane_friction_checks_results.json"
-                        ]
-                      },
-                      "producer_route": "known_friction_regression_matrix",
-                      "progress_only": false,
-                      "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
-                      "result_status": "progress_only",
-                      "route_evidence_current": true,
-                      "route_gap_codes": [],
-                      "stale_reasons": [],
-                      "started_at": ""
-                    },
-                    "rationale": "Forbidden historical shortcuts remain blocked by the current proof artifact.",
-                    "repaired_contract_id": "control_plane_friction.pm_package_disposition_packet_outcomes_missing"
-                  },
-                  "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts"
-                }
-              },
-              "severity": "blocker"
             }
           ],
           "ok": false,
           "passed_gate_ids": [],
           "plan_id": "flowpilot_known_friction_defect_families",
           "scoped_gate_ids": [],
-          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_not_passing findings=6"
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_not_passing findings=4"
         },
         "ok": false,
         "risk_ledger_plan": {
@@ -603,7 +495,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -619,12 +511,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "progress_only",
                     "route_evidence_current": true,
                     "route_gap_codes": [],
@@ -656,7 +548,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -672,12 +564,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "progress_only",
                     "route_evidence_current": true,
                     "route_gap_codes": [],
@@ -897,7 +789,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -913,12 +805,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "passed",
                     "route_evidence_current": false,
                     "route_gap_codes": [],
@@ -941,67 +833,13 @@
               "message": "defect-family gate has no current passing proof evidence",
               "metadata": {},
               "severity": "blocker"
-            },
-            {
-              "code": "legacy_path_stale_proof_artifact",
-              "evidence_id": "",
-              "gate_id": "defect_family:worker_self_check_failure",
-              "message": "proof artifact or its route evidence is stale",
-              "metadata": {
-                "legacy_path": {
-                  "code": "legacy_path_stale_proof_artifact",
-                  "message": "proof artifact or its route evidence is stale",
-                  "metadata": {
-                    "disposition": "blocked",
-                    "in_scope": true,
-                    "metadata": {},
-                    "out_of_scope_reason": "",
-                    "parent_entry_ids": [],
-                    "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts",
-                    "proof_artifact": {
-                      "artifact_fingerprints": {
-                        "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
-                      },
-                      "artifact_id": "artifact:defect_family:worker_self_check_failure",
-                      "assertion_scope": "external_contract",
-                      "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
-                      "covered_obligation_ids": [
-                        "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
-                        "proof:defect_family:worker_self_check_failure",
-                        "known_friction.worker_self_check_failure"
-                      ],
-                      "current": false,
-                      "exit_code": 0,
-                      "finished_at": "",
-                      "metadata": {
-                        "friction_id": "known_friction.worker_self_check_failure",
-                        "result_paths": [
-                          "simulations/flowpilot_control_plane_friction_checks_results.json"
-                        ]
-                      },
-                      "producer_route": "known_friction_regression_matrix",
-                      "progress_only": false,
-                      "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
-                      "result_status": "passed",
-                      "route_evidence_current": false,
-                      "route_gap_codes": [],
-                      "stale_reasons": [],
-                      "started_at": ""
-                    },
-                    "rationale": "Forbidden historical shortcuts remain blocked by the current proof artifact.",
-                    "repaired_contract_id": "control_plane_friction.pm_package_disposition_packet_outcomes_missing"
-                  },
-                  "path_id": "known_friction.worker_self_check_failure:legacy-forbidden-shortcuts"
-                }
-              },
-              "severity": "blocker"
             }
           ],
           "ok": false,
           "passed_gate_ids": [],
           "plan_id": "flowpilot_known_friction_defect_families",
           "scoped_gate_ids": [],
-          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=stale_defect_family_proof findings=4"
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=stale_defect_family_proof findings=3"
         },
         "ok": false,
         "risk_ledger_plan": {
@@ -1057,7 +895,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_checks_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -1073,12 +911,12 @@
                     "metadata": {
                       "friction_id": "known_friction.worker_self_check_failure",
                       "result_paths": [
-                        "simulations/flowpilot_control_plane_friction_checks_results.json"
+                        "simulations/flowpilot_control_plane_friction_results.json"
                       ]
                     },
                     "producer_route": "known_friction_regression_matrix",
                     "progress_only": false,
-                    "result_path": "simulations/flowpilot_control_plane_friction_checks_results.json",
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
                     "result_status": "passed",
                     "route_evidence_current": false,
                     "route_gap_codes": [],

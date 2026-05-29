@@ -12,8 +12,8 @@ while delegating source-of-truth entry construction to a child module.
 
 - **WHEN** terminal final ledger construction asks for root replay, route node,
   superseded node, child-skill, evidence, and generated-resource entries
-- **THEN** the returned entry shapes and gate families SHALL remain compatible
-  with the existing final ledger behavior
+- **THEN** the returned entry shapes and gate families SHALL keep the current
+  final ledger behavior contract
 - **AND** the parent facade helper names SHALL remain available
 
 #### Scenario: Child boundary has direct evidence

@@ -3,13 +3,13 @@
 ## Purpose
 TBD - created by archiving change prune-controller-standby-state-policy. Update Purpose after archive.
 ## Requirements
-### Requirement: Standby state policy is centralized and compatible
+### Requirement: Standby state policy is centralized and stable
 
 FlowPilot SHALL derive foreground Controller standby state, foreground mode,
 return permission, patrol requirement, and final-answer preflight from a single
 internal state-policy boundary while preserving existing public payload fields.
 
-#### Scenario: State names remain compatible
+#### Scenario: Current state names remain stable
 
 - **WHEN** standby observes terminal, user input, daemon liveness, Controller
   action ready, wait-target blocker, wait-target reissue, wait-target check,

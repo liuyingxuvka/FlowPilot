@@ -8,7 +8,6 @@ from typing import Any
 from packet_runtime_contracts import normalize_output_contract
 from packet_runtime_ledger import packet_ledger_record_for_envelope
 from packet_runtime_paths import (
-    normalize_envelope_aliases,
     packet_paths_from_envelope,
     packet_paths_from_result_envelope,
     project_relative,
@@ -39,7 +38,7 @@ def _same_project_path(project_root: Path, left: str | None, right: str | None) 
 
 
 def verify_packet_open_receipt(project_root: Path, packet_envelope: dict[str, Any], *, role: str) -> dict[str, Any]:
-    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    packet_envelope = dict(packet_envelope)
     opened = packet_envelope.get("body_opened_by_role")
     if (
         not isinstance(opened, dict)
@@ -96,7 +95,7 @@ def validate_packet_ready_for_direct_relay(
     envelope_path: str | Path | None = None,
     allowed_target_roles: set[str] | list[str] | tuple[str, ...] | None = None,
 ) -> dict[str, Any]:
-    envelope = normalize_envelope_aliases(packet_envelope)
+    envelope = dict(packet_envelope)
     blockers: list[str] = []
     missing_fields = [field for field in DIRECT_DISPATCH_PACKET_REQUIRED_FIELDS if field not in envelope or envelope.get(field) in (None, "")]
     if missing_fields:
@@ -241,8 +240,8 @@ def validate_result_ready_for_recipient_relay(
     result_envelope: dict[str, Any],
     agent_role_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    packet_envelope = normalize_envelope_aliases(packet_envelope)
-    result_envelope = normalize_envelope_aliases(result_envelope)
+    packet_envelope = dict(packet_envelope)
+    result_envelope = dict(result_envelope)
     blockers: list[str] = []
     expected_role = packet_envelope.get("to_role")
     completed_by_role = result_envelope.get("completed_by_role")
@@ -332,12 +331,14 @@ def validate_result_ready_for_reviewer_relay(
     result_envelope: dict[str, Any],
     agent_role_map: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    return validate_result_ready_for_recipient_relay(
+    audit = validate_result_ready_for_recipient_relay(
         project_root,
         packet_envelope=packet_envelope,
         result_envelope=result_envelope,
         agent_role_map=agent_role_map,
     )
+    audit["recipient_neutral_schema_version"] = audit["schema_version"]
+    return audit
 
 
 def verify_router_startup_release(

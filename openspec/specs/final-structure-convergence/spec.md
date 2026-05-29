@@ -3,10 +3,10 @@
 ## Purpose
 TBD - created by archiving change final-flowpilot-structure-convergence. Update Purpose after archive.
 ## Requirements
-### Requirement: Compatibility-Preserving Final Structure
+### Requirement: Current Public Structure Converges
 
 FlowPilot SHALL complete remaining Python structure convergence through
-compatibility-preserving module splits.
+current public-entrypoint-preserving module splits.
 
 #### Scenario: Public entrypoints stay stable
 
@@ -29,8 +29,8 @@ source into domain-owned modules without losing coverage.
 - **WHEN** domain modules are generated or maintained
 - **THEN** every aggregate test SHALL be present in exactly one domain
 - **AND** no domain SHALL include unknown or duplicate test names
-- **AND** the aggregate compatibility entrypoint SHALL either load the domain
-  suites or remain a thin compatibility layer until explicitly retired.
+- **AND** the aggregate test entrypoint SHALL either load the domain suites or
+  be replaced by a documented current runner after parity evidence exists.
 
 ### Requirement: Child FlowGuard Models Remain Semantically Equivalent
 

@@ -14,315 +14,24 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": false,
+  "full_coverage_ok": true,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_controller_break_glass",
-        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_controller_break_glass",
-        "surface_owner": "flowpilot_controller_break_glass"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
-        "kind": "public_facade",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_controller_scheduler_standby",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
-        "surface_owner": "flowpilot_router_controller_scheduler_standby"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_controller_wait_audit",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_wait_audit",
-        "surface_owner": "flowpilot_router_controller_wait_audit"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_daemon_runtime",
-        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_daemon_runtime",
-        "surface_owner": "flowpilot_router_daemon_runtime"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
-        "name": "role_output_runtime_envelopes",
-        "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:role_output_runtime_envelopes",
-        "surface_owner": "role_output_runtime_envelopes"
-      }
-    ],
-    "actionable_summary": [
-      {
-        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_controller_break_glass.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_controller_break_glass"
-        ],
-        "surface_owner": "flowpilot_controller_break_glass"
-      },
-      {
-        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_controller_scheduler_standby"
-        ],
-        "surface_owner": "flowpilot_router_controller_scheduler_standby"
-      },
-      {
-        "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_controller_wait_audit"
-        ],
-        "surface_owner": "flowpilot_router_controller_wait_audit"
-      },
-      {
-        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_daemon_runtime"
-        ],
-        "surface_owner": "flowpilot_router_daemon_runtime"
-      },
-      {
-        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/role_output_runtime_envelopes.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:role_output_runtime_envelopes"
-        ],
-        "surface_owner": "role_output_runtime_envelopes"
-      }
-    ],
-    "covered_surface_count": 875,
-    "deferred_structure_split_count": 5,
+    "actionable_findings": [],
+    "actionable_summary": [],
+    "covered_surface_count": 887,
+    "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
-    "findings": [
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_controller_break_glass|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_controller_break_glass has 603 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_controller_break_glass",
-        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_controller_break_glass",
-        "surface_owner": "flowpilot_controller_break_glass"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_wait_audit|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_controller_wait_audit has 539 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_controller_wait_audit",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_wait_audit",
-        "surface_owner": "flowpilot_router_controller_wait_audit"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_daemon_runtime|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_daemon_runtime has 488 lines, above the 450 line diagnostic threshold",
-        "name": "flowpilot_router_daemon_runtime",
-        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_daemon_runtime",
-        "surface_owner": "flowpilot_router_daemon_runtime"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "role_output_runtime_envelopes|defer_structure_split|needs_structure_split",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "role_output_runtime_envelopes has 464 lines, above the 450 line diagnostic threshold",
-        "name": "role_output_runtime_envelopes",
-        "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:role_output_runtime_envelopes",
-        "surface_owner": "role_output_runtime_envelopes"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_controller_scheduler_standby|defer_structure_split|needs_structure_split",
-        "kind": "public_facade",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_controller_scheduler_standby has 394 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_controller_scheduler_standby",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
-        "surface_owner": "flowpilot_router_controller_scheduler_standby"
-      }
-    ],
-    "full_coverage_ok": false,
-    "gap_counts": {
-      "needs_structure_split": 5
-    },
-    "gap_counts_by_release_relevance": {
-      "runtime_contract": 5
-    },
-    "gap_counts_by_repair_type": {
-      "defer_structure_split": 5
-    },
-    "gap_counts_by_severity": {
-      "medium": 5
-    },
-    "gap_surface_count": 5,
+    "findings": [],
+    "full_coverage_ok": true,
+    "gap_counts": {},
+    "gap_counts_by_release_relevance": {},
+    "gap_counts_by_repair_type": {},
+    "gap_counts_by_severity": {},
+    "gap_surface_count": 0,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -514,12 +223,12 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 880,
+    "surface_count": 887,
     "surface_counts": {
-      "model_check_runner": 106,
+      "model_check_runner": 108,
       "model_check_runner_helper": 19,
-      "owner_module": 268,
-      "public_facade": 111,
+      "owner_module": 272,
+      "public_facade": 112,
       "script_entrypoint": 19,
       "test_tier": 15,
       "test_tier_command": 342
@@ -634,6 +343,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_card_envelope_checks",
         "surface_owner": "model-check:run_flowpilot_card_envelope_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 415,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_compatibility_layer_pruning_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_compatibility_layer_pruning_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_compatibility_layer_pruning_checks",
+        "surface_owner": "model-check:run_flowpilot_compatibility_layer_pruning_checks"
       },
       {
         "covered": true,
@@ -1129,7 +860,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 283,
+        "line_count": 282,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_dynamic_return_path_checks",
@@ -1789,7 +1520,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 373,
+        "line_count": 376,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_prompt_boundary_checks",
@@ -2581,6 +2312,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 187,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_validation_artifact_canonicalization_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_validation_artifact_canonicalization_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_validation_artifact_canonicalization_checks",
+        "surface_owner": "model-check:run_flowpilot_validation_artifact_canonicalization_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 166,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -3106,7 +2859,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 297,
+        "line_count": 294,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3130,7 +2883,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 447,
+        "line_count": 397,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3143,7 +2896,7 @@
         "surface_id": "model-check-helper:flowpilot_model_hierarchy_checks_runner_inventory",
         "surface_owner": "model-check:flowpilot_model_hierarchy_checks_runner_inventory",
         "top_level_class_count": 0,
-        "top_level_function_count": 13
+        "top_level_function_count": 12
       },
       {
         "covered": true,
@@ -3202,7 +2955,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 329,
+        "line_count": 325,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3506,44 +3259,42 @@
         "top_level_function_count": 11
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
-        "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_controller_break_glass_core.py"
         ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 603,
+        "line_count": 372,
         "local_import_count": 3,
-        "max_severity": "medium",
+        "max_severity": "none",
         "model_binding": null,
         "name": "flowpilot_controller_break_glass",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
         "recent_owner_context": [
           "bd83ae52",
           "435292eb",
           "c874e8b3"
         ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "recommended_next_action": "monitor_break_glass_core_child_contracts",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
+        "repair_types": [],
         "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "split_reason": "core_data_path_validation_helpers_extracted",
+        "split_status": "completed_split",
         "split_threshold": 450,
         "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_controller_break_glass",
         "surface_owner": "flowpilot_controller_break_glass",
         "top_level_class_count": 0,
-        "top_level_function_count": 30
+        "top_level_function_count": 8
       },
       {
         "covered": true,
@@ -3568,6 +3319,30 @@
         "surface_owner": "flowpilot_controller_break_glass_cli",
         "top_level_class_count": 0,
         "top_level_function_count": 3
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 245,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "controller_break_glass_runtime_contracts",
+        "name": "flowpilot_controller_break_glass_core",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_core.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_controller_break_glass_core",
+        "surface_owner": "flowpilot_controller_break_glass_core",
+        "top_level_class_count": 0,
+        "top_level_function_count": 22
       },
       {
         "covered": true,
@@ -4916,84 +4691,90 @@
         "top_level_function_count": 2
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 539,
-        "local_import_count": 1,
-        "max_severity": "medium",
+        "line_count": 130,
+        "local_import_count": 2,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_controller_wait_audit",
+        "name": "flowpilot_router_controller_scheduler_standby_task",
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby_task.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 450,
-        "structure_split_status": "deferred",
-        "surface_id": "asset:flowpilot_router_controller_wait_audit",
-        "surface_owner": "flowpilot_router_controller_wait_audit",
+        "surface_id": "asset:flowpilot_router_controller_scheduler_standby_task",
+        "surface_owner": "flowpilot_router_controller_scheduler_standby_task",
         "top_level_class_count": 0,
-        "top_level_function_count": 22
+        "top_level_function_count": 4
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 488,
+        "line_count": 372,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_wait_audit_scanners",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit_scanners.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_controller_wait_audit_scanners",
+        "surface_owner": "flowpilot_router_controller_wait_audit_scanners",
+        "top_level_class_count": 0,
+        "top_level_function_count": 21
+      },
+      {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py"
+        ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 422,
         "local_import_count": 2,
-        "max_severity": "medium",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_daemon_runtime",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
         "recent_owner_context": [
           "bd83ae52",
           "435292eb",
           "c874e8b3"
         ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "recommended_next_action": "monitor_daemon_lock_child_contracts",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
+        "repair_types": [],
         "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "split_reason": "run_root_resolution_and_daemon_lock_lifecycle_extracted",
+        "split_status": "completed_split",
         "split_threshold": 450,
         "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_daemon_runtime",
         "surface_owner": "flowpilot_router_daemon_runtime",
         "top_level_class_count": 0,
-        "top_level_function_count": 20
+        "top_level_function_count": 15
       },
       {
         "covered": true,
@@ -5018,6 +4799,30 @@
         "surface_owner": "flowpilot_router_daemon_runtime_diagnostics",
         "top_level_class_count": 0,
         "top_level_function_count": 2
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 128,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_daemon_runtime_lock",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_daemon_runtime_lock",
+        "surface_owner": "flowpilot_router_daemon_runtime_lock",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -9018,7 +8823,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 418,
+        "line_count": 408,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -9306,7 +9111,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 193,
+        "line_count": 192,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9354,7 +9159,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 221,
+        "line_count": 220,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9489,7 +9294,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 370,
+        "line_count": 369,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9513,7 +9318,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 267,
+        "line_count": 265,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9537,7 +9342,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 284,
+        "line_count": 282,
         "local_import_count": 10,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9585,7 +9390,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 147,
+        "line_count": 131,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9598,7 +9403,7 @@
         "surface_id": "asset:packet_runtime_paths",
         "surface_owner": "packet_runtime_paths",
         "top_level_class_count": 0,
-        "top_level_function_count": 12
+        "top_level_function_count": 11
       },
       {
         "covered": true,
@@ -9609,7 +9414,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 243,
+        "line_count": 242,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9633,7 +9438,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 194,
+        "line_count": 192,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9657,7 +9462,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 396,
+        "line_count": 397,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9681,7 +9486,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 305,
+        "line_count": 303,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9705,7 +9510,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 172,
+        "line_count": 171,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -9841,44 +9646,66 @@
         "top_level_function_count": 2
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 464,
-        "local_import_count": 4,
-        "max_severity": "medium",
+        "line_count": 127,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "role_output_runtime_architecture",
+        "name": "role_output_runtime_envelope_receipts",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/role_output_runtime_envelope_receipts.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:role_output_runtime_envelope_receipts",
+        "surface_owner": "role_output_runtime_envelope_receipts",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
+      },
+      {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/role_output_runtime_envelope_receipts.py"
+        ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 362,
+        "local_import_count": 5,
+        "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
         "name": "role_output_runtime_envelopes",
         "parse_error": "",
         "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
         "recent_owner_context": [
           "bd83ae52",
           "435292eb",
           "c874e8b3"
         ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "recommended_next_action": "monitor_role_output_receipt_child_contracts",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
+        "repair_types": [],
         "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "split_reason": "runtime_receipt_validation_and_envelope_lookup_helpers_extracted",
+        "split_status": "completed_split",
         "split_threshold": 450,
         "structure_split_status": "deferred",
         "surface_id": "asset:role_output_runtime_envelopes",
         "surface_owner": "role_output_runtime_envelopes",
         "top_level_class_count": 0,
-        "top_level_function_count": 12
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -10741,44 +10568,42 @@
         "top_level_function_count": 7
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
-        "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby_task.py"
         ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 394,
-        "local_import_count": 3,
-        "max_severity": "medium",
+        "line_count": 312,
+        "local_import_count": 4,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_scheduler_standby",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby.py",
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
         "recent_owner_context": [
           "bd83ae52",
           "435292eb",
           "c874e8b3"
         ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
+        "recommended_next_action": "monitor_standby_task_child_contracts",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "public_facade",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
+        "safe_split_class": "runtime_scheduler_wait_helper",
+        "split_reason": "continuous_standby_task_payload_helpers_extracted",
+        "split_status": "completed_split",
         "split_threshold": 320,
         "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_controller_scheduler_standby",
         "surface_owner": "flowpilot_router_controller_scheduler_standby",
         "top_level_class_count": 0,
-        "top_level_function_count": 12
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -10842,6 +10667,44 @@
         "surface_owner": "flowpilot_router_controller_scheduler_waits",
         "top_level_class_count": 0,
         "top_level_function_count": 0
+      },
+      {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_router_controller_wait_audit_scanners.py"
+        ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "public_facade",
+        "line_count": 187,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_wait_audit",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_wait_audit.py",
+        "peer_safety_status": "claimed_by_converge_new_only_maintenance_cleanup",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "monitor_wait_audit_scanner_child_contracts",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "safe_split_class": "runtime_scheduler_wait_helper",
+        "split_reason": "controller_wait_receipt_metadata_scanners_extracted",
+        "split_status": "completed_split",
+        "split_threshold": 320,
+        "structure_split_status": "deferred",
+        "surface_id": "asset:flowpilot_router_controller_wait_audit",
+        "surface_owner": "flowpilot_router_controller_wait_audit",
+        "top_level_class_count": 0,
+        "top_level_function_count": 1
       },
       {
         "covered": true,
@@ -11391,7 +11254,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 221,
+        "line_count": 220,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11480,7 +11343,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 175,
+        "line_count": 172,
         "local_import_count": 10,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12096,7 +11959,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 262,
+        "line_count": 261,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12715,7 +12578,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 274,
+        "line_count": 302,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12728,7 +12591,7 @@
         "surface_id": "asset:flowpilot_router_work_packets_current_node_validation",
         "surface_owner": "flowpilot_router_work_packets_current_node_validation",
         "top_level_class_count": 0,
-        "top_level_function_count": 9
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -13160,7 +13023,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 129,
+        "line_count": 128,
         "local_import_count": 13,
         "max_severity": "none",
         "model_binding": null,
@@ -13296,7 +13159,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 155,
+        "line_count": 217,
         "max_severity": "none",
         "model_binding": "validation_artifact_audit",
         "name": "audit_validation_artifacts",
@@ -13626,7 +13489,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 477,
+        "line_count": 478,
         "max_severity": "none",
         "model_binding": "coverage_sweep_runner",
         "name": "run_flowguard_coverage_sweep",
@@ -21269,18 +21132,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": null,
-              "meta_status": null,
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
-              "progress_seen": false,
+              "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "missing_meta",
-                "missing_exit"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -21410,18 +21270,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": null,
-              "meta_status": null,
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
-              "progress_seen": false,
+              "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "missing_meta",
-                "missing_exit"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
@@ -27374,6 +27231,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27386,6 +27244,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": []
       },
       "report": {
@@ -27409,6 +27271,7 @@
               "obligation_type": "hazard",
               "required": true,
               "required_closure_evidence_roles": [],
+              "required_runtime_node_ids": [],
               "required_test_kinds": [
                 "happy_path"
               ],
@@ -27460,6 +27323,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27472,6 +27336,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27548,6 +27416,7 @@
               "obligation_type": "hazard",
               "required": true,
               "required_closure_evidence_roles": [],
+              "required_runtime_node_ids": [],
               "required_test_kinds": [
                 "happy_path"
               ],
@@ -27599,6 +27468,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27611,6 +27481,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27683,6 +27557,7 @@
               "obligation_type": "hazard",
               "required": true,
               "required_closure_evidence_roles": [],
+              "required_runtime_node_ids": [],
               "required_test_kinds": [
                 "happy_path"
               ],
@@ -27733,6 +27608,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27745,6 +27621,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27838,6 +27718,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27850,6 +27731,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27918,6 +27803,7 @@
               "obligation_type": "hazard",
               "required": true,
               "required_closure_evidence_roles": [],
+              "required_runtime_node_ids": [],
               "required_test_kinds": [
                 "happy_path"
               ],
@@ -27968,6 +27854,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -27980,6 +27867,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30102,6 +29993,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -30125,6 +30017,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
@@ -30138,6 +30031,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30266,6 +30163,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -30289,6 +30187,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -30312,6 +30211,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path",
               "failure_path"
@@ -30335,6 +30235,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -30347,6 +30248,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30532,6 +30437,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -30554,6 +30460,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -30576,6 +30483,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -30598,6 +30506,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -30620,6 +30529,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -30642,6 +30552,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -30664,6 +30575,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -30686,6 +30598,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -30708,6 +30621,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -30730,6 +30644,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -30752,6 +30667,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -30774,6 +30690,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -30786,6 +30703,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31071,6 +30992,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31094,6 +31016,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path",
               "edge_path"
@@ -31107,6 +31030,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31234,6 +31161,7 @@
             "obligation_type": "invariant",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31257,6 +31185,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "failure_path"
             ],
@@ -31279,6 +31208,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
@@ -31292,6 +31222,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31438,6 +31372,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31461,6 +31396,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31484,6 +31420,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -31496,6 +31433,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31646,6 +31587,7 @@
             "obligation_type": "transition",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path"
@@ -31669,6 +31611,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path",
@@ -31693,6 +31636,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
@@ -31717,6 +31661,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path"
             ],
@@ -31739,6 +31684,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "failure_path",
@@ -31763,6 +31709,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
@@ -31787,6 +31734,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path",
@@ -31811,6 +31759,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31834,6 +31783,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path",
               "negative_path"
@@ -31857,6 +31807,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path",
               "negative_path"
@@ -31880,6 +31831,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path",
               "negative_path"
@@ -31903,6 +31855,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path",
               "negative_path"
@@ -31926,6 +31879,7 @@
             "obligation_type": "invariant",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "edge_path"
@@ -31949,6 +31903,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -31962,6 +31917,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -32628,6 +32587,7 @@
             "obligation_type": "invariant",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -32651,6 +32611,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -32673,6 +32634,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -32695,6 +32657,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -32717,6 +32680,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -32739,6 +32703,7 @@
             "obligation_type": "scenario",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -32752,6 +32717,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -32939,6 +32908,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -32962,6 +32932,7 @@
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "negative_path"
             ],
@@ -32984,6 +32955,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -32997,6 +32969,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33145,6 +33121,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -33168,6 +33145,7 @@
             "obligation_type": "contract",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -33191,6 +33169,7 @@
             "obligation_type": "invariant",
             "required": true,
             "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
             "required_test_kinds": [
               "edge_path"
             ],
@@ -33203,6 +33182,10 @@
         ],
         "require_code_contracts": false,
         "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33745,7 +33728,6 @@
           "required": true,
           "role": "owner",
           "side_effects": [
-            "update",
             "write_json_atomic"
           ],
           "state_reads": [],
@@ -34608,7 +34590,7 @@
           "implements_obligations": [
             "daemon.lock_status_queue_contract"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -34634,7 +34616,7 @@
           "implements_obligations": [
             "daemon.lock_status_queue_contract"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -34660,7 +34642,7 @@
           "implements_obligations": [
             "daemon.lock_status_queue_contract"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -38450,7 +38432,7 @@
           "implements_obligations": [
             "role_output_runtime.owner_helper_contracts"
           ],
-          "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+          "path": "skills/flowpilot/assets/role_output_runtime_envelope_receipts.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -38652,6 +38634,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -38675,6 +38658,7 @@
           "obligation_type": "scenario",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "failure_path"
           ],
@@ -38697,6 +38681,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -38719,6 +38704,7 @@
           "obligation_type": "hazard",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -38741,6 +38727,7 @@
           "obligation_type": "transition",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -38763,6 +38750,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -38785,6 +38773,7 @@
           "obligation_type": "hazard",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
@@ -38808,6 +38797,7 @@
           "obligation_type": "invariant",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -38831,6 +38821,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -38853,6 +38844,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -38875,6 +38867,7 @@
           "obligation_type": "transition",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "failure_path"
@@ -38898,6 +38891,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -38920,6 +38914,7 @@
           "obligation_type": "hazard",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
@@ -38943,6 +38938,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -38965,6 +38961,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -38987,6 +38984,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -39010,6 +39008,7 @@
           "obligation_type": "scenario",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "replay",
             "negative_path"
@@ -39033,6 +39032,7 @@
           "obligation_type": "hazard",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -39056,6 +39056,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path",
             "negative_path"
@@ -39079,6 +39080,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39101,6 +39103,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39123,6 +39126,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39145,6 +39149,7 @@
           "obligation_type": "transition",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "failure_path"
@@ -39168,6 +39173,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39190,6 +39196,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39212,6 +39219,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "edge_path",
@@ -39236,6 +39244,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39258,6 +39267,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -39281,6 +39291,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39303,6 +39314,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path"
@@ -39326,6 +39338,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39348,6 +39361,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39370,6 +39384,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39392,6 +39407,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39414,6 +39430,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39436,6 +39453,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39458,6 +39476,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39480,6 +39499,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "edge_path"
           ],
@@ -39502,6 +39522,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39524,6 +39545,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39546,6 +39568,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39568,6 +39591,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39590,6 +39614,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39612,6 +39637,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39634,6 +39660,7 @@
           "obligation_type": "workflow_step",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path",
             "negative_path",
@@ -39658,6 +39685,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -39680,6 +39708,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
           ],
@@ -39702,6 +39731,7 @@
           "obligation_type": "contract",
           "required": true,
           "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
           "required_test_kinds": [
             "negative_path"
           ],
@@ -39714,6 +39744,10 @@
       ],
       "require_code_contracts": true,
       "require_proof_artifacts": false,
+      "require_runtime_path_evidence": false,
+      "runtime_node_contracts": [],
+      "runtime_node_observations": [],
+      "runtime_path_runs": [],
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
@@ -42682,14 +42716,12 @@
             "_update_packet_record",
             "audit.get",
             "envelope.get",
-            "envelope.update",
             "envelope_hash",
             "get",
             "history.append",
             "list",
             "mark_controller_contamination",
             "mutual_role_reminder",
-            "normalize_envelope_aliases",
             "packet_paths_from_any_envelope",
             "resolve_project_path",
             "str",
@@ -42722,7 +42754,6 @@
           ],
           "returns_value": true,
           "side_effects": [
-            "update",
             "write_json_atomic"
           ],
           "state_reads": [
@@ -42755,7 +42786,6 @@
             "mark_controller_contamination",
             "mutual_reminder",
             "mutual_role_reminder",
-            "normalize_envelope_aliases",
             "packet_id",
             "packet_ledger",
             "packet_paths_from_any_envelope",
@@ -42774,7 +42804,6 @@
             "source_role",
             "str",
             "target_role",
-            "update",
             "utc_now",
             "validate_packet_ready_for_direct_relay",
             "write_json_atomic"
@@ -42805,9 +42834,9 @@
             "_upsert_packet_record",
             "contract_self_check_metadata",
             "controller_process_aside_contract",
+            "dict",
             "ensure_result_identity_boundary",
             "isinstance",
-            "normalize_envelope_aliases",
             "output_contract_id",
             "packet_envelope.get",
             "packet_paths_from_envelope",
@@ -42872,7 +42901,6 @@
             "get",
             "isinstance",
             "next_recipient",
-            "normalize_envelope_aliases",
             "output_contract",
             "output_contract_id",
             "packet_envelope",
@@ -45240,7 +45268,7 @@
             "run_state"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -45326,7 +45354,7 @@
             "run_root"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -45385,7 +45413,7 @@
             "status"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
           "raised_errors": [],
           "return_values": [
             "lock"
@@ -47045,6 +47073,7 @@
             "audit.get",
             "body_ref.get",
             "counts.get",
+            "dict",
             "envelope.get",
             "high_standard.get",
             "int",
@@ -47053,7 +47082,6 @@
             "issues.append",
             "issues.extend",
             "len",
-            "packet_runtime.normalize_envelope_aliases",
             "packet_runtime.validate_packet_ready_for_direct_relay",
             "path_key.endswith",
             "payload.get",
@@ -47115,7 +47143,6 @@
             "issues",
             "len",
             "list",
-            "normalize_envelope_aliases",
             "packet_runtime",
             "path",
             "path_key",
@@ -52833,12 +52860,12 @@
             "_completed_agent_id_is_role_key",
             "_same_project_path",
             "blockers.append",
+            "dict",
             "get",
             "isinstance",
             "ledger.get",
             "ledger_record.get",
             "next",
-            "normalize_envelope_aliases",
             "packet_envelope.get",
             "packet_open_record.get",
             "packet_paths_from_result_envelope",
@@ -52893,7 +52920,6 @@
             "ledger_result_opened_by_recipient",
             "list",
             "next",
-            "normalize_envelope_aliases",
             "packet_body_hash_matches",
             "packet_envelope",
             "packet_ledger",
@@ -54366,7 +54392,6 @@
         },
         {
           "calls": [
-            "normalize_envelope_aliases",
             "read_json",
             "resolve_project_path",
             "str"
@@ -54381,7 +54406,7 @@
           "path": "skills/flowpilot/assets/packet_runtime_paths.py",
           "raised_errors": [],
           "return_values": [
-            "normalize_envelope_aliases"
+            "read_json"
           ],
           "returns_value": true,
           "side_effects": [],
@@ -54390,7 +54415,6 @@
             "Path",
             "dict",
             "envelope_path",
-            "normalize_envelope_aliases",
             "project_root",
             "read_json",
             "resolve_project_path",
@@ -55404,7 +55428,7 @@
             "run_id"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/role_output_runtime_envelopes.py",
+          "path": "skills/flowpilot/assets/role_output_runtime_envelope_receipts.py",
           "raised_errors": [],
           "return_values": [
             "envelope"

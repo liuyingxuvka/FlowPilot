@@ -3,10 +3,10 @@
 ## Purpose
 TBD - created by archiving change behavior-preserving-router-structure-reduction. Update Purpose after archive.
 ## Requirements
-### Requirement: Router event dispatch is table-driven behind the legacy entrypoint
+### Requirement: Router event dispatch is table-driven behind the current entrypoint
 
 The router MUST route selected external events through a named handler table
-while preserving `_record_external_event_unchecked` as the compatibility
+while preserving `_record_external_event_unchecked` as the current public
 entrypoint for migrated events.
 
 #### Scenario: Stable event handlers are migrated first

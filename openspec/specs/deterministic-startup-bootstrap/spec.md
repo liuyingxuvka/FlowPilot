@@ -37,7 +37,7 @@ startup intake seed.
 - **WHEN** the startup intake seed has recorded startup answers for the current
   run
 - **THEN** the Router scheduler and Controller action ledgers do not require a
-  later `record_startup_answers` row for the same answers.
+  later answer-recording row for the same answers.
 
 ### Requirement: Startup obligations use the unified scheduler
 FlowPilot SHALL schedule startup work that requires waiting, host automation,

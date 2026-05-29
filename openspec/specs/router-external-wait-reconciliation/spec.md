@@ -120,10 +120,10 @@ external-event wait groups.
 - **AND** Router MUST NOT create a Controller `await_role_decision` row for
   that event
 
-### Requirement: Manual event compatibility does not change ownership
+### Requirement: Manual event replay does not change ownership
 FlowPilot SHALL keep any idempotent manual external-event recording path for a
 Router-owned internal postcondition separate from ownership classification, so
-that compatibility path SHALL NOT make the postcondition a role-owned wait.
+that repeated manual replay SHALL NOT make the postcondition a role-owned wait.
 
 #### Scenario: Manual capability sync event is replayed
 - **WHEN** `capability_evidence_synced` is manually recorded after its source

@@ -59,6 +59,14 @@ flowpilot_maintenance_map = load_module(
     "flowpilot_test_maintenance_map",
     ROOT / "scripts" / "flowpilot_maintenance_map.py",
 )
+flowpilot_thin_parent_checks = load_module(
+    "flowpilot_test_thin_parent_checks",
+    ROOT / "simulations" / "flowpilot_thin_parent_checks.py",
+)
+flowpilot_model_hierarchy_inventory = load_module(
+    "flowpilot_test_model_hierarchy_inventory",
+    ROOT / "simulations" / "flowpilot_model_hierarchy_checks_runner_inventory.py",
+)
 
 
 class FlowPilotMaintenanceToolTests(unittest.TestCase):
@@ -81,7 +89,48 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
         self.assertEqual(report["artifact_count"], 3)
         self.assertEqual(report["duplicate_group_count"], 1)
         self.assertEqual(report["runner_duplicate_pair_count"], 1)
+        self.assertEqual(report["shadow_pair_count"], 1)
+        self.assertFalse(report["shadow_result_pairs"][0]["semantic_drift"])
         self.assertEqual(before, after)
+
+    def test_validation_artifact_audit_reports_stale_shadow_semantics(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-artifact-audit-stale-") as tmp_name:
+            tmp = Path(tmp_name)
+            checks = tmp / "sample_checks_results.json"
+            results = tmp / "sample_results.json"
+            checks.write_text(
+                json.dumps({"ok": True, "note": "retaining modelability names as compatibility aliases"}),
+                encoding="utf-8",
+            )
+            results.write_text(json.dumps({"ok": True, "note": "current canonical artifact"}), encoding="utf-8")
+
+            report = audit_validation_artifacts.build_report(tmp)
+
+        self.assertEqual(report["shadow_pair_count"], 1)
+        self.assertEqual(report["semantic_drift_pair_count"], 1)
+        self.assertEqual(report["stale_shadow_semantics_pair_count"], 1)
+        self.assertTrue(report["stale_shadow_semantics_pairs"][0]["stale_shadow_semantics"])
+
+    def test_parent_evidence_prefers_canonical_results_over_shadow_checks(self) -> None:
+        thin_rows = flowpilot_thin_parent_checks.result_index()
+        hierarchy_rows = flowpilot_model_hierarchy_inventory._result_index()
+
+        self.assertEqual(
+            thin_rows["flowpilot_repair_transaction"]["result_file"],
+            "simulations/flowpilot_repair_transaction_results.json",
+        )
+        self.assertEqual(
+            thin_rows["flowpilot_dynamic_return_path"]["result_file"],
+            "simulations/flowpilot_dynamic_return_path_results.json",
+        )
+        self.assertEqual(
+            hierarchy_rows["flowpilot_repair_transaction"]["result_file"],
+            "simulations/flowpilot_repair_transaction_results.json",
+        )
+        self.assertEqual(
+            hierarchy_rows["flowpilot_dynamic_return_path"]["result_file"],
+            "simulations/flowpilot_dynamic_return_path_results.json",
+        )
 
     def test_runtime_retention_report_preserves_current_run_and_reports_excess(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-retention-") as tmp_name:

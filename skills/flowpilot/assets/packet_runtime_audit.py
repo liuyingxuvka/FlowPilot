@@ -41,7 +41,6 @@ from packet_runtime_ledger import (
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,

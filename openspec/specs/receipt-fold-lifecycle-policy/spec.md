@@ -41,4 +41,4 @@ visibility boundaries unchanged while pruning lifecycle writeback branches.
 
 - **WHEN** lifecycle writeback is refactored
 - **THEN** the receipt fold registry, exported helper names, action types,
-  Router flags, and returned fold summary fields MUST remain compatible.
+  Router flags, and returned fold summary fields MUST keep the current public contract.

@@ -9,7 +9,7 @@ Internal refactors MUST preserve public entrypoints, event names, persisted JSON
 shapes, protocol semantics, and validation meaning unless a separate
 behavior-changing OpenSpec explicitly authorizes the change.
 
-#### Scenario: Router entrypoint remains compatible
+#### Scenario: Router entrypoint keeps current public behavior
 
 - **GIVEN** runtime code is moved from `flowpilot_router.py` into helper modules
 - **WHEN** existing callers import and call the original router entrypoints

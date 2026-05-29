@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any
 
 from packet_runtime_schema import (
-    RESULT_ENVELOPE_SCHEMA,
     PacketRuntimeError,
     sha256_file,
     validate_packet_id,
@@ -77,7 +76,7 @@ def packet_paths(project_root: Path, packet_id: str, run_id: str | None = None) 
 
 
 def packet_paths_from_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
-    envelope = normalize_envelope_aliases(envelope)
+    envelope = dict(envelope)
     validate_packet_id(str(envelope["packet_id"]))
     packet_body = resolve_project_path(project_root, str(envelope["body_path"]))
     packet_dir = packet_body.parent
@@ -97,7 +96,7 @@ def packet_paths_from_envelope(project_root: Path, envelope: dict[str, Any]) -> 
 
 
 def packet_paths_from_result_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
-    envelope = normalize_envelope_aliases(envelope)
+    envelope = dict(envelope)
     validate_packet_id(str(envelope["packet_id"]))
     result_body = resolve_project_path(project_root, str(envelope["result_body_path"]))
     packet_dir = result_body.parent
@@ -117,7 +116,6 @@ def packet_paths_from_result_envelope(project_root: Path, envelope: dict[str, An
 
 
 def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any]) -> dict[str, Any]:
-    envelope = normalize_envelope_aliases(envelope)
     if "body_path" in envelope:
         return packet_paths_from_envelope(project_root, envelope)
     if "result_body_path" in envelope:
@@ -125,22 +123,8 @@ def packet_paths_from_any_envelope(project_root: Path, envelope: dict[str, Any])
     raise PacketRuntimeError("envelope must contain body_path or result_body_path")
 
 
-def normalize_envelope_aliases(envelope: dict[str, Any]) -> dict[str, Any]:
-    """Return a shallow copy of the current packet/result envelope."""
-
-    normalized = dict(envelope)
-    schema = str(normalized.get("schema_version") or "")
-    is_result = schema == RESULT_ENVELOPE_SCHEMA or (
-        "completed_by_role" in normalized and "result_body_path" in normalized
-    )
-    if is_result:
-        return normalized
-
-    return normalized
-
-
 def load_envelope(project_root: Path, envelope_path: str | Path) -> dict[str, Any]:
-    return normalize_envelope_aliases(read_json(resolve_project_path(project_root, str(envelope_path))))
+    return read_json(resolve_project_path(project_root, str(envelope_path)))
 
 
 def verify_body_hash(project_root: Path, body_path: str, expected_hash: str) -> bool:

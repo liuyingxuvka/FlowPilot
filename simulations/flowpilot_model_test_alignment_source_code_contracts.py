@@ -110,7 +110,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="controller_relay_envelope",
             implements=("output_contract.packet_binding",),
             external_inputs=("project_root", "envelope", "envelope_path"),
-            side_effects=("update", "write_json_atomic"),
+            side_effects=("write_json_atomic",),
         ),
         _contract(
             "packet.write_result",
@@ -386,7 +386,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "daemon.acquire_lock",
-            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
             symbol="_acquire_router_daemon_lock",
             implements=("daemon.lock_status_queue_contract",),
             external_inputs=("router", "project_root", "run_root", "run_state"),
@@ -394,7 +394,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "daemon.refresh_lock",
-            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
             symbol="_refresh_router_daemon_lock",
             implements=("daemon.lock_status_queue_contract",),
             external_inputs=("router", "project_root", "run_root"),
@@ -402,7 +402,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "daemon.release_lock",
-            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
+            path="skills/flowpilot/assets/flowpilot_router_daemon_runtime_lock.py",
             symbol="_release_router_daemon_lock",
             implements=("daemon.lock_status_queue_contract",),
             external_inputs=("router", "project_root", "run_root", "reason"),
@@ -1633,7 +1633,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "role_output_envelopes.runtime_envelope_for_body",
-            path="skills/flowpilot/assets/role_output_runtime_envelopes.py",
+            path="skills/flowpilot/assets/role_output_runtime_envelope_receipts.py",
             symbol="runtime_envelope_for_body",
             implements=("role_output_runtime.owner_helper_contracts",),
             external_inputs=("project_root", "output_type", "body_path", "body_hash"),

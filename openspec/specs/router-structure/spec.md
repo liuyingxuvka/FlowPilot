@@ -8,7 +8,7 @@ TBD - created by archiving change split-flowpilot-router-facade-prompt-store. Up
 `flowpilot_router.py` SHALL remain the public Python import and CLI entrypoint
 while behavior families are moved into cohesive internal modules.
 
-#### Scenario: CLI entrypoint remains compatible
+#### Scenario: CLI entrypoint keeps the current command contract
 
 - **GIVEN** a maintainer runs the existing router CLI command
 - **WHEN** router behavior has been moved into child modules

@@ -98,16 +98,16 @@ without forcing foreground rebuild of the two heavyweight parent graphs.
 
 ### Requirement: Hierarchy reports thin parent result type
 The system SHALL expose whether each Meta and Capability parent result came
-from thin evidence aggregation, full legacy graph exploration, proof reuse, or
+from thin evidence aggregation, full graph exploration, proof reuse, or
 an incomplete background run.
 
 #### Scenario: Thin parent result is current
 - **WHEN** hierarchy inventory reads a current thin parent result
 - **THEN** it MUST report the parent result type as thin and MUST NOT classify
-  that result as a full legacy regression
+  that result as a full regression
 
 #### Scenario: Full parent result is current
-- **WHEN** hierarchy inventory reads a current full legacy parent result or
+- **WHEN** hierarchy inventory reads a current full parent result or
   valid full proof
 - **THEN** it MUST report the full evidence path separately from the thin parent
   result

@@ -45,7 +45,6 @@ from packet_runtime_ledger import (
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,
@@ -227,7 +226,7 @@ def update_controller_progress(
     controller_aside: str | None = None,
 ) -> dict[str, Any]:
     resolved_agent_id = _require_concrete_agent_id(agent_id, role=role)
-    envelope = normalize_envelope_aliases(load_envelope(project_root, str(envelope_path)))
+    envelope = load_envelope(project_root, str(envelope_path))
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"progress may only be updated by to_role={envelope.get('to_role')!r}, not {role!r}")
     return write_controller_status_packet(

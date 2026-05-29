@@ -16,10 +16,15 @@ LOCAL_PREFIXES = (
     "run_packet",
 )
 STRUCTURE_SPLIT_CHILD_SURFACES = (
+    "flowpilot_controller_break_glass_core",
     "flowpilot_router_event_dispatcher_record",
+    "flowpilot_router_controller_scheduler_standby_task",
+    "flowpilot_router_controller_wait_audit_scanners",
+    "flowpilot_router_daemon_runtime_lock",
     "flowpilot_router_expected_waits_reconciliation_pm_package",
     "flowpilot_router_role_output_bridge_events_replay",
     "flowpilot_router_runtime_state_persistence_save",
+    "role_output_runtime_envelope_receipts",
 )
 
 

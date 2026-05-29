@@ -41,7 +41,6 @@ from packet_runtime_ledger import (
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,
@@ -210,7 +209,6 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
-    envelope.update(normalize_envelope_aliases(envelope))
     verify_controller_relay(envelope, recipient_role=role)
     open_source = "controller_relay"
     if role != envelope.get("to_role"):

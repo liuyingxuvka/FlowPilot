@@ -1,22 +1,207 @@
 {
   "claim_scope": "routine FlowPilot maintenance and local install confidence",
   "current": {
-    "confidence": "full",
-    "decision": "model_maturation_current",
-    "findings": [],
-    "full_closure_ok": true,
+    "confidence": "scoped",
+    "decision": "model_maturation_scoped_claim",
+    "findings": [
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "current": false,
+          "description": "Protocol contract conformance result must be current for the model and checker.",
+          "evidence_id": "simulations/protocol_contract_conformance_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1780011922.654438,
+              "missing_sources": [],
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_missing": false,
+              "result_mtime": 1780001263.5237114,
+              "sources": [
+                "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                "simulations\\run_protocol_contract_conformance_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "required": true,
+          "resolved": false,
+          "risk_id": "protocol_contract_result_stale",
+          "signal_id": "protocol_contract_conformance_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "existing_model_preflight",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "risk_id": "protocol_contract_result_stale",
+        "severity": "blocker",
+        "signal_id": "protocol_contract_conformance_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "current": false,
+          "description": "Protocol contract conformance result must be current for the model and checker.",
+          "evidence_id": "simulations/protocol_contract_conformance_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1780011922.654438,
+              "missing_sources": [],
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_missing": false,
+              "result_mtime": 1780001263.5237114,
+              "sources": [
+                "simulations\\flowpilot_protocol_contract_conformance_model.py",
+                "simulations\\run_protocol_contract_conformance_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/protocol_contract_conformance_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_protocol_contract_conformance",
+          "required": true,
+          "resolved": false,
+          "risk_id": "protocol_contract_result_stale",
+          "signal_id": "protocol_contract_conformance_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "existing_model_preflight",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_protocol_contract_conformance",
+        "risk_id": "protocol_contract_result_stale",
+        "severity": "blocker",
+        "signal_id": "protocol_contract_conformance_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_maturation_signal_stale",
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "current": false,
+          "description": "Startup-control evidence must be current after model or checker edits.",
+          "evidence_id": "simulations/flowpilot_startup_control_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1780009674.8968043,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_missing": false,
+              "result_mtime": 1779900641.3928554,
+              "sources": [
+                "simulations\\flowpilot_startup_control_model.py",
+                "simulations\\run_flowpilot_startup_control_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_startup_control",
+          "required": true,
+          "resolved": false,
+          "risk_id": "startup_control_result_stale",
+          "signal_id": "startup_control_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_startup_control",
+        "risk_id": "startup_control_result_stale",
+        "severity": "blocker",
+        "signal_id": "startup_control_evidence_fresh"
+      },
+      {
+        "action": "refresh_evidence",
+        "code": "model_upgrade_required",
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "current": false,
+          "description": "Startup-control evidence must be current after model or checker edits.",
+          "evidence_id": "simulations/flowpilot_startup_control_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1780009674.8968043,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_missing": false,
+              "result_mtime": 1779900641.3928554,
+              "sources": [
+                "simulations\\flowpilot_startup_control_model.py",
+                "simulations\\run_flowpilot_startup_control_checks.py"
+              ]
+            },
+            "json": {
+              "confidence": "",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_startup_control_results.json",
+              "result_type": ""
+            }
+          },
+          "model_id": "flowpilot_startup_control",
+          "required": true,
+          "resolved": false,
+          "risk_id": "startup_control_result_stale",
+          "signal_id": "startup_control_evidence_fresh",
+          "signal_type": "stale_evidence",
+          "source_route": "development_process_flow",
+          "suggested_actions": [
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_startup_control",
+        "risk_id": "startup_control_result_stale",
+        "severity": "blocker",
+        "signal_id": "startup_control_evidence_fresh"
+      }
+    ],
+    "full_closure_ok": false,
     "model_id": "flowpilot_model_maturation_closure",
     "ok": true,
     "plan_id": "flowpilot-model-maturation-routine-closure",
     "recommended_actions": [
-      "no_model_change_needed"
+      "refresh_evidence",
+      "downgrade_claim"
     ],
     "risk_id": "coarse_or_stale_flowpilot_model_confidence",
-    "scoped_signal_ids": [],
+    "scoped_signal_ids": [
+      "protocol_contract_conformance_fresh",
+      "startup_control_evidence_fresh"
+    ],
     "signal_count": 10,
-    "summary": "No current route signal requires model maturation."
+    "summary": "Only a scoped FlowGuard claim is supported until maturation signals are resolved."
   },
-  "full_closure_ok": true,
+  "full_closure_ok": false,
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
     {

@@ -345,11 +345,7 @@ def _active_route(frontier: dict[str, Any], state: dict[str, Any], route: dict[s
     route = route or {}
     value = (
         frontier.get("active_route_id")
-        or frontier.get("active_route")
-        or frontier.get("route_id")
         or state.get("active_route_id")
-        or state.get("active_route")
-        or state.get("route_id")
         or route.get("route_id")
     )
     return str(value) if value else None
@@ -360,14 +356,8 @@ def _active_node(frontier: dict[str, Any], state: dict[str, Any] | None = None, 
     route = route or {}
     value = (
         frontier.get("active_node_id")
-        or frontier.get("active_node")
-        or frontier.get("current_node")
         or state.get("active_node_id")
-        or state.get("active_node")
-        or state.get("current_node")
         or route.get("active_node_id")
-        or route.get("active_node")
-        or route.get("current_node")
     )
     return str(value) if value else None
 

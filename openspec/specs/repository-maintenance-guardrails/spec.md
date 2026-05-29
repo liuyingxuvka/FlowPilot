@@ -158,9 +158,9 @@ local git commit evidence before claiming the pass complete.
 - **THEN** it does not push, tag, publish, or create a release unless the user
   explicitly authorizes that separate action.
 
-### Requirement: Registry consolidation preserves compatibility evidence
+### Requirement: Registry consolidation preserves parity evidence
 
-Repository maintenance SHALL prove that registry-derived compatibility views match the previously exported tables before switching behavior-sensitive callers to the registry.
+Repository maintenance SHALL prove that registry-derived parity views match the previously exported tables before switching behavior-sensitive callers to the registry.
 
 #### Scenario: Generated table parity is checked before caller migration
 

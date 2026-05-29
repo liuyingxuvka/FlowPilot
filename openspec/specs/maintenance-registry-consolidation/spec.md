@@ -24,13 +24,13 @@ FlowPilot SHALL provide a canonical maintenance surface registry for files and p
 
 FlowPilot SHALL keep existing public protocol tables available while deriving them from canonical registries where duplication has been removed.
 
-#### Scenario: Gate outcome exports remain compatible
+#### Scenario: Gate outcome exports keep current values
 
 - **GIVEN** gate outcome facts are represented in a canonical gate registry
 - **WHEN** legacy gate outcome tables are imported
 - **THEN** `GATE_OUTCOME_BLOCK_EVENT_SPECS`, `GATE_OUTCOME_BLOCK_EVENTS`, `GATE_OUTCOME_PASS_CLEAR_FLAGS`, reset flag tuples, and `GATE_OUTCOME_PASS_CLEARS_EVENTS` expose the same values as before the registry conversion.
 
-#### Scenario: External event exports remain compatible
+#### Scenario: External event exports keep current values
 
 - **GIVEN** external event facts are represented in a canonical event registry
 - **WHEN** legacy external event shard modules and `EXTERNAL_EVENTS` are imported

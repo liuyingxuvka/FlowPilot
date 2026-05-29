@@ -48,7 +48,6 @@ from packet_runtime_results import read_result_body_for_role, write_result
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,

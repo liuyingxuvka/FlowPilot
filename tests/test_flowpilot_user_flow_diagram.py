@@ -29,7 +29,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "current_run_root": ".flowpilot/runs/run-test",
             },
         )
-        _write_json(run_root / "state.json", {"active_route": "route-001"})
+        _write_json(run_root / "state.json", {"active_route_id": "route-001"})
         nodes = [
             ("node-001-startup", "complete"),
             ("node-002-product-function-strategy", "complete"),
@@ -46,7 +46,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "status": "active",
                 "nodes": [
                     {
-                        "id": node_id,
+                        "node_id": node_id,
                         "status": status,
                         "summary": node_id,
                         "allowed_next": [],
@@ -58,10 +58,10 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         _write_json(
             run_root / "execution_frontier.json",
             {
-                "active_route": "route-001",
+                "active_route_id": "route-001",
                 "route_version": 3,
                 "frontier_version": 5,
-                "active_node": active_node,
+                "active_node_id": active_node,
                 "current_subnode": "complete" if active_node.endswith("verification") else "repair",
                 "next_gate": "FlowGuard route checks" if active_node.endswith("verification") else "human review repair",
                 "current_mainline": [node_id for node_id, _ in nodes],
@@ -94,14 +94,14 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
 
     def write_retired_layout(self, root: Path, *, active_route: str = "retired-route") -> None:
         flowpilot_root = root / ".flowpilot"
-        _write_json(flowpilot_root / "state.json", {"active_route": active_route})
+        _write_json(flowpilot_root / "state.json", {"active_route_id": active_route})
         _write_json(
             flowpilot_root / "execution_frontier.json",
             {
-                "active_route": active_route,
+                "active_route_id": active_route,
                 "route_version": 1,
                 "frontier_version": 1,
-                "active_node": "retired-node",
+                "active_node_id": "retired-node",
                 "next_gate": "retired execution",
                 "current_mainline": ["retired-node", "retired-complete"],
             },
@@ -113,8 +113,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "route_version": 1,
                 "status": "active",
                 "nodes": [
-                    {"id": "retired-node", "status": "running", "summary": "retired"},
-                    {"id": "retired-complete", "status": "pending", "summary": "retired"},
+                    {"node_id": "retired-node", "status": "running", "summary": "retired"},
+                    {"node_id": "retired-complete", "status": "pending", "summary": "retired"},
                 ],
             },
         )
@@ -292,23 +292,27 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertNotIn("Chat evidence:", payload["markdown"])
         self.assertNotIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
 
-    def test_active_run_and_current_node_aliases_resolve_current_route(self) -> None:
+    def test_retired_active_route_and_current_node_aliases_do_not_resolve_current_route(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")
         current_path = root / ".flowpilot" / "current.json"
         current_path.write_text(
             json.dumps(
                 {
-                    "active_run_id": "run-test",
-                    "active_route_id": "route-001",
+                    "current_run_id": "run-test",
+                    "current_run_root": ".flowpilot/runs/run-test",
                 },
                 indent=2,
             ),
             encoding="utf-8",
         )
         frontier_path = root / ".flowpilot" / "runs" / "run-test" / "execution_frontier.json"
+        state_path = root / ".flowpilot" / "runs" / "run-test" / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state["active_route"] = state.pop("active_route_id")
+        state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
         frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
-        frontier["route_id"] = frontier.pop("active_route")
-        frontier["current_node"] = frontier.pop("active_node")
+        frontier["active_route"] = frontier.pop("active_route_id")
+        frontier["current_node"] = frontier.pop("active_node_id")
         frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
         payload = route_sign.generate(
             root,
@@ -321,11 +325,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             reviewer_check=False,
         )
 
-        self.assertEqual(payload["run_id"], "run-test")
         self.assertEqual(payload["active_route"], "route-001")
-        self.assertEqual(payload["active_node"], "node-004-desktop-implementation")
-        self.assertEqual(payload["active_highlight"]["visible_node_id"], "node-004-desktop-implementation")
-        self.assertIn("class n04 active;", payload["mermaid"])
+        self.assertIsNone(payload["active_node"])
+        self.assertNotIn("class n04 active;", payload["mermaid"])
 
     def test_draft_route_with_node_id_aliases_is_not_user_visible_by_default(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-draft-"))
@@ -702,7 +704,6 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
         frontier_path = run_root / "execution_frontier.json"
         frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
-        frontier["active_node"] = "node-004-desktop-implementation-repair"
         frontier["active_node_id"] = "node-004-desktop-implementation-repair"
         frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
 
@@ -731,7 +732,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         route = json.loads(route_path.read_text(encoding="utf-8"))
         route["active_node_id"] = "node-004-desktop-implementation-v2"
         for node in route["nodes"]:
-            if node["id"] == "node-004-desktop-implementation":
+            if node["node_id"] == "node-004-desktop-implementation":
                 node["status"] = "superseded"
                 node["superseded_by"] = "node-004-desktop-implementation-v2"
         route["nodes"].append(
@@ -748,7 +749,6 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
         frontier_path = run_root / "execution_frontier.json"
         frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
-        frontier["active_node"] = "node-004-desktop-implementation-v2"
         frontier["active_node_id"] = "node-004-desktop-implementation-v2"
         frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
 
@@ -777,7 +777,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         route = json.loads(route_path.read_text(encoding="utf-8"))
         route["active_node_id"] = "node-004-desktop-implementation-v2"
         for node in route["nodes"]:
-            if node["id"] == "node-004-desktop-implementation":
+            if node["node_id"] == "node-004-desktop-implementation":
                 node["status"] = "superseded"
                 node["superseded_by"] = "node-004-desktop-implementation-v2"
         route["nodes"].append(
@@ -795,7 +795,6 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         route_path.write_text(json.dumps(route, indent=2), encoding="utf-8")
         frontier_path = run_root / "execution_frontier.json"
         frontier = json.loads(frontier_path.read_text(encoding="utf-8"))
-        frontier["active_node"] = "node-004-desktop-implementation-v2"
         frontier["active_node_id"] = "node-004-desktop-implementation-v2"
         frontier_path.write_text(json.dumps(frontier, indent=2), encoding="utf-8")
 

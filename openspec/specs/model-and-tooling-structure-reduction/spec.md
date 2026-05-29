@@ -23,13 +23,13 @@ hazard labels, invariant coverage, and pass/fail interpretation.
 `scripts/check_install.py` MUST call named check groups while preserving its
 existing JSON shape and severity semantics.
 
-#### Scenario: JSON output remains compatible
+#### Scenario: JSON output keeps the current contract
 
 - **GIVEN** install checks are split into file presence, manifest, runtime card,
   JSON parse, retired-path, and optional local runtime groups
 - **WHEN** `python scripts\check_install.py --json` runs
-- **THEN** top-level `ok` and `checks` output MUST remain compatible with
-  existing callers.
+- **THEN** top-level `ok` and `checks` output MUST keep the current contract
+  for supported callers.
 
 ### Requirement: Final sync validates public and local boundaries
 

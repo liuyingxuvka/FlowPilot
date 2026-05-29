@@ -60,14 +60,14 @@ safe to replay after daemon/controller reconciliation.
   deterministic seed evidence
 - **THEN** FlowPilot syncs the startup answer and seed-owned flags before
   choosing later startup work
-- **AND** FlowPilot MUST NOT reissue `record_startup_answers` for the same
+- **AND** FlowPilot MUST NOT reissue a separate answer-recording row for the same
   completed intake.
 
-#### Scenario: answer-recording receipt replay is safe
-- **WHEN** a `record_startup_answers` receipt is replayed after the same
+#### Scenario: retired answer-recording receipt replay is safe
+- **WHEN** a retired answer-recording receipt is replayed after the same
   startup answers are already durable for the run
-- **THEN** FlowPilot treats the row as reconciled under the startup Controller
-  receipt owner
+- **THEN** FlowPilot preserves the native startup answer owner and treats the
+  retired receipt as non-current replay evidence
 - **AND** FlowPilot MUST NOT create a PM/control blocker from the replay.
 
 #### Scenario: unsupported startup receipt still blocks

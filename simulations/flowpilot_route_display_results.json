@@ -13,7 +13,7 @@
       "Startup Mermaid may be displayed as a placeholder only when it has explicit placeholder identity and replacement metadata",
       "Startup waiting-for-PM-route state remains internal instead of producing a separate user-visible status card",
       "draft routes are internal-only until PM activates a reviewed flow.json route",
-      "route_state_snapshot.route.nodes is the stable fallback when route file aliases drift",
+      "route_state_snapshot.route.nodes is the stable fallback when a committed route file is unavailable",
       "display receipt is required; generated files alone do not satisfy user visibility"
     ],
     "scenarios": [
@@ -42,6 +42,8 @@
       "user_dialog_or_cockpit_can_receive_a_draft_backed_route_map"
     ],
     "state": {
+      "canonical_frontier_fields_required": true,
+      "canonical_route_nodes_required": true,
       "chat_display_kind": "mermaid",
       "chat_fallback_required": true,
       "cockpit_available": false,
@@ -61,7 +63,6 @@
       "draft_route_fallback_supported": true,
       "draft_wrote_visible_display_plan": true,
       "evidence_table_visible": false,
-      "frontier_aliases_supported": true,
       "generated_files_only": false,
       "holder": "controller",
       "internal_source_fields_visible": false,
@@ -78,7 +79,6 @@
       "replacement_rule": "none",
       "route_checklists_preserved": true,
       "route_generation": 1,
-      "route_node_aliases_supported": true,
       "route_nodes_real": true,
       "route_phase": "draft",
       "route_source_exists": true,
@@ -116,6 +116,8 @@
           "canonical route display kept startup placeholder semantics"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -135,7 +137,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -152,7 +153,6 @@
           "replacement_rule": "replace_when_canonical_route_available",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -179,6 +179,8 @@
           "canonical route display lacked explicit canonical identity"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -198,7 +200,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -215,7 +216,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -242,6 +242,8 @@
           "chat fallback displayed bullet list instead of Mermaid route sign"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "bullet",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -261,7 +263,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -278,7 +279,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -305,6 +305,8 @@
           "Cockpit route map and chat fallback used different route sources"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": true,
@@ -324,7 +326,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -341,7 +342,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -368,6 +368,8 @@
           "user-visible route map was not derived from canonical route/frontier/snapshot"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -387,7 +389,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -404,7 +405,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -431,6 +431,8 @@
           "chat fallback degraded without recording a Mermaid source reason"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "degraded",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -450,7 +452,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -467,7 +468,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -494,6 +494,8 @@
           "user-visible route sign generator allowed flow.draft.json fallback"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -513,7 +515,6 @@
           "draft_route_fallback_supported": true,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -530,7 +531,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -557,6 +557,8 @@
           "user-visible route_state_snapshot was backed by flow.draft.json"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -576,7 +578,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -593,7 +594,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -622,6 +622,8 @@
           "new draft overwrote the previous committed visible route"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -641,7 +643,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -658,7 +659,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "draft",
           "route_source_exists": true,
@@ -686,6 +686,8 @@
           "new draft overwrote the previous committed visible route"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -705,7 +707,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -722,7 +723,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -751,6 +751,8 @@
           "new draft overwrote the previous committed visible route"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -770,7 +772,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -787,7 +788,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "draft",
           "route_source_exists": true,
@@ -814,6 +814,8 @@
           "route draft wrote or replaced the user-visible display plan"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -833,7 +835,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": true,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -850,7 +851,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -877,6 +877,8 @@
           "user-visible route sign leaked internal source fields or evidence tables"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -896,7 +898,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": true,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -913,7 +914,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -940,6 +940,8 @@
           "generated route diagram files existed without a user-visible display receipt"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -959,7 +961,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": true,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -976,7 +977,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1003,6 +1003,8 @@
           "user-visible route sign leaked internal source fields or evidence tables"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1022,7 +1024,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": true,
@@ -1039,7 +1040,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1067,6 +1067,8 @@
           "repair candidate was displayed before committed activation"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1086,7 +1088,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1103,7 +1104,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1130,6 +1130,8 @@
           "route display dropped real major nodes or node checklists"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1149,7 +1151,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1166,7 +1167,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": false,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1193,6 +1193,8 @@
           "committed route existed but user-visible Mermaid still showed route=unknown or node=unknown"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1212,7 +1214,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1229,7 +1230,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1256,6 +1256,8 @@
           "completed, active, selected, blocked, or pending node states were conflated"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1275,7 +1277,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1292,7 +1293,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1319,6 +1319,8 @@
           "route display repair broke sealed packet/result body boundary"
         ],
         "state": {
+          "canonical_frontier_fields_required": true,
+          "canonical_route_nodes_required": true,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1338,7 +1340,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": true,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1355,7 +1356,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": true,
           "route_generation": 1,
-          "route_node_aliases_supported": true,
           "route_nodes_real": true,
           "route_phase": "committed",
           "route_source_exists": true,
@@ -1383,6 +1383,8 @@
           "startup placeholder route sign lacked explicit placeholder identity"
         ],
         "state": {
+          "canonical_frontier_fields_required": false,
+          "canonical_route_nodes_required": false,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1402,7 +1404,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": false,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1419,7 +1420,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": false,
           "route_generation": 0,
-          "route_node_aliases_supported": false,
           "route_nodes_real": false,
           "route_phase": "startup",
           "route_source_exists": false,
@@ -1446,6 +1446,8 @@
           "startup placeholder route sign lacked explicit canonical-route replacement rule"
         ],
         "state": {
+          "canonical_frontier_fields_required": false,
+          "canonical_route_nodes_required": false,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1465,7 +1467,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": false,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1482,7 +1483,6 @@
           "replacement_rule": "none",
           "route_checklists_preserved": false,
           "route_generation": 0,
-          "route_node_aliases_supported": false,
           "route_nodes_real": false,
           "route_phase": "startup",
           "route_source_exists": false,
@@ -1509,6 +1509,8 @@
           "startup waiting status card was shown to the user before PM route activation"
         ],
         "state": {
+          "canonical_frontier_fields_required": false,
+          "canonical_route_nodes_required": false,
           "chat_display_kind": "mermaid",
           "chat_fallback_required": true,
           "cockpit_available": false,
@@ -1528,7 +1530,6 @@
           "draft_route_fallback_supported": false,
           "draft_wrote_visible_display_plan": false,
           "evidence_table_visible": false,
-          "frontier_aliases_supported": false,
           "generated_files_only": false,
           "holder": "controller",
           "internal_source_fields_visible": false,
@@ -1545,7 +1546,6 @@
           "replacement_rule": "replace_when_canonical_route_available",
           "route_checklists_preserved": false,
           "route_generation": 0,
-          "route_node_aliases_supported": false,
           "route_nodes_real": false,
           "route_phase": "startup",
           "route_source_exists": false,

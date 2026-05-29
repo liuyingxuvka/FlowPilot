@@ -1,0 +1,101 @@
+{
+  "checks": {
+    "flowguard_explorer": {
+      "dead_branch_count": 0,
+      "exception_branch_count": 0,
+      "ok": true,
+      "reachability_failure_count": 0,
+      "reachability_failures": [],
+      "summary": "sequences=6 initial_states=1 traces=6",
+      "violation_count": 0
+    },
+    "hazards": {
+      "hazards": {
+        "accepted_stale_shadow_alias": {
+          "detected": true,
+          "failures": [
+            "shadow artifact with retired alias semantics cannot be current evidence"
+          ],
+          "state": {
+            "audit_read_only": true,
+            "canonical_preferred": true,
+            "canonical_result_exists": true,
+            "cleanup_required_reported": true,
+            "exact_duplicate_reported": false,
+            "scenario": "stale_shadow_alias_with_canonical",
+            "shadow_has_retired_alias_semantics": true,
+            "shadow_pair_reported": true,
+            "shadow_result_exists": true,
+            "shadow_used_as_current": false,
+            "status": "accepted"
+          }
+        },
+        "read_only_mutation": {
+          "detected": true,
+          "failures": [
+            "read-only artifact audit mutated files"
+          ],
+          "state": {
+            "audit_read_only": false,
+            "canonical_preferred": true,
+            "canonical_result_exists": true,
+            "cleanup_required_reported": false,
+            "exact_duplicate_reported": false,
+            "scenario": "read_only_audit_mutates_files",
+            "shadow_has_retired_alias_semantics": false,
+            "shadow_pair_reported": true,
+            "shadow_result_exists": true,
+            "shadow_used_as_current": false,
+            "status": "accepted"
+          }
+        },
+        "unreported_shadow_pair": {
+          "detected": true,
+          "failures": [
+            "shadow artifact pair was not reported"
+          ],
+          "state": {
+            "audit_read_only": true,
+            "canonical_preferred": true,
+            "canonical_result_exists": true,
+            "cleanup_required_reported": false,
+            "exact_duplicate_reported": false,
+            "scenario": "canonical_pair_current",
+            "shadow_has_retired_alias_semantics": false,
+            "shadow_pair_reported": false,
+            "shadow_result_exists": true,
+            "shadow_used_as_current": false,
+            "status": "accepted"
+          }
+        }
+      },
+      "ok": true
+    },
+    "progress": {
+      "cannot_reach_terminal_count": 0,
+      "ok": true,
+      "samples": [],
+      "stuck_state_count": 0
+    },
+    "safe_graph": {
+      "accepted_scenarios": [
+        "canonical_pair_current",
+        "exact_duplicate_pair_reported",
+        "shadow_only_current"
+      ],
+      "edge_count": 6,
+      "invariant_failure_count": 0,
+      "invariant_failures": [],
+      "missing_labels": [],
+      "ok": true,
+      "rejected_scenarios": [
+        "read_only_audit_mutates_files",
+        "shadow_used_as_current_with_canonical",
+        "stale_shadow_alias_with_canonical"
+      ],
+      "state_count": 7
+    }
+  },
+  "model": "flowpilot_validation_artifact_canonicalization",
+  "ok": true
+}

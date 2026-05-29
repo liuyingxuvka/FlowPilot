@@ -51,8 +51,8 @@ class State:
 
     dispatch_gate_checked: bool = False
     packet_body_hash_identity_synced: bool = False
-    packet_body_path_alias_normalized: bool = False
-    result_body_path_alias_normalized: bool = False
+    packet_current_body_fields_present: bool = False
+    result_current_body_fields_present: bool = False
     router_direct_dispatch_passed: bool = False
     packet_relayed_by_controller: bool = False
     packet_open_envelope_receipt: bool = False
@@ -149,8 +149,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     followup_reaudit_passed=True,
                     dispatch_gate_checked=True,
                     packet_body_hash_identity_synced=True,
-                    packet_body_path_alias_normalized=True,
-                    result_body_path_alias_normalized=True,
+                    packet_current_body_fields_present=True,
+                    result_current_body_fields_present=True,
                 ),
             )
             yield Transition(
@@ -162,21 +162,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                     followup_reaudit_passed=True,
                     dispatch_gate_checked=True,
                     packet_body_hash_identity_synced=True,
-                    packet_body_path_alias_normalized=True,
-                    result_body_path_alias_normalized=True,
+                    packet_current_body_fields_present=True,
+                    result_current_body_fields_present=True,
                 ),
             )
             return
 
     if not state.dispatch_gate_checked:
         yield Transition(
-            "dispatch_gate_checks_body_envelope_and_ledger_hash_identity",
+            "dispatch_gate_checks_current_envelope_fields_and_ledger_hash_identity",
             _inc(
                 state,
                 dispatch_gate_checked=True,
                 packet_body_hash_identity_synced=True,
-                packet_body_path_alias_normalized=True,
-                result_body_path_alias_normalized=True,
+                packet_current_body_fields_present=True,
+                result_current_body_fields_present=True,
             ),
         )
         yield Transition(
@@ -284,10 +284,10 @@ def dispatch_requires_hash_identity(state: State, trace) -> InvariantResult:
     if state.router_direct_dispatch_passed and not (
         state.dispatch_gate_checked
         and state.packet_body_hash_identity_synced
-        and state.packet_body_path_alias_normalized
-        and state.result_body_path_alias_normalized
+        and state.packet_current_body_fields_present
+        and state.result_current_body_fields_present
     ):
-        return InvariantResult.fail("direct dispatch passed without envelope/ledger packet body hash identity")
+        return InvariantResult.fail("direct dispatch passed without current envelope fields and packet body hash identity")
     return InvariantResult.pass_()
 
 
@@ -408,7 +408,7 @@ MAX_SEQUENCE_LENGTH = 16
 
 
 REQUIRED_LABELS = (
-    "dispatch_gate_checks_body_envelope_and_ledger_hash_identity",
+    "dispatch_gate_checks_current_envelope_fields_and_ledger_hash_identity",
     "pm_hash_repair_requires_followup_reaudit",
     "fatal_protocol_violation_requires_pm_repair_decision",
     "pm_repair_decision_recorded_blocker_still_active",
@@ -448,28 +448,28 @@ def hazard_states() -> dict[str, State]:
             packet_body_hash_identity_synced=False,
             router_direct_dispatch_passed=True,
         ),
-        "packet_body_alias_not_normalized": State(
+        "packet_retired_body_alias_accepted": State(
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=False,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=False,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
         ),
-        "result_body_alias_not_normalized": State(
+        "result_retired_body_alias_accepted": State(
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=False,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=False,
             router_direct_dispatch_passed=True,
         ),
         "packet_open_envelope_only": State(
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,
@@ -482,8 +482,8 @@ def hazard_states() -> dict[str, State]:
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,
@@ -497,8 +497,8 @@ def hazard_states() -> dict[str, State]:
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,
@@ -511,8 +511,8 @@ def hazard_states() -> dict[str, State]:
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,
@@ -529,8 +529,8 @@ def hazard_states() -> dict[str, State]:
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
-            packet_body_path_alias_normalized=True,
-            result_body_path_alias_normalized=True,
+            packet_current_body_fields_present=True,
+            result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
             packet_relayed_by_controller=True,
             packet_open_envelope_receipt=True,

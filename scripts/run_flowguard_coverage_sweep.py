@@ -126,6 +126,7 @@ SUPPORTING_COVERAGE = {
     "flowpilot_test_obligation_ownership",
     "flowpilot_test_tiering",
     "flowpilot_two_table_async_scheduler",
+    "flowpilot_validation_artifact_canonicalization",
     "flowpilot_workflow_step_contract",
     "long_check_observability",
     "proof_carrying",

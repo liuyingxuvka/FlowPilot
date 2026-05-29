@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
 
 import flowpilot_router as router  # noqa: E402
+import flowpilot_controller_break_glass_core as break_glass_core  # noqa: E402
 import flowpilot_router_facade_imports as router_facade_imports  # noqa: E402
 import flowpilot_runtime as flowpilot_runtime_cli  # noqa: E402
 import flowpilot_runtime_args as flowpilot_runtime_args  # noqa: E402
@@ -34,6 +35,9 @@ import flowpilot_router_controller_repair_mail_pending as controller_repair_mail
 import flowpilot_router_controller_repair_mail_postconditions as controller_repair_mail_postconditions  # noqa: E402
 import flowpilot_router_controller_scheduler_standby as controller_standby  # noqa: E402
 import flowpilot_router_controller_scheduler_standby_policy as controller_standby_policy  # noqa: E402
+import flowpilot_router_controller_scheduler_standby_task as controller_standby_task  # noqa: E402
+import flowpilot_router_controller_wait_audit as controller_wait_audit  # noqa: E402
+import flowpilot_router_controller_wait_audit_scanners as controller_wait_audit_scanners  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_pending as receipts_pending  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_packet_folds as receipts_packet_folds  # noqa: E402
 import flowpilot_router_controller_scheduler_receipts_packet_fold_lifecycle as receipt_fold_lifecycle  # noqa: E402
@@ -65,6 +69,8 @@ import flowpilot_router_events_repair_transaction_outcomes as repair_transaction
 import flowpilot_router_events_repair_transaction_paths as repair_transaction_paths  # noqa: E402
 import flowpilot_router_events_repair_transaction_resolution as repair_transaction_resolution  # noqa: E402
 import flowpilot_router_events_repair_transactions as repair_transactions  # noqa: E402
+import flowpilot_router_daemon_runtime as daemon_runtime  # noqa: E402
+import flowpilot_router_daemon_runtime_lock as daemon_runtime_lock  # noqa: E402
 import flowpilot_router_expected_waits as expected_waits  # noqa: E402
 import flowpilot_router_expected_waits_actions as expected_waits_actions  # noqa: E402
 import flowpilot_router_expected_waits_events as expected_waits_events  # noqa: E402
@@ -253,6 +259,8 @@ import packet_control_plane_model_transitions_review_pm as packet_review_pm  # n
 import packet_runtime  # noqa: E402
 import packet_runtime_reviewer  # noqa: E402
 import role_output_runtime_schema as role_output_schema  # noqa: E402
+import role_output_runtime_envelopes as role_output_envelopes  # noqa: E402
+import role_output_runtime_envelope_receipts as role_output_envelope_receipts  # noqa: E402
 import role_output_runtime_schema_authority as role_output_schema_authority  # noqa: E402
 import role_output_runtime_schema_io as role_output_schema_io  # noqa: E402
 import role_output_runtime_schema_quality as role_output_schema_quality  # noqa: E402
@@ -319,6 +327,42 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         ):
             if hasattr(module, "_bind_router"):
                 module._bind_router(router)
+
+    def test_latest_structure_split_children_preserve_parent_boundaries(self) -> None:
+        self.assertTrue(hasattr(break_glass_core, "load_index"))
+        self.assertTrue(hasattr(break_glass_core, "_validate_patch_finalization"))
+        self.assertIs(
+            controller_standby._continuous_standby_task_payload,
+            controller_standby_task._continuous_standby_task_payload,
+        )
+        self.assertIs(
+            controller_standby._continuous_standby_release_conditions,
+            controller_standby_task._continuous_standby_release_conditions,
+        )
+        self.assertIs(
+            controller_wait_audit._scan_return_ledger,
+            controller_wait_audit_scanners._scan_return_ledger,
+        )
+        self.assertIs(
+            controller_wait_audit._scan_role_outputs,
+            controller_wait_audit_scanners._scan_role_outputs,
+        )
+        self.assertIs(
+            daemon_runtime._acquire_router_daemon_lock,
+            daemon_runtime_lock._acquire_router_daemon_lock,
+        )
+        self.assertIs(
+            daemon_runtime._release_router_daemon_lock,
+            daemon_runtime_lock._release_router_daemon_lock,
+        )
+        self.assertIs(
+            role_output_envelopes.runtime_envelope_for_body,
+            role_output_envelope_receipts.runtime_envelope_for_body,
+        )
+        self.assertIs(
+            role_output_envelopes.validate_envelope_runtime_receipt,
+            role_output_envelope_receipts.validate_envelope_runtime_receipt,
+        )
 
     def test_controller_control_scheduler_external_contracts(self) -> None:
         args = router_cli.parse_args(["--root", ".", "controller-receipt", "--action-id", "a1", "--status", "done"])

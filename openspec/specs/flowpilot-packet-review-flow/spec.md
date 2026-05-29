@@ -42,10 +42,12 @@ FlowPilot SHALL keep Reviewer review on PM-built formal gate packages and indepe
 - **THEN** Reviewer SHALL inspect the formal package and required direct evidence before pass or block
 - **AND** PM SHALL NOT advance solely from Router mechanical proof.
 
-### Requirement: Legacy reviewer-dispatch flags cannot satisfy new flow gates
-FlowPilot SHALL treat old reviewer-dispatch cards, events, or flags as legacy compatibility evidence only. They MUST NOT satisfy new PM disposition, formal package release, or Reviewer package-review requirements.
+### Requirement: Retired reviewer-dispatch flags cannot satisfy new flow gates
+FlowPilot SHALL treat old reviewer-dispatch cards, events, or flags as retired
+audit history only. They MUST NOT satisfy new PM disposition, formal package
+release, or Reviewer package-review requirements.
 
-#### Scenario: Legacy flag is ignored for current acceptance
-- **WHEN** a run contains `reviewer_dispatch_allowed`, `reviewer_dispatch_card_delivered`, or an equivalent legacy reviewer-dispatch flag
+#### Scenario: Retired flag is ignored for current acceptance
+- **WHEN** a run contains `reviewer_dispatch_allowed`, `reviewer_dispatch_card_delivered`, or an equivalent old reviewer-dispatch flag
 - **THEN** Router and PM package gates SHALL NOT count that flag as PM package-result disposition
 - **AND** Reviewer gates SHALL still require a formal PM gate package for new-flow acceptance.

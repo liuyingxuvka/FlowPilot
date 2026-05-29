@@ -23,11 +23,14 @@ FlowPilot SHALL expose a single `current_work` monitor projection that identifie
 - **THEN** `current_work` identifies `router` or `controller` as the owner instead of leaving the monitor's primary owner blank
 
 ### Requirement: Current work owner does not replace wait diagnostics
-FlowPilot SHALL preserve existing `current_wait` and `waiting_for_role` fields for compatibility while using `current_work` as the primary monitor responsibility projection.
+FlowPilot SHALL expose `current_wait` and `waiting_for_role` only as diagnostic
+wait details while using `current_work` as the primary monitor responsibility
+projection.
 
-#### Scenario: Legacy wait field remains null but current work is known
-- **WHEN** the legacy wait projection has no `waiting_for_role` and another runtime source identifies the active responsibility owner
-- **THEN** `waiting_for_role` remains compatible with the legacy projection and `current_work` names the active responsibility owner
+#### Scenario: Wait detail remains null but current work is known
+- **WHEN** the wait-detail projection has no `waiting_for_role` and another runtime source identifies the active responsibility owner
+- **THEN** `current_work` names the active responsibility owner
+- **AND** FlowPilot does not backfill `waiting_for_role` as a separate legacy authority
 
 #### Scenario: Ownership does not complete work
 - **WHEN** `current_work` names a role, Router, Controller, or user

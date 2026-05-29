@@ -44,8 +44,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SIM_ROOT = Path(__file__).resolve().parent
 
 SCRIPT_RESULT_PATHS = {
-    "run_flowpilot_control_plane_friction_checks.py": "simulations/flowpilot_control_plane_friction_checks_results.json",
-    "run_flowpilot_repair_transaction_checks.py": "simulations/flowpilot_repair_transaction_checks_results.json",
+    "run_flowpilot_control_plane_friction_checks.py": "simulations/flowpilot_control_plane_friction_results.json",
+    "run_flowpilot_repair_transaction_checks.py": "simulations/flowpilot_repair_transaction_results.json",
     "run_flowpilot_event_idempotency_checks.py": "simulations/flowpilot_event_idempotency_results.json",
     "run_flowpilot_model_test_alignment_checks.py": "simulations/flowpilot_model_test_alignment_results.json",
     "run_flowpilot_card_envelope_checks.py": "simulations/flowpilot_card_envelope_results.json",

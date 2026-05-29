@@ -3721,10 +3721,6 @@
             "target": "_parallel_packet_batch_root"
           },
           {
-            "public": "_pm_role_work_gate_mapping_alias_specs",
-            "target": "_pm_role_work_gate_mapping_alias_specs"
-          },
-          {
             "public": "_pm_role_work_gate_mapping_artifact_path",
             "target": "_pm_role_work_gate_mapping_artifact_path"
           },

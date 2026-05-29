@@ -20,14 +20,14 @@ local KB/control directories.
 ### Requirement: Fast validation excludes long and release-only work
 
 The fast tier SHALL include only focused model/tooling checks and small unit
-tests. It SHALL NOT run release/public-boundary checks, legacy full
+tests. It SHALL NOT run release/public-boundary checks, release full
 Meta/Capability regressions, or blocking coverage sweeps.
 
 #### Scenario: Fast tier stays foreground-safe
 
 - **GIVEN** a developer asks for the fast tier
 - **WHEN** the tier runner plans commands
-- **THEN** no command includes legacy full regressions
+- **THEN** no command includes release full regressions
 - **AND** no command invokes public release checks
 - **AND** no command invokes the broad coverage sweep.
 
@@ -60,7 +60,7 @@ evidence only, not completion evidence.
 
 ### Requirement: Release obligations remain visible when deferred
 
-Routine tiers SHALL keep release-only or legacy full regression obligations
+Routine tiers SHALL keep release-only or release full regression obligations
 visible whenever they defer those checks. A release claim SHALL require release
 tier execution or valid background/proof evidence.
 

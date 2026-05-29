@@ -13,7 +13,6 @@ from packet_runtime_active_holder_core import (
 )
 from packet_runtime_ledger import _update_packet_record
 from packet_runtime_paths import (
-    normalize_envelope_aliases,
     packet_paths_from_envelope,
     project_relative,
     read_json_if_exists,
@@ -105,7 +104,7 @@ def issue_active_holder_lease(
 ) -> dict[str, Any]:
     """Create a short-lived Router-authorized lease for the current packet holder."""
 
-    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    packet_envelope = dict(packet_envelope)
     resolved_agent_id = _require_concrete_agent_id(holder_agent_id, role=holder_role)
     if holder_role != packet_envelope.get("to_role"):
         raise PacketRuntimeError("active-holder lease may only be issued to the packet to_role")

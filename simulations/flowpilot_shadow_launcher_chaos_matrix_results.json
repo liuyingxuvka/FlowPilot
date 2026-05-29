@@ -1,6 +1,13 @@
 {
   "coverage_boundary": "Rows prove bounded end-to-end control-plane behavior through fake AI packages, the installed launcher, real Router state, daemon recovery, peer isolation, malformed package rejection, and short cleanup repetition. They do not prove arbitrary live AI semantic quality, every historical migration, or indefinite stress behavior.",
-  "findings": [],
+  "findings": [
+    {
+      "code": "unknown_surface",
+      "message": "row surface must be one of the required shadow chaos surfaces",
+      "rehearsal_id": "shadow.current_pointer.install_freshness",
+      "surface": "current_pointer"
+    }
+  ],
   "known_bad_cases": [
     {
       "expected_codes": [
@@ -304,7 +311,7 @@
     "wrong_author_role",
     "stale_hash_or_path"
   ],
-  "ok": true,
+  "ok": false,
   "required_rehearsal_count": 6,
   "required_surface_count": 6,
   "result_type": "flowpilot_shadow_launcher_chaos_matrix",
@@ -448,7 +455,7 @@
       "surface": "peer_conflict"
     },
     {
-      "confidence_boundary": "does not prove every historical schema migration",
+      "confidence_boundary": "does not prove arbitrary external state recovery",
       "destructive_live_state_mutation": false,
       "entrypoints": [
         "state",
@@ -459,35 +466,35 @@
       "evidence_current": true,
       "evidence_role": "primary_shadow_rehearsal",
       "evidence_status": "passed",
-      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_legacy_pointer_and_installed_assets_resolve_to_current_standard_state",
-      "expected_standard_state": "legacy_active_pointer_resolves_to_current_run_state_without_fallback_to_unscoped_state",
-      "failure_injection": "old_active_run_pointer_fields_and_existing_installed_skill",
+      "evidence_test": "FlowPilotShadowLauncherChaosReplayTests.test_current_pointer_and_installed_assets_resolve_to_current_standard_state",
+      "expected_standard_state": "current_pointer_resolves_to_current_run_state_without_unscoped_state",
+      "failure_injection": "current_pointer_fields_and_existing_installed_skill",
       "fake_ai_artifacts": [
-        "legacy_current_pointer",
+        "current_pointer",
         "minimal_running_run"
       ],
       "finite_package_classes": [
-        "legacy_pointer_shadow_package"
+        "current_pointer_shadow_package"
       ],
       "forbidden_shortcuts": [
-        "fallback_to_legacy_dot_flowpilot_root",
+        "fallback_to_unscoped_dot_flowpilot_root",
         "assume_install_fresh_without_file_evidence"
       ],
       "live_ai_semantic_quality_proven": false,
       "phase_sequence": [
-        "legacy_current_pointer",
+        "current_pointer",
         "state_load",
         "installed_source_presence"
       ],
-      "protected_state_invariant": "old pointers may be read only as compatibility input and cannot bypass current run root authority",
-      "rehearsal_id": "shadow.upgrade_migration.legacy_pointer_install_freshness",
+      "protected_state_invariant": "current pointer must identify the run root authority without unscoped state fallback",
+      "rehearsal_id": "shadow.current_pointer.install_freshness",
       "required_evidence": [
-        "active_run_root_compatibility_loaded",
-        "run_state_matches_legacy_pointer_run",
+        "current_run_root_loaded",
+        "run_state_matches_current_pointer_run",
         "installed_skill_assets_present"
       ],
       "soak_cycle_bound": 1,
-      "surface": "upgrade_migration"
+      "surface": "current_pointer"
     },
     {
       "confidence_boundary": "finite generator proves named protocol classes, not arbitrary natural-language bad answers",
@@ -586,9 +593,9 @@
   "rows_by_surface": {
     "bounded_soak": 1,
     "crash_recovery": 1,
+    "current_pointer": 1,
     "installed_launcher": 1,
     "malformed_packages": 1,
-    "peer_conflict": 1,
-    "upgrade_migration": 1
+    "peer_conflict": 1
   }
 }

@@ -91,14 +91,14 @@ FlowPilot SHALL reject packet open attempts that rely only on Controller chat te
 - **THEN** Worker `open-packet` MUST accept the packet and write the normal packet-open session receipt
 
 ### Requirement: Neutral relay names do not expand body access authority
-FlowPilot SHALL allow recipient-neutral relay helper names while preserving the addressed-role body access rules. A renamed or aliased relay check MUST NOT let PM, Reviewer, Controller, Worker, or Officer open a body outside the role and stage authorized by the packet or result contract.
+FlowPilot SHALL allow recipient-neutral relay helper names while preserving the addressed-role body access rules. A renamed relay check MUST NOT let PM, Reviewer, Controller, Worker, or Officer open a body outside the role and stage authorized by the packet or result contract.
 
 #### Scenario: PM opens only PM-bound result
 - **WHEN** a result is relayed to `project_manager` for disposition
 - **THEN** PM may open the result body only through the packet runtime authorization path for that result
 - **AND** Reviewer SHALL NOT gain raw result body access from the PM-bound relay.
 
-#### Scenario: Compatibility alias keeps old callers safe
-- **WHEN** existing code calls a legacy reviewer-named relay check for a PM-bound result
-- **THEN** the check SHALL apply the same recipient, ledger, hash, and body-boundary rules as the recipient-neutral check
-- **AND** the legacy name SHALL NOT imply Reviewer approval or Reviewer body access.
+#### Scenario: Reviewer-named relay does not grant current authority
+- **WHEN** a PM-bound result is checked through any reviewer-named relay surface
+- **THEN** current authority still comes only from the recipient, ledger, hash, and body-boundary rules
+- **AND** the reviewer-named surface SHALL NOT imply Reviewer approval, Reviewer body access, or PM disposition completion.

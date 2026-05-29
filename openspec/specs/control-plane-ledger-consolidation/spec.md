@@ -20,8 +20,8 @@ state transitions while a run is in daemon mode.
   display projection from one fold operation
 - **AND** the fold is idempotent across repeated daemon ticks.
 
-### Requirement: Legacy pending-action is a projection
-FlowPilot SHALL NOT let legacy `pending_action` override Controller action ledger
+### Requirement: Pending action is a non-authoritative projection
+FlowPilot SHALL NOT let `pending_action` override Controller action ledger
 authority for action execution, receipt requirements, or router-controlled wait
 classification.
 
@@ -31,7 +31,7 @@ classification.
   router-controlled wait
 - **THEN** Controller and daemon decisions follow the Controller action ledger
   row
-- **AND** status output labels the legacy pending action as a compatibility
+- **AND** status output labels the pending action as a non-authoritative
   projection.
 
 ### Requirement: Stale passive waits are superseded

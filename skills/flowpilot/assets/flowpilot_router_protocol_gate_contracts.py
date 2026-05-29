@@ -56,8 +56,6 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
     },
 }
 
-GATE_CONTRACT_ALIASES: dict[str, str] = {}
-
 GATE_CONTRACTS_BY_CARD = {
     str(contract["card_id"]): gate_id
     for gate_id, contract in GATE_CONTRACTS.items()
@@ -84,7 +82,7 @@ def _gate_contract_for_id(gate_id: str | None) -> dict[str, Any] | None:
     if not gate_id:
         return None
     key = str(gate_id)
-    return GATE_CONTRACTS.get(key) or GATE_CONTRACTS.get(GATE_CONTRACT_ALIASES.get(key, ""))
+    return GATE_CONTRACTS.get(key)
 
 def _gate_contract_for_card(card_id: str | None) -> dict[str, Any] | None:
     if not card_id:
@@ -157,7 +155,6 @@ PROCESS_ROUTE_MODEL_BLOCK_EVENTS = frozenset(
 __all__ = (
     'GATE_CONTRACT_SCHEMA',
     'GATE_CONTRACTS',
-    'GATE_CONTRACT_ALIASES',
     'GATE_CONTRACTS_BY_CARD',
     'GATE_CONTRACTS_BY_EVENT',
     '_public_gate_contract',

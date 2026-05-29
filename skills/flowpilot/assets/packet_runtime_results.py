@@ -45,7 +45,6 @@ from packet_runtime_ledger import (
 from packet_runtime_paths import (
     active_run_root,
     load_envelope,
-    normalize_envelope_aliases,
     packet_paths,
     packet_paths_from_any_envelope,
     packet_paths_from_envelope,
@@ -155,7 +154,7 @@ def write_result(
     strict_role: bool = True,
     controller_aside: str | None = None,
 ) -> dict[str, Any]:
-    packet_envelope = normalize_envelope_aliases(packet_envelope)
+    packet_envelope = dict(packet_envelope)
     if strict_role and completed_by_role != packet_envelope.get("to_role"):
         raise PacketRuntimeError(
             f"completed_by_role {completed_by_role!r} does not match packet to_role {packet_envelope.get('to_role')!r}"
@@ -271,7 +270,6 @@ def write_result(
     return result_envelope
 
 def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any], *, role: str) -> str:
-    result_envelope.update(normalize_envelope_aliases(result_envelope))
     verify_controller_relay(result_envelope, recipient_role=role)
     allowed = {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
     if role not in allowed:

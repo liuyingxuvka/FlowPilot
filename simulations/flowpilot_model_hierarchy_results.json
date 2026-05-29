@@ -282,7 +282,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-05-29T01:28:13.781628+00:00",
+            "created_at": "2026-05-29T07:20:10.714076+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -296,7 +296,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-29T01:28:13.781628+00:00",
+          "created_at": "2026-05-29T07:20:10.714076+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -317,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-29T01:28:16.209264+00:00",
+            "created_at": "2026-05-29T07:20:12.567838+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -343,7 +343,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-05-29T01:28:13.713630+00:00",
+            "created_at": "2026-05-29T07:20:10.714076+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -357,7 +357,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-29T01:28:13.713630+00:00",
+          "created_at": "2026-05-29T07:20:10.714076+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -378,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-29T01:28:16.132736+00:00",
+            "created_at": "2026-05-29T07:21:30.699388+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1239,7 +1239,7 @@
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 70,
+        "state_count": 67,
         "tier": "small"
       },
       {
@@ -1257,7 +1257,7 @@
         "model_id": "flowpilot_card_envelope",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_card_envelope_checks_results.json",
+        "result_file": "simulations/flowpilot_card_envelope_results.json",
         "role": "child_evidence",
         "state_count": 54,
         "tier": "small"
@@ -1357,7 +1357,7 @@
         "model_id": "flowpilot_handoff_artifact_protocol",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_handoff_artifact_protocol_checks_results.json",
+        "result_file": "simulations/flowpilot_handoff_artifact_protocol_results.json",
         "role": "child_evidence",
         "state_count": 41,
         "tier": "small"
@@ -1367,7 +1367,7 @@
         "model_id": "flowpilot_legal_next_action",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_legal_next_action_checks_results.json",
+        "result_file": "simulations/flowpilot_legal_next_action_results.json",
         "role": "child_evidence",
         "state_count": 39,
         "tier": "small"
@@ -1377,7 +1377,7 @@
         "model_id": "flowpilot_model_driven_recursive_route",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_model_driven_recursive_route_checks_results.json",
+        "result_file": "simulations/flowpilot_model_driven_recursive_route_results.json",
         "role": "child_evidence",
         "state_count": 41,
         "tier": "small"
@@ -1387,7 +1387,7 @@
         "model_id": "flowpilot_model_mesh",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_model_mesh_checks_results.json",
+        "result_file": "simulations/flowpilot_model_mesh_results.json",
         "role": "child_evidence",
         "state_count": 53,
         "tier": "small"
@@ -1407,7 +1407,7 @@
         "model_id": "flowpilot_packet_lifecycle",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_packet_lifecycle_checks_results.json",
+        "result_file": "simulations/flowpilot_packet_lifecycle_results.json",
         "role": "child_evidence",
         "state_count": 60,
         "tier": "small"
@@ -1447,7 +1447,7 @@
         "model_id": "flowpilot_repair_transaction",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_repair_transaction_checks_results.json",
+        "result_file": "simulations/flowpilot_repair_transaction_results.json",
         "role": "child_evidence",
         "state_count": 205,
         "tier": "small"
@@ -1457,7 +1457,7 @@
         "model_id": "flowpilot_requirement_traceability",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_requirement_traceability_checks_results.json",
+        "result_file": "simulations/flowpilot_requirement_traceability_results.json",
         "role": "child_evidence",
         "state_count": 8,
         "tier": "small"
@@ -1477,7 +1477,7 @@
         "model_id": "flowpilot_reviewer_active_challenge",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_reviewer_active_challenge_checks_results.json",
+        "result_file": "simulations/flowpilot_reviewer_active_challenge_results.json",
         "role": "child_evidence",
         "state_count": 59,
         "tier": "small"
@@ -1487,7 +1487,7 @@
         "model_id": "flowpilot_role_output_runtime",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_role_output_runtime_checks_results.json",
+        "result_file": "simulations/flowpilot_role_output_runtime_results.json",
         "role": "child_evidence",
         "state_count": null,
         "tier": "unknown"
@@ -1507,7 +1507,7 @@
         "model_id": "flowpilot_route_display",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_route_display_checks_results.json",
+        "result_file": "simulations/flowpilot_route_display_results.json",
         "role": "child_evidence",
         "state_count": 35,
         "tier": "small"
@@ -1517,7 +1517,7 @@
         "model_id": "flowpilot_route_replanning_policy",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_route_replanning_policy_checks_results.json",
+        "result_file": "simulations/flowpilot_route_replanning_policy_results.json",
         "role": "child_evidence",
         "state_count": 43,
         "tier": "small"
@@ -1527,7 +1527,7 @@
         "model_id": "flowpilot_router_loop",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_router_loop_checks_results.json",
+        "result_file": "simulations/flowpilot_router_loop_results.json",
         "role": "child_evidence",
         "state_count": 175,
         "tier": "small"
@@ -1537,7 +1537,7 @@
         "model_id": "flowpilot_startup_control",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_startup_control_checks_results.json",
+        "result_file": "simulations/flowpilot_startup_control_results.json",
         "role": "child_evidence",
         "state_count": 298,
         "tier": "small"
@@ -1547,7 +1547,7 @@
         "model_id": "flowpilot_startup_intake_ui",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_startup_intake_ui_checks_results.json",
+        "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
         "role": "child_evidence",
         "state_count": 25,
         "tier": "small"
@@ -1557,7 +1557,7 @@
         "model_id": "flowpilot_terminal_state_monotonicity",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_terminal_state_monotonicity_checks_results.json",
+        "result_file": "simulations/flowpilot_terminal_state_monotonicity_results.json",
         "role": "child_evidence",
         "state_count": 29,
         "tier": "small"
@@ -1567,7 +1567,7 @@
         "model_id": "flowpilot_terminal_summary",
         "ok": true,
         "registered_in_partition": true,
-        "result_file": "simulations/flowpilot_terminal_summary_checks_results.json",
+        "result_file": "simulations/flowpilot_terminal_summary_results.json",
         "role": "child_evidence",
         "state_count": 21,
         "tier": "small"

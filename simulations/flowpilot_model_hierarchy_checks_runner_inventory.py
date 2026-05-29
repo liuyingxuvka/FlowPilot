@@ -74,6 +74,14 @@ def _base_from_result_path(path: Path) -> str:
     return name
 
 
+def _is_canonical_result_path(path: Path) -> bool:
+    return path.name.endswith("_results.json") and not path.name.endswith("_checks_results.json")
+
+
+def _is_shadow_check_result_path(path: Path) -> bool:
+    return path.name.endswith("_checks_results.json")
+
+
 def _result_index() -> dict[str, dict[str, Any]]:
     rows: dict[str, dict[str, Any]] = {}
     for path in sorted(SIMULATIONS.glob("*.json")):
@@ -87,6 +95,12 @@ def _result_index() -> dict[str, dict[str, Any]]:
             continue
         base = _base_from_result_path(path)
         previous = rows.get(base)
+        if previous:
+            previous_path = SIMULATIONS.parent / str(previous["result_file"])
+            if _is_canonical_result_path(previous_path) and _is_shadow_check_result_path(path):
+                continue
+            if _is_shadow_check_result_path(previous_path) and _is_canonical_result_path(path):
+                previous = None
         current_state_count = counts["state_count"] if counts["state_count"] is not None else -1
         previous_state_count = -1
         if previous and previous.get("state_count") is not None:

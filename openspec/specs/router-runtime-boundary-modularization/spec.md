@@ -17,7 +17,7 @@ narrower helper modules.
 - **AND** the command dispatches to the same public behavior as before the
   extraction.
 
-#### Scenario: Existing imports remain compatible
+#### Scenario: Existing imports keep the current public contract
 
 - **WHEN** repository tests or install checks import `flowpilot_router`
 - **THEN** existing public constants, exceptions, and entrypoint functions remain

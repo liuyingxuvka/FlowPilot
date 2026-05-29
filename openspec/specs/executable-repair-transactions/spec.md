@@ -46,17 +46,17 @@ FlowPilot SHALL support explicit repair transaction plan kinds for
 - **WHEN** PM selects `terminal_stop`
 - **THEN** Router records the terminal stop reason and does not wait for a follow-up repair event.
 
-### Requirement: Legacy event replay cannot create dead waits
-FlowPilot SHALL treat legacy `event_replay` repair transactions as a
-deprecated compatibility alias for `await_existing_event` only when an existing
-producer is present.
+### Requirement: Retired event replay cannot create dead waits
+FlowPilot SHALL reject retired `event_replay` repair transactions instead of
+treating them as aliases for current repair transactions.
 
-#### Scenario: Legacy replay with producer is accepted as compatibility
-- **WHEN** PM submits legacy `event_replay` and the awaited event already has a current producer
-- **THEN** Router normalizes the transaction to an existing-event wait or records compatibility metadata without creating a new replay mechanism.
+#### Scenario: Retired replay with producer is rejected
+- **WHEN** PM submits retired `event_replay` and the awaited event already has a current producer
+- **THEN** Router rejects the repair decision before writing a committed repair transaction
+- **AND** Router SHALL NOT normalize the transaction to an existing-event wait.
 
-#### Scenario: Legacy replay without producer is rejected
-- **WHEN** PM submits legacy `event_replay` without an existing producer for the awaited event
+#### Scenario: Retired replay without producer is rejected
+- **WHEN** PM submits retired `event_replay` without an existing producer for the awaited event
 - **THEN** Router rejects the repair decision before writing a committed repair transaction.
 
 ### Requirement: Role reissue waits require concrete producers

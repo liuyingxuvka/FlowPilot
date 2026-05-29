@@ -44,7 +44,6 @@ REQUIRED_LABELS = (
     "select_registry_allowed_role_mismatch",
     "select_registry_router_event_missing",
     "select_unregistered_runtime_output_type",
-    "select_broken_compat_output_alias",
     "select_missing_runtime_receipt",
     "select_missing_required_field",
     "select_missing_explicit_empty_array",
@@ -66,7 +65,6 @@ REQUIRED_LABELS = (
     "router_rejects_registry_allowed_role_mismatch",
     "router_rejects_registry_router_event_missing",
     "router_rejects_unregistered_runtime_output_type",
-    "router_rejects_broken_compat_output_alias",
     "router_rejects_missing_runtime_receipt",
     "router_rejects_missing_required_field",
     "router_rejects_missing_explicit_empty_array",
@@ -86,7 +84,6 @@ HAZARD_EXPECTED_FAILURES = {
     "registry_allowed_role_mismatch": "registry/runtime allowed role mismatch",
     "registry_router_event_missing": "missing Router event binding",
     "unregistered_runtime_output_type": "not declared by registry",
-    "broken_compat_output_alias": "broken compatibility output alias",
     "missing_runtime_receipt": "without runtime receipt",
     "missing_required_field": "missing required field",
     "missing_explicit_empty_array": "missing explicit empty array",
@@ -120,8 +117,7 @@ def _state_id(state: model.State) -> str:
         f"{state.registry_contract_id_matches_runtime},"
         f"{state.registry_allowed_roles_match_runtime},"
         f"{state.registry_router_event_exists},"
-        f"{state.runtime_output_type_declared_by_registry},"
-        f"{state.compat_output_alias_valid}|"
+        f"{state.runtime_output_type_declared_by_registry}|"
         f"runtime={state.runtime_receipt_written}|hash={state.body_hash_verified}|"
         f"direct_router={state.direct_router_submission},{state.router_receives_role_output_envelope},"
         f"{state.controller_waits_router_status}|router_ready="

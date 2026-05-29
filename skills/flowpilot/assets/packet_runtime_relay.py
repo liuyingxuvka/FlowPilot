@@ -12,7 +12,6 @@ from typing import Any
 from packet_runtime_contracts import mutual_role_reminder
 from packet_runtime_ledger import _update_packet_record
 from packet_runtime_paths import (
-    normalize_envelope_aliases,
     packet_paths_from_any_envelope,
     resolve_project_path,
 )
@@ -100,7 +99,6 @@ def controller_relay_envelope(
     body_was_executed_by_controller: bool = False,
     private_role_to_role_delivery_detected: bool = False,
 ) -> dict[str, Any]:
-    envelope.update(normalize_envelope_aliases(envelope))
     source_role = received_from_role or envelope.get("from_role") or envelope.get("completed_by_role") or "unknown"
     target_role = relayed_to_role or envelope.get("to_role") or envelope.get("next_recipient") or "unknown"
     if envelope.get("controller_return_to_sender", {}).get("contaminated"):

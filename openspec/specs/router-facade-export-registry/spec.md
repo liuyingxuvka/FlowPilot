@@ -3,7 +3,7 @@
 ## Purpose
 TBD - created by archiving change collapse-router-export-manifest-shards. Update Purpose after archive.
 ## Requirements
-### Requirement: Router facade export registry remains compatible
+### Requirement: Router facade export registry keeps current public exports
 FlowPilot SHALL preserve the public router facade export contract while moving
 export rows into a single canonical registry owner.
 
@@ -15,7 +15,7 @@ export rows into a single canonical registry owner.
 - **AND** no event name, ledger shape, CLI command, or runtime protocol field is
   changed.
 
-#### Scenario: Compatibility shard views remain importable
+#### Scenario: Canonical registry views remain importable
 - **WHEN** existing callers import manifest shard functions such as
   `owner_exports_actions()`, `owner_exports_controller()`,
   `owner_exports_route()`, `owner_exports_startup()`, or
@@ -38,4 +38,3 @@ maintenance change, not as an unmodeled cleanup.
   stale parity, or missing model-test evidence
 - **THEN** the maintenance pass is blocked
 - **AND** local install sync and local git completion are not claimed.
-

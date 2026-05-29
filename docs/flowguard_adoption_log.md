@@ -19982,3 +19982,68 @@ only the new FlowPilot workflow.
   not rewritten as active runtime behavior.
 - Future StructureMesh splits beyond compatibility-surface contraction remain
   separate scoped work.
+## 2026-05-29 09:05 +02:00 - Converge new-only maintenance cleanup
+
+### Trigger
+
+The user clarified that FlowPilot upgrades should not preserve old compatible
+paths, formats, prompts, or work modes, and specifically asked to use FlowGuard
+to identify compatibility-layer branches that should be deleted.
+
+### Changed Surfaces
+
+- Added `flowpilot_compatibility_layer_pruning` as a FlowGuard-backed scanner
+  and classifier for active compatibility, legacy, alias, fallback, and retired
+  terms across runtime assets, scripts, tests, simulations, and OpenSpec specs.
+- Removed the remaining no-op runtime compatibility hooks for gate-contract
+  aliases and packet/result envelope alias normalization.
+- Updated current packet, role-output, and route-display models so retired
+  packet/result aliases are hazards, not accepted or normalized paths.
+- Reworded active OpenSpec specs that still described current public behavior
+  as compatibility or legacy-full preservation.
+- Synchronized the repository-owned installed FlowPilot skill after validation.
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`.
+- OK: `python simulations\run_flowpilot_compatibility_layer_pruning_checks.py --json-out simulations\flowpilot_compatibility_layer_pruning_results.json`; immediate cleanup count is 0 after spec cleanup.
+- OK: `python simulations\run_new_only_runtime_checks.py --json-out simulations\flowpilot_new_only_runtime_results.json`.
+- OK: `python simulations\run_flowpilot_packet_lifecycle_checks.py --json-out simulations\flowpilot_packet_lifecycle_results.json`.
+- OK: `python simulations\run_flowpilot_role_output_runtime_checks.py --json-out simulations\flowpilot_role_output_runtime_results.json`.
+- OK: `python simulations\run_flowpilot_route_display_checks.py --json-out simulations\flowpilot_route_display_results.json`.
+- OK: `python simulations\run_flowpilot_validation_artifact_canonicalization_checks.py --json-out simulations\flowpilot_validation_artifact_canonicalization_results.json`.
+- OK: `python simulations\run_card_instruction_coverage_checks.py --json-out simulations\card_instruction_coverage_results.json`.
+- OK: `python -m unittest tests.test_flowpilot_packet_runtime -v`.
+- OK: `python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_current_node_packet_and_result_reject_envelope_aliases tests.router_runtime.packets.PacketsRuntimeTests.test_current_node_completion_requires_reviewer_passed_packet_audit -v`.
+- OK: `python -m unittest tests.test_flowpilot_maintenance_tools tests.test_flowpilot_validation_artifact_canonicalization_model tests.test_flowpilot_asset_surface_contracts tests.test_flowpilot_user_flow_diagram -v`.
+- OK: `openspec validate converge-new-only-maintenance-cleanup --strict`.
+- OK: `openspec validate --all --strict`; 167 items passed.
+- OK: background `tmp/flowguard_background/run_meta_checks.*`; completed, exit code 0, `proof_reuse=false`.
+- OK: background `tmp/flowguard_background/run_capability_checks.*`; completed, exit code 0, `proof_reuse=false`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`.
+- OK: `python scripts\check_install.py --json`.
+- OK after rerun: `python scripts\audit_local_install_sync.py --json`.
+- OK: `python scripts\install_flowpilot.py --check --json`.
+
+### Findings
+
+- FlowGuard found no remaining runtime code branch that accepts old aliases
+  after cleanup.
+- The new pruning model initially found 17 active OpenSpec lines still teaching
+  compatibility or legacy preservation language; those were rewritten to current
+  public-contract wording.
+- The same model keeps negative rejection tests and current safety fallbacks
+  out of the deletion set, so manual resume, Cockpit/chat display fallback,
+  authorized single-agent fallback, and break-glass repair remain current safety
+  mechanisms rather than old workflow compatibility.
+- Public facade/import surfaces remain classified as StructureMesh-gated
+  follow-up work; they are not old work modes, and deleting them safely requires
+  separate parity evidence.
+
+### Skipped Or Limited
+
+- Runtime cards were not broadly compressed in this pass.
+- The largest shared test helper surface was not split because that scope was
+  not necessary for the compatibility-layer deletion result.
+- No local commit, push, tag, release, deploy, or destructive runtime-data
+  cleanup was performed.
