@@ -1,5 +1,5 @@
 {
-  "mode": "release",
+  "mode": "routine",
   "ok": true,
   "result_type": "ai_project_runtime_checks",
   "scenarios": [
@@ -19,7 +19,8 @@
           },
           {
             "id": "packet-0001",
-            "kind": "packet"
+            "kind": "packet",
+            "packet_kind": "task"
           },
           {
             "id": "result-0002",
@@ -32,13 +33,49 @@
           {
             "id": "flowguard-0001",
             "kind": "flowguard"
+          },
+          {
+            "id": "packet-0002",
+            "kind": "packet",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "id": "result-0003",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0003",
+            "kind": "packet",
+            "packet_kind": "review"
+          },
+          {
+            "id": "result-0004",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0004",
+            "kind": "packet",
+            "packet_kind": "validation"
+          },
+          {
+            "id": "result-0005",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0005",
+            "kind": "packet",
+            "packet_kind": "closure"
+          },
+          {
+            "id": "result-0006",
+            "kind": "result"
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T17:02:09.900464+00:00",
+        "created_at": "2026-05-29T21:00:47.901262+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "runtime-validation"
+        "validation_evidence_id": "validation-result-0005"
       },
       "details": {
         "accepted_result_id": "result-0002",
@@ -64,9 +101,10 @@
         "backward_chain": [],
         "blockers": [
           "missing_accepted_packet_result",
-          "packet_not_accepted:packet-0001"
+          "packet_not_accepted:packet-0001",
+          "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-05-29T17:02:09.901466+00:00",
+        "created_at": "2026-05-29T21:00:47.902261+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -75,17 +113,18 @@
         "blockers": [
           "missing_matching_flowguard_report",
           "missing_accepted_packet_result",
-          "packet_not_accepted:packet-0001"
+          "packet_not_accepted:packet-0001",
+          "packet_not_accepted:packet-0002"
         ]
       },
       "expected_acceptance": false,
       "name": "wrong_flowguard_target_blocks",
       "next_action": {
-        "action_type": "repair_packet",
+        "action_type": "lease_agent",
         "modeled_target": "",
-        "reason": "packet result or review is blocked",
-        "responsibility": "",
-        "subject_id": "packet-0001"
+        "reason": "packet has no assigned lease",
+        "responsibility": "flowguard_operator",
+        "subject_id": "packet-0002"
       },
       "ok": true
     },
@@ -102,11 +141,11 @@
       "expected_acceptance": false,
       "name": "self_review_blocks",
       "next_action": {
-        "action_type": "repair_packet",
+        "action_type": "lease_agent",
         "modeled_target": "",
-        "reason": "packet result or review is blocked",
-        "responsibility": "",
-        "subject_id": "packet-0001"
+        "reason": "packet has no assigned lease",
+        "responsibility": "flowguard_operator",
+        "subject_id": "packet-0002"
       },
       "ok": true
     },
@@ -200,7 +239,8 @@
           },
           {
             "id": "packet-0001",
-            "kind": "packet"
+            "kind": "packet",
+            "packet_kind": "task"
           },
           {
             "id": "result-0001",
@@ -213,13 +253,49 @@
           {
             "id": "flowguard-0001",
             "kind": "flowguard"
+          },
+          {
+            "id": "packet-0002",
+            "kind": "packet",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "id": "result-0002",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0003",
+            "kind": "packet",
+            "packet_kind": "review"
+          },
+          {
+            "id": "result-0003",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0004",
+            "kind": "packet",
+            "packet_kind": "validation"
+          },
+          {
+            "id": "result-0004",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0005",
+            "kind": "packet",
+            "packet_kind": "closure"
+          },
+          {
+            "id": "result-0005",
+            "kind": "result"
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T17:02:09.903466+00:00",
+        "created_at": "2026-05-29T21:00:47.905261+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "runtime-validation"
+        "validation_evidence_id": "validation-result-0004"
       },
       "details": {
         "leaked": false,
@@ -229,10 +305,65 @@
             "body_hash": "bca1f899e7cd7b55aec0f1d84f7954830f2eaeeb17e29acee0c6d211ef3b1f51",
             "objective": "Implement runtime slice",
             "packet_id": "packet-0001",
+            "packet_kind": "task",
             "responsibility": "worker",
             "route_version": 1,
             "sealed_body_hidden": true,
-            "status": "accepted"
+            "status": "accepted",
+            "subject_id": "",
+            "target_result_id": ""
+          },
+          {
+            "accepted_result_id": "result-0002",
+            "body_hash": "dc4d2c5afb0099942e881d8ce720adb69ce54fbab616e52e964edbe73b67b701",
+            "objective": "Run FlowGuard evidence for packet-0001",
+            "packet_id": "packet-0002",
+            "packet_kind": "flowguard_check",
+            "responsibility": "flowguard_operator",
+            "route_version": 1,
+            "sealed_body_hidden": true,
+            "status": "accepted",
+            "subject_id": "packet-0001",
+            "target_result_id": "result-0001"
+          },
+          {
+            "accepted_result_id": "result-0003",
+            "body_hash": "1b01c45f251f2db01917f17f0ab5a93ef5d8b6b6bedff79620ca57313ccdeeaf",
+            "objective": "Review result and FlowGuard evidence for packet-0001",
+            "packet_id": "packet-0003",
+            "packet_kind": "review",
+            "responsibility": "reviewer",
+            "route_version": 1,
+            "sealed_body_hidden": true,
+            "status": "accepted",
+            "subject_id": "packet-0001",
+            "target_result_id": "result-0001"
+          },
+          {
+            "accepted_result_id": "result-0004",
+            "body_hash": "92d783c87fb0bb2466b4fa1687ff520d14b5c3432616486d94915b8e1b3be880",
+            "objective": "Record validation evidence for packet-0001",
+            "packet_id": "packet-0004",
+            "packet_kind": "validation",
+            "responsibility": "validator",
+            "route_version": 1,
+            "sealed_body_hidden": true,
+            "status": "accepted",
+            "subject_id": "packet-0001",
+            "target_result_id": ""
+          },
+          {
+            "accepted_result_id": "result-0005",
+            "body_hash": "6735697d5696e3d8966e7b0d0b7cde4dd97e5b69be7e60c7e6f1101d18cda244",
+            "objective": "Perform final backward closure for packet-0001",
+            "packet_id": "packet-0005",
+            "packet_kind": "closure",
+            "responsibility": "closure_officer",
+            "route_version": 1,
+            "sealed_body_hidden": true,
+            "status": "accepted",
+            "subject_id": "packet-0001",
+            "target_result_id": ""
           }
         ]
       },
@@ -251,7 +382,7 @@
   "test_mesh": {
     "parent_gates": {
       "release_runtime_gate": {
-        "ok": true,
+        "ok": false,
         "required_rows": [
           "runtime_scenarios",
           "runtime_console_isolation",
@@ -296,10 +427,10 @@
           "tmp/flowguard_background/run_meta_checks.*",
           "tmp/flowguard_background/run_capability_checks.*"
         ],
-        "freshness": "current",
+        "freshness": "not_run",
         "id": "background_meta_capability",
         "scope": "release",
-        "status": "passed"
+        "status": "not_run"
       },
       {
         "details": {},
@@ -308,10 +439,10 @@
           "scripts/audit_local_install_sync.py",
           "scripts/check_install.py"
         ],
-        "freshness": "current",
+        "freshness": "not_run",
         "id": "install_surface_parity",
         "scope": "release",
-        "status": "passed"
+        "status": "not_run"
       }
     ]
   }

@@ -20,7 +20,7 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [],
     "actionable_summary": [],
-    "covered_surface_count": 902,
+    "covered_surface_count": 904,
     "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
@@ -223,9 +223,9 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 902,
+    "surface_count": 904,
     "surface_counts": {
-      "model_check_runner": 121,
+      "model_check_runner": 123,
       "model_check_runner_helper": 19,
       "owner_module": 274,
       "public_facade": 112,
@@ -288,7 +288,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 323,
+        "line_count": 366,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_ai_project_runtime_checks",
@@ -552,7 +552,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 353,
+        "line_count": 402,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_complete_system_runtime_checks",
@@ -1223,6 +1223,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_event_idempotency_checks",
         "surface_owner": "model-check:run_flowpilot_event_idempotency_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 562,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_fake_project_rehearsal_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_fake_project_rehearsal_checks",
+        "surface_owner": "model-check:run_flowpilot_fake_project_rehearsal_checks"
       },
       {
         "covered": true,
@@ -2488,6 +2510,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 125,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_symmetric_work_packet_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_symmetric_work_packet_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_symmetric_work_packet_checks",
+        "surface_owner": "model-check:run_flowpilot_symmetric_work_packet_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 548,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -3687,7 +3731,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 449,
+        "line_count": 406,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -3700,7 +3744,7 @@
         "surface_id": "asset:flowpilot_new",
         "surface_owner": "flowpilot_new",
         "top_level_class_count": 0,
-        "top_level_function_count": 21
+        "top_level_function_count": 17
       },
       {
         "covered": true,
@@ -13867,7 +13911,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 142,
+        "line_count": 144,
         "max_severity": "none",
         "model_binding": "smoke_fast_validation",
         "name": "smoke_autopilot",
@@ -27548,6 +27592,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_missing_evidence",
         "obligation_families": [],
@@ -27582,6 +27627,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": []
       },
       "report": {
@@ -27640,6 +27689,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_stale_evidence",
         "obligation_families": [],
@@ -27674,6 +27724,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27785,6 +27839,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_progress_only",
         "obligation_families": [],
@@ -27819,6 +27874,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27925,6 +27984,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_overclaim",
         "obligation_families": [],
@@ -27959,6 +28019,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28035,6 +28099,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_orphan",
         "obligation_families": [],
@@ -28069,6 +28134,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28171,6 +28240,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_duplicate",
         "obligation_families": [],
@@ -28205,6 +28275,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28288,6 +28362,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_runtime_path_missing",
         "obligation_families": [],
@@ -28324,6 +28399,10 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30462,6 +30541,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "startup",
         "obligation_families": [],
@@ -30714,6 +30794,10 @@
             "source_evidence_id": "runtime_path.startup"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30836,6 +30920,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "packet_card_ack",
         "obligation_families": [],
@@ -31311,6 +31396,10 @@
             "source_evidence_id": "runtime_path.packet_card_ack"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31492,6 +31581,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "packet_result_family",
         "obligation_families": [],
@@ -32852,6 +32942,10 @@
             "source_evidence_id": "runtime_path.packet_result_family"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33141,6 +33235,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "route_mutation",
         "obligation_families": [],
@@ -33393,6 +33488,10 @@
             "source_evidence_id": "runtime_path.route_mutation"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33514,6 +33613,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "terminal_closure_resume",
         "obligation_families": [],
@@ -33877,6 +33977,10 @@
             "source_evidence_id": "runtime_path.terminal_closure_resume"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -34018,6 +34122,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "role_output_contracts",
         "obligation_families": [],
@@ -34381,6 +34486,10 @@
             "source_evidence_id": "runtime_path.role_output_contracts"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -34526,6 +34635,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "router_loop_daemon",
         "obligation_families": [],
@@ -36126,6 +36236,10 @@
             "source_evidence_id": "runtime_path.router_loop_daemon"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -36798,6 +36912,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "repair_transactions",
         "obligation_families": [],
@@ -37494,6 +37609,10 @@
             "source_evidence_id": "runtime_path.repair_transactions"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -37679,6 +37798,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "test_tiering_slow_contracts",
         "obligation_families": [],
@@ -38042,6 +38162,10 @@
             "source_evidence_id": "runtime_path.test_tiering_slow_contracts"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -38185,6 +38309,7 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
+        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "meta_capability_parents",
         "obligation_families": [],
@@ -38548,6 +38673,10 @@
             "source_evidence_id": "runtime_path.meta_capability_parents"
           }
         ],
+        "same_family_similarity_relation_ids": [],
+        "similarity_maintenance_group_ids": [],
+        "similarity_relation_ids": [],
+        "similarity_test_obligation_ids": [],
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -38992,19 +39121,165 @@
             "return"
           ],
           "implements_obligations": [
-            "new_entrypoint.rehearsal_closure"
+            "new_entrypoint.rehearsal_closure",
+            "new_entrypoint.symmetric_role_packet_lifecycle"
           ],
           "path": "skills/flowpilot/assets/flowpilot_new.py",
           "required": true,
           "role": "owner",
           "side_effects": [
-            "create_work_order",
             "save_run_ledger"
           ],
           "state_reads": [],
           "state_writes": [],
           "surface_type": "function",
           "symbol": "run_fake_e2e"
+        },
+        {
+          "code_contract_id": "flowpilot_new.lease_agent",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "packet_id",
+            "responsibility",
+            "agent_id",
+            "host_kind"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            "new_entrypoint.role_lease_requires_matching_packet"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "lease_responsibility",
+            "assign_packet",
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "lease_agent"
+        },
+        {
+          "code_contract_id": "flowpilot_new.ack",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "lease_id",
+            "packet_id"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "ack_lease",
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "ack"
+        },
+        {
+          "code_contract_id": "flowpilot_new.submit_result",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "lease_id",
+            "packet_id",
+            "body"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "submit_host_result",
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "submit_result"
+        },
+        {
+          "code_contract_id": "flowpilot_new.status",
+          "error_paths": [],
+          "external_inputs": [
+            "root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "status"
+        },
+        {
+          "code_contract_id": "flowpilot_new.main",
+          "error_paths": [],
+          "external_inputs": [
+            "argv"
+          ],
+          "external_outputs": [
+            "exit_code"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.side_command_surface_retired"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "main"
+        },
+        {
+          "code_contract_id": "flowpilot_fake_project_rehearsal.run_checks",
+          "error_paths": [],
+          "external_inputs": [
+            "work_root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.blackbox_fake_project_rehearsal"
+          ],
+          "path": "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "run_checks"
         },
         {
           "code_contract_id": "terminal_ledger_source_entries.route_nodes_with_requirement_trace",
@@ -44087,6 +44362,7 @@
           "symbol": "main"
         }
       ],
+      "evidence_duplicate_relation_ids": [],
       "family_evidence": [],
       "model_id": "model_test_code_source_contracts",
       "obligation_families": [],
@@ -44200,6 +44476,102 @@
           "required_runtime_node_ids": [],
           "required_test_kinds": [
             "happy_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited black-box fake project rehearsal boundary proving the public CLI and startup UI script can drive normal and error packet flows without internal helper proof.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.blackbox_fake_project_rehearsal",
+          "obligation_type": "scenario",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path",
+            "edge_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited new-entrypoint packet lifecycle boundary requiring PM, FlowGuard operator, Reviewer, Validator, and Closure officer to use issued packet, lease, ACK, result, packet-owned side effect, and clean lease projection.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.symmetric_role_packet_lifecycle",
+          "obligation_type": "invariant",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path",
+            "edge_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited dynamic lease boundary rejecting a backend role lease against another responsibility's packet before allowing the role through its own issued packet.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.role_lease_requires_matching_packet",
+          "obligation_type": "hazard",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited formal public surface boundary that omits retired direct FlowGuard, review, validation, and closure side-command paths.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.side_command_surface_retired",
+          "obligation_type": "hazard",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "negative_path"
           ],
           "requires_same_class_test_evidence": false,
           "risk_level": "high",
@@ -45310,6 +45682,10 @@
       "runtime_node_contracts": [],
       "runtime_node_observations": [],
       "runtime_path_runs": [],
+      "same_family_similarity_relation_ids": [],
+      "similarity_maintenance_group_ids": [],
+      "similarity_relation_ids": [],
+      "similarity_test_obligation_ids": [],
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
@@ -45432,7 +45808,8 @@
             "flowpilot_new.run_fake_e2e"
           ],
           "covered_obligations": [
-            "new_entrypoint.rehearsal_closure"
+            "new_entrypoint.rehearsal_closure",
+            "new_entrypoint.symmetric_role_packet_lifecycle"
           ],
           "evidence_current": true,
           "evidence_id": "source.new_entrypoint.e2e",
@@ -45445,6 +45822,171 @@
           "stale_reasons": [],
           "test_kind": "happy_path",
           "test_name": "test_fake_end_to_end_rehearsal_reaches_final_closure"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+          "covered_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.blackbox_fake_project_rehearsal"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_happy",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+          "covered_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.blackbox_fake_project_rehearsal"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_negative",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+          "covered_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.blackbox_fake_project_rehearsal"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_edge",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_ack_only_and_pm_only_result_do_not_reach_terminal_closure",
+          "covered_code_contracts": [
+            "flowpilot_new.start_run",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.ack",
+            "flowpilot_new.submit_result",
+            "flowpilot_new.status"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.no_shortcut",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_ack_only_and_pm_only_result_do_not_reach_terminal_closure"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_flowguard_operator_is_leased_through_its_own_packet",
+          "covered_code_contracts": [
+            "flowpilot_new.start_run",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.ack",
+            "flowpilot_new.submit_result"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.role_lease_requires_matching_packet"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.flowguard_packet",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_reviewer_packet_lease_projection_is_clean_before_and_after_review",
+          "covered_code_contracts": [
+            "flowpilot_new.start_run",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.ack",
+            "flowpilot_new.submit_result",
+            "flowpilot_new.status"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.reviewer_clean_projection",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_retired_side_command_paths",
+          "covered_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.side_command_surface_retired"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.side_command_surface",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
         },
         {
           "assertion_scope": "external_contract",
@@ -47987,20 +48529,19 @@
         {
           "calls": [
             "_first_active_packet",
+            "_packet_by_kind",
             "cockpit.render_status",
-            "flowguard_orders.complete_work_order",
-            "flowguard_orders.create_work_order",
+            "complete_open_packet",
             "host.lease_responsibility",
             "host.submit_host_result",
-            "review_closure.attempt_final_closure",
-            "review_closure.review_result",
+            "iter",
+            "next",
             "router.router_next_action",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "run_shell.save_run_ledger",
             "runtime.ack_lease",
             "runtime.assign_packet",
-            "runtime.record_validation_evidence",
             "shell.to_json",
             "start_run",
             "to_json"
@@ -48018,38 +48559,50 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
-            "create_work_order",
             "save_run_ledger"
           ],
           "state_reads": [
             "Any",
             "Path",
             "_first_active_packet",
+            "_packet_by_kind",
             "ack_lease",
+            "agent_id",
             "assign_packet",
-            "attempt_final_closure",
+            "body",
             "closure",
+            "closure_lease_id",
+            "closure_packet_id",
+            "closure_result_id",
             "cockpit",
-            "complete_work_order",
-            "create_work_order",
+            "complete_open_packet",
             "decision",
             "dict",
-            "flowguard_orders",
+            "envelope",
+            "flowguard_lease_id",
+            "flowguard_packet_id",
+            "flowguard_result_id",
+            "flowguard_work_orders",
             "host",
+            "iter",
             "lease_id",
             "lease_responsibility",
             "ledger",
             "load_run_ledger",
             "load_run_shell",
+            "next",
             "order_id",
+            "packet",
             "packet_id",
-            "record_validation_evidence",
+            "packets",
             "render_status",
+            "responsibility",
             "result_id",
-            "review_closure",
             "review_id",
-            "review_result",
-            "reviewer",
+            "review_packet_id",
+            "review_result_id",
+            "reviewer_lease_id",
+            "reviews",
             "root",
             "router",
             "router_next_action",
@@ -48064,21 +48617,392 @@
             "startup_text",
             "str",
             "submit_host_result",
-            "to_json"
+            "to_json",
+            "tuple",
+            "validation_lease_id",
+            "validation_packet_id",
+            "validation_result_id"
           ],
           "state_writes": [
             "closure",
+            "closure_lease_id",
+            "closure_packet_id",
+            "closure_result_id",
+            "flowguard_lease_id",
+            "flowguard_packet_id",
+            "flowguard_result_id",
             "lease_id",
             "ledger",
             "order_id",
+            "packet",
             "packet_id",
+            "responsibility",
             "result_id",
             "review_id",
-            "reviewer",
+            "review_packet_id",
+            "review_result_id",
+            "reviewer_lease_id",
             "shell",
-            "start_result"
+            "start_result",
+            "validation_lease_id",
+            "validation_packet_id",
+            "validation_result_id"
           ],
           "symbol": "run_fake_e2e"
+        },
+        {
+          "calls": [
+            "host.lease_responsibility",
+            "router.router_next_action",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "run_shell.save_run_ledger",
+            "runtime.assign_packet",
+            "to_json"
+          ],
+          "code_contract_id": "flowpilot_new.lease_agent",
+          "found": true,
+          "parameters": [
+            "agent_id",
+            "host_kind",
+            "packet_id",
+            "responsibility",
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "assign_packet",
+            "lease_responsibility",
+            "save_run_ledger"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "agent_id",
+            "assign_packet",
+            "dict",
+            "host",
+            "host_kind",
+            "lease_id",
+            "lease_responsibility",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "packet_id",
+            "responsibility",
+            "root",
+            "router",
+            "router_next_action",
+            "run_shell",
+            "runtime",
+            "save_run_ledger",
+            "shell",
+            "str",
+            "to_json"
+          ],
+          "state_writes": [
+            "lease_id",
+            "ledger",
+            "shell"
+          ],
+          "symbol": "lease_agent"
+        },
+        {
+          "calls": [
+            "router.router_next_action",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "run_shell.save_run_ledger",
+            "runtime.ack_lease",
+            "to_json"
+          ],
+          "code_contract_id": "flowpilot_new.ack",
+          "found": true,
+          "parameters": [
+            "lease_id",
+            "packet_id",
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "ack_lease",
+            "save_run_ledger"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "ack_lease",
+            "dict",
+            "lease_id",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "packet_id",
+            "root",
+            "router",
+            "router_next_action",
+            "run_shell",
+            "runtime",
+            "save_run_ledger",
+            "shell",
+            "str",
+            "to_json"
+          ],
+          "state_writes": [
+            "ledger",
+            "shell"
+          ],
+          "symbol": "ack"
+        },
+        {
+          "calls": [
+            "host.submit_host_result",
+            "router.router_next_action",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "run_shell.save_run_ledger",
+            "to_json"
+          ],
+          "code_contract_id": "flowpilot_new.submit_result",
+          "found": true,
+          "parameters": [
+            "body",
+            "lease_id",
+            "packet_id",
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "save_run_ledger",
+            "submit_host_result"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "body",
+            "dict",
+            "host",
+            "lease_id",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "packet_id",
+            "result_id",
+            "root",
+            "router",
+            "router_next_action",
+            "run_shell",
+            "save_run_ledger",
+            "shell",
+            "str",
+            "submit_host_result",
+            "to_json"
+          ],
+          "state_writes": [
+            "ledger",
+            "result_id",
+            "shell"
+          ],
+          "symbol": "submit_result"
+        },
+        {
+          "calls": [
+            "cockpit.render_status",
+            "router.router_next_action",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "shell.to_json",
+            "to_json"
+          ],
+          "code_contract_id": "flowpilot_new.status",
+          "found": true,
+          "parameters": [
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "cockpit",
+            "dict",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "render_status",
+            "root",
+            "router",
+            "router_next_action",
+            "run_shell",
+            "shell",
+            "str",
+            "to_json"
+          ],
+          "state_writes": [
+            "ledger",
+            "shell"
+          ],
+          "symbol": "status"
+        },
+        {
+          "calls": [
+            "Path",
+            "_print",
+            "ack",
+            "ack_parser.add_argument",
+            "argparse.ArgumentParser",
+            "args.root.resolve",
+            "bool",
+            "fake.add_argument",
+            "json.dumps",
+            "lease.add_argument",
+            "lease_agent",
+            "parser.add_argument",
+            "parser.add_subparsers",
+            "parser.parse_args",
+            "payload.get",
+            "print",
+            "run_fake_e2e",
+            "runtime.BlackBoxRuntimeError",
+            "sorted",
+            "start.add_argument",
+            "start_run",
+            "status",
+            "str",
+            "sub.add_parser",
+            "submit.add_argument",
+            "submit_result"
+          ],
+          "code_contract_id": "flowpilot_new.main",
+          "found": true,
+          "parameters": [
+            "argv"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [
+            "BlackBoxRuntimeError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "ArgumentParser",
+            "BlackBoxRuntimeError",
+            "HOST_KINDS",
+            "Path",
+            "__doc__",
+            "_print",
+            "ack",
+            "ack_parser",
+            "add_argument",
+            "add_parser",
+            "add_subparsers",
+            "agent_id",
+            "argparse",
+            "args",
+            "argv",
+            "body",
+            "bool",
+            "command",
+            "dumps",
+            "exc",
+            "fake",
+            "get",
+            "headless_startup_text",
+            "host",
+            "host_kind",
+            "int",
+            "json",
+            "lease",
+            "lease_agent",
+            "lease_id",
+            "list",
+            "packet_id",
+            "parse_args",
+            "parser",
+            "payload",
+            "print",
+            "resolve",
+            "responsibility",
+            "root",
+            "run_fake_e2e",
+            "run_id",
+            "runtime",
+            "sorted",
+            "start",
+            "start_run",
+            "startup_text",
+            "status",
+            "stderr",
+            "str",
+            "sub",
+            "submit",
+            "submit_result",
+            "sys"
+          ],
+          "state_writes": [
+            "ack_parser",
+            "args",
+            "fake",
+            "lease",
+            "parser",
+            "payload",
+            "root",
+            "start",
+            "sub",
+            "submit"
+          ],
+          "symbol": "main"
+        },
+        {
+          "calls": [
+            "Path",
+            "_run_checks_in_root",
+            "tempfile.TemporaryDirectory"
+          ],
+          "code_contract_id": "flowpilot_fake_project_rehearsal.run_checks",
+          "found": true,
+          "parameters": [
+            "work_root"
+          ],
+          "parse_error": "",
+          "path": "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+          "raised_errors": [],
+          "return_values": [
+            "_run_checks_in_root"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "TemporaryDirectory",
+            "_run_checks_in_root",
+            "dict",
+            "str",
+            "tempfile",
+            "tmp",
+            "work_root"
+          ],
+          "state_writes": [],
+          "symbol": "run_checks"
         },
         {
           "calls": [
@@ -62043,14 +62967,16 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 6,
+          "assert_count": 11,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.run_fake_e2e"
           ],
           "calls": [
             "Path",
+            "all",
             "flowpilot_new.run_fake_e2e",
+            "get",
             "iter",
             "json.loads",
             "next",
@@ -62068,6 +62994,191 @@
           "parse_error": "",
           "path": "tests/test_flowpilot_new_entrypoint.py",
           "test_name": "test_fake_end_to_end_rehearsal_reaches_final_closure"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "calls": [
+            "fake_project_runner.run_checks",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_happy",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "calls": [
+            "fake_project_runner.run_checks",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_negative",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_fake_project_rehearsal.run_checks"
+          ],
+          "calls": [
+            "fake_project_runner.run_checks",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertTrue"
+          ],
+          "evidence_id": "source.new_entrypoint.blackbox_rehearsal_edge",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_fake_project_rehearsal.py",
+          "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.status",
+            "flowpilot_new.submit_result"
+          ],
+          "calls": [
+            "Path",
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.status",
+            "flowpilot_new.submit_result",
+            "iter",
+            "next",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "self._open_packet_by_kind",
+            "self.assertEqual",
+            "self.assertNotEqual",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.new_entrypoint.no_shortcut",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_ack_only_and_pm_only_result_do_not_reach_terminal_closure"
+        },
+        {
+          "assert_count": 7,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.submit_result"
+          ],
+          "calls": [
+            "Path",
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.submit_result",
+            "get",
+            "iter",
+            "len",
+            "next",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "self.assertEqual",
+            "self.assertRaisesRegex",
+            "tempfile.TemporaryDirectory",
+            "values"
+          ],
+          "evidence_id": "source.new_entrypoint.flowguard_packet",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.status",
+            "flowpilot_new.submit_result"
+          ],
+          "calls": [
+            "Path",
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.status",
+            "flowpilot_new.submit_result",
+            "iter",
+            "next",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "self._complete_open_packet",
+            "self._open_packet_by_kind",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertTrue",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.new_entrypoint.reviewer_clean_projection",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
+        },
+        {
+          "assert_count": 12,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "calls": [
+            "Path.cwd",
+            "contextlib.redirect_stderr",
+            "contextlib.redirect_stdout",
+            "direct_error.getvalue",
+            "direct_help.getvalue",
+            "flowpilot_new.main",
+            "hasattr",
+            "io.StringIO",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertNotEqual",
+            "self.assertNotIn",
+            "self.assertRaises",
+            "str",
+            "subprocess.run"
+          ],
+          "evidence_id": "source.new_entrypoint.side_command_surface",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
         },
         {
           "assert_count": 12,

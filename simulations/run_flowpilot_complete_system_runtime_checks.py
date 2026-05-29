@@ -35,6 +35,43 @@ def _base_ledger() -> tuple[dict[str, Any], str, str]:
     return ledger, packet_id, lease_id
 
 
+def _open_packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
+    for packet_id, packet in ledger.get("packets", {}).items():
+        if packet["envelope"].get("packet_kind", "task") == packet_kind and packet["status"] == "open":
+            return str(packet_id)
+    raise AssertionError(f"missing open {packet_kind} packet")
+
+
+def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str) -> str:
+    packet = ledger["packets"][packet_id]
+    lease_id = host.lease_responsibility(
+        ledger,
+        packet["envelope"]["responsibility"],
+        host_kind="fake",
+        agent_id=agent_id,
+        packet_id=packet_id,
+        scope="complete-system",
+    )
+    runtime.assign_packet(ledger, packet_id, lease_id)
+    runtime.ack_lease(ledger, lease_id, packet_id)
+    return host.submit_host_result(
+        ledger,
+        lease_id,
+        packet_id,
+        body,
+        evidence_ids=[f"{packet['envelope'].get('packet_kind', 'task')}-complete-system"],
+    )
+
+
+def _latest_validation_evidence_id(ledger: dict[str, Any]) -> str:
+    evidence_id = str(ledger.get("latest_validation_evidence_id", ""))
+    if evidence_id:
+        return evidence_id
+    if ledger.get("validation_evidence"):
+        return next(reversed(ledger["validation_evidence"]))
+    return "runtime-validation"
+
+
 def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> str:
     runtime.ack_lease(ledger, lease_id, packet_id)
     result_id = host.submit_host_result(
@@ -44,22 +81,34 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         "SEALED_RESULT_BODY: complete-system result",
         evidence_ids=["runtime-unit"],
     )
-    order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
-    flowguard_orders.complete_work_order(
+    flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
+    _complete_open_packet(
         ledger,
-        order_id,
-        evidence_id="fg-complete-runtime",
-        proof_artifact="simulations/flowpilot_complete_system_runtime_results.json",
+        flowguard_packet,
+        agent_id="flowguard-complete-system",
+        body="SEALED_RESULT_BODY: complete-system FlowGuard evidence",
     )
-    reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake", scope="review")
-    review_closure.review_result(
+    review_packet = _open_packet_by_kind(ledger, "review")
+    _complete_open_packet(
         ledger,
-        result_id,
-        reviewer,
-        scope_restatement="Complete-system packet result",
-        failure_hypotheses=["late output", "wrong FlowGuard target", "stale evidence"],
+        review_packet,
+        agent_id="reviewer-complete-system",
+        body="SEALED_RESULT_BODY: complete-system reviewer accepted evidence",
     )
-    runtime.record_validation_evidence(ledger, "runtime-validation")
+    validation_packet = _open_packet_by_kind(ledger, "validation")
+    _complete_open_packet(
+        ledger,
+        validation_packet,
+        agent_id="validator-complete-system",
+        body="SEALED_RESULT_BODY: complete-system validation current",
+    )
+    closure_packet = _open_packet_by_kind(ledger, "closure")
+    _complete_open_packet(
+        ledger,
+        closure_packet,
+        agent_id="closure-complete-system",
+        body="SEALED_RESULT_BODY: complete-system closure confirmed",
+    )
     return result_id
 
 
@@ -72,7 +121,7 @@ def dead_worker_replaced() -> dict[str, Any]:
     replacement = host.lease_responsibility(ledger, "worker", host_kind="fake", scope="replacement")
     runtime.assign_packet(ledger, packet_id, replacement)
     _complete_packet(ledger, packet_id, replacement)
-    closure = runtime.attempt_final_closure(ledger, "runtime-validation")
+    closure = ledger["closure"]
     return _scenario_result(
         "dead_worker_replaced",
         closure["decision"] == "complete" and "closed_or_inactive_lease" in ledger["results"][late]["mechanical_blockers"],
@@ -125,7 +174,7 @@ def cutover_requires_live_host() -> dict[str, Any]:
         live_host_ok=False,
         git_ok=True,
     )
-    closure = review_closure.attempt_final_closure(ledger, "runtime-validation")
+    closure = review_closure.attempt_final_closure(ledger, _latest_validation_evidence_id(ledger))
     return _scenario_result(
         "cutover_requires_live_host",
         gate["decision"] == "blocked" and closure["decision"] == "blocked",
@@ -246,7 +295,7 @@ def completion_claim_resources_risks_and_old_ui_block_closure() -> dict[str, Any
     ledger["open_resources"].append("background-agent-slot")
     ledger["residual_risks"].append("live host missing")
     ledger["old_ui_evidence"].append("old screenshot")
-    closure = runtime.attempt_final_closure(ledger, "runtime-validation")
+    closure = runtime.attempt_final_closure(ledger, _latest_validation_evidence_id(ledger))
     expected = {
         "completion_report_only_not_sufficient",
         "unresolved_resources",

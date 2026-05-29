@@ -39,6 +39,32 @@ def _base_ledger() -> tuple[dict[str, Any], str, str]:
     return ledger, packet_id, worker
 
 
+def _open_packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
+    for packet_id, packet in ledger.get("packets", {}).items():
+        if packet["envelope"].get("packet_kind", "task") == packet_kind and packet["status"] == "open":
+            return str(packet_id)
+    raise AssertionError(f"missing open {packet_kind} packet")
+
+
+def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str) -> str:
+    packet = ledger["packets"][packet_id]
+    lease_id = runtime.lease_agent(
+        ledger,
+        packet["envelope"]["responsibility"],
+        agent_id=agent_id,
+        packet_id=packet_id,
+    )
+    runtime.assign_packet(ledger, packet_id, lease_id)
+    runtime.ack_lease(ledger, lease_id, packet_id)
+    return runtime.submit_result(
+        ledger,
+        lease_id,
+        packet_id,
+        body,
+        evidence_ids=[f"{packet['envelope'].get('packet_kind', 'task')}-runtime"],
+    )
+
+
 def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) -> str:
     runtime.ack_lease(ledger, worker, packet_id)
     result_id = runtime.submit_result(
@@ -48,17 +74,34 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
         "SEALED_RESULT_BODY: implementation result",
         evidence_ids=["unit-runtime"],
     )
-    order_id = runtime.create_flowguard_work_order(
+    flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
+    _complete_open_packet(
         ledger,
-        "development_process",
-        "done_claim",
-        packet_id,
+        flowguard_packet,
+        agent_id="flowguard-a",
+        body="SEALED_RESULT_BODY: FlowGuard runtime evidence",
     )
-    runtime.complete_flowguard_work_order(ledger, order_id, evidence_id="fg-runtime")
-    reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-a")
-    runtime.review_result(ledger, result_id, reviewer)
-    runtime.record_validation_evidence(ledger, "runtime-validation")
-    runtime.attempt_final_closure(ledger, "runtime-validation")
+    review_packet = _open_packet_by_kind(ledger, "review")
+    _complete_open_packet(
+        ledger,
+        review_packet,
+        agent_id="reviewer-a",
+        body="SEALED_RESULT_BODY: reviewer accepted the runtime result",
+    )
+    validation_packet = _open_packet_by_kind(ledger, "validation")
+    _complete_open_packet(
+        ledger,
+        validation_packet,
+        agent_id="validator-a",
+        body="SEALED_RESULT_BODY: runtime validation is current",
+    )
+    closure_packet = _open_packet_by_kind(ledger, "closure")
+    _complete_open_packet(
+        ledger,
+        closure_packet,
+        agent_id="closure-a",
+        body="SEALED_RESULT_BODY: closure confirms backward chain",
+    )
     return result_id
 
 

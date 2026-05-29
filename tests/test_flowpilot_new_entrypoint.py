@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import importlib
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -19,6 +22,42 @@ entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entry
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
+    def _complete_open_packet(
+        self,
+        root: Path,
+        *,
+        packet_id: str,
+        responsibility: str,
+        agent_id: str,
+        body: str,
+    ) -> tuple[str, str]:
+        lease_id = flowpilot_new.lease_agent(
+            root,
+            packet_id=packet_id,
+            responsibility=responsibility,
+            agent_id=agent_id,
+            host_kind="fake",
+        )["lease_id"]
+        flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+        result_id = flowpilot_new.submit_result(
+            root,
+            lease_id=lease_id,
+            packet_id=packet_id,
+            body=body,
+        )["result_id"]
+        return lease_id, result_id
+
+    def _open_packet_by_kind(self, ledger: dict[str, object], packet_kind: str) -> str:
+        packets = ledger["packets"]
+        self.assertIsInstance(packets, dict)
+        for packet_id, packet in packets.items():
+            self.assertIsInstance(packet, dict)
+            envelope = packet["envelope"]
+            self.assertIsInstance(envelope, dict)
+            if envelope.get("packet_kind", "task") == packet_kind and packet.get("status") == "open":
+                return str(packet_id)
+        self.fail(f"missing open {packet_kind} packet")
+
     def test_start_rehearsal_reuses_old_startup_ui_and_enters_new_ledger(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -61,8 +100,232 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(next(iter(ledger["reviews"].values()))["decision"], "accept")
             self.assertEqual(next(iter(ledger["flowguard_work_orders"].values()))["modeled_target"], "development_process")
+            packet_kinds = [packet["envelope"].get("packet_kind", "task") for packet in ledger["packets"].values()]
+            self.assertEqual(packet_kinds, ["task", "flowguard_check", "review", "validation", "closure"])
+            self.assertTrue(all(lease["status"] == "closed" for lease in ledger["leases"].values()))
+            self.assertTrue(all(lease["ack_received"] for lease in ledger["leases"].values()))
+            self.assertTrue(all(lease["packet_id"] for lease in ledger["leases"].values()))
             status = json.loads((shell.run_root / "console" / "status.json").read_text(encoding="utf-8"))
             self.assertFalse(status["sealed_bodies_visible"])
+            self.assertFalse([lease for lease in status["leases"] if lease["status"] == "active"])
+
+    def test_ack_only_and_pm_only_result_do_not_reach_terminal_closure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-no-shortcut",
+                headless_startup_text="Exercise no-shortcut closure.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-no-shortcut")
+            ledger = run_shell.load_run_ledger(shell)
+            pm_packet = next(iter(ledger["packets"]))
+            pm_lease = flowpilot_new.lease_agent(
+                root,
+                packet_id=pm_packet,
+                responsibility="pm",
+                agent_id="pm-agent",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
+
+            ack_only_status = flowpilot_new.status(root)
+            self.assertEqual(ack_only_status["next_action"]["action_type"], "wait_for_result")
+            self.assertEqual(ack_only_status["status"]["closure"]["decision"], "not_attempted")
+
+            after_pm = flowpilot_new.submit_result(
+                root,
+                lease_id=pm_lease,
+                packet_id=pm_packet,
+                body="SEALED_RESULT_BODY: PM result is not enough for closure.",
+            )
+            self.assertEqual(after_pm["next_action"]["action_type"], "lease_agent")
+            self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
+            self.assertNotEqual(after_pm["next_action"]["action_type"], "terminal_complete")
+            after_pm_status = flowpilot_new.status(root)
+            self.assertEqual(after_pm_status["status"]["closure"]["decision"], "not_attempted")
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(ledger["packets"][pm_packet]["status"], "result_submitted")
+            self.assertEqual(self._open_packet_by_kind(ledger, "flowguard_check"), after_pm["next_action"]["subject_id"])
+
+    def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-symmetric",
+                headless_startup_text="Exercise symmetric packet flow.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-symmetric")
+            ledger = run_shell.load_run_ledger(shell)
+            pm_packet = next(iter(ledger["packets"]))
+
+            with self.assertRaisesRegex(Exception, "lease responsibility does not match packet"):
+                flowpilot_new.lease_agent(
+                    root,
+                    packet_id=pm_packet,
+                    responsibility="flowguard_operator",
+                    agent_id="bad-flowguard",
+                    host_kind="fake",
+                )
+
+            pm_lease = flowpilot_new.lease_agent(
+                root,
+                packet_id=pm_packet,
+                responsibility="pm",
+                agent_id="pm-agent",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
+            after_pm = flowpilot_new.submit_result(
+                root,
+                lease_id=pm_lease,
+                packet_id=pm_packet,
+                body="SEALED_RESULT_BODY: PM result",
+            )
+
+            self.assertEqual(after_pm["next_action"]["action_type"], "lease_agent")
+            self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
+            flowguard_packet = after_pm["next_action"]["subject_id"]
+            flowguard_lease = flowpilot_new.lease_agent(
+                root,
+                packet_id=flowguard_packet,
+                responsibility="flowguard_operator",
+                agent_id="flowguard-agent",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
+            flowpilot_new.submit_result(
+                root,
+                lease_id=flowguard_lease,
+                packet_id=flowguard_packet,
+                body="SEALED_RESULT_BODY: FlowGuard result",
+            )
+
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(ledger["packets"][flowguard_packet]["envelope"]["packet_kind"], "flowguard_check")
+            self.assertEqual(ledger["packets"][flowguard_packet]["status"], "accepted")
+            self.assertEqual(ledger["leases"][flowguard_lease]["status"], "closed")
+            reviewer_packets = [
+                packet for packet in ledger["packets"].values() if packet["envelope"].get("packet_kind") == "review"
+            ]
+            self.assertEqual(len(reviewer_packets), 1)
+
+    def test_reviewer_packet_lease_projection_is_clean_before_and_after_review(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-reviewer-clean",
+                headless_startup_text="Exercise reviewer lease cleanliness.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-reviewer-clean")
+            ledger = run_shell.load_run_ledger(shell)
+            pm_packet = next(iter(ledger["packets"]))
+            self._complete_open_packet(
+                root,
+                packet_id=pm_packet,
+                responsibility="pm",
+                agent_id="pm-agent",
+                body="SEALED_RESULT_BODY: PM result",
+            )
+            ledger = run_shell.load_run_ledger(shell)
+            flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")
+            self._complete_open_packet(
+                root,
+                packet_id=flowguard_packet,
+                responsibility="flowguard_operator",
+                agent_id="flowguard-agent",
+                body="SEALED_RESULT_BODY: FlowGuard result",
+            )
+            ledger = run_shell.load_run_ledger(shell)
+            review_packet = self._open_packet_by_kind(ledger, "review")
+            reviewer_lease = flowpilot_new.lease_agent(
+                root,
+                packet_id=review_packet,
+                responsibility="reviewer",
+                agent_id="reviewer-agent",
+                host_kind="fake",
+            )["lease_id"]
+
+            before_ack = flowpilot_new.status(root)["status"]
+            reviewer_rows = [row for row in before_ack["leases"] if row["lease_id"] == reviewer_lease]
+            self.assertEqual(reviewer_rows, [{
+                "lease_id": reviewer_lease,
+                "agent_id": "reviewer-agent",
+                "responsibility": "reviewer",
+                "status": "active",
+                "ack_received": False,
+                "packet_id": review_packet,
+            }])
+
+            flowpilot_new.ack(root, lease_id=reviewer_lease, packet_id=review_packet)
+            after_ack = flowpilot_new.status(root)["status"]
+            reviewer_rows = [row for row in after_ack["leases"] if row["lease_id"] == reviewer_lease]
+            self.assertEqual(reviewer_rows[0]["packet_id"], review_packet)
+            self.assertTrue(reviewer_rows[0]["ack_received"])
+
+            flowpilot_new.submit_result(
+                root,
+                lease_id=reviewer_lease,
+                packet_id=review_packet,
+                body="SEALED_RESULT_BODY: Reviewer accepted the FlowGuard-backed result.",
+            )
+            after_review = flowpilot_new.status(root)["status"]
+            self.assertFalse(
+                [
+                    row
+                    for row in after_review["leases"]
+                    if row["responsibility"] == "reviewer" and row["status"] == "active"
+                ]
+            )
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(ledger["packets"][review_packet]["status"], "accepted")
+            self.assertEqual(ledger["leases"][reviewer_lease]["status"], "closed")
+            self.assertTrue(ledger["leases"][reviewer_lease]["ack_received"])
+            self.assertEqual(self._open_packet_by_kind(ledger, "validation"), after_review["next_action"]["subject_id"])
+
+    def test_formal_public_surface_omits_retired_side_command_paths(self) -> None:
+        retired_functions = ("complete_flowguard", "review", "record_validation", "close")
+        for name in retired_functions:
+            self.assertFalse(hasattr(flowpilot_new, name), name)
+
+        direct_help = io.StringIO()
+        with self.assertRaises(SystemExit) as help_exit:
+            with contextlib.redirect_stdout(direct_help):
+                flowpilot_new.main(["--help"])
+        self.assertEqual(help_exit.exception.code, 0)
+        self.assertIn("{start,run-fake-e2e,status,lease-agent,ack,submit-result}", direct_help.getvalue())
+
+        direct_error = io.StringIO()
+        with self.assertRaises(SystemExit) as error_exit:
+            with contextlib.redirect_stderr(direct_error):
+                flowpilot_new.main(["complete-flowguard"])
+        self.assertEqual(error_exit.exception.code, 2)
+        self.assertIn("invalid choice", direct_error.getvalue())
+
+        completed = subprocess.run(
+            [sys.executable, str(ASSETS / "flowpilot_new.py"), "--help"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("{start,run-fake-e2e,status,lease-agent,ack,submit-result}", completed.stdout)
+        for command in ("complete-flowguard", "record-validation"):
+            self.assertNotIn(command, completed.stdout)
+
+        rejected = subprocess.run(
+            [sys.executable, str(ASSETS / "flowpilot_new.py"), "--root", str(Path.cwd()), "complete-flowguard"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertNotEqual(rejected.returncode, 0)
+        self.assertIn("invalid choice", rejected.stderr)
 
     def test_formal_mode_rejects_headless_startup_result_as_formal_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -26,6 +26,8 @@ RESPONSIBILITIES = {
     "research_worker",
     "reviewer",
     "flowguard_operator",
+    "validator",
+    "closure_officer",
     "ui_qa",
 }
 
@@ -358,6 +360,9 @@ def issue_task_packet(
     allowed_tools: list[str] | None = None,
     required_output_type: str = "artifact",
     required_flowguard_target: str = REQUIRED_FLOWGUARD_TARGET,
+    packet_kind: str = "task",
+    subject_id: str = "",
+    target_result_id: str = "",
 ) -> str:
     if ledger.get("active_route_version") is None:
         raise BlackBoxRuntimeError("cannot issue a packet without an active route")
@@ -367,9 +372,12 @@ def issue_task_packet(
     body_hash = hash_text(body)
     envelope = {
         "packet_id": packet_id,
+        "packet_kind": packet_kind,
         "route_version": ledger["active_route_version"],
         "responsibility": responsibility,
         "objective": objective,
+        "subject_id": subject_id,
+        "target_result_id": target_result_id,
         "allowed_tools": list(allowed_tools or []),
         "required_output_type": required_output_type,
         "required_reviewer": "independent",
@@ -388,7 +396,7 @@ def issue_task_packet(
         "accepted_result_id": "",
         "old_route_disposition": "",
     }
-    _event(ledger, "task_packet_issued", packet_id=packet_id, responsibility=responsibility)
+    _event(ledger, "task_packet_issued", packet_id=packet_id, responsibility=responsibility, packet_kind=packet_kind)
     return packet_id
 
 
@@ -489,7 +497,228 @@ def submit_result(
         lease_id=lease_id,
         status=status,
     )
+    if not blockers:
+        _apply_valid_packet_result(ledger, packet, result, lease)
     return result_id
+
+
+def _apply_valid_packet_result(
+    ledger: dict[str, Any],
+    packet: dict[str, Any],
+    result: dict[str, Any],
+    lease: dict[str, Any],
+) -> None:
+    packet_kind = packet["envelope"].get("packet_kind", "task")
+    if packet_kind == "task":
+        close_lease(ledger, lease["lease_id"], "result_submitted")
+        _ensure_flowguard_packet_for_task_result(ledger, packet, result)
+        return
+    if packet_kind == "flowguard_check":
+        _accept_packet_result(ledger, packet, result, lease, reason="flowguard_result_submitted")
+        _record_flowguard_from_packet_result(ledger, packet, result)
+        _ensure_review_packet_for_task_result(ledger, packet["envelope"]["subject_id"])
+        return
+    if packet_kind == "review":
+        _record_review_from_packet_result(ledger, packet, result)
+        _accept_packet_result(ledger, packet, result, lease, reason="review_result_submitted")
+        _ensure_validation_packet_for_task(ledger, packet["envelope"]["subject_id"])
+        return
+    if packet_kind == "validation":
+        _accept_packet_result(ledger, packet, result, lease, reason="validation_result_submitted")
+        evidence_id = f"validation-{result['result_id']}"
+        record_validation_evidence(ledger, evidence_id)
+        ledger["latest_validation_evidence_id"] = evidence_id
+        _ensure_closure_packet_for_task(ledger, packet["envelope"]["subject_id"])
+        return
+    if packet_kind == "closure":
+        _accept_packet_result(ledger, packet, result, lease, reason="closure_result_submitted")
+        evidence_id = str(ledger.get("latest_validation_evidence_id") or f"validation-{result['result_id']}")
+        attempt_final_closure(ledger, evidence_id)
+        return
+    raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
+
+
+def _accept_packet_result(
+    ledger: dict[str, Any],
+    packet: dict[str, Any],
+    result: dict[str, Any],
+    lease: dict[str, Any],
+    *,
+    reason: str,
+) -> None:
+    result["status"] = "accepted"
+    result["accepted"] = True
+    packet["status"] = "accepted"
+    packet["accepted_result_id"] = result["result_id"]
+    close_lease(ledger, lease["lease_id"], reason)
+
+
+def _find_packet(
+    ledger: Mapping[str, Any],
+    *,
+    packet_kind: str,
+    subject_id: str,
+    target_result_id: str = "",
+) -> dict[str, Any] | None:
+    for packet in ledger.get("packets", {}).values():
+        envelope = packet.get("envelope", {})
+        if envelope.get("packet_kind", "task") != packet_kind:
+            continue
+        if envelope.get("subject_id", "") != subject_id:
+            continue
+        if target_result_id and envelope.get("target_result_id", "") != target_result_id:
+            continue
+        if packet.get("status") == "quarantined_after_route_mutation":
+            continue
+        return packet
+    return None
+
+
+def _ensure_flowguard_packet_for_task_result(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> str:
+    subject_id = str(packet["packet_id"])
+    existing = _find_packet(ledger, packet_kind="flowguard_check", subject_id=subject_id, target_result_id=str(result["result_id"]))
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "flowguard_operator",
+        f"Run FlowGuard evidence for {subject_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.flowguard_packet.v1",
+                "subject_packet_id": subject_id,
+                "target_result_id": result["result_id"],
+                "modeled_target": packet["envelope"]["required_flowguard_target"],
+                "instruction": "Produce current-run FlowGuard evidence for the subject packet result.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="",
+        packet_kind="flowguard_check",
+        subject_id=subject_id,
+        target_result_id=str(result["result_id"]),
+    )
+
+
+def _record_flowguard_from_packet_result(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> str:
+    subject_id = str(packet["envelope"]["subject_id"])
+    subject_packet = _require(ledger["packets"], subject_id, "packet")
+    modeled_target = subject_packet["envelope"]["required_flowguard_target"]
+    order_id = create_flowguard_work_order(ledger, modeled_target, "done_claim", subject_id)
+    order = ledger["flowguard_work_orders"][order_id]
+    order["officer_lease_id"] = result["producer_lease_id"]
+    order["packet_id"] = packet["packet_id"]
+    order["producer_result_id"] = result["result_id"]
+    complete_flowguard_work_order(ledger, order_id, evidence_id=result["result_id"])
+    order["proof_artifact"] = result["result_id"]
+    order["confidence_boundary"] = "current_run_packet"
+    return order_id
+
+
+def _ensure_review_packet_for_task_result(ledger: dict[str, Any], subject_id: str) -> str:
+    subject_packet = _require(ledger["packets"], subject_id, "packet")
+    target_result_id = str((subject_packet.get("result_ids") or [""])[-1])
+    existing = _find_packet(ledger, packet_kind="review", subject_id=subject_id, target_result_id=target_result_id)
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "reviewer",
+        f"Review result and FlowGuard evidence for {subject_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.review_packet.v1",
+                "subject_packet_id": subject_id,
+                "target_result_id": target_result_id,
+                "instruction": "Review the subject result and matching FlowGuard evidence independently.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="",
+        packet_kind="review",
+        subject_id=subject_id,
+        target_result_id=target_result_id,
+    )
+
+
+def _record_review_from_packet_result(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> str:
+    subject_id = str(packet["envelope"]["subject_id"])
+    target_result_id = str(packet["envelope"]["target_result_id"])
+    review_id = review_result(
+        ledger,
+        target_result_id,
+        result["producer_lease_id"],
+        decision="accept",
+        checks_evidence=True,
+        direct_evidence_ids=[result["result_id"]],
+        pm_routing_decision="accept_result",
+    )
+    review = ledger["reviews"][review_id]
+    review["review_packet_id"] = packet["packet_id"]
+    review["review_packet_result_id"] = result["result_id"]
+    review["subject_packet_id"] = subject_id
+    return review_id
+
+
+def _ensure_validation_packet_for_task(ledger: dict[str, Any], subject_id: str) -> str:
+    existing = _find_packet(ledger, packet_kind="validation", subject_id=subject_id)
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "validator",
+        f"Record validation evidence for {subject_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.validation_packet.v1",
+                "subject_packet_id": subject_id,
+                "instruction": "Record current validation evidence for the accepted subject packet.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="",
+        packet_kind="validation",
+        subject_id=subject_id,
+    )
+
+
+def _ensure_closure_packet_for_task(ledger: dict[str, Any], subject_id: str) -> str:
+    existing = _find_packet(ledger, packet_kind="closure", subject_id=subject_id)
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "closure_officer",
+        f"Perform final backward closure for {subject_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.closure_packet.v1",
+                "subject_packet_id": subject_id,
+                "validation_evidence_id": ledger.get("latest_validation_evidence_id", ""),
+                "instruction": "Confirm final backward chain and close only if all required packet evidence is current.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="",
+        packet_kind="closure",
+        subject_id=subject_id,
+    )
 
 
 def _result_mechanical_blockers(
@@ -757,6 +986,8 @@ def _closure_blockers(
         if packet["status"] not in {"accepted", "quarantined_after_route_mutation"}:
             blockers.append(f"packet_not_accepted:{packet['packet_id']}")
     for packet in accepted_packets:
+        if packet["envelope"].get("packet_kind", "task") != "task":
+            continue
         result = ledger["results"][packet["accepted_result_id"]]
         review = ledger["reviews"].get(result.get("review_id", ""))
         if not review or review.get("decision") != "accept":
@@ -813,12 +1044,14 @@ def _backward_chain(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
         if not packet.get("accepted_result_id"):
             continue
         result = ledger["results"][packet["accepted_result_id"]]
-        chain.append({"kind": "packet", "id": packet["packet_id"]})
+        chain.append({"kind": "packet", "id": packet["packet_id"], "packet_kind": packet["envelope"].get("packet_kind", "task")})
         chain.append({"kind": "result", "id": result["result_id"]})
-        chain.append({"kind": "review", "id": result["review_id"]})
-        for order in ledger.get("flowguard_work_orders", {}).values():
-            if order.get("subject_id") == packet["packet_id"] and order.get("decision") == "pass":
-                chain.append({"kind": "flowguard", "id": order["order_id"]})
+        if result.get("review_id"):
+            chain.append({"kind": "review", "id": result["review_id"]})
+        if packet["envelope"].get("packet_kind", "task") == "task":
+            for order in ledger.get("flowguard_work_orders", {}).values():
+                if order.get("subject_id") == packet["packet_id"] and order.get("decision") == "pass":
+                    chain.append({"kind": "flowguard", "id": order["order_id"]})
     return chain
 
 
@@ -852,27 +1085,41 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 packet["packet_id"],
                 packet["envelope"]["responsibility"],
             )
-        lease_id = packet.get("assigned_lease_id", "")
-        lease = ledger.get("leases", {}).get(lease_id)
-        if lease and lease.get("status") != "active":
-            return RuntimeAction("replace_lease", "assigned lease is inactive", packet["packet_id"])
-        if lease and not lease.get("ack_received"):
-            return RuntimeAction("wait_for_ack", "assigned lease has not acknowledged", packet["packet_id"])
-        if packet["status"] == "acknowledged":
-            return RuntimeAction("wait_for_result", "ACK is liveness only", packet["packet_id"])
+        if packet["status"] in {"assigned", "acknowledged"}:
+            lease_id = packet.get("assigned_lease_id", "")
+            lease = ledger.get("leases", {}).get(lease_id)
+            if lease and lease.get("status") != "active":
+                return RuntimeAction("replace_lease", "assigned lease is inactive", packet["packet_id"])
+            if lease and not lease.get("ack_received"):
+                return RuntimeAction("wait_for_ack", "assigned lease has not acknowledged", packet["packet_id"])
+            if packet["status"] == "acknowledged":
+                return RuntimeAction("wait_for_result", "ACK is liveness only", packet["packet_id"])
+
+    for packet in active_packets:
         if packet["status"] in {"result_blocked", "review_blocked"}:
             return RuntimeAction("repair_packet", "packet result or review is blocked", packet["packet_id"])
-        if packet["status"] == "result_submitted":
+        if packet["status"] == "result_submitted" and packet["envelope"].get("packet_kind", "task") == "task":
             required_target = packet["envelope"]["required_flowguard_target"]
-            if not _has_matching_flowguard_report(ledger, packet["packet_id"], required_target):
+            has_flowguard_packet = _find_packet(
+                ledger,
+                packet_kind="flowguard_check",
+                subject_id=packet["packet_id"],
+            )
+            if not _has_matching_flowguard_report(ledger, packet["packet_id"], required_target) and not has_flowguard_packet:
                 return RuntimeAction(
-                    "create_flowguard_order",
-                    "result needs matching FlowGuard evidence",
+                    "issue_flowguard_packet",
+                    "result needs a FlowGuard work packet",
                     packet["packet_id"],
                     "flowguard_operator",
                     required_target,
                 )
-            return RuntimeAction("review_result", "result needs independent review", packet["packet_id"], "reviewer")
+            has_review_packet = _find_packet(
+                ledger,
+                packet_kind="review",
+                subject_id=packet["packet_id"],
+            )
+            if _has_matching_flowguard_report(ledger, packet["packet_id"], required_target) and not has_review_packet:
+                return RuntimeAction("issue_review_packet", "result needs a Reviewer work packet", packet["packet_id"], "reviewer")
 
     closure = ledger.get("closure") or {}
     if closure.get("decision") == "complete":
@@ -889,10 +1136,13 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         packet_rows.append(
             {
                 "packet_id": packet["packet_id"],
+                "packet_kind": envelope.get("packet_kind", "task"),
                 "status": packet["status"],
                 "route_version": envelope["route_version"],
                 "responsibility": envelope["responsibility"],
                 "objective": envelope["objective"],
+                "subject_id": envelope.get("subject_id", ""),
+                "target_result_id": envelope.get("target_result_id", ""),
                 "body_hash": envelope["body_hash"],
                 "sealed_body_hidden": True,
                 "accepted_result_id": packet.get("accepted_result_id", ""),

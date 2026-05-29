@@ -8,8 +8,8 @@ fixed-role startup, or stale result artifacts as authority.
 ## Shape
 
 - `runtime.py`: serializable ledger, dynamic leases, sealed packet helpers,
-  FlowGuard work-order scheduling, independent review, final closure, and
-  public console projection.
+  symmetric role-packet scheduling, FlowGuard work-order recording,
+  independent review, final closure, and public console projection.
 - `run_shell.py`: current-run authority files, startup-intake import, append-only
   event history, and materialized sealed envelope/body artifacts under
   `.flowpilot/runs/<run-id>/`.
@@ -32,6 +32,9 @@ fixed-role startup, or stale result artifacts as authority.
 - Formal startup enters through the native startup UI. Headless startup output
   is rehearsal evidence only and cannot prove a formal user launch.
 - FlowGuard work orders must name the modeled target before selecting a skill.
+- FlowGuard, review, validation, and closure are formal role packets, not
+  side-command shortcuts. Each role must receive a packet, ACK it, and submit a
+  sealed result before its ledger side effect is recorded.
 - Review must be independent and evidence-aware.
 - Final completion must walk backward from the user goal to current route,
   accepted results, reviews, FlowGuard reports, and fresh validation evidence.

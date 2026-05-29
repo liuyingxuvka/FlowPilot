@@ -124,12 +124,14 @@ def main(argv: list[str] | None = None) -> int:
         daemon_terminal_projection_check,
         control_transaction_registry_check,
         model_mesh_check,
+        # Hierarchy consumes the current thin-parent proof files written by the
+        # meta/capability checks, so refresh those proofs first.
+        meta_check,
+        capability_check,
         model_hierarchy_check,
         structure_maintenance_check,
         router_facade_split_check,
         model_test_alignment_check,
-        meta_check,
-        capability_check,
     ]
     ok = True
     for command in checks:

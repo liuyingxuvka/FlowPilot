@@ -110,10 +110,15 @@ class AIProjectRuntimeTests(unittest.TestCase):
 
         self.assertEqual(ledger["closure"]["decision"], "complete")
         self.assertEqual(runtime.router_next_action(ledger).action_type, "terminal_complete")
-        self.assertEqual(
-            [item["kind"] for item in ledger["closure"]["backward_chain"]],
-            ["goal", "route", "packet", "result", "review", "flowguard"],
-        )
+        chain = ledger["closure"]["backward_chain"]
+        self.assertEqual([item["packet_kind"] for item in chain if item["kind"] == "packet"], [
+            "task",
+            "flowguard_check",
+            "review",
+            "validation",
+            "closure",
+        ])
+        self.assertFalse([lease for lease in ledger["leases"].values() if lease["status"] == "active"])
 
     def test_runtime_testmesh_does_not_overclaim_release_evidence(self) -> None:
         report = runtime_runner.run_checks()

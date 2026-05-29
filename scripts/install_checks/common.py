@@ -27,6 +27,10 @@ REQUIRED_FILES = [
     "openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md",
     "openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md",
     "openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md",
+    "openspec/changes/unify-new-flowpilot-work-packet-lifecycle/proposal.md",
+    "openspec/changes/unify-new-flowpilot-work-packet-lifecycle/design.md",
+    "openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md",
+    "openspec/changes/unify-new-flowpilot-work-packet-lifecycle/specs/new-flowpilot-formal-entrypoint/spec.md",
     "docs/project_brief.md",
     "docs/design_decisions.md",
     "docs/flowguard_preflight_findings.md",
@@ -637,6 +641,7 @@ REQUIRED_FILES = [
     "tests/test_ai_project_runtime.py",
     "tests/test_flowpilot_complete_system_runtime.py",
     "tests/test_flowpilot_new_entrypoint.py",
+    "tests/test_flowpilot_fake_project_rehearsal.py",
     "simulations/ai_project_protocol_model.py",
     "simulations/run_ai_project_protocol_checks.py",
     "simulations/ai_project_protocol_stress_model.py",
@@ -658,6 +663,10 @@ REQUIRED_FILES = [
     "simulations/run_flowpilot_complete_system_ui_checks.py",
     "simulations/flowpilot_new_entrypoint_model.py",
     "simulations/run_flowpilot_new_entrypoint_checks.py",
+    "simulations/flowpilot_symmetric_work_packet_model.py",
+    "simulations/run_flowpilot_symmetric_work_packet_checks.py",
+    "simulations/flowpilot_fake_project_rehearsal_model.py",
+    "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
 ]
 
 JSON_FILES = [
@@ -729,6 +738,8 @@ JSON_FILES = [
     "simulations/flowpilot_complete_system_testmesh_results.json",
     "simulations/flowpilot_complete_system_ui_results.json",
     "simulations/flowpilot_new_entrypoint_results.json",
+    "simulations/flowpilot_symmetric_work_packet_results.json",
+    "simulations/flowpilot_fake_project_rehearsal_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",

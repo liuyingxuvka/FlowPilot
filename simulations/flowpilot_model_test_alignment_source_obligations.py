@@ -59,6 +59,31 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(HAPPY,),
         ),
         _source_obligation(
+            "new_entrypoint.blackbox_fake_project_rehearsal",
+            obligation_type="scenario",
+            description="Source-audited black-box fake project rehearsal boundary proving the public CLI and startup UI script can drive normal and error packet flows without internal helper proof.",
+            required_test_kinds=(HAPPY, NEGATIVE, EDGE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            obligation_type="invariant",
+            description="Source-audited new-entrypoint packet lifecycle boundary requiring PM, FlowGuard operator, Reviewer, Validator, and Closure officer to use issued packet, lease, ACK, result, packet-owned side effect, and clean lease projection.",
+            required_test_kinds=(HAPPY, NEGATIVE, EDGE),
+        ),
+        _source_obligation(
+            "new_entrypoint.role_lease_requires_matching_packet",
+            obligation_type="hazard",
+            description="Source-audited dynamic lease boundary rejecting a backend role lease against another responsibility's packet before allowing the role through its own issued packet.",
+            required_test_kinds=(NEGATIVE,),
+        ),
+        _source_obligation(
+            "new_entrypoint.side_command_surface_retired",
+            obligation_type="hazard",
+            description="Source-audited formal public surface boundary that omits retired direct FlowGuard, review, validation, and closure side-command paths.",
+            required_test_kinds=(NEGATIVE,),
+        ),
+        _source_obligation(
             "packet.physical_body_boundary",
             obligation_type="contract",
             description="Source-audited Controller handoff boundary that keeps packet bodies out of Controller relay text.",

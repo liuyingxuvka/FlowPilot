@@ -1,0 +1,173 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=24 initial_states=1 traces=300",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "ack_only_completion",
+      "closure_before_validation_packet",
+      "closure_side_command_completion",
+      "dirty_flowguard_projection",
+      "dirty_reviewer_projection",
+      "flowguard_side_command_completion",
+      "lingering_active_lease_after_completion",
+      "nonpacket_flowguard_lease",
+      "pm_only_terminal",
+      "review_side_command_completion",
+      "review_without_packet",
+      "validation_side_command_completion"
+    ],
+    "hazards": {
+      "ack_only_completion": [
+        "ACK-only packet was treated as completed work"
+      ],
+      "closure_before_validation_packet": [
+        "Closure packet issued before validation packet result"
+      ],
+      "closure_side_command_completion": [
+        "Closure was completed through a side command instead of a closure packet result"
+      ],
+      "dirty_flowguard_projection": [
+        "FlowGuard lease projection remained active or missing packet ACK after evidence"
+      ],
+      "dirty_reviewer_projection": [
+        "Reviewer lease projection remained active or missing packet ACK after review"
+      ],
+      "flowguard_side_command_completion": [
+        "FlowGuard was completed through a side command instead of a packet result"
+      ],
+      "lingering_active_lease_after_completion": [
+        "completed packet left an active lease projection"
+      ],
+      "nonpacket_flowguard_lease": [
+        "non-PM role was leased without an issued packet"
+      ],
+      "pm_only_terminal": [
+        "PM-only result reached terminal closure without check/review/validation/closure packets"
+      ],
+      "review_side_command_completion": [
+        "Review was completed through a side command instead of a reviewer packet result"
+      ],
+      "review_without_packet": [
+        "Reviewer leased without review packet"
+      ],
+      "validation_side_command_completion": [
+        "Validation was recorded through a side command instead of a validation packet result"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_symmetric_work_packet_lifecycle",
+  "ok": true,
+  "result_type": "flowpilot_symmetric_work_packet_checks",
+  "target_plan": {
+    "evidence_role": "symmetric_packet_target_path_not_live_user_proof",
+    "failures": [],
+    "labels": [
+      "record_startup_and_route",
+      "issue_pm_packet",
+      "lease_pm_packet",
+      "ack_pm_packet",
+      "submit_pm_result",
+      "issue_flowguard_packet",
+      "lease_flowguard_packet",
+      "ack_flowguard_packet",
+      "submit_flowguard_result",
+      "record_flowguard_order_from_packet",
+      "issue_reviewer_packet",
+      "lease_reviewer_packet",
+      "ack_reviewer_packet",
+      "submit_reviewer_result",
+      "record_review_from_packet",
+      "issue_validation_packet",
+      "lease_validation_packet",
+      "ack_validation_packet",
+      "submit_validation_result",
+      "record_validation_from_packet",
+      "issue_closure_packet",
+      "lease_closure_packet",
+      "ack_closure_packet",
+      "submit_closure_result_and_close"
+    ],
+    "ok": true,
+    "state": {
+      "ack_only_completed": false,
+      "closure_ack": true,
+      "closure_leased": true,
+      "closure_packet_issued": true,
+      "closure_result": true,
+      "dirty_flowguard_projection": false,
+      "dirty_reviewer_projection": false,
+      "final_closure_complete": true,
+      "flowguard_ack": true,
+      "flowguard_leased": true,
+      "flowguard_order_recorded": true,
+      "flowguard_packet_issued": true,
+      "flowguard_result": true,
+      "lingering_active_lease_after_completion": false,
+      "nonpacket_role_lease": false,
+      "pm_ack": true,
+      "pm_leased": true,
+      "pm_only_terminal": false,
+      "pm_packet_issued": true,
+      "pm_result": true,
+      "review_recorded": true,
+      "reviewer_ack": true,
+      "reviewer_leased": true,
+      "reviewer_packet_issued": true,
+      "reviewer_result": true,
+      "route_created": true,
+      "side_command_closure": false,
+      "side_command_flowguard": false,
+      "side_command_review": false,
+      "side_command_validation": false,
+      "startup_recorded": true,
+      "status": "complete",
+      "validation_ack": true,
+      "validation_leased": true,
+      "validation_packet_issued": true,
+      "validation_recorded": true,
+      "validation_result": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_symmetric_work_packet_model.py"
+        ],
+        "freshness": "current",
+        "id": "symmetric_packet_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/unify-new-flowpilot-work-packet-lifecycle/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "symmetric_packet_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_symmetric_work_packet_model.py"
+        ],
+        "freshness": "current",
+        "id": "symmetric_packet_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

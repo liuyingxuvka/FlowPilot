@@ -1,0 +1,1343 @@
+{
+  "black_box_contract": {
+    "fake_ai_result_bodies_redacted_from_report": true,
+    "uses_internal_e2e_helper": false,
+    "uses_public_cli_subprocesses": true,
+    "uses_startup_ui_script": true
+  },
+  "entrypoint": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\skills\\flowpilot\\assets\\flowpilot_new.py",
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=32 initial_states=1 traces=528",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "ack_only_terminal",
+      "error_flow_unrecovered",
+      "internal_helper_only",
+      "missing_ack_result_accepted",
+      "pm_only_terminal",
+      "result_body_leak",
+      "side_command_surface_available",
+      "startup_body_leak",
+      "terminal_active_lease",
+      "terminal_missing_role_packet",
+      "wrong_role_lease_accepted"
+    ],
+    "hazards": {
+      "ack_only_terminal": [
+        "ACK-only path reached terminal completion"
+      ],
+      "error_flow_unrecovered": [
+        "Observed error flow could not recover or expose a repair boundary"
+      ],
+      "internal_helper_only": [
+        "Rehearsal used an internal helper instead of the public CLI black box"
+      ],
+      "missing_ack_result_accepted": [
+        "Missing-ACK result was accepted as authoritative"
+      ],
+      "pm_only_terminal": [
+        "PM-only path reached terminal completion"
+      ],
+      "result_body_leak": [
+        "Public status leaked a sealed role result body"
+      ],
+      "side_command_surface_available": [
+        "Retired side-command completion surface was still available"
+      ],
+      "startup_body_leak": [
+        "Public status leaked the sealed startup body"
+      ],
+      "terminal_active_lease": [
+        "Terminal status retained an active lease"
+      ],
+      "terminal_missing_role_packet": [
+        "Terminal status did not include all required role packets"
+      ],
+      "wrong_role_lease_accepted": [
+        "Wrong-role lease was accepted against another role's packet"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_fake_project_blackbox_rehearsal",
+  "ok": true,
+  "result_type": "flowpilot_fake_project_rehearsal_checks",
+  "scenarios": [
+    {
+      "commands": [
+        {
+          "args": [
+            "start",
+            "--run-id",
+            "run-fake-normal",
+            "--headless-startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true,
+            "result_id": "result-0001"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0002",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-flowguard",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0002",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0003"
+            },
+            "ok": true,
+            "result_id": "result-0002"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0003",
+            "--responsibility",
+            "reviewer",
+            "--agent-id",
+            "fake-reviewer",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0003",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "validator",
+              "subject_id": "packet-0004"
+            },
+            "ok": true,
+            "result_id": "result-0003"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "validator",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0004",
+            "--responsibility",
+            "validator",
+            "--agent-id",
+            "fake-validator",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0004",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "closure_officer",
+              "subject_id": "packet-0005"
+            },
+            "ok": true,
+            "result_id": "result-0004"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "closure_officer",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0005",
+            "--responsibility",
+            "closure_officer",
+            "--agent-id",
+            "fake-closure",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0005",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "terminal_complete",
+              "responsibility": "",
+              "subject_id": ""
+            },
+            "ok": true,
+            "result_id": "result-0005"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "terminal_complete",
+              "responsibility": "",
+              "subject_id": ""
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "normal_full_path",
+      "observations": {
+        "completed_packets": [
+          {
+            "lease_id": "lease-0001",
+            "packet_id": "packet-0001",
+            "packet_kind": "task"
+          },
+          {
+            "lease_id": "lease-0002",
+            "packet_id": "packet-0002",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "lease_id": "lease-0003",
+            "packet_id": "packet-0003",
+            "packet_kind": "review"
+          },
+          {
+            "lease_id": "lease-0004",
+            "packet_id": "packet-0004",
+            "packet_kind": "validation"
+          },
+          {
+            "lease_id": "lease-0005",
+            "packet_id": "packet-0005",
+            "packet_kind": "closure"
+          }
+        ],
+        "lease_count": 5,
+        "packet_kinds": [
+          "task",
+          "flowguard_check",
+          "review",
+          "validation",
+          "closure"
+        ],
+        "sealed_bodies_visible": false,
+        "terminal_action": {
+          "action_type": "terminal_complete",
+          "modeled_target": "",
+          "reason": "final backward chain is complete",
+          "responsibility": "",
+          "subject_id": ""
+        }
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "start",
+            "--run-id",
+            "run-fake-wrong-role",
+            "--headless-startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-wrong-role",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "error": "lease responsibility does not match packet",
+            "ok": false
+          },
+          "returncode": 1,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true,
+            "result_id": "result-0001"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0002",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-flowguard",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0002",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0003"
+            },
+            "ok": true,
+            "result_id": "result-0002"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0003",
+            "--responsibility",
+            "reviewer",
+            "--agent-id",
+            "fake-reviewer",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0003",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "validator",
+              "subject_id": "packet-0004"
+            },
+            "ok": true,
+            "result_id": "result-0003"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "validator",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0004",
+            "--responsibility",
+            "validator",
+            "--agent-id",
+            "fake-validator",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0004",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "closure_officer",
+              "subject_id": "packet-0005"
+            },
+            "ok": true,
+            "result_id": "result-0004"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "closure_officer",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0005",
+            "--responsibility",
+            "closure_officer",
+            "--agent-id",
+            "fake-closure",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0005",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0005"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "terminal_complete",
+              "responsibility": "",
+              "subject_id": ""
+            },
+            "ok": true,
+            "result_id": "result-0005"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "terminal_complete",
+              "responsibility": "",
+              "subject_id": ""
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "wrong_role_recovery",
+      "observations": {
+        "packet_kinds": [
+          "task",
+          "flowguard_check",
+          "review",
+          "validation",
+          "closure"
+        ],
+        "recovered_to_terminal": true,
+        "wrong_role_rejected": true
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "start",
+            "--run-id",
+            "run-fake-missing-ack",
+            "--headless-startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm-no-ack",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "repair_packet",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true,
+            "result_id": "result-0001"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "repair_packet",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "missing_ack_block",
+      "observations": {
+        "blockers": [
+          "packet_blocked:packet-0001",
+          "result-0001:missing_ack"
+        ],
+        "next_action": "repair_packet",
+        "result_status": "result_blocked"
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "start",
+            "--run-id",
+            "run-fake-ack-only",
+            "--headless-startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm-ack-only",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "ack_only_wait",
+      "observations": {
+        "closure": "not_attempted",
+        "next_action": "wait_for_result"
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "--help"
+          ],
+          "returncode": 0,
+          "stderr_excerpt": "",
+          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,lease-agent,ack,submit-result}\n                        ...\n\nFormal entrypoint for the new black-box FlowPilot runtime. This entrypoint\nstarts a new FlowPilot run from the native startup intake UI, "
+        },
+        {
+          "args": [
+            "--json",
+            "complete-flowguard"
+          ],
+          "returncode": 2,
+          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,lease-agent,ack,submit-result}\n                        ...\nflowpilot_new.py: error: argument command: invalid choice: 'complete-flowguard' (choose from start, run-fake-e2e, status, lease-agent, ack",
+          "stdout_excerpt": ""
+        }
+      ],
+      "name": "retired_side_command",
+      "observations": {
+        "complete_flowguard_invalid_choice": true
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\retired_side_command"
+    }
+  ],
+  "target_plan": {
+    "evidence_role": "blackbox_fake_project_target_plan_not_live_user_proof",
+    "failures": [],
+    "labels": [
+      "open_startup_ui",
+      "write_fake_user_startup_package",
+      "close_startup_ui_and_seal_body",
+      "start_cli_records_route",
+      "complete_pm_packet_via_cli",
+      "complete_flowguard_packet_via_cli",
+      "complete_review_packet_via_cli",
+      "complete_validation_packet_via_cli",
+      "complete_closure_packet_via_cli",
+      "verify_terminal_public_status",
+      "observe_wrong_role_lease_rejection",
+      "recover_from_wrong_role_with_valid_packets",
+      "observe_missing_ack_result_block",
+      "observe_ack_only_wait_not_terminal",
+      "observe_retired_side_command_rejection",
+      "write_rehearsal_report"
+    ],
+    "ok": true,
+    "state": {
+      "ack_only_terminal": false,
+      "ack_only_wait_observed": true,
+      "cli_start_recorded_route": true,
+      "closure_packet_complete": true,
+      "error_flow_unrecovered": false,
+      "fake_user_package_written": true,
+      "flowguard_packet_complete": true,
+      "internal_helper_only": false,
+      "missing_ack_result_accepted": false,
+      "missing_ack_result_blocked": true,
+      "pm_only_terminal": false,
+      "pm_packet_complete": true,
+      "result_body_leaked": false,
+      "retired_side_command_rejected": true,
+      "review_packet_complete": true,
+      "scenario_report_written": true,
+      "side_command_surface_available": false,
+      "startup_body_leaked": false,
+      "startup_body_sealed": true,
+      "startup_ui_closed": true,
+      "startup_ui_opened": true,
+      "status": "complete",
+      "terminal_active_lease": false,
+      "terminal_missing_role_packet": false,
+      "terminal_status_checked": true,
+      "validation_packet_complete": true,
+      "wrong_role_lease_accepted": false,
+      "wrong_role_lease_rejected": true,
+      "wrong_role_recovery_completed": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_fake_project_rehearsal_model.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_normal",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_error_flows",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_fake_project_rehearsal_model.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  },
+  "work_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal"
+}

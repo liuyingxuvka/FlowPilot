@@ -25,10 +25,10 @@ DEFAULT_ACCEPTANCE_CONTRACT = (
 )
 
 try:  # pragma: no cover - direct script fallback.
-    from ai_project_runtime import cockpit, flowguard_orders, host, review_closure, router, run_shell, runtime
+    from ai_project_runtime import cockpit, host, router, run_shell, runtime
 except ImportError:  # pragma: no cover
     sys.path.insert(0, str(ASSETS_ROOT))
-    from ai_project_runtime import cockpit, flowguard_orders, host, review_closure, router, run_shell, runtime  # type: ignore
+    from ai_project_runtime import cockpit, host, router, run_shell, runtime  # type: ignore
 
 
 def _print(payload: object) -> None:
@@ -196,11 +196,11 @@ def _first_active_packet(ledger: dict[str, Any]) -> str:
     raise runtime.BlackBoxRuntimeError("no active packet found")
 
 
-def _single_result_for_packet(ledger: dict[str, Any], packet_id: str) -> str:
-    result_ids = ledger["packets"][packet_id].get("result_ids") or []
-    if not result_ids:
-        raise runtime.BlackBoxRuntimeError("packet has no result")
-    return str(result_ids[-1])
+def _packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
+    for packet_id, packet in ledger.get("packets", {}).items():
+        if packet["envelope"].get("packet_kind", "task") == packet_kind and packet["status"] == "open":
+            return packet_id
+    raise runtime.BlackBoxRuntimeError(f"no open {packet_kind} packet found")
 
 
 def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: str, host_kind: str) -> dict[str, Any]:
@@ -235,60 +235,6 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
     return {"ok": True, "result_id": result_id, "next_action": router.router_next_action(ledger).to_json()}
 
 
-def complete_flowguard(root: Path, *, packet_id: str, proof_artifact: str) -> dict[str, Any]:
-    shell = run_shell.load_run_shell(root)
-    ledger = run_shell.load_run_ledger(shell)
-    order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
-    flowguard_orders.complete_work_order(
-        ledger,
-        order_id,
-        proof_artifact=proof_artifact,
-        confidence_boundary="current_run",
-    )
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": True, "order_id": order_id, "next_action": router.router_next_action(ledger).to_json()}
-
-
-def review(root: Path, *, packet_id: str, reviewer_agent_id: str) -> dict[str, Any]:
-    shell = run_shell.load_run_shell(root)
-    ledger = run_shell.load_run_ledger(shell)
-    result_id = _single_result_for_packet(ledger, packet_id)
-    reviewer = host.lease_responsibility(
-        ledger,
-        "reviewer",
-        agent_id=reviewer_agent_id,
-        host_kind="live" if reviewer_agent_id else "fake",
-        scope="review",
-    )
-    review_id = review_closure.review_result(
-        ledger,
-        result_id,
-        reviewer,
-        scope_restatement="Review the current-run packet result and FlowGuard evidence.",
-        failure_hypotheses=["stale output", "wrong FlowGuard target", "self review"],
-        direct_evidence_ids=["new-flowpilot-entrypoint-validation"],
-        pm_routing_decision="accept_result",
-    )
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": ledger["reviews"][review_id]["decision"] == "accept", "review_id": review_id, "next_action": router.router_next_action(ledger).to_json()}
-
-
-def record_validation(root: Path, *, evidence_id: str) -> dict[str, Any]:
-    shell = run_shell.load_run_shell(root)
-    ledger = run_shell.load_run_ledger(shell)
-    runtime.record_validation_evidence(ledger, evidence_id)
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": True, "next_action": router.router_next_action(ledger).to_json()}
-
-
-def close(root: Path, *, evidence_id: str) -> dict[str, Any]:
-    shell = run_shell.load_run_shell(root)
-    ledger = run_shell.load_run_ledger(shell)
-    closure = review_closure.attempt_final_closure(ledger, evidence_id)
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": closure["decision"] == "complete", "closure": closure, "next_action": router.router_next_action(ledger).to_json()}
-
-
 def run_fake_e2e(root: Path, *, run_id: str | None, startup_text: str) -> dict[str, Any]:
     start_result = start_run(
         root,
@@ -298,35 +244,56 @@ def run_fake_e2e(root: Path, *, run_id: str | None, startup_text: str) -> dict[s
     )
     shell = run_shell.load_run_shell(root, run_id=start_result["run"]["run_id"])
     ledger = run_shell.load_run_ledger(shell)
+
+    def complete_open_packet(packet_id: str, *, agent_id: str, body: str) -> tuple[str, str]:
+        packet = ledger["packets"][packet_id]
+        responsibility = packet["envelope"]["responsibility"]
+        lease_id = host.lease_responsibility(
+            ledger,
+            responsibility,
+            host_kind="fake",
+            agent_id=agent_id,
+            packet_id=packet_id,
+            scope="e2e",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
+        return lease_id, result_id
+
     packet_id = _first_active_packet(ledger)
-    lease_id = host.lease_responsibility(ledger, "pm", host_kind="fake", agent_id="fake-pm", packet_id=packet_id, scope="e2e")
-    runtime.assign_packet(ledger, packet_id, lease_id)
-    runtime.ack_lease(ledger, lease_id, packet_id)
-    result_id = host.submit_host_result(
-        ledger,
-        lease_id,
+    lease_id, result_id = complete_open_packet(
         packet_id,
-        "SEALED_RESULT_BODY: fake PM completed the new FlowPilot route rehearsal.",
+        agent_id="fake-pm",
+        body="SEALED_RESULT_BODY: fake PM completed the new FlowPilot route rehearsal.",
     )
-    order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
-    flowguard_orders.complete_work_order(
-        ledger,
-        order_id,
-        proof_artifact="simulations/flowpilot_new_entrypoint_results.json",
-        confidence_boundary="rehearsal",
+    flowguard_packet_id = _packet_by_kind(ledger, "flowguard_check")
+    flowguard_lease_id, flowguard_result_id = complete_open_packet(
+        flowguard_packet_id,
+        agent_id="fake-flowguard",
+        body="SEALED_RESULT_BODY: fake FlowGuard evidence passed for the PM result.",
     )
-    reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake", agent_id="fake-reviewer", scope="e2e")
-    review_id = review_closure.review_result(
-        ledger,
-        result_id,
-        reviewer,
-        scope_restatement="Review fake end-to-end new FlowPilot entrypoint evidence.",
-        failure_hypotheses=["old router authority", "headless formal overclaim", "missing FlowGuard target"],
-        direct_evidence_ids=["new-flowpilot-entrypoint-rehearsal"],
-        pm_routing_decision="accept_result",
+    review_packet_id = _packet_by_kind(ledger, "review")
+    reviewer_lease_id, review_result_id = complete_open_packet(
+        review_packet_id,
+        agent_id="fake-reviewer",
+        body="SEALED_RESULT_BODY: fake reviewer accepted the PM result and FlowGuard evidence.",
     )
-    runtime.record_validation_evidence(ledger, "new-flowpilot-entrypoint-rehearsal")
-    closure = review_closure.attempt_final_closure(ledger, "new-flowpilot-entrypoint-rehearsal")
+    validation_packet_id = _packet_by_kind(ledger, "validation")
+    validation_lease_id, validation_result_id = complete_open_packet(
+        validation_packet_id,
+        agent_id="fake-validator",
+        body="SEALED_RESULT_BODY: fake validation evidence is current.",
+    )
+    closure_packet_id = _packet_by_kind(ledger, "closure")
+    closure_lease_id, closure_result_id = complete_open_packet(
+        closure_packet_id,
+        agent_id="fake-closure",
+        body="SEALED_RESULT_BODY: fake closure officer confirmed backward chain.",
+    )
+    closure = ledger["closure"]
+    order_id = next(iter(ledger["flowguard_work_orders"]))
+    review_id = next(iter(ledger["reviews"]))
     run_shell.save_run_ledger(shell, ledger)
     return {
         "ok": closure["decision"] == "complete",
@@ -335,6 +302,18 @@ def run_fake_e2e(root: Path, *, run_id: str | None, startup_text: str) -> dict[s
         "packet_id": packet_id,
         "lease_id": lease_id,
         "result_id": result_id,
+        "flowguard_packet_id": flowguard_packet_id,
+        "flowguard_lease_id": flowguard_lease_id,
+        "flowguard_result_id": flowguard_result_id,
+        "review_packet_id": review_packet_id,
+        "reviewer_lease_id": reviewer_lease_id,
+        "review_result_id": review_result_id,
+        "validation_packet_id": validation_packet_id,
+        "validation_lease_id": validation_lease_id,
+        "validation_result_id": validation_result_id,
+        "closure_packet_id": closure_packet_id,
+        "closure_lease_id": closure_lease_id,
+        "closure_result_id": closure_result_id,
         "order_id": order_id,
         "review_id": review_id,
         "closure": closure,
@@ -380,20 +359,6 @@ def main(argv: list[str] | None = None) -> int:
     submit.add_argument("--packet-id", required=True)
     submit.add_argument("--body", required=True)
 
-    fg = sub.add_parser("complete-flowguard", help="Record current modeled-target FlowGuard evidence")
-    fg.add_argument("--packet-id", required=True)
-    fg.add_argument("--proof-artifact", required=True)
-
-    review_parser = sub.add_parser("review", help="Record independent reviewer acceptance")
-    review_parser.add_argument("--packet-id", required=True)
-    review_parser.add_argument("--reviewer-agent-id", required=True)
-
-    validation = sub.add_parser("record-validation", help="Record validation evidence")
-    validation.add_argument("--evidence-id", required=True)
-
-    close_parser = sub.add_parser("close", help="Attempt final backward closure")
-    close_parser.add_argument("--evidence-id", required=True)
-
     args = parser.parse_args(argv)
     root = args.root.resolve()
     try:
@@ -420,14 +385,6 @@ def main(argv: list[str] | None = None) -> int:
             payload = ack(root, lease_id=args.lease_id, packet_id=args.packet_id)
         elif args.command == "submit-result":
             payload = submit_result(root, lease_id=args.lease_id, packet_id=args.packet_id, body=args.body)
-        elif args.command == "complete-flowguard":
-            payload = complete_flowguard(root, packet_id=args.packet_id, proof_artifact=args.proof_artifact)
-        elif args.command == "review":
-            payload = review(root, packet_id=args.packet_id, reviewer_agent_id=args.reviewer_agent_id)
-        elif args.command == "record-validation":
-            payload = record_validation(root, evidence_id=args.evidence_id)
-        elif args.command == "close":
-            payload = close(root, evidence_id=args.evidence_id)
         else:  # pragma: no cover
             raise runtime.BlackBoxRuntimeError(f"unsupported command: {args.command}")
     except runtime.BlackBoxRuntimeError as exc:

@@ -2,6 +2,41 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.20 - 2026-05-29
+
+### Changed
+
+- Reworked the new FlowPilot formal runtime so PM, FlowGuard operator,
+  Reviewer, Validator, and Closure officer all use the same packet lifecycle:
+  issued packet, lease, ACK, sealed result, packet-owned ledger side effect,
+  and next packet.
+- Removed the retired formal side-command surface from `flowpilot_new.py`;
+  fresh formal operation now advances through `lease-agent`, `ack`, and
+  `submit-result` only after startup.
+- Updated fake-host rehearsal, runtime scenario runners, and complete-system
+  runtime checks to exercise the full role-packet chain instead of injecting
+  FlowGuard/review/validation/closure evidence directly.
+- Reordered the fast smoke check so model hierarchy proof consumes fresh
+  meta/capability parent proofs instead of stale files.
+
+### Added
+
+- Added the `unify-new-flowpilot-work-packet-lifecycle` OpenSpec change.
+- Added a focused FlowGuard symmetric work-packet lifecycle model with hazards
+  for non-packet role leases, ACK-only completion, PM-only terminal closure,
+  side-command completion, dirty reviewer/FlowGuard projections, and lingering
+  active leases.
+- Added regression tests for the live-run miss: FlowGuard operator cannot be
+  leased against the PM packet, Reviewer status must carry packet id and ACK,
+  and completed role packets must leave no active dirty lease rows.
+- Added a real black-box fake-project rehearsal that starts through the
+  startup intake script, drives only public CLI packet commands, and covers
+  normal completion plus wrong-role, missing-ACK, ACK-only, and retired
+  side-command error flows.
+- Added model-test alignment obligations and source-audited evidence for the
+  symmetric packet lifecycle, black-box fake-project rehearsal, and retired
+  side-command surface.
+
 ## 0.9.19 - 2026-05-29
 
 ### Added

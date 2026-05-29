@@ -45,10 +45,6 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json sta
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json complete-flowguard --packet-id <packet_id> --proof-artifact <path>
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json review --packet-id <packet_id> --reviewer-agent-id <agent_id>
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json record-validation --evidence-id <evidence_id>
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json close --evidence-id <evidence_id>
 ```
 
 Legacy `flowpilot_router.py next/apply/run-until-wait` commands are existing-old-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
@@ -76,6 +72,8 @@ When no Cockpit/UI surface is open, show the router's public route sign together
 After the native startup intake result is recorded, the new runtime materializes the sealed UI record into the run and creates the first PM-bound packet. Do not provide chat-body startup text; startup authority comes from the sealed native UI record.
 
 When the new runtime returns a `lease_agent` next action, spawn only the requested responsibility, then record the real host `agent_id` with `flowpilot_new.py lease-agent`. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort. Do not treat empty role slots, prior-route agent IDs, or unrelated later subagents as startup success.
+
+All new formal runtime roles are packet roles. PM, FlowGuard operator, reviewer, validator, and closure officer all follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Do not complete FlowGuard, review, validation, or final closure through side-command shortcuts; wait for the runtime to issue the matching role packet, then use `lease-agent`, `ack`, and `submit-result` for that packet.
 
 When a heartbeat or manual mid-run wakeup occurs, always record `heartbeat_or_manual_resume_requested`, then attach to daemon status, daemon lock evidence, and the Controller action ledger for the current run. If the daemon is live, process only exposed Controller rows or stay in standby; if it is missing or stale, use the explicit daemon repair/restart path. Treat any supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a `wait_agent` timeout to skip `load_resume_state`.
 

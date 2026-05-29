@@ -20087,6 +20087,80 @@ to identify compatibility-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## unify-new-flowpilot-work-packet-lifecycle - Black-box fake-project rehearsal
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested a real FlowPilot black-box rehearsal with fake AI packets from startup through closure, including error paths.
+- Status: implemented, validated, installed, and ready for local commit.
+- Skill decision: OpenSpec apply change + FlowGuard DevelopmentProcessFlow + FlowGuard Model-Test Alignment.
+- Started: 2026-05-29T20:13:36+00:00
+- Ended: 2026-05-29T21:05:00+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_symmetric_work_packet_model.py`
+- `simulations/run_flowpilot_symmetric_work_packet_checks.py`
+- `simulations/flowpilot_symmetric_work_packet_results.json`
+- `simulations/flowpilot_fake_project_rehearsal_model.py`
+- `simulations/run_flowpilot_fake_project_rehearsal_checks.py`
+- `simulations/flowpilot_fake_project_rehearsal_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> package 0.36.0.
+- `python -m flowguard project-audit --root .` -> pass.
+- `python -B simulations\run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations\flowpilot_fake_project_rehearsal_results.json` -> ok true; 528 FlowGuard traces.
+- `python -B simulations\run_flowpilot_symmetric_work_packet_checks.py --json-out simulations\flowpilot_symmetric_work_packet_results.json` -> ok true; 300 FlowGuard traces.
+- `python -B simulations\run_flowpilot_new_entrypoint_checks.py --json-out simulations\flowpilot_new_entrypoint_results.json` -> ok true; 120 FlowGuard traces.
+- `python -B simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` -> alignment ok; 904 covered diagnostic surfaces.
+- `python -B -m pytest tests\test_flowpilot_new_entrypoint.py tests\test_flowpilot_fake_project_rehearsal.py tests\test_flowpilot_complete_system_runtime.py tests\test_ai_project_runtime.py -q` -> 27 passed, 24 subtests passed.
+- `python -B simulations\run_ai_project_runtime_checks.py --json-out simulations\ai_project_runtime_results.json` -> routine ok.
+- `python -B simulations\run_flowpilot_complete_system_runtime_checks.py --json-out simulations\flowpilot_complete_system_runtime_results.json` -> routine ok.
+- `openspec validate unify-new-flowpilot-work-packet-lifecycle --strict` -> valid.
+- `openspec validate --all --strict` -> 174 passed, 0 failed.
+- `python -B scripts\check_install.py` -> ok true.
+- `python -B scripts\audit_local_install_sync.py --json` -> repo-owned skill fresh.
+- `python -B scripts\install_flowpilot.py --check --json` -> source fresh.
+- `python -B scripts\smoke_autopilot.py --fast` -> exit 0; log root `tmp/final_smoke/`.
+
+### Findings
+- The rehearsal now opens the startup intake path, writes a fake sealed user package, closes startup intake, and then drives PM, FlowGuard operator, Reviewer, Validator, and Closure officer through the same public packet commands.
+- Fake AI result bodies remain sealed in the public report; the rehearsal records hashes and public packet metadata but does not leak body text.
+- Wrong-role lease attempts are rejected and recover through the proper PM packet route.
+- Missing-ACK result submission is blocked into repair state, ACK-only progress remains waiting for a result, and retired direct side commands are invalid CLI choices.
+- The first fast smoke attempt exposed stale hierarchy proof ordering: hierarchy ran before meta/capability parent proofs were refreshed. `scripts/smoke_autopilot.py` now runs meta and capability before hierarchy, and the rerun passed.
+- FlowGuard project adoption records were upgraded to package 0.36.0 after the local package changed; affected fake-project, symmetric-packet, entrypoint, model-test alignment, runtime, OpenSpec, install, and audit checks were rerun.
+
+### Counterexamples
+- `wrong_role_lease_accepted`
+- `missing_ack_result_accepted`
+- `ack_only_terminal`
+- `pm_only_terminal`
+- `side_command_surface_available`
+- `terminal_active_lease`
+- `terminal_missing_role_packet`
+- `result_body_leak`
+- `startup_body_leak`
+- `dirty_flowguard_projection`
+- `dirty_reviewer_projection`
+- `closure_before_validation_packet`
+
+### Skipped Steps
+- No real external AI agents were invoked; the rehearsal intentionally uses fake AI packets against the real public CLI flow.
+- No GitHub push, tag, release, deploy, or destructive runtime cleanup was performed.
+- No manual live user startup session was claimed; headless startup is rehearsal evidence only.
+- Routine runtime gates are current; release/full live-host cutover confidence remains a separate release evidence boundary.
+
+### Risk Evidence Summary
+- Routine black-box fake-project confidence is current and passing.
+- Model-test alignment covers the new fake-project obligation, including happy, negative, and edge evidence rows.
+- Fast smoke evidence is current after the hierarchy ordering repair.
+
+### Next Actions
+- For future release or public cutover, run the release-scoped live-host gates and any required full background checks under their release evidence mode.
+
+
 ## flowpilot-runtime-path-evidence-20260529 - Adopt runtime-path evidence for FlowPilot model-test alignment
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -20491,3 +20565,79 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - No interactive formal startup window was manually completed in this automated
   validation pass. Headless startup is covered only as rehearsal evidence and
   is explicitly rejected as formal startup proof.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-29T20:13:36+00:00
+- Ended: 2026-05-29T20:13:36+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.35.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-29T20:56:42+00:00
+- Ended: 2026-05-29T20:56:42+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.36.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
