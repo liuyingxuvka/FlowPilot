@@ -1,0 +1,67 @@
+{
+  "scheduler_id": "ai_project_protocol_flowguard_route_scheduler",
+  "version": 1,
+  "default_rule": "Choose the FlowGuard route by the thing being modeled, not by the agent role asking for help.",
+  "routes": [
+    {
+      "modeled_target": "target_product_behavior",
+      "risk_type": "state_or_function_behavior",
+      "selected_skill": "model-first-function-flow",
+      "examples": ["feature behavior", "state transition", "ordinary invariant"]
+    },
+    {
+      "modeled_target": "development_process",
+      "risk_type": "step_order_evidence_freshness_or_done_claim",
+      "selected_skill": "flowguard-development-process-flow",
+      "examples": ["plan-edit-test order", "stale evidence", "done claim"]
+    },
+    {
+      "modeled_target": "ui_interaction_flow",
+      "risk_type": "visible_control_or_navigation_state",
+      "selected_skill": "flowguard-ui-flow-structure",
+      "examples": ["startup panel", "button state", "screen transition"]
+    },
+    {
+      "modeled_target": "code_structure_plan",
+      "risk_type": "module_boundary_or_facade_design",
+      "selected_skill": "flowguard-code-structure-recommendation",
+      "examples": ["new module split", "ownership boundary", "adapter design"]
+    },
+    {
+      "modeled_target": "large_structure_split",
+      "risk_type": "facade_compatibility_dependency_or_parity",
+      "selected_skill": "flowguard-structure-mesh",
+      "examples": ["large runtime split", "public API preservation"]
+    },
+    {
+      "modeled_target": "test_and_evidence_hierarchy",
+      "risk_type": "large_slow_layered_or_stale_tests",
+      "selected_skill": "flowguard-test-mesh",
+      "examples": ["background model checks", "release-only validation"]
+    },
+    {
+      "modeled_target": "model_test_alignment",
+      "risk_type": "obligation_to_test_or_contract_gap",
+      "selected_skill": "flowguard-model-test-alignment",
+      "examples": ["model scenario missing test", "contract not observed"]
+    },
+    {
+      "modeled_target": "model_hierarchy",
+      "risk_type": "parent_child_model_or_affected_sibling",
+      "selected_skill": "flowguard-model-mesh",
+      "examples": ["three or more models", "stale child evidence"]
+    },
+    {
+      "modeled_target": "model_miss",
+      "risk_type": "runtime_failure_after_green_model",
+      "selected_skill": "flowguard-model-miss-review",
+      "examples": ["test failure after model pass", "counterexample trace"]
+    },
+    {
+      "modeled_target": "architecture_reduction",
+      "risk_type": "behavior_preserving_simplification",
+      "selected_skill": "flowguard-architecture-reduction",
+      "examples": ["duplicate handler removal", "adapter collapse"]
+    }
+  ]
+}

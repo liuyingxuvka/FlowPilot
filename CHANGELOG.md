@@ -2,6 +2,34 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.15 - 2026-05-29
+
+### Added
+
+- Added the `introduce-ai-project-protocol-kernel` OpenSpec change for a clean
+  AI project execution protocol that uses a black-box ledger, dynamic
+  background-agent leases, sealed task/result packets, independent review,
+  FlowGuard route scheduling, and final backward closure.
+- Added a legacy source snapshot under
+  `backups/ai-project-protocol-legacy-snapshot-20260529/` so old FlowPilot
+  assets and failure cases remain read-only references instead of the new
+  protocol foundation.
+- Added `skills/flowpilot/assets/ai_project_protocol/` with the protocol
+  contract, schema examples, and FlowGuard route scheduler table.
+- Added `simulations/ai_project_protocol_model.py` and
+  `simulations/run_ai_project_protocol_checks.py` to rehearse fake-agent
+  success and failure paths before runtime integration.
+- Added focused tests for the AI project protocol kernel assets, route table,
+  model checks, and false-completion hazards.
+
+### Changed
+
+- Kept this as a local protocol-kernel version: it does not replace the current
+  FlowPilot runtime, launch a new full UI, push, tag, deploy, or release.
+- Documented that ACK, progress, stale evidence, closed-agent output,
+  self-review, weak review, wrong FlowGuard target, and missing final backward
+  closure are blockers rather than completion evidence.
+
 ## 0.9.14 - 2026-05-27
 
 ### Added

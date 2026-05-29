@@ -1,0 +1,27 @@
+{
+  "backup_id": "ai-project-protocol-legacy-snapshot-20260529",
+  "created_date": "2026-05-29",
+  "purpose": "Preserve tracked legacy source before introducing a clean AI project protocol kernel.",
+  "source_commit": "85337f0883600cdb1b2341e9a654d8b2725acf7d",
+  "source_commit_subject": "Adopt FlowPilot runtime path evidence",
+  "archive": "flowguardprojectautopilot-tracked-head-20260529.zip",
+  "archive_sha256": "3A02BAAB3CE8671FCA3050FF8C1F7E1F815F0588EDEE9347C1C7A7D56C9B5EA5",
+  "reuse_policy": {
+    "allowed": [
+      "startup panel visual references",
+      "brand icons",
+      "historical failure cases",
+      "test scenario ideas"
+    ],
+    "forbidden": [
+      "old runtime state as current truth",
+      "old compatibility routes",
+      "old fixed-agent topology as a requirement",
+      "stale validation evidence"
+    ]
+  },
+  "notes": [
+    "The backup is a local source snapshot, not an active execution ledger.",
+    "New protocol work must rebuild FlowGuard models from first principles."
+  ]
+}

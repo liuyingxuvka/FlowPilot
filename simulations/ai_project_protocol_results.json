@@ -1,0 +1,107 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=66",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "ack_without_output_accepted",
+      "closed_agent_output_accepted",
+      "final_closure_gap_accepted",
+      "flowguard_wrong_target_accepted",
+      "missing_ack_accepted",
+      "route_mutation_old_packet_accepted",
+      "self_review_accepted",
+      "stale_evidence_accepted",
+      "success_overblocked",
+      "weak_review_accepted",
+      "wrong_packet_shape_accepted"
+    ],
+    "hazards": {
+      "ack_without_output_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: ack_without_output"
+      ],
+      "closed_agent_output_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: closed_agent_output"
+      ],
+      "final_closure_gap_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: final_closure_gap"
+      ],
+      "flowguard_wrong_target_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: flowguard_wrong_target"
+      ],
+      "missing_ack_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: missing_ack"
+      ],
+      "route_mutation_old_packet_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: route_mutation_old_packet"
+      ],
+      "self_review_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: self_review"
+      ],
+      "stale_evidence_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: stale_evidence"
+      ],
+      "success_overblocked": [
+        "happy path was blocked despite complete fresh evidence"
+      ],
+      "weak_review_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: weak_review"
+      ],
+      "wrong_packet_shape_accepted": [
+        "project completion was accepted without the full protocol gate",
+        "risk scenario was accepted: wrong_packet_shape"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "ai_project_protocol_kernel",
+  "ok": true,
+  "result_type": "ai_project_protocol_kernel",
+  "risk_scenarios": [
+    "ack_without_output",
+    "closed_agent_output",
+    "final_closure_gap",
+    "flowguard_wrong_target",
+    "missing_ack",
+    "route_mutation_old_packet",
+    "self_review",
+    "stale_evidence",
+    "weak_review",
+    "wrong_packet_shape"
+  ],
+  "safe_scenarios": [
+    "success"
+  ],
+  "scenario_matrix": {
+    "matrix": {
+      "ack_without_output": "block_ack_without_output",
+      "closed_agent_output": "block_closed_agent_output",
+      "final_closure_gap": "block_final_closure_gap",
+      "flowguard_wrong_target": "block_flowguard_wrong_target",
+      "missing_ack": "block_missing_ack",
+      "route_mutation_old_packet": "block_route_mutation_old_packet",
+      "self_review": "block_self_review",
+      "stale_evidence": "block_stale_evidence",
+      "success": "accept_verified_result",
+      "weak_review": "block_weak_review",
+      "wrong_packet_shape": "block_wrong_packet_shape"
+    },
+    "mismatches": {},
+    "ok": true
+  }
+}

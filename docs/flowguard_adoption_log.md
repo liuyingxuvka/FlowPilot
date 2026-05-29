@@ -20129,3 +20129,112 @@ to identify compatibility-layer branches that should be deleted.
 
 ### Next Actions
 - Continue using the runtime_path_summary/progress_lines section when reviewing future FlowPilot model-test alignment output.
+
+
+## ai-project-protocol-kernel-20260529 - Introduce clean AI project protocol kernel
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested a from-scratch, no-old-baggage AI project
+  execution protocol with OpenSpec, FlowGuard, dynamic background agents,
+  legacy backup, install sync, model regressions, and local git finalization.
+- Status: completed
+- Skill decision: predictive_kb_preflight + openspec_propose_apply +
+  flowguard_existing_model_preflight + model_first_function_flow +
+  flowguard_development_process_flow + flowguard_model_test_alignment +
+  flowguard_test_mesh
+- Started: 2026-05-29T13:31:00+00:00
+- Ended: 2026-05-29T13:47:00+00:00
+- Commands OK: True
+
+### Model Files
+
+- simulations/ai_project_protocol_model.py
+- simulations/run_ai_project_protocol_checks.py
+- simulations/ai_project_protocol_results.json
+- tmp/flowguard_background/run_meta_checks.meta.json
+- tmp/flowguard_background/run_capability_checks.meta.json
+
+### Runtime And Protocol Files
+
+- skills/flowpilot/assets/ai_project_protocol/README.md
+- skills/flowpilot/assets/ai_project_protocol/protocol_contract.md
+- skills/flowpilot/assets/ai_project_protocol/schema_examples.json
+- skills/flowpilot/assets/ai_project_protocol/flowguard_route_scheduler.json
+- backups/ai-project-protocol-legacy-snapshot-20260529/BACKUP_MANIFEST.json
+- backups/ai-project-protocol-legacy-snapshot-20260529/flowguardprojectautopilot-tracked-head-20260529.zip
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate introduce-ai-project-protocol-kernel --strict`
+- OK: `python simulations\run_ai_project_protocol_checks.py --json`
+- OK: `python -m pytest tests\test_ai_project_protocol_kernel.py tests\test_flowpilot_model_check_runner_contracts.py -q`
+- OK: `openspec validate --all --strict`
+- OK: background `tmp/flowguard_background/run_meta_checks.*`; completed,
+  exit code 0, stderr empty, combined report `ok: true`, proof status
+  `not_present`.
+- OK: background `tmp/flowguard_background/run_capability_checks.*`;
+  completed, exit code 0, stderr empty, combined report `ok: true`, proof
+  status `not_present`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py --json`
+
+### Findings
+
+- The new protocol kernel is not a FlowPilot runtime rewrite; it is a clean
+  contract for black-box ledger authority, dynamic agent leases, sealed
+  task/result packets, independent review, FlowGuard route scheduling, and
+  final backward closure.
+- The FlowGuard model accepts the intended success path and blocks missing ACK,
+  ACK without output, wrong packet shape, closed-agent output, self-review,
+  weak review, stale evidence, old-route packet acceptance, wrong FlowGuard
+  modeled target, and missing final backward closure.
+- Hazard states prove false completion and overblocking are rejected by the
+  model before runtime integration.
+- Install checks now require the new protocol assets, model files, result JSON,
+  and legacy backup manifest so local install validation cannot silently omit
+  this protocol kernel.
+
+### Counterexamples
+
+- missing_ack
+- ack_without_output
+- wrong_packet_shape
+- closed_agent_output
+- self_review
+- weak_review
+- stale_evidence
+- route_mutation_old_packet
+- flowguard_wrong_target
+- final_closure_gap
+
+### Friction Points
+
+- The first focused test exposed that one contract rule was split across lines,
+  making it harder to assert directly; the rule was rewritten as a single
+  explicit sentence.
+- The first local install sync correctly found the installed FlowPilot skill
+  stale and then overwrote it from repository source.
+
+### Skipped Steps
+
+- The current FlowPilot runtime was not replaced by the protocol kernel.
+- A full new UI was not built; only startup-panel asset reuse boundaries were
+  preserved.
+- No destructive `.flowpilot/` runtime cleanup was performed.
+- No GitHub push, tag, deploy, or release was attempted.
+
+### Risk Evidence Summary
+
+- Background Meta and Capability checks completed with exit code 0 and current
+  result reports. The combined logs show `proof_status: not_present`, so this
+  pass did not rely on reused proofs for the new claim.
+
+### Next Actions
+
+- Wire the protocol kernel into a future runtime entry only after a separate
+  OpenSpec change models the startup panel and router integration boundary.

@@ -8,6 +8,9 @@ Reusable assets for FlowPilot live here or in the repository-level
   export registry reader backed by `runtime_kit/router_facade_owner_exports.json`
   so the public router surface stays explicit during owner-module maintenance;
 - `runtime_kit/manifest.json`, the system-card manifest copied into each run;
+- `ai_project_protocol/`, the clean protocol kernel for black-box ledger
+  authority, dynamic background-agent leases, sealed task/result packets,
+  FlowGuard route scheduling, fake-agent rehearsal, and final backward closure;
 - `runtime_kit/cards/`, role, phase, event, reviewer, and display cards;
 - `runtime_kit/prompts/`, hash-manifested prompt assets loaded by
   `flowpilot_prompt_store.py`, including packet prompt fragments under
