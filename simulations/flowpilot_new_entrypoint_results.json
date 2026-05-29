@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=15 initial_states=1 traces=120",
+    "summary": "sequences=20 initial_states=1 traces=210",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -14,11 +14,15 @@
       "chat_body_leak",
       "fake_live_overclaim",
       "fixed_six_required",
+      "flowguard_without_run_local_evidence",
       "headless_formal_overclaim",
+      "invented_host_kind_value",
+      "missing_host_kind_menu",
       "monitor_ui_required",
       "old_router_authority",
       "review_before_flowguard",
-      "route_before_ledger"
+      "route_before_ledger",
+      "tracked_baseline_flowguard_evidence"
     ],
     "hazards": {
       "ack_only_completion": [
@@ -33,8 +37,17 @@
       "fixed_six_required": [
         "fixed six agents were required instead of dynamic leases"
       ],
+      "flowguard_without_run_local_evidence": [
+        "FlowGuard ran before run-local evidence output was selected"
+      ],
       "headless_formal_overclaim": [
         "headless startup result was treated as formal UI evidence"
+      ],
+      "invented_host_kind_value": [
+        "an unlisted host kind value was invented"
+      ],
+      "missing_host_kind_menu": [
+        "host kind value selected before the allowed-value menu was presented"
       ],
       "monitor_ui_required": [
         "non-startup monitoring UI was required"
@@ -47,6 +60,9 @@
       ],
       "route_before_ledger": [
         "contract frozen before new ledger authority"
+      ],
+      "tracked_baseline_flowguard_evidence": [
+        "formal FlowGuard evidence wrote to a tracked simulation baseline"
       ]
     },
     "ok": true
@@ -65,9 +81,12 @@
       "freeze_contract",
       "create_new_route",
       "request_dynamic_agent_lease",
+      "present_host_kind_value_menu",
+      "select_host_kind_from_allowed_menu",
       "bind_dynamic_agent_lease",
       "record_ack_as_liveness_only",
       "submit_result_artifact",
+      "write_flowguard_evidence_to_run_local_path",
       "run_targeted_flowguard",
       "record_independent_review",
       "record_validation_evidence",
@@ -84,11 +103,16 @@
       "fake_host_claimed_live": false,
       "final_closure_complete": true,
       "fixed_six_required": false,
+      "flowguard_evidence_run_local": true,
       "flowguard_targeted": true,
       "formal_use_flowpilot_request": true,
       "headless_result_treated_as_formal": false,
+      "host_kind_menu_missing": false,
+      "host_kind_selected_from_allowed_menu": true,
+      "host_kind_value_menu_presented": true,
       "independent_review_passed": true,
       "interactive_startup_result": true,
+      "invented_host_kind_value": false,
       "monitor_ui_required": false,
       "new_ledger_authority": true,
       "old_router_authority": false,
@@ -97,6 +121,7 @@
       "route_created": true,
       "sealed_intake_recorded": true,
       "status": "complete",
+      "tracked_baseline_flowguard_evidence": false,
       "validation_recorded": true
     }
   },

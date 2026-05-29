@@ -2,6 +2,25 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.21 - 2026-05-29
+
+### Changed
+
+- Hardened the new formal FlowPilot runtime so fixed-value operator fields
+  list their allowed values directly, including `--host-kind live|fake|dry_run`.
+- Updated FlowGuard operator packets to require run-local evidence output under
+  the current `.flowpilot/runs/<run-id>/evidence/flowguard/...` tree.
+- Added `--json-out` and proof override support to Meta and Capability runners
+  so formal run evidence no longer dirties tracked simulation baselines.
+
+### Added
+
+- Added the `harden-flowpilot-enum-prompts-and-run-evidence` OpenSpec change.
+- Added FlowGuard hazards and tests for missing host-kind menus, invented host
+  kinds, and formal FlowGuard evidence written to tracked baselines.
+- Added model-test alignment evidence for enum menu guidance and run-local
+  FlowGuard evidence isolation.
+
 ## 0.9.20 - 2026-05-29
 
 ### Changed

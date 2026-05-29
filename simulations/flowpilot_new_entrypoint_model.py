@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MODEL_ID = "flowpilot_new_formal_entrypoint"
-MAX_SEQUENCE_LENGTH = 15
+MAX_SEQUENCE_LENGTH = 20
 
 
 @dataclass(frozen=True)
@@ -23,9 +23,12 @@ class State:
     contract_frozen: bool = False
     route_created: bool = False
     dynamic_agent_lease_requested: bool = False
+    host_kind_value_menu_presented: bool = False
+    host_kind_selected_from_allowed_menu: bool = False
     dynamic_agent_lease_bound: bool = False
     ack_recorded: bool = False
     result_submitted: bool = False
+    flowguard_evidence_run_local: bool = False
     flowguard_targeted: bool = False
     independent_review_passed: bool = False
     validation_recorded: bool = False
@@ -37,6 +40,9 @@ class State:
     headless_result_treated_as_formal: bool = False
     ack_only_completed: bool = False
     fake_host_claimed_live: bool = False
+    host_kind_menu_missing: bool = False
+    invented_host_kind_value: bool = False
+    tracked_baseline_flowguard_evidence: bool = False
 
 
 @dataclass(frozen=True)
@@ -62,9 +68,12 @@ REQUIRED_SAFE_LABELS = (
     "freeze_contract",
     "create_new_route",
     "request_dynamic_agent_lease",
+    "present_host_kind_value_menu",
+    "select_host_kind_from_allowed_menu",
     "bind_dynamic_agent_lease",
     "record_ack_as_liveness_only",
     "submit_result_artifact",
+    "write_flowguard_evidence_to_run_local_path",
     "run_targeted_flowguard",
     "record_independent_review",
     "record_validation_evidence",
@@ -84,7 +93,9 @@ class NewFlowPilotEntrypointStep:
         "sealed_intake_recorded",
         "new_ledger_authority",
         "route_created",
+        "host_kind_value_menu_presented",
         "dynamic_agent_lease_bound",
+        "flowguard_evidence_run_local",
         "flowguard_targeted",
         "independent_review_passed",
     )
@@ -93,7 +104,9 @@ class NewFlowPilotEntrypointStep:
         "current_run_ledger",
         "route_state",
         "lease_state",
+        "host_value_menu",
         "packet_result_state",
+        "run_local_flowguard_evidence_path",
         "flowguard_report",
         "review_report",
         "closure",
@@ -128,12 +141,18 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("create_new_route", replace(state, route_created=True)),)
     if not state.dynamic_agent_lease_requested:
         return (Transition("request_dynamic_agent_lease", replace(state, dynamic_agent_lease_requested=True)),)
+    if not state.host_kind_value_menu_presented:
+        return (Transition("present_host_kind_value_menu", replace(state, host_kind_value_menu_presented=True)),)
+    if not state.host_kind_selected_from_allowed_menu:
+        return (Transition("select_host_kind_from_allowed_menu", replace(state, host_kind_selected_from_allowed_menu=True)),)
     if not state.dynamic_agent_lease_bound:
         return (Transition("bind_dynamic_agent_lease", replace(state, dynamic_agent_lease_bound=True)),)
     if not state.ack_recorded:
         return (Transition("record_ack_as_liveness_only", replace(state, ack_recorded=True)),)
     if not state.result_submitted:
         return (Transition("submit_result_artifact", replace(state, result_submitted=True)),)
+    if not state.flowguard_evidence_run_local:
+        return (Transition("write_flowguard_evidence_to_run_local_path", replace(state, flowguard_evidence_run_local=True)),)
     if not state.flowguard_targeted:
         return (Transition("run_targeted_flowguard", replace(state, flowguard_targeted=True)),)
     if not state.independent_review_passed:
@@ -161,14 +180,20 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("route created before contract freeze")
     if state.dynamic_agent_lease_requested and not state.route_created:
         failures.append("dynamic agent requested before route creation")
-    if state.dynamic_agent_lease_bound and not state.dynamic_agent_lease_requested:
-        failures.append("agent lease bound before router request")
+    if state.host_kind_value_menu_presented and not state.dynamic_agent_lease_requested:
+        failures.append("host kind menu presented before router requested a dynamic agent")
+    if state.host_kind_selected_from_allowed_menu and not state.host_kind_value_menu_presented:
+        failures.append("host kind value selected before the allowed-value menu was presented")
+    if state.dynamic_agent_lease_bound and not state.host_kind_selected_from_allowed_menu:
+        failures.append("agent lease bound before host kind was selected from the allowed-value menu")
     if state.ack_recorded and not state.dynamic_agent_lease_bound:
         failures.append("ACK recorded before dynamic lease was bound")
     if state.result_submitted and not state.ack_recorded:
         failures.append("result submitted before ACK liveness")
-    if state.flowguard_targeted and not state.result_submitted:
-        failures.append("FlowGuard ran before result artifact")
+    if state.flowguard_evidence_run_local and not state.result_submitted:
+        failures.append("FlowGuard evidence path was selected before result artifact")
+    if state.flowguard_targeted and not state.flowguard_evidence_run_local:
+        failures.append("FlowGuard ran before run-local evidence output was selected")
     if state.independent_review_passed and not state.flowguard_targeted:
         failures.append("review passed before targeted FlowGuard evidence")
     if state.validation_recorded and not state.independent_review_passed:
@@ -189,6 +214,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("ACK-only liveness was treated as completion")
     if state.fake_host_claimed_live:
         failures.append("fake host evidence was claimed as live host confidence")
+    if state.host_kind_menu_missing:
+        failures.append("host kind was requested without an allowed-value menu")
+    if state.invented_host_kind_value:
+        failures.append("an unlisted host kind value was invented")
+    if state.tracked_baseline_flowguard_evidence:
+        failures.append("formal FlowGuard evidence wrote to a tracked simulation baseline")
     return failures
 
 
@@ -222,6 +253,15 @@ def hazard_states() -> dict[str, State]:
         "headless_formal_overclaim": replace(target_state(), headless_result_treated_as_formal=True),
         "ack_only_completion": replace(target_state(), ack_only_completed=True),
         "fake_live_overclaim": replace(target_state(), fake_host_claimed_live=True),
+        "missing_host_kind_menu": replace(
+            target_state(),
+            host_kind_value_menu_presented=False,
+            host_kind_selected_from_allowed_menu=True,
+            dynamic_agent_lease_bound=True,
+        ),
+        "invented_host_kind_value": replace(target_state(), invented_host_kind_value=True),
+        "tracked_baseline_flowguard_evidence": replace(target_state(), tracked_baseline_flowguard_evidence=True),
+        "flowguard_without_run_local_evidence": replace(target_state(), flowguard_evidence_run_local=False, flowguard_targeted=True),
         "route_before_ledger": replace(target_state(), new_ledger_authority=False, contract_frozen=True, route_created=True),
         "review_before_flowguard": replace(target_state(), flowguard_targeted=False, independent_review_passed=True),
     }

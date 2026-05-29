@@ -49,6 +49,7 @@ RESULTS_PATH = THIN_RESULT_PATHS["meta"]
 PROOF_PATH = THIN_PROOF_PATHS["meta"]
 LAYERED_RESULTS_PATH = LAYERED_FULL_RESULT_PATHS["meta"]
 LAYERED_PROOF_PATH = LAYERED_FULL_PROOF_PATHS["meta"]
+PARENT_ID = "meta"
 
 
 def _emit_proof_reuse(check_name: str, path: Path) -> None:
@@ -68,34 +69,66 @@ def _layered_input_fingerprint() -> str:
     return layered_full_input_fingerprint("meta", RUNNER_PATH)
 
 
-def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
+def _valid_proof(
+    input_fingerprint: str,
+    *,
+    result_path: Path | None = None,
+    proof_path: Path | None = None,
+) -> tuple[bool, str]:
     return valid_thin_proof(
-        parent="meta",
+        parent=PARENT_ID,
         runner_path=RUNNER_PATH,
-        result_path=RESULTS_PATH,
-        proof_path=PROOF_PATH,
+        result_path=result_path or RESULTS_PATH,
+        proof_path=proof_path or PROOF_PATH,
         input_fingerprint=input_fingerprint,
     )
 
 
-def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
+def _write_proof(
+    *,
+    ok: bool,
+    input_fingerprint: str,
+    result_path: Path | None = None,
+    proof_path: Path | None = None,
+) -> None:
     write_thin_proof(
-        parent="meta",
-        result_path=RESULTS_PATH,
-        proof_path=PROOF_PATH,
+        parent=PARENT_ID,
+        result_path=result_path or RESULTS_PATH,
+        proof_path=proof_path or PROOF_PATH,
         ok=ok,
         input_fingerprint=input_fingerprint,
     )
 
 
-def _valid_layered_proof(input_fingerprint: str) -> tuple[bool, str]:
+def _valid_layered_proof(
+    input_fingerprint: str,
+    *,
+    result_path: Path | None = None,
+    proof_path: Path | None = None,
+) -> tuple[bool, str]:
     return valid_layered_full_proof(
-        parent="meta",
+        parent=PARENT_ID,
         runner_path=RUNNER_PATH,
-        result_path=LAYERED_RESULTS_PATH,
-        proof_path=LAYERED_PROOF_PATH,
+        result_path=result_path or LAYERED_RESULTS_PATH,
+        proof_path=proof_path or LAYERED_PROOF_PATH,
         input_fingerprint=input_fingerprint,
     )
+
+
+def _proof_path_for(result_path: Path) -> Path:
+    return result_path.with_suffix(".proof.json")
+
+
+def _prepare_output_paths(*paths: Path) -> None:
+    for path in paths:
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def _thin_result_path_for(layered_result_path: Path) -> Path:
+    name = layered_result_path.name
+    if name.endswith("_layered_full_results.json"):
+        return layered_result_path.with_name(name.replace("_layered_full_results.json", "_thin_parent_results.json"))
+    return layered_result_path.with_name(f"{PARENT_ID}_thin_parent_results.json")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -111,23 +144,55 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="force the selected Meta regression and ignore reusable proof files",
     )
+    parser.add_argument(
+        "--json-out",
+        type=Path,
+        default=None,
+        help="write the selected result JSON to this path instead of the tracked default baseline",
+    )
+    parser.add_argument(
+        "--proof-out",
+        type=Path,
+        default=None,
+        help="write the selected proof JSON to this path; defaults beside --json-out when provided",
+    )
+    parser.add_argument(
+        "--thin-json-out",
+        type=Path,
+        default=None,
+        help="with --full, write the refreshed thin-parent result to this path",
+    )
+    parser.add_argument(
+        "--thin-proof-out",
+        type=Path,
+        default=None,
+        help="with --full, write the refreshed thin-parent proof to this path",
+    )
     args = parser.parse_args(argv)
+
+    result_path = args.json_out or (LAYERED_RESULTS_PATH if args.full else RESULTS_PATH)
+    proof_path = args.proof_out or (_proof_path_for(result_path) if args.json_out else (LAYERED_PROOF_PATH if args.full else PROOF_PATH))
+    thin_result_path = args.thin_json_out or (_thin_result_path_for(result_path) if args.full and args.json_out else RESULTS_PATH)
+    thin_proof_path = args.thin_proof_out or (
+        _proof_path_for(thin_result_path) if args.full and (args.json_out or args.thin_json_out) else PROOF_PATH
+    )
 
     input_fingerprint = _current_input_fingerprint()
     if args.fast and not args.force and not args.full:
-        valid, reason = _valid_proof(input_fingerprint)
+        valid, reason = _valid_proof(input_fingerprint, result_path=result_path, proof_path=proof_path)
         if valid:
-            _emit_proof_reuse("meta", PROOF_PATH)
-            print(f"FlowGuard meta proof reused: {PROOF_PATH}")
+            _emit_proof_reuse("meta", proof_path)
+            print(f"FlowGuard meta proof reused: {proof_path}")
             return 0
         print(f"FlowGuard meta proof not reused: {reason}")
 
-    if not args.force and not args.full:
+    if not args.full:
+        _prepare_output_paths(result_path, proof_path)
         payload = run_thin_parent(
-            "meta",
+            PARENT_ID,
             runner_path=RUNNER_PATH,
-            result_path=RESULTS_PATH,
-            proof_path=PROOF_PATH,
+            result_path=result_path,
+            proof_path=proof_path,
         )
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0 if payload.get("ok") else 1
@@ -135,19 +200,20 @@ def main(argv: list[str] | None = None) -> int:
     if args.full:
         layered_input_fingerprint = _layered_input_fingerprint()
         if args.fast and not args.force:
-            valid, reason = _valid_layered_proof(layered_input_fingerprint)
+            valid, reason = _valid_layered_proof(layered_input_fingerprint, result_path=result_path, proof_path=proof_path)
             if valid:
-                _emit_proof_reuse("meta-layered-full", LAYERED_PROOF_PATH)
-                print(f"FlowGuard meta layered full proof reused: {LAYERED_PROOF_PATH}")
+                _emit_proof_reuse("meta-layered-full", proof_path)
+                print(f"FlowGuard meta layered full proof reused: {proof_path}")
                 return 0
             print(f"FlowGuard meta layered full proof not reused: {reason}")
+        _prepare_output_paths(result_path, proof_path, thin_result_path, thin_proof_path)
         payload = run_layered_full_parent(
-            "meta",
+            PARENT_ID,
             runner_path=RUNNER_PATH,
-            result_path=LAYERED_RESULTS_PATH,
-            proof_path=LAYERED_PROOF_PATH,
-            thin_result_path=RESULTS_PATH,
-            thin_proof_path=PROOF_PATH,
+            result_path=result_path,
+            proof_path=proof_path,
+            thin_result_path=thin_result_path,
+            thin_proof_path=thin_proof_path,
         )
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0 if payload.get("ok") else 1

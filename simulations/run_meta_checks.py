@@ -52,16 +52,16 @@ def _current_input_fingerprint() -> str:
     return _call_impl(_impl._current_input_fingerprint)
 
 
-def _valid_proof(input_fingerprint: str) -> tuple[bool, str]:
-    return _call_impl(_impl._valid_proof, input_fingerprint)
+def _valid_proof(input_fingerprint: str, **kwargs) -> tuple[bool, str]:
+    return _call_impl(_impl._valid_proof, input_fingerprint, **kwargs)
 
 
-def _write_proof(*, ok: bool, input_fingerprint: str) -> None:
-    return _call_impl(_impl._write_proof, ok=ok, input_fingerprint=input_fingerprint)
+def _write_proof(*, ok: bool, input_fingerprint: str, **kwargs) -> None:
+    return _call_impl(_impl._write_proof, ok=ok, input_fingerprint=input_fingerprint, **kwargs)
 
 
-def _valid_layered_proof(input_fingerprint: str) -> tuple[bool, str]:
-    return _call_impl(_impl._valid_layered_proof, input_fingerprint)
+def _valid_layered_proof(input_fingerprint: str, **kwargs) -> tuple[bool, str]:
+    return _call_impl(_impl._valid_layered_proof, input_fingerprint, **kwargs)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

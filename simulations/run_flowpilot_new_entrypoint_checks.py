@@ -117,6 +117,7 @@ def main() -> int:
     output = json.dumps(result, indent=2, sort_keys=True) + "\n"
     print(output, end="")
     if not args.no_write_results:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
         args.json_out.write_text(output, encoding="utf-8")
     return 0 if result["ok"] else 1
 

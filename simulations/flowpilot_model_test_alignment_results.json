@@ -20,7 +20,7 @@
   "full_model_test_code_diagnostic": {
     "actionable_findings": [],
     "actionable_summary": [],
-    "covered_surface_count": 904,
+    "covered_surface_count": 905,
     "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
@@ -223,9 +223,9 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 904,
+    "surface_count": 905,
     "surface_counts": {
-      "model_check_runner": 123,
+      "model_check_runner": 124,
       "model_check_runner_helper": 19,
       "owner_module": 274,
       "public_facade": 112,
@@ -1542,7 +1542,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 125,
+        "line_count": 126,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_new_entrypoint_checks",
@@ -1905,6 +1905,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_recursive_decomposition_checks",
         "surface_owner": "model-check:run_flowpilot_recursive_decomposition_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 124,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_recursive_route_execution_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_recursive_route_execution_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_recursive_route_execution_checks",
+        "surface_owner": "model-check:run_flowpilot_recursive_route_execution_checks"
       },
       {
         "covered": true,
@@ -2997,7 +3019,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 158,
+        "line_count": 224,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3010,7 +3032,7 @@
         "surface_id": "model-check-helper:capability_checks_runner_impl",
         "surface_owner": "model-check:capability_checks_runner_impl",
         "top_level_class_count": 0,
-        "top_level_function_count": 7
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -3381,7 +3403,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 157,
+        "line_count": 223,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3394,7 +3416,7 @@
         "surface_id": "model-check-helper:meta_checks_runner_impl",
         "surface_owner": "model-check:meta_checks_runner_impl",
         "top_level_class_count": 0,
-        "top_level_function_count": 7
+        "top_level_function_count": 10
       },
       {
         "covered": true,
@@ -3731,7 +3753,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 406,
+        "line_count": 425,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -27592,7 +27614,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_missing_evidence",
         "obligation_families": [],
@@ -27627,10 +27648,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": []
       },
       "report": {
@@ -27689,7 +27707,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_stale_evidence",
         "obligation_families": [],
@@ -27724,10 +27741,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27839,7 +27853,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_progress_only",
         "obligation_families": [],
@@ -27874,10 +27887,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -27984,7 +27994,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_overclaim",
         "obligation_families": [],
@@ -28019,10 +28028,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28099,7 +28105,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_orphan",
         "obligation_families": [],
@@ -28134,10 +28139,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28240,7 +28242,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_duplicate",
         "obligation_families": [],
@@ -28275,10 +28276,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -28362,7 +28360,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "known_bad_runtime_path_missing",
         "obligation_families": [],
@@ -28399,10 +28396,7 @@
         "runtime_node_contracts": [],
         "runtime_node_observations": [],
         "runtime_path_runs": [],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30541,7 +30535,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "startup",
         "obligation_families": [],
@@ -30794,10 +30787,7 @@
             "source_evidence_id": "runtime_path.startup"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -30920,7 +30910,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "packet_card_ack",
         "obligation_families": [],
@@ -31396,10 +31385,7 @@
             "source_evidence_id": "runtime_path.packet_card_ack"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -31581,7 +31567,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "packet_result_family",
         "obligation_families": [],
@@ -32942,10 +32927,7 @@
             "source_evidence_id": "runtime_path.packet_result_family"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33235,7 +33217,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "route_mutation",
         "obligation_families": [],
@@ -33488,10 +33469,7 @@
             "source_evidence_id": "runtime_path.route_mutation"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -33613,7 +33591,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "terminal_closure_resume",
         "obligation_families": [],
@@ -33977,10 +33954,7 @@
             "source_evidence_id": "runtime_path.terminal_closure_resume"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -34122,7 +34096,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "role_output_contracts",
         "obligation_families": [],
@@ -34486,10 +34459,7 @@
             "source_evidence_id": "runtime_path.role_output_contracts"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -34635,7 +34605,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "router_loop_daemon",
         "obligation_families": [],
@@ -36236,10 +36205,7 @@
             "source_evidence_id": "runtime_path.router_loop_daemon"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -36912,7 +36878,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "repair_transactions",
         "obligation_families": [],
@@ -37609,10 +37574,7 @@
             "source_evidence_id": "runtime_path.repair_transactions"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -37798,7 +37760,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "test_tiering_slow_contracts",
         "obligation_families": [],
@@ -38162,10 +38123,7 @@
             "source_evidence_id": "runtime_path.test_tiering_slow_contracts"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -38309,7 +38267,6 @@
         "boundary_contracts": [],
         "boundary_observations": [],
         "code_contracts": [],
-        "evidence_duplicate_relation_ids": [],
         "family_evidence": [],
         "model_id": "meta_capability_parents",
         "obligation_families": [],
@@ -38673,10 +38630,7 @@
             "source_evidence_id": "runtime_path.meta_capability_parents"
           }
         ],
-        "same_family_similarity_relation_ids": [],
-        "similarity_maintenance_group_ids": [],
-        "similarity_relation_ids": [],
-        "similarity_test_obligation_ids": [],
+        "similarity_handoff": null,
         "test_evidence": [
           {
             "assertion_scope": "external_contract",
@@ -39204,7 +39158,8 @@
             "return"
           ],
           "implements_obligations": [
-            "new_entrypoint.symmetric_role_packet_lifecycle"
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            "new_entrypoint.flowguard_run_local_evidence"
           ],
           "path": "skills/flowpilot/assets/flowpilot_new.py",
           "required": true,
@@ -39249,9 +39204,52 @@
             "exit_code"
           ],
           "implements_obligations": [
-            "new_entrypoint.side_command_surface_retired"
+            "new_entrypoint.side_command_surface_retired",
+            "new_entrypoint.host_kind_value_menu"
           ],
           "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "main"
+        },
+        {
+          "code_contract_id": "meta_checks_runner.run_local_json_out",
+          "error_paths": [],
+          "external_inputs": [
+            "argv"
+          ],
+          "external_outputs": [
+            "exit_code"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.flowguard_run_local_evidence"
+          ],
+          "path": "simulations/run_meta_checks.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "main"
+        },
+        {
+          "code_contract_id": "capability_checks_runner.run_local_json_out",
+          "error_paths": [],
+          "external_inputs": [
+            "argv"
+          ],
+          "external_outputs": [
+            "exit_code"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.flowguard_run_local_evidence"
+          ],
+          "path": "simulations/run_capability_checks.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -44362,7 +44360,6 @@
           "symbol": "main"
         }
       ],
-      "evidence_duplicate_relation_ids": [],
       "family_evidence": [],
       "model_id": "model_test_code_source_contracts",
       "obligation_families": [],
@@ -44571,6 +44568,54 @@
           "required_closure_evidence_roles": [],
           "required_runtime_node_ids": [],
           "required_test_kinds": [
+            "negative_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
+          "description": "Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_subagent.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.host_kind_value_menu",
+          "obligation_type": "contract",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "happy_path",
+            "negative_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": true,
+          "allow_shared_implementation": true,
+          "description": "Source-audited FlowGuard operator packet and runner-output boundary requiring formal evidence to use run-local output paths instead of tracked simulation baselines.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "new_entrypoint.flowguard_run_local_evidence",
+          "obligation_type": "contract",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "happy_path",
             "negative_path"
           ],
           "requires_same_class_test_evidence": false,
@@ -45682,10 +45727,7 @@
       "runtime_node_contracts": [],
       "runtime_node_observations": [],
       "runtime_path_runs": [],
-      "same_family_similarity_relation_ids": [],
-      "similarity_maintenance_group_ids": [],
-      "similarity_relation_ids": [],
-      "similarity_test_obligation_ids": [],
+      "similarity_handoff": null,
       "test_evidence": [
         {
           "assertion_scope": "external_contract",
@@ -45901,7 +45943,8 @@
             "flowpilot_new.status"
           ],
           "covered_obligations": [
-            "new_entrypoint.symmetric_role_packet_lifecycle"
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            "new_entrypoint.flowguard_run_local_evidence"
           ],
           "evidence_current": true,
           "evidence_id": "source.new_entrypoint.no_shortcut",
@@ -45938,6 +45981,28 @@
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "negative_path",
+          "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_flowguard_operator_is_leased_through_its_own_packet",
+          "covered_code_contracts": [
+            "flowpilot_new.submit_result"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.flowguard_run_local_evidence"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.flowguard_run_local_packet",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
           "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
         },
         {
@@ -45987,6 +46052,94 @@
           "stale_reasons": [],
           "test_kind": "negative_path",
           "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_retired_side_command_paths",
+          "covered_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.host_kind_value_menu"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.host_kind_menu",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_invalid_host_kind_is_rejected_instead_of_normalized",
+          "covered_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.host_kind_value_menu"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.new_entrypoint.host_kind_reject",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_invalid_host_kind_is_rejected_instead_of_normalized"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_thin_parent_checks.FlowPilotThinParentChecksTests.test_meta_runner_json_out_keeps_canonical_result_unchanged",
+          "covered_code_contracts": [
+            "meta_checks_runner.run_local_json_out"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.flowguard_run_local_evidence"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.thin_parent.meta_json_out",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_meta_runner_json_out_keeps_canonical_result_unchanged"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_thin_parent_checks.FlowPilotThinParentChecksTests.test_capability_runner_json_out_keeps_canonical_result_unchanged",
+          "covered_code_contracts": [
+            "capability_checks_runner.run_local_json_out"
+          ],
+          "covered_obligations": [
+            "new_entrypoint.flowguard_run_local_evidence"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.thin_parent.capability_json_out",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "proof_artifact": null,
+          "result_status": "passed",
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_capability_runner_json_out_keeps_canonical_result_unchanged"
         },
         {
           "assertion_scope": "external_contract",
@@ -48906,6 +49059,7 @@
             "ArgumentParser",
             "BlackBoxRuntimeError",
             "HOST_KINDS",
+            "HOST_KIND_HELP",
             "Path",
             "__doc__",
             "_print",
@@ -48968,6 +49122,90 @@
             "start",
             "sub",
             "submit"
+          ],
+          "symbol": "main"
+        },
+        {
+          "calls": [
+            "_call_impl",
+            "inspect.signature",
+            "list"
+          ],
+          "code_contract_id": "meta_checks_runner.run_local_json_out",
+          "found": true,
+          "parameters": [
+            "argv"
+          ],
+          "parse_error": "",
+          "path": "simulations/run_meta_checks.py",
+          "raised_errors": [],
+          "return_values": [
+            "_call_impl"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Sequence",
+            "__file__",
+            "_call_impl",
+            "_impl",
+            "argv",
+            "inspect",
+            "int",
+            "list",
+            "main",
+            "old_argv",
+            "parameters",
+            "signature",
+            "str",
+            "sys"
+          ],
+          "state_writes": [
+            "argv",
+            "old_argv",
+            "signature"
+          ],
+          "symbol": "main"
+        },
+        {
+          "calls": [
+            "_call_impl",
+            "inspect.signature",
+            "list"
+          ],
+          "code_contract_id": "capability_checks_runner.run_local_json_out",
+          "found": true,
+          "parameters": [
+            "argv"
+          ],
+          "parse_error": "",
+          "path": "simulations/run_capability_checks.py",
+          "raised_errors": [],
+          "return_values": [
+            "_call_impl"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Sequence",
+            "__file__",
+            "_call_impl",
+            "_impl",
+            "argv",
+            "inspect",
+            "int",
+            "list",
+            "main",
+            "old_argv",
+            "parameters",
+            "signature",
+            "str",
+            "sys"
+          ],
+          "state_writes": [
+            "argv",
+            "old_argv",
+            "signature"
           ],
           "symbol": "main"
         },
@@ -63053,7 +63291,7 @@
           "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
         },
         {
-          "assert_count": 8,
+          "assert_count": 12,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
@@ -63070,12 +63308,16 @@
             "flowpilot_new.status",
             "flowpilot_new.submit_result",
             "iter",
+            "join",
+            "json.loads",
             "next",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self._open_packet_by_kind",
             "self.assertEqual",
+            "self.assertIn",
             "self.assertNotEqual",
+            "self.assertTrue",
             "tempfile.TemporaryDirectory"
           ],
           "evidence_id": "source.new_entrypoint.no_shortcut",
@@ -63085,7 +63327,7 @@
           "test_name": "test_ack_only_and_pm_only_result_do_not_reach_terminal_closure"
         },
         {
-          "assert_count": 7,
+          "assert_count": 9,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
@@ -63101,16 +63343,51 @@
             "flowpilot_new.submit_result",
             "get",
             "iter",
+            "join",
+            "json.loads",
             "len",
             "next",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self.assertEqual",
+            "self.assertIn",
             "self.assertRaisesRegex",
             "tempfile.TemporaryDirectory",
             "values"
           ],
           "evidence_id": "source.new_entrypoint.flowguard_packet",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+        },
+        {
+          "assert_count": 9,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.submit_result"
+          ],
+          "calls": [
+            "Path",
+            "flowpilot_new.ack",
+            "flowpilot_new.lease_agent",
+            "flowpilot_new.start_run",
+            "flowpilot_new.submit_result",
+            "get",
+            "iter",
+            "join",
+            "json.loads",
+            "len",
+            "next",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertRaisesRegex",
+            "tempfile.TemporaryDirectory",
+            "values"
+          ],
+          "evidence_id": "source.new_entrypoint.flowguard_run_local_packet",
           "found": true,
           "parse_error": "",
           "path": "tests/test_flowpilot_new_entrypoint.py",
@@ -63151,7 +63428,7 @@
           "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
         },
         {
-          "assert_count": 12,
+          "assert_count": 16,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"
@@ -63179,6 +63456,119 @@
           "parse_error": "",
           "path": "tests/test_flowpilot_new_entrypoint.py",
           "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+        },
+        {
+          "assert_count": 16,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "calls": [
+            "Path.cwd",
+            "contextlib.redirect_stderr",
+            "contextlib.redirect_stdout",
+            "direct_error.getvalue",
+            "direct_help.getvalue",
+            "flowpilot_new.main",
+            "hasattr",
+            "io.StringIO",
+            "self.assertEqual",
+            "self.assertFalse",
+            "self.assertIn",
+            "self.assertNotEqual",
+            "self.assertNotIn",
+            "self.assertRaises",
+            "str",
+            "subprocess.run"
+          ],
+          "evidence_id": "source.new_entrypoint.host_kind_menu",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+        },
+        {
+          "assert_count": 5,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "flowpilot_new.main"
+          ],
+          "calls": [
+            "Path",
+            "contextlib.redirect_stderr",
+            "direct_error.getvalue",
+            "flowpilot_new.main",
+            "flowpilot_new.start_run",
+            "io.StringIO",
+            "iter",
+            "next",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "self.assertEqual",
+            "self.assertIn",
+            "self.assertNotEqual",
+            "self.assertRaises",
+            "str",
+            "subprocess.run",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.new_entrypoint.host_kind_reject",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_new_entrypoint.py",
+          "test_name": "test_invalid_host_kind_is_rejected_instead_of_normalized"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "meta_checks_runner.run_local_json_out"
+          ],
+          "calls": [
+            "Path",
+            "contextlib.redirect_stdout",
+            "exists",
+            "io.StringIO",
+            "output_path.exists",
+            "output_path.with_suffix",
+            "run_meta_checks.RESULTS_PATH.read_text",
+            "run_meta_checks.main",
+            "self.assertEqual",
+            "self.assertTrue",
+            "str",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.thin_parent.meta_json_out",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "test_name": "test_meta_runner_json_out_keeps_canonical_result_unchanged"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "capability_checks_runner.run_local_json_out"
+          ],
+          "calls": [
+            "Path",
+            "contextlib.redirect_stdout",
+            "exists",
+            "io.StringIO",
+            "output_path.exists",
+            "output_path.with_suffix",
+            "run_capability_checks.RESULTS_PATH.read_text",
+            "run_capability_checks.main",
+            "self.assertEqual",
+            "self.assertTrue",
+            "str",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.thin_parent.capability_json_out",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_thin_parent_checks.py",
+          "test_name": "test_capability_runner_json_out_keeps_canonical_result_unchanged"
         },
         {
           "assert_count": 12,

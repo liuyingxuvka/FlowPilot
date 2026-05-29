@@ -147,7 +147,14 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(after_pm_status["status"]["closure"]["decision"], "not_attempted")
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(ledger["packets"][pm_packet]["status"], "result_submitted")
-            self.assertEqual(self._open_packet_by_kind(ledger, "flowguard_check"), after_pm["next_action"]["subject_id"])
+            flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")
+            self.assertEqual(flowguard_packet, after_pm["next_action"]["subject_id"])
+            flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
+            policy = flowguard_body["evidence_output_policy"]
+            self.assertIn(f"/evidence/flowguard/{flowguard_packet}", policy["run_local_evidence_root"])
+            self.assertTrue(policy["required_for_formal_run"])
+            self.assertIn("simulations/meta_thin_parent_results.json", policy["tracked_baseline_paths_forbidden_unless_explicit_baseline_update"])
+            self.assertIn("--json-out", " ".join(flowguard_body["recommended_runner_commands"]))
 
     def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -189,6 +196,10 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(after_pm["next_action"]["action_type"], "lease_agent")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
             flowguard_packet = after_pm["next_action"]["subject_id"]
+            ledger = run_shell.load_run_ledger(shell)
+            flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
+            self.assertIn(f"/evidence/flowguard/{flowguard_packet}", flowguard_body["evidence_output_policy"]["run_local_evidence_root"])
+            self.assertIn("--json-out", " ".join(flowguard_body["recommended_runner_commands"]))
             flowguard_lease = flowpilot_new.lease_agent(
                 root,
                 packet_id=flowguard_packet,
@@ -318,6 +329,17 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 
+        lease_help = subprocess.run(
+            [sys.executable, str(ASSETS / "flowpilot_new.py"), "lease-agent", "--help"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(lease_help.returncode, 0, lease_help.stderr)
+        self.assertIn("{live,fake,dry_run}", lease_help.stdout)
+        self.assertIn("live=real Codex", lease_help.stdout)
+        self.assertIn("codex_subagent", lease_help.stdout)
+
         rejected = subprocess.run(
             [sys.executable, str(ASSETS / "flowpilot_new.py"), "--root", str(Path.cwd()), "complete-flowguard"],
             text=True,
@@ -326,6 +348,64 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
         self.assertNotEqual(rejected.returncode, 0)
         self.assertIn("invalid choice", rejected.stderr)
+
+    def test_invalid_host_kind_is_rejected_instead_of_normalized(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-host-kind-reject",
+                headless_startup_text="Exercise host kind rejection.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-host-kind-reject")
+            ledger = run_shell.load_run_ledger(shell)
+            packet_id = next(iter(ledger["packets"]))
+
+            rejected = subprocess.run(
+                [
+                    sys.executable,
+                    str(ASSETS / "flowpilot_new.py"),
+                    "--root",
+                    str(root),
+                    "lease-agent",
+                    "--packet-id",
+                    packet_id,
+                    "--responsibility",
+                    "pm",
+                    "--agent-id",
+                    "agent-1",
+                    "--host-kind",
+                    "codex_subagent",
+                ],
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("invalid choice", rejected.stderr)
+
+            direct_error = io.StringIO()
+            with self.assertRaises(SystemExit) as direct_exit:
+                with contextlib.redirect_stderr(direct_error):
+                    flowpilot_new.main(
+                        [
+                            "--root",
+                            str(root),
+                            "lease-agent",
+                            "--packet-id",
+                            packet_id,
+                            "--responsibility",
+                            "pm",
+                            "--agent-id",
+                            "agent-1",
+                            "--host-kind",
+                            "codex_subagent",
+                        ]
+                    )
+            self.assertEqual(direct_exit.exception.code, 2)
+            self.assertIn("invalid choice", direct_error.getvalue())
 
     def test_formal_mode_rejects_headless_startup_result_as_formal_evidence(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -346,6 +426,11 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertIn("old_router_authority", result["hazard_detection"]["hazards"])
         self.assertIn("monitor_ui_required", result["hazard_detection"]["hazards"])
         self.assertIn("headless_formal_overclaim", result["hazard_detection"]["hazards"])
+        self.assertIn("missing_host_kind_menu", result["hazard_detection"]["hazards"])
+        self.assertIn("invented_host_kind_value", result["hazard_detection"]["hazards"])
+        self.assertIn("tracked_baseline_flowguard_evidence", result["hazard_detection"]["hazards"])
+        self.assertTrue(result["target_plan"]["state"]["host_kind_value_menu_presented"])
+        self.assertTrue(result["target_plan"]["state"]["flowguard_evidence_run_local"])
 
 
 if __name__ == "__main__":

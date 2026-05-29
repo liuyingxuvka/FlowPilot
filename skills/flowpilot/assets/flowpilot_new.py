@@ -23,6 +23,11 @@ DEFAULT_ACCEPTANCE_CONTRACT = (
     "an active route, accepted packet results, matching FlowGuard evidence, "
     "independent review, current validation evidence, and final backward closure."
 )
+HOST_KIND_HELP = (
+    "Allowed values: live=real Codex/multi-agent/background host, "
+    "fake=deterministic rehearsal wrapper, dry_run=no real agent. "
+    "Do not invent values such as codex_subagent."
+)
 
 try:  # pragma: no cover - direct script fallback.
     from ai_project_runtime import cockpit, host, router, run_shell, runtime
@@ -348,7 +353,13 @@ def main(argv: list[str] | None = None) -> int:
     lease.add_argument("--packet-id", required=True)
     lease.add_argument("--responsibility", required=True)
     lease.add_argument("--agent-id", required=True)
-    lease.add_argument("--host-kind", default="live", choices=sorted(host.HOST_KINDS))
+    lease.add_argument(
+        "--host-kind",
+        default="live",
+        choices=sorted(host.HOST_KINDS),
+        metavar="{live,fake,dry_run}",
+        help=HOST_KIND_HELP,
+    )
 
     ack_parser = sub.add_parser("ack", help="Record lease ACK for a packet")
     ack_parser.add_argument("--lease-id", required=True)

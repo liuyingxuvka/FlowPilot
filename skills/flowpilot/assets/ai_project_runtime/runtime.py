@@ -363,12 +363,13 @@ def issue_task_packet(
     packet_kind: str = "task",
     subject_id: str = "",
     target_result_id: str = "",
+    preassigned_packet_id: str = "",
 ) -> str:
     if ledger.get("active_route_version") is None:
         raise BlackBoxRuntimeError("cannot issue a packet without an active route")
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
-    packet_id = _next_id(ledger, "packet")
+    packet_id = preassigned_packet_id or _next_id(ledger, "packet")
     body_hash = hash_text(body)
     envelope = {
         "packet_id": packet_id,
@@ -583,6 +584,8 @@ def _ensure_flowguard_packet_for_task_result(
     existing = _find_packet(ledger, packet_kind="flowguard_check", subject_id=subject_id, target_result_id=str(result["result_id"]))
     if existing:
         return str(existing["packet_id"])
+    flowguard_packet_id = _next_id(ledger, "packet")
+    evidence_root = _flowguard_packet_evidence_root(ledger, flowguard_packet_id)
     return issue_task_packet(
         ledger,
         "flowguard_operator",
@@ -594,6 +597,25 @@ def _ensure_flowguard_packet_for_task_result(
                 "target_result_id": result["result_id"],
                 "modeled_target": packet["envelope"]["required_flowguard_target"],
                 "instruction": "Produce current-run FlowGuard evidence for the subject packet result.",
+                "evidence_output_policy": {
+                    "run_local_evidence_root": evidence_root,
+                    "required_for_formal_run": True,
+                    "tracked_baseline_paths_forbidden_unless_explicit_baseline_update": [
+                        "simulations/meta_thin_parent_results.json",
+                        "simulations/meta_layered_full_results.json",
+                        "simulations/capability_thin_parent_results.json",
+                        "simulations/capability_layered_full_results.json",
+                    ],
+                    "operator_rule": (
+                        "Write formal-run FlowGuard evidence under run_local_evidence_root. "
+                        "Do not write formal-run evidence to tracked simulations/*_results.json baselines "
+                        "unless the packet explicitly requests a baseline refresh."
+                    ),
+                },
+                "recommended_runner_commands": [
+                    f"python simulations/run_meta_checks.py --fast --json-out {evidence_root}/meta_thin_parent_results.json",
+                    f"python simulations/run_capability_checks.py --fast --json-out {evidence_root}/capability_thin_parent_results.json",
+                ],
             },
             indent=2,
             sort_keys=True,
@@ -602,8 +624,17 @@ def _ensure_flowguard_packet_for_task_result(
         packet_kind="flowguard_check",
         subject_id=subject_id,
         target_result_id=str(result["result_id"]),
+        preassigned_packet_id=flowguard_packet_id,
     )
 
+
+def _flowguard_packet_evidence_root(ledger: Mapping[str, Any], packet_id: str) -> str:
+    run_id = str(ledger.get("run_id") or "<run-id>")
+    relative_root = f".flowpilot/runs/{run_id}/evidence/flowguard/{packet_id}"
+    run_root = ledger.get("run_root")
+    if not run_root:
+        return relative_root
+    return (Path(str(run_root)) / "evidence" / "flowguard" / packet_id).as_posix()
 
 def _record_flowguard_from_packet_result(
     ledger: dict[str, Any],

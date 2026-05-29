@@ -20605,6 +20605,76 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-enum-prompts-and-run-evidence - Formal run prompt and evidence repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: live formal FlowPilot operation exposed that AI-filled enum fields could be guessed (`codex_subagent`) and that formal FlowGuard evidence could dirty tracked simulation baselines.
+- Status: completed
+- Skill decision: OpenSpec proposal plus FlowGuard development-process/model-test alignment route
+- Started: 2026-05-29T21:30:28+00:00
+- Ended: 2026-05-29T21:51:29+00:00
+- Commands OK: True
+
+### Model Files
+- `openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/proposal.md`
+- `openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/design.md`
+- `openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md`
+- `openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowpilot-prompt-boundary-policy/spec.md`
+- `openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowguard-background-observability/spec.md`
+- `simulations/flowpilot_new_entrypoint_model.py`
+- `simulations/flowpilot_new_entrypoint_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> `0.37.0`
+- `python -m flowguard project-audit --root .` -> pass
+- `openspec validate "harden-flowpilot-enum-prompts-and-run-evidence" --strict` -> pass
+- `python -m unittest tests.test_flowpilot_new_entrypoint tests.test_flowpilot_thin_parent_checks` -> pass
+- `python -B simulations/run_flowpilot_new_entrypoint_checks.py --json-out simulations/flowpilot_new_entrypoint_results.json` -> pass
+- `python -B simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> pass
+- `python scripts/check_install.py` -> pass
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> pass
+- `python scripts/audit_local_install_sync.py --json` -> pass
+- `python scripts/install_flowpilot.py --check --json` -> pass
+
+### Background FlowGuard Evidence
+- Log root: `tmp/flowguard_background/`
+- Meta stdout: `tmp/flowguard_background/run_meta_checks.out.txt`
+- Meta stderr: `tmp/flowguard_background/run_meta_checks.err.txt`
+- Meta combined: `tmp/flowguard_background/run_meta_checks.combined.txt`
+- Meta exit: `tmp/flowguard_background/run_meta_checks.exit.txt` -> `0`
+- Meta status metadata: `tmp/flowguard_background/run_meta_checks.meta.json`, `status=passed`, `valid_proof_reused=false`
+- Capability stdout: `tmp/flowguard_background/run_capability_checks.out.txt`
+- Capability stderr: `tmp/flowguard_background/run_capability_checks.err.txt`
+- Capability combined: `tmp/flowguard_background/run_capability_checks.combined.txt`
+- Capability exit: `tmp/flowguard_background/run_capability_checks.exit.txt` -> `0`
+- Capability status metadata: `tmp/flowguard_background/run_capability_checks.meta.json`, `status=passed`, `valid_proof_reused=false`
+
+### Findings
+- Fixed-value fields must be presented as menus in operator-visible prompts and CLI help; `--host-kind` now accepts only `live`, `fake`, or `dry_run`.
+- Formal FlowGuard operator packets now include a run-local evidence root and runner commands using `--json-out`.
+- Meta and Capability runners now support output/proof overrides so formal runs can write evidence under `.flowpilot/runs/<run-id>/evidence/flowguard/<packet-id>/` without touching tracked baselines.
+- Model-test alignment was updated to cover both positive guidance and negative rejection behavior.
+
+### Counterexamples
+- Missing host-kind menu.
+- Invented host-kind value.
+- Formal FlowGuard evidence written to tracked `simulations/*_results.json` baselines.
+- FlowGuard formal run evidence claimed before a run-local evidence path exists.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or public publication was performed.
+- No tracked Meta/Capability baseline refresh was performed for formal run-local evidence.
+
+### Risk Evidence Summary
+- Focused unit tests cover invalid enum rejection, CLI help/value-menu text, FlowGuard operator packet evidence policy, and custom runner output isolation.
+- Run-local background regressions completed with exit code `0` and did not dirty canonical Meta/Capability result files.
+
+### Next Actions
+- Keep future formal-run evidence under run-local evidence directories unless a packet explicitly requests a canonical baseline refresh.
+
+
 ## flowguard-project-upgrade - FlowGuard project upgrade record update
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -20625,6 +20695,44 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.36.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-29T21:30:28+00:00
+- Ended: 2026-05-29T21:30:28+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.37.0
 - FlowGuard schema version recorded: 1.0
 
 ### Counterexamples

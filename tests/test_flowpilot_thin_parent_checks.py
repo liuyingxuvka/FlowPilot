@@ -35,6 +35,10 @@ run_meta_checks = load_module(
     "flowpilot_test_thin_parent_run_meta_checks",
     ROOT / "simulations" / "run_meta_checks.py",
 )
+run_capability_checks = load_module(
+    "flowpilot_test_thin_parent_run_capability_checks",
+    ROOT / "simulations" / "run_capability_checks.py",
+)
 
 
 class FlowPilotThinParentChecksTests(unittest.TestCase):
@@ -127,6 +131,32 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
                 run_meta_checks.PROOF_PATH = old_proof
                 run_meta_checks._run_sharded_graph_checks = old_graph
 
+    def test_meta_runner_json_out_keeps_canonical_result_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-run-local-meta-") as tmp_name:
+            tmp = Path(tmp_name)
+            output_path = tmp / "evidence" / "meta_thin_parent_results.json"
+            canonical_before = run_meta_checks.RESULTS_PATH.read_text(encoding="utf-8")
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(run_meta_checks.main(["--force", "--json-out", str(output_path)]), 0)
+
+            self.assertTrue(output_path.exists())
+            self.assertTrue(output_path.with_suffix(".proof.json").exists())
+            self.assertEqual(run_meta_checks.RESULTS_PATH.read_text(encoding="utf-8"), canonical_before)
+
+    def test_capability_runner_json_out_keeps_canonical_result_unchanged(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-run-local-capability-") as tmp_name:
+            tmp = Path(tmp_name)
+            output_path = tmp / "evidence" / "capability_thin_parent_results.json"
+            canonical_before = run_capability_checks.RESULTS_PATH.read_text(encoding="utf-8")
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(run_capability_checks.main(["--force", "--json-out", str(output_path)]), 0)
+
+            self.assertTrue(output_path.exists())
+            self.assertTrue(output_path.with_suffix(".proof.json").exists())
+            self.assertEqual(run_capability_checks.RESULTS_PATH.read_text(encoding="utf-8"), canonical_before)
+
     def test_full_meta_runner_uses_layered_parent_without_full_graph(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-layered-full-runner-") as tmp_name:
             tmp = Path(tmp_name)
@@ -156,6 +186,26 @@ class FlowPilotThinParentChecksTests(unittest.TestCase):
                 run_meta_checks.RESULTS_PATH = old_results
                 run_meta_checks.PROOF_PATH = old_proof
                 run_meta_checks._run_sharded_graph_checks = old_graph
+
+    def test_full_meta_json_out_derives_run_local_thin_result(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-run-local-full-meta-") as tmp_name:
+            tmp = Path(tmp_name)
+            layered_output_path = tmp / "evidence" / "meta_layered_full_results.json"
+            canonical_layered_before = run_meta_checks.LAYERED_RESULTS_PATH.read_text(encoding="utf-8")
+            canonical_thin_before = run_meta_checks.RESULTS_PATH.read_text(encoding="utf-8")
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    run_meta_checks.main(["--full", "--force", "--json-out", str(layered_output_path)]),
+                    0,
+                )
+
+            self.assertTrue(layered_output_path.exists())
+            self.assertTrue(layered_output_path.with_suffix(".proof.json").exists())
+            self.assertTrue((tmp / "evidence" / "meta_thin_parent_results.json").exists())
+            self.assertTrue((tmp / "evidence" / "meta_thin_parent_results.proof.json").exists())
+            self.assertEqual(run_meta_checks.LAYERED_RESULTS_PATH.read_text(encoding="utf-8"), canonical_layered_before)
+            self.assertEqual(run_meta_checks.RESULTS_PATH.read_text(encoding="utf-8"), canonical_thin_before)
 
 
 if __name__ == "__main__":

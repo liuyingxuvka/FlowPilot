@@ -84,6 +84,19 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(NEGATIVE,),
         ),
         _source_obligation(
+            "new_entrypoint.host_kind_value_menu",
+            obligation_type="contract",
+            description="Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_subagent.",
+            required_test_kinds=(HAPPY, NEGATIVE),
+        ),
+        _source_obligation(
+            "new_entrypoint.flowguard_run_local_evidence",
+            obligation_type="contract",
+            description="Source-audited FlowGuard operator packet and runner-output boundary requiring formal evidence to use run-local output paths instead of tracked simulation baselines.",
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "packet.physical_body_boundary",
             obligation_type="contract",
             description="Source-audited Controller handoff boundary that keeps packet bodies out of Controller relay text.",
