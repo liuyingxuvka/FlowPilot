@@ -907,6 +907,7 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "active_route_version": ledger.get("active_route_version"),
         "source_generation": ledger.get("source_generation"),
         "next_action": router_next_action(ledger).to_json(),
+        "sealed_bodies_visible": False,
         "packets": packet_rows,
         "leases": [
             {

@@ -20416,3 +20416,78 @@ Task id: `complete-black-box-flowpilot-system-20260529`
   material until a separate removal or public-entrypoint cutover change.
 - Cockpit is currently an operational status/control surface, not a polished
   final UI redesign.
+
+## 2026-05-29 - New FlowPilot Formal Entrypoint
+
+Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
+
+### Summary
+
+- Added `flowpilot_new.py` as the fresh formal FlowPilot entrypoint. It reuses
+  only the native startup intake UI, then records sealed intake into the new
+  current-run ledger and proceeds through route, packet, dynamic lease,
+  FlowGuard, review, validation, and closure state.
+- Updated `SKILL.md`, OpenSpec, install inventory, version `0.9.19`, and
+  changelog so fresh `Use FlowPilot` starts the new runtime instead of the old
+  router path.
+- Preserved the old router as reference/diagnostic material; no monitoring UI,
+  fixed six-agent startup, old route state, or headless startup output can act
+  as fresh-run authority.
+
+### Evidence
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> `0.34.0`
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate generate-new-flowpilot-formal-entrypoint --strict`
+- OK: `openspec validate --all --strict` -> `173 passed, 0 failed`
+- OK: `python -B simulations\run_flowpilot_new_entrypoint_checks.py --json-out simulations\flowpilot_new_entrypoint_results.json`
+- OK: `python -B simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` -> `902 covered surfaces`, `0 gaps`
+- OK: `python -B -m pytest tests\test_flowpilot_new_entrypoint.py tests\test_flowpilot_complete_system_runtime.py tests\test_ai_project_runtime.py tests\test_flowpilot_model_test_alignment.py -q` -> `39 passed, 389 subtests passed`
+- OK: `python -B skills\flowpilot\assets\flowpilot_new.py --root tmp\new-flowpilot-entrypoint-smoke --json run-fake-e2e --run-id run-smoke --startup-text "Build a small smoke target."`
+- OK: `python -B scripts\check_install.py` -> `831 checks`, `0 failures`
+- OK: `python -B scripts\install_flowpilot.py --sync-repo-owned --skip-self-check --json`
+- OK: `python -B scripts\audit_local_install_sync.py --json`
+- OK: `python -B scripts\install_flowpilot.py --check --json`
+- OK: `python -B scripts\smoke_autopilot.py --fast` -> exit `0`
+
+### Background Checks
+
+- `tmp/flowguard_background/run_meta_checks.*`: status `passed`, exit `0`,
+  stderr length `0`, combined output `ok: true`, layered full proof current
+  after forced full refresh.
+- `tmp/flowguard_background/run_capability_checks.*`: status `passed`, exit
+  `0`, stderr length `0`, combined output `ok: true`, layered full proof
+  current after forced full refresh.
+- `tmp/flowguard_background/run_meta_checks_full.*` and
+  `tmp/flowguard_background/run_capability_checks_full.*`: forced full refresh
+  commands both passed with exit `0`.
+
+### Findings
+
+- FlowGuard hazard replay blocks old router authority, non-startup monitoring
+  UI requirements, fixed six-agent startup, body leakage, headless formal
+  overclaim, ACK-only completion, fake-host live overclaim, route-before-ledger,
+  and review-before-FlowGuard paths.
+- A smoke failure exposed startup-intake relative-path ambiguity when the target
+  project root lives inside the FlowPilot repository; path resolution now checks
+  the target root, result directory, current working directory, and FlowPilot
+  source root.
+- Model-test alignment exposed that the new public entrypoint had tests and
+  model coverage but initially lacked explicit source-level external contract
+  bindings. Added obligations, code contracts, and test evidence for startup UI
+  to new ledger, formal headless rejection, and fake end-to-end rehearsal.
+- Install self-check guidance was updated from old daemon-first startup wording
+  to the new formal-entrypoint contract.
+- KB postflight observation recorded as
+  `23b824f5-b4f0-4e05-86dc-e4743cf4f76d`.
+- Additional KB postflight observation for the model-test-code contract gap
+  recorded as `0ce46912-6a23-4634-9ac5-834e164419c7`.
+
+### Skipped Steps
+
+- No GitHub push, tag, release, deploy, or destructive runtime-data cleanup was
+  performed.
+- No interactive formal startup window was manually completed in this automated
+  validation pass. Headless startup is covered only as rehearsal evidence and
+  is explicitly rejected as formal startup proof.

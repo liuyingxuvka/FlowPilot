@@ -57,7 +57,8 @@ def run_checks(result: dict[str, object]) -> None:
         if not has_name:
             result["ok"] = False
         small_router_launcher = (
-            len(text.splitlines()) < 120
+            len(text.splitlines()) < 160
+            and "flowpilot_new.py" in text
             and "flowpilot_router.py" in text
             and "Do not read FlowPilot reference files" in text
             and "Final Route-Wide Gate Ledger" not in text
@@ -67,20 +68,20 @@ def run_checks(result: dict[str, object]) -> None:
         )
         if not small_router_launcher:
             result["ok"] = False
-        daemon_first_startup = all(
+        new_entrypoint_startup = all(
             term in text
             for term in (
-                "minimal run shell, current pointer, and run index",
-                "starts or attaches the built-in one-second Router daemon",
-                "daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows",
-                "same two-table rule as later runtime work",
-                "current startup-scope rows, receipts, required postconditions",
+                "flowpilot_new.py --root <project-root> --json start",
+                "native startup intake UI",
+                "There is no requirement for a non-startup monitoring UI",
+                ".flowpilot/runs/<run-id>/ledger.json` is authority",
+                "Do not require a fixed six-agent startup",
             )
         )
         result["checks"].append(
-            {"name": "flowpilot_skill_daemon_first_startup_guidance", "ok": daemon_first_startup}
+            {"name": "flowpilot_skill_new_entrypoint_startup_guidance", "ok": new_entrypoint_startup}
         )
-        if not daemon_first_startup:
+        if not new_entrypoint_startup:
             result["ok"] = False
 
     try:

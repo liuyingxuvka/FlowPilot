@@ -10,7 +10,7 @@ from . import cockpit, runtime
 def router_next_action(ledger: dict[str, Any]) -> runtime.RuntimeAction:
     if not ledger.get("startup_intake"):
         return runtime.RuntimeAction("open_startup_intake", "startup intake has not been recorded")
-    if ledger.get("cutover_gate", {}).get("decision") == "blocked":
+    if (ledger.get("cutover_gate") or {}).get("decision") == "blocked":
         return runtime.RuntimeAction("repair_cutover_gate", "cutover gate has blockers")
     return runtime.router_next_action(ledger)
 

@@ -15,6 +15,8 @@ fixed-role startup, or stale result artifacts as authority.
   `.flowpilot/runs/<run-id>/`.
 - `cli.py`: small command-line harness for deterministic scenario checks and
   status rendering.
+- `../flowpilot_new.py`: formal new FlowPilot entrypoint that reuses the native
+  startup intake UI, then gives authority to the new current-run ledger.
 
 ## Rules
 
@@ -27,6 +29,8 @@ fixed-role startup, or stale result artifacts as authority.
   the public console.
 - Startup intake enters the runtime only as a confirmed sealed receipt/body hash
   copied into the current run.
+- Formal startup enters through the native startup UI. Headless startup output
+  is rehearsal evidence only and cannot prove a formal user launch.
 - FlowGuard work orders must name the modeled target before selecting a skill.
 - Review must be independent and evidence-aware.
 - Final completion must walk backward from the user goal to current route,

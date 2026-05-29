@@ -1,0 +1,137 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=15 initial_states=1 traces=120",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "ack_only_completion",
+      "chat_body_leak",
+      "fake_live_overclaim",
+      "fixed_six_required",
+      "headless_formal_overclaim",
+      "monitor_ui_required",
+      "old_router_authority",
+      "review_before_flowguard",
+      "route_before_ledger"
+    ],
+    "hazards": {
+      "ack_only_completion": [
+        "ACK-only liveness was treated as completion"
+      ],
+      "chat_body_leak": [
+        "sealed startup body leaked into chat/status"
+      ],
+      "fake_live_overclaim": [
+        "fake host evidence was claimed as live host confidence"
+      ],
+      "fixed_six_required": [
+        "fixed six agents were required instead of dynamic leases"
+      ],
+      "headless_formal_overclaim": [
+        "headless startup result was treated as formal UI evidence"
+      ],
+      "monitor_ui_required": [
+        "non-startup monitoring UI was required"
+      ],
+      "old_router_authority": [
+        "old flowpilot_router authority was used by the new system"
+      ],
+      "review_before_flowguard": [
+        "review passed before targeted FlowGuard evidence"
+      ],
+      "route_before_ledger": [
+        "contract frozen before new ledger authority"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_new_formal_entrypoint",
+  "ok": true,
+  "result_type": "flowpilot_new_entrypoint_checks",
+  "target_plan": {
+    "evidence_role": "new_entrypoint_target_path_not_live_user_proof",
+    "failures": [],
+    "labels": [
+      "receive_formal_use_flowpilot_request",
+      "open_reused_startup_ui",
+      "record_interactive_ui_result",
+      "write_sealed_intake_to_new_ledger",
+      "freeze_contract",
+      "create_new_route",
+      "request_dynamic_agent_lease",
+      "bind_dynamic_agent_lease",
+      "record_ack_as_liveness_only",
+      "submit_result_artifact",
+      "run_targeted_flowguard",
+      "record_independent_review",
+      "record_validation_evidence",
+      "complete_final_backward_closure"
+    ],
+    "ok": true,
+    "state": {
+      "ack_only_completed": false,
+      "ack_recorded": true,
+      "chat_body_leaked": false,
+      "contract_frozen": true,
+      "dynamic_agent_lease_bound": true,
+      "dynamic_agent_lease_requested": true,
+      "fake_host_claimed_live": false,
+      "final_closure_complete": true,
+      "fixed_six_required": false,
+      "flowguard_targeted": true,
+      "formal_use_flowpilot_request": true,
+      "headless_result_treated_as_formal": false,
+      "independent_review_passed": true,
+      "interactive_startup_result": true,
+      "monitor_ui_required": false,
+      "new_ledger_authority": true,
+      "old_router_authority": false,
+      "old_startup_ui_opened": true,
+      "result_submitted": true,
+      "route_created": true,
+      "sealed_intake_recorded": true,
+      "status": "complete",
+      "validation_recorded": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_new_entrypoint_model.py"
+        ],
+        "freshness": "current",
+        "id": "new_entrypoint_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "new_entrypoint_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_new_entrypoint_model.py"
+        ],
+        "freshness": "current",
+        "id": "new_entrypoint_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

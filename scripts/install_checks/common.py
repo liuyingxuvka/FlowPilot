@@ -23,6 +23,10 @@ REQUIRED_FILES = [
     "openspec/changes/complete-black-box-flowpilot-system/specs/interactive-startup-intake/spec.md",
     "openspec/changes/complete-black-box-flowpilot-system/specs/multiround-fake-ai-control-rehearsal/spec.md",
     "openspec/changes/complete-black-box-flowpilot-system/specs/runtime-ledger-persistence/spec.md",
+    "openspec/changes/generate-new-flowpilot-formal-entrypoint/proposal.md",
+    "openspec/changes/generate-new-flowpilot-formal-entrypoint/design.md",
+    "openspec/changes/generate-new-flowpilot-formal-entrypoint/tasks.md",
+    "openspec/changes/generate-new-flowpilot-formal-entrypoint/specs/new-flowpilot-formal-entrypoint/spec.md",
     "docs/project_brief.md",
     "docs/design_decisions.md",
     "docs/flowguard_preflight_findings.md",
@@ -70,6 +74,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/ai_project_runtime/review_closure.py",
     "skills/flowpilot/assets/ai_project_runtime/router.py",
     "skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+    "skills/flowpilot/assets/flowpilot_new.py",
     "skills/flowpilot/assets/flowpilot_router_card_delivery.py",
     "skills/flowpilot/assets/flowpilot_router_card_returns.py",
     "skills/flowpilot/assets/flowpilot_router_card_settlement.py",
@@ -631,6 +636,7 @@ REQUIRED_FILES = [
     "tests/test_ai_project_protocol_stress.py",
     "tests/test_ai_project_runtime.py",
     "tests/test_flowpilot_complete_system_runtime.py",
+    "tests/test_flowpilot_new_entrypoint.py",
     "simulations/ai_project_protocol_model.py",
     "simulations/run_ai_project_protocol_checks.py",
     "simulations/ai_project_protocol_stress_model.py",
@@ -650,6 +656,8 @@ REQUIRED_FILES = [
     "simulations/run_flowpilot_complete_system_structure_checks.py",
     "simulations/run_flowpilot_complete_system_testmesh_checks.py",
     "simulations/run_flowpilot_complete_system_ui_checks.py",
+    "simulations/flowpilot_new_entrypoint_model.py",
+    "simulations/run_flowpilot_new_entrypoint_checks.py",
 ]
 
 JSON_FILES = [
@@ -720,6 +728,7 @@ JSON_FILES = [
     "simulations/flowpilot_complete_system_structure_results.json",
     "simulations/flowpilot_complete_system_testmesh_results.json",
     "simulations/flowpilot_complete_system_ui_results.json",
+    "simulations/flowpilot_new_entrypoint_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",

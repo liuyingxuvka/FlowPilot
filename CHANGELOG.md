@@ -2,6 +2,28 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.19 - 2026-05-29
+
+### Added
+
+- Added the `generate-new-flowpilot-formal-entrypoint` OpenSpec change for a
+  fresh FlowPilot entrypoint that reuses only the native startup intake UI and
+  then runs through the new current-run ledger.
+- Added `skills/flowpilot/assets/flowpilot_new.py` with start, status,
+  dynamic lease, ACK, result, FlowGuard, review, validation, closure, and
+  fake end-to-end rehearsal commands.
+- Added a focused FlowGuard model and tests for the new startup UI -> sealed
+  intake -> new ledger -> dynamic lease -> FlowGuard -> review -> closure path.
+
+### Changed
+
+- Updated `Use FlowPilot` skill instructions so new formal starts enter
+  `flowpilot_new.py start`; the old router is reference/diagnostic material
+  for old runs, not fresh-run authority.
+- Made public console projection explicitly report that sealed bodies are not
+  visible and made router cutover-gate handling tolerate unevaluated new-run
+  ledgers.
+
 ## 0.9.18 - 2026-05-29
 
 ### Added

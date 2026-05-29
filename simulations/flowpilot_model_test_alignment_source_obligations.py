@@ -41,6 +41,24 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(FAILURE,),
         ),
         _source_obligation(
+            "new_entrypoint.startup_ui_to_new_ledger",
+            obligation_type="contract",
+            description="Source-audited fresh FlowPilot entrypoint boundary from native startup UI output into the new current-run ledger.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
+            "new_entrypoint.formal_headless_rejection",
+            obligation_type="hazard",
+            description="Source-audited fresh FlowPilot entrypoint boundary that rejects headless startup output as formal startup evidence.",
+            required_test_kinds=(NEGATIVE,),
+        ),
+        _source_obligation(
+            "new_entrypoint.rehearsal_closure",
+            obligation_type="scenario",
+            description="Source-audited fake-host rehearsal boundary proving startup, packet, FlowGuard, review, validation, and closure can compose.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
             "packet.physical_body_boundary",
             obligation_type="contract",
             description="Source-audited Controller handoff boundary that keeps packet bodies out of Controller relay text.",

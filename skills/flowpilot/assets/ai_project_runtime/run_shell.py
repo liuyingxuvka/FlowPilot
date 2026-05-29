@@ -164,6 +164,9 @@ def record_startup_intake_result(shell: RunShell, result_path: Path) -> dict[str
         "schema_version": "black_box_flowpilot.startup_intake.v1",
         "status": "confirmed",
         "source": result.get("source", ""),
+        "launch_mode": result.get("launch_mode", ""),
+        "headless": result.get("headless"),
+        "formal_startup_allowed": result.get("formal_startup_allowed"),
         "startup_answers": result.get("startup_answers", {}),
         "body_hash": body_hash,
         "body_visibility": "sealed_pm_only",
@@ -281,7 +284,12 @@ def _resolve_record_path(root: Path, record_path: Path, raw: str) -> Path:
     path = Path(raw)
     if path.is_absolute():
         return path
-    for base in (root, record_path.parent):
+    candidate_bases = [root, record_path.parent, Path.cwd()]
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "assets" / "brand" / "flowpilot-icon-default.png").exists():
+            candidate_bases.append(parent)
+            break
+    for base in candidate_bases:
         candidate = (base / path).resolve()
         if candidate.exists():
             return candidate

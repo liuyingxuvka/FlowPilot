@@ -36,21 +36,26 @@ Before the daemon is started or attached, the assistant is only the FlowPilot bo
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json start`. `start` is the only current entrypoint for a new formal FlowPilot invocation.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. `start` is the only current entrypoint for a new formal FlowPilot invocation. It reuses the native startup intake UI and then records the result into the new current-run ledger. The legacy `flowpilot_router.py start` command is diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
 
 Manual diagnostic/repair commands:
 
 ```powershell
-python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json next
-python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json apply --action-type <action_type>
-python skills\flowpilot\assets\flowpilot_router.py --root <project-root> --json run-until-wait
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json status
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json complete-flowguard --packet-id <packet_id> --proof-artifact <path>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json review --packet-id <packet_id> --reviewer-agent-id <agent_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json record-validation --evidence-id <evidence_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json close --evidence-id <evidence_id>
 ```
 
-`next` and `run-until-wait` are existing-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
+Legacy `flowpilot_router.py next/apply/run-until-wait` commands are existing-old-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
 
 Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
 
-Formal startup creates only the minimal run shell, current pointer, and run index before it starts or attaches the built-in one-second Router daemon. The daemon is bound to that run's `run_id`/`run_root`; `.flowpilot/current.json` is UI focus/default-target metadata, not authority for later daemon ticks. The daemon then schedules startup UI, role startup, heartbeat, and Controller-core handoff rows through the ordinary Controller action ledger plus Router scheduler ledger. There is no startup option to disable it; if live daemon lock/status/ledger evidence is missing, startup must fail instead of bypassing daemon-driven startup.
+Formal startup creates the new current-run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, and first PM packet before returning the new runtime's public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI.
 
 During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
 
@@ -58,7 +63,7 @@ Router-ready state preempts foreground waits. After Controller relays or observe
 
 A Controller receipt is local Controller evidence only; Router must reconcile it into Router-owned workflow facts before progress is counted. For mail delivery, progress is counted only after Router folds the receipt into the mail ledger and the packet runtime ledger shows the packet released to the addressed role with a controller relay signature.
 
-When the router returns `open_startup_intake_ui`, open the native startup intake UI with the command and output directory in the action envelope. Formal startup must use the interactive native UI result produced by that window. Do not satisfy this action with headless auto-confirmation, scripted result synthesis, chat-text substitution, direct JSON creation, or any other non-interactive intake. If the UI cannot be opened or does not return an interactive result, stop and report the startup UI failure instead of continuing. After the UI closes, return to Router daemon status and the Controller action ledger before continuing. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
+When `flowpilot_new.py start` opens the native startup intake UI, formal startup must use the interactive native UI result produced by that window. Do not satisfy formal startup with headless auto-confirmation, scripted result synthesis, chat-text substitution, direct JSON creation, or any other non-interactive intake. If the UI cannot be opened or does not return an interactive result, stop and report the startup UI failure instead of continuing. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
 
 The UI result replaces the old chat three-question startup boundary. The router maps the UI toggles to canonical startup answer enum fields and seals the work request body behind a path/hash record. The startup UI record is the authority for activation; reviewer live review checks `startup_intake/startup_intake_record.json`, its receipt/envelope/hash evidence, and independently observable startup facts requested by the router, not private chat authenticity or chat history.
 
@@ -68,9 +73,9 @@ The startup banner and FlowPilot Route Sign are user-facing display text. When a
 
 When no Cockpit/UI surface is open, show the router's public route sign together with the current status summary. Use only `current_status_summary.json` and public route-display text for that summary; do not show evidence tables, source fields, hashes, or sealed packet/result body details. Treat the status summary as display-only: it can explain what the user sees, but it never authorizes Controller stop and stale `next_step` projection never overrides Router daemon status plus `runtime/controller_action_ledger.json`. When the Cockpit/UI surface is open, let the UI render the same status summary and keep chat updates short.
 
-When the router returns `record_user_request` after a native startup intake result, apply it with no payload; the router will materialize the sealed UI record into the run and create the PM-bound `user_intake` packet. Do not provide chat-body startup text; startup authority comes from the sealed native UI record.
+After the native startup intake result is recorded, the new runtime materializes the sealed UI record into the run and creates the first PM-bound packet. Do not provide chat-body startup text; startup authority comes from the sealed native UI record.
 
-When the router returns `start_role_slots` with `requires_host_spawn: true`, spawn all six requested role agents before completing the action. For a direct pending action, apply it with the required payload. For a Controller ledger row, write `controller-receipt` with one current `agent_id` per requested role, `model_policy: strongest_available`, `reasoning_effort_policy: highest_available`, `spawn_result: spawned_fresh_for_task`, `spawned_after_startup_answers: true`, and current `spawned_for_run_id` in the receipt payload. Every background role agent must be explicitly requested with the strongest available host model and the highest available reasoning effort; do not rely on inheriting the foreground/Controller model. Do not treat empty role slots, prior-route agent IDs, or later on-demand subagents as startup success.
+When the new runtime returns a `lease_agent` next action, spawn only the requested responsibility, then record the real host `agent_id` with `flowpilot_new.py lease-agent`. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort. Do not treat empty role slots, prior-route agent IDs, or unrelated later subagents as startup success.
 
 When a heartbeat or manual mid-run wakeup occurs, always record `heartbeat_or_manual_resume_requested`, then attach to daemon status, daemon lock evidence, and the Controller action ledger for the current run. If the daemon is live, process only exposed Controller rows or stay in standby; if it is missing or stale, use the explicit daemon repair/restart path. Treat any supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a `wait_agent` timeout to skip `load_resume_state`.
 
@@ -105,6 +110,7 @@ All system cards are `from: system`, `issued_by: router`, and `delivered_by: con
 The active prompt content lives in the copied runtime kit and prompt manifest, not in this file:
 
 - `assets/flowpilot_router.py`
+- `assets/flowpilot_new.py`
 - `assets/flowpilot_runtime.py`
 - `assets/card_runtime.py`
 - `assets/runtime_kit/manifest.json`
