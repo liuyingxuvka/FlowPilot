@@ -127,6 +127,33 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                 ),
             ),
         },
+        {
+            "name": "missing_runtime_path_evidence",
+            "expected_codes": ["runtime_node_missing_observation"],
+            "plan": ModelTestAlignmentPlan(
+                model_id="known_bad_runtime_path_missing",
+                obligations=(
+                    ModelObligation(
+                        "known_bad.runtime_path_required",
+                        obligation_type="hazard",
+                        description="Synthetic obligation proving runtime-path nodes cannot be skipped when required.",
+                        required_test_kinds=(HAPPY,),
+                        required_runtime_node_ids=("known_bad.runtime_path.node",),
+                    ),
+                ),
+                test_evidence=(
+                    _evidence(
+                        "known_bad.runtime_path.has_test",
+                        test_name="synthetic evidence without runtime path observation",
+                        path=path,
+                        command=command,
+                        test_kind=HAPPY,
+                        covers=("known_bad.runtime_path_required",),
+                    ),
+                ),
+                require_runtime_path_evidence=True,
+            ),
+        },
     ]
 
 

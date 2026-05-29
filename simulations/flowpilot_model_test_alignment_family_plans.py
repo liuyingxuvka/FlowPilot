@@ -2,9 +2,25 @@
 
 from __future__ import annotations
 
+import sys
 from typing import Any
 
 from flowpilot_model_test_alignment_common import *
+
+ASSETS_PATH = ROOT / "skills" / "flowpilot" / "assets"
+if str(ASSETS_PATH) not in sys.path:
+    sys.path.insert(0, str(ASSETS_PATH))
+
+from flowpilot_runtime_path_evidence import attach_runtime_path_evidence_to_plan
+
+
+def _with_runtime_path(plan: ModelTestAlignmentPlan, family: str) -> ModelTestAlignmentPlan:
+    return attach_runtime_path_evidence_to_plan(
+        plan,
+        family=family,
+        code_contract_prefix=f"runtime_path.{plan.model_id}",
+    )
+
 
 def build_alignment_plan_entries() -> list[dict[str, Any]]:
     """Build major FlowPilot model/test-family alignment plans."""
@@ -1086,6 +1102,17 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
         ),
     )
+
+    startup = _with_runtime_path(startup, "startup")
+    packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
+    packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
+    route_mutation = _with_runtime_path(route_mutation, "route mutation")
+    terminal_closure_resume = _with_runtime_path(terminal_closure_resume, "terminal/closure/resume")
+    role_output = _with_runtime_path(role_output, "role/output contracts")
+    router_loop_daemon = _with_runtime_path(router_loop_daemon, "router loop/daemon")
+    repair_transactions = _with_runtime_path(repair_transactions, "repair transactions")
+    tiering = _with_runtime_path(tiering, "test tiering/slow-test contracts")
+    meta_capability = _with_runtime_path(meta_capability, "meta/capability parents")
 
     return [
         _plan_entry(

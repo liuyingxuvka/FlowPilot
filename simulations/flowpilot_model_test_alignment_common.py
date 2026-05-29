@@ -299,6 +299,7 @@ ASSET_MODEL_BINDING_STEMS = {
     "flowpilot_controller_break_glass_core": "controller_break_glass_runtime_contracts",
     "flowpilot_controller_break_glass_cli": "controller_break_glass_runtime_contracts",
     "flowpilot_controller_break_glass_recovery": "recovery_supervisor_contracts",
+    "flowpilot_runtime_path_evidence": "runtime_path_contracts",
     "flowpilot_router_daemon_runtime_diagnostics": "router_daemon_runtime_architecture",
     "flowpilot_closure_kernel": "control_plane_closure_kernel",
     "flowpilot_control_plane_contracts": "control_plane_contracts",

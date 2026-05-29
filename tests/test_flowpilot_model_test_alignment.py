@@ -10,6 +10,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from flowguard import ModelObligation, ModelTestAlignmentPlan, TestEvidence
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,6 +39,10 @@ def load_module(name: str, path: Path):
 alignment_runner = load_module(
     "flowpilot_test_model_test_alignment_runner",
     ROOT / "simulations" / "run_flowpilot_model_test_alignment_checks.py",
+)
+runtime_path_evidence = load_module(
+    "flowpilot_runtime_path_evidence",
+    ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_runtime_path_evidence.py",
 )
 
 
@@ -350,10 +356,98 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertEqual(plan["decision"], "model_test_alignment_green")
                 self.assertTrue(plan["model_checks"])
                 self.assertIn("coverage_boundary", plan)
+                self.assertIn("runtime_path_summary", plan)
                 self.assertGreaterEqual(len(plan["plan"]["obligations"]), 1)
                 self.assertGreaterEqual(len(plan["plan"]["test_evidence"]), 1)
                 self.assertEqual(plan["report"]["findings"], [])
                 self.assertIn("model_test_alignment_green", plan["report"]["summary"])
+
+    def test_each_plan_has_parseable_runtime_path_evidence(self) -> None:
+        report = alignment_runner.build_report()
+
+        for plan in report["per_plan"]:
+            with self.subTest(family=plan["family"]):
+                payload = plan["plan"]
+                summary = plan["runtime_path_summary"]
+                obligations = payload["obligations"]
+                contracts = {
+                    contract["node_id"]: contract
+                    for contract in payload["runtime_node_contracts"]
+                }
+
+                self.assertTrue(payload["require_runtime_path_evidence"])
+                self.assertEqual(summary["runtime_path_run_count"], 1)
+                self.assertEqual(summary["runtime_node_contract_count"], len(obligations))
+                self.assertEqual(summary["runtime_observation_count"], len(obligations))
+                self.assertEqual(summary["progress_line_count"], len(obligations))
+
+                for obligation in obligations:
+                    required_nodes = obligation["required_runtime_node_ids"]
+                    self.assertGreaterEqual(len(required_nodes), 1)
+                    for node_id in required_nodes:
+                        contract = contracts[node_id]
+                        self.assertEqual(contract["model_id"], payload["model_id"])
+                        self.assertEqual(contract["model_obligation_id"], obligation["obligation_id"])
+                        self.assertTrue(contract["model_path"].startswith("FlowPilot model-test alignment/"))
+                        self.assertTrue(contract["required_observation_ids"])
+
+                for line in summary["progress_lines"]:
+                    self.assertTrue(line.startswith("flowguard.runtime_path "), line)
+                    for token in (
+                        "model=",
+                        "node=",
+                        "run=",
+                        "status=passed",
+                        "model_path=",
+                        "obligation=",
+                        "input_case=",
+                        "state_case=",
+                        "evidence=",
+                        "progress=",
+                    ):
+                        self.assertIn(token, line)
+
+    def test_flowpilot_runtime_path_evidence_helper_binds_model_nodes(self) -> None:
+        plan = ModelTestAlignmentPlan(
+            model_id="helper_contract",
+            obligations=(
+                ModelObligation(
+                    "helper_contract.required_node",
+                    obligation_type="contract",
+                    required_test_kinds=("happy_path",),
+                ),
+            ),
+            test_evidence=(
+                TestEvidence(
+                    "helper_contract.test_evidence",
+                    test_name="test_flowpilot_runtime_path_evidence_helper_binds_model_nodes",
+                    path="tests/test_flowpilot_model_test_alignment.py",
+                    command="python -m unittest tests.test_flowpilot_model_test_alignment.FlowPilotModelTestAlignmentTests.test_flowpilot_runtime_path_evidence_helper_binds_model_nodes",
+                    result_status="passed",
+                    test_kind="happy_path",
+                    covered_obligations=("helper_contract.required_node",),
+                ),
+            ),
+        )
+
+        bound = runtime_path_evidence.attach_runtime_path_evidence_to_plan(
+            plan,
+            family="helper contract",
+            code_contract_prefix="runtime_path.helper_contract",
+        )
+        lines = runtime_path_evidence.runtime_path_progress_lines(bound)
+
+        self.assertTrue(bound.require_runtime_path_evidence)
+        self.assertEqual(len(bound.runtime_node_contracts), 1)
+        self.assertEqual(len(bound.runtime_path_runs), 1)
+        self.assertEqual(
+            bound.obligations[0].required_runtime_node_ids,
+            ("helper_contract:helper_contract.required_node",),
+        )
+        self.assertEqual(len(lines), 1)
+        self.assertIn("model=helper_contract", lines[0])
+        self.assertIn("node=helper_contract:helper_contract.required_node", lines[0])
+        self.assertIn("obligation=helper_contract.required_node", lines[0])
 
     def test_each_declared_test_evidence_path_contains_definition_when_source_auditable(self) -> None:
         skipped_names = {
@@ -400,6 +494,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "overclaim_model_confidence",
             "orphan_evidence",
             "duplicate_same_kind_evidence",
+            "missing_runtime_path_evidence",
         ):
             with self.subTest(name=name):
                 self.assertIn(name, checks)

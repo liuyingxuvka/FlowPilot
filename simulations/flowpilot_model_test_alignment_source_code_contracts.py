@@ -1653,6 +1653,13 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("project_root", "agent_id", "submit_output", "run_id", "action_id", "source_action_id"),
         ),
         _contract(
+            "flowpilot_runtime_path_evidence.attach_runtime_path_evidence_to_plan",
+            path="skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            symbol="attach_runtime_path_evidence_to_plan",
+            implements=("runtime_path_contracts.runtime_evidence_binding",),
+            external_inputs=("plan", "family", "code_contract_prefix", "model_path"),
+        ),
+        _contract(
             "workflow_step_contracts.project_action",
             path="simulations/flowpilot_workflow_step_contracts.py",
             symbol="workflow_step_contracts_for_action",

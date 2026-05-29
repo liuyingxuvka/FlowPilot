@@ -984,6 +984,17 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             ),
         ),
         _evidence(
+            "source.runtime_path_evidence.helper_binding",
+            test_name="test_flowpilot_runtime_path_evidence_helper_binds_model_nodes",
+            path="tests/test_flowpilot_model_test_alignment.py",
+            command="python -m unittest tests.test_flowpilot_model_test_alignment.FlowPilotModelTestAlignmentTests.test_flowpilot_runtime_path_evidence_helper_binds_model_nodes",
+            test_kind=HAPPY,
+            covers=("runtime_path_contracts.runtime_evidence_binding",),
+            code_contracts=(
+                "flowpilot_runtime_path_evidence.attach_runtime_path_evidence_to_plan",
+            ),
+        ),
+        _evidence(
             "source.workflow_step.controller_receipt",
             test_name="test_controller_receipt_projection_blocks_apply_path_confusion",
             path="tests/test_flowpilot_workflow_step_contracts.py",

@@ -45,6 +45,9 @@ def _plan_report(entry: dict[str, Any]) -> dict[str, Any]:
     plan: ModelTestAlignmentPlan = entry["plan"]
     report = review_model_test_alignment(plan)
     findings = report.to_dict()["findings"]
+    progress_lines: list[str] = []
+    for run in plan.runtime_path_runs:
+        progress_lines.extend(run.format_progress_lines().splitlines())
     return {
         "family": entry["family"],
         "model_id": plan.model_id,
@@ -54,6 +57,15 @@ def _plan_report(entry: dict[str, Any]) -> dict[str, Any]:
         "finding_counts": _finding_counts(findings),
         "model_checks": entry["model_checks"],
         "coverage_boundary": entry["coverage_boundary"],
+        "runtime_path_summary": {
+            "required": plan.require_runtime_path_evidence,
+            "runtime_node_contract_count": len(plan.runtime_node_contracts),
+            "runtime_path_run_count": len(plan.runtime_path_runs),
+            "runtime_observation_count": len(plan.runtime_node_observations)
+            + sum(len(run.observations) for run in plan.runtime_path_runs),
+            "progress_line_count": len(progress_lines),
+            "progress_lines": progress_lines,
+        },
         "plan": plan.to_dict(),
         "report": report.to_dict(),
     }

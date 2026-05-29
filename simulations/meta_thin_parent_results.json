@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-29T07:22:31.826109+00:00",
+  "created_at": "2026-05-29T07:59:59.040468+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 10
   },
   "layered_full_regression": {
-    "current": true,
+    "current": false,
     "required_for_release": true,
     "status": {
       "created_at": "2026-05-29T07:20:10.714076+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "proof_file": "simulations/meta_layered_full_results.proof.json",
-      "reason": "valid proof",
+      "reason": "input fingerprint changed",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/meta_layered_full_results.json",
       "state_count": 12,
-      "valid": true
+      "valid": false
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "current_with_layered_full_parent",
+  "release_confidence": "requires_full_regression",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -71,7 +71,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/startup_pm_review_results.json",
-            "result_fingerprint": "1ad2204153d5872ea7e9448be3f081de3907f053fbf851ccb6d93a81cc89e853",
+            "result_fingerprint": "f5dfcbc66b2fba61a1c54d45d5089dc40b1e62bf8b7d9e8d3ffb7cc5f245893c",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 3149

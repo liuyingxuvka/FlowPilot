@@ -356,8 +356,11 @@ def _active_node(frontier: dict[str, Any], state: dict[str, Any] | None = None, 
     route = route or {}
     value = (
         frontier.get("active_node_id")
+        or frontier.get("active_node")
         or state.get("active_node_id")
+        or state.get("active_node")
         or route.get("active_node_id")
+        or route.get("active_node")
     )
     return str(value) if value else None
 

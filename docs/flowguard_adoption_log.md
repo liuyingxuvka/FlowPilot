@@ -20047,3 +20047,85 @@ to identify compatibility-layer branches that should be deleted.
   not necessary for the compatibility-layer deletion result.
 - No local commit, push, tag, release, deploy, or destructive runtime-data
   cleanup was performed.
+
+
+## flowguard-project-adopt - FlowGuard project adopt record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-29T07:40:39+00:00
+- Ended: 2026-05-29T07:40:39+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.34.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-runtime-path-evidence-20260529 - Adopt runtime-path evidence for FlowPilot model-test alignment
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowGuard 0.34 runtime path evidence to compare real FlowPilot code/test paths with model nodes
+- Status: completed
+- Skill decision: used_existing_model_preflight_model_test_alignment_development_process_flow
+- Started: 2026-05-29T08:07:44+00:00
+- Ended: 2026-05-29T08:07:44+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_model_test_alignment_family_plans.py
+- simulations/flowpilot_model_test_alignment_results.json
+
+### Commands
+- OK (0.000s): `python -m unittest tests.test_flowpilot_model_test_alignment`
+- OK (0.000s): `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`
+- OK (0.000s): `python -m unittest tests.test_flowpilot_model_test_alignment tests.test_flowpilot_asset_surface_contracts tests.test_flowpilot_full_diagnostic_contracts`
+- OK (0.000s): `python scripts/smoke_autopilot.py --fast`
+- OK (0.000s): `openspec validate --all --strict`
+- OK (0.000s): `python scripts/install_flowpilot.py --install-missing --install-flowguard --sync-repo-owned --json`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json`
+
+### Findings
+- 10 family plans now require runtime-path evidence; 52 model obligations produce 52 parseable FlowGuard runtime_path progress lines.
+- FlowPilot user-flow active node lookup now accepts active_node as well as active_node_id after validation exposed the mismatch.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Risk Evidence Summary
+- Runtime-path evidence is diagnostic and does not replace ordinary tests, source-contract audits, family parity, smoke, or parent/child FlowGuard checks.
+
+### Next Actions
+- Continue using the runtime_path_summary/progress_lines section when reviewing future FlowPilot model-test alignment output.

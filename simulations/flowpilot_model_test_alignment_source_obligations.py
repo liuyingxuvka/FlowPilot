@@ -305,6 +305,12 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             allow_shared_evidence=True,
         ),
         _source_obligation(
+            "runtime_path_contracts.runtime_evidence_binding",
+            obligation_type="contract",
+            description="Source-audited runtime-path evidence helper binds FlowPilot model obligations to FlowGuard runtime node contracts, observations, runs, and parseable progress lines.",
+            required_test_kinds=(HAPPY,),
+        ),
+        _source_obligation(
             "workflow_step_contracts.next_step_projection",
             obligation_type="workflow_step",
             description="Source-audited FlowGuard workflow-step contract projection for FlowPilot next_step_contract records, including Controller receipts, ACK-only settlement, target-work output, stale receipt invalidation, and claim gates.",
