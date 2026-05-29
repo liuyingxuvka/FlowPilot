@@ -20238,3 +20238,117 @@ to identify compatibility-layer branches that should be deleted.
 
 - Wire the protocol kernel into a future runtime entry only after a separate
   OpenSpec change models the startup panel and router integration boundary.
+
+
+## ai-project-protocol-stress-testing-20260529 - Add multi-round fake-AI stress validation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user asked to execute the comprehensive multi-round test plan
+  with OpenSpec, FlowGuard, fake AI wrappers, background regressions, install
+  sync, local repository sync, and local git completion.
+- Status: completed
+- Skill decision: predictive_kb_preflight + openspec_propose_apply +
+  flowguard_existing_model_preflight + flowguard_development_process_flow +
+  flowguard_test_mesh + flowguard_model_test_alignment
+- Started: 2026-05-29T14:52:00+00:00
+- Ended: 2026-05-29T15:01:00+00:00
+- Commands OK: True
+
+### Model Files
+
+- simulations/ai_project_protocol_stress_model.py
+- simulations/run_ai_project_protocol_stress_checks.py
+- simulations/ai_project_protocol_stress_results.json
+- simulations/ai_project_protocol_results.json
+- tmp/flowguard_background/run_meta_checks.meta.json
+- tmp/flowguard_background/run_capability_checks.meta.json
+
+### Runtime And Protocol Files
+
+- skills/flowpilot/assets/ai_project_protocol/stress_testing.md
+- skills/flowpilot/assets/ai_project_protocol/README.md
+- scripts/install_checks/common.py
+- tests/test_ai_project_protocol_stress.py
+- tests/test_ai_project_protocol_kernel.py
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate stress-test-ai-project-protocol-kernel --strict`
+- OK: `python simulations\run_ai_project_protocol_checks.py --json`
+- OK: `python simulations\run_ai_project_protocol_stress_checks.py --json`
+- OK: `python -m pytest tests\test_ai_project_protocol_kernel.py tests\test_ai_project_protocol_stress.py tests\test_flowpilot_model_check_runner_contracts.py -q`
+- OK: `openspec validate --all --strict`
+- OK: background `tmp/flowguard_background/run_meta_checks.*`; completed,
+  exit code 0, stderr empty, combined report `ok: true`, proof status
+  `not_present`.
+- OK: background `tmp/flowguard_background/run_capability_checks.*`;
+  completed, exit code 0, stderr empty, combined report `ok: true`, proof
+  status `not_present`.
+- OK: `python scripts\install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts\audit_local_install_sync.py --json`
+- OK: `python scripts\install_flowpilot.py --check --json`
+- OK: `python scripts\check_install.py --json`
+- OK: `python simulations\run_ai_project_protocol_stress_checks.py --json --release-evidence --background-dir tmp\flowguard_background --install-ok`
+
+### Findings
+
+- The stress harness adds deterministic fake AI actors rather than calling real
+  AI services, so failures are cheap and reproducible.
+- The multi-round scenarios accept only the replacement-worker success paths
+  and block missing ACK, ACK-only progress, wrong-shaped output, closed-agent
+  late output, stale route output, weak review, self-review, stale evidence,
+  wrong FlowGuard modeled target, progress-only background evidence, and final
+  closure gaps.
+- The release TestMesh gate now has current passing rows for focused kernel
+  compatibility, deterministic multi-round scenarios, seeded random long runs,
+  historical bad-case replay, FlowGuard exploration, background regressions,
+  and install-surface parity.
+- Install checks now require the new stress asset, stress model, runner, result
+  artifact, and focused stress tests.
+
+### Counterexamples
+
+- missing_ack_result_attempt
+- ack_only_timeout
+- wrong_shape_result
+- closed_agent_late_output
+- route_mutation_stale_return
+- weak_review_after_valid_result
+- self_review_after_valid_result
+- stale_evidence_after_source_change
+- wrong_flowguard_target_then_final_claim
+- final_closure_gap_after_all_green
+- progress_only_background_evidence
+
+### Friction Points
+
+- The first stress asset test caught a line-wrapped evidence sentence; the
+  documentation was rewritten so the hard release-evidence rule is explicit.
+- A first ad hoc hidden PowerShell launcher did not refresh artifacts because
+  an older artifact format was still present; the final background runs used
+  the repository's existing `scripts.run_test_tier` background artifact helper
+  and produced fresh current artifacts.
+
+### Skipped Steps
+
+- No real external AI agents were invoked; the new layer is deterministic
+  protocol stress testing.
+- The current FlowPilot router/runtime was not replaced.
+- No destructive `.flowpilot` runtime cleanup was performed.
+- No GitHub push, tag, deploy, or release was attempted.
+
+### Risk Evidence Summary
+
+- Background Meta and Capability checks completed with exit code 0 and current
+  result reports. The combined logs show `ok: true`, stderr is empty, and proof
+  status is `not_present`.
+- Release stress evidence is current only after the final release-mode stress
+  runner consumed the inspected background artifacts and install-pass flag.
+
+### Next Actions
+
+- A future live-agent integration test can be added above this deterministic
+  harness after startup-panel/router integration is separately modeled.

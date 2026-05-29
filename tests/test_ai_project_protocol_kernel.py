@@ -48,6 +48,7 @@ class AIProjectProtocolKernelTests(unittest.TestCase):
             "protocol_contract.md",
             "schema_examples.json",
             "flowguard_route_scheduler.json",
+            "stress_testing.md",
         }
         self.assertEqual(required_files, {path.name for path in ASSET_ROOT.iterdir() if path.is_file()})
 

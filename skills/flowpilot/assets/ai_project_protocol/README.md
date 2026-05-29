@@ -17,6 +17,8 @@ closed only when fresh evidence connects the user goal to the delivered result?
   result, review, FlowGuard work order, and final closure records.
 - `flowguard_route_scheduler.json`: route table for selecting the correct
   FlowGuard skill by risk type.
+- `stress_testing.md`: deterministic fake-AI, multi-round, historical replay,
+  seeded long-run, and TestMesh evidence contract.
 
 ## Legacy Boundary
 

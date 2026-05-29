@@ -48,6 +48,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/ai_project_protocol/protocol_contract.md",
     "skills/flowpilot/assets/ai_project_protocol/schema_examples.json",
     "skills/flowpilot/assets/ai_project_protocol/flowguard_route_scheduler.json",
+    "skills/flowpilot/assets/ai_project_protocol/stress_testing.md",
     "skills/flowpilot/assets/flowpilot_router_card_delivery.py",
     "skills/flowpilot/assets/flowpilot_router_card_returns.py",
     "skills/flowpilot/assets/flowpilot_router_card_settlement.py",
@@ -606,8 +607,11 @@ REQUIRED_FILES = [
     "tests/test_flowpilot_modeling_coverage.py",
     "tests/test_flowpilot_test_tiers.py",
     "tests/test_ai_project_protocol_kernel.py",
+    "tests/test_ai_project_protocol_stress.py",
     "simulations/ai_project_protocol_model.py",
     "simulations/run_ai_project_protocol_checks.py",
+    "simulations/ai_project_protocol_stress_model.py",
+    "simulations/run_ai_project_protocol_stress_checks.py",
 ]
 
 JSON_FILES = [
@@ -666,6 +670,7 @@ JSON_FILES = [
     "simulations/flowpilot_route_replanning_policy_results.json",
     "simulations/flowpilot_controller_break_glass_results.json",
     "simulations/ai_project_protocol_results.json",
+    "simulations/ai_project_protocol_stress_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",

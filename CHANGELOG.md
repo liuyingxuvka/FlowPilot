@@ -2,6 +2,32 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.16 - 2026-05-29
+
+### Added
+
+- Added the `stress-test-ai-project-protocol-kernel` OpenSpec change for
+  deterministic multi-round fake-AI stress testing of the clean AI project
+  protocol kernel.
+- Added protocol stress-testing documentation covering fake actors, replacement
+  workers, historical bad-case replay, seeded long-run checks, FlowGuard target
+  discipline, and TestMesh evidence rows.
+- Added `simulations/ai_project_protocol_stress_model.py` and
+  `simulations/run_ai_project_protocol_stress_checks.py` to rehearse multi-round
+  leases, stale route returns, weak/self review, stale evidence, progress-only
+  background evidence, wrong FlowGuard targets, and final closure gaps.
+- Added focused tests for the stress harness, historical replay, random
+  reproducibility, replacement-worker success, and routine/release TestMesh
+  evidence boundaries.
+
+### Changed
+
+- Updated install checks so the new stress assets, runner, result artifact, and
+  tests are part of local source/install parity.
+- Kept release-level stress confidence gated on inspected background Meta and
+  Capability artifacts plus local install parity; routine stress checks do not
+  overclaim those rows before they run.
+
 ## 0.9.15 - 2026-05-29
 
 ### Added
