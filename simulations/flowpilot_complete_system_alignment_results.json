@@ -1,0 +1,37 @@
+{
+  "mode": "implementation",
+  "model_id": "flowpilot_complete_system_alignment",
+  "ok": true,
+  "pending_evidence": [],
+  "report": {
+    "decision": "model_test_alignment_green",
+    "findings": [],
+    "model_id": "flowpilot_complete_system_alignment",
+    "ok": true,
+    "summary": "OK: model=flowpilot_complete_system_alignment decision=model_test_alignment_green findings=0"
+  },
+  "result_type": "flowpilot_complete_system_alignment_checks",
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_evidence_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_model_test_alignment",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [],
+        "freshness": "current",
+        "id": "complete_implementation_evidence",
+        "scope": "implementation",
+        "status": "passed"
+      }
+    ]
+  }
+}

@@ -2,6 +2,35 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.18 - 2026-05-29
+
+### Added
+
+- Added the `complete-black-box-flowpilot-system` OpenSpec change for the
+  full new FlowPilot system contract: current-run ledger authority, dynamic
+  leases, modeled FlowGuard work orders, startup intake, Cockpit/status,
+  review/repair/closure, migration/cutover, historical replay, install sync,
+  background regression, and live-host evidence gates.
+- Extended `ai_project_runtime` with current-run shell persistence,
+  append-only event projection, startup-intake import, dynamic host evidence,
+  route mutation records, FlowGuard proof boundaries, review metadata,
+  Cockpit fallback, migration gates, and materialized run artifacts.
+- Added complete-system FlowGuard development-process, code-structure,
+  UI-flow, TestMesh, and model-test-alignment models plus focused runtime,
+  historical replay, live-host readiness, and implementation tests.
+- Added local live host-agent evidence from real Codex multi-agent sidecar
+  runs, with the claim boundary kept local to this machine and not treated as
+  a remote deployment or public release.
+
+### Changed
+
+- Updated install checks so complete-system OpenSpec files, runtime modules,
+  simulations, result artifacts, live-host evidence, and tests are covered by
+  source/install parity.
+- Kept the old FlowPilot runtime as reference/diagnostic material; old state,
+  stale projection, stale proof artifacts, and completion-report-only claims do
+  not become current-run authority.
+
 ## 0.9.17 - 2026-05-29
 
 ### Added

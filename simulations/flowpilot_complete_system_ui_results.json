@@ -1,0 +1,65 @@
+{
+  "interaction_report": {
+    "findings": [],
+    "model_id": "flowpilot_complete_system_ui_flow",
+    "ok": true,
+    "summary": "OK: ui_interaction_model=flowpilot_complete_system_ui_flow findings=0"
+  },
+  "journey_report": {
+    "coverage_id": "flowpilot_complete_system_ui_journey",
+    "findings": [],
+    "ok": true,
+    "reachable_state_ids": [
+      "fallback",
+      "intake",
+      "launch",
+      "paused",
+      "running",
+      "stopped"
+    ],
+    "summary": "OK: ui_journey_coverage=flowpilot_complete_system_ui_journey findings=0"
+  },
+  "model_id": "flowpilot_complete_system_ui_flow",
+  "ok": true,
+  "result_type": "flowpilot_complete_system_ui_checks",
+  "structure_report": {
+    "derivation_id": "flowpilot_complete_system_ui_structure",
+    "findings": [],
+    "ok": true,
+    "summary": "OK: ui_structure_derivation=flowpilot_complete_system_ui_structure findings=0"
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_ui_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_ui_interaction_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_ui_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_ui_journey_coverage",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_ui_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_ui_structure_derivation",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

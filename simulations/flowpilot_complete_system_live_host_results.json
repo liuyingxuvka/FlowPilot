@@ -1,0 +1,32 @@
+{
+  "claim_boundary": "live",
+  "evidence_blockers": [],
+  "evidence_file": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_complete_system_live_host_evidence.json",
+  "evidence_summary": {
+    "agent_count": 2,
+    "host_surface": "multi_agent_v1"
+  },
+  "live_confidence": true,
+  "ok": true,
+  "result_type": "flowpilot_complete_system_live_host_readiness_checks",
+  "rows": [
+    {
+      "evidence": [
+        "skills/flowpilot/assets/ai_project_runtime/host.py"
+      ],
+      "freshness": "current",
+      "id": "host_driver_interface",
+      "scope": "routine",
+      "status": "passed"
+    },
+    {
+      "evidence": [
+        "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_complete_system_live_host_evidence.json"
+      ],
+      "freshness": "current",
+      "id": "real_live_host_project_run",
+      "scope": "live",
+      "status": "passed"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "agents": [
+    {
+      "agent_id": "019e749c-d1f1-75e2-8bd1-7103195a78de",
+      "nickname": "Sartre",
+      "status": "completed",
+      "task_scope": "complete-system task audit",
+      "write_scope": "read_only",
+      "result_summary": "Audited tasks 3-10 and identified done, partial, and missing evidence rows."
+    },
+    {
+      "agent_id": "019e749c-ebe1-79f1-a1e5-fd96e1d555f2",
+      "nickname": "Ampere",
+      "status": "completed",
+      "task_scope": "install and sync audit",
+      "write_scope": "read_only",
+      "result_summary": "Audited install inventory, version, changelog, and serialized sync/check order."
+    }
+  ],
+  "claim_boundary": "live host-agent execution evidence for local Codex multi-agent host; not a remote deployment or public release",
+  "host_surface": "multi_agent_v1",
+  "observed_at": "2026-05-29T16:55:00Z",
+  "schema_version": "flowpilot.complete_system.live_host_evidence.v1"
+}

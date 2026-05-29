@@ -1,0 +1,59 @@
+{
+  "mode": "release",
+  "model_id": "flowpilot_complete_system_testmesh",
+  "ok": true,
+  "release_gate": {
+    "ok": true,
+    "required_suites": [
+      "runtime_unit",
+      "fake_agent_chaos",
+      "historical_replay",
+      "background_meta_capability",
+      "install_sync",
+      "live_host"
+    ]
+  },
+  "report": {
+    "decision": "test_mesh_green_can_continue",
+    "decision_scope": "routine",
+    "findings": [],
+    "ok": true,
+    "parent_suite_id": "flowpilot_complete_system_testmesh",
+    "release_obligations": [],
+    "summary": "OK: parent=flowpilot_complete_system_testmesh scope=routine decision=test_mesh_green_can_continue findings=0"
+  },
+  "result_type": "flowpilot_complete_system_testmesh_checks",
+  "test_mesh": {
+    "release_gate": {
+      "ok": true
+    },
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_evidence_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_testmesh_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "tests/test_flowpilot_complete_system_runtime.py",
+          "simulations/flowpilot_complete_system_runtime_results.json",
+          "simulations/flowpilot_complete_system_historical_replay_results.json",
+          "tmp/flowguard_background/run_meta_checks.*; tmp/flowguard_background/run_capability_checks.*",
+          "local installed skill parity",
+          "simulations/flowpilot_complete_system_live_host_results.json"
+        ],
+        "freshness": "current",
+        "id": "complete_release_evidence_boundary",
+        "scope": "release",
+        "status": "passed"
+      }
+    ]
+  }
+}

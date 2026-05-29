@@ -10,16 +10,23 @@ fixed-role startup, or stale result artifacts as authority.
 - `runtime.py`: serializable ledger, dynamic leases, sealed packet helpers,
   FlowGuard work-order scheduling, independent review, final closure, and
   public console projection.
+- `run_shell.py`: current-run authority files, startup-intake import, append-only
+  event history, and materialized sealed envelope/body artifacts under
+  `.flowpilot/runs/<run-id>/`.
 - `cli.py`: small command-line harness for deterministic scenario checks and
   status rendering.
 
 ## Rules
 
 - The ledger is the truth.
+- `.flowpilot/current.json` points to the current run, but the run ledger is the
+  authority.
 - ACK and progress are liveness only.
 - Closed, expired, or superseded leases cannot submit authoritative output.
 - Packet envelopes are public routing metadata; packet bodies stay sealed from
   the public console.
+- Startup intake enters the runtime only as a confirmed sealed receipt/body hash
+  copied into the current run.
 - FlowGuard work orders must name the modeled target before selecting a skill.
 - Review must be independent and evidence-aware.
 - Final completion must walk backward from the user goal to current route,

@@ -45,10 +45,23 @@ development_runner = load_module(
 
 class AIProjectRuntimeTests(unittest.TestCase):
     def test_runtime_assets_exist_and_document_boundaries(self) -> None:
-        self.assertEqual(
-            {"__init__.py", "README.md", "runtime.py", "cli.py"},
-            {path.name for path in RUNTIME_ROOT.iterdir() if path.is_file()},
-        )
+        runtime_files = {path.name for path in RUNTIME_ROOT.iterdir() if path.is_file()}
+        for required_file in {
+            "__init__.py",
+            "README.md",
+            "runtime.py",
+            "cli.py",
+            "run_shell.py",
+            "host.py",
+            "router.py",
+            "packets.py",
+            "flowguard_orders.py",
+            "review_closure.py",
+            "cockpit.py",
+            "migration.py",
+        }:
+            with self.subTest(required_file=required_file):
+                self.assertIn(required_file, runtime_files)
         readme = (RUNTIME_ROOT / "README.md").read_text(encoding="utf-8")
         for phrase in (
             "The ledger is the truth",

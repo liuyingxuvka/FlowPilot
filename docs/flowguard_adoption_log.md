@@ -20352,3 +20352,67 @@ to identify compatibility-layer branches that should be deleted.
 
 - A future live-agent integration test can be added above this deterministic
   harness after startup-panel/router integration is separately modeled.
+
+## 2026-05-29 - Complete Black-Box FlowPilot System
+
+Task id: `complete-black-box-flowpilot-system-20260529`
+
+### Summary
+
+- Implemented the complete black-box FlowPilot runtime path around current-run
+  ledger authority, dynamic responsibility leases, sealed packets/results,
+  FlowGuard modeled-target work orders, independent review, route mutation,
+  Cockpit/status projection, migration/cutover boundaries, validation evidence,
+  and final closure.
+- Extended OpenSpec with `complete-black-box-flowpilot-system` and updated the
+  install inventory, `VERSION` (`0.9.18`), changelog, local installed skill, and
+  final validation artifacts.
+- Recorded KB postflight observation
+  `b75cb823-800f-4d58-a34b-1b92e39c1901` for the reusable lesson that modeled
+  target plans are not execution proof.
+
+### Evidence
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> `1.0`
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> `0.34.0`
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate complete-black-box-flowpilot-system --strict`
+- OK: `openspec validate --all --strict` -> `172 passed, 0 failed`
+- OK: `python -B -m pytest tests\test_ai_project_runtime.py tests\test_flowpilot_complete_system_runtime.py -q` -> `18 passed, 24 subtests passed`
+- OK: complete-system development, structure, UI, alignment, TestMesh, runtime,
+  historical replay, and live-host readiness runners.
+- OK: existing AI project protocol/runtime checks and release stress gate.
+- OK: `python -B scripts\install_flowpilot.py --sync-repo-owned --skip-self-check --json`
+- OK: `python -B scripts\audit_local_install_sync.py --json`
+- OK: `python -B scripts\install_flowpilot.py --check --json`
+- OK: `python -B scripts\check_install.py`
+
+### Background Checks
+
+- `tmp/flowguard_background/run_meta_checks.*`: status `passed`, exit `0`,
+  stderr length `0`, combined output `ok: true`, proof reused `false`, latest
+  update `2026-05-29T16:53:25.609312+00:00`.
+- `tmp/flowguard_background/run_capability_checks.*`: status `passed`, exit
+  `0`, stderr length `0`, combined output `ok: true`, proof reused `false`,
+  latest update `2026-05-29T16:53:25.548311+00:00`.
+
+### Findings
+
+- Deterministic fake-agent checks are scoped confidence only; live confidence is
+  recorded through current-machine `multi_agent_v1` evidence with two completed
+  sidecar agents.
+- Progress-only background logs, stale proof artifacts, wrong FlowGuard targets,
+  duplicate outputs, late closed-lease outputs, stale old artifacts, stale UI
+  projections, and completion-report-only closure attempts are blocked by
+  executable replay.
+- Install sync, audit, and check were run in serialized order so the installed
+  `flowpilot` skill digest matched the repository digest.
+
+### Skipped Steps
+
+- No GitHub push, tag, release, deploy, or destructive runtime-data cleanup was
+  performed.
+- The old FlowPilot runtime was not deleted; it remains reference/diagnostic
+  material until a separate removal or public-entrypoint cutover change.
+- Cockpit is currently an operational status/control surface, not a polished
+  final UI redesign.

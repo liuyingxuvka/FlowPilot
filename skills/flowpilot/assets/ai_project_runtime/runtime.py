@@ -19,7 +19,46 @@ from typing import Any, Mapping
 SCHEMA_VERSION = "black_box_flowpilot_runtime.v1"
 DEFAULT_PROJECT_ID = "project-001"
 REQUIRED_FLOWGUARD_TARGET = "development_process"
-RESPONSIBILITIES = {"planner", "worker", "reviewer", "flowguard_operator"}
+RESPONSIBILITIES = {
+    "planner",
+    "pm",
+    "worker",
+    "research_worker",
+    "reviewer",
+    "flowguard_operator",
+    "ui_qa",
+}
+
+EVENT_FAMILY_BY_TYPE = {
+    "project_started": "lifecycle",
+    "startup_intake_recorded": "startup",
+    "route_created": "route",
+    "source_generation_changed": "route",
+    "contract_frozen": "route",
+    "route_drafted": "route",
+    "lease_created": "lease",
+    "lease_closed": "lease",
+    "lease_expired": "lease",
+    "lease_superseded": "lease",
+    "resume_requested": "lifecycle",
+    "responsibility_lease_created": "lease",
+    "role_memory_seed_recorded": "lease",
+    "task_packet_issued": "packet",
+    "packet_assigned": "packet",
+    "sealed_packet_body_opened": "packet",
+    "lease_ack": "lease",
+    "lease_progress": "lease",
+    "result_submitted": "packet",
+    "flowguard_work_order_created": "flowguard",
+    "flowguard_work_order_completed": "flowguard",
+    "result_reviewed": "review",
+    "validation_evidence_recorded": "validation",
+    "old_artifact_imported": "migration",
+    "cutover_gate_evaluated": "migration",
+    "cockpit_event_submitted": "ui",
+    "final_closure_attempted": "closure",
+    "completion_claim_recorded": "closure",
+}
 
 _DEFAULT_FLOWGUARD_ROUTES = {
     "target_product_behavior": "model-first-function-flow",
@@ -72,6 +111,7 @@ def _event(ledger: dict[str, Any], event_type: str, **payload: Any) -> None:
         {
             "event_id": _next_id(ledger, "event"),
             "event_type": event_type,
+            "event_family": EVENT_FAMILY_BY_TYPE.get(event_type, "unknown"),
             "created_at": now_iso(),
             "payload": payload,
         }
@@ -127,8 +167,13 @@ def new_ledger(
         "created_at": now_iso(),
         "goal": goal,
         "acceptance_contract": acceptance_contract,
+        "contract_frozen": False,
+        "contract_hash": "",
+        "startup_intake": None,
         "source_generation": 1,
+        "lifecycle": {"state": "created"},
         "active_route_version": None,
+        "route_mutations": [],
         "routes": {},
         "leases": {},
         "packets": {},
@@ -136,12 +181,30 @@ def new_ledger(
         "reviews": {},
         "flowguard_work_orders": {},
         "validation_evidence": {},
+        "host_driver_state": {},
+        "host_evidence": {},
+        "imported_evidence": {},
+        "cutover_gate": None,
+        "user_events": [],
+        "status_projection": None,
+        "display_surface": {"preferred": "cockpit", "active": "unknown", "fallback_reason": ""},
+        "completion_claims": [],
+        "open_resources": [],
+        "residual_risks": [],
+        "old_ui_evidence": [],
         "closure": None,
         "events": [],
         "counters": {},
     }
     _event(ledger, "project_started", project_id=project_id)
     return ledger
+
+
+def freeze_contract(ledger: dict[str, Any]) -> None:
+    ledger["contract_frozen"] = True
+    ledger["contract_hash"] = hash_text(f"{ledger['goal']}\n{ledger['acceptance_contract']}")
+    ledger["lifecycle"] = {"state": "contract_frozen"}
+    _event(ledger, "contract_frozen", contract_hash=ledger["contract_hash"])
 
 
 def save_ledger(ledger: Mapping[str, Any], path: Path) -> None:
@@ -161,6 +224,8 @@ def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
         raise BlackBoxRuntimeError("route summary is required")
     if not steps:
         raise BlackBoxRuntimeError("route needs at least one step")
+    if not ledger.get("contract_frozen"):
+        freeze_contract(ledger)
 
     old_version = ledger.get("active_route_version")
     new_version = int(old_version or 0) + 1
@@ -173,8 +238,20 @@ def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
         "status": "active",
         "created_at": now_iso(),
         "source_generation": ledger["source_generation"],
+        "contract_hash": ledger.get("contract_hash", ""),
     }
     ledger["active_route_version"] = new_version
+    if old_version is not None:
+        mutation = {
+            "mutation_id": _next_id(ledger, "mutation"),
+            "old_route_version": old_version,
+            "new_route_version": new_version,
+            "reason": "route_replaced",
+            "affected_packets": [],
+            "requires_replay_or_rebinding": True,
+            "created_at": now_iso(),
+        }
+        ledger.setdefault("route_mutations", []).append(mutation)
 
     for packet in ledger["packets"].values():
         if packet["envelope"]["route_version"] != new_version and packet["status"] in {
@@ -185,9 +262,30 @@ def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
         }:
             packet["status"] = "quarantined_after_route_mutation"
             packet["old_route_disposition"] = "quarantined"
+            if old_version is not None:
+                mutation["affected_packets"].append(packet["packet_id"])
 
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     return route_id
+
+
+def draft_route(ledger: dict[str, Any], summary: str, steps: list[str], *, reason: str = "") -> str:
+    if not summary.strip():
+        raise BlackBoxRuntimeError("route summary is required")
+    if not steps:
+        raise BlackBoxRuntimeError("route needs at least one step")
+    draft_id = _next_id(ledger, "route_draft")
+    ledger.setdefault("route_drafts", {})[draft_id] = {
+        "draft_id": draft_id,
+        "summary": summary,
+        "steps": list(steps),
+        "reason": reason,
+        "status": "draft",
+        "created_at": now_iso(),
+        "contract_hash": ledger.get("contract_hash", ""),
+    }
+    _event(ledger, "route_drafted", draft_id=draft_id)
+    return draft_id
 
 
 def record_source_change(ledger: dict[str, Any], reason: str) -> int:
@@ -237,6 +335,18 @@ def expire_lease(ledger: dict[str, Any], lease_id: str, reason: str = "timeout")
     lease["closed_at"] = now_iso()
     lease["close_reason"] = reason
     _event(ledger, "lease_expired", lease_id=lease_id, reason=reason)
+
+
+def supersede_lease(ledger: dict[str, Any], lease_id: str, replacement_lease_id: str, reason: str = "replaced") -> None:
+    lease = _require(ledger["leases"], lease_id, "lease")
+    replacement = _require(ledger["leases"], replacement_lease_id, "lease")
+    if lease["responsibility"] != replacement["responsibility"]:
+        raise BlackBoxRuntimeError("replacement lease responsibility mismatch")
+    lease["status"] = "superseded"
+    lease["closed_at"] = now_iso()
+    lease["close_reason"] = reason
+    lease["superseded_by"] = replacement_lease_id
+    _event(ledger, "lease_superseded", lease_id=lease_id, replacement_lease_id=replacement_lease_id, reason=reason)
 
 
 def issue_task_packet(
@@ -326,6 +436,7 @@ def submit_result(
     evidence_ids: list[str] | None = None,
     evidence_generation: int | None = None,
     valid_shape: bool = True,
+    packet_body_hash: str | None = None,
 ) -> str:
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
@@ -339,6 +450,7 @@ def submit_result(
         output_type=output_type,
         evidence_generation=generation,
         valid_shape=valid_shape,
+        packet_body_hash=packet_body_hash,
     )
     status = "mechanically_valid" if not blockers else "blocked"
     result = {
@@ -349,6 +461,8 @@ def submit_result(
         "route_version": packet["envelope"]["route_version"],
         "status": status,
         "mechanical_blockers": blockers,
+        "non_authoritative": bool(blockers),
+        "quarantine_reason": ",".join(blockers) if blockers else "",
         "envelope": {
             "packet_id": packet_id,
             "result_id": result_id,
@@ -358,6 +472,7 @@ def submit_result(
             "evidence_generation": generation,
             "body_hash": body_hash,
             "body_visibility": "sealed",
+            "referenced_packet_body_hash": packet_body_hash or packet["envelope"]["body_hash"],
         },
         "body": body,
         "review_id": "",
@@ -385,6 +500,7 @@ def _result_mechanical_blockers(
     output_type: str,
     evidence_generation: int,
     valid_shape: bool,
+    packet_body_hash: str | None,
 ) -> list[str]:
     blockers: list[str] = []
     if lease["status"] != "active":
@@ -399,6 +515,19 @@ def _result_mechanical_blockers(
         blockers.append("wrong_result_shape")
     if evidence_generation < int(ledger.get("source_generation", 1)):
         blockers.append("stale_evidence")
+    if packet_body_hash is not None and packet_body_hash != packet["envelope"]["body_hash"]:
+        blockers.append("body_hash_mismatch")
+    if packet.get("accepted_result_id"):
+        blockers.append("duplicate_after_packet_accepted")
+    same_lease_results = [
+        result
+        for result in ledger.get("results", {}).values()
+        if result.get("packet_id") == packet["packet_id"]
+        and result.get("producer_lease_id") == lease["lease_id"]
+        and result.get("status") == "mechanically_valid"
+    ]
+    if same_lease_results:
+        blockers.append("duplicate_output_from_same_lease")
     return blockers
 
 
@@ -419,6 +548,11 @@ def create_flowguard_work_order(
         "status": "open",
         "decision": "",
         "evidence_id": "",
+        "proof_artifact": "",
+        "confidence_boundary": "scoped",
+        "officer_lease_id": "",
+        "pm_decision": "",
+        "proof_stale": False,
         "progress_only": False,
         "skipped_checks": [],
         "source_generation": ledger["source_generation"],
@@ -448,6 +582,7 @@ def complete_flowguard_work_order(
     order["status"] = "complete"
     order["decision"] = decision
     order["evidence_id"] = evidence_id
+    order["proof_artifact"] = evidence_id
     order["progress_only"] = progress_only
     order["skipped_checks"] = list(skipped_checks or [])
     order["source_generation"] = ledger["source_generation"]
@@ -462,6 +597,9 @@ def review_result(
     *,
     decision: str = "accept",
     checks_evidence: bool = True,
+    direct_evidence_ids: list[str] | None = None,
+    waivers: list[str] | None = None,
+    pm_routing_decision: str = "",
 ) -> str:
     result = _require(ledger["results"], result_id, "result")
     packet = _require(ledger["packets"], result["packet_id"], "packet")
@@ -484,6 +622,9 @@ def review_result(
         "reviewer_agent_id": reviewer["agent_id"],
         "decision": "accept" if accepted else "block",
         "checks_evidence": checks_evidence,
+        "direct_evidence_ids": list(direct_evidence_ids or []),
+        "waivers": list(waivers or []),
+        "pm_routing_decision": pm_routing_decision,
         "independent_from_producer": reviewer["agent_id"] != producer["agent_id"],
         "blockers": blockers,
         "created_at": now_iso(),
@@ -571,6 +712,18 @@ def attempt_final_closure(
     return closure
 
 
+def record_resume_request(ledger: dict[str, Any], reason: str = "manual_resume") -> None:
+    ledger["lifecycle"] = {"state": "resume_requested", "reason": reason}
+    _event(ledger, "resume_requested", reason=reason)
+
+
+def record_completion_claim(ledger: dict[str, Any], *, source: str, claim: str, evidence_id: str = "") -> None:
+    ledger.setdefault("completion_claims", []).append(
+        {"source": source, "claim": claim, "evidence_id": evidence_id, "created_at": now_iso()}
+    )
+    _event(ledger, "completion_claim_recorded", source=source, evidence_id=evidence_id)
+
+
 def _closure_blockers(
     ledger: Mapping[str, Any],
     *,
@@ -580,6 +733,14 @@ def _closure_blockers(
     blockers: list[str] = []
     if not ledger.get("goal"):
         blockers.append("missing_goal")
+    if ledger.get("completion_claims") and not ledger.get("closure_confirmed_by_backward_replay"):
+        blockers.append("completion_report_only_not_sufficient")
+    if ledger.get("open_resources"):
+        blockers.append("unresolved_resources")
+    if ledger.get("residual_risks"):
+        blockers.append("unresolved_residual_risks")
+    if ledger.get("old_ui_evidence"):
+        blockers.append("old_ui_evidence_unresolved")
     active_route = ledger.get("active_route_version")
     if active_route is None:
         blockers.append("missing_active_route")
@@ -631,6 +792,10 @@ def _has_matching_flowguard_report(
             continue
         if order.get("skipped_checks"):
             continue
+        if not order.get("proof_artifact"):
+            continue
+        if order.get("proof_stale"):
+            continue
         if order.get("source_generation") != ledger.get("source_generation"):
             continue
         return True
@@ -658,8 +823,17 @@ def _backward_chain(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
+    lifecycle = ledger.get("lifecycle") or {}
+    if lifecycle.get("state") == "paused":
+        return RuntimeAction("wait_for_resume", "run is paused by user")
+    if lifecycle.get("state") == "resume_requested":
+        return RuntimeAction("resume_reconcile", "resume request needs current-run reconciliation")
+    if not ledger.get("contract_frozen"):
+        return RuntimeAction("freeze_contract", "acceptance contract is not frozen")
     if ledger.get("active_route_version") is None:
-        return RuntimeAction("create_route", "no active route exists")
+        if not ledger.get("route_drafts"):
+            return RuntimeAction("draft_route", "no active route exists")
+        return RuntimeAction("activate_route", "route draft needs activation")
 
     active_route = ledger["active_route_version"]
     active_packets = [
@@ -700,7 +874,8 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 )
             return RuntimeAction("review_result", "result needs independent review", packet["packet_id"], "reviewer")
 
-    if ledger.get("closure", {}).get("decision") == "complete":
+    closure = ledger.get("closure") or {}
+    if closure.get("decision") == "complete":
         return RuntimeAction("terminal_complete", "final backward chain is complete")
     return RuntimeAction("close_project", "all active packets are accepted")
 
@@ -727,6 +902,8 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "project_id": ledger.get("project_id"),
         "goal": ledger.get("goal"),
+        "lifecycle": _copy_jsonable(ledger.get("lifecycle") or {}),
+        "route_stage": _route_stage(ledger),
         "active_route_version": ledger.get("active_route_version"),
         "source_generation": ledger.get("source_generation"),
         "next_action": router_next_action(ledger).to_json(),
@@ -753,8 +930,36 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
             }
             for order in ledger.get("flowguard_work_orders", {}).values()
         ],
+        "validation_evidence": [
+            {
+                "evidence_id": evidence["evidence_id"],
+                "status": evidence["status"],
+                "source_generation": evidence["source_generation"],
+            }
+            for evidence in ledger.get("validation_evidence", {}).values()
+        ],
+        "host_evidence": list(ledger.get("host_evidence", {}).values()),
+        "cutover_gate": _copy_jsonable(ledger.get("cutover_gate") or {"decision": "not_evaluated"}),
+        "display_surface": _copy_jsonable(ledger.get("display_surface") or {}),
         "closure": _copy_jsonable(ledger.get("closure") or {"decision": "not_attempted"}),
     }
+
+
+def _route_stage(ledger: Mapping[str, Any]) -> str:
+    if not ledger.get("startup_intake"):
+        return "startup_intake"
+    if not ledger.get("contract_frozen"):
+        return "contract_freeze"
+    if ledger.get("active_route_version") is None:
+        return "route_planning"
+    if any(packet.get("status") not in {"accepted", "quarantined_after_route_mutation"} for packet in ledger.get("packets", {}).values()):
+        return "packet_execution"
+    cutover_gate = ledger.get("cutover_gate") or {}
+    if cutover_gate.get("decision") == "blocked":
+        return "cutover_repair"
+    if (ledger.get("closure") or {}).get("decision") == "complete":
+        return "complete"
+    return "closure"
 
 
 def _require(mapping: Mapping[str, Any], key: str, label: str) -> dict[str, Any]:

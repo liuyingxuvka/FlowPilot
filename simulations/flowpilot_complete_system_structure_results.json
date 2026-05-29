@@ -1,0 +1,685 @@
+{
+  "function_blocks": [
+    "current_run_shell",
+    "ledger_event_store",
+    "deterministic_router",
+    "dynamic_host_driver",
+    "responsibility_lease_runtime",
+    "sealed_packet_runtime",
+    "flowguard_work_order_runtime",
+    "independent_review_runtime",
+    "route_mutation_runtime",
+    "cockpit_status_projection",
+    "migration_cutover_runtime",
+    "validation_evidence_runtime"
+  ],
+  "known_bad": {
+    "missing_dynamic_host_owner": {
+      "findings": [
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "responsibility_lease_runtime",
+          "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "leases",
+          "message": "state leases is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "host_runs",
+          "message": "state host_runs is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "role_memory",
+          "message": "state role_memory is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "start_fake_host",
+          "message": "side effect start_fake_host is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_live_host_boundary",
+          "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "quarantine_late_output",
+          "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "lease_responsibility",
+          "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "expire_lease",
+          "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_host_result",
+          "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        }
+      ],
+      "ok": false,
+      "recommendation_id": "missing_dynamic_host_owner",
+      "summary": "BLOCKED: recommendation=missing_dynamic_host_owner findings=10"
+    },
+    "missing_module_rationale": {
+      "findings": [
+        {
+          "code": "missing_module_rationale",
+          "item_id": "",
+          "message": "target module run_shell has no grouping rationale",
+          "metadata": {
+            "layer": "child",
+            "module_id": "run_shell",
+            "owns_config": [],
+            "owns_function_blocks": [
+              "current_run_shell"
+            ],
+            "owns_side_effects": [],
+            "owns_state": [
+              "current_pointer"
+            ],
+            "path": "skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            "public_entrypoints": [],
+            "rationale": "",
+            "validation_boundaries": [
+              "run_shell_persistence"
+            ]
+          },
+          "module_id": "run_shell",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "deterministic_router",
+          "message": "FunctionBlock deterministic_router is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "route_mutation_runtime",
+          "message": "FunctionBlock route_mutation_runtime is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "dynamic_host_driver",
+          "message": "FunctionBlock dynamic_host_driver is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "responsibility_lease_runtime",
+          "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "sealed_packet_runtime",
+          "message": "FunctionBlock sealed_packet_runtime is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "flowguard_work_order_runtime",
+          "message": "FunctionBlock flowguard_work_order_runtime is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "independent_review_runtime",
+          "message": "FunctionBlock independent_review_runtime is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "validation_evidence_runtime",
+          "message": "FunctionBlock validation_evidence_runtime is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "cockpit_status_projection",
+          "message": "FunctionBlock cockpit_status_projection is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "function_block_owner_not_registered",
+          "item_id": "migration_cutover_runtime",
+          "message": "FunctionBlock migration_cutover_runtime is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "active_route",
+          "message": "state active_route is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "router_next_action",
+          "message": "state router_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "route_mutations",
+          "message": "state route_mutations is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "leases",
+          "message": "state leases is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "host_runs",
+          "message": "state host_runs is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "role_memory",
+          "message": "state role_memory is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "packet_envelopes",
+          "message": "state packet_envelopes is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "packet_bodies",
+          "message": "state packet_bodies is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "result_envelopes",
+          "message": "state result_envelopes is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "result_bodies",
+          "message": "state result_bodies is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "work_orders",
+          "message": "state work_orders is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "flowguard_reports",
+          "message": "state flowguard_reports is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "reviews",
+          "message": "state reviews is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "validation_evidence",
+          "message": "state validation_evidence is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "final_closure",
+          "message": "state final_closure is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "status_projection",
+          "message": "state status_projection is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "user_events",
+          "message": "state user_events is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "imported_evidence",
+          "message": "state imported_evidence is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "state_owner_not_registered",
+          "item_id": "cutover_gate",
+          "message": "state cutover_gate is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "emit_next_action",
+          "message": "side effect emit_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "mark_evidence_stale",
+          "message": "side effect mark_evidence_stale is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "start_fake_host",
+          "message": "side effect start_fake_host is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_live_host_boundary",
+          "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "quarantine_late_output",
+          "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_packet_body",
+          "message": "side effect write_packet_body is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_result_body",
+          "message": "side effect write_result_body is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "verify_body_hash",
+          "message": "side effect verify_body_hash is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "select_flowguard_skill",
+          "message": "side effect select_flowguard_skill is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_proof_artifact",
+          "message": "side effect record_proof_artifact is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "accept_result",
+          "message": "side effect accept_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "block_result",
+          "message": "side effect block_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_backward_chain",
+          "message": "side effect write_backward_chain is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "render_public_status",
+          "message": "side effect render_public_status is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_user_event",
+          "message": "side effect record_user_event is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "classify_old_artifact",
+          "message": "side effect classify_old_artifact is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_cutover_decision",
+          "message": "side effect record_cutover_decision is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "router_next_action",
+          "message": "public entrypoint router_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "apply_router_event",
+          "message": "public entrypoint apply_router_event is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "lease_responsibility",
+          "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "expire_lease",
+          "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_host_result",
+          "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "issue_packet",
+          "message": "public entrypoint issue_packet is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_result",
+          "message": "public entrypoint submit_result is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "open_sealed_body_for_role",
+          "message": "public entrypoint open_sealed_body_for_role is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "create_flowguard_order",
+          "message": "public entrypoint create_flowguard_order is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "complete_flowguard_order",
+          "message": "public entrypoint complete_flowguard_order is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "review_result",
+          "message": "public entrypoint review_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "record_validation_evidence",
+          "message": "public entrypoint record_validation_evidence is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "attempt_final_closure",
+          "message": "public entrypoint attempt_final_closure is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "render_status",
+          "message": "public entrypoint render_status is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_cockpit_event",
+          "message": "public entrypoint submit_cockpit_event is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "import_old_artifact",
+          "message": "public entrypoint import_old_artifact is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        },
+        {
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "evaluate_cutover_gate",
+          "message": "public entrypoint evaluate_cutover_gate is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "severity": "blocker"
+        }
+      ],
+      "ok": false,
+      "recommendation_id": "missing_module_rationale",
+      "summary": "BLOCKED: recommendation=missing_module_rationale findings=64"
+    }
+  },
+  "model_id": "flowpilot_complete_system_structure",
+  "ok": true,
+  "report": {
+    "findings": [],
+    "ok": true,
+    "recommendation_id": "flowpilot_complete_system_structure",
+    "summary": "OK: recommendation=flowpilot_complete_system_structure findings=0"
+  },
+  "result_type": "flowpilot_complete_system_structure_checks",
+  "target_modules": [
+    "run_shell",
+    "router",
+    "host",
+    "packets",
+    "flowguard_orders",
+    "review_closure",
+    "cockpit",
+    "migration"
+  ],
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_structure_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_structure_recommendation",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_structure_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_structure_known_bad_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=23 initial_states=1 traces=276",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "background_before_history",
+      "cockpit_before_closure_boundary",
+      "cockpit_direct_write",
+      "code_before_models",
+      "completion_before_git",
+      "fake_only_live_claim",
+      "fixed_six_roles_authoritative",
+      "flowguard_orders_before_host",
+      "history_before_routine",
+      "host_before_router",
+      "install_before_live_boundary",
+      "old_state_authoritative",
+      "progress_only_background",
+      "sealed_body_leak",
+      "tests_before_implementation"
+    ],
+    "hazards": {
+      "background_before_history": [
+        "background regressions inspected before historical replay"
+      ],
+      "cockpit_before_closure_boundary": [
+        "Cockpit projection implemented before review/closure boundary"
+      ],
+      "cockpit_direct_write": [
+        "Cockpit direct state write bypassed router"
+      ],
+      "code_before_models": [
+        "run shell implemented before required FlowGuard models"
+      ],
+      "completion_before_git": [
+        "full completion claimed before local git closure"
+      ],
+      "fake_only_live_claim": [
+        "fake-agent evidence was claimed as live-host confidence"
+      ],
+      "fixed_six_roles_authoritative": [
+        "fixed six roles were reintroduced as runtime authority"
+      ],
+      "flowguard_orders_before_host": [
+        "FlowGuard work orders implemented before dynamic host boundary"
+      ],
+      "history_before_routine": [
+        "historical replay passed before routine checks"
+      ],
+      "host_before_router": [
+        "dynamic host implemented before router state machine"
+      ],
+      "install_before_live_boundary": [
+        "install sync ran before live-host evidence boundary was recorded"
+      ],
+      "old_state_authoritative": [
+        "old FlowPilot state was used as current authority"
+      ],
+      "progress_only_background": [
+        "progress-only background evidence was accepted as completion"
+      ],
+      "sealed_body_leak": [
+        "sealed packet or result body leaked into public projection"
+      ],
+      "tests_before_implementation": [
+        "full-system tests written before all implementation surfaces existed"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_complete_system_development_process",
+  "ok": true,
+  "result_type": "flowpilot_complete_system_development_checks",
+  "target_plan": {
+    "evidence_role": "modeled_target_path_not_execution_proof",
+    "failures": [],
+    "labels": [
+      "start_complete_system_development",
+      "validate_openspec_contract",
+      "run_existing_model_preflight",
+      "run_development_process_model",
+      "run_code_structure_model",
+      "run_ui_flow_model",
+      "run_testmesh_model",
+      "run_model_test_alignment",
+      "implement_run_shell",
+      "implement_router_state_machine",
+      "implement_dynamic_host",
+      "implement_flowguard_work_orders",
+      "implement_review_repair_closure",
+      "implement_cockpit_projection",
+      "implement_migration_cutover",
+      "write_full_system_tests",
+      "run_routine_checks",
+      "run_historical_replay",
+      "inspect_background_regressions",
+      "record_live_host_evidence_boundary",
+      "sync_install_and_checks",
+      "commit_local_git",
+      "claim_complete_system_done"
+    ],
+    "ok": true,
+    "state": {
+      "alignment_model_passed": true,
+      "background_regressions_inspected": true,
+      "cockpit_projection_done": true,
+      "development_model_passed": true,
+      "dynamic_host_done": true,
+      "existing_model_preflight_done": true,
+      "flowguard_work_orders_done": true,
+      "full_completion_claimed": true,
+      "git_committed": true,
+      "historical_replay_passed": true,
+      "install_synced_and_checked": true,
+      "live_host_evidence_recorded": true,
+      "migration_cutover_done": true,
+      "openspec_contract_validated": true,
+      "review_repair_closure_done": true,
+      "router_state_machine_done": true,
+      "routine_checks_passed": true,
+      "run_shell_done": true,
+      "status": "complete",
+      "structure_model_passed": true,
+      "testmesh_model_passed": true,
+      "tests_written": true,
+      "ui_model_passed": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_development_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_development_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/complete-black-box-flowpilot-system/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "complete_target_development_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_complete_system_development_model.py"
+        ],
+        "freshness": "current",
+        "id": "complete_development_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

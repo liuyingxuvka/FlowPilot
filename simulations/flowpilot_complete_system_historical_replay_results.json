@@ -1,0 +1,64 @@
+{
+  "ok": true,
+  "required_replay_ids": [
+    "ack_only_or_dead_worker_not_completion",
+    "stale_display_projection_not_authority",
+    "stale_unowned_old_artifact_not_authority",
+    "wrong_flowguard_target_not_gate_evidence",
+    "stale_result_artifact_not_gate_evidence",
+    "duplicate_result_not_authority",
+    "cockpit_disconnect_uses_chat_route_sign",
+    "progress_only_background_not_release"
+  ],
+  "result_type": "flowpilot_complete_system_historical_replay_checks",
+  "rows": [
+    {
+      "evidence": "dead_worker_replaced",
+      "replay_id": "ack_only_or_dead_worker_not_completion",
+      "source_class": "lease_liveness",
+      "status": "passed"
+    },
+    {
+      "evidence": "cockpit_direct_write_rejected",
+      "replay_id": "stale_display_projection_not_authority",
+      "source_class": "display_projection",
+      "status": "passed"
+    },
+    {
+      "evidence": "imported_old_artifact_is_read_only",
+      "replay_id": "stale_unowned_old_artifact_not_authority",
+      "source_class": "old_state_replay",
+      "status": "passed"
+    },
+    {
+      "evidence": "wrong_flowguard_target_blocks_complete_system",
+      "replay_id": "wrong_flowguard_target_not_gate_evidence",
+      "source_class": "flowguard_target",
+      "status": "passed"
+    },
+    {
+      "evidence": "stale_proof_artifact_blocks_review",
+      "replay_id": "stale_result_artifact_not_gate_evidence",
+      "source_class": "stale_proof",
+      "status": "passed"
+    },
+    {
+      "evidence": "duplicate_output_blocks_second_result",
+      "replay_id": "duplicate_result_not_authority",
+      "source_class": "duplicate_output",
+      "status": "passed"
+    },
+    {
+      "evidence": "cockpit_disconnect_records_chat_fallback",
+      "replay_id": "cockpit_disconnect_uses_chat_route_sign",
+      "source_class": "display_surface_fallback",
+      "status": "passed"
+    },
+    {
+      "evidence": "complete_runtime_release_boundary",
+      "replay_id": "progress_only_background_not_release",
+      "source_class": "release_evidence",
+      "status": "passed"
+    }
+  ]
+}
