@@ -2,6 +2,32 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.17 - 2026-05-29
+
+### Added
+
+- Added the `build-black-box-flowpilot-runtime` OpenSpec change for the clean
+  black-box runtime that turns the protocol kernel into executable ledger,
+  lease, packet, review, FlowGuard, closure, and console behavior.
+- Added `skills/flowpilot/assets/ai_project_runtime/` with a serializable
+  project ledger, dynamic agent leases, sealed task/result packets,
+  FlowGuard work-order scheduling, independent review, final backward closure,
+  and safe public console projection.
+- Added a FlowGuard development-process model and runtime scenario runner for
+  replacement-worker success, ACK-only timeout, closed-lease late output, wrong
+  FlowGuard targets, self-review, stale route output, stale evidence, and
+  console body isolation.
+- Added focused runtime tests and TestMesh-style routine/release evidence rows
+  so routine checks cannot overclaim background or install parity.
+
+### Changed
+
+- Updated install checks so the clean runtime assets, simulations, result
+  artifacts, and tests are part of local source/install parity.
+- Kept the clean runtime additive: legacy FlowPilot remains reference material,
+  while old runtime state and fixed six-role startup are not accepted as new
+  runtime authority.
+
 ## 0.9.16 - 2026-05-29
 
 ### Added

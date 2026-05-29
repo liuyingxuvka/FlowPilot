@@ -1,0 +1,318 @@
+{
+  "mode": "release",
+  "ok": true,
+  "result_type": "ai_project_runtime_checks",
+  "scenarios": [
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [
+          {
+            "id": "project-001",
+            "kind": "goal",
+            "summary": "Ship the clean black-box FlowPilot runtime"
+          },
+          {
+            "id": "route-v1",
+            "kind": "route"
+          },
+          {
+            "id": "packet-0001",
+            "kind": "packet"
+          },
+          {
+            "id": "result-0002",
+            "kind": "result"
+          },
+          {
+            "id": "review-0001",
+            "kind": "review"
+          },
+          {
+            "id": "flowguard-0001",
+            "kind": "flowguard"
+          }
+        ],
+        "blockers": [],
+        "created_at": "2026-05-29T15:23:31.620606+00:00",
+        "decision": "complete",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "runtime-validation"
+      },
+      "details": {
+        "accepted_result_id": "result-0002",
+        "late_result_blockers": [
+          "closed_or_inactive_lease"
+        ]
+      },
+      "expected_acceptance": true,
+      "name": "replacement_worker_success",
+      "next_action": {
+        "action_type": "terminal_complete",
+        "modeled_target": "",
+        "reason": "final backward chain is complete",
+        "responsibility": "",
+        "subject_id": ""
+      },
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [],
+        "blockers": [
+          "missing_accepted_packet_result",
+          "packet_not_accepted:packet-0001"
+        ],
+        "created_at": "2026-05-29T15:23:31.621606+00:00",
+        "decision": "blocked",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "runtime-validation"
+      },
+      "details": {
+        "blockers": [
+          "missing_matching_flowguard_report",
+          "missing_accepted_packet_result",
+          "packet_not_accepted:packet-0001"
+        ]
+      },
+      "expected_acceptance": false,
+      "name": "wrong_flowguard_target_blocks",
+      "next_action": {
+        "action_type": "repair_packet",
+        "modeled_target": "",
+        "reason": "packet result or review is blocked",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "blockers": [
+          "self_review"
+        ]
+      },
+      "expected_acceptance": false,
+      "name": "self_review_blocks",
+      "next_action": {
+        "action_type": "repair_packet",
+        "modeled_target": "",
+        "reason": "packet result or review is blocked",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "blockers": [
+          "stale_route_version"
+        ]
+      },
+      "expected_acceptance": false,
+      "name": "stale_route_output_blocks",
+      "next_action": {
+        "action_type": "issue_task_packet",
+        "modeled_target": "",
+        "reason": "active route has no task packets",
+        "responsibility": "worker",
+        "subject_id": ""
+      },
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "blockers": [
+          "stale_evidence"
+        ]
+      },
+      "expected_acceptance": false,
+      "name": "stale_evidence_blocks",
+      "next_action": {
+        "action_type": "repair_packet",
+        "modeled_target": "",
+        "reason": "packet result or review is blocked",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": false,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "after_timeout": {
+          "action_type": "replace_lease",
+          "modeled_target": "",
+          "reason": "assigned lease is inactive",
+          "responsibility": "",
+          "subject_id": "packet-0001"
+        },
+        "before_timeout": {
+          "action_type": "wait_for_result",
+          "modeled_target": "",
+          "reason": "ACK is liveness only",
+          "responsibility": "",
+          "subject_id": "packet-0001"
+        }
+      },
+      "expected_acceptance": false,
+      "name": "ack_only_timeout_stays_incomplete",
+      "next_action": {
+        "action_type": "replace_lease",
+        "modeled_target": "",
+        "reason": "assigned lease is inactive",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [
+          {
+            "id": "project-001",
+            "kind": "goal",
+            "summary": "Ship the clean black-box FlowPilot runtime"
+          },
+          {
+            "id": "route-v1",
+            "kind": "route"
+          },
+          {
+            "id": "packet-0001",
+            "kind": "packet"
+          },
+          {
+            "id": "result-0001",
+            "kind": "result"
+          },
+          {
+            "id": "review-0001",
+            "kind": "review"
+          },
+          {
+            "id": "flowguard-0001",
+            "kind": "flowguard"
+          }
+        ],
+        "blockers": [],
+        "created_at": "2026-05-29T15:23:31.622607+00:00",
+        "decision": "complete",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "runtime-validation"
+      },
+      "details": {
+        "leaked": false,
+        "packet_rows": [
+          {
+            "accepted_result_id": "result-0001",
+            "body_hash": "bca1f899e7cd7b55aec0f1d84f7954830f2eaeeb17e29acee0c6d211ef3b1f51",
+            "objective": "Implement runtime slice",
+            "packet_id": "packet-0001",
+            "responsibility": "worker",
+            "route_version": 1,
+            "sealed_body_hidden": true,
+            "status": "accepted"
+          }
+        ]
+      },
+      "expected_acceptance": true,
+      "name": "console_does_not_leak_sealed_bodies",
+      "next_action": {
+        "action_type": "terminal_complete",
+        "modeled_target": "",
+        "reason": "final backward chain is complete",
+        "responsibility": "",
+        "subject_id": ""
+      },
+      "ok": true
+    }
+  ],
+  "test_mesh": {
+    "parent_gates": {
+      "release_runtime_gate": {
+        "ok": true,
+        "required_rows": [
+          "runtime_scenarios",
+          "runtime_console_isolation",
+          "background_meta_capability",
+          "install_surface_parity"
+        ]
+      },
+      "routine_runtime_gate": {
+        "ok": true,
+        "required_rows": [
+          "runtime_scenarios",
+          "runtime_console_isolation"
+        ]
+      }
+    },
+    "rows": [
+      {
+        "details": {
+          "case_count": 7
+        },
+        "evidence": [
+          "simulations/run_ai_project_runtime_checks.py"
+        ],
+        "freshness": "current",
+        "id": "runtime_scenarios",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "details": {},
+        "evidence": [
+          "skills/flowpilot/assets/ai_project_runtime/runtime.py"
+        ],
+        "freshness": "current",
+        "id": "runtime_console_isolation",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "details": {},
+        "evidence": [
+          "tmp/flowguard_background/run_meta_checks.*",
+          "tmp/flowguard_background/run_capability_checks.*"
+        ],
+        "freshness": "current",
+        "id": "background_meta_capability",
+        "scope": "release",
+        "status": "passed"
+      },
+      {
+        "details": {},
+        "evidence": [
+          "scripts/install_flowpilot.py",
+          "scripts/audit_local_install_sync.py",
+          "scripts/check_install.py"
+        ],
+        "freshness": "current",
+        "id": "install_surface_parity",
+        "scope": "release",
+        "status": "passed"
+      }
+    ]
+  }
+}

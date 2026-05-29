@@ -8,7 +8,7 @@
     "summary": "sequences=2 initial_states=1 traces=39",
     "violation_count": 0
   },
-  "generated_at": "2026-05-29T15:08:06.706677+00:00",
+  "generated_at": "2026-05-29T15:28:41.283054+00:00",
   "hazard_detection": {
     "expected": [
       "ack_only_timeout_forced_accepted",
@@ -1537,7 +1537,7 @@
                 "stdout": true
               },
               "exit_code": 0,
-              "latest_update": "2026-05-29T15:05:00.279003+00:00",
+              "latest_update": "2026-05-29T15:22:21.329507+00:00",
               "meta_status": "passed",
               "name": "run_meta_checks",
               "ok": true,
@@ -1559,7 +1559,7 @@
                 "stdout": true
               },
               "exit_code": 0,
-              "latest_update": "2026-05-29T15:05:00.268003+00:00",
+              "latest_update": "2026-05-29T15:22:21.297271+00:00",
               "meta_status": "passed",
               "name": "run_capability_checks",
               "ok": true,

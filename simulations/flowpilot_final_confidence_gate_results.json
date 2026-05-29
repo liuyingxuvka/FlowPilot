@@ -1,6 +1,6 @@
 {
   "blockers": [],
-  "decision": "release_convergence_with_deferred_structure_splits",
+  "decision": "full_confidence",
   "evidence_rows": [
     {
       "blockers": [],
@@ -34,14 +34,12 @@
       "blockers": [],
       "details": {
         "alignment_ok": true,
-        "coverage_claim": "release_convergence_deferred_structure_only",
-        "deferred_structure_split_count": 5,
-        "full_coverage_ok": false,
+        "coverage_claim": "full_coverage",
+        "deferred_structure_split_count": 0,
+        "full_coverage_ok": true,
         "full_diagnostic_ok": true,
-        "gap_counts": {
-          "needs_structure_split": 5
-        },
-        "gap_surface_count": 5,
+        "gap_counts": {},
+        "gap_surface_count": 0,
         "release_convergence_ok": true,
         "top_level_ok": true,
         "unresolved_non_deferred_gap_count": 0
@@ -49,7 +47,7 @@
       "name": "model_test_alignment",
       "ok": true,
       "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_model_test_alignment_results.json",
-      "status": "release_convergence_with_deferred_structure_splits"
+      "status": "full_confidence"
     },
     {
       "blockers": [],
@@ -76,5 +74,5 @@
   },
   "result_type": "flowpilot_final_confidence_gate",
   "subcheck_runs": [],
-  "summary": "RELEASE_CONVERGED: required evidence passes with explicitly deferred structure split debt"
+  "summary": "FULL: all required final-confidence evidence is current and passing"
 }
