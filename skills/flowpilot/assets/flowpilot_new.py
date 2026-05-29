@@ -20,8 +20,10 @@ STARTUP_UI = ASSETS_ROOT / "ui" / "startup_intake" / "flowpilot_startup_intake.p
 DEFAULT_GOAL = "FlowPilot sealed startup request"
 DEFAULT_ACCEPTANCE_CONTRACT = (
     "Complete only when the current-run ledger has sealed startup intake, "
-    "an active route, accepted packet results, matching FlowGuard evidence, "
-    "independent review, current validation evidence, and final backward closure."
+    "an active materialized route tree, accepted route nodes, matching "
+    "FlowGuard evidence, independent review, PM disposition, current "
+    "validation evidence, a clean final route-wide gate ledger, and final "
+    "backward closure."
 )
 HOST_KIND_HELP = (
     "Allowed values: live=real Codex/multi-agent/background host, "
@@ -110,6 +112,7 @@ def _startup_body_ref(ledger: dict[str, Any]) -> dict[str, str]:
 
 def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
+    ledger["recursive_route_execution_required"] = True
     if not ledger.get("contract_frozen"):
         runtime.freeze_contract(ledger)
     if not ledger.get("route_drafts"):
@@ -159,6 +162,11 @@ def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
             body,
             required_output_type="artifact",
             required_flowguard_target="development_process",
+            route_scope="planning",
+            acceptance_criteria=[
+                "PM route plan is reviewed and then materialized into route nodes.",
+                "Project closure is blocked until every effective route node is accepted.",
+            ],
         )
     run_shell.save_run_ledger(shell, ledger)
     return ledger
@@ -266,61 +274,51 @@ def run_fake_e2e(root: Path, *, run_id: str | None, startup_text: str) -> dict[s
         result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
         return lease_id, result_id
 
-    packet_id = _first_active_packet(ledger)
-    lease_id, result_id = complete_open_packet(
-        packet_id,
-        agent_id="fake-pm",
-        body="SEALED_RESULT_BODY: fake PM completed the new FlowPilot route rehearsal.",
-    )
-    flowguard_packet_id = _packet_by_kind(ledger, "flowguard_check")
-    flowguard_lease_id, flowguard_result_id = complete_open_packet(
-        flowguard_packet_id,
-        agent_id="fake-flowguard",
-        body="SEALED_RESULT_BODY: fake FlowGuard evidence passed for the PM result.",
-    )
-    review_packet_id = _packet_by_kind(ledger, "review")
-    reviewer_lease_id, review_result_id = complete_open_packet(
-        review_packet_id,
-        agent_id="fake-reviewer",
-        body="SEALED_RESULT_BODY: fake reviewer accepted the PM result and FlowGuard evidence.",
-    )
-    validation_packet_id = _packet_by_kind(ledger, "validation")
-    validation_lease_id, validation_result_id = complete_open_packet(
-        validation_packet_id,
-        agent_id="fake-validator",
-        body="SEALED_RESULT_BODY: fake validation evidence is current.",
-    )
-    closure_packet_id = _packet_by_kind(ledger, "closure")
-    closure_lease_id, closure_result_id = complete_open_packet(
-        closure_packet_id,
-        agent_id="fake-closure",
-        body="SEALED_RESULT_BODY: fake closure officer confirmed backward chain.",
-    )
-    closure = ledger["closure"]
-    order_id = next(iter(ledger["flowguard_work_orders"]))
-    review_id = next(iter(ledger["reviews"]))
+    completed_packets: list[dict[str, str]] = []
+    for index in range(80):
+        action = router.router_next_action(ledger)
+        if action.action_type == "terminal_complete":
+            break
+        if action.action_type == "issue_node_task_packet":
+            runtime.ensure_next_node_task_packet(ledger)
+            continue
+        if action.action_type == "close_project":
+            runtime.attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or "fake-validation"))
+            continue
+        if action.action_type != "lease_agent":
+            raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action.to_json()}")
+        packet_id = action.subject_id
+        packet = ledger["packets"][packet_id]
+        kind = packet["envelope"].get("packet_kind", "task")
+        scope = packet["envelope"].get("route_scope", "")
+        if kind == "task" and scope == "planning":
+            body = "\n".join(
+                [
+                    "1. Plan architecture and acceptance contracts",
+                    "2. Implement the target behavior through node work",
+                    "3. Validate evidence and final route-wide closure",
+                ]
+            )
+        elif kind == "pm_disposition":
+            body = json.dumps({"decision": "accept", "reason": "fake PM accepts current node"})
+        else:
+            body = f"SEALED_RESULT_BODY: fake {kind} result for packet {packet_id}"
+        lease_id, result_id = complete_open_packet(packet_id, agent_id=f"fake-{kind}-{index}", body=body)
+        completed_packets.append({"packet_id": packet_id, "packet_kind": kind, "lease_id": lease_id, "result_id": result_id})
+    else:
+        raise runtime.BlackBoxRuntimeError("fake e2e exceeded packet completion budget")
+
+    closure = ledger.get("closure") or {"decision": "not_attempted"}
     run_shell.save_run_ledger(shell, ledger)
     return {
         "ok": closure["decision"] == "complete",
         "mode": "rehearsal",
         "run": shell.to_json(),
-        "packet_id": packet_id,
-        "lease_id": lease_id,
-        "result_id": result_id,
-        "flowguard_packet_id": flowguard_packet_id,
-        "flowguard_lease_id": flowguard_lease_id,
-        "flowguard_result_id": flowguard_result_id,
-        "review_packet_id": review_packet_id,
-        "reviewer_lease_id": reviewer_lease_id,
-        "review_result_id": review_result_id,
-        "validation_packet_id": validation_packet_id,
-        "validation_lease_id": validation_lease_id,
-        "validation_result_id": validation_result_id,
-        "closure_packet_id": closure_packet_id,
-        "closure_lease_id": closure_lease_id,
-        "closure_result_id": closure_result_id,
-        "order_id": order_id,
-        "review_id": review_id,
+        "completed_packets": completed_packets,
+        "accepted_node_ids": [
+            node_id for node_id, node in ledger.get("route_nodes", {}).items() if node.get("status") == "accepted"
+        ],
+        "final_route_wide_gate_ledger": ledger.get("final_route_wide_gate_ledger"),
         "closure": closure,
         "next_action": router.router_next_action(ledger).to_json(),
         "status": cockpit.render_status(ledger),

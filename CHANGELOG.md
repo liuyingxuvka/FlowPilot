@@ -2,6 +2,28 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.22 - 2026-05-29
+
+### Added
+
+- Added the `restore-recursive-route-execution-runtime` OpenSpec change.
+- Added recursive route execution FlowGuard checks for PM-plan terminal
+  overclaim, missing node closure, wrong FlowGuard target, stale evidence,
+  dead lease advancement, and route mutation without frontier rewrite.
+- Added focused runtime tests for route materialization, node packet loops, PM
+  disposition, route mutation, closure blockers, and public route/frontier
+  status projection.
+
+### Changed
+
+- Updated the new formal FlowPilot runtime so PM planning materializes route
+  nodes instead of completing the project after the first PM packet chain.
+- Expanded the black-box fake-project rehearsal to run a multi-node route
+  through the public CLI and report explicit recursive-route bad-case rows.
+- Split the fake-project rehearsal runner into CLI and scenario child modules
+  after model-test diagnostics flagged the parent runner as oversized.
+- Upgraded the project FlowGuard adoption record to package `0.38.0`.
+
 ## 0.9.21 - 2026-05-29
 
 ### Changed

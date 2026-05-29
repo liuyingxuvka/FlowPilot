@@ -1,0 +1,121 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=18 initial_states=1 traces=171",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "dead_lease_advances_node",
+      "missing_node_terminal_complete",
+      "mutation_without_frontier_rewrite",
+      "pm_plan_terminal_complete",
+      "stale_node_evidence_accepted",
+      "wrong_flowguard_target_accepted"
+    ],
+    "hazards": {
+      "dead_lease_advances_node": [
+        "dead or inactive lease advanced a node"
+      ],
+      "missing_node_terminal_complete": [
+        "final route-wide ledger built before all node dispositions",
+        "terminal closure passed with an incomplete effective node"
+      ],
+      "mutation_without_frontier_rewrite": [
+        "route mutation did not rewrite execution frontier"
+      ],
+      "pm_plan_terminal_complete": [
+        "PM planning packet chain reached terminal completion"
+      ],
+      "stale_node_evidence_accepted": [
+        "stale node evidence was accepted after route/source change"
+      ],
+      "wrong_flowguard_target_accepted": [
+        "wrong FlowGuard modeled target satisfied a node"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_recursive_route_execution",
+  "ok": true,
+  "result_type": "flowpilot_recursive_route_execution_checks",
+  "target_plan": {
+    "failures": [],
+    "labels": [
+      "record_startup_intake",
+      "accept_pm_planning_packet",
+      "materialize_route_nodes",
+      "initialize_execution_frontier",
+      "complete_node_1_packet_loop",
+      "record_node_1_pm_disposition",
+      "complete_node_2_packet_loop",
+      "record_node_2_pm_disposition",
+      "complete_node_3_packet_loop",
+      "record_node_3_pm_disposition",
+      "build_final_route_wide_ledger",
+      "complete_terminal_closure"
+    ],
+    "ok": true,
+    "state": {
+      "dead_lease_advances_node": false,
+      "final_route_wide_ledger_built": true,
+      "frontier_ready": true,
+      "missing_node_terminal_complete": false,
+      "mutation_without_frontier_rewrite": false,
+      "node_1_packet_loop_closed": true,
+      "node_1_pm_disposition": true,
+      "node_2_packet_loop_closed": true,
+      "node_2_pm_disposition": true,
+      "node_3_packet_loop_closed": true,
+      "node_3_pm_disposition": true,
+      "pm_plan_terminal_complete": false,
+      "pm_planning_packet_accepted": true,
+      "repair_boundary_observed": false,
+      "route_materialized": true,
+      "route_mutation_rewrites_frontier": false,
+      "stale_node_evidence_accepted": false,
+      "startup_recorded": true,
+      "status": "complete",
+      "terminal_complete": true,
+      "wrong_flowguard_target_accepted": false
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_recursive_route_execution_model.py"
+        ],
+        "freshness": "current",
+        "id": "recursive_route_execution_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/restore-recursive-route-execution-runtime/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "recursive_route_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_recursive_route_execution_model.py"
+        ],
+        "freshness": "current",
+        "id": "recursive_route_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

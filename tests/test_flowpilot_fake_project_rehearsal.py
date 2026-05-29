@@ -21,6 +21,8 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
             {
                 "normal_full_path",
                 "wrong_role_recovery",
+                "planning_chain_does_not_terminal",
+                "route_mutation_recovery",
                 "missing_ack_block",
                 "ack_only_wait",
                 "retired_side_command",
@@ -28,7 +30,16 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
         )
         self.assertIn("wrong_role_lease_accepted", result["hazard_detection"]["hazards"])
         self.assertIn("missing_ack_result_accepted", result["hazard_detection"]["hazards"])
+        self.assertIn("planning_chain_terminal", result["hazard_detection"]["hazards"])
+        self.assertIn("terminal_missing_route_node", result["hazard_detection"]["hazards"])
+        self.assertIn("route_mutation_without_frontier_rewrite", result["hazard_detection"]["hazards"])
         self.assertIn("side_command_surface_available", result["hazard_detection"]["hazards"])
+        recursive_hazards = result["recursive_route_hazard_detection"]["hazards"]
+        self.assertIn("missing_node_terminal_complete", recursive_hazards)
+        self.assertIn("wrong_flowguard_target_accepted", recursive_hazards)
+        self.assertIn("stale_node_evidence_accepted", recursive_hazards)
+        self.assertIn("dead_lease_advances_node", recursive_hazards)
+        self.assertIn("mutation_without_frontier_rewrite", recursive_hazards)
 
 
 if __name__ == "__main__":

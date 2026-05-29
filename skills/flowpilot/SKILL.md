@@ -50,7 +50,7 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json sub
 Fixed value menus for manual commands:
 
 - `--host-kind`: use `live` for a real Codex, multi-agent, or background host; use `fake` only for deterministic fake AI or rehearsal wrappers; use `dry_run` only for diagnostic no-agent placeholders. Do not use or invent unlisted values such as `codex_subagent`.
-- `--responsibility`: copy the exact value from the runtime `next_action.responsibility`. Current formal packet responsibilities include `pm`, `flowguard_operator`, `reviewer`, `validator`, and `closure_officer`.
+- `--responsibility`: copy the exact value from the runtime `next_action.responsibility`. Current formal packet responsibilities include packet officers such as `pm`, `flowguard_operator`, `reviewer`, `validator`, and `closure_officer`, plus route-node worker responsibilities such as `worker`, `ui_qa`, or `research_worker` when the PM plan materializes executable nodes.
 - If no listed value fits a fixed-value field, stop and report the value-menu mismatch instead of guessing.
 
 Legacy `flowpilot_router.py next/apply/run-until-wait` commands are existing-old-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
@@ -80,6 +80,8 @@ After the native startup intake result is recorded, the new runtime materializes
 When the new runtime returns a `lease_agent` next action, spawn only the requested responsibility, then record the real host `agent_id` with `flowpilot_new.py lease-agent`. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort. Do not treat empty role slots, prior-route agent IDs, or unrelated later subagents as startup success.
 
 All new formal runtime roles are packet roles. PM, FlowGuard operator, reviewer, validator, and closure officer all follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Do not complete FlowGuard, review, validation, or final closure through side-command shortcuts; wait for the runtime to issue the matching role packet, then use `lease-agent`, `ack`, and `submit-result` for that packet.
+
+After the PM planning packet chain closes, the new runtime does not treat the project as done. It materializes the PM route plan into executable route nodes, issues each node as its own packet chain, requires FlowGuard/review/validation/closure and a PM disposition for each node, then builds a final route-wide gate ledger before terminal completion.
 
 When the issued packet is a FlowGuard operator packet, write formal-run evidence under the packet's `evidence_output_policy.run_local_evidence_root`. For Meta or Capability runners, use the packet's `recommended_runner_commands` or the same `--json-out <run-local-path>` pattern. Do not write formal-run evidence to tracked `simulations/*_results.json` baselines unless the packet explicitly asks for a repository baseline update.
 

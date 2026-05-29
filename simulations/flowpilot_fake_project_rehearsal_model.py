@@ -25,9 +25,15 @@ class State:
     review_packet_complete: bool = False
     validation_packet_complete: bool = False
     closure_packet_complete: bool = False
+    route_nodes_materialized: bool = False
+    route_node_1_complete: bool = False
+    route_node_2_complete: bool = False
+    route_node_3_complete: bool = False
+    final_route_wide_ledger_built: bool = False
     terminal_status_checked: bool = False
     wrong_role_lease_rejected: bool = False
     wrong_role_recovery_completed: bool = False
+    route_mutation_recovered: bool = False
     missing_ack_result_blocked: bool = False
     ack_only_wait_observed: bool = False
     retired_side_command_rejected: bool = False
@@ -39,6 +45,9 @@ class State:
     missing_ack_result_accepted: bool = False
     ack_only_terminal: bool = False
     pm_only_terminal: bool = False
+    planning_chain_terminal: bool = False
+    terminal_missing_route_node: bool = False
+    route_mutation_without_frontier_rewrite: bool = False
     side_command_surface_available: bool = False
     terminal_active_lease: bool = False
     terminal_missing_role_packet: bool = False
@@ -70,9 +79,15 @@ REQUIRED_SAFE_LABELS = (
     "complete_review_packet_via_cli",
     "complete_validation_packet_via_cli",
     "complete_closure_packet_via_cli",
+    "materialize_route_nodes_from_pm_plan",
+    "complete_route_node_1_via_cli",
+    "complete_route_node_2_via_cli",
+    "complete_route_node_3_via_cli",
+    "build_final_route_wide_ledger",
     "verify_terminal_public_status",
     "observe_wrong_role_lease_rejection",
     "recover_from_wrong_role_with_valid_packets",
+    "observe_route_mutation_recovery",
     "observe_missing_ack_result_block",
     "observe_ack_only_wait_not_terminal",
     "observe_retired_side_command_rejection",
@@ -141,12 +156,24 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("complete_validation_packet_via_cli", replace(state, validation_packet_complete=True)),)
     if not state.closure_packet_complete:
         return (Transition("complete_closure_packet_via_cli", replace(state, closure_packet_complete=True)),)
+    if not state.route_nodes_materialized:
+        return (Transition("materialize_route_nodes_from_pm_plan", replace(state, route_nodes_materialized=True)),)
+    if not state.route_node_1_complete:
+        return (Transition("complete_route_node_1_via_cli", replace(state, route_node_1_complete=True)),)
+    if not state.route_node_2_complete:
+        return (Transition("complete_route_node_2_via_cli", replace(state, route_node_2_complete=True)),)
+    if not state.route_node_3_complete:
+        return (Transition("complete_route_node_3_via_cli", replace(state, route_node_3_complete=True)),)
+    if not state.final_route_wide_ledger_built:
+        return (Transition("build_final_route_wide_ledger", replace(state, final_route_wide_ledger_built=True)),)
     if not state.terminal_status_checked:
         return (Transition("verify_terminal_public_status", replace(state, terminal_status_checked=True)),)
     if not state.wrong_role_lease_rejected:
         return (Transition("observe_wrong_role_lease_rejection", replace(state, wrong_role_lease_rejected=True)),)
     if not state.wrong_role_recovery_completed:
         return (Transition("recover_from_wrong_role_with_valid_packets", replace(state, wrong_role_recovery_completed=True)),)
+    if not state.route_mutation_recovered:
+        return (Transition("observe_route_mutation_recovery", replace(state, route_mutation_recovered=True)),)
     if not state.missing_ack_result_blocked:
         return (Transition("observe_missing_ack_result_block", replace(state, missing_ack_result_blocked=True)),)
     if not state.ack_only_wait_observed:
@@ -180,11 +207,26 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Closure packet completed before validation packet")
     if state.terminal_status_checked and not state.closure_packet_complete:
         failures.append("Terminal status checked before closure packet")
+    if state.route_nodes_materialized and not state.closure_packet_complete:
+        failures.append("Route nodes materialized before PM planning packet closure")
+    if state.route_node_1_complete and not state.route_nodes_materialized:
+        failures.append("Route node 1 completed before route materialization")
+    if state.route_node_2_complete and not state.route_node_1_complete:
+        failures.append("Route node 2 completed before route node 1")
+    if state.route_node_3_complete and not state.route_node_2_complete:
+        failures.append("Route node 3 completed before route node 2")
+    if state.final_route_wide_ledger_built and not state.route_node_3_complete:
+        failures.append("Final route-wide ledger built before three route nodes completed")
+    if state.terminal_status_checked and not state.final_route_wide_ledger_built:
+        failures.append("Terminal status checked before final route-wide ledger")
     if state.wrong_role_recovery_completed and not state.wrong_role_lease_rejected:
         failures.append("Wrong-role recovery claimed before wrong-role rejection")
+    if state.route_mutation_recovered and not state.terminal_status_checked:
+        failures.append("Route mutation recovery claimed before normal recursive terminal path")
     if state.scenario_report_written and not (
         state.terminal_status_checked
         and state.wrong_role_recovery_completed
+        and state.route_mutation_recovered
         and state.missing_ack_result_blocked
         and state.ack_only_wait_observed
         and state.retired_side_command_rejected
@@ -204,6 +246,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("ACK-only path reached terminal completion")
     if state.pm_only_terminal:
         failures.append("PM-only path reached terminal completion")
+    if state.planning_chain_terminal:
+        failures.append("Planning packet chain reached terminal completion before route nodes")
+    if state.terminal_missing_route_node:
+        failures.append("Terminal completion missed an effective route node")
+    if state.route_mutation_without_frontier_rewrite:
+        failures.append("Route mutation did not rewrite the execution frontier")
     if state.side_command_surface_available:
         failures.append("Retired side-command completion surface was still available")
     if state.terminal_active_lease:
@@ -246,6 +294,9 @@ def hazard_states() -> dict[str, State]:
         "missing_ack_result_accepted": replace(target, missing_ack_result_accepted=True),
         "ack_only_terminal": replace(target, ack_only_terminal=True),
         "pm_only_terminal": replace(target, pm_only_terminal=True),
+        "planning_chain_terminal": replace(target, planning_chain_terminal=True),
+        "terminal_missing_route_node": replace(target, route_node_3_complete=False, terminal_missing_route_node=True),
+        "route_mutation_without_frontier_rewrite": replace(target, route_mutation_without_frontier_rewrite=True),
         "side_command_surface_available": replace(target, side_command_surface_available=True),
         "terminal_active_lease": replace(target, terminal_active_lease=True),
         "terminal_missing_role_packet": replace(target, terminal_missing_role_packet=True),

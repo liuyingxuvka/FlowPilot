@@ -65,6 +65,8 @@ def create_run_shell(
         "results/bodies",
         "leases",
         "role_memory",
+        "frontier",
+        "route_nodes",
         "flowguard/work_orders",
         "flowguard/work_orders/envelopes",
         "flowguard/work_orders/reports",
@@ -192,6 +194,10 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_text(shell.run_root / "packets" / "bodies" / f"{packet_id}.md", str(packet.get("body", "")))
     for route_version, route in ledger.get("routes", {}).items():
         _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
+    for node_id, node in ledger.get("route_nodes", {}).items():
+        _write_json(shell.run_root / "route_nodes" / f"{node_id}.json", node)
+    if isinstance(ledger.get("execution_frontier"), dict):
+        _write_json(shell.run_root / "frontier" / "execution_frontier.json", ledger["execution_frontier"])
     for result_id, result in ledger.get("results", {}).items():
         _write_json(shell.run_root / "results" / "envelopes" / f"{result_id}.json", result["envelope"])
         _write_text(shell.run_root / "results" / "bodies" / f"{result_id}.md", str(result.get("body", "")))
@@ -223,6 +229,8 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "cutover_gate.json", ledger["cutover_gate"])
     if isinstance(ledger.get("closure"), dict):
         _write_json(shell.run_root / "closure" / "final_closure.json", ledger["closure"])
+    if isinstance(ledger.get("final_route_wide_gate_ledger"), dict):
+        _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
     _write_json(shell.run_root / "console" / "status.json", runtime.render_console(ledger))
 
 

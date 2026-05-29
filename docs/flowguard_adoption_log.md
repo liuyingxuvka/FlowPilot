@@ -20087,6 +20087,73 @@ to identify compatibility-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## restore-recursive-route-execution-runtime - Restore recursive FlowPilot route execution
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: new FlowPilot runtime stopped after the PM planning packet chain instead of recursively executing all PM route nodes.
+- Status: completed
+- Skill decision: predictive KB + OpenSpec + FlowGuard development process/model-test alignment/structure mesh
+- Started: 2026-05-29T21:05:00+00:00
+- Ended: 2026-05-29T22:24:14+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_recursive_route_execution_model.py`
+- `simulations/run_flowpilot_recursive_route_execution_checks.py`
+- `simulations/flowpilot_recursive_route_execution_results.json`
+- `simulations/flowpilot_fake_project_rehearsal_model.py`
+- `simulations/run_flowpilot_fake_project_rehearsal_checks.py`
+- `simulations/flowpilot_fake_project_rehearsal_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> ok, schema 1.0
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> ok, version 0.38.0
+- `python -m flowguard project-upgrade --root .` -> ok, project record upgraded to 0.38.0
+- `openspec validate --all --strict` -> ok, 176 passed
+- `python simulations\run_flowpilot_recursive_route_execution_checks.py --json-out simulations\flowpilot_recursive_route_execution_results.json` -> ok
+- `python simulations\run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations\flowpilot_fake_project_rehearsal_results.json` -> ok, 7 scenarios, 12 TestMesh rows
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` -> ok, no actionable findings after StructureMesh split
+- `python -m unittest tests.test_ai_project_runtime tests.test_flowpilot_complete_system_runtime tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_recursive_route_execution_runtime` -> ok, 24 tests
+- `python simulations/run_meta_checks.py` -> ok via `tmp/flowguard_background/run_meta_checks.*`, exit 0, proof reuse not reported
+- `python simulations/run_capability_checks.py` -> ok via `tmp/flowguard_background/run_capability_checks.*`, exit 0, proof reuse not reported
+- `python scripts\check_install.py --json` -> ok
+- `python scripts\audit_local_install_sync.py --json` -> ok after `python scripts\install_flowpilot.py --sync-repo-owned --json`
+
+### Findings
+- PM planning closure now materializes route nodes and execution frontier instead of declaring terminal completion.
+- Every effective route node runs through the symmetric packet lifecycle: task, FlowGuard, review, validation, closure packet, and PM disposition.
+- Final terminal completion now requires a route-wide gate ledger with all effective nodes accepted or otherwise resolved.
+- Fake-project rehearsal now starts through the real public CLI, traverses a multi-node route, covers planning-not-terminal and route-mutation recovery, and reports recursive bad-case rows for missing node, wrong target, stale evidence, dead lease, and mutation without frontier rewrite.
+- Model-test alignment initially found the fake-project rehearsal runner was oversized; the runner was split into CLI and scenario child modules and the rerun reported zero actionable findings.
+
+### Counterexamples
+- `pm_plan_terminal_complete`
+- `missing_node_terminal_complete`
+- `wrong_flowguard_target_accepted`
+- `stale_node_evidence_accepted`
+- `dead_lease_advances_node`
+- `mutation_without_frontier_rewrite`
+- `planning_chain_terminal`
+- `terminal_missing_route_node`
+- `route_mutation_without_frontier_rewrite`
+
+### Friction Points
+- Public CLI cannot directly manufacture every low-level corrupt state, so wrong target, stale evidence, and dead lease are covered by the recursive FlowGuard model and focused runtime tests rather than by invalid public commands.
+- The fake-project rehearsal runner crossed the structure threshold after adding scenarios, requiring a StructureMesh split before final confidence.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or destructive cleanup was performed.
+- No live external AI project was claimed; fake-project rehearsal remains deterministic fake AI evidence.
+
+### Risk Evidence Summary
+- Routine runtime, fake rehearsal, OpenSpec, install sync, FlowGuard project audit, and background Meta/Capability evidence are current.
+- Release/live-host cutover evidence remains a separate release boundary.
+
+### Next Actions
+- For future release confidence, rerun release-scoped live-host gates and archive the OpenSpec change only after any release-specific acceptance is requested.
+
+
 ## unify-new-flowpilot-work-packet-lifecycle - Black-box fake-project rehearsal
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -20733,6 +20800,44 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.37.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-29T22:09:52+00:00
+- Ended: 2026-05-29T22:09:52+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.38.0
 - FlowGuard schema version recorded: 1.0
 
 ### Counterexamples

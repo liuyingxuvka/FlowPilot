@@ -36,6 +36,10 @@ REQUIRED_FILES = [
     "openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/tasks.md",
     "openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowpilot-prompt-boundary-policy/spec.md",
     "openspec/changes/harden-flowpilot-enum-prompts-and-run-evidence/specs/flowguard-background-observability/spec.md",
+    "openspec/changes/restore-recursive-route-execution-runtime/proposal.md",
+    "openspec/changes/restore-recursive-route-execution-runtime/design.md",
+    "openspec/changes/restore-recursive-route-execution-runtime/tasks.md",
+    "openspec/changes/restore-recursive-route-execution-runtime/specs/recursive-route-execution-runtime/spec.md",
     "docs/project_brief.md",
     "docs/design_decisions.md",
     "docs/flowguard_preflight_findings.md",
@@ -647,6 +651,7 @@ REQUIRED_FILES = [
     "tests/test_flowpilot_complete_system_runtime.py",
     "tests/test_flowpilot_new_entrypoint.py",
     "tests/test_flowpilot_fake_project_rehearsal.py",
+    "tests/test_flowpilot_recursive_route_execution_runtime.py",
     "simulations/ai_project_protocol_model.py",
     "simulations/run_ai_project_protocol_checks.py",
     "simulations/ai_project_protocol_stress_model.py",
@@ -671,7 +676,11 @@ REQUIRED_FILES = [
     "simulations/flowpilot_symmetric_work_packet_model.py",
     "simulations/run_flowpilot_symmetric_work_packet_checks.py",
     "simulations/flowpilot_fake_project_rehearsal_model.py",
+    "simulations/flowpilot_fake_project_rehearsal_cli.py",
+    "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
     "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+    "simulations/flowpilot_recursive_route_execution_model.py",
+    "simulations/run_flowpilot_recursive_route_execution_checks.py",
 ]
 
 JSON_FILES = [
@@ -745,6 +754,7 @@ JSON_FILES = [
     "simulations/flowpilot_new_entrypoint_results.json",
     "simulations/flowpilot_symmetric_work_packet_results.json",
     "simulations/flowpilot_fake_project_rehearsal_results.json",
+    "simulations/flowpilot_recursive_route_execution_results.json",
     "templates/flowpilot/current.template.json",
     "templates/flowpilot/index.template.json",
     "templates/flowpilot/runs/run-001/run.template.json",

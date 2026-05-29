@@ -71,7 +71,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T21:00:47.906260+00:00",
+        "created_at": "2026-05-29T22:09:08.543223+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0005"
@@ -159,7 +159,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T21:00:47.907261+00:00",
+        "created_at": "2026-05-29T22:09:08.544224+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -171,7 +171,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-05-29T21:00:47.907261+00:00"
+          "created_at": "2026-05-29T22:09:08.544224+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -252,14 +252,14 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T21:00:47.910270+00:00",
+        "created_at": "2026-05-29T22:09:08.546226+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
       },
       "details": {
         "import": {
-          "created_at": "2026-05-29T21:00:47.910270+00:00",
+          "created_at": "2026-05-29T22:09:08.546226+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -347,7 +347,7 @@
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-05-29T21:00:47.911269+00:00",
+        "created_at": "2026-05-29T22:09:08.547226+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -422,7 +422,7 @@
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-05-29T21:00:47.911269+00:00",
+          "created_at": "2026-05-29T22:09:08.547226+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0004"
@@ -431,7 +431,7 @@
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-05-29T21:00:47.911269+00:00",
+          "created_at": "2026-05-29T22:09:08.547226+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
@@ -456,7 +456,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T21:00:47.913271+00:00",
+          "created_at": "2026-05-29T22:09:08.548224+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -489,7 +489,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-05-29T21:00:47.913271+00:00",
+          "created_at": "2026-05-29T22:09:08.548224+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -501,6 +501,7 @@
           "assigned_lease_id": "lease-0001",
           "body": "SEALED_TASK_BODY: complete-system work",
           "envelope": {
+            "acceptance_criteria": [],
             "allowed_tools": [],
             "body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
             "body_visibility": "sealed",
@@ -511,6 +512,8 @@
             "required_output_type": "artifact",
             "required_reviewer": "independent",
             "responsibility": "worker",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "source_generation": 1,
             "subject_id": "",
@@ -654,7 +657,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T21:00:47.915270+00:00",
+          "created_at": "2026-05-29T22:09:08.550221+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -684,9 +687,9 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-05-29T21:00:47.916270+00:00",
+          "completed_at": "2026-05-29T22:09:08.550221+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-05-29T21:00:47.916270+00:00",
+          "created_at": "2026-05-29T22:09:08.550221+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
           "modeled_target": "development_process",
@@ -708,7 +711,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T21:00:47.916270+00:00",
+          "created_at": "2026-05-29T22:09:08.550221+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -742,7 +745,7 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-05-29T21:00:47.918270+00:00",
+        "created_at": "2026-05-29T22:09:08.552225+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -757,7 +760,7 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-05-29T21:00:47.918270+00:00",
+          "created_at": "2026-05-29T22:09:08.552225+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0004"
@@ -780,7 +783,7 @@
       "details": {
         "fallback": {
           "active": "chat_route_sign",
-          "created_at": "2026-05-29T21:00:47.918270+00:00",
+          "created_at": "2026-05-29T22:09:08.552225+00:00",
           "fallback_reason": "cockpit_unavailable",
           "preferred": "cockpit",
           "route_sign_required": true
